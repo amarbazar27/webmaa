@@ -6,21 +6,30 @@
  * @returns {Promise<string>} Download URL of the uploaded image
  */
 export const uploadImage = async (file) => {
-  const url = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dcsecgwzc';
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+  
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'webmaa_preset');
+  formData.append('upload_preset', uploadPreset);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData,
-  });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+    });
 
-  const data = await response.json();
-  if (data.secure_url) {
-    return data.secure_url;
-  } else {
-    throw new Error('Failed to upload image to Cloudinary');
+    const data = await response.json();
+    if (data.secure_url) {
+      return data.secure_url;
+    } else {
+      console.error('Cloudinary upload err object:', data);
+      throw new Error(data?.error?.message || 'Failed to upload image to Cloudinary');
+    }
+  } catch (error) {
+    console.error('Cloudinary upload exception:', error);
+    throw new Error('Image upload failed. Check internet or try without image.');
   }
 };
 

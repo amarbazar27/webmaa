@@ -58,18 +58,49 @@ export default function AiCompanion({ shop }) {
     return `আমি এখনো পুরোপুরি ট্রেনড না, তবে আমি আপনার অর্ডার, স্টক এবং মার্কেটিং আইডিয়া নিয়ে কথা বলতে পারি। নিচের বাটনগুলো ট্রাই করুন অথবা সরাসরি প্রশ্ন করুন! — ${botName} 🤖`;
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = { id: Date.now(), role: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: generateReply(input) };
+    try {
+      const apiKey = shop?.aiConfig?.apiKey || 'AIzaSyDkw6nSHsJHh1ieqOtuFsVbc503N5NxI8g';
+      const prompt = `You are a professional e-commerce AI assistant named ${shop?.aiConfig?.botName || 'Webmaa AI'}, assisting the shop owner in Bengali. 
+      Current Store Context: 
+      - Total Products: ${analyticsData.products.length}
+      - Total Orders: ${analyticsData.orders.length} 
+      (Use this context to answer intelligently, but only if relevant).
+      User Query: "${userMsg.text}"`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Gemini API Error');
+      }
+
+      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: botText || generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
+    } catch (err) {
+      console.error(err);
+      // Fallback to static rules if API fails
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: generateReply(userMsg.text) };
+      setMessages(prev => [...prev, botMsg]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   return (

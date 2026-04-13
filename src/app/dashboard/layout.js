@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/dashboard/Sidebar';
-import { X, Info } from 'lucide-react';
+import { X, Info, LogOut } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const { user, userData, loading } = useAuth();
@@ -58,8 +58,29 @@ export default function DashboardLayout({ children }) {
       <Sidebar />
 
       {/* Main Context Area */}
-      <main className="flex-1 lg:ml-64 min-h-screen relative p-4 md:p-8">
-        <div className="max-w-7xl mx-auto pt-4">
+      <main className="flex-1 lg:ml-64 min-h-screen relative p-4 pb-24 md:p-8 md:pb-8">
+        
+        {/* 📱 Mobile Top Header */}
+        <div className="lg:hidden flex items-center justify-between bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 mb-4 sticky top-4 z-40">
+           <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                 <span className="text-white font-black text-sm">W</span>
+              </div>
+              <span className="font-black text-slate-800 text-sm">Dashboard</span>
+           </div>
+           <button 
+             onClick={async () => {
+                const { logoutUser } = await import('@/lib/auth');
+                await logoutUser();
+                router.push('/login');
+             }} 
+             className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm border border-red-100"
+           >
+              <LogOut size={16} className="-ml-0.5" />
+           </button>
+        </div>
+
+        <div className="max-w-7xl mx-auto">
 
           {/* ⚠️ Staff Access Notice - শুধুমাত্র Staff রোলের জন্য দেখাবে */}
           {showNotice && userData?.role === 'staff' && (
