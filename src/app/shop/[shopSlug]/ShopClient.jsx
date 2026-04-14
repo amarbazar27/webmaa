@@ -46,6 +46,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [phoneError, setPhoneError] = useState('');
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '' });
+  const [globalConfig, setGlobalConfig] = useState(null);
   
   // 🛸 PWA Install Logic
   useEffect(() => {
@@ -67,16 +68,19 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }
   };
 
-  // 📝 Fetch Real Order History
+  // 📝 Fetch Real Order History & Global Intelligence Key
   useEffect(() => {
-    if (user?.email && shop?.id) {
-       import('@/lib/firestore').then(lib => {
+    import('@/lib/firestore').then(lib => {
+       lib.getGlobalConfig().then(setGlobalConfig);
+       if (user?.email && shop?.id) {
           setLoadingOrders(true);
           lib.getUserOrders(shop.id, user.email)
              .then(setUserOrders)
              .finally(() => setLoadingOrders(false));
-       });
-    } else {
+       }
+    });
+
+    if (!user?.email || !shop?.id) {
        setUserOrders([]);
     }
   }, [user, shop?.id]);
@@ -103,118 +107,72 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   };
 
   // Smart Context-Aware AI Chat
-  const [chatMessages, setChatMessages] = useState([{
-    id: 1, role: 'bot',
-    text: 'Hello! I am ' + (shop.aiConfig && shop.aiConfig.botName ? shop.aiConfig.botName : 'Bazar Bot') + ' — ' + shop.shopName + ' shopping assistant. Ask about products, delivery or payment!'
-  }]);
+  const [chatMessages, setChatMessages] = useState([
+    { id: 1, role: 'bot', text: `আসসালামু আলাইকুম! আমি ${shop.aiConfig?.botName || 'Webmaa AI'}। ${shop.shopName}-এ আপনাকে স্বাগতম। আপনি চাইলে আমাদের পণ্য বা পেমেন্ট সম্পর্কে যেকোনো প্রশ্ন করতে পারেন!` }
+  ]);
   const [chatInput, setChatInput] = useState('');
+  const [isAiTyping, setIsAiTyping] = useState(false);
 
+  // 🤖 Fallback Keyword Logic
   const getSmartBotReply = (text) => {
-    const q = text.toLowerCase().trim();
-    const shopName = shop.shopName || 'এই স্টোর';
-    const deliveryFee = (shop.deliveryConfig && shop.deliveryConfig.advanceFee) ? shop.deliveryConfig.advanceFee : 60;
-    const isCOD = shop.deliveryConfig ? shop.deliveryConfig.isCOD !== false : true;
-    const payNums = (shop.deliveryConfig && shop.deliveryConfig.methods) ? shop.deliveryConfig.methods : 'bKash/Nagad';
-
-    // ─── Keyword groups (English + Bangla) ───────────────────────
-    const deliveryKW = [
-      'delivery', 'charge', 'shipping', 'courier', 'cost', 'fee', 'how much',
-      // বাংলা কীওয়ার্ড
-      'ডেলিভারি', 'চার্জ', 'শিপিং', 'কুরিয়ার', 'কত টাকা', 'ডেলিভারি চার্জ',
-      'কত দিতে হবে', 'খরচ কত', 'কত লাগবে', 'ডেলিভারি কত'
-    ];
-    const payKW = [
-      'payment', 'bkash', 'nagad', 'pay', 'txn', 'transaction', 'number',
-      // বাংলা কীওয়ার্ড
-      'পেমেন্ট', 'বিকাশ', 'নগদ', 'পে', 'ট্রানজেকশন', 'কিভাবে দেব', 'টাকা দেব', 'কিভাবে পেমেন্ট'
-    ];
-    const returnKW = [
-      'return', 'refund', 'exchange', 'replace',
-      // বাংলা কীওয়ার্ড
-      'রিটার্ন', 'ফেরত', 'এক্সচেঞ্জ', 'বদলানো', 'সমস্যা হলে', 'ফেরত দিতে পারব'
-    ];
-    const orderKW = [
-      'order', 'status', 'track', 'where is',
-      // বাংলা কীওয়ার্ড
-      'অর্ডার', 'স্ট্যাটাস', 'ট্র্যাক', 'কোথায়', 'অর্ডার কোথায়', 'অর্ডার পেলাম না', 'অর্ডার চেক'
-    ];
-    const greetKW = [
-      'hello', 'hi', 'hey', 'help', 'assist',
-      // বাংলা কীওয়ার্ড
-      'হ্যালো', 'হেলো', 'সালাম', 'আস্সালামু', 'হেল্প', 'সাহায্য', 'কেমন আছ', 'শুরু'
-    ];
-    const listKW = [
-      'product', 'item', 'what do', 'show me', 'available', 'sell', 'have',
-      // বাংলা কীওয়ার্ড
-      'পণ্য', 'কি কি আছে', 'আইটেম', 'কি বিক্রি', 'দেখাও', 'লিস্ট', 'কি আছে',
-      'কোনটা আছে', 'সব পণ্য', 'কোন পণ্য', 'কি পণ্য'
-    ];
-    const priceKW = [
-      'price', 'rate', 'how much is',
-      // বাংলা কীওয়ার্ড
-      'দাম', 'মূল্য', 'রেট', 'কত দাম', 'দাম কত', 'এর দাম', 'কত টাকায়'
-    ];
-
-    // ─── Reply Logic ─────────────────────────────────────────────
-    if (deliveryKW.some(kw => q.includes(kw))) {
-      return isCOD
-        ? `ডেলিভারি চার্জ: ৳${deliveryFee} (অগ্রিম)।\nবাকি Cash on Delivery। পেমেন্ট করুন: ${payNums} ✅`
-        : `এই স্টোরে সম্পূর্ণ পেমেন্ট আগে দিতে হবে।\nডেলিভারি চার্জ সহ পেমেন্ট করুন: ${payNums} ✅`;
-    }
-
-    if (payKW.some(kw => q.includes(kw))) {
-      return `পেমেন্ট করুন: ${payNums}\nপেমেন্টের পর Transaction ID (TxnID) অর্ডার ফর্মে দিন। 💳`;
-    }
-
-    // Product search - search within real products (name/category/description)
-    const matched = products.filter(p =>
-      (p.name && p.name.toLowerCase().includes(q)) ||
-      (p.category && p.category.toLowerCase().includes(q)) ||
-      (p.description && p.description.toLowerCase().includes(q))
-    );
-    if (matched.length > 0) {
-      const names = matched.slice(0, 3).map(p => `${p.name} (৳${p.price})`).join('\n• ');
-      return `হ্যাঁ! ${shopName}-এ আছে:\n• ${names}\n\nকার্টে যোগ করুন এবং অর্ডার করুন! 🛒`;
-    }
-
-    if (priceKW.some(kw => q.includes(kw))) {
-      const sample = products.slice(0, 3).map(p => `${p.name}: ৳${p.price}`).join('\n• ');
-      return products.length > 0
-        ? `কিছু পণ্যের দাম:\n• ${sample}\n\nনির্দিষ্ট পণ্যের নাম লিখলে আরো সঠিক তথ্য দিতে পারব! 😊`
-        : 'এই মুহূর্তে কোনো পণ্যের তথ্য নেই। দয়া করে পরে আবার চেক করুন।';
-    }
-
-    if (returnKW.some(kw => q.includes(kw))) {
-      const waLink = (shop.socialLinks && shop.socialLinks.wa) ? `\nWhatsApp: wa.me/${shop.socialLinks.wa}` : '';
-      return `পণ্য পাওয়ার ২৪ ঘণ্টার মধ্যে আমাদের সাথে যোগাযোগ করুন।${waLink} 🔁`;
-    }
-
-    if (greetKW.some(kw => q.includes(kw))) {
-      return `আস্সালামু আলাইকুম! 👋 আমি ${shop.aiConfig?.botName || 'Bazar Bot'}।\n${shopName}-এ ${products.length}টি পণ্য আছে।\nকিভাবে সাহায্য করতে পারি?`;
-    }
-
-    if (orderKW.some(kw => q.includes(kw))) {
-      return `অর্ডার স্ট্যাটাস দেখতে উপরের প্রোফাইল আইকনে (👤) ক্লিক করুন এবং Google দিয়ে লগইন করুন। 📦`;
-    }
-
-    if (listKW.some(kw => q.includes(kw))) {
-      const sample = products.slice(0, 5).map(p => p.name).join(', ');
-      return `${shopName}-এ মোট ${products.length}টি পণ্য আছে।\nযেমন: ${sample}${products.length > 5 ? '...' : ''}\n\nউপরে সার্চ করুন বা ক্যাটাগরি ফিল্টার করুন! 🔍`;
-    }
-
-    // Default fallback - বাংলায় উত্তর দেবে
-    return `ধন্যবাদ প্রশ্নের জন্য! 😊\n"${text}" সম্পর্কে নিশ্চিত না।\n${shopName}-এ ${products.length}টি পণ্য আছে। পণ্যের নাম লিখলে খুঁজে দিতে পারব!`;
+    const q = text.toLowerCase();
+    const deliveryFee = shop.settings?.deliveryFee || 60;
+    const isCOD = shop.settings?.paymentMethods?.includes('cod');
+    
+    if (q.includes('delivery')) return `ডেলিভারি চার্জ: ৳${deliveryFee}. ${isCOD ? 'ক্যাশ অন ডেলিভারি (COD) প্রযোজ্য।' : 'শুধুমাত্র অগ্রিম পেমেন্টে ডেলিভারি হবে।'}`;
+    if (q.includes('payment')) return `পেমেন্ট করতে পারেন: ${shop.settings?.paymentNumbers || 'বিকাশ/নগদ'}`;
+    return `আসসালামু আলাইকুম! আমি আপনার শপিং অ্যাসিস্ট্যান্ট। আমি আপনার প্রশ্নের উত্তর দেওয়ার চেষ্টা করছি। ড্যাশবোর্ড থেকে এআই ডোমেইন সেটআপ করলে আমি আরো নির্ভুল উত্তর দিতে পারব।`;
   };
 
-  const sendChatMessage = (text) => {
+  const sendChatMessage = async (text) => {
     if (!text.trim()) return;
     const userMsg = { id: Date.now(), role: 'user', text };
     setChatMessages(prev => [...prev, userMsg]);
     setChatInput('');
-    setTimeout(() => {
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: getSmartBotReply(text) };
-      setChatMessages(prev => [...prev, botMsg]);
-    }, 700);
+    setIsAiTyping(true);
+
+    try {
+      const apiKey = shop?.aiConfig?.apiKey || globalConfig?.geminiApiKey; // We use the same 'geminiApiKey' field to store the Groq Key
+      
+      if (!apiKey) {
+        // Simple delay to feel natural
+        setTimeout(() => {
+          setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: getSmartBotReply(text) }]);
+          setIsAiTyping(false);
+        }, 800);
+        return;
+      }
+
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a helpful shopping assistant for "${shop.shopName}". Speak in Bengali.
+              Inventory Preview: ${products.slice(0, 10).map(p => `${p.name} (৳${p.price})`).join(', ')}.
+              Shop Policies: Delivery charge is ${shop.settings?.deliveryFee || 'calculated at checkout'}.
+              Task: Assist customers with product questions or shop info. Be professional, friendly, and concise.`
+            },
+            { role: 'user', content: text }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      const botText = data.choices?.[0]?.message?.content || getSmartBotReply(text);
+      setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: botText }]);
+    } catch (err) {
+      console.error("AI Error:", err);
+      setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: getSmartBotReply(text) }]);
+    } finally {
+      setIsAiTyping(false);
+    }
   };
 
   // ─── Filters & Sorting ─────────────────────

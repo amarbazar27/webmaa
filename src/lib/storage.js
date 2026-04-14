@@ -6,6 +6,8 @@
  * @returns {Promise<string>} Download URL of the uploaded image
  */
 export const uploadImage = async (file) => {
+  if (file.size > 1024 * 1024) throw new Error('ফাইল সাইজ ১ মেগাবাইটের বেশি! অনুগ্রহ করে ছোট ছবি ব্যবহার করুন।');
+  
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dcsecgwzc';
   const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
   
