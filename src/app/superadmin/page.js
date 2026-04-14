@@ -132,19 +132,19 @@ export default function SuperAdminPage() {
       </div>
 
       {/* 🚀 Platform AI Intelligence (Global Settings) */}
-      <Card title="Platform Intelligence" subtitle="Manage global AI nodes and API keys" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/20">
+      <Card title="Platform Intelligence" subtitle="Manage global AI nodes and API keys (Groq Engine)" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/20">
         <form onSubmit={handleUpdateConfig} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
            <div className="md:col-span-10">
               <Input
-                label="Global Gemini API Key"
-                placeholder="AIzaSy..."
+                label="Global Groq API Key"
+                placeholder="gsk_..."
                 type="password"
                 value={globalApiKey}
                 onChange={e => setGlobalApiKey(e.target.value)}
                 icon={Key}
               />
               <p className="text-[10px] text-slate-400 font-bold mt-2 px-1 uppercase tracking-wider">
-                This key is used as a fallback if a retailer does not provide their own Gemini API key.
+                This key is used as a fallback if a retailer does not provide their own Groq API key.
               </p>
            </div>
            <div className="md:col-span-2">

@@ -68,45 +68,50 @@ export default function AiCompanion({ shop, isMobile }) {
     setIsTyping(true);
 
     try {
-      const apiKey = shop?.aiConfig?.apiKey || globalConfig?.geminiApiKey;
-      if (!apiKey) throw new Error('No Gemini API Key found (Shop or Global)');
+      const apiKey = shop?.aiConfig?.apiKey || globalConfig?.geminiApiKey; // We'll keep the field name for now to avoid DB migration, but it holds Groq Key
+      if (!apiKey) throw new Error('No AI API Key found (Shop or Global)');
 
       const shopName = shop?.shopName || 'this store';
-      const prompt = `You are a professional retail assistant for "${shopName}".
-      Context:
-      - Total Inventory: ${analyticsData.products.length} items.
-      - Total Orders: ${analyticsData.orders.length} orders.
-      - AI Name: ${shop?.aiConfig?.botName || 'Webmaa AI'}.
       
-      Task: Answer the shop owner's query in Bengali using the provided context. Be precise, helpful, and professional. 
-      If asked about stock, refer to ${analyticsData.products.length} items. 
-      If asked about sales, refer to ${analyticsData.orders.length} orders.
-      User Query: "${userMsg.text}"`;
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional retail assistant for "${shopName}" in Bangladesh. Speak in Bengali. 
+              Only use the provided shop data. Never share information about other retailers.
+              Current Shop Stats:
+              - Products: ${analyticsData.products.length} items
+              - Orders: ${analyticsData.orders.length} total orders`
+            },
+            {
+              role: 'user',
+              content: userMsg.text
+            }
+          ],
+          temperature: 0.7,
         })
       });
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Gemini API Error');
+        throw new Error(data.error?.message || 'Groq API Error');
       }
 
-      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const botText = data.choices?.[0]?.message?.content;
       const botMsg = { id: Date.now() + 1, role: 'bot', text: botText || generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
       console.error(err);
-      // Fallback but include error so user knows what failed
-      const errorContext = err.message.includes('API') ? `[API Error: ${err.message}] ` : '';
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: errorContext + generateReply(userMsg.text) };
+      const errorMsg = err.message.includes('API') ? `[AI Error: ${err.message}] ` : '';
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: errorMsg + generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
     } finally {
       setIsTyping(false);

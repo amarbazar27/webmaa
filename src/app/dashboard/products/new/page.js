@@ -9,7 +9,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 export default function NewProductPage() {
-  const { user } = useAuth();
+  const { user, activeShopId } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -27,15 +27,20 @@ export default function NewProductPage() {
 
   // Fetch categories on mount
   useEffect(() => {
-    if (!user) return;
-    getCategories(user.uid).then(cats => {
+    if (!activeShopId) return;
+    getCategories(activeShopId).then(cats => {
       setCategories(cats);
     }).catch(err => console.error('Failed to load categories:', err));
-  }, [user]);
+  }, [activeShopId]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 1024 * 1024) {
+        toast.error('ইমেজের সাইজ ১ মেগাবাইটের বেশি হওয়া যাবে না।');
+        e.target.value = '';
+        return;
+      }
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -56,25 +61,24 @@ export default function NewProductPage() {
     if (!user) return;
     
     setLoading(true);
-    try {
-      let imageUrl = '';
-      if (imageFile) {
-        try {
-           imageUrl = await uploadProductImage(user.uid, imageFile);
-        } catch (uploadErr) {
-           console.error("Image Upload Failed:", uploadErr);
-           toast.error(uploadErr.message || 'Image upload failed. Product will be saved without image.');
-           // Proceed without image if it fails so users aren't blocked from adding products
+      try {
+        let imageUrl = '';
+        if (imageFile) {
+          try {
+             imageUrl = await uploadProductImage(activeShopId, imageFile);
+          } catch (uploadErr) {
+             console.error("Image Upload Failed:", uploadErr);
+             toast.error(uploadErr.message || 'Image upload failed. Product will be saved without image.');
+          }
         }
-      }
-
-      await addProduct(user.uid, {
-        ...form,
-        price: parseFloat(form.price),
-        stock: parseInt(form.stock),
-        imageUrl,
-        ownerId: user.uid,
-      });
+  
+        await addProduct(activeShopId, {
+          ...form,
+          price: parseFloat(form.price),
+          stock: parseInt(form.stock),
+          imageUrl,
+          ownerId: activeShopId,
+        });
 
       toast.success('Product indexed successfully! 🚀');
       router.push('/dashboard/products');
@@ -120,7 +124,7 @@ export default function NewProductPage() {
                 <Camera size={32} />
               </div>
               <p className="font-bold text-slate-700 text-sm">Upload Product Image</p>
-              <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">Recommended: 800 x 800px</p>
+              <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">সর্বোচ্চ ১ মেগাবাইট (Max 1MB)</p>
             </div>
           )}
         </div>

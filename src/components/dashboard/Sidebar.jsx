@@ -186,7 +186,7 @@ export default function Sidebar() {
       </div>
       
       {/* 🚀 Mobile AI Sidekick */}
-      {!isStaff && <AiCompanion shop={shop} isMobile={true} />}
+      <AiCompanion shop={shop} isMobile={true} />
     </>
   );
 }

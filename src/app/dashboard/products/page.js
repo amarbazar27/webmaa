@@ -110,6 +110,10 @@ export default function ProductsPage() {
 
   const handleImageUpdate = async (productId, file) => {
     if (!file) return;
+    if (file.size > 1024 * 1024) {
+      toast.error('ইমেজের সাইজ ১ মেগাবাইটের বেশি হওয়া যাবে না।');
+      return;
+    }
     setUpdatingImageId(productId);
     try {
       const url = await uploadProductImage(activeShopId, file);
