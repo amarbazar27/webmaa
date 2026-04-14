@@ -41,26 +41,64 @@ export async function POST(req) {
        apiKey = globalConfig?.geminiApiKey;
     }
 
+    // Final Fallback to Vercel Environment Variables (Securely)
     if (!apiKey) {
-       return NextResponse.json({ error: { message: "API key not configured." } }, { status: 400 });
+       apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
     }
 
-    // Proxy securely to Groq
-    const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model || 'llama-3.3-70b-versatile',
-        messages,
-        temperature: 0.7,
-      })
-    });
+    if (!apiKey) {
+       return NextResponse.json({ error: { message: "API key not configured in Firestore or Vercel." } }, { status: 400 });
+    }
 
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    // ── SMART DETECT: Gemini vs Groq ────────────────────────
+    const isGemini = apiKey.startsWith('AIzaSy');
+
+    if (isGemini) {
+      // 🚀 Gemini API Call
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      
+      const response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: messages.map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.text || m.content }]
+          })),
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000,
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) return NextResponse.json(data, { status: response.status });
+
+      // Format Gemini response to match OpenAI/Groq format for frontend consistency
+      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+      return NextResponse.json({
+        choices: [{ message: { content: botText } }]
+      });
+
+    } else {
+      // 🚀 Groq API Call
+      const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model || 'llama-3.3-70b-versatile',
+          messages: messages.map(m => ({ role: m.role, content: m.text || m.content })),
+          temperature: 0.7,
+        })
+      });
+
+      const data = await response.json();
+      return NextResponse.json(data, { status: response.status });
+    }
 
   } catch (error) {
     console.error("AI Proxy Error:", error);

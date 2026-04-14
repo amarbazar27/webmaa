@@ -96,7 +96,7 @@ export default function AiCompanion({ shop, isMobile }) {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Invalid API Key or Groq Service Error');
+        throw new Error(data.error?.message || 'AI Service Error');
       }
 
       const botText = data.choices?.[0]?.message?.content;
@@ -104,13 +104,7 @@ export default function AiCompanion({ shop, isMobile }) {
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
       console.error("AI Assistant Error:", err);
-      let errorMsg = '';
-      if (err.message.includes('API Key')) {
-         errorMsg = '[AI Error: API কী সেট করা নেই অথবা সেটি ভুল। দয়া করে সুপারঅ্যাডমিন প্যানেল থেকে সঠিক API Key দিন।] ';
-      } else {
-         errorMsg = `[AI Error: ${err.message}] `;
-      }
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: errorMsg + generateReply(userMsg.text) };
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: `[AI Error: ${err.message}] ` + generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
     } finally {
       setIsTyping(false);

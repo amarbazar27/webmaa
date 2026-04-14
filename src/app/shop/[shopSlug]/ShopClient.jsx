@@ -151,15 +151,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || 'Invalid API Key');
+      if (!response.ok) throw new Error(data.error?.message || 'AI Service Error');
       const botText = data.choices?.[0]?.message?.content || getSmartBotReply(text);
       setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: botText }]);
     } catch (err) {
       console.error("AI Error:", err);
-      let errMsg = getSmartBotReply(text);
-      if (err.message.includes('API Key')) {
-         errMsg = '[AI Error: API কী সঠিকভাবে কনফিগার করা হয়নি।] ' + errMsg;
-      }
+      const errMsg = `[AI Error: ${err.message}] ` + getSmartBotReply(text);
       setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: errMsg }]);
     } finally {
       setIsAiTyping(false);
