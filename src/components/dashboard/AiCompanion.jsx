@@ -95,8 +95,9 @@ export default function AiCompanion({ shop, isMobile }) {
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
       console.error(err);
-      // Fallback to static rules if API fails
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: generateReply(userMsg.text) };
+      // Fallback but include error so user knows what failed
+      const errorContext = err.message.includes('API') ? `[API Error: ${err.message}] ` : '';
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: errorContext + generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
     } finally {
       setIsTyping(false);

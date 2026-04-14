@@ -9,6 +9,7 @@ const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' });
 export const metadata = {
   title: 'Webmaa - Premium Storefront',
   description: 'Buy products easily and securely',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }) {
@@ -27,6 +28,22 @@ export default function RootLayout({ children }) {
               toastOptions={{ 
                 style: { marginBottom: '20px', marginRight: '20px' } 
               }} 
+            />
+            {/* Service Worker Registration for PWA */}
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', function() {
+                      navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                        console.log('SW registered: ', registration.scope);
+                      }).catch(function(err) {
+                        console.log('SW registration failed: ', err);
+                      });
+                    });
+                  }
+                `,
+              }}
             />
           </AuthProvider>
         </ThemeProvider>

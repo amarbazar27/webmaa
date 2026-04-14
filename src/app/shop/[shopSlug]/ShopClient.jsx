@@ -529,13 +529,13 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       </footer>
 
       {/* ── AI Floating Companion ── */}
-      <div className="fixed bottom-6 left-6 z-40 flex items-end gap-3 flex-row-reverse group">
-         <button onClick={() => setIsAiOpen(true)} className="w-16 h-16 bg-purple-600 border-4 border-white rounded-full shadow-[0_10px_25px_rgba(147,51,234,0.5)] flex items-center justify-center animate-bounce hover:scale-110 transition-transform relative overflow-hidden group">
-            <span className="text-3xl drop-shadow-md group-hover:rotate-12 transition-transform">🤖</span>
-         </button>
-         <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-br-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 ml-2">
+      <div className="fixed bottom-24 right-6 z-40 flex items-end gap-3 group">
+         <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-br-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 mr-2">
             প্রশ্ন করুন! ✨
          </div>
+         <button onClick={() => setIsAiOpen(true)} className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-white rounded-full shadow-[0_10px_25px_rgba(147,51,234,0.5)] flex items-center justify-center animate-bounce hover:scale-110 transition-transform relative overflow-hidden group">
+            <span className="text-3xl drop-shadow-md group-hover:rotate-12 transition-transform">🤖</span>
+         </button>
       </div>
 
       {/* ── Modals & Drawers ── */}
