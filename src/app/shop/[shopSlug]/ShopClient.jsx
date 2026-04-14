@@ -136,7 +136,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         },
         body: JSON.stringify({
           shopId: shop.id,
-          model: 'llama-3.1-70b-versatile',
+          model: 'llama-3.3-70b-versatile',
           messages: [
             {
               role: 'system',

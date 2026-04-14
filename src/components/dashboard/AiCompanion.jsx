@@ -75,7 +75,7 @@ export default function AiCompanion({ shop, isMobile }) {
         },
         body: JSON.stringify({
           shopId: shop?.id || activeShopId,
-          model: 'llama-3.1-70b-versatile',
+          model: 'llama-3.3-70b-versatile',
           messages: [
             {
               role: 'system',
