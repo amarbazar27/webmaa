@@ -22,14 +22,15 @@ export const uploadImage = async (file) => {
 
     const data = await response.json();
     if (data.secure_url) {
+      console.log('✅ Cloudinary Upload Success:', data.secure_url);
       return data.secure_url;
     } else {
-      console.error('Cloudinary upload err object:', data);
-      throw new Error(data?.error?.message || 'Failed to upload image to Cloudinary');
+      console.error('❌ Cloudinary Error Response:', data);
+      throw new Error(data?.error?.message || 'Failed to upload image. (Tip: Ensure you have an "Unsigned" preset named "unsigned_preset" in Cloudinary settings)');
     }
   } catch (error) {
-    console.error('Cloudinary upload exception:', error);
-    throw new Error('Image upload failed. Check internet or try without image.');
+    console.error('❌ Cloudinary Upload Exception:', error);
+    throw new Error(error.message || 'Image upload failed. Verify internet or Cloudinary settings.');
   }
 };
 

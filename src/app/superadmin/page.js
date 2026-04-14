@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import {
   getRetailerInvites, addRetailerInvite, removeRetailerInvite, getAllShops,
-  getRetailerRequests, approveRetailerRequest, denyRetailerRequest
+  getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
+  getGlobalConfig, updateGlobalConfig
 } from '@/lib/firestore';
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck, Search,
-  Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2
+  Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -22,19 +23,25 @@ export default function SuperAdminPage() {
   const [newEmail, setNewEmail] = useState('');
   const [inviting, setInviting] = useState(false);
   const [processingId, setProcessingId] = useState(null);
+  
+  const [globalApiKey, setGlobalApiKey] = useState('');
+  const [savingConfig, setSavingConfig] = useState(false);
+  
   const router = useRouter();
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [invitesData, shopsData, requestsData] = await Promise.all([
+      const [invitesData, shopsData, requestsData, configData] = await Promise.all([
         getRetailerInvites(),
         getAllShops(),
         getRetailerRequests(),
+        getGlobalConfig()
       ]);
       setInvites(invitesData);
       setShops(shopsData);
       setRequests(requestsData);
+      setGlobalApiKey(configData?.geminiApiKey || '');
     } catch (err) {
       console.error(err);
     }
@@ -93,6 +100,18 @@ export default function SuperAdminPage() {
     setProcessingId(null);
   };
 
+  const handleUpdateConfig = async (e) => {
+    e.preventDefault();
+    setSavingConfig(true);
+    try {
+      await updateGlobalConfig({ geminiApiKey: globalApiKey });
+      toast.success('Global AI Configuration updated!');
+    } catch (err) {
+      toast.error('Failed to update global config');
+    }
+    setSavingConfig(false);
+  };
+
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const processedRequests = requests.filter(r => r.status !== 'pending');
 
@@ -111,6 +130,30 @@ export default function SuperAdminPage() {
         <Card title={pendingRequests.length} subtitle="Pending Requests" icon={Clock} className="border-l-4 border-l-amber-500" />
         <Card title="Healthy" subtitle="System Engine" icon={Activity} className="border-l-4 border-l-green-500" />
       </div>
+
+      {/* 🚀 Platform AI Intelligence (Global Settings) */}
+      <Card title="Platform Intelligence" subtitle="Manage global AI nodes and API keys" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/20">
+        <form onSubmit={handleUpdateConfig} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+           <div className="md:col-span-10">
+              <Input
+                label="Global Gemini API Key"
+                placeholder="AIzaSy..."
+                type="password"
+                value={globalApiKey}
+                onChange={e => setGlobalApiKey(e.target.value)}
+                icon={Key}
+              />
+              <p className="text-[10px] text-slate-400 font-bold mt-2 px-1 uppercase tracking-wider">
+                This key is used as a fallback if a retailer does not provide their own Gemini API key.
+              </p>
+           </div>
+           <div className="md:col-span-2">
+              <Button type="submit" loading={savingConfig} className="w-full bg-slate-900 border-b-4 border-slate-950 hover:bg-black py-4">
+                Update
+              </Button>
+           </div>
+        </form>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 

@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getProducts, deleteProduct, updateProduct } from '@/lib/firestore';
-import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle } from 'lucide-react';
+import { uploadProductImage } from '@/lib/storage';
+import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2 } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -105,6 +106,23 @@ export default function ProductsPage() {
     }
   };
 
+  const [updatingImageId, setUpdatingImageId] = useState(null);
+
+  const handleImageUpdate = async (productId, file) => {
+    if (!file) return;
+    setUpdatingImageId(productId);
+    try {
+      const url = await uploadProductImage(activeShopId, file);
+      await updateProduct(activeShopId, productId, { imageUrl: url });
+      setProducts(prev => prev.map(p => p.id === productId ? { ...p, imageUrl: url } : p));
+      toast.success('Image updated! ✨');
+    } catch (err) {
+      toast.error(err.message || 'Image update failed');
+    } finally {
+      setUpdatingImageId(null);
+    }
+  };
+
   const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.category?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -178,11 +196,28 @@ export default function ProductsPage() {
 
               {/* Product Info */}
               <div className="col-span-4 flex items-center gap-4 w-full">
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                  {product.imageUrl
-                    ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-slate-200"><Package size={20} /></div>
-                  }
+                <div className="relative group/img w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
+                  {updatingImageId === product.id ? (
+                     <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                        <Loader2 className="animate-spin text-purple-600" size={16} />
+                     </div>
+                  ) : (
+                     <>
+                        {product.imageUrl
+                          ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          : <div className="w-full h-full flex items-center justify-center text-slate-200"><Package size={20} /></div>
+                        }
+                        <label className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-all flex items-center justify-center cursor-pointer">
+                           <Camera size={16} className="text-white" />
+                           <input 
+                              type="file" 
+                              className="hidden" 
+                              accept="image/*" 
+                              onChange={(e) => handleImageUpdate(product.id, e.target.files[0])} 
+                           />
+                        </label>
+                     </>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <EditableCell

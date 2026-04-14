@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, Settings, LogOut, ChevronRight, Store, Bot } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, Settings, LogOut, ChevronRight, Store, Bot, ShieldCheck, Download } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
 import { getShop } from '@/lib/firestore';
@@ -113,13 +113,17 @@ export default function Sidebar() {
 
         {/* Footer / Account */}
         <div className="p-4 mt-auto">
-          {deferredPrompt && (
+          {deferredPrompt ? (
              <button
                 onClick={handleAppDownload}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 mb-4"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 mb-4 animate-pulse"
              >
-                <Store size={16} /> Install App
+                <Download size={16} /> Install Webmaa App
              </button>
+          ) : (
+             <div className="w-full bg-slate-50 border border-slate-200 text-slate-400 font-black text-[10px] py-3 px-4 rounded-xl flex items-center justify-center gap-2 mb-4 opacity-60">
+                <ShieldCheck size={14} /> Device Verified
+             </div>
           )}
 
           <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center gap-3 mb-4">

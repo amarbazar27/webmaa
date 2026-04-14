@@ -14,20 +14,22 @@ export default function AiCompanion({ shop, isMobile }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [analyticsData, setAnalyticsData] = useState({ orders: [], products: [] });
+  const [globalConfig, setGlobalConfig] = useState(null);
 
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && activeShopId) {
-      // Fetch data for context
-      const unsub = subscribeOrders(activeShopId, (orders) => {
-        getProducts(activeShopId).then(products => {
+    import('@/lib/firestore').then(lib => {
+      lib.getGlobalConfig().then(setGlobalConfig);
+    });
+    if (activeShopId) {
+      getProducts(activeShopId).then(products => {
+        subscribeOrders(activeShopId, (orders) => {
            setAnalyticsData({ orders, products });
         });
       });
-      return () => unsub();
     }
-  }, [isOpen, activeShopId]);
+  }, [activeShopId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -66,12 +68,19 @@ export default function AiCompanion({ shop, isMobile }) {
     setIsTyping(true);
 
     try {
-      const apiKey = shop?.aiConfig?.apiKey || 'AIzaSyDkw6nSHsJHh1ieqOtuFsVbc503N5NxI8g';
-      const prompt = `You are a professional e-commerce AI assistant named ${shop?.aiConfig?.botName || 'Webmaa AI'}, assisting the shop owner in Bengali. 
-      Current Store Context: 
-      - Total Products: ${analyticsData.products.length}
-      - Total Orders: ${analyticsData.orders.length} 
-      (Use this context to answer intelligently, but only if relevant).
+      const apiKey = shop?.aiConfig?.apiKey || globalConfig?.geminiApiKey;
+      if (!apiKey) throw new Error('No Gemini API Key found (Shop or Global)');
+
+      const shopName = shop?.shopName || 'this store';
+      const prompt = `You are a professional retail assistant for "${shopName}".
+      Context:
+      - Total Inventory: ${analyticsData.products.length} items.
+      - Total Orders: ${analyticsData.orders.length} orders.
+      - AI Name: ${shop?.aiConfig?.botName || 'Webmaa AI'}.
+      
+      Task: Answer the shop owner's query in Bengali using the provided context. Be precise, helpful, and professional. 
+      If asked about stock, refer to ${analyticsData.products.length} items. 
+      If asked about sales, refer to ${analyticsData.orders.length} orders.
       User Query: "${userMsg.text}"`;
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
