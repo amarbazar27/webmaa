@@ -140,10 +140,18 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
           messages: [
             {
               role: 'system',
-              content: `You are a helpful shopping assistant for "${shop.shopName}". Speak in Bengali.
-              Inventory Preview: ${products.slice(0, 10).map(p => `${p.name} (৳${p.price})`).join(', ')}.
-              Shop Policies: Delivery charge is ${shop.settings?.deliveryFee || 'calculated at checkout'}.
-              Task: Assist customers with product questions or shop info. Be professional, friendly, and concise.`
+              content: `You are a helpful shopping assistant for "${shop.shopName}" in Bangladesh.
+              STRICT RULE: Always greet with "Assalamu Alaikum". Never use "Nomoskar" or any non-Muslim greeting.
+              Speak in Bengali. Be professional, friendly, and concise.
+              
+              Product List:
+              ${products.slice(0, 20).map(p => `- ${p.name}: ৳${p.price}`).join('\n')}
+              
+              Shop Policies:
+              - Delivery Charge: ৳${shop.settings?.deliveryFee || shop.deliveryConfig?.advanceFee || 'checkout-এ নির্ধারিত হবে'}
+              - Payment: ${shop.deliveryConfig?.methods || 'বিকাশ/নগদ'}
+              
+              If you don't know a specific answer, politely ask the customer to contact the shop owner.`
             },
             { role: 'user', content: text }
           ]
@@ -156,7 +164,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: botText }]);
     } catch (err) {
       console.error("AI Error:", err);
-      const errMsg = `[AI Error: ${err.message}] ` + getSmartBotReply(text);
+      console.error('Storefront AI Error:', err.message);
+      const errMsg = getSmartBotReply(text);
       setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: errMsg }]);
     } finally {
       setIsAiTyping(false);

@@ -54,86 +54,85 @@ export async function POST(req) {
     const isGemini = apiKey.startsWith('AIzaSy');
 
     if (isGemini) {
-      // 🚀 Gemini API Call with Improved Model Fallback (2026 Ready)
-      const modelsToTry = [
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-exp',
-        'gemini-1.5-flash', 
-        'gemini-1.5-flash-latest', 
-        'gemini-1.5-pro',
-        'gemini-1.0-pro'
-      ];
+      // 🚀 Gemini API Call (2026 — Only live models)
+      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash'];
       
-      let lastData = null;
-      let lastStatus = 500;
-      let success = false;
-      let botText = "No response";
-
-      // Inject strict Islamic etiquette instruction if not present
-      const systemInstruction = "Always start with 'Assalamu Alaikum' for greetings. Never use 'Nomoskar'. Follow Muslim etiquette for a Bangladeshi retail store.";
-      const updatedMessages = messages.map(m => {
+      // Extract system message and user/bot messages separately
+      // Gemini API does NOT accept 'system' role in contents — it must go in systemInstruction
+      let systemText = "Always greet with 'Assalamu Alaikum'. Never use 'Nomoskar'. Follow Muslim etiquette. Speak in Bengali for a Bangladeshi retail store.";
+      const chatMessages = [];
+      
+      for (const m of messages) {
+        const text = m.text || m.content || '';
         if (m.role === 'system') {
-          return { ...m, content: `${systemInstruction}\n${m.text || m.content}` };
+          systemText += '\n' + text;
+        } else {
+          chatMessages.push({
+            role: m.role === 'assistant' || m.role === 'bot' ? 'model' : 'user',
+            parts: [{ text }]
+          });
         }
-        return m;
-      });
+      }
+
+      // Ensure conversation starts with 'user' role (Gemini requirement)
+      if (chatMessages.length === 0 || chatMessages[0].role !== 'user') {
+        chatMessages.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
+      }
+
+      let lastError = null;
+      const MAX_RETRIES = 2;
 
       for (const modelName of modelsToTry) {
-        try {
-          // Try v1 first
-          let url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
-          let response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: updatedMessages.map(m => ({
-                role: m.role === 'assistant' || m.role === 'bot' ? 'model' : 'user',
-                parts: [{ text: m.text || m.content }]
-              })),
-              generationConfig: { maxOutputTokens: 1000 }
-            })
-          });
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                systemInstruction: { parts: [{ text: systemText }] },
+                contents: chatMessages,
+                generationConfig: { maxOutputTokens: 1000 }
+              })
+            });
 
-          let data = await response.json();
+            const data = await response.json();
 
-          // Fallback to v1beta if v1 fails or specifically for "not found"
-          if (!response.ok && (data.error?.message?.includes('not found') || response.status === 404)) {
-             url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-             response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  contents: updatedMessages.map(m => ({
-                    role: m.role === 'assistant' || m.role === 'bot' ? 'model' : 'user',
-                    parts: [{ text: m.text || m.content }]
-                  })),
-                  generationConfig: { maxOutputTokens: 1000 }
-                })
-             });
-             data = await response.json();
+            if (response.ok) {
+              const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+              return NextResponse.json({
+                choices: [{ message: { content: botText } }]
+              });
+            }
+
+            // If quota exceeded, wait and retry
+            if (response.status === 429 || data.error?.status === 'RESOURCE_EXHAUSTED') {
+              console.warn(`Gemini ${modelName} quota hit (attempt ${attempt + 1}). Retrying in 3s...`);
+              if (attempt < MAX_RETRIES) {
+                await new Promise(r => setTimeout(r, 3000));
+                continue;
+              }
+            }
+
+            // If model not found, skip to next model immediately
+            if (response.status === 404 || data.error?.message?.includes('not found')) {
+              console.error(`Gemini ${modelName}: Model not found, skipping.`);
+              lastError = data;
+              break; // break retry loop, go to next model
+            }
+
+            lastError = data;
+            break; // other error, skip retries
+          } catch (err) {
+            lastError = { error: { message: err.message } };
           }
-
-          if (response.ok) {
-            botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-            success = true;
-            break; 
-          } else {
-            lastData = data;
-            lastStatus = response.status;
-            console.error(`Gemini Model ${modelName} failed:`, data.error?.message);
-          }
-        } catch (err) {
-          lastData = { error: { message: err.message } };
         }
       }
 
-      if (!success) {
-        return NextResponse.json(lastData || { error: { message: "All Gemini models failed." } }, { status: lastStatus });
-      }
-
-      return NextResponse.json({
-        choices: [{ message: { content: botText } }]
-      });
+      return NextResponse.json(
+        lastError || { error: { message: "All Gemini models failed." } }, 
+        { status: 500 }
+      );
 
     } else {
       // 🚀 Groq API Call

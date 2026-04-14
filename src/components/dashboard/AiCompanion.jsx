@@ -125,7 +125,7 @@ export default function AiCompanion({ shop, isMobile }) {
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
       console.error("AI Assistant Error:", err);
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: `[AI Error: ${err.message}] ` + generateReply(userMsg.text) };
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
     } finally {
       setIsTyping(false);
