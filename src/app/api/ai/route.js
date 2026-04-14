@@ -54,12 +54,27 @@ export async function POST(req) {
     const isGemini = apiKey.startsWith('AIzaSy');
 
     if (isGemini) {
-      // 🚀 Gemini API Call with Model Fallback
-      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-pro'];
+      // 🚀 Gemini API Call with Improved Model Fallback
+      const modelsToTry = [
+        'gemini-1.5-flash', 
+        'gemini-1.5-flash-latest', 
+        'gemini-1.5-flash-8b',
+        'gemini-1.0-pro'
+      ];
+      
       let lastData = null;
       let lastStatus = 500;
       let success = false;
       let botText = "No response";
+
+      // Inject strict Islamic etiquette instruction if not present
+      const systemInstruction = "Always start with 'Assalamu Alaikum' for greetings. Never use 'Nomoskar'. Follow Muslim etiquette for a Bangladeshi retail store.";
+      const updatedMessages = messages.map(m => {
+        if (m.role === 'system') {
+          return { ...m, content: `${systemInstruction}\n${m.text || m.content}` };
+        }
+        return m;
+      });
 
       for (const modelName of modelsToTry) {
         try {
@@ -69,7 +84,7 @@ export async function POST(req) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: messages.map(m => ({
+              contents: updatedMessages.map(m => ({
                 role: m.role === 'assistant' || m.role === 'bot' ? 'model' : 'user',
                 parts: [{ text: m.text || m.content }]
               })),
@@ -79,14 +94,14 @@ export async function POST(req) {
 
           let data = await response.json();
 
-          if (!response.ok && data.error?.message?.includes('not found')) {
-             // Fallback to v1beta
+          // Fallback to v1beta if v1 fails or specifically for "not found"
+          if (!response.ok && (data.error?.message?.includes('not found') || response.status === 404)) {
              url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
              response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  contents: messages.map(m => ({
+                  contents: updatedMessages.map(m => ({
                     role: m.role === 'assistant' || m.role === 'bot' ? 'model' : 'user',
                     parts: [{ text: m.text || m.content }]
                   })),
@@ -99,10 +114,11 @@ export async function POST(req) {
           if (response.ok) {
             botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
             success = true;
-            break; // Exit loop on success
+            break; 
           } else {
             lastData = data;
             lastStatus = response.status;
+            console.error(`Gemini Model ${modelName} failed:`, data.error?.message);
           }
         } catch (err) {
           lastData = { error: { message: err.message } };

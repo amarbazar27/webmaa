@@ -67,6 +67,7 @@ export default function AiCompanion({ shop, isMobile }) {
 
     try {
       const shopName = shop?.shopName || 'this store';
+      const productList = analyticsData.products.slice(0, 20).map(p => `- ${p.name}: ${p.price} BDT`).join('\n');
       
       const response = await fetch(`/api/ai`, {
         method: 'POST',
@@ -79,11 +80,23 @@ export default function AiCompanion({ shop, isMobile }) {
           messages: [
             {
               role: 'system',
-              content: `You are a professional retail assistant for "${shopName}" in Bangladesh. Speak in Bengali. 
-              Only use the provided shop data. Never share information about other retailers.
-              Current Shop Stats:
-              - Products: ${analyticsData.products.length} items
-              - Orders: ${analyticsData.orders.length} total orders`
+              content: `You are a professional retail assistant for "${shopName}" in Bangladesh. 
+              STRICT RULE: Always greet with "Assalamu Alaikum". Never ever use "Nomoskar" or non-Muslim greetings.
+              Speak in Bengali and follow Muslim etiquette.
+              
+              Current Shop Data:
+              - Store Name: ${shopName}
+              - Total Products: ${analyticsData.products.length}
+              - Total Orders: ${analyticsData.orders.length}
+              
+              Product Price List:
+              ${productList || 'No products listed yet.'}
+              
+              Delivery Info:
+              - Default Delivery Charge: ${shop?.deliveryCharge || 'Calculated at checkout'}
+              - Area: ${shop?.address || 'Bangladesh'}
+              
+              Instruction: If you don't know a specific detail, ask the customer to check the checkout page or contact the shop owner. Never make up data.`
             },
             {
               role: 'user',
