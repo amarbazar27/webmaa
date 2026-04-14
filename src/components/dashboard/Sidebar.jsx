@@ -143,22 +143,41 @@ export default function Sidebar() {
       </aside>
 
       {/* 📱 Mobile Bottom Navigation (Visible only on tablets & phones) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] z-50 px-2 pb-safe">
-        <div className="flex items-center justify-around py-3">
-           {visibleNavItems.map(({ href, icon: Icon, label }) => {
-              const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
-              return (
-                 <Link key={href} href={href} className="flex flex-col items-center gap-1 group w-16">
-                    <div className={clsx(
-                       "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-                       isActive ? "bg-purple-100/50 text-purple-600" : "text-slate-400 group-hover:bg-slate-50 group-hover:text-slate-600"
-                    )}>
-                       <Icon size={20} className={isActive ? "scale-110" : "scale-100 group-hover:scale-105"} />
-                    </div>
-                    <span className={clsx("text-[9px] font-black uppercase tracking-wider text-center", isActive ? "text-purple-600" : "text-slate-400")}>{label.split(' ')[0]}</span>
-                 </Link>
-              );
-           })}
+      <div className="lg:hidden flex flex-col fixed bottom-0 left-0 right-0 z-50">
+        
+        {/* Mobile App Install Banner - pops up above the navigation if available */}
+        {deferredPrompt && (
+           <div className="bg-purple-600 px-4 py-3 shadow-[0_-5px_20px_-5px_rgba(147,51,234,0.3)] flex items-center justify-between animate-slide-in cursor-pointer" onClick={handleAppDownload}>
+             <div className="flex items-center gap-3">
+               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                 <Store size={18} className="text-white" />
+               </div>
+               <div>
+                  <p className="text-white font-black text-xs">Install Dashboard App</p>
+                  <p className="text-purple-200 text-[10px] font-bold">Fast & secure access</p>
+               </div>
+             </div>
+             <span className="bg-white text-purple-700 text-xs font-black px-3 py-1.5 rounded-lg">Install</span>
+           </div>
+        )}
+
+        <div className="bg-white border-t border-slate-100 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] px-2 pb-safe">
+          <div className="flex items-center justify-around py-3">
+             {visibleNavItems.map(({ href, icon: Icon, label }) => {
+                const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+                return (
+                   <Link key={href} href={href} className="flex flex-col items-center gap-1 group w-16">
+                      <div className={clsx(
+                         "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+                         isActive ? "bg-purple-100/50 text-purple-600" : "text-slate-400 group-hover:bg-slate-50 group-hover:text-slate-600"
+                      )}>
+                         <Icon size={20} className={isActive ? "scale-110" : "scale-100 group-hover:scale-105"} />
+                      </div>
+                      <span className={clsx("text-[9px] font-black uppercase tracking-wider text-center", isActive ? "text-purple-600" : "text-slate-400")}>{label.split(' ')[0]}</span>
+                   </Link>
+                );
+             })}
+          </div>
         </div>
       </div>
     </>

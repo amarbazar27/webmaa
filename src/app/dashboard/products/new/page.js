@@ -59,7 +59,13 @@ export default function NewProductPage() {
     try {
       let imageUrl = '';
       if (imageFile) {
-        imageUrl = await uploadProductImage(user.uid, imageFile);
+        try {
+           imageUrl = await uploadProductImage(user.uid, imageFile);
+        } catch (uploadErr) {
+           console.error("Image Upload Failed:", uploadErr);
+           toast.error(uploadErr.message || 'Image upload failed. Product will be saved without image.');
+           // Proceed without image if it fails so users aren't blocked from adding products
+        }
       }
 
       await addProduct(user.uid, {
@@ -73,8 +79,8 @@ export default function NewProductPage() {
       toast.success('Product indexed successfully! 🚀');
       router.push('/dashboard/products');
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to add product. Please try again.');
+      console.error("Database save failed:", err);
+      toast.error('Failed to add product database entry. Please try again.');
     } finally {
       setLoading(false);
     }
