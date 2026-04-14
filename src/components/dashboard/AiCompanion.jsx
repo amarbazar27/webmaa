@@ -5,7 +5,7 @@ import { getProducts, subscribeOrders } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 
-export default function AiCompanion({ shop }) {
+export default function AiCompanion({ shop, isMobile }) {
   const { activeShopId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -105,25 +105,34 @@ export default function AiCompanion({ shop }) {
 
   return (
     <>
-      <div className="px-4 py-2">
+      {isMobile ? (
         <button 
           onClick={() => setIsOpen(true)}
-          className="w-full flex items-center justify-between p-4 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl text-white shadow-lg hover:shadow-purple-500/20 hover:scale-[1.02] transition-all group overflow-hidden relative"
+          className="fixed bottom-20 right-4 z-50 w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-full text-white shadow-[0_5px_20px_-5px_rgba(147,51,234,0.6)] hover:scale-105 transition-all flex items-center justify-center lg:hidden"
         >
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
-              <Bot size={20} className="group-hover:rotate-12 transition-transform" />
-            </div>
-            <div className="text-left">
-              <p className="text-[10px] font-black uppercase tracking-widest text-purple-200 opacity-80">{shop?.aiConfig?.botName || 'AI Assistant'}</p>
-              <p className="text-sm font-black">AI Companion</p>
-            </div>
-          </div>
-          <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-125 transition-transform">
-            <Bot size={80} />
-          </div>
+          <Bot size={24} />
         </button>
-      </div>
+      ) : (
+        <div className="px-4 py-2">
+          <button 
+            onClick={() => setIsOpen(true)}
+            className="w-full flex items-center justify-between p-4 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl text-white shadow-lg hover:shadow-purple-500/20 hover:scale-[1.02] transition-all group overflow-hidden relative"
+          >
+            <div className="flex items-center gap-3 relative z-10">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md">
+                <Bot size={20} className="group-hover:rotate-12 transition-transform" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-purple-200 opacity-80">{shop?.aiConfig?.botName || 'AI Assistant'}</p>
+                <p className="text-sm font-black">AI Companion</p>
+              </div>
+            </div>
+            <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-125 transition-transform">
+              <Bot size={80} />
+            </div>
+          </button>
+        </div>
+      )}
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
