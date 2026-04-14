@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import {
   getRetailerInvites, addRetailerInvite, removeRetailerInvite, getAllShops,
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
-  getGlobalConfig, updateGlobalConfig
+  subscribeGlobalConfig, updateGlobalConfig
 } from '@/lib/firestore';
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck, Search,
-  Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key
+  Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -28,27 +28,39 @@ export default function SuperAdminPage() {
   const [savingConfig, setSavingConfig] = useState(false);
   
   const router = useRouter();
+  const [showKey, setShowKey] = useState(false);
+
+  // Helper to mask key
+  const maskKey = (key) => {
+    if (!key) return '';
+    if (key.length < 15) return '*'.repeat(key.length);
+    return `${key.substring(0, 4)}********${key.substring(key.length - 4)}`;
+  };
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [invitesData, shopsData, requestsData, configData] = await Promise.all([
+      const [invitesData, shopsData, requestsData] = await Promise.all([
         getRetailerInvites(),
         getAllShops(),
-        getRetailerRequests(),
-        getGlobalConfig()
+        getRetailerRequests()
       ]);
       setInvites(invitesData);
       setShops(shopsData);
       setRequests(requestsData);
-      setGlobalApiKey(configData?.geminiApiKey || '');
     } catch (err) {
       console.error(err);
     }
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { 
+    loadData(); 
+    const unsubscribe = subscribeGlobalConfig((configData) => {
+      setGlobalApiKey(configData?.geminiApiKey || '');
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -135,15 +147,27 @@ export default function SuperAdminPage() {
       <Card title="Platform Intelligence" subtitle="Manage global AI nodes and API keys (Groq Engine)" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/20">
         <form onSubmit={handleUpdateConfig} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
            <div className="md:col-span-10">
-              <Input
-                label="Global Groq API Key"
-                placeholder="gsk_..."
-                type="password"
-                value={globalApiKey}
-                onChange={e => setGlobalApiKey(e.target.value)}
-                icon={Key}
-              />
-              <p className="text-[10px] text-slate-400 font-bold mt-2 px-1 uppercase tracking-wider">
+              <div className="relative">
+                 <Input
+                   label="Global Groq API Key"
+                   placeholder="gsk_..."
+                   type={showKey ? "text" : "password"}
+                   value={globalApiKey}
+                   onChange={e => setGlobalApiKey(e.target.value)}
+                   icon={Key}
+                 />
+                 <button 
+                   type="button" 
+                   className="absolute right-4 top-10 text-slate-400 hover:text-purple-600 transition-colors"
+                   onClick={() => setShowKey(!showKey)}
+                 >
+                   {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                 </button>
+              </div>
+              {!showKey && globalApiKey && (
+                 <p className="text-xs font-mono text-purple-700 bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg mt-3 inline-block">Current Key: {maskKey(globalApiKey)}</p>
+              )}
+              <p className="text-[10px] text-slate-400 font-bold mt-3 px-1 uppercase tracking-wider">
                 This key is used as a fallback if a retailer does not provide their own Groq API key.
               </p>
            </div>

@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getShop, getOrders, getProducts } from '@/lib/firestore';
-import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, barChart2, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap } from 'lucide-react';
+import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import Link from 'next/link';
+import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 
 export default function DashboardPage() {
   const { user, activeShopId } = useAuth();
@@ -107,6 +108,9 @@ export default function DashboardPage() {
             className="border-l-4 border-l-orange-500 shadow-sm" 
          />
       </div>
+
+      {/* Analytics Charts */}
+      {orders.length > 0 && <AnalyticsCharts orders={orders} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Sales Feed */}

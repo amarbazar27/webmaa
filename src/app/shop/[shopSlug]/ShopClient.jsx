@@ -46,7 +46,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [phoneError, setPhoneError] = useState('');
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '' });
-  const [globalConfig, setGlobalConfig] = useState(null);
   
   // 🛸 PWA Install Logic
   useEffect(() => {
@@ -67,11 +66,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       toast.success('অ্যাপটি ইতিমধ্যেই ইনস্টল করা আছে অথবা ব্রাউজার এটি সাপোর্ট করছে না।');
     }
   };
-
-  // 📝 Fetch Real Order History & Global Intelligence Key
+  // 📝 Fetch Real Order History
   useEffect(() => {
     import('@/lib/firestore').then(lib => {
-       lib.getGlobalConfig().then(setGlobalConfig);
        if (user?.email && shop?.id) {
           setLoadingOrders(true);
           lib.getUserOrders(shop.id, user.email)
@@ -132,25 +129,14 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     setIsAiTyping(true);
 
     try {
-      const apiKey = shop?.aiConfig?.apiKey || globalConfig?.geminiApiKey; // We use the same 'geminiApiKey' field to store the Groq Key
-      
-      if (!apiKey) {
-        // Simple delay to feel natural
-        setTimeout(() => {
-          setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: getSmartBotReply(text) }]);
-          setIsAiTyping(false);
-        }, 800);
-        return;
-      }
-
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('/api/ai', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          shopId: shop.id,
+          model: 'llama-3.1-70b-versatile',
           messages: [
             {
               role: 'system',
@@ -165,11 +151,16 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'Invalid API Key');
       const botText = data.choices?.[0]?.message?.content || getSmartBotReply(text);
       setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: botText }]);
     } catch (err) {
       console.error("AI Error:", err);
-      setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: getSmartBotReply(text) }]);
+      let errMsg = getSmartBotReply(text);
+      if (err.message.includes('API Key')) {
+         errMsg = '[AI Error: API কী সঠিকভাবে কনফিগার করা হয়নি।] ' + errMsg;
+      }
+      setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: errMsg }]);
     } finally {
       setIsAiTyping(false);
     }

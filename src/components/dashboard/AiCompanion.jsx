@@ -14,18 +14,16 @@ export default function AiCompanion({ shop, isMobile }) {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [analyticsData, setAnalyticsData] = useState({ orders: [], products: [] });
-  const [globalConfig, setGlobalConfig] = useState(null);
 
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    import('@/lib/firestore').then(lib => {
-      lib.getGlobalConfig().then(setGlobalConfig);
-    });
     if (activeShopId) {
-      getProducts(activeShopId).then(products => {
-        subscribeOrders(activeShopId, (orders) => {
-           setAnalyticsData({ orders, products });
+      import('@/lib/firestore').then(lib => {
+        lib.getProducts(activeShopId).then(products => {
+          lib.subscribeOrders(activeShopId, (orders) => {
+             setAnalyticsData({ orders, products });
+          });
         });
       });
     }
@@ -68,19 +66,16 @@ export default function AiCompanion({ shop, isMobile }) {
     setIsTyping(true);
 
     try {
-      const apiKey = shop?.aiConfig?.apiKey || globalConfig?.geminiApiKey; // We'll keep the field name for now to avoid DB migration, but it holds Groq Key
-      if (!apiKey) throw new Error('No AI API Key found (Shop or Global)');
-
       const shopName = shop?.shopName || 'this store';
       
-      const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+      const response = await fetch(`/api/ai`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          shopId: shop?.id || activeShopId,
+          model: 'llama-3.1-70b-versatile',
           messages: [
             {
               role: 'system',
@@ -94,23 +89,27 @@ export default function AiCompanion({ shop, isMobile }) {
               role: 'user',
               content: userMsg.text
             }
-          ],
-          temperature: 0.7,
+          ]
         })
       });
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Groq API Error');
+        throw new Error(data.error?.message || 'Invalid API Key or Groq Service Error');
       }
 
       const botText = data.choices?.[0]?.message?.content;
       const botMsg = { id: Date.now() + 1, role: 'bot', text: botText || generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
-      console.error(err);
-      const errorMsg = err.message.includes('API') ? `[AI Error: ${err.message}] ` : '';
+      console.error("AI Assistant Error:", err);
+      let errorMsg = '';
+      if (err.message.includes('API Key')) {
+         errorMsg = '[AI Error: API কী সেট করা নেই অথবা সেটি ভুল। দয়া করে সুপারঅ্যাডমিন প্যানেল থেকে সঠিক API Key দিন।] ';
+      } else {
+         errorMsg = `[AI Error: ${err.message}] `;
+      }
       const botMsg = { id: Date.now() + 1, role: 'bot', text: errorMsg + generateReply(userMsg.text) };
       setMessages(prev => [...prev, botMsg]);
     } finally {

@@ -249,3 +249,12 @@ export const updateGlobalConfig = async (data) => {
   return setDoc(doc(db, 'config', 'global'), data, { merge: true });
 };
 
+export const subscribeGlobalConfig = (callback) => {
+  return onSnapshot(doc(db, 'config', 'global'), (snap) => {
+    if (snap.exists()) {
+      callback(snap.data());
+    } else {
+      callback({ geminiApiKey: '' });
+    }
+  });
+};
