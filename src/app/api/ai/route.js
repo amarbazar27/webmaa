@@ -54,15 +54,16 @@ export async function POST(req) {
     const isGemini = apiKey.startsWith('AIzaSy');
 
     if (isGemini) {
-      // 🚀 Gemini API Call
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      // 🚀 Gemini API Call (Using v1 for better stability)
+      const modelName = 'gemini-1.5-flash';
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
       
       const response = await fetch(geminiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: messages.map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
+            role: m.role === 'assistant' || m.role === 'bot' ? 'model' : 'user',
             parts: [{ text: m.text || m.content }]
           })),
           generationConfig: {
@@ -73,9 +74,30 @@ export async function POST(req) {
       });
 
       const data = await response.json();
+      
+      // If v1 fails with "not found", try v1beta as fallback
+      if (!response.ok && data.error?.message?.includes('not found')) {
+         const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+         const fallbackRes = await fetch(fallbackUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: messages.map(m => ({
+                role: m.role === 'assistant' || m.role === 'bot' ? 'model' : 'user',
+                parts: [{ text: m.text || m.content }]
+              })),
+              generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+            })
+         });
+         const fallbackData = await fallbackRes.json();
+         if (!fallbackRes.ok) return NextResponse.json(fallbackData, { status: fallbackRes.status });
+         
+         const botText = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+         return NextResponse.json({ choices: [{ message: { content: botText } }] });
+      }
+
       if (!response.ok) return NextResponse.json(data, { status: response.status });
 
-      // Format Gemini response to match OpenAI/Groq format for frontend consistency
       const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
       return NextResponse.json({
         choices: [{ message: { content: botText } }]
