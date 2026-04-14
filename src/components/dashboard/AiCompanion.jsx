@@ -38,24 +38,32 @@ export default function AiCompanion({ shop, isMobile }) {
   const generateReply = (query) => {
     const q = query.toLowerCase();
     const { orders, products } = analyticsData;
+    const botName = shop?.aiConfig?.botName || 'Webmaa AI';
 
-    if (q.includes('order') || q.includes('সেল') || q.includes('analysis')) {
+    if (q.includes('salam') || q.includes('আসসালামু') || q.includes('wa-alaikum')) {
+      return `ওয়া আলাইকুম আসসালাম! আমি ${botName}। আমি আপনাকে আপনার দোকানের অর্ডার এবং স্টকের তথ্য দিয়ে সাহায্য করতে পারি। ইনশাআল্লাহ সব ঠিক হয়ে যাবে! 🌙`;
+    }
+
+    if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
+      return `আসসালামু আলাইকুম! শোরুম অ্যাসিস্ট্যান্ট ${botName} হিসেবে আমি আপনার সেবায় নিয়োজিত। কোনো তথ্য জানতে চান? 😊`;
+    }
+
+    if (q.includes('order') || q.includes('অর্ডার') || q.includes('সেল') || q.includes('analysis')) {
       const delivered = orders.filter(o => o.status === 'completed').length;
       const pending = orders.filter(o => o.status === 'pending').length;
-      return `আপনার এই মুহূর্তে মোট ${orders.length}টি অর্ডার আছে। এর মধ্যে ${delivered}টি ডেলিভার হয়েছে এবং ${pending}টি পেন্ডিং। আপনার কাস্টমাররা বেশিরভাগই ${orders[0]?.customerAddress?.split(',')[0] || 'লোকাল'} এরিয়া থেকে অর্ডার করছেন। আপনি চাইলে ঐসব এরিয়ায় ফেসবুক এড ট্রাই করতে পারেন! 📈`;
+      return `আপনার এই মুহূর্তে মোট ${orders.length}টি অর্ডার আছে। এর মধ্যে ${delivered}টি ডেলিভার হয়েছে এবং ${pending}টি পেন্ডিং। (লোকাল ডাটা থেকে প্রাপ্ত) 📈`;
     }
 
     if (q.includes('stock') || q.includes('ইনভেন্টরি') || q.includes('পণ্য')) {
       const lowStock = products.filter(p => p.stock < 5).length;
-      return `আপনার স্টোরে এখন ${products.length}টি পণ্য আছে। ${lowStock > 0 ? `${lowStock}টি পণ্যের স্টক কম আছে।` : 'সবগুলো প্রডাক্টের স্টক ঠিক আছে।'} আপনি কি কোনো পণ্যের দাম বা তথ্য আপডেট করতে চান? 📦`;
+      return `আপনার স্টোরে এখন ${products.length}টি পণ্য আছে। ${lowStock > 0 ? `${lowStock}টি পণ্যের স্টক কম আছে।` : 'সবগুলো প্রডাক্টের স্টক ঠিক আছে।'} 📦`;
     }
 
     if (q.includes('marketing') || q.includes('আইডিয়া') || q.includes('বিপণন')) {
       return `মার্কেটিং আইডিয়া: আপনার ফেইসবুক পেজে "ফ্রি ডেলিভারি" অফার দিয়ে একটি পোস্ট দিতে পারেন। এতে অর্ডার ২০% পর্যন্ত বাড়তে পারে বলে আমাদের রিপোর্ট বলছে! 💡`;
     }
 
-    const botName = shop?.aiConfig?.botName || 'Webmaa AI';
-    return `আমি এখনো পুরোপুরি ট্রেনড না, তবে আমি আপনার অর্ডার, স্টক এবং মার্কেটিং আইডিয়া নিয়ে কথা বলতে পারি। নিচের বাটনগুলো ট্রাই করুন অথবা সরাসরি প্রশ্ন করুন! — ${botName} 🤖`;
+    return `আসসালামু আলাইকুম! আমি এখনো পুরোপুরি ট্রেনড না, তবে আমি আপনার অর্ডার, স্টক এবং মার্কেটিং আইডিয়া নিয়ে কথা বলতে পারি। নিচের বাটনগুলো ট্রাই করুন অথবা সরাসরি প্রশ্ন করুন! — ${botName} 🤖`;
   };
 
   const handleSend = async () => {
