@@ -9,6 +9,8 @@ export const uploadImage = async (file) => {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dcsecgwzc';
   const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
   
+  console.log(`[Cloudinary Config Debug] Cloud Name: ${cloudName}, Preset: ${uploadPreset}`);
+
   const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
   const formData = new FormData();
   formData.append('file', file);

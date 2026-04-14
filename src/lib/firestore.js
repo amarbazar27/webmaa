@@ -234,3 +234,18 @@ export const deleteOrder = async (shopId, orderId) => {
   return deleteDoc(doc(db, 'shops', shopId, 'orders', orderId));
 };
 
+// ── GLOBAL CONFIG ──────────────────────────────────
+export const getGlobalConfig = async () => {
+  try {
+    const snap = await getDoc(doc(db, 'config', 'global'));
+    return snap.exists() ? snap.data() : { geminiApiKey: '' };
+  } catch (err) {
+    console.error("Global Config Error:", err);
+    return { geminiApiKey: '' };
+  }
+};
+
+export const updateGlobalConfig = async (data) => {
+  return setDoc(doc(db, 'config', 'global'), data, { merge: true });
+};
+

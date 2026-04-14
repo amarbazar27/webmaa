@@ -30,7 +30,7 @@ export async function generateMetadata({ params }) {
   return {
     title: shop?.shopName || 'Webmaa Store',
     description: shop?.slogan || 'Welcome to our store',
-    manifest: `/api/manifest/${shopSlug}`
+    manifest: `/api/manifest?shop=${shopSlug}`
   };
 }
 
