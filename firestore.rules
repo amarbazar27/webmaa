@@ -25,7 +25,8 @@ service cloud.firestore {
     // 2. Retailer Requests and Invites
     match /retailer_requests/{docId} {
       allow create: if isAuthenticated();
-      allow read, update, delete: if isSuperAdmin();
+      allow read: if isSuperAdmin() || (isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid));
+      allow update, delete: if isSuperAdmin();
     }
     match /retailer_invites/{docId} {
       allow read: if isAuthenticated();

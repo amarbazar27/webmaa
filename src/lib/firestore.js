@@ -191,7 +191,7 @@ export const getAllUsers = async () => {
 // ── RETAILER REQUESTS ─────────────────────────────
 export const addRetailerRequest = async (userData, phone = '') => {
   // Check for duplicate
-  const q = query(collection(db, 'retailer_requests'), where('email', '==', userData.email.toLowerCase().trim()));
+  const q = query(collection(db, 'retailer_requests'), where('uid', '==', userData.uid));
   const existing = await getDocs(q);
   if (!existing.empty) {
     throw new Error('You have already submitted a retailer request.');
