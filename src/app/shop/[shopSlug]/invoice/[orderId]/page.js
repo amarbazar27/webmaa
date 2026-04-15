@@ -95,7 +95,10 @@ export default function InvoicePage({ params }) {
                    <tbody className="divide-y divide-slate-100 text-sm font-bold">
                       {order.items?.map((item, idx) => (
                          <tr key={idx} className="group hover:bg-slate-50 transition-colors">
-                            <td className="py-4">{item.name}</td>
+                            <td className="py-4">
+                               <div className="font-black">{item.name}</div>
+                               {item.note && <div className="text-[10px] text-slate-500 italic mt-0.5">নোট: {item.note}</div>}
+                            </td>
                             <td className="py-4 text-center">{item.quantity}</td>
                             <td className="py-4 text-right">৳{parseFloat(item.price).toLocaleString()}</td>
                             <td className="py-4 text-right font-black">৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</td>

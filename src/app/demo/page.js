@@ -44,30 +44,25 @@ export default function DemoPage() {
   );
 
   const handleRequestClick = async () => {
-    if (!user) {
+    let currentUser = user;
+    if (!currentUser) {
       try {
-        await loginWithGoogle();
-        toast.success('Logged in! Now click the button again to request access.');
+        const result = await loginWithGoogle();
+        currentUser = result.user; // Get the user from the login result
       } catch (err) {
-        toast.error('Login failed. Please try again.');
+        toast.error('লগইন ব্যর্থ হয়েছে। দয়া করে আবার চেষ্টা করুন।');
+        return;
       }
-      return;
     }
-    setShowRequestModal(true);
-  };
-
-  const handleSubmitRequest = async () => {
-    if (!phoneNumber || phoneNumber.length < 11) {
-      toast.error('Please enter a valid 11-digit mobile number.');
-      return;
-    }
+    
     setSubmitting(true);
     try {
-      await addRetailerRequest(user, phoneNumber);
+      await addRetailerRequest(currentUser, '');
       setSubmitted(true);
-      toast.success('Request submitted! Admin will review shortly.');
+      setShowRequestModal(true); // Show the success modal
+      toast.success('আবেদন জমা দেওয়া হয়েছে! অ্যাডমিন শীঘ্রই যাচাই করবেন।');
     } catch (err) {
-      toast.error(err.message || 'Failed to submit request.');
+      toast.error(err.message || 'আবেদন জমা দিতে সমস্যা হয়েছে।');
     } finally {
       setSubmitting(false);
     }
@@ -277,79 +272,21 @@ export default function DemoPage() {
               <X size={20} />
             </button>
 
-            {submitted ? (
-              <div className="text-center py-8">
-                <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle size={40} className="text-emerald-400" />
-                </div>
-                <h3 className="text-2xl font-black text-white mb-3">Request Submitted!</h3>
-                <p className="text-white/40 font-medium mb-6">
-                  Our admin team will review your request and get back to you shortly. After approval, you can log in and start managing your store.
-                </p>
-                <button
-                  onClick={() => setShowRequestModal(false)}
-                  className="px-8 py-3 bg-white/10 border border-white/10 rounded-xl font-bold text-white/60 hover:bg-white/20 transition-colors"
-                >
-                  Close
-                </button>
+            <div className="text-center py-8">
+              <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle size={40} className="text-emerald-400" />
               </div>
-            ) : (
-              <>
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-purple-500/25">
-                    <Store size={28} className="text-white" />
-                  </div>
-                  <h3 className="text-2xl font-black text-white mb-2">Request Retailer Access</h3>
-                  <p className="text-white/40 text-sm font-medium">
-                    Enter your active mobile number. Admin will review and approve your request.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  {/* Show logged in user info */}
-                  <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl">
-                    {user?.photoURL ? (
-                      <img src={user.photoURL} className="w-10 h-10 rounded-full object-cover border border-white/10" alt="" />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-black">
-                        {user?.displayName?.[0] || 'U'}
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-bold text-white">{user?.displayName || 'User'}</p>
-                      <p className="text-[10px] text-white/30 font-bold">{user?.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest block pl-1">Active Mobile Number *</label>
-                    <div className="relative">
-                      <Phone size={16} className="absolute left-4 top-4 text-white/20" />
-                      <input
-                        type="tel"
-                        maxLength={11}
-                        placeholder="01XXXXXXXXX"
-                        value={phoneNumber}
-                        onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                        className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-sm font-bold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 placeholder:text-white/15 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleSubmitRequest}
-                    disabled={submitting}
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl font-black text-white flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:hover:scale-100"
-                  >
-                    {submitting ? (
-                      <><Loader2 className="animate-spin" size={18} /> Submitting...</>
-                    ) : (
-                      <><CheckCircle size={18} /> Submit Request</>
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
+              <h3 className="text-2xl font-black text-white mb-3">আবেদন জমা পড়েছে!</h3>
+              <p className="text-white/40 font-medium mb-6">
+                আমাদের অ্যাডমিন টিম আপনার আবেদনটি দ্রুত যাচাই করবে। অনুমোদনের পর আপনি লগইন করে আপনার স্টোর পরিচালনা করতে পারবেন।
+              </p>
+              <button
+                onClick={() => setShowRequestModal(false)}
+                className="px-8 py-3 bg-white/10 border border-white/10 rounded-xl font-bold text-white/60 hover:bg-white/20 transition-colors"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
+import { addRetailerRequest } from '@/lib/firestore';
+import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -38,6 +40,30 @@ export default function Home() {
       // silently ignore
     } finally {
       setLoggingIn(false);
+    }
+  };
+
+  const [requesting, setRequesting] = useState(false);
+  const handleRequestClick = async () => {
+    let currentUser = user;
+    if (!currentUser) {
+      try {
+        const result = await loginWithGoogle();
+        currentUser = result.user;
+      } catch (err) {
+        toast.error('লগইন ব্যর্থ হয়েছে। দয়া করে আবার চেষ্টা করুন।');
+        return;
+      }
+    }
+    
+    setRequesting(true);
+    try {
+      await addRetailerRequest(currentUser, '');
+      toast.success('আবেদন জমা দেওয়া হয়েছে! অ্যাডমিন শীঘ্রই যাচাই করবেন।');
+    } catch (err) {
+      toast.error(err.message || 'আবেদন জমা দিতে সমস্যা হয়েছে।');
+    } finally {
+      setRequesting(false);
     }
   };
 
@@ -210,13 +236,14 @@ export default function Home() {
                 <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
             ) : (
-              <Link
-                href="/demo"
-                className="group px-10 py-5 rounded-2xl text-lg font-black flex items-center justify-center gap-3 bg-white/5 backdrop-blur border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-xl"
+              <button
+                onClick={handleRequestClick}
+                disabled={requesting}
+                className="group px-10 py-5 rounded-2xl text-lg font-black flex items-center justify-center gap-3 bg-white/5 backdrop-blur border border-white/10 text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-xl disabled:opacity-50"
               >
                 <Store size={22} /> Become a Seller
                 <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-              </Link>
+              </button>
             )}
           </div>
 
@@ -305,12 +332,13 @@ export default function Home() {
                 <Rocket size={20} /> View Live Demo
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link
-                href="/demo"
-                className="px-10 py-4 rounded-2xl font-black bg-white/10 backdrop-blur border border-white/20 text-white hover:bg-white/20 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
+              <button
+                onClick={handleRequestClick}
+                disabled={requesting}
+                className="px-10 py-4 rounded-2xl font-black bg-white/10 backdrop-blur border border-white/20 text-white hover:bg-white/20 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 <Store size={20} /> Request Seller Access
-              </Link>
+              </button>
             </div>
           </div>
         </div>

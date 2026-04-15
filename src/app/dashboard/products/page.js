@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getProducts, deleteProduct, updateProduct } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -188,10 +188,11 @@ export default function ProductsPage() {
         <div className="space-y-3">
           {/* Header */}
           <div className="hidden lg:grid grid-cols-12 px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <div className="col-span-4">Product</div>
+            <div className="col-span-3">Product</div>
             <div className="col-span-2">Category</div>
             <div className="col-span-2 text-center">Price (৳)</div>
             <div className="col-span-2 text-center">Stock</div>
+            <div className="col-span-1 text-center">Note</div>
             <div className="col-span-2 text-right">Action</div>
           </div>
 
@@ -199,7 +200,7 @@ export default function ProductsPage() {
             <div key={product.id} className="bg-white p-4 lg:grid lg:grid-cols-12 items-center gap-4 rounded-2xl border border-slate-100 hover:border-purple-200 hover:shadow-lg transition-all group flex flex-col lg:flex-row">
 
               {/* Product Info */}
-              <div className="col-span-4 flex items-center gap-4 w-full">
+              <div className="col-span-3 flex items-center gap-4 w-full">
                 <div className="relative group/img w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
                   {updatingImageId === product.id ? (
                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
@@ -264,6 +265,17 @@ export default function ProductsPage() {
                   />
                   <span className="text-[9px] font-black uppercase opacity-50">pcs</span>
                 </div>
+              </div>
+
+              {/* Note Toggle */}
+              <div className="col-span-1 text-center">
+                 <button 
+                   onClick={() => handleUpdate(product.id, 'allowNote', !product.allowNote)}
+                   className={`p-2 rounded-xl transition-all ${product.allowNote ? 'bg-purple-100 text-purple-600 ring-2 ring-purple-600/20' : 'bg-slate-50 text-slate-300'}`}
+                   title={product.allowNote ? "Customer Note is ON" : "Customer Note is OFF"}
+                 >
+                    <MessageSquare size={18} strokeWidth={product.allowNote ? 3 : 2} />
+                 </button>
               </div>
 
               {/* Delete */}

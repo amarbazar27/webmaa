@@ -189,7 +189,7 @@ export const getAllUsers = async () => {
 };
 
 // ── RETAILER REQUESTS ─────────────────────────────
-export const addRetailerRequest = async (userData, phone) => {
+export const addRetailerRequest = async (userData, phone = '') => {
   // Check for duplicate
   const q = query(collection(db, 'retailer_requests'), where('email', '==', userData.email.toLowerCase().trim()));
   const existing = await getDocs(q);

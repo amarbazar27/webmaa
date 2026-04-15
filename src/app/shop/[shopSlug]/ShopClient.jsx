@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { 
   ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart,
-  User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings
+  User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { placeOrder } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -44,6 +45,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [phoneError, setPhoneError] = useState('');
+  const [productNotes, setProductNotes] = useState({});
+  const [activeBanner, setActiveBanner] = useState(0);
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '' });
   
@@ -189,12 +192,13 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   // ─── Cart Actions ─────────────────────
   const addToCart = (product) => {
+    const note = productNotes[product.id] || '';
     const existing = cart.find(item => item.id === product.id);
     if (existing) {
-      setCart(prev => prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+      setCart(prev => prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1, note: note || item.note } : item));
       toast.success(`${product.name} পরিমাণ বাড়ানো হয়েছে`);
     } else {
-      setCart(prev => [...prev, { ...product, quantity: 1 }]);
+      setCart(prev => [...prev, { ...product, quantity: 1, note }]);
       toast.success(`${product.name} কার্টে যোগ করা হয়েছে!`);
     }
   };
@@ -250,7 +254,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         customerNote: orderForm.note,
         transactionId: orderForm.txnId,
         orderIdVisual,
-        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, note: i.note || '' })),
         total: cartTotal + deliveryAdvanceFee,
         isCOD,
         shopId: shop.id,
@@ -336,13 +340,54 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
          </div>
       </header>
 
-      {/* ── Banner Section (20% height equivalent) ── */}
-      <div className="relative h-[25vh] md:h-[30vh] w-full bg-slate-900 overflow-hidden border-b border-slate-200">
-        {shop.coverImg ? (
-           <img src={shop.coverImg} alt="Banner" className="w-full h-full object-cover opacity-85" />
+      {/* ── Banner/Carousel Section (20% height equivalent) ── */}
+      <div className="relative h-[25vh] md:h-[35vh] w-full bg-slate-900 overflow-hidden border-b border-slate-200 group/banner">
+        {shop.banners && shop.banners.length > 0 ? (
+           <div className="relative w-full h-full">
+              {/* Slides */}
+              {shop.banners.map((img, i) => (
+                <div 
+                  key={i} 
+                  className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${i === activeBanner ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                >
+                   <img src={img} alt={`Banner ${i+1}`} className="w-full h-full object-cover" />
+                   <div className="absolute inset-0 bg-black/20"></div>
+                </div>
+              ))}
+
+              {/* Navigation Arrows */}
+              {shop.banners.length > 1 && (
+                <>
+                  <button 
+                    onClick={() => setActiveBanner(prev => (prev === 0 ? shop.banners.length - 1 : prev - 1))}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all opacity-0 group-hover/banner:opacity-100"
+                  >
+                    <ChevronLeft size={24} strokeWidth={3} />
+                  </button>
+                  <button 
+                    onClick={() => setActiveBanner(prev => (prev === shop.banners.length - 1 ? 0 : prev + 1))}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all opacity-0 group-hover/banner:opacity-100"
+                  >
+                    <ChevronRight size={24} strokeWidth={3} />
+                  </button>
+
+                  {/* Dots */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                     {shop.banners.map((_, i) => (
+                       <button 
+                         key={i} 
+                         onClick={() => setActiveBanner(i)}
+                         className={`w-2 h-2 rounded-full transition-all ${i === activeBanner ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60'}`}
+                       />
+                     ))}
+                  </div>
+                </>
+              )}
+           </div>
         ) : (
-           <div className="w-full h-full bg-gradient-to-r from-purple-800 via-purple-600 to-blue-700 flex items-center justify-center p-6 text-center shadow-inner">
-              <h2 className="text-3xl md:text-5xl font-black text-white drop-shadow-xl tracking-tight">{shop.welcomeMessage || 'স্বাগতম আমাদের স্টোরে!'}</h2>
+           <div className="w-full h-full bg-gradient-to-r from-purple-800 via-purple-600 to-blue-700 flex items-center justify-center p-6 text-center shadow-inner relative">
+              {shop.coverImg && <img src={shop.coverImg} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
+              <h2 className="relative z-10 text-3xl md:text-5xl font-black text-white drop-shadow-xl tracking-tight">{shop.welcomeMessage || 'স্বাগতম আমাদের স্টোরে!'}</h2>
            </div>
         )}
       </div>
@@ -427,7 +472,19 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                   {/* Info + Actions */}
                   <div className="p-4 sm:p-5 flex flex-col flex-1 bg-white">
                     <h3 className="font-extrabold text-slate-900 text-[15px] leading-tight group-hover:text-purple-700 transition-colors line-clamp-2 md:line-clamp-none mb-2">{product.name}</h3>
-                    <div className="flex-1"></div>
+                    <div className="flex-1">
+                      {product.allowNote && (
+                        <div className="mt-2">
+                           <textarea
+                             placeholder="আপনার বিশেষ অনুরোধ এখানে লিখুন (যেমন: সাইজ, রং...)"
+                             className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 outline-none focus:border-purple-600 transition-colors resize-none placeholder:font-medium"
+                             rows={2}
+                             value={productNotes[product.id] || ''}
+                             onChange={(e) => setProductNotes(prev => ({ ...prev, [product.id]: e.target.value }))}
+                           />
+                        </div>
+                      )}
+                    </div>
                     {/* Qty control if in cart, else Add button */}
                     <div className="mt-4 pt-4 border-t border-slate-100">
                       {cartItem ? (
@@ -567,6 +624,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-black text-sm text-slate-900 truncate">{item.name}</h4>
+                    {item.note && <p className="text-[10px] font-bold text-purple-600 truncate mt-0.5 italic">নোট: {item.note}</p>}
                     <p className="font-black text-purple-700 text-sm mt-0.5">৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
                     {/* Advanced Qty Controls */}
                     <div className="flex items-center gap-1.5 mt-2">

@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
   const { user, userData, activeShopId } = useAuth();
-  const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', subdomainSlug: '' });
+  const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', subdomainSlug: '', banners: [] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -43,6 +43,7 @@ export default function SettingsPage() {
           notices: data.notices || '',
           welcomeMessage: data.welcomeMessage || '',
           subdomainSlug: data.subdomainSlug || '',
+          banners: data.banners || [],
           ...data
         });
       }
@@ -110,6 +111,45 @@ export default function SettingsPage() {
       setSlugEditing(false);
     } catch (err) {
       toast.error('Failed to update URL');
+    } finally {
+      setSaving(false);
+    }
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('ব্যানার সাইজ ৫ মেগাবাইটের বেশি হওয়া যাবে না।');
+      return;
+    }
+    if ((shop.banners?.length || 0) >= 5) {
+      toast.error('আপনি সর্বোচ্চ ৫টি ব্যানার আপলোড করতে পারবেন।');
+      return;
+    }
+    
+    const { uploadImage } = await import('@/lib/storage');
+    setSaving(true);
+    try {
+      const url = await uploadImage(file);
+      const newBanners = [...(shop.banners || []), url];
+      await updateShop(user.uid, { banners: newBanners });
+      setShop(s => ({ ...s, banners: newBanners }));
+      toast.success('ব্যানার আপলোড সফল হয়েছে! 🖼️');
+    } catch (err) {
+      toast.error(err.message || 'ব্যানার আপলোড ব্যর্থ হয়েছে');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeBanner = async (index) => {
+    const newBanners = shop.banners.filter((_, i) => i !== index);
+    setSaving(true);
+    try {
+      await updateShop(user.uid, { banners: newBanners });
+      setShop(s => ({ ...s, banners: newBanners }));
+      toast.success('ব্যানার সরানো হয়েছে');
+    } catch (err) {
+      toast.error('ব্যানার সরাতে সমস্যা হয়েছে');
     } finally {
       setSaving(false);
     }
@@ -395,6 +435,31 @@ export default function SettingsPage() {
                   onChange={e => setShop({ ...shop, welcomeMessage: e.target.value })}
                   placeholder="Welcome message if no banner is set"
                 />
+
+                <div className="space-y-3 pt-4 border-t border-slate-100">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shop Banners (Max 5, 5MB each)</label>
+                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                      {shop.banners?.map((url, i) => (
+                         <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group">
+                            <img src={url} className="w-full h-full object-cover" alt="" />
+                            <button 
+                              type="button" 
+                              onClick={() => removeBanner(i)}
+                              className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                            >
+                               <X size={14} />
+                            </button>
+                         </div>
+                      ))}
+                      {(shop.banners?.length || 0) < 5 && (
+                         <label className="aspect-video rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 cursor-pointer transition-colors group">
+                            <ImageIcon size={20} className="text-slate-300 group-hover:text-purple-500" />
+                            <span className="text-[10px] font-black text-slate-400">Add Slide</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
+                         </label>
+                      )}
+                   </div>
+                </div>
               </div>
             </Card>
 
