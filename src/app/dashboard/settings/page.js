@@ -114,6 +114,8 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
   const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
