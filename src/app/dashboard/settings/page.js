@@ -690,7 +690,7 @@ export default function SettingsPage() {
                         className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed max-h-[150px] overflow-y-auto custom-scrollbar"
                       >
                         <option value="">উপজেলা সিলেক্ট করুন</option>
-                        {geoData.upazilas.sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+                        {[...geoData.upazilas].sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
@@ -706,11 +706,12 @@ export default function SettingsPage() {
                         >
                           <option value="">সিলেক্ট করুন (অথবা নিচে নাম লিখুন)</option>
                           {(() => {
-                             const cityWards = getCityWards(geoSelections.district);
+                             const distName = geoData.districts.find(d => d.id === geoSelections.district)?.bn_name || geoSelections.district;
+                             const cityWards = getCityWards(distName);
                              if (cityWards) {
                                return cityWards.map(w => <option key={w.id} value={w.name}>{w.name}</option>);
                              }
-                             return geoData.unions.sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.bn_name}>{d.bn_name}</option>);
+                             return [...geoData.unions].sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.bn_name}>{d.bn_name}</option>);
                           })()}
                           <option value="custom">+ হাতে নাম লিখুন (Custom Name)...</option>
                         </select>
