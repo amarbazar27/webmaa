@@ -136,17 +136,27 @@ export async function POST(req) {
 
     } else {
       // 🚀 Groq API Call
+      const bodyParameters = {
+          model: model || 'llama-3.3-70b-versatile',
+          messages: messages.map(m => ({ role: m.role, content: m.text || m.content })),
+          temperature: 0.7,
+      };
+
+      // Force numeric response if specific prompt signatures are found
+      const lastMsg = messages[messages.length - 1];
+      const promptText = (lastMsg?.text || lastMsg?.content || '').toLowerCase();
+      if (promptText.includes('respond only with') && promptText.includes('price')) {
+          bodyParameters.temperature = 0.1; // More deterministic for pricing
+          bodyParameters.max_tokens = 50;
+      }
+
       const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: model || 'llama-3.3-70b-versatile',
-          messages: messages.map(m => ({ role: m.role, content: m.text || m.content })),
-          temperature: 0.7,
-        })
+        body: JSON.stringify(bodyParameters)
       });
 
       const data = await response.json();

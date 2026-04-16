@@ -6,10 +6,24 @@ import { getShop, updateShop } from '@/lib/firestore';
 import { uploadShopLogo } from '@/lib/storage';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
-  Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X
+  Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
+  MapPin, Clock, Plus
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
+
+// Bangladesh Districts (partial list — key ones)
+const BD_DISTRICTS = [
+  'ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'সিলেট', 'রংপুর', 'ময়মনসিংহ',
+  'কুমিল্লা', 'নারায়ণগঞ্জ', 'গাজীপুর', 'জামালপুর', 'নোয়াখালী', 'ফেনী', 'বিক্রমপুর',
+  'মাদারীপুর', 'গোপালগঞ্জ', 'কিশোরগঞ্জ', 'হবিগঞ্জ', 'মৌলভীবাজার', 'সুনামগঞ্জ',
+  'পঞ্চগড়', 'ঠাকুরগাঁও', 'দিনাজপুর', 'নীলফামারী', 'কুড়িগ্রাম', 'লালমনিরহাট',
+  'বগুড়া', 'জয়পুরহাট', 'চাঁপাইনবাবগঞ্জ', 'রাজবাড়ী', 'রাঙামাটি', 'খাগড়াছড়ি',
+  'বান্দরবান', 'চাঁদপুর', 'লক্ষ্মীপুর', 'শরীয়তপুর', 'পিরোজপুর', 'খুলনা', 'সাতক্ষীরা', 'বাগেরহাট',
+  'নাটোর', 'পাবনা', 'সিরাজগঞ্জ', 'মানিকগঞ্জ', 'মুন্শীগঞ্জ', 'শরিয়তপুর', 'ককসবাজার', 'টাঙ্গাইল',
+  'Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Barishal', 'Sylhet', 'Rangpur', 'Mymensingh',
+  'Comilla', 'Narayanganj', 'Gazipur', 'Jamalpur', 'Noakhali', 'Feni'
+];
 
 export default function SettingsPage() {
   const { user, userData, activeShopId } = useAuth();
@@ -32,6 +46,8 @@ export default function SettingsPage() {
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny' });
+  const [serviceAreas, setServiceAreas] = useState([]);
+  const [newServiceArea, setNewServiceArea] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -74,6 +90,7 @@ export default function SettingsPage() {
         botTone: data?.aiConfig?.botTone || 'funny' 
       });
       setStaffEmails(data?.staffEmails || []);
+      setServiceAreas(data?.serviceAreas || []);
       
       setLoading(false);
     });
@@ -172,13 +189,15 @@ export default function SettingsPage() {
         slogan: shop.slogan,
         notices: shop.notices,
         welcomeMessage: shop.welcomeMessage,
+        bannerInterval: shop.bannerInterval || 4,
         logoUrl,
         socialLinks,
         authSettings,
         promoSettings,
         deliveryConfig,
         aiConfig,
-        staffEmails
+        staffEmails,
+        serviceAreas
       });
       toast.success('All settings synchronized! ✨');
     } catch (err) {
@@ -461,7 +480,97 @@ export default function SettingsPage() {
                          </label>
                       )}
                    </div>
+                   {/* Banner Auto-slide Interval */}
+                   <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-xl p-4 mt-3">
+                     <Clock size={18} className="text-purple-500 shrink-0" />
+                     <div className="flex-1">
+                       <p className="text-xs font-black text-slate-900">Auto-slide Interval</p>
+                       <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Seconds per banner (default: 4s)</p>
+                     </div>
+                     <input
+                       type="number" min="1" max="60"
+                       value={shop.bannerInterval || 4}
+                       onChange={e => setShop({ ...shop, bannerInterval: parseInt(e.target.value) || 4 })}
+                       className="w-20 text-center font-black text-lg bg-white border-2 border-slate-200 rounded-xl py-2 outline-none focus:border-purple-600 text-slate-900"
+                     />
+                   </div>
                 </div>
+              </div>
+            </Card>
+
+            {/* Service Area Location */}
+            <Card title="সার্ভিস এলাকা" subtitle="কোথায় ডেলিভারি করেন তা সেট করুন" icon={MapPin} className="border-l-4 border-l-emerald-500">
+              <div className="space-y-4">
+                <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                  কাস্টমাররা আপনার স্টোরে ঢুকলে তাদের লোকেশন যাচাই করা হবে। যদি তাদের এলাকা আপনার সার্ভিস এলাকায় থাকে তবে ✅ দেখাবে।
+                </p>
+                
+                {/* Searchable district selector */}
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <select
+                      value={newServiceArea}
+                      onChange={e => setNewServiceArea(e.target.value)}
+                      className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer"
+                    >
+                      <option value="">জেলা বা এলাকা বেছে নিন...</option>
+                      {BD_DISTRICTS.filter(d => !serviceAreas.includes(d)).map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newServiceArea && !serviceAreas.includes(newServiceArea)) {
+                        setServiceAreas([...serviceAreas, newServiceArea]);
+                        setNewServiceArea('');
+                      }
+                    }}
+                    className="px-5 py-3 bg-purple-600 text-white rounded-xl font-black text-sm hover:bg-purple-700 transition-colors shadow-md flex items-center gap-2"
+                  >
+                    <Plus size={16} /> যোগ করুন
+                  </button>
+                </div>
+
+                {/* Custom text input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="কাস্টম এলাকার নাম লিখুন (যেমন: Mirpur, Uttara)..."
+                    className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600"
+                    value={newServiceArea}
+                    onChange={e => setNewServiceArea(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newServiceArea.trim() && !serviceAreas.includes(newServiceArea.trim())) {
+                          setServiceAreas([...serviceAreas, newServiceArea.trim()]);
+                          setNewServiceArea('');
+                        }
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Selected areas */}
+                {serviceAreas.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {serviceAreas.map(area => (
+                      <div key={area} className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-sm font-black">
+                        <MapPin size={12} className="text-emerald-600" />
+                        {area}
+                        <button type="button" onClick={() => setServiceAreas(serviceAreas.filter(a => a !== area))} className="text-emerald-600 hover:text-red-600 transition-colors ml-1">
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {serviceAreas.length === 0 && (
+                  <p className="text-center text-slate-400 text-xs font-bold py-4 border-2 border-dashed border-slate-100 rounded-xl">কোনো সার্ভিস এলাকা সেট করা হয়নি। সব জায়গায় সার্ভিস দেখানো হবে।</p>
+                )}
               </div>
             </Card>
 

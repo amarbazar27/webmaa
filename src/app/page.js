@@ -19,6 +19,9 @@ export default function Home() {
   const router = useRouter();
   const [hoveredFeature, setHoveredFeature] = useState(null);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestPhone, setRequestPhone] = useState('');
+  const [requesting, setRequesting] = useState(false);
 
   // Smart dashboard redirect based on user role
   const getDashboardHref = () => {
@@ -43,7 +46,6 @@ export default function Home() {
     }
   };
 
-  const [requesting, setRequesting] = useState(false);
   const handleRequestClick = async () => {
     let currentUser = user;
     if (!currentUser) {
@@ -56,12 +58,22 @@ export default function Home() {
       }
     }
     
+    // Show phone modal
+    setShowRequestModal(true);
+  };
+
+  const handleSubmitRequest = async () => {
+    let currentUser = user;
+    if (!currentUser) return;
     setRequesting(true);
     try {
-      await addRetailerRequest(currentUser, '');
-      toast.success('আবেদন জমা দেওয়া হয়েছে! অ্যাডমিন শীঘ্রই যাচাই করবেন।');
+      await addRetailerRequest(currentUser, requestPhone.trim());
+      toast.success('আবেদন জমা দেওয়া হয়েছে! অ্যাডমিন শীঘ্রই যাচাই করবেন। 🙏');
+      setShowRequestModal(false);
+      setRequestPhone('');
     } catch (err) {
       toast.error(err.message || 'আবেদন জমা দিতে সমস্যা হয়েছে।');
+      if (err.message.includes('অনুমোদিত')) setShowRequestModal(false);
     } finally {
       setRequesting(false);
     }
@@ -343,6 +355,33 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Request Modal */}
+      {showRequestModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full relative">
+            <button onClick={() => setShowRequestModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-red-500">
+              <LogOut className="rotate-180" size={20} />
+            </button>
+            <h3 className="text-2xl font-black text-slate-900 mb-2">আপনার ফোন নম্বর</h3>
+            <p className="text-slate-500 text-sm font-bold mb-6">অ্যাডমিন আপনার সাথে যোগাযোগ করতে পারে। অনুগ্রহ করে একটি সচল নম্বর দিন।</p>
+            <input 
+              type="tel" 
+              placeholder="01XXXXXXXXX" 
+              value={requestPhone}
+              onChange={(e) => setRequestPhone(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl mb-4 font-black outline-none focus:border-purple-600 focus:bg-white transition-colors"
+            />
+            <button 
+              onClick={handleSubmitRequest}
+              disabled={requesting || requestPhone.length < 11}
+              className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-black hover:bg-purple-600 transition-colors shadow-lg disabled:opacity-50"
+            >
+              {requesting ? 'জমা হচ্ছে...' : 'আবেদন জমা দিন'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/[0.06] py-12">

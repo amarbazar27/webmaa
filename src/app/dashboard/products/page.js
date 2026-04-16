@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getProducts, deleteProduct, updateProduct } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare } from 'lucide-react';
+import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -191,8 +191,9 @@ export default function ProductsPage() {
             <div className="col-span-3">Product</div>
             <div className="col-span-2">Category</div>
             <div className="col-span-2 text-center">Price (৳)</div>
-            <div className="col-span-2 text-center">Stock</div>
+            <div className="col-span-1 text-center">Stock</div>
             <div className="col-span-1 text-center">Note</div>
+            <div className="col-span-1 text-center">Custom</div>
             <div className="col-span-2 text-right">Action</div>
           </div>
 
@@ -255,7 +256,7 @@ export default function ProductsPage() {
               </div>
 
               {/* Stock */}
-              <div className="col-span-2 text-center">
+              <div className="col-span-1 text-center">
                 <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-black ${(parseInt(product.stock) || 0) > 10 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
                   <EditableCell
                     value={product.stock || 0}
@@ -275,6 +276,17 @@ export default function ProductsPage() {
                    title={product.allowNote ? "Customer Note is ON" : "Customer Note is OFF"}
                  >
                     <MessageSquare size={18} strokeWidth={product.allowNote ? 3 : 2} />
+                 </button>
+              </div>
+
+              {/* Customize Toggle */}
+              <div className="col-span-1 text-center">
+                 <button 
+                   onClick={() => handleUpdate(product.id, 'allowCustomize', !product.allowCustomize)}
+                   className={`p-2 rounded-xl transition-all ${product.allowCustomize ? 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-600/20' : 'bg-slate-50 text-slate-300'}`}
+                   title={product.allowCustomize ? "AI Customize is ON" : "AI Customize is OFF"}
+                 >
+                    <Sparkles size={18} strokeWidth={product.allowCustomize ? 3 : 2} />
                  </button>
               </div>
 

@@ -48,13 +48,13 @@ export async function GET(request) {
       orientation: "portrait-primary",
       icons: [
         {
-          src: shop.shopLogo || "/logo.png",
+          src: shop.logoUrl || "/logo.png",
           sizes: "192x192",
           type: "image/png",
           purpose: "any maskable"
         },
         {
-          src: shop.shopLogo || "/logo.png",
+          src: shop.logoUrl || "/logo.png",
           sizes: "512x512",
           type: "image/png",
           purpose: "any maskable"
