@@ -332,10 +332,14 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         })
       });
       const data = await resp.json();
-      const botText = data.choices?.[0]?.message?.content || getSmartBotReply(text);
-      setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: botText }]);
-    } catch {
-      setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: getSmartBotReply(text) }]);
+      if (data.error) {
+        setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: `⚠️ AI API Error: ${data.error.message || 'Unknown server error'}. ${!shop.aiConfig?.apiKey ? 'ড্যাশবোর্ডে API Key সেট করা নেই।' : ''}` }]);
+      } else {
+        const botText = data.choices?.[0]?.message?.content || getSmartBotReply(text);
+        setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: botText }]);
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: `⚠️ Network Error: ${err.message}` }]);
     } finally {
       setIsAiTyping(false);
     }
