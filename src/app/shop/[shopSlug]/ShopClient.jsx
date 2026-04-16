@@ -75,9 +75,7 @@ function StreakTracker({ orders }) {
 }
 
 // ── Service Area Detector ────────────────────────
-function ServiceBanner({ shop }) {
-  const [status, setStatus] = useState('idle'); // idle | checking | available | unavailable | denied
-  const [manualInput, setManualInput] = useState('');
+function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, detectedLocation, setDetectedLocation }) {
   const serviceAreas = shop.serviceAreas || [];
 
   useEffect(() => {
@@ -92,6 +90,8 @@ function ServiceBanner({ shop }) {
           });
           const data = await resp.json();
           const area = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
+          if (area) setDetectedLocation(area);
+          
           const isAvailable = serviceAreas.some(sa => 
             area.toLowerCase().includes(sa.toLowerCase()) || sa.toLowerCase().includes(area.toLowerCase())
           );
@@ -140,9 +140,9 @@ function ServiceBanner({ shop }) {
   );
 
   return (
-    <div className={`border-b px-4 py-2 text-sm font-black ${status === 'available' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
-      <div className="max-w-7xl mx-auto">
-        {status === 'available' ? '✅ আপনার এলাকায় আমাদের সার্ভিস আছে!' : '❌ দুঃখিত, এই মুহূর্তে আপনার এলাকায় সার্ভিস নেই।'}
+    <div className={`sticky top-0 z-[60] border-b px-4 py-2 text-sm font-black shadow-md ${status === 'available' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+      <div className="max-w-7xl mx-auto flex items-center gap-2">
+        {status === 'available' ? '✅ আপনি সার্ভিস এরিয়ার ভেতরে আছেন' : '❌ আপনি সার্ভিস এরিয়ার বাইরে আছেন'}
       </div>
     </div>
   );
@@ -159,10 +159,20 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('newest');
   
-  const [cart, setCart] = useState([]);
+  const CART_KEY = `cart_${initialShop.id}`;
+  const [cart, setCart] = useState(() => {
+    // Sync from localStorage on first render (items may come from ProductDetailClient)
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem(`cart_${initialShop.id}`) || '[]'); } catch { return []; }
+  });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  // Lifted Location State
+  const [locationStatus, setLocationStatus] = useState('idle'); // idle | checking | available | unavailable | denied
+  const [detectedLocation, setDetectedLocation] = useState('');
+  const [locationManualInput, setLocationManualInput] = useState('');
   const [isAiOpen, setIsAiOpen] = useState(false);
   const [userOrders, setUserOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -278,7 +288,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         body: JSON.stringify({
           shopId: shop.id,
           messages: [
-            { role: 'system', content: `তুমি "${shop.shopName}"-এর AI shopping assistant। সবসময় "আসসালামু আলাইকুম" দিয়ে শুরু করবে। বাংলায় উত্তর দেবে। Admin panel-এর কোনো তথ্য দেবে না। পণ্যের তালিকা: ${products.slice(0,20).map(p=>`${p.name}: ৳${p.price}`).join(', ')}` },
+            { role: 'system', content: `তুমি "${shop.shopName}"-এর AI shopping assistant। সবসময় "আসসালামু আলাইকুম" দিয়ে শুরু করবে। বাংলায় উত্তর দেবে। Admin panel-এর কোনো তথ্য দেবে না। 
+সার্ভিস এরিয়া: ${(shop.serviceAreas || []).join(', ')}। 
+ইউজারের বর্তমান লোকেশন: ${detectedLocation || locationManualInput || 'জানা যায়নি'}। 
+যদি ইউজার জিজ্ঞেস করে তার এলাকায় ডেলিভারি হবে কি না, তাহলে এই তথ্যের ওপর ভিত্তি করে সঠিক উত্তর দাও।
+পণ্যের তালিকা: ${products.slice(0,20).map(p=>`${p.name}: ৳${p.price}`).join(', ')}` },
             { role: 'user', content: text }
           ]
         })
@@ -308,6 +322,25 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   });
 
   // ── Cart Actions ───────────────────────────────
+  // Persist cart to localStorage on every change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    }
+  }, [cart, CART_KEY]);
+
+  // Sync from localStorage when window gets focus (user comes back from detail page)
+  useEffect(() => {
+    const syncCart = () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+        setCart(stored);
+      } catch {}
+    };
+    window.addEventListener('focus', syncCart);
+    return () => window.removeEventListener('focus', syncCart);
+  }, [CART_KEY]);
+
   const addToCart = (product) => {
     const note = productNotes[product.id] || '';
     const existing = cart.find(item => item.id === product.id);
@@ -360,6 +393,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   // ── Place Order ────────────────────────────────
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+    
+    if (shop.isStrictLocation && locationStatus !== 'available') {
+      toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই।');
+      return;
+    }
+    
     if (cart.length === 0) return;
     if (!validatePhone(orderForm.phone)) {
       setPhoneError('বৈধ বাংলাদেশি নম্বর লিখুন। 01 দিয়ে শুরু করুন, মোট ১১ ডিজিট।');
@@ -407,6 +446,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
       toast.success('অর্ডার সফলভাবে দেওয়া হয়েছে! 🎉');
       setCart([]);
+      localStorage.removeItem(CART_KEY);
       setIsOrderOpen(false);
       setIsCartOpen(false);
       setOrderForm({ name: '', phone: '', address: '', note: '', txnId: '' });
@@ -447,8 +487,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
         <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0 0 8px">Customer Info</p>
         <p style="margin:4px 0;font-size:13px;font-weight:700;color:#1e293b">${orderData.customerName} — ${orderData.customerPhone}</p>
-        <p style="margin:4px 0;font-size:12px;color:#64748b">${orderData.customerAddress}</p>
-        ${orderData.customerNote ? `<p style="margin:8px 0 0;font-size:11px;color:#7c3aed;font-style:italic">Note: ${orderData.customerNote}</p>` : ''}
+        <p style="margin:4px 0;font-size:12px;color:#64748b"><b>Delivery Addr:</b> ${orderData.customerAddress}</p>
+        <p style="margin:4px 0;font-size:10px;color:#7c3aed;font-weight:700"><b>Live Location:</b> ${detectedLocation || 'Not Shared'}</p>
+        ${locationManualInput ? `<p style="margin:4px 0;font-size:10px;color:#1d4ed8;font-weight:700"><b>Manual Location:</b> ${locationManualInput}</p>` : ''}
+        ${orderData.customerNote ? `<p style="margin:8px 0 0;font-size:11px;color:#b45309;font-style:italic;padding-top:8px;border-top:1px dashed #cbd5e1"><b>Order Note:</b> ${orderData.customerNote}</p>` : ''}
       </div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
         <thead>
@@ -461,7 +503,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         <tbody>
           ${orderData.items.map((item, i) => `
             <tr style="background:${i%2===0?'white':'#f8fafc'}">
-              <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#1e293b">${item.name}${item.note ? `<br><span style="font-size:10px;color:#7c3aed;font-style:italic">${item.note}</span>` : ''}</td>
+              <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#1e293b">
+                ${item.name}
+                ${item.note ? `<br><span style="font-size:10px;color:#7c3aed;font-style:italic">📝 ${item.note}</span>` : ''}
+                ${item.isCustomized ? `<br><span style="font-size:10px;color:#16a34a;font-weight:900">✅ AI কাস্টম মূল্য</span>` : ''}
+              </td>
               <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#64748b">${item.quantity}</td>
               <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:900;color:#1e293b">${String.fromCharCode(2547)}${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
             </tr>
@@ -501,7 +547,15 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       
       {/* ── Service Area Banner ── */}
-      <ServiceBanner shop={shop} />
+      <ServiceBanner 
+         shop={shop} 
+         status={locationStatus} 
+         setStatus={setLocationStatus}
+         manualInput={locationManualInput}
+         setManualInput={setLocationManualInput}
+         detectedLocation={detectedLocation}
+         setDetectedLocation={setDetectedLocation}
+      />
 
       {/* ── Marquee Notice ── */}
       {shop.notices && (
@@ -791,14 +845,31 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         </div>
       </footer>
 
-      {/* ── AI Floating Companion ── */}
-      <div className="fixed bottom-6 right-6 z-40 flex items-end gap-3 group">
-        <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-br-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 mr-2">
-          প্রশ্ন করুন! ✨
-        </div>
-        <button onClick={() => setIsAiOpen(true)} className="w-15 h-15 w-[60px] h-[60px] bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-white rounded-full shadow-[0_10px_25px_rgba(147,51,234,0.5)] flex items-center justify-center animate-bounce hover:scale-110 transition-transform relative overflow-hidden group">
-          <span className="text-2xl drop-shadow-md group-hover:rotate-12 transition-transform">🤖</span>
+      {/* ── Floating Buttons (Left Bottom) ── */}
+      <div className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-4">
+        
+        {/* Floating Cart Button (Above AI Bot) */}
+        <button 
+          onClick={() => setIsCartOpen(true)} 
+          className="relative w-[60px] h-[60px] bg-slate-900 text-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 transition-transform group"
+        >
+          <ShoppingCart size={24} className="group-hover:rotate-12 transition-transform" />
+          {cartCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[12px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-pulse">
+              {cartCount}
+            </span>
+          )}
         </button>
+
+        {/* AI Floating Companion */}
+        <div className="relative group flex items-end gap-3">
+          <button onClick={() => setIsAiOpen(true)} className="w-[60px] h-[60px] bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-white rounded-full shadow-[0_10px_25px_rgba(147,51,234,0.5)] flex items-center justify-center animate-bounce hover:scale-110 transition-transform relative overflow-hidden group">
+            <span className="text-2xl drop-shadow-md group-hover:rotate-12 transition-transform">🤖</span>
+          </button>
+          <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-bl-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 absolute left-[70px] bottom-0 pointer-events-none">
+            প্রশ্ন করুন! ✨
+          </div>
+        </div>
       </div>
 
       {/* ── ORDER SUCCESS + PDF DOWNLOAD ── */}
@@ -903,7 +974,16 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                   <span className="text-sm font-black text-slate-900">মোট (ডেলিভারি বাদে)</span>
                   <span className="text-2xl font-black text-purple-700">৳{cartTotal}</span>
                 </div>
-                <button onClick={() => setIsOrderOpen(true)} className="w-full py-4 bg-slate-900 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-lg">
+                <button 
+                  onClick={() => {
+                    if (shop.isStrictLocation && locationStatus !== 'available') {
+                      toast.error('দুঃখিত, আপনার লোকেশনে আমাদের সার্ভিস নেই। অর্ডার করা যাবে না।');
+                      return;
+                    }
+                    setIsOrderOpen(true);
+                  }} 
+                  className="w-full py-4 bg-slate-900 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-lg"
+                >
                   পরবর্তী ধাপ <ArrowRight size={20} strokeWidth={2.5}/>
                 </button>
               </div>

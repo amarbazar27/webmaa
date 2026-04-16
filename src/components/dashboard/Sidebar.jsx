@@ -40,6 +40,19 @@ export default function Sidebar() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, [activeShopId]);
 
+  // Inject Shop-specific Manifest for Admin Panel downloads
+  useEffect(() => {
+    if (shop?.subdomainSlug) {
+      let manifestLink = document.querySelector('link[rel="manifest"]');
+      if (!manifestLink) {
+        manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        document.head.appendChild(manifestLink);
+      }
+      manifestLink.href = `/api/manifest?shop=${shop.subdomainSlug}`;
+    }
+  }, [shop?.subdomainSlug]);
+
   const handleAppDownload = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();

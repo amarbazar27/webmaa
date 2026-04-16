@@ -195,7 +195,6 @@ export const addRetailerRequest = async (userData, phone = '') => {
   if (!uid) throw new Error('ব্যবহারকারীর তথ্য পাওয়া যাচ্ছে না। আবার লগইন করুন।');
 
   const email = userData?.email?.toLowerCase?.().trim() || userData?.providerData?.[0]?.email?.toLowerCase?.().trim() || '';
-  if (!email) throw new Error('ইমেিল ঠিকানা পাওয়া যায়নি। Google অ্যাকাউন্ট ব্যবহার করুন।');
 
   // Check for duplicate
   const q = query(collection(db, 'retailer_requests'), where('uid', '==', uid));

@@ -48,6 +48,11 @@ export default function SettingsPage() {
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny' });
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
+  const [isStrictLocation, setIsStrictLocation] = useState(false);
+  
+  const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [] });
+  const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', union: '' });
+  const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -91,10 +96,73 @@ export default function SettingsPage() {
       });
       setStaffEmails(data?.staffEmails || []);
       setServiceAreas(data?.serviceAreas || []);
+      setIsStrictLocation(data?.isStrictLocation || false);
       
       setLoading(false);
     });
   }, [user]);
+
+  // Geo Data Fetching Logic
+  useEffect(() => {
+    setGeoLoading(true);
+    fetch('/api/geo?type=divisions').then(r => r.json()).then(data => {
+      setGeoData(prev => ({ ...prev, divisions: data }));
+      setGeoLoading(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!geoSelections.division) return;
+    setGeoLoading(true);
+    fetch(`/api/geo?type=districts`).then(r => r.json()).then(data => {
+      const filtered = data.filter(d => d.division_id === geoSelections.division);
+      setGeoData(prev => ({ ...prev, districts: filtered, upazilas: [], unions: [] }));
+      setGeoSelections(prev => ({ ...prev, district: '', upazila: '', union: '' }));
+      setGeoLoading(false);
+    });
+  }, [geoSelections.division]);
+
+  useEffect(() => {
+    if (!geoSelections.district) return;
+    setGeoLoading(true);
+    fetch(`/api/geo?type=upazilas`).then(r => r.json()).then(data => {
+      const filtered = data.filter(d => d.district_id === geoSelections.district);
+      setGeoData(prev => ({ ...prev, upazilas: filtered, unions: [] }));
+      setGeoSelections(prev => ({ ...prev, upazila: '', union: '' }));
+      setGeoLoading(false);
+    });
+  }, [geoSelections.district]);
+
+  useEffect(() => {
+    if (!geoSelections.upazila) return;
+    setGeoLoading(true);
+    fetch(`/api/geo?type=unions`).then(r => r.json()).then(data => {
+      const filtered = data.filter(d => d.upazilla_id === geoSelections.upazila);
+      setGeoData(prev => ({ ...prev, unions: filtered }));
+      setGeoSelections(prev => ({ ...prev, union: '' }));
+      setGeoLoading(false);
+    });
+  }, [geoSelections.upazila]);
+
+  const addGeoArea = () => {
+    const { division, district, upazila, union } = geoSelections;
+    if (!division) return;
+    
+    const divName = geoData.divisions.find(d => d.id === division)?.bn_name;
+    const distName = geoData.districts.find(d => d.id === district)?.bn_name;
+    const upaName = geoData.upazilas.find(d => d.id === upazila)?.bn_name;
+    const uniName = geoData.unions.find(d => d.id === union)?.bn_name;
+    
+    let areaString = divName;
+    if (distName) areaString += ` > ${distName}`;
+    if (upaName) areaString += ` > ${upaName}`;
+    if (uniName) areaString += ` > ${uniName}`;
+    
+    if (!serviceAreas.includes(areaString)) {
+      setServiceAreas([...serviceAreas, areaString]);
+    }
+  };
+
 
   // Protect page from staff users just in case they land here
   if (userData?.role === 'staff') {
@@ -197,7 +265,8 @@ export default function SettingsPage() {
         deliveryConfig,
         aiConfig,
         staffEmails,
-        serviceAreas
+        serviceAreas,
+        isStrictLocation
       });
       toast.success('All settings synchronized! ✨');
     } catch (err) {
@@ -500,57 +569,91 @@ export default function SettingsPage() {
 
             {/* Service Area Location */}
             <Card title="সার্ভিস এলাকা" subtitle="কোথায় ডেলিভারি করেন তা সেট করুন" icon={MapPin} className="border-l-4 border-l-emerald-500">
-              <div className="space-y-4">
-                <p className="text-xs text-slate-500 font-bold leading-relaxed">
-                  কাস্টমাররা আপনার স্টোরে ঢুকলে তাদের লোকেশন যাচাই করা হবে। যদি তাদের এলাকা আপনার সার্ভিস এলাকায় থাকে তবে ✅ দেখাবে।
-                </p>
-                
-                {/* Searchable district selector */}
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <select
-                      value={newServiceArea}
-                      onChange={e => setNewServiceArea(e.target.value)}
-                      className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer"
-                    >
-                      <option value="">জেলা বা এলাকা বেছে নিন...</option>
-                      {BD_DISTRICTS.filter(d => !serviceAreas.includes(d)).map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                  <div>
+                    <h4 className="text-sm font-black text-emerald-900 flex items-center gap-2">
+                       <ShieldCheck size={16} className="text-emerald-600" /> স্ট্রিক্ট লোকেশন ম্যাচ (Strict Match)
+                    </h4>
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase mt-1">লোকেশনের বাইরে কেউ অর্ডার করতে পারবে না</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (newServiceArea && !serviceAreas.includes(newServiceArea)) {
-                        setServiceAreas([...serviceAreas, newServiceArea]);
-                        setNewServiceArea('');
-                      }
-                    }}
-                    className="px-5 py-3 bg-purple-600 text-white rounded-xl font-black text-sm hover:bg-purple-700 transition-colors shadow-md flex items-center gap-2"
-                  >
-                    <Plus size={16} /> যোগ করুন
-                  </button>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={isStrictLocation} onChange={e => setIsStrictLocation(e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
                 </div>
 
-                {/* Custom text input */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="কাস্টম এলাকার নাম লিখুন (যেমন: Mirpur, Uttara)..."
-                    className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600"
-                    value={newServiceArea}
-                    onChange={e => setNewServiceArea(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        if (newServiceArea.trim() && !serviceAreas.includes(newServiceArea.trim())) {
-                          setServiceAreas([...serviceAreas, newServiceArea.trim()]);
-                          setNewServiceArea('');
-                        }
-                      }
-                    }}
-                  />
+                <div className="space-y-4">
+                  <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                    বাংলাদেশ জিও-ডেটা অনুযায়ী সার্ভিস এলাকা বেছে নিন (বিভাগ {' > '} জেলা {' > '} উপজেলা {' > '} ইউনিয়ন/সিটি)। কাস্টমাররা অর্ডারের সময় এই এলাকার সাথে লোকেশন ম্যাচিং হবে।
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Division */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">বিভাগ</label>
+                      <select
+                        value={geoSelections.division}
+                        onChange={e => setGeoSelections({ ...geoSelections, division: e.target.value })}
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer"
+                      >
+                        <option value="">বিভাগ সিলেক্ট করুন</option>
+                        {geoData.divisions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+                      </select>
+                    </div>
+
+                    {/* District */}
+                    <div className="space-y-1.5 opacity-0 animate-in fade-in slide-in-from-top-1 duration-300 fill-mode-forwards" style={{ opacity: geoSelections.division ? 1 : 0.5 }}>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">জেলা</label>
+                      <select
+                        disabled={!geoSelections.division}
+                        value={geoSelections.district}
+                        onChange={e => setGeoSelections({ ...geoSelections, district: e.target.value })}
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">জেলা সিলেক্ট করুন</option>
+                        {geoData.districts.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Upazila */}
+                    <div className="space-y-1.5" style={{ opacity: geoSelections.district ? 1 : 0.5 }}>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">উপজেলা</label>
+                      <select
+                        disabled={!geoSelections.district}
+                        value={geoSelections.upazila}
+                        onChange={e => setGeoSelections({ ...geoSelections, upazila: e.target.value })}
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">উপজেলা সিলেক্ট করুন</option>
+                        {geoData.upazilas.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Union */}
+                    <div className="space-y-1.5" style={{ opacity: geoSelections.upazila ? 1 : 0.5 }}>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">ইউনিয়ন / সিটি</label>
+                      <select
+                        disabled={!geoSelections.upazila}
+                        value={geoSelections.union}
+                        onChange={e => setGeoSelections({ ...geoSelections, union: e.target.value })}
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="">ইউনিয়ন সিলেক্ট করুন</option>
+                        {geoData.unions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={!geoSelections.division || geoLoading}
+                    onClick={addGeoArea}
+                    className="w-full py-4 bg-slate-900 lg:bg-purple-600 text-white rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:scale-100"
+                  >
+                    {geoLoading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Plus size={18} />}
+                    সার্ভিস এরিয়া হিসেবে যোগ করুন
+                  </button>
                 </div>
 
                 {/* Selected areas */}

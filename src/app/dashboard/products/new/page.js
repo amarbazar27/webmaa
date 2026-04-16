@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { addProduct, getCategories } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown } from 'lucide-react';
+import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown, Sparkles, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -23,6 +23,8 @@ export default function NewProductPage() {
     price: '',
     stock: '',
     description: '',
+    allowCustomize: false,
+    sizes: [], // Array of { name: 'Small', label: 'S', price: 0 }
   });
 
   // Fetch categories on mount
@@ -76,6 +78,7 @@ export default function NewProductPage() {
           ...form,
           price: parseFloat(form.price),
           stock: parseInt(form.stock),
+          sizes: form.sizes.map(s => ({ ...s, price: parseFloat(s.price) })),
           imageUrl,
           ownerId: activeShopId,
         });
@@ -221,6 +224,86 @@ export default function NewProductPage() {
                 value={form.description}
                 onChange={(e) => setForm({...form, description: e.target.value})}
               />
+            </div>
+
+            {/* Sizes & Customization */}
+            <div className="col-span-1 md:col-span-2 space-y-6 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between bg-purple-50/50 p-4 rounded-xl border border-purple-100">
+                <div>
+                  <h4 className="text-sm font-black text-purple-900 flex items-center gap-2">
+                    <Sparkles size={16} className="text-purple-600" /> এআই কাস্টমাইজেশন (AI Customization)
+                  </h4>
+                  <p className="text-[10px] font-bold text-purple-600 uppercase mt-1">ইউজার কাস্টম সাইজ বা পরিমাণ চেয়ে প্রাইস জেনারেট করতে পারবে</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" checked={form.allowCustomize} onChange={e => setForm({...form, allowCustomize: e.target.checked})} />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">প্রোডাক্ট ভ্যারিয়েন্ট বা সাইজ</label>
+                  <button 
+                    type="button" 
+                    onClick={() => setForm({...form, sizes: [...form.sizes, { name: '', label: '', price: '' }]})}
+                    className="text-[10px] font-black uppercase text-purple-600 hover:text-purple-800 flex items-center gap-1 bg-purple-50 px-2 py-1 rounded"
+                  >
+                    <Plus size={12} /> সাইজ যোগ করুন
+                  </button>
+                </div>
+                {form.sizes.length === 0 ? (
+                  <div className="text-center py-4 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    কোনো সাইজ সেট করা নেই (ডিফল্ট সাইজ ব্যবহার হবে)
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {form.sizes.map((sz, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2 rounded-xl">
+                        <input
+                          type="text"
+                          placeholder="Name (e.g. Small)"
+                          className="flex-1 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
+                          value={sz.name}
+                          onChange={(e) => {
+                            const newSizes = [...form.sizes];
+                            newSizes[idx].name = e.target.value;
+                            setForm({...form, sizes: newSizes});
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Label (S/M/L) (Optional)"
+                          className="w-24 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
+                          value={sz.label}
+                          onChange={(e) => {
+                            const newSizes = [...form.sizes];
+                            newSizes[idx].label = e.target.value;
+                            setForm({...form, sizes: newSizes});
+                          }}
+                        />
+                        <input
+                          type="number"
+                          placeholder="Price (৳)"
+                          className="w-28 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-purple-700"
+                          value={sz.price}
+                          onChange={(e) => {
+                            const newSizes = [...form.sizes];
+                            newSizes[idx].price = e.target.value;
+                            setForm({...form, sizes: newSizes});
+                          }}
+                        />
+                        <button type="button" onClick={() => {
+                          const newSizes = form.sizes.filter((_, i) => i !== idx);
+                          setForm({...form, sizes: newSizes});
+                        }} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

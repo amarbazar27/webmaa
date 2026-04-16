@@ -97,6 +97,8 @@ export default function AiCompanion({ shop, isMobile }) {
               - Total Products: ${analyticsData.products.length}
               - Total Orders: ${analyticsData.orders.length}
               
+              Service Areas (Locations we deliver to): ${(shop?.serviceAreas || []).join(', ') || 'All over Bangladesh'}
+              
               Product Price List:
               ${productList || 'No products listed yet.'}
               

@@ -29,22 +29,7 @@ export default function RootLayout({ children }) {
                 style: { marginBottom: '20px', marginRight: '20px' } 
               }} 
             />
-            {/* Service Worker Registration for PWA */}
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  if ('serviceWorker' in navigator) {
-                    window.addEventListener('load', function() {
-                      navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                        console.log('SW registered: ', registration.scope);
-                      }).catch(function(err) {
-                        console.log('SW registration failed: ', err);
-                      });
-                    });
-                  }
-                `,
-              }}
-            />
+            {/* PWA and DevTools Blocker removed per user request */}
           </AuthProvider>
         </ThemeProvider>
       </body>

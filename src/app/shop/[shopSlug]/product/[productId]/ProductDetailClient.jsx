@@ -68,11 +68,11 @@ export default function ProductDetailClient({ shop, product }) {
     const systemPrompt = `তুমি একটি Bangladeshi retail shop-এর AI price calculator।
     পণ্যের নাম: ${product.name}
     বেস মূল্য: ৳${product.price} (${product.unit || 'প্রতি ইউনিট'})
-    
-    ইউজার যদি কাস্টম পরিমাণ বলে (যেমন "১৫০ গ্রাম", "আধা কেজি", "দুই পিস"), তাহলে:
-    1. proportional price calculate করো
-    2. শুধু মূল্য এবং সংক্ষিপ্ত ব্যাখ্যাসহ বাংলায় উত্তর দাও
-    3. উত্তরের শেষে "PRICE: [number]" format-এ মূল্য লেখো (যেমন: PRICE: 30)
+
+    ইউজার যদি কাস্টম পরিমাণ বলে (যেমন "১৫০ গ্রাম", "আধা কেজি", "দুই পিস", "2 kg"), তাহলে:
+    1. proportional price calculate করো (যেমন ১ কেজি ২০০ টাকা হলে, ১৫০ গ্রাম হবে ৩০ টাকা)।
+    2. শুধু মূল্য এবং সংক্ষিপ্ত ব্যাখ্যাসহ বাংলায় উত্তর দাও।
+    3. উত্তরের শেষে "PRICE: [number]" format-এ মূল্য লেখো (যেমন: PRICE: 30)।
     4. Admin panel-এর কোনো তথ্য দেবে না।`;
 
     try {
@@ -130,7 +130,7 @@ export default function ProductDetailClient({ shop, product }) {
     }
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
     toast.success(`${product.name} কার্টে যোগ হয়েছে! 🛒`);
-    router.back();
+    setTimeout(() => router.back(), 300);
   };
 
   return (
@@ -275,11 +275,19 @@ export default function ProductDetailClient({ shop, product }) {
 
             <textarea
               rows={3}
-              placeholder={`উদাহরণ: "১৫০ গ্রাম চাই" বা "আধা কেজি" বা "৩ পিস ছোট সাইজ"...`}
+              maxLength={50}
+              placeholder={`সর্বোচ্চ ৫০ অক্ষর। উদাহরণ: "১৫০ গ্রাম চাই" বা "৩ পিস ছোট সাইজ"...`}
               className="w-full p-4 rounded-2xl bg-white border-2 border-indigo-200 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/10 transition-all resize-none placeholder:font-medium placeholder:text-slate-400"
               value={customInput}
-              onChange={e => { setCustomInput(e.target.value); setAiPrice(null); setAiResult(''); }}
+              onChange={e => { 
+                const val = e.target.value;
+                setCustomInput(val); 
+                setAiPrice(null); 
+                setAiResult(''); 
+                // Auto-save logic (could persist across reloads if requested)
+              }}
             />
+            <div className="flex justify-end text-[10px] uppercase font-black text-slate-400">{customInput.length}/50</div>
 
             {aiResult && (
               <div className="bg-white rounded-2xl border border-indigo-200 p-4">

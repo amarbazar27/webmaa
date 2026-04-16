@@ -365,12 +365,16 @@ export default function Home() {
             </button>
             <h3 className="text-2xl font-black text-slate-900 mb-2">আপনার ফোন নম্বর</h3>
             <p className="text-slate-500 text-sm font-bold mb-6">অ্যাডমিন আপনার সাথে যোগাযোগ করতে পারে। অনুগ্রহ করে একটি সচল নম্বর দিন।</p>
+            <label htmlFor="requestPhoneInput" className="sr-only">Phone Number</label>
             <input 
+              id="requestPhoneInput"
+              name="requestPhone"
               type="tel" 
+              maxLength={11}
               placeholder="01XXXXXXXXX" 
               value={requestPhone}
-              onChange={(e) => setRequestPhone(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl mb-4 font-black outline-none focus:border-purple-600 focus:bg-white transition-colors"
+              onChange={(e) => setRequestPhone(e.target.value.replace(/[^0-9]/g, ''))}
+              className="w-full px-4 py-3 bg-slate-100 border-2 border-slate-300 rounded-xl mb-4 font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors"
             />
             <button 
               onClick={handleSubmitRequest}
