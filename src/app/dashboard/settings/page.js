@@ -7,7 +7,7 @@ import { uploadShopLogo } from '@/lib/storage';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
-  MapPin, Clock, Plus
+  MapPin, Clock, Plus, ChevronDown
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
