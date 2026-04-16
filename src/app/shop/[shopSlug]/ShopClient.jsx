@@ -1142,6 +1142,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                   </button>
                 </div>
               ) : (
+                <div className="w-full space-y-5">
                   {/* Current Location Display */}
                   <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 mb-2 text-slate-500 font-black text-[10px] uppercase tracking-widest">
