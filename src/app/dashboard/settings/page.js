@@ -25,6 +25,68 @@ const BD_DISTRICTS = [
   'Comilla', 'Narayanganj', 'Gazipur', 'Jamalpur', 'Noakhali', 'Feni'
 ];
 
+const RANGPUR_WARDS = [
+  { id: '1', name: 'ওয়ার্ড ১ (ধাপ, কেরানীপাড়া)', areas: ['ধাপ', 'কেরানীপাড়া'] },
+  { id: '2', name: 'ওয়ার্ড ২ (মুন্সিপাড়া, সেনপাড়া)', areas: ['মুন্সিপাড়া', 'সেনপাড়া'] },
+  { id: '3', name: 'ওয়ার্ড ৩ (কলেজ রোড, ধাপ রোড)', areas: ['কলেজ রোড', 'ধাপ রোড'] },
+  { id: '4', name: 'ওয়ার্ড ৪ (লালকুঠি, স্টেশন রোড)', areas: ['লালকুঠি', 'স্টেশন রোড'] },
+  { id: '5', name: 'ওয়ার্ড ৫ (মেডিকেল মোড়, সেন্ট্রাল রোড)', areas: ['মেডিকেল মোড়', 'সেন্ট্রাল রোড'] },
+  { id: '6', name: 'ওয়ার্ড ৬ (লালবাগ, নিউ লালবাগ)', areas: ['লালবাগ', 'নিউ লালবাগ'] },
+  { id: '7', name: 'ওয়ার্ড ৭ (মাহিগঞ্জ রোড, লালবাগ বাজার)', areas: ['মাহিগঞ্জ রোড', 'লালবাগ বাজার'] },
+  { id: '8', name: 'ওয়ার্ড ৮ (আলমনগর আংশিক)', areas: ['আলমনগর'] },
+  { id: '9', name: 'ওয়ার্ড ৯ (মাস্টারপাড়া, খলিফাপাড়া)', areas: ['মাস্টারপাড়া', 'খলিফাপাড়া'] },
+  { id: '10', name: 'ওয়ার্ড ১০ (পায়রাচত্বর)', areas: ['পায়রাচত্বর'] },
+  { id: '11', name: 'ওয়ার্ড ১১ (রাজারহাট)', areas: ['রাজারহাট'] },
+  { id: '12', name: 'ওয়ার্ড ১২ (শালবন)', areas: ['শালবন'] },
+  { id: '13', name: 'ওয়ার্ড ১৩ (কুঠিবাড়ি)', areas: ['কুঠিবাড়ি'] },
+  { id: '14', name: 'ওয়ার্ড ১৪ (মডার্ন মোড়)', areas: ['মডার্ন মোড়'] },
+  { id: '15', name: 'ওয়ার্ড ১৫ (আবাসিক এলাকা)', areas: ['আবাসিক এলাকা'] },
+  { id: '16', name: 'ওয়ার্ড ১৬ (আলমনগর)', areas: ['আলমনগর'] },
+  { id: '17', name: 'ওয়ার্ড ১৭ (জুম্মাপাড়া)', areas: ['জুম্মাপাড়া'] },
+  { id: '18', name: 'ওয়ার্ড ১৮ (ইসলামবাগ)', areas: ['ইসলামবাগ'] },
+  { id: '19', name: 'ওয়ার্ড ১৯ (মডেল কলোনি)', areas: ['মডেল কলোনি'] },
+  { id: '20', name: 'ওয়ার্ড ২০ (স্যাটেলাইট টাউন)', areas: ['স্যাটেলাইট টাউন'] },
+  { id: '21', name: 'ওয়ার্ড ২১ (স্যাটেলাইট এক্সটেনশন)', areas: ['স্যাটেলাইট এক্সটেনশন'] },
+  { id: '22', name: 'ওয়ার্ড ২২ (ইঞ্জিনিয়ারিং কলেজ)', areas: ['ইঞ্জিনিয়ারিং কলেজ'] },
+  { id: '23', name: 'ওয়ার্ড ২৩ (মেডিকেল কলেজ)', areas: ['মেডিকেল কলেজ'] },
+  { id: '24', name: 'ওয়ার্ড ২৪ (চৌধুরীপাড়া)', areas: ['চৌধুরীপাড়া'] },
+  { id: '25', name: 'ওয়ার্ড ২৫ (তাজহাট)', areas: ['তাজহাট'] },
+  { id: '26', name: 'ওয়ার্ড ২৬ (হরিদেবপুর)', areas: ['হরিদেবপুর'] },
+  { id: '27', name: 'ওয়ার্ড ২৭ (বাহিরের আবাসিক)', areas: ['বাহিরের আবাসিক'] },
+  { id: '28', name: 'ওয়ার্ড ২৮ (নতুন কলোনি)', areas: ['নতুন কলোনি'] },
+  { id: '29', name: 'ওয়ার্ড ২৯ (গ্রোথ এরিয়া)', areas: ['গ্রোথ এরিয়া'] },
+  { id: '30', name: 'ওয়ার্ড ৩০ (আউটার রিং)', areas: ['আউটার রিং'] },
+  { id: '31', name: 'ওয়ার্ড ৩১ (পল্লী এলাকা)', areas: ['পল্লী এলাকা'] },
+  { id: '32', name: 'ওয়ার্ড ৩২ (শহরতলী এলাকা)', areas: ['শহরতলী এলাকা'] },
+  { id: '33', name: 'ওয়ার্ড ৩৩ (এক্সটেন্ডেড সিটি)', areas: ['এক্সটেন্ডেড সিটি'] }
+];
+
+const getCityWards = (district) => {
+  if (district === 'রংপুর' || district === 'Rangpur') return RANGPUR_WARDS;
+  
+  const cityWardsCount = {
+    'ঢাকা': 129, 'Dhaka': 129,
+    'চট্টগ্রাম': 41, 'Chittagong': 41,
+    'রাজশাহী': 30, 'Rajshahi': 30,
+    'খুলনা': 31, 'Khulna': 31,
+    'বরিশাল': 30, 'Barishal': 30,
+    'সিলেট': 42, 'Sylhet': 42,
+    'ময়মনসিংহ': 33, 'Mymensingh': 33,
+    'কুমিল্লা': 27, 'Comilla': 27,
+    'নারায়ণগঞ্জ': 27, 'Narayanganj': 27,
+    'গাজীপুর': 57, 'Gazipur': 57
+  };
+  
+  const count = cityWardsCount[district] || 0;
+  if (count === 0) return null;
+  
+  const wards = [];
+  for (let i = 1; i <= count; i++) {
+    wards.push({ id: `ward_${i}`, name: `ওয়ার্ড ${i}` });
+  }
+  return wards;
+};
+
 export default function SettingsPage() {
   const { user, userData, activeShopId } = useAuth();
   const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', subdomainSlug: '', banners: [] });
@@ -87,7 +149,9 @@ export default function SettingsPage() {
       setDeliveryConfig({ 
         advanceFee: data?.deliveryConfig?.advanceFee || '', 
         methods: data?.deliveryConfig?.methods || '', 
-        isCOD: data?.deliveryConfig?.isCOD ?? true 
+        isCOD: data?.deliveryConfig?.isCOD ?? true,
+        contactEmail: data?.deliveryConfig?.contactEmail || '',
+        contactWhatsapp: data?.deliveryConfig?.contactWhatsapp || ''
       });
       setAiConfig({ 
         apiKey: data?.aiConfig?.apiKey || '', 
@@ -623,25 +687,45 @@ export default function SettingsPage() {
                         disabled={!geoSelections.district}
                         value={geoSelections.upazila}
                         onChange={e => setGeoSelections({ ...geoSelections, upazila: e.target.value })}
-                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed max-h-[150px] overflow-y-auto custom-scrollbar"
                       >
                         <option value="">উপজেলা সিলেক্ট করুন</option>
-                        {geoData.upazilas.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+                        {geoData.upazilas.sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
-                    {/* Union */}
+                    {/* Union / Word */}
                     <div className="space-y-1.5" style={{ opacity: geoSelections.upazila ? 1 : 0.5 }}>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">ইউনিয়ন / সিটি</label>
-                      <select
-                        disabled={!geoSelections.upazila}
-                        value={geoSelections.union}
-                        onChange={e => setGeoSelections({ ...geoSelections, union: e.target.value })}
-                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
-                      >
-                        <option value="">ইউনিয়ন সিলেক্ট করুন</option>
-                        {geoData.unions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
-                      </select>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">ইউনিয়ন / সিটি ওয়ার্ড</label>
+                      <div className="relative group/geo">
+                        <select
+                          disabled={!geoSelections.upazila}
+                          value={geoSelections.union}
+                          onChange={e => setGeoSelections({ ...geoSelections, union: e.target.value })}
+                          className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed max-h-[200px] overflow-y-auto custom-scrollbar"
+                        >
+                          <option value="">সিলেক্ট করুন (অথবা নিচে নাম লিখুন)</option>
+                          {(() => {
+                             const cityWards = getCityWards(geoSelections.district);
+                             if (cityWards) {
+                               return cityWards.map(w => <option key={w.id} value={w.name}>{w.name}</option>);
+                             }
+                             return geoData.unions.sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.bn_name}>{d.bn_name}</option>);
+                          })()}
+                          <option value="custom">+ হাতে নাম লিখুন (Custom Name)...</option>
+                        </select>
+                        <ChevronDown size={14} className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
+                      </div>
+                      
+                      {geoSelections.union === 'custom' && (
+                        <input 
+                          type="text"
+                          placeholder="ওয়ার্ড বা ইউনিয়নের নাম লিখুন..."
+                          className="w-full mt-2 bg-slate-50 border-2 border-purple-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-900 outline-none focus:border-purple-600"
+                          value={newServiceArea}
+                          onChange={e => setNewServiceArea(e.target.value)}
+                        />
+                      )}
                     </div>
                   </div>
 

@@ -89,18 +89,34 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
             headers: { 'User-Agent': 'WebmaaShop/1.0' }
           });
           const data = await resp.json();
-          const area = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
-          if (area) setDetectedLocation(area);
+          const address = data.address || {};
+          const area = address.suburb || address.neighbourhood || address.city_district || address.village || address.town || address.city || '';
+          const district = address.state_district || address.district || '';
           
-          const isAvailable = serviceAreas.some(sa => 
-            area.toLowerCase().includes(sa.toLowerCase()) || sa.toLowerCase().includes(area.toLowerCase())
-          );
+          const fullLabel = [area, district, address.state].filter(Boolean).join(', ');
+          if (area) setDetectedLocation(fullLabel);
+          
+          // Match against any significant address part
+          const searchTargets = [area, district, address.county, address.municipality, address.city, address.town, address.village].filter(Boolean).map(s => s.toLowerCase().trim());
+          
+          const isAvailable = serviceAreas.some(sa => {
+            if (!sa) return false;
+            const normalizedSa = sa.toLowerCase().trim();
+            // Try whole string match first
+            if (searchTargets.some(target => target.includes(normalizedSa) || normalizedSa.includes(target))) return true;
+            if (fullLabel.toLowerCase().includes(normalizedSa)) return true;
+            
+            // Try word-by-word matching for robustness
+            const saParts = normalizedSa.split(/[\s,]+/).filter(p => p.length > 2); // only significant words
+            return saParts.some(part => searchTargets.some(target => target.includes(part)) || fullLabel.toLowerCase().includes(part));
+          });
           setStatus(isAvailable ? 'available' : 'unavailable');
         } catch {
           setStatus('denied');
         }
       },
-      () => setStatus('denied')
+      () => setStatus('denied'),
+      { enableHighAccuracy: true }
     );
   }, [serviceAreas.length]);
 
@@ -288,11 +304,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         body: JSON.stringify({
           shopId: shop.id,
           messages: [
-            { role: 'system', content: `তুমি "${shop.shopName}"-এর AI shopping assistant। সবসময় "আসসালামু আলাইকুম" দিয়ে শুরু করবে। বাংলায় উত্তর দেবে। Admin panel-এর কোনো তথ্য দেবে না। 
-সার্ভিস এরিয়া: ${(shop.serviceAreas || []).join(', ')}। 
-ইউজারের বর্তমান লোকেশন: ${detectedLocation || locationManualInput || 'জানা যায়নি'}। 
-যদি ইউজার জিজ্ঞেস করে তার এলাকায় ডেলিভারি হবে কি না, তাহলে এই তথ্যের ওপর ভিত্তি করে সঠিক উত্তর দাও।
-পণ্যের তালিকা: ${products.slice(0,20).map(p=>`${p.name}: ৳${p.price}`).join(', ')}` },
+            { role: 'system', content: `তুমি "${shop.shopName}"-এর এআই সাহায্যকারী। "আসসালামু আলাইকুম" দিয়ে শুরু করবে। 
+সার্ভিস এরিয়া (যেখানে আমরা ডেলিভারি দেই): ${(shop.serviceAreas || []).join(', ')}। 
+ইউজারের বর্তমান লোকেশন: ${detectedLocation || locationManualInput || 'জানা যায়নি'}। 
+যদি ইউজার তার এলাকায় ডেলিভারি হবে কি না জিজ্ঞেস করে, উপরের সার্ভিস এরিয়ার সাথে মিলিয়ে সঠিক উত্তর দিবে।
+সবসময় বাংলায় কথা বলবে।
+প্রোডাক্টের তালিকা: ${products.slice(0,25).map(p=>`${p.name}: ৳${p.price}`).join(', ')}` },
             { role: 'user', content: text }
           ]
         })
@@ -395,7 +412,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     e.preventDefault();
     
     if (shop.isStrictLocation && locationStatus !== 'available') {
-      toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই।');
+      // Trigger a direct re-check or show prompt
+      toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই। অর্ডার করার জন্য সার্ভিস এরিয়ার ভেতরে থাকা বাধ্যতামূলক।');
+      if (locationStatus === 'denied' || locationStatus === 'idle') {
+        const confirm = window.confirm('লোকেশনের তথ্য দিতে হবে। এলাকা নিশ্চিত করুন।');
+        if (!confirm) return;
+      }
       return;
     }
     
@@ -470,9 +492,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;left:-9999px;top:0;width:595px;padding:40px;background:white;font-family:Arial,sans-serif;direction:ltr';
     el.innerHTML = `
-      <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:20px;margin-bottom:20px">
+      <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:15px;margin-bottom:15px">
         <h1 style="font-size:24px;font-weight:900;color:#1e293b;margin:0">${orderData.shopName}</h1>
-        <p style="font-size:12px;color:#64748b;margin:4px 0 0">Order Receipt / অর্ডার রশিদ</p>
+        ${shop.deliveryConfig?.contactEmail ? `<p style="font-size:10px;color:#64748b;margin:2px 0">${shop.deliveryConfig.contactEmail}</p>` : ''}
+        ${shop.deliveryConfig?.contactWhatsapp ? `<p style="font-size:10px;color:#059669;margin:2px 0;font-weight:700">WhatsApp: ${shop.deliveryConfig.contactWhatsapp}</p>` : ''}
+        <p style="font-size:9px;color:#94a3b8;margin:4px 0 0;text-transform:uppercase;letter-spacing:1px">Order Receipt / অর্ডার রশিদ</p>
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:16px">
         <div>
@@ -488,8 +512,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0 0 8px">Customer Info</p>
         <p style="margin:4px 0;font-size:13px;font-weight:700;color:#1e293b">${orderData.customerName} — ${orderData.customerPhone}</p>
         <p style="margin:4px 0;font-size:12px;color:#64748b"><b>Delivery Addr:</b> ${orderData.customerAddress}</p>
-        <p style="margin:4px 0;font-size:10px;color:#7c3aed;font-weight:700"><b>Live Location:</b> ${detectedLocation || 'Not Shared'}</p>
-        ${locationManualInput ? `<p style="margin:4px 0;font-size:10px;color:#1d4ed8;font-weight:700"><b>Manual Location:</b> ${locationManualInput}</p>` : ''}
+        <div style="margin:8px 0;padding:8px;background:#fff;border-radius:6px;border:1px solid #cbd5e1">
+          <p style="margin:0;font-size:10px;color:#7c3aed;font-weight:700"><b>Live Location:</b> ${detectedLocation || 'Not Shared'}</p>
+          ${locationManualInput ? `<p style="margin:4px 0 0;font-size:10px;color:#1d4ed8;font-weight:700"><b>Manual Selection:</b> ${locationManualInput}</p>` : ''}
+          <p style="margin:4px 0 0;font-size:10px;color:#64748b;font-weight:700"><b>Coords:</b> ${detectedLocation ? 'Auto-detected via GPS' : 'User provided'}</p>
+        </div>
         ${orderData.customerNote ? `<p style="margin:8px 0 0;font-size:11px;color:#b45309;font-style:italic;padding-top:8px;border-top:1px dashed #cbd5e1"><b>Order Note:</b> ${orderData.customerNote}</p>` : ''}
       </div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
@@ -733,10 +760,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                           <Plus size={15} strokeWidth={2.5} /> কার্টে যোগ করুন
                         </button>
                       )}
-                      {/* Customize button — goes to detail page */}
                       {(product.allowCustomize || (product.sizes && product.sizes.length > 0)) && (
                         <button
-                          onClick={() => router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}`)}
+                          onClick={() => router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}?customize=true`)}
                           className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"
                         >
                           <Sparkles size={13} /> কাস্টমাইজ
@@ -794,8 +820,22 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
             {/* Social & Contact */}
             <div className="space-y-4">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">আমাদের সাথে যুক্ত থাকুন</h3>
-              <div className="flex gap-3 flex-wrap">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">যোগাযোগ করুন</h3>
+              <div className="space-y-3">
+                {shop.deliveryConfig?.contactEmail && (
+                  <div className="flex items-center gap-2 text-slate-400 group">
+                    <Bot size={14} className="group-hover:text-purple-400" />
+                    <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{shop.deliveryConfig.contactEmail}</span>
+                  </div>
+                )}
+                {shop.deliveryConfig?.contactWhatsapp && (
+                  <div className="flex items-center gap-2 text-slate-400 group">
+                    <Phone size={14} className="group-hover:text-emerald-400" />
+                    <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{shop.deliveryConfig.contactWhatsapp}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3 flex-wrap pt-2">
                 {shop.socialLinks?.fb && (
                   <a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg font-black text-sm">
                     fb
@@ -839,10 +879,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         </div>
       </footer>
 
-      {/* ── Floating Buttons (Right Bottom) ── */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-4">
+      {/* ── Floating Buttons (Left Bottom - Updated Position) ── */}
+      <div className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-4">
         
-        {/* Floating Cart Button (Above AI Bot) */}
+        {/* Floating Cart Button (Stacked Above AI) */}
         <button 
           onClick={() => setIsCartOpen(true)} 
           className="relative w-[60px] h-[60px] bg-slate-900 text-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 transition-transform group"
@@ -857,12 +897,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
         {/* AI Floating Companion */}
         <div className="relative group flex items-end gap-3">
-          <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-br-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 absolute right-[75px] bottom-0 pointer-events-none">
-            প্রশ্ন করুন! ✨
-          </div>
           <button onClick={() => setIsAiOpen(true)} className="w-[60px] h-[60px] bg-gradient-to-br from-indigo-500 to-purple-600 border-4 border-white rounded-full shadow-[0_10px_25px_rgba(147,51,234,0.5)] flex items-center justify-center animate-bounce hover:scale-110 transition-transform relative overflow-hidden group">
             <span className="text-2xl drop-shadow-md group-hover:rotate-12 transition-transform">🤖</span>
           </button>
+          <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-bl-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 absolute left-[75px] bottom-0 pointer-events-none">
+            প্রশ্ন করুন! ✨
+          </div>
         </div>
       </div>
 
@@ -1102,7 +1142,21 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                   </button>
                 </div>
               ) : (
-                <div className="w-full space-y-5">
+                  {/* Current Location Display */}
+                  <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center gap-2 mb-2 text-slate-500 font-black text-[10px] uppercase tracking-widest">
+                      <MapPin size={12} /> আপনার বর্তমান লোকেশন
+                    </div>
+                    <p className="text-sm font-black text-slate-900 leading-tight">
+                      {detectedLocation || locationManualInput || 'জানা যায়নি'}
+                    </p>
+                    {locationStatus === 'available' && (
+                      <span className="inline-block mt-2 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-md border border-emerald-200">
+                        ✅ সার্ভিস এলাকায় আছেন
+                      </span>
+                    )}
+                  </div>
+
                   {/* Daily Streak Tracker */}
                   {userOrders.length > 0 && <StreakTracker orders={userOrders} />}
 

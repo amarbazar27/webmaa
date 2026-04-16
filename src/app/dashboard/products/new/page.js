@@ -24,6 +24,7 @@ export default function NewProductPage() {
     stock: '',
     description: '',
     allowCustomize: false,
+    allowNote: false,
     sizes: [], // Array of { name: 'Small', label: 'S', price: 0 }
   });
 
@@ -238,6 +239,19 @@ export default function NewProductPage() {
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" className="sr-only peer" checked={form.allowCustomize} onChange={e => setForm({...form, allowCustomize: e.target.checked})} />
                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div>
+                  <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                    <MessageSquare size={16} className="text-slate-500" /> কাস্টমার নোট (Customer Note)
+                  </h4>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">অর্ডারের সময় ইউজার স্পেশাল রিকোয়েস্ট লিখতে পারবে</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" className="sr-only peer" checked={form.allowNote} onChange={e => setForm({...form, allowNote: e.target.checked})} />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-700"></div>
                 </label>
               </div>
 

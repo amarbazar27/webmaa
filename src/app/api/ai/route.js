@@ -31,14 +31,18 @@ export async function POST(req) {
     // Determine the exact key securely on the BACKEND
     if (shopId) {
        const shop = await getShop(shopId);
-       if (shop?.aiConfig?.apiKey) {
-           apiKey = shop.aiConfig.apiKey;
+       if (shop?.aiConfig?.apiKey?.trim()) {
+           apiKey = shop.aiConfig.apiKey.trim();
+           console.log(`Using shop-specific AI key for shop: ${shopId}`);
        }
     }
 
     if (!apiKey) {
        const globalConfig = await getGlobalConfig();
-       apiKey = globalConfig?.geminiApiKey;
+       if (globalConfig?.geminiApiKey?.trim()) {
+           apiKey = globalConfig.geminiApiKey.trim();
+           console.log("Using global Gemini API key from Firestore.");
+       }
     }
 
     // Final Fallback to Vercel Environment Variables (Securely)
@@ -55,7 +59,8 @@ export async function POST(req) {
 
     if (isGemini) {
       // 🚀 Gemini API Call (2026 — Only live models)
-      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+      // 🚀 Gemini API Call (Using Stable Production Models)
+      const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
       
       // Extract system message and user/bot messages separately
       // Gemini API does NOT accept 'system' role in contents — it must go in systemInstruction

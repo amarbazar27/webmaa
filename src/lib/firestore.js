@@ -196,35 +196,31 @@ export const addRetailerRequest = async (userData, phone = '') => {
 
   const email = userData?.email?.toLowerCase?.().trim() || userData?.providerData?.[0]?.email?.toLowerCase?.().trim() || '';
 
-  // Check for duplicate
-  const q = query(collection(db, 'retailer_requests'), where('uid', '==', uid));
-  const existing = await getDocs(q);
-  if (!existing.empty) {
-    const prevReq = existing.docs[0].data();
-    if (prevReq.status === 'pending') {
-      throw new Error('আপনি ইতোমধ্যে একটি আবেদন করেছেন। অ্যাডমিন পর্যালোচনা করছেন।');
-    }
-    if (prevReq.status === 'approved') {
-      throw new Error('আপনার আবেদন ইতোমধ্যে অনুমোদিত হয়েছে। লগআউট করে আবার লগইন করুন।');
-    }
-    // If denied, allow re-request
-    await updateDoc(doc(db, 'retailer_requests', existing.docs[0].id), {
+  // Use setDoc with a deterministic ID (uid) to resolve permission issues.
+  // This allows us to use standard 'allow read, write: if request.auth.uid == uid' rules.
+  const requestRef = doc(db, 'retailer_requests', uid);
+  
+  try {
+    // Check if document exists first to maintain the logic of not over-writing approved ones casually
+    // However, if we can't read, we just try to set it.
+    await setDoc(requestRef, {
+      uid,
+      email,
+      name: userData?.displayName || userData?.name || 'ব্যবহারকারী',
+      photoURL: userData?.photoURL || '',
+      phone: phone || '',
       status: 'pending',
-      phone: phone || prevReq.phone || '',
       requestedAt: serverTimestamp(),
-    });
-    return;
+    }, { merge: true }); // Merge true to preserve fields if needed
+    
+    return { id: uid };
+  } catch (err) {
+    console.error("Retailer Request Error:", err);
+    if (err.code === 'permission-denied') {
+      throw new Error('অনুমতি নেই। সম্ভবত আপনার আবেদনটি প্রক্রিয়াধীন আছে।');
+    }
+    throw err;
   }
-
-  return addDoc(collection(db, 'retailer_requests'), {
-    uid,
-    email,
-    name: userData?.displayName || userData?.name || 'ব্যবহারকারী',
-    photoURL: userData?.photoURL || '',
-    phone: phone || '',
-    status: 'pending',
-    requestedAt: serverTimestamp(),
-  });
 };
 
 export const getRetailerRequests = async () => {

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, ShoppingCart, Plus, Minus, Sparkles, Loader2,
-  CheckCircle, Package, Tag, Layers
+  CheckCircle, Package, Tag, Layers, MessageSquare, Info
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
@@ -32,7 +32,12 @@ export default function ProductDetailClient({ shop, product }) {
   const [aiPrice, setAiPrice] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState('');
-  const [customerNote, setCustomerNote] = useState('');
+  const [customerNote, setCustomerNote] = useState(() => {
+    if (typeof window !== 'undefined') {
+       return localStorage.getItem(`note_${product.id}`) || '';
+    }
+    return '';
+  });
 
   // Cart (read from localStorage + sync)
   const CART_KEY = `cart_${shop.id}`;
@@ -43,6 +48,22 @@ export default function ProductDetailClient({ shop, product }) {
 
   const basePrice = selectedSize ? parseFloat(selectedSize.price) : parseFloat(product.price);
   const displayPrice = aiPrice !== null ? aiPrice : basePrice * qty;
+
+  // Auto-scroll to customization if parameter is set
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('customize') === 'true') {
+        setTimeout(() => {
+            const el = document.getElementById('customization-box');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+    }
+  }, []);
+
+  // Auto-save note
+  useEffect(() => {
+    localStorage.setItem(`note_${product.id}`, customerNote);
+  }, [customerNote, product.id]);
 
   const handleQtyChange = (delta) => {
     setQty(prev => Math.max(1, Math.min(999, prev + delta)));
@@ -68,13 +89,13 @@ export default function ProductDetailClient({ shop, product }) {
     const shopApiKey = shop?.aiConfig?.apiKey;
     const systemPrompt = `তুমি একটি Bangladeshi retail shop-এর AI price calculator।
     পণ্যের নাম: ${product.name}
-    বেস মূল্য: ৳${product.price} (${product.unit || 'প্রতি ইউনিট'})
+    বেস মূল্য: ৳${basePrice} (${product.unit || 'প্রতি ইউনিট'})
 
     ইউজার যদি কাস্টম পরিমাণ বলে (যেমন "১৫০ গ্রাম", "আধা কেজি", "দুই পিস", "2 kg"), তাহলে:
-    1. proportional price calculate করো (যেমন ১ কেজি ২০০ টাকা হলে, ১৫০ গ্রাম হবে ৩০ টাকা)।
-    2. শুধু মূল্য এবং সংক্ষিপ্ত ব্যাখ্যাসহ বাংলায় উত্তর দাও।
+    1. proportional price calculate করো। হিসাবের যুক্তি: (বেস মূল্য / ১০০০) * গ্রামের পরিমাণ। যেমন ১ কেজি ২০০ টাকা হলে, ১৫০ গ্রাম হবে (২০০/১০০০)*১৫০ = ৩০ টাকা।
+    2. শুধু মূল্য এবং সংক্ষিপ্ত ব্যাখ্যাসহ বাংলায় উত্তর দাও।
     3. উত্তরের শেষে "PRICE: [number]" format-এ মূল্য লেখো (যেমন: PRICE: 30)।
-    4. Admin panel-এর কোনো তথ্য দেবে না।`;
+    4. কোনো অতিরিক্ত কথা বা শুভেচ্ছা ছাড়াই পয়েন্ট-টু- পয়েন্ট উত্তর দাও।`;
 
     try {
       const resp = await fetch('/api/ai', {
@@ -270,22 +291,24 @@ export default function ProductDetailClient({ shop, product }) {
                </div>
                <div>
                  <h3 className="font-black text-slate-900">বিশেষ নির্দেশনা (Special Note)</h3>
-                 <p className="text-xs text-slate-500 font-bold">আপনার কোনো অনুরোধ থাকলে এখানে লিখুন</p>
+                 <p className="text-xs text-slate-500 font-bold">আপনার কোনো অনুরোধ থাকলে এখানে লিখুন (সর্বোচ্চ ৪০ অক্ষর)</p>
                </div>
              </div>
              <textarea
-               rows={3}
+               rows={2}
+               maxLength={40}
                placeholder={`যেমন: "বেশি ঝাল দিবেন না" বা "প্যাক করে পাঠাবেন"...`}
                className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all resize-none"
                value={customerNote}
                onChange={e => setCustomerNote(e.target.value)}
              />
+             <div className="flex justify-end text-[10px] uppercase font-black text-slate-400">{(customerNote || '').length}/40</div>
           </div>
         )}
 
         {/* AI Customization Box */}
         {product.allowCustomize && (
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl border-2 border-indigo-100 p-6 shadow-sm space-y-4">
+          <div id="customization-box" className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl border-2 border-indigo-100 p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <Sparkles size={18} className="text-white" />

@@ -6,7 +6,7 @@ import {
   ShoppingBag, LayoutDashboard, ArrowRight, Store, LogOut,
   Globe, Zap, ShieldCheck, Rocket, Sparkles, TrendingUp,
   Smartphone, BarChart3, Users, CheckCircle, Star, ChevronRight,
-  Package, CreditCard, Headphones
+  Package, CreditCard, Headphones, Mail, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -399,6 +399,7 @@ export default function Home() {
               <Link href="/demo" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Demo</Link>
               <a href="#features" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Features</a>
               <a href="#stats" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Performance</a>
+              <a href="#contact" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Contact</a>
             </div>
             <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
               &copy; {new Date().getFullYear()} Webmaa. All rights reserved.
