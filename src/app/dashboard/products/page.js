@@ -70,6 +70,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedId, setExpandedId] = useState(null);
 
   const fetchProducts = useCallback(async () => {
     if (!activeShopId) return;
@@ -291,7 +292,14 @@ export default function ProductsPage() {
               </div>
 
               {/* Delete */}
-              <div className="col-span-2 flex justify-end">
+              <div className="col-span-1 flex justify-end gap-2">
+                <button
+                  onClick={() => setExpandedId(expandedId === product.id ? null : product.id)}
+                  className={`p-3 rounded-xl transition-all ${expandedId === product.id ? 'bg-purple-600 text-white' : 'hover:bg-purple-100 text-slate-400'}`}
+                  title="Edit Description"
+                >
+                  <Pencil size={18} />
+                </button>
                 <Button
                   variant="ghost"
                   icon={Trash2}
@@ -299,6 +307,25 @@ export default function ProductsPage() {
                   className="px-3 py-3 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 opacity-40 group-hover:opacity-100 transition-all"
                 />
               </div>
+
+              {/* Expandable Description Area */}
+              {expandedId === product.id && (
+                <div className="col-span-12 mt-4 pt-4 border-t border-slate-100 animate-slide-in">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-2">Product Description</label>
+                   <textarea
+                     rows={4}
+                     className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all resize-none"
+                     value={product.description || ''}
+                     placeholder="কোনো ডেসক্রিপশন সেট করা নেই..."
+                     onChange={(e) => {
+                        const newDesc = e.target.value;
+                        setProducts(prev => prev.map(p => p.id === product.id ? { ...p, description: newDesc } : p));
+                     }}
+                     onBlur={(e) => handleUpdate(product.id, 'description', e.target.value)}
+                   />
+                   <p className="text-[10px] text-slate-400 font-bold mt-2 italic px-1">Note: Description saves automatically on blur (clicking outside).</p>
+                </div>
+              )}
             </div>
           ))}
         </div>

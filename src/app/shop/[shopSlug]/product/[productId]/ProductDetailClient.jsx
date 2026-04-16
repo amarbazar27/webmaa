@@ -27,11 +27,12 @@ export default function ProductDetailClient({ shop, product }) {
   // Quantity
   const [qty, setQty] = useState(1);
 
-  // Customization AI
+  // Customization AI & Local Storage Memory
   const [customInput, setCustomInput] = useState('');
   const [aiPrice, setAiPrice] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState('');
+  const [customerNote, setCustomerNote] = useState('');
 
   // Cart (read from localStorage + sync)
   const CART_KEY = `cart_${shop.id}`;
@@ -116,7 +117,7 @@ export default function ProductDetailClient({ shop, product }) {
       price: aiPrice !== null ? aiPrice / qty : basePrice,
       quantity: qty,
       imageUrl: product.imageUrl || '',
-      note: customInput ? `কাস্টমাইজ: ${customInput}` : '',
+      note: (customInput ? `কাস্টমাইজ: ${customInput}` : '') + (customerNote ? (customInput ? ' | ' : '') + `নোট: ${customerNote}` : ''),
       isCustomized: aiPrice !== null,
       customizedPrice: aiPrice
     };
@@ -259,6 +260,28 @@ export default function ProductDetailClient({ shop, product }) {
             </div>
           </div>
         </div>
+
+        {/* Customer Note Field (Manual Instructions) */}
+        {product.allowNote && (
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+             <div className="flex items-center gap-3">
+               <div className="w-10 h-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600">
+                 <MessageSquare size={18} />
+               </div>
+               <div>
+                 <h3 className="font-black text-slate-900">বিশেষ নির্দেশনা (Special Note)</h3>
+                 <p className="text-xs text-slate-500 font-bold">আপনার কোনো অনুরোধ থাকলে এখানে লিখুন</p>
+               </div>
+             </div>
+             <textarea
+               rows={3}
+               placeholder={`যেমন: "বেশি ঝাল দিবেন না" বা "প্যাক করে পাঠাবেন"...`}
+               className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all resize-none"
+               value={customerNote}
+               onChange={e => setCustomerNote(e.target.value)}
+             />
+          </div>
+        )}
 
         {/* AI Customization Box */}
         {product.allowCustomize && (
