@@ -215,15 +215,19 @@ export default function SettingsPage() {
     const divName = geoData.divisions.find(d => d.id === division)?.bn_name;
     const distName = geoData.districts.find(d => d.id === district)?.bn_name;
     const upaName = geoData.upazilas.find(d => d.id === upazila)?.bn_name;
-    const uniName = geoData.unions.find(d => d.id === union)?.bn_name;
+    // For city wards, the value is already the name string (not an ID)
+    const uniFromList = geoData.unions.find(d => d.id === union)?.bn_name;
+    const uniName = uniFromList || (union && union !== 'custom' && union !== '' ? union : null);
     
-    let areaString = divName;
-    if (distName) areaString += ` > ${distName}`;
-    if (upaName) areaString += ` > ${upaName}`;
-    if (uniName) areaString += ` > ${uniName}`;
+    // If custom ward input is active, use that
+    const finalAreaName = geoSelections.union === 'custom' ? newServiceArea : uniName;
     
-    if (!serviceAreas.includes(areaString)) {
+    // Build the most specific name possible (Ward or Union name is best for matching)
+    let areaString = finalAreaName || upaName || distName || divName;
+    
+    if (areaString && !serviceAreas.includes(areaString)) {
       setServiceAreas([...serviceAreas, areaString]);
+      if (geoSelections.union === 'custom') setNewServiceArea('');
     }
   };
 

@@ -96,19 +96,36 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
           const fullLabel = [area, district, address.state].filter(Boolean).join(', ');
           if (area) setDetectedLocation(fullLabel);
           
-          // Match against any significant address part
-          const searchTargets = [area, district, address.county, address.municipality, address.city, address.town, address.village].filter(Boolean).map(s => s.toLowerCase().trim());
+          // Transliteration: English Nominatim names -> Bengali equivalents
+          const EN_TO_BN = {
+            'rangpur': 'রংপুর', 'dhaka': 'ঢাকা', 'chittagong': 'চট্টগ্রাম',
+            'sylhet': 'সিলেট', 'rajshahi': 'রাজশাহী', 'khulna': 'খুলনা',
+            'barisal': 'বরিশাল', 'barishal': 'বরিশাল',
+            'mymensingh': 'ময়মনসিংহ', 'comilla': 'কুমিল্লা',
+            'gazipur': 'গাজীপুর', 'narayanganj': 'নারায়ণগঞ্জ',
+            'metropolitan': 'মেট্রোপলিটন', 'sadar': 'সদর',
+            'cox': 'ককসবাজার', 'bogra': 'বগুড়া',
+          };
+          const translateEN = (str) => str.toLowerCase().replace(/\b\w+\b/g, w => EN_TO_BN[w] || w);
+          const translatedLabel = translateEN(fullLabel);
+          
+          // Match against any significant address part (original + translated)
+          const searchTargets = [area, district, address.county, address.municipality, address.city, address.town, address.village]
+            .filter(Boolean).map(s => s.toLowerCase().trim());
+          const translatedTargets = searchTargets.map(t => translateEN(t));
+          const allTargets = [...searchTargets, ...translatedTargets];
           
           const isAvailable = serviceAreas.some(sa => {
             if (!sa) return false;
             const normalizedSa = sa.toLowerCase().trim();
-            // Try whole string match first
-            if (searchTargets.some(target => target.includes(normalizedSa) || normalizedSa.includes(target))) return true;
+            // Try whole string match first (original + translated)
+            if (allTargets.some(target => target.includes(normalizedSa) || normalizedSa.includes(target))) return true;
             if (fullLabel.toLowerCase().includes(normalizedSa)) return true;
+            if (translatedLabel.includes(normalizedSa)) return true;
             
-            // Try word-by-word matching for robustness
-            const saParts = normalizedSa.split(/[\s,]+/).filter(p => p.length > 2); // only significant words
-            return saParts.some(part => searchTargets.some(target => target.includes(part)) || fullLabel.toLowerCase().includes(part));
+            // Try word-by-word matching
+            const saParts = normalizedSa.split(/[\s,>]+/).filter(p => p.length > 1);
+            return saParts.some(part => allTargets.some(t => t.includes(part)) || translatedLabel.includes(part));
           });
           setStatus(isAvailable ? 'available' : 'unavailable');
         } catch {
