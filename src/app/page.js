@@ -6,7 +6,7 @@ import {
   ShoppingBag, LayoutDashboard, ArrowRight, Store, LogOut,
   Globe, Zap, ShieldCheck, Rocket, Sparkles, TrendingUp,
   Smartphone, BarChart3, Users, CheckCircle, Star, ChevronRight,
-  Package, CreditCard, Headphones, Mail, MessageSquare, Facebook, Phone
+  Package, CreditCard, Headphones, Mail, MessageSquare, Phone
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -354,7 +354,7 @@ export default function Home() {
               {globalConfig?.contactFb && (
                 <a href={globalConfig.contactFb} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group">
                   <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                    <Facebook size={24} />
+                    <MessageSquare size={24} />
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Facebook Message</p>
