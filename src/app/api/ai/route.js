@@ -54,16 +54,31 @@ export async function POST(req) {
        return NextResponse.json({ error: { message: "API key not configured in Firestore or Vercel." } }, { status: 400 });
     }
 
-    // ── SMART DETECT: Gemini vs Groq ────────────────────────
-    const isGemini = apiKey.startsWith('AIzaSy');
+    // ── SMART DETECT: Gemini vs OpenAI-Compatible (Groq, OpenRouter, DeepSeek) ────────────────────────
+    
+    // Determine provider and endpoint based on key
+    let endpoint = '';
+    let isGemini = false;
+    let defaultModel = model;
+
+    if (apiKey.startsWith('AIzaSy')) {
+      isGemini = true;
+    } else if (apiKey.startsWith('gsk_')) {
+      endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+      defaultModel = model || 'llama-3.3-70b-versatile';
+    } else if (apiKey.startsWith('sk-or-')) {
+      endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+      defaultModel = model || 'google/gemini-2.5-flash'; // Good default for openrouter
+    } else {
+      // Standard OpenAI / DeepSeek
+      endpoint = 'https://api.openai.com/v1/chat/completions';
+      if (!model) defaultModel = 'gpt-4o-mini';
+    }
 
     if (isGemini) {
-      // 🚀 Gemini API Call (2026 — Only live models)
-      // 🚀 Gemini API Call (Stable models — 2025/2026)
-      const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+      // 🚀 Gemini Native API Call
+      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
       
-      // Extract system message and user/bot messages separately
-      // Gemini API does NOT accept 'system' role in contents — it must go in systemInstruction
       let systemText = "Always greet with 'Assalamu Alaikum'. Never use 'Nomoskar'. Follow Muslim etiquette. Speak in Bengali for a Bangladeshi retail store.";
       const chatMessages = [];
       
@@ -79,7 +94,6 @@ export async function POST(req) {
         }
       }
 
-      // Ensure conversation starts with 'user' role (Gemini requirement)
       if (chatMessages.length === 0 || chatMessages[0].role !== 'user') {
         chatMessages.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
       }
@@ -110,56 +124,50 @@ export async function POST(req) {
               });
             }
 
-            // If quota exceeded, wait and retry
             if (response.status === 429 || data.error?.status === 'RESOURCE_EXHAUSTED') {
-              console.warn(`Gemini ${modelName} quota hit (attempt ${attempt + 1}). Retrying in 3s...`);
               if (attempt < MAX_RETRIES) {
                 await new Promise(r => setTimeout(r, 3000));
                 continue;
               }
             }
 
-            // If model not found, skip to next model immediately
             if (response.status === 404 || data.error?.message?.includes('not found')) {
-              console.error(`Gemini ${modelName}: Model not found, skipping.`);
               lastError = data;
-              break; // break retry loop, go to next model
+              break; 
             }
 
             lastError = data;
-            break; // other error, skip retries
+            break; 
           } catch (err) {
             lastError = { error: { message: err.message } };
           }
         }
       }
-
       return NextResponse.json(
         lastError || { error: { message: "All Gemini models failed." } }, 
         { status: 500 }
       );
-
     } else {
-      // 🚀 Groq API Call
+      // 🚀 OpenAI-Compatible Wrapper (Groq, OpenRouter, Custom)
       const bodyParameters = {
-          model: model || 'llama-3.3-70b-versatile',
+          model: defaultModel,
           messages: messages.map(m => ({ role: m.role, content: m.text || m.content })),
           temperature: 0.7,
       };
 
-      // Force numeric response if specific prompt signatures are found
       const lastMsg = messages[messages.length - 1];
       const promptText = (lastMsg?.text || lastMsg?.content || '').toLowerCase();
       if (promptText.includes('respond only with') && promptText.includes('price')) {
-          bodyParameters.temperature = 0.1; // More deterministic for pricing
-          bodyParameters.max_tokens = 50;
+          bodyParameters.temperature = 0.1;
       }
 
-      const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://webmaa.pro.bd',
+          'X-Title': 'Webmaa SaaS'
         },
         body: JSON.stringify(bodyParameters)
       });

@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import {
   getRetailerInvites, addRetailerInvite, removeRetailerInvite, getAllShops,
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
-  subscribeGlobalConfig, updateGlobalConfig
+  subscribeGlobalConfig, updateGlobalConfig, getOrders
 } from '@/lib/firestore';
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck, Search,
-  Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff
+  Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
+  Globe, Link2
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -45,8 +46,32 @@ export default function SuperAdminPage() {
         getAllShops(),
         getRetailerRequests()
       ]);
+      
+      // Fetch metrics for each shop in parallel
+      const shopsWithMetrics = await Promise.all(shopsData.map(async (shop) => {
+        try {
+          const orders = await getOrders(shop.id);
+          const completedOrders = orders.filter(o => o.status === 'completed');
+          const totalSales = completedOrders.length;
+          const totalRevenue = completedOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+          
+          // Match owner email from requests
+          const owner = requestsData.find(r => r.id === shop.id);
+          
+          return {
+            ...shop,
+            totalSales,
+            totalRevenue,
+            ownerEmail: owner?.email || shop.ownerEmail || 'Unknown',
+            orderCount: orders.length
+          };
+        } catch (e) {
+          return { ...shop, totalSales: 0, totalRevenue: 0, ownerEmail: 'Error' };
+        }
+      }));
+
       setInvites(invitesData);
-      setShops(shopsData);
+      setShops(shopsWithMetrics);
       setRequests(requestsData);
     } catch (err) {
       console.error(err);
@@ -312,6 +337,120 @@ export default function SuperAdminPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </Card>
+        </div>
+        {/* Live Shops Oversight Section */}
+        <div className="lg:col-span-12">
+          <Card
+            title="Platform Ecosystem Overview"
+            subtitle="Monitor all active stores, their domains, and estimated storage footprints"
+            icon={Store}
+            className="border-2 border-emerald-100 bg-emerald-50/10"
+          >
+            {loading ? (
+              <div className="py-10 text-center animate-pulse">
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Scanning ecosystem...</p>
+              </div>
+            ) : shops.length === 0 ? (
+              <div className="py-16 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <Store size={40} className="mx-auto mb-4 text-emerald-300" />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No active stores found</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <th className="pb-2 px-4 border-b border-slate-100">Store Name</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">Retailer Gmail</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">Performance (Sales/Money)</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
+                      <th className="pb-2 px-4 border-b border-slate-100 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shops.map((shop) => {
+                      // Estimate size: basic 2MB base + ~500kb per banner + assumed product footprint
+                      const bannerFootprintMB = (shop.banners?.length || 0) * 0.5;
+                      const productFootprintMB = (shop.orderCount || 0) * 0.1 + 5.2; 
+                      const estimatedTotalMB = (2.0 + bannerFootprintMB + productFootprintMB).toFixed(1);
+                      
+                      return (
+                        <tr key={shop.id} className="bg-white group hover:bg-emerald-50/50 transition-colors border-b border-slate-50 last:border-0">
+                          <td className="p-4 first:rounded-l-2xl">
+                            <div className="flex items-center gap-3">
+                              {shop.logoUrl ? (
+                                <img src={shop.logoUrl} className="w-8 h-8 rounded-lg object-cover border border-slate-200" alt="" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center font-black text-emerald-600 text-xs text-center leading-none">
+                                  {shop.shopName?.[0] || 'S'}
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-bold text-slate-900 text-sm leading-tight">{shop.shopName || 'Unnamed Store'}</p>
+                                <p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{shop.slogan || 'No slogan'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div>
+                               <p className="font-bold text-xs text-slate-600">{shop.ownerEmail}</p>
+                               <p className="font-mono text-[9px] text-slate-400">UID: {shop.id.substring(0,8)}...</p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex flex-col">
+                               <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-black text-slate-800">{shop.totalSales} Sales</span>
+                                  <span className="text-[11px] font-black text-emerald-600">৳{shop.totalRevenue.toLocaleString()}</span>
+                               </div>
+                               <div className="mt-1 flex items-center gap-1">
+                                  {shop.totalSales > 10 ? (
+                                    <span className="text-[8px] font-black uppercase bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">High Growth</span>
+                                  ) : shop.totalSales > 0 ? (
+                                    <span className="text-[8px] font-black uppercase bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Active</span>
+                                  ) : (
+                                    <span className="text-[8px] font-black uppercase bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded">No Sales</span>
+                                  )}
+                               </div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="space-y-1">
+                              {shop.customDomain && (
+                                <a href={`https://${shop.customDomain}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-black text-purple-600 hover:text-purple-800 hover:underline">
+                                  <Globe size={11} /> {shop.customDomain}
+                                </a>
+                              )}
+                              {shop.subdomainSlug && (
+                                <a href={`https://${shop.subdomainSlug}.webmaa.vercel.app`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
+                                  <Link2 size={11} /> {shop.subdomainSlug}
+                                </a>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-full bg-slate-100 rounded-full h-1.5 max-w-[60px]">
+                                <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (estimatedTotalMB / 20) * 100)}%` }}></div>
+                              </div>
+                              <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-right last:rounded-r-2xl">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${shop.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                              {shop.isActive !== false ? 'Live' : 'Suspended'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </Card>

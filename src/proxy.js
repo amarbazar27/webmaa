@@ -32,29 +32,27 @@ export function proxy(request) {
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   
-  // Wildcard Subdomain Routing
+  // ── Custom Domain Routing ────────────────────────────────────────────────
+  // Note: *.vercel.app wildcard is NOT supported on Vercel's shared domain.
+  // Free stores use /shop/[slug] paths which work without any subdomain magic.
+  // This block ONLY handles external custom domains like rahimshop.com.
   const hostname = request.headers.get('host') || '';
   const mainDomain = 'webmaa.pro.bd';
   const vercelDomain = 'webmaa.vercel.app';
-  
-  if (
-    !hostname.includes('localhost') &&
-    hostname !== mainDomain &&
-    hostname !== `www.${mainDomain}` &&
-    hostname !== vercelDomain
-  ) {
-    const isWebmaaDomain = hostname.endsWith(`.${mainDomain}`);
-    let subdomain = null;
-    
-    if (isWebmaaDomain) {
-      subdomain = hostname.replace(`.${mainDomain}`, '');
-    }
 
-    if (subdomain && subdomain !== 'www' && !url.pathname.startsWith('/shop/')) {
-      // Rewrite subdomain to /shop/subdomain
-      url.pathname = `/shop/${subdomain}${url.pathname === '/' ? '' : url.pathname}`;
+  const isKnownPlatformHost =
+    hostname.includes('localhost') ||
+    hostname === mainDomain ||
+    hostname === `www.${mainDomain}` ||
+    hostname === vercelDomain ||
+    hostname.endsWith(`.vercel.app`); // covers preview deployments like xxx.vercel.app
+
+  if (!isKnownPlatformHost) {
+    // Must be a retailer's own custom domain — rewrite to our /domain/[host] handler
+    if (!url.pathname.startsWith('/domain/') && !url.pathname.startsWith('/_next')) {
+      const encodedHost = encodeURIComponent(hostname);
+      url.pathname = `/domain/${encodedHost}${url.pathname === '/' ? '' : url.pathname}`;
       const rewriteResponse = NextResponse.rewrite(url);
-      // carry over the headers we just set
       rewriteResponse.headers.set('X-XSS-Protection', '1; mode=block');
       rewriteResponse.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
       return rewriteResponse;

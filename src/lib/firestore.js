@@ -23,6 +23,14 @@ export const getShopBySlug = async (slug) => {
   return { id: snap.docs[0].id, ...snap.docs[0].data() };
 };
 
+export const getShopByDomain = async (domain) => {
+  if (!domain) return null;
+  const q = query(collection(db, 'shops'), where('customDomain', '==', domain.toLowerCase().trim()));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+};
+
 export const updateShop = async (shopId, data) => {
   const shopDocRef = doc(db, 'shops', shopId);
   return updateDoc(shopDocRef, { ...data, updatedAt: serverTimestamp() });

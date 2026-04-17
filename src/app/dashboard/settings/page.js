@@ -101,6 +101,10 @@ export default function SettingsPage() {
   
   const [staffEmails, setStaffEmails] = useState([]);
   const [newStaffEmail, setNewStaffEmail] = useState('');
+  
+  const [customDomainInput, setCustomDomainInput] = useState('');
+  const [customDomainEditing, setCustomDomainEditing] = useState(false);
+  const [domainStatus, setDomainStatus] = useState(''); // '', 'pending_dns', 'connected', 'pending_manual'
 
   // Complex substates to prevent null referencing
   const [socialLinks, setSocialLinks] = useState({ fb: '', insta: '', yt: '', wa: '' });
@@ -113,8 +117,8 @@ export default function SettingsPage() {
   const [isStrictLocation, setIsStrictLocation] = useState(false);
   const [trackingConfig, setTrackingConfig] = useState({ ga4Id: '', clarityId: '' });
   
-  const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [] });
-  const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', union: '' });
+  const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [], unionsType: 'unions' });
+  const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', upazilaName: '', union: '' });
   const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
@@ -133,6 +137,7 @@ export default function SettingsPage() {
       }
       setLogoPreview(data?.logoUrl || null);
       setSlugInput(data?.subdomainSlug || '');
+      setCustomDomainInput(data?.customDomain || '');
       
       setSocialLinks({
         fb: data?.socialLinks?.fb || '', 
@@ -166,74 +171,79 @@ export default function SettingsPage() {
         ga4Id: data?.trackingConfig?.ga4Id || '',
         clarityId: data?.trackingConfig?.clarityId || ''
       });
+      setDomainStatus(data?.domainStatus || '');
       
       setLoading(false);
     });
   }, [user]);
 
-  // Geo Data Fetching Logic
+  // ── Geo: load divisions once ────────────────────────────────────────────
   useEffect(() => {
-    setGeoLoading(true);
     fetch('/api/geo?type=divisions').then(r => r.json()).then(data => {
-      setGeoData(prev => ({ ...prev, divisions: data }));
-      setGeoLoading(false);
+      setGeoData(prev => ({ ...prev, divisions: Array.isArray(data) ? data : [] }));
     });
   }, []);
 
+  // ── Geo: load districts when division changes ────────────────────────────
   useEffect(() => {
     if (!geoSelections.division) return;
     setGeoLoading(true);
-    fetch(`/api/geo?type=districts`).then(r => r.json()).then(data => {
-      const filtered = data.filter(d => d.division_id === geoSelections.division);
-      setGeoData(prev => ({ ...prev, districts: filtered, upazilas: [], unions: [] }));
-      setGeoSelections(prev => ({ ...prev, district: '', upazila: '', union: '' }));
-      setGeoLoading(false);
-    });
+    fetch(`/api/geo?type=districts&division_id=${geoSelections.division}`)
+      .then(r => r.json()).then(data => {
+        setGeoData(prev => ({ ...prev, districts: Array.isArray(data) ? data : [], upazilas: [], unions: [], unionsType: 'unions' }));
+        setGeoSelections(prev => ({ ...prev, district: '', upazila: '', upazilaName: '', union: '' }));
+        setGeoLoading(false);
+      });
   }, [geoSelections.division]);
 
+  // ── Geo: load upazilas when district changes ─────────────────────────────
   useEffect(() => {
     if (!geoSelections.district) return;
     setGeoLoading(true);
-    fetch(`/api/geo?type=upazilas`).then(r => r.json()).then(data => {
-      const filtered = data.filter(d => d.district_id === geoSelections.district);
-      setGeoData(prev => ({ ...prev, upazilas: filtered, unions: [] }));
-      setGeoSelections(prev => ({ ...prev, upazila: '', union: '' }));
-      setGeoLoading(false);
-    });
+    fetch(`/api/geo?type=upazilas&district_id=${geoSelections.district}`)
+      .then(r => r.json()).then(data => {
+        setGeoData(prev => ({ ...prev, upazilas: Array.isArray(data) ? data : [], unions: [], unionsType: 'unions' }));
+        setGeoSelections(prev => ({ ...prev, upazila: '', upazilaName: '', union: '' }));
+        setGeoLoading(false);
+      });
   }, [geoSelections.district]);
 
+  // ── Geo: load unions OR wards based on upazila type ──────────────────────
   useEffect(() => {
     if (!geoSelections.upazila) return;
     setGeoLoading(true);
-    fetch(`/api/geo?type=unions`).then(r => r.json()).then(data => {
-      const filtered = data.filter(d => d.upazilla_id === geoSelections.upazila);
-      setGeoData(prev => ({ ...prev, unions: filtered }));
-      setGeoSelections(prev => ({ ...prev, union: '' }));
-      setGeoLoading(false);
+    const params = new URLSearchParams({
+      type: 'unions',
+      upazila_id: geoSelections.upazila,
+      upazila_name: geoSelections.upazilaName || '',
     });
+    fetch(`/api/geo?${params.toString()}`)
+      .then(r => r.json())
+      .then(res => {
+        // New API returns { data: [...], type: 'wards'|'unions' }
+        const items = Array.isArray(res) ? res : (res.data || []);
+        const resType = res.type || 'unions';
+        setGeoData(prev => ({ ...prev, unions: items, unionsType: resType }));
+        setGeoSelections(prev => ({ ...prev, union: '' }));
+        setGeoLoading(false);
+      });
   }, [geoSelections.upazila]);
 
   const addGeoArea = () => {
-    const { division, district, upazila, union } = geoSelections;
+    const { division, district, upazila, upazilaName, union } = geoSelections;
     if (!division) return;
     
     const divName = geoData.divisions.find(d => d.id === division)?.bn_name;
     const distName = geoData.districts.find(d => d.id === district)?.bn_name;
-    const upaName = geoData.upazilas.find(d => d.id === upazila)?.bn_name;
-    // For city wards, the value is already the name string (not an ID)
-    const uniFromList = geoData.unions.find(d => d.id === union)?.bn_name;
-    const uniName = uniFromList || (union && union !== 'custom' && union !== '' ? union : null);
+    const upaName = upazilaName || geoData.upazilas.find(d => d.id === upazila)?.bn_name;
+    const uniItem = geoData.unions.find(d => d.id === union);
+    const uniName = uniItem?.bn_name || uniItem?.name;
     
-    // If custom ward input is active, use that
-    const finalAreaName = geoSelections.union === 'custom' ? newServiceArea : uniName;
-    
-    // Build the most specific name possible (Ward or Union name is best for matching)
-    const parts = [divName, distName, upaName, finalAreaName].filter(Boolean);
+    const parts = [divName, distName, upaName, uniName].filter(Boolean);
     const areaString = parts.join(' > ');
     
     if (areaString && !serviceAreas.includes(areaString)) {
       setServiceAreas([...serviceAreas, areaString]);
-      if (geoSelections.union === 'custom') setNewServiceArea('');
     }
   };
 
@@ -274,6 +284,70 @@ export default function SettingsPage() {
       setSaving(false);
     }
   };
+
+  const handleCustomDomainSave = async () => {
+    const rawInput = customDomainInput.trim();
+    if (!rawInput) { toast.error('Custom domain cannot be empty.'); return; }
+    const cleanDomain = rawInput.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+    // Basic format check
+    if (!/^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z]{2,})+$/.test(cleanDomain)) {
+      toast.error('Invalid domain. Example: rahimshop.com');
+      return;
+    }
+    setSaving(true);
+    try {
+      const vercelRes = await fetch('/api/domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: cleanDomain, shopId: user.uid })
+      });
+      const vercelData = await vercelRes.json();
+
+      if (!vercelRes.ok) {
+        // 409 = duplicate domain
+        toast.error(vercelData.error || 'Could not register domain.');
+        setSaving(false);
+        return;
+      }
+
+      const newStatus = vercelData.status || 'pending_dns';
+      await updateShop(user.uid, { customDomain: cleanDomain, domainStatus: newStatus });
+      setShop(s => ({ ...s, customDomain: cleanDomain, domainStatus: newStatus }));
+      setDomainStatus(newStatus);
+      setCustomDomainEditing(false);
+
+      if (newStatus === 'pending_manual') {
+        toast('Domain saved. Add the domain manually in Vercel dashboard.', { icon: '⚠️' });
+      } else {
+        toast.success('Domain registered! Now configure DNS below.');
+      }
+    } catch (err) {
+      toast.error('Failed to save custom domain.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Poll Vercel every 30s to see if custom domain DNS has been verified
+  useEffect(() => {
+    if (!shop?.customDomain || domainStatus === 'connected') return;
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`/api/domain?domain=${encodeURIComponent(shop.customDomain)}`);
+        const data = await res.json();
+        if (data.status === 'connected') {
+          setDomainStatus('connected');
+          await updateShop(user.uid, { domainStatus: 'connected' });
+          setShop(s => ({ ...s, domainStatus: 'connected' }));
+          toast.success(`✅ ${shop.customDomain} is now live!`);
+        }
+      } catch (e) { /* silent */ }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop?.customDomain, domainStatus]);
 
   const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
@@ -404,6 +478,90 @@ export default function SettingsPage() {
                   </div>
                 )}
 
+              </div>
+            </div>
+
+            {/* Custom Domain Management UI */}
+            <div>
+              <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Globe size={14}/> Custom Domain Mapping (Pro)</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Connect your own .com / .shop domain</p>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-inner relative">
+                {customDomainEditing ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="e.g. rahimshop.com"
+                      value={customDomainInput}
+                      onChange={e => setCustomDomainInput(e.target.value.toLowerCase())}
+                      className="w-full bg-white border-2 border-emerald-200 rounded-xl px-3 py-2 text-sm font-black outline-none focus:border-emerald-600 transition-all text-slate-900"
+                    />
+                    <div className="flex gap-2">
+                       <button onClick={handleCustomDomainSave} disabled={saving} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Save Domain</button>
+                       <button onClick={() => setCustomDomainEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {shop?.customDomain ? (
+                      <div className="space-y-3">
+                        {/* Domain + Status Badge */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <a href={`https://${shop.customDomain}`} target="_blank" rel="noreferrer" className="text-sm font-black text-emerald-700 hover:text-emerald-800 underline truncate tracking-tight">
+                            {shop.customDomain}
+                          </a>
+                          {/* Status Badge */}
+                          {domainStatus === 'connected' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Connected
+                            </span>
+                          )}
+                          {(domainStatus === 'pending_dns' || domainStatus === '') && shop?.customDomain && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[9px] font-black uppercase tracking-wider">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Pending DNS
+                            </span>
+                          )}
+                          {domainStatus === 'pending_manual' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[9px] font-black uppercase tracking-wider">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Manual Required
+                            </span>
+                          )}
+                        </div>
+
+                        {/* DNS Instructions — only show when not yet connected */}
+                        {domainStatus !== 'connected' && (
+                          <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs">
+                            <p className="font-bold text-slate-800 mb-2">DNS Instructions (Add in your Domain Panel):</p>
+                            <div className="space-y-2 font-mono text-[10px]">
+                              <div className="flex justify-between bg-slate-50 p-2 rounded">
+                                 <span className="text-slate-500 font-bold">Type: A</span>
+                                 <span className="text-slate-500 font-bold">Name: @</span>
+                                 <span className="text-emerald-700 font-black select-all">76.76.21.21</span>
+                              </div>
+                              <div className="flex justify-between bg-slate-50 p-2 rounded">
+                                 <span className="text-slate-500 font-bold">Type: CNAME</span>
+                                 <span className="text-slate-500 font-bold">Name: www</span>
+                                 <span className="text-emerald-700 font-black select-all">cname.vercel-dns.com</span>
+                              </div>
+                            </div>
+                            <p className="text-[9px] text-amber-600 font-bold mt-2">
+                              ⏱ DNS changes take 10–30 minutes. This page auto-checks every 30 seconds.
+                            </p>
+                          </div>
+                        )}
+                        {domainStatus === 'connected' && (
+                          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[10px] font-bold text-emerald-700">
+                            ✅ Your custom domain is live with SSL! Customers can now access your store via <span className="underline">{shop.customDomain}</span>.
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs font-bold text-slate-400">No custom domain linked. Connect your own .com or .shop domain below.</p>
+                    )}
+                    <button onClick={() => setCustomDomainEditing(true)} className="mt-1 w-full py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+                       {shop?.customDomain ? 'Change Domain' : 'Connect Custom Domain'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -663,81 +821,65 @@ export default function SettingsPage() {
                     বাংলাদেশ জিও-ডেটা অনুযায়ী সার্ভিস এলাকা বেছে নিন (বিভাগ {' > '} জেলা {' > '} উপজেলা {' > '} ইউনিয়ন/সিটি)। কাস্টমাররা অর্ডারের সময় এই এলাকার সাথে লোকেশন ম্যাচিং হবে।
                   </p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Division */}
-                    <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* 1. Division */}
+                    <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">বিভাগ</label>
                       <select
                         value={geoSelections.division}
                         onChange={e => setGeoSelections({ ...geoSelections, division: e.target.value })}
-                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer"
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer"
                       >
-                        <option value="">বিভাগ সিলেক্ট করুন</option>
+                        <option value="">-- বিভাগ --</option>
                         {geoData.divisions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
-                    {/* District */}
-                    <div className="space-y-1.5 opacity-0 animate-in fade-in slide-in-from-top-1 duration-300 fill-mode-forwards" style={{ opacity: geoSelections.division ? 1 : 0.5 }}>
+                    {/* 2. District */}
+                    <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">জেলা</label>
                       <select
-                        disabled={!geoSelections.division}
+                        disabled={!geoSelections.division || !geoData.districts.length}
                         value={geoSelections.district}
                         onChange={e => setGeoSelections({ ...geoSelections, district: e.target.value })}
-                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed"
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer disabled:bg-slate-50 disabled:opacity-60"
                       >
-                        <option value="">জেলা সিলেক্ট করুন</option>
+                        <option value="">-- জেলা --</option>
                         {geoData.districts.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
-                    {/* Upazila */}
-                    <div className="space-y-1.5" style={{ opacity: geoSelections.district ? 1 : 0.5 }}>
+                    {/* 3. Upazila */}
+                    <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">উপজেলা</label>
                       <select
-                        disabled={!geoSelections.district}
+                        disabled={!geoSelections.district || !geoData.upazilas.length}
                         value={geoSelections.upazila}
-                        onChange={e => setGeoSelections({ ...geoSelections, upazila: e.target.value })}
-                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed max-h-[150px] overflow-y-auto custom-scrollbar"
+                        onChange={e => {
+                          const sel = geoData.upazilas.find(u => u.id === e.target.value);
+                          setGeoSelections({ ...geoSelections, upazila: e.target.value, upazilaName: sel?.bn_name || '', union: '' });
+                        }}
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer disabled:bg-slate-50 disabled:opacity-60"
                       >
-                        <option value="">উপজেলা সিলেক্ট করুন</option>
-                        {[...geoData.upazilas].sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+                        <option value="">-- উপজেলা --</option>
+                        {geoData.upazilas.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
-                    {/* Union / Word */}
-                    <div className="space-y-1.5" style={{ opacity: geoSelections.upazila ? 1 : 0.5 }}>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">ইউনিয়ন / সিটি ওয়ার্ড</label>
-                      <div className="relative group/geo">
-                        <select
-                          disabled={!geoSelections.upazila}
-                          value={geoSelections.union}
-                          onChange={e => setGeoSelections({ ...geoSelections, union: e.target.value })}
-                          className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer disabled:bg-slate-50 disabled:cursor-not-allowed max-h-[200px] overflow-y-auto custom-scrollbar"
-                        >
-                          <option value="">সিলেক্ট করুন (অথবা নিচে নাম লিখুন)</option>
-                          {(() => {
-                             const distName = geoData.districts.find(d => d.id === geoSelections.district)?.bn_name || geoSelections.district;
-                             const cityWards = getCityWards(distName);
-                             if (cityWards) {
-                               return cityWards.map(w => <option key={w.id} value={w.name}>{w.name}</option>);
-                             }
-                             return [...geoData.unions].sort((a,b) => a.bn_name?.localeCompare(b.bn_name, 'bn')).map(d => <option key={d.id} value={d.bn_name}>{d.bn_name}</option>);
-                          })()}
-                          <option value="custom">+ হাতে নাম লিখুন (Custom Name)...</option>
-                        </select>
-                        <ChevronDown size={14} className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
-                      </div>
-                      
-                      {geoSelections.union === 'custom' && (
-                        <input 
-                          type="text"
-                          placeholder="ওয়ার্ড বা ইউনিয়নের নাম লিখুন..."
-                          className="w-full mt-2 bg-slate-50 border-2 border-purple-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-900 outline-none focus:border-purple-600"
-                          value={newServiceArea}
-                          onChange={e => setNewServiceArea(e.target.value)}
-                        />
-                      )}
+                    {/* 4. Ward / Union — label changes based on type returned by API */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">
+                        {geoData.unionsType === 'wards' ? 'সিটি ওয়ার্ড' : 'ইউনিয়ন'}
+                      </label>
+                      <select
+                        disabled={!geoSelections.upazila || geoLoading}
+                        value={geoSelections.union}
+                        onChange={e => setGeoSelections({ ...geoSelections, union: e.target.value })}
+                        className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer disabled:bg-slate-50 disabled:opacity-60"
+                      >
+                        <option value="">{geoLoading ? 'লোড হচ্ছে...' : `-- ${geoData.unionsType === 'wards' ? 'ওয়ার্ড' : 'ইউনিয়ন'} (ঐচ্ছিক) --`}</option>
+                        {geoData.unions.map(d => <option key={d.id} value={d.id}>{d.bn_name || d.name}</option>)}
+                      </select>
                     </div>
                   </div>
 
@@ -745,12 +887,13 @@ export default function SettingsPage() {
                     type="button"
                     disabled={!geoSelections.division || geoLoading}
                     onClick={addGeoArea}
-                    className="w-full py-4 bg-slate-900 lg:bg-purple-600 text-white rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:scale-100"
+                    className="w-full py-3.5 bg-purple-600 text-white rounded-2xl font-black text-sm hover:bg-purple-700 active:scale-95 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {geoLoading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Plus size={18} />}
-                    সার্ভিস এরিয়া হিসেবে যোগ করুন
+                    {geoLoading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Plus size={16} />}
+                    এলাকা যোগ করুন
                   </button>
                 </div>
+
 
                 {/* Selected areas */}
                 {serviceAreas.length > 0 && (
