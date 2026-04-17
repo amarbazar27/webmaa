@@ -603,7 +603,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       localStorage.removeItem(CART_KEY);
       trackEvent('begin_checkout', { items_count: cart.length, total: cartTotal + effectiveDelivery });
       
-      const serial = await getOrderSerial(shop.id);
       trackEvent('purchase', { transaction_id: orderId, value: cartTotal, currency: 'BDT' });
       toast.success('অর্ডার প্লেস করা হয়েছে! 🎉');
       
