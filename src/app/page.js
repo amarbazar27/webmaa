@@ -325,6 +325,32 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Promoted Shops Section */}
+      {(globalConfig?.promotedLinks && globalConfig.promotedLinks.length > 0) && (
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 border-t border-white/[0.06]">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <p className="text-[11px] font-bold text-amber-400 uppercase tracking-[0.3em] mb-4">Powered by Webmaa</p>
+            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+              Premium Stores Built<br />
+              <span className="text-white/30">On Our Platform</span>
+            </h2>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6">
+            {globalConfig.promotedLinks.map((link, idx) => (
+              <a key={idx} href={link.url} target="_blank" rel="noreferrer" className="group flex items-center gap-4 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-amber-500/30 p-5 rounded-2xl transition-all duration-300 hover:-translate-y-2">
+                <div className="w-12 h-12 bg-amber-500/20 text-amber-500 flex items-center justify-center rounded-xl group-hover:scale-110 transition-transform">
+                  <Store size={24} />
+                </div>
+                <div>
+                  <h4 className="text-white font-black text-lg group-hover:text-amber-400 transition-colors">{link.title}</h4>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest flex items-center gap-1 mt-1">Visit Store <ArrowRight size={10} /></p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Contact & Support Section */}
       <div id="contact" className="relative z-10 max-w-7xl mx-auto px-6 py-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">

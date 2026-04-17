@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { addProduct, getCategories } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown, Sparkles, Plus, Trash2 } from 'lucide-react';
+import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown, Sparkles, Plus, Trash2, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 

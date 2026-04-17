@@ -228,7 +228,8 @@ export default function SettingsPage() {
     const finalAreaName = geoSelections.union === 'custom' ? newServiceArea : uniName;
     
     // Build the most specific name possible (Ward or Union name is best for matching)
-    let areaString = finalAreaName || upaName || distName || divName;
+    const parts = [divName, distName, upaName, finalAreaName].filter(Boolean);
+    const areaString = parts.join(' > ');
     
     if (areaString && !serviceAreas.includes(areaString)) {
       setServiceAreas([...serviceAreas, areaString]);

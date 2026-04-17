@@ -24,7 +24,7 @@ export default function SuperAdminPage() {
   const [inviting, setInviting] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   
-  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactWa: '', contactFb: '', contactEmail: '' });
+  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactWa: '', contactFb: '', contactEmail: '', promotedLinks: [] });
   const [savingConfig, setSavingConfig] = useState(false);
   
   const router = useRouter();
@@ -61,7 +61,8 @@ export default function SuperAdminPage() {
         geminiApiKey: configData?.geminiApiKey || '',
         contactWa: configData?.contactWa || '',
         contactFb: configData?.contactFb || '',
-        contactEmail: configData?.contactEmail || ''
+        contactEmail: configData?.contactEmail || '',
+        promotedLinks: configData?.promotedLinks || []
       });
     });
     return () => unsubscribe();
@@ -185,6 +186,36 @@ export default function SuperAdminPage() {
              <Input label="WhatsApp Number" placeholder="017XXX..." value={globalConfig.contactWa} onChange={e => setGlobalConfig({...globalConfig, contactWa: e.target.value})} />
              <Input label="Facebook Page Link" placeholder="https://facebook.com/..." value={globalConfig.contactFb} onChange={e => setGlobalConfig({...globalConfig, contactFb: e.target.value})} />
              <Input label="Support Email" placeholder="support@webmaa.cloud" value={globalConfig.contactEmail} onChange={e => setGlobalConfig({...globalConfig, contactEmail: e.target.value})} />
+           </div>
+
+           <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">
+             <div>
+               <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><ArrowUpRight size={14}/> Promoted Shops (Landing Page Portfolio)</p>
+               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Add shops built with Webmaa to showcase on the main landing page</p>
+             </div>
+             
+             {globalConfig.promotedLinks.map((link, idx) => (
+               <div key={idx} className="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200">
+                 <input type="text" placeholder="Shop Name" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold bg-white" value={link.title} onChange={e => {
+                   const newArr = [...globalConfig.promotedLinks];
+                   newArr[idx].title = e.target.value;
+                   setGlobalConfig({...globalConfig, promotedLinks: newArr});
+                 }} />
+                 <input type="text" placeholder="URL (e.g., https://example.com)" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold bg-white" value={link.url} onChange={e => {
+                   const newArr = [...globalConfig.promotedLinks];
+                   newArr[idx].url = e.target.value;
+                   setGlobalConfig({...globalConfig, promotedLinks: newArr});
+                 }} />
+                 <button type="button" onClick={() => {
+                   const newArr = globalConfig.promotedLinks.filter((_, i) => i !== idx);
+                   setGlobalConfig({...globalConfig, promotedLinks: newArr});
+                 }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+               </div>
+             ))}
+             
+             <button type="button" onClick={() => setGlobalConfig({...globalConfig, promotedLinks: [...globalConfig.promotedLinks, { title: '', url: '' }]})} className="text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-xl w-max border border-purple-200">
+               + Add Promoted Shop
+             </button>
            </div>
 
            <div className="md:col-span-12 flex justify-end">
