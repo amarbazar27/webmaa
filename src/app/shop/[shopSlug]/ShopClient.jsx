@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import { 
   ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart,
@@ -96,7 +97,6 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
           const fullLabel = [area, district, address.state].filter(Boolean).join(', ');
           if (area) setDetectedLocation(fullLabel);
           
-          // Transliteration: English Nominatim names -> Bengali equivalents
           const EN_TO_BN = {
             'rangpur': 'রংপুর', 'dhaka': 'ঢাকা', 'chittagong': 'চট্টগ্রাম',
             'sylhet': 'সিলেট', 'rajshahi': 'রাজশাহী', 'khulna': 'খুলনা',
@@ -105,44 +105,48 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
             'gazipur': 'গাজীপুর', 'narayanganj': 'নারায়ণগঞ্জ',
             'metropolitan': 'মেট্রোপলিটন', 'sadar': 'সদর',
             'cox': 'ককসবাজার', 'bogra': 'বগুড়া',
+            'lalbag': 'লালবাগ', 'dhap': 'ধাপ', 'modern mor': 'মর্ডান মোড়', 'mahi ganj': 'মাহিগঞ্জ',
+            'sathmatha': 'সাতমাথা', 'jahaj company': 'জাহাজ কোম্পানি', 'shalbon': 'শালবন',
+            'college road': 'কলেজ রোড', 'medical mor': 'মেডিকেল মোড়', 'checkpost': 'চেকপোস্ট'
           };
           const translateEN = (str) => str.toLowerCase().replace(/\b\w+\b/g, w => EN_TO_BN[w] || w);
           const translatedLabel = translateEN(fullLabel);
           
-          // Match against any significant address part (original + translated)
           const searchTargets = [area, district, address.county, address.municipality, address.city, address.town, address.village]
             .filter(Boolean).map(s => s.toLowerCase().trim());
           const translatedTargets = searchTargets.map(t => translateEN(t));
           const allTargets = [...searchTargets, ...translatedTargets];
           
-          const isAvailable = serviceAreas.some(sa => {
+          const isMatch = serviceAreas.some(sa => {
             if (!sa) return false;
             const normalizedSa = sa.toLowerCase().trim();
-            // Try whole string match first (original + translated)
             if (allTargets.some(target => target.includes(normalizedSa) || normalizedSa.includes(target))) return true;
             if (fullLabel.toLowerCase().includes(normalizedSa)) return true;
             if (translatedLabel.includes(normalizedSa)) return true;
-            
-            // Try word-by-word matching
-            const saParts = normalizedSa.split(/[\s,>]+/).filter(p => p.length > 1);
-            return saParts.some(part => allTargets.some(t => t.includes(part)) || translatedLabel.includes(part));
+            return false;
           });
-          setStatus(isAvailable ? 'available' : 'unavailable');
-        } catch {
-          setStatus('denied');
+          setStatus(isMatch ? 'available' : 'unavailable');
+        } catch (err) {
+          setStatus('unavailable');
         }
       },
-      () => setStatus('denied'),
-      { enableHighAccuracy: true }
+      () => setStatus('unavailable'),
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   }, [serviceAreas.length]);
 
-  const checkManual = () => {
-    if (!manualInput.trim()) return;
+  const checkManual = (val) => {
+    const inputVal = val || manualInput;
+    if (!inputVal.trim()) return;
     const isAvailable = serviceAreas.some(sa =>
-      manualInput.toLowerCase().includes(sa.toLowerCase()) || sa.toLowerCase().includes(manualInput.toLowerCase())
+      inputVal.toLowerCase().includes(sa.toLowerCase()) || sa.toLowerCase().includes(inputVal.toLowerCase())
     );
     setStatus(isAvailable ? 'available' : 'unavailable');
+    
+    // TRACK Manual selection
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'location_manual_select', { area_name: inputVal });
+    }
   };
 
   if (serviceAreas.length === 0 || status === 'idle') return null;
@@ -153,20 +157,21 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
     </div>
   );
 
-  if (status === 'denied') return (
+  if (status === 'denied' || status === 'unavailable') return (
     <div className="bg-slate-50 border-b border-slate-200 px-4 py-2">
       <div className="max-w-7xl mx-auto flex items-center gap-3 flex-wrap">
         <span className="text-xs font-bold text-slate-600">আপনার এলাকার নাম লিখুন:</span>
         <div className="flex gap-2 flex-1">
-          <input
-            type="text"
+          <select
             value={manualInput}
-            onChange={e => setManualInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && checkManual()}
-            placeholder="যেমন: Dhaka, Rangpur..."
-            className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-bold outline-none focus:border-purple-500"
-          />
-          <button onClick={checkManual} className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-black hover:bg-purple-700 transition-colors">যাচাই করুন</button>
+            onChange={e => { setManualInput(e.target.value); checkManual(e.target.value); }}
+            className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-bold outline-none focus:border-purple-500 appearance-none bg-white"
+          >
+            <option value="" disabled>আপনার এলাকা নির্বাচন করুন...</option>
+            {serviceAreas.map((area, i) => (
+              <option key={i} value={area}>{area}</option>
+            ))}
+          </select>
         </div>
       </div>
     </div>
@@ -194,7 +199,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   
   const CART_KEY = `cart_${initialShop.id}`;
   const [cart, setCart] = useState(() => {
-    // Sync from localStorage on first render (items may come from ProductDetailClient)
     if (typeof window === 'undefined') return [];
     try { return JSON.parse(localStorage.getItem(`cart_${initialShop.id}`) || '[]'); } catch { return []; }
   });
@@ -202,8 +206,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
-  // Lifted Location State
-  const [locationStatus, setLocationStatus] = useState('idle'); // idle | checking | available | unavailable | denied
+  const [locationStatus, setLocationStatus] = useState('idle');
   const [detectedLocation, setDetectedLocation] = useState('');
   const [locationManualInput, setLocationManualInput] = useState('');
   const [isAiOpen, setIsAiOpen] = useState(false);
@@ -213,14 +216,24 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [phoneError, setPhoneError] = useState('');
   const [productNotes, setProductNotes] = useState({});
   const [activeBanner, setActiveBanner] = useState(0);
-  const [pwaInstalled, setPwaInstalled] = useState(true); // hide by default
+  const [pwaInstalled, setPwaInstalled] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [orderSuccess, setOrderSuccess] = useState(null); // for PDF download
+  const [orderSuccess, setOrderSuccess] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '' });
 
-  // ── PWA: show only if not installed ──────────────────────
+  // ── TRACKING HELPER ──
+  const trackEvent = (name, params = {}) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', name, {
+        store_id: shop.id,
+        store_name: shop.shopName,
+        ...params
+      });
+    }
+  };
+
   useEffect(() => {
     const installed = localStorage.getItem('pwa_installed');
     if (!installed) setPwaInstalled(false);
@@ -360,14 +373,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   });
 
   // ── Cart Actions ───────────────────────────────
-  // Persist cart to localStorage on every change
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
     }
   }, [cart, CART_KEY]);
 
-  // Sync from localStorage when window gets focus (user comes back from detail page)
   useEffect(() => {
     const syncCart = () => {
       try {
@@ -380,15 +391,15 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   }, [CART_KEY]);
 
   const addToCart = (product) => {
-    const note = productNotes[product.id] || '';
     const existing = cart.find(item => item.id === product.id);
     if (existing) {
-      setCart(prev => prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1, note: note || item.note } : item));
+      setCart(prev => prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
       toast.success(`${product.name} পরিমাণ বাড়ানো হয়েছে`);
     } else {
-      setCart(prev => [...prev, { ...product, quantity: 1, note }]);
-      toast.success(`${product.name} কার্টে যোগ করা হয়েছে!`);
+      setCart([...cart, { ...product, quantity: 1, note: '' }]);
+      toast.success(`${product.name} যোগ করা হয়েছে! 🛒`);
     }
+    trackEvent('add_to_cart', { item_name: product.name, price: product.price });
   };
 
   const updateQuantity = (id, delta) => {
@@ -406,20 +417,19 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: v } : item));
   };
 
+  const cartTotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+  const deliveryAdvanceFee = shop.deliveryConfig?.advanceFee ? parseInt(shop.deliveryConfig.advanceFee) : 60;
+  const isCOD = shop.deliveryConfig?.isCOD !== false;
+  const cartCount = cart.reduce((a, c) => a + c.quantity, 0);
+  const isAdvanceRequired = !isCOD || (shop.deliveryConfig?.advanceFee && shop.deliveryConfig.advanceFee !== '0');
+
+  const { hasFreeDelivery } = getUserStreak(userOrders);
+  const effectiveDelivery = hasFreeDelivery ? 0 : deliveryAdvanceFee;
+
   const removeFromCart = (id) => {
     setCart(prev => prev.filter(item => item.id !== id));
     toast.error('কার্ট থেকে সরানো হয়েছে');
   };
-
-  const cartTotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-  const deliveryAdvanceFee = shop.deliveryConfig?.advanceFee ? parseInt(shop.deliveryConfig.advanceFee) : 60;
-  const isCOD = shop.deliveryConfig?.isCOD !== false;
-  const isAdvanceRequired = !isCOD || (shop.deliveryConfig?.advanceFee && shop.deliveryConfig.advanceFee !== '0');
-  const cartCount = cart.reduce((a, c) => a + c.quantity, 0);
-
-  // Free delivery from streak
-  const { hasFreeDelivery } = getUserStreak(userOrders);
-  const effectiveDelivery = hasFreeDelivery ? 0 : deliveryAdvanceFee;
 
   const handlePhoneChange = (e) => {
     const val = e.target.value.replace(/\D/g, '').slice(0, 11);
@@ -431,20 +441,13 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   // ── Place Order ────────────────────────────────
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    
     if (shop.isStrictLocation && locationStatus !== 'available') {
-      // Trigger a direct re-check or show prompt
-      toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই। অর্ডার করার জন্য সার্ভিস এরিয়ার ভেতরে থাকা বাধ্যতামূলক।');
-      if (locationStatus === 'denied' || locationStatus === 'idle') {
-        const confirm = window.confirm('লোকেশনের তথ্য দিতে হবে। এলাকা নিশ্চিত করুন।');
-        if (!confirm) return;
-      }
+      toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই।');
       return;
     }
-    
     if (cart.length === 0) return;
     if (!validatePhone(orderForm.phone)) {
-      setPhoneError('বৈধ বাংলাদেশি নম্বর লিখুন। 01 দিয়ে শুরু করুন, মোট ১১ ডিজিট।');
+      setPhoneError('বৈধ বাংলাদেশি নম্বর লিখুন।');
       return;
     }
     setPlacing(true);
@@ -457,7 +460,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       const dateStr = `${dd}${mm}${yyyy}`;
       const orderIdVisual = `${serial}#${dateStr}`;
 
-      const orderRef = await placeOrder(shop.id, {
+      const orderData = {
         customerName: orderForm.name,
         customerPhone: orderForm.phone,
         customerEmail: user?.email || '',
@@ -465,58 +468,49 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         customerNote: orderForm.note,
         transactionId: orderForm.txnId,
         orderIdVisual,
-        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, note: i.note || '', isCustomized: i.isCustomized || false })),
+        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, note: i.note || '' })),
         total: cartTotal + effectiveDelivery,
         isCOD,
         shopId: shop.id,
         shopName: shop.shopName,
         freeDelivery: hasFreeDelivery,
-      });
-
-      // Store order for PDF
+      };
+      
+      const orderId = await placeOrder(shop.id, orderData);
+      
+      // Store order for PDF download
       setOrderSuccess({
-        orderIdVisual,
-        items: cart,
-        total: cartTotal + effectiveDelivery,
+        ...orderData,
+        id: orderId,
         deliveryFee: effectiveDelivery,
-        customerName: orderForm.name,
-        customerPhone: orderForm.phone,
-        customerAddress: orderForm.address,
-        customerNote: orderForm.note,
-        shopName: shop.shopName,
         date: `${dd}/${mm}/${yyyy}`,
       });
 
-      toast.success('অর্ডার সফলভাবে দেওয়া হয়েছে! 🎉');
       setCart([]);
       localStorage.removeItem(CART_KEY);
       setIsOrderOpen(false);
-      setIsCartOpen(false);
-      setOrderForm({ name: '', phone: '', address: '', note: '', txnId: '' });
-
+      trackEvent('purchase', { transaction_id: orderId, value: cartTotal, currency: 'BDT' });
+      toast.success('অর্ডার প্লেস করা হয়েছে! 🎉');
+      
       if (user?.email) {
         import('@/lib/firestore').then(lib => lib.getUserOrders(shop.id, user.email).then(setUserOrders));
       }
     } catch (err) {
-      console.error(err);
-      toast.error('অর্ডার দিতে ব্যর্থ হয়েছে, আবার চেষ্টা করুন।');
+      toast.error('অর্ডার দিতে ব্যর্থ হয়েছে।');
     } finally {
       setPlacing(false);
     }
   };
 
-  // ── PDF Generator (Bengali-safe via html2canvas) ──
+  // ── PDF Generator ──
   const generatePDF = async (orderData) => {
     const { default: html2canvas } = await import('html2canvas');
     const { default: jsPDF } = await import('jspdf');
-    
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;left:-9999px;top:0;width:595px;padding:40px;background:white;font-family:Arial,sans-serif;direction:ltr';
     el.innerHTML = `
       <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:15px;margin-bottom:15px">
         <h1 style="font-size:24px;font-weight:900;color:#1e293b;margin:0">${orderData.shopName}</h1>
-        ${shop.deliveryConfig?.contactEmail ? `<p style="font-size:10px;color:#64748b;margin:2px 0">${shop.deliveryConfig.contactEmail}</p>` : ''}
-        ${shop.deliveryConfig?.contactWhatsapp ? `<p style="font-size:10px;color:#059669;margin:2px 0;font-weight:700">WhatsApp: ${shop.deliveryConfig.contactWhatsapp}</p>` : ''}
         <p style="font-size:9px;color:#94a3b8;margin:4px 0 0;text-transform:uppercase;letter-spacing:1px">Order Receipt / অর্ডার রশিদ</p>
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:16px">
@@ -533,31 +527,21 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0 0 8px">Customer Info</p>
         <p style="margin:4px 0;font-size:13px;font-weight:700;color:#1e293b">${orderData.customerName} — ${orderData.customerPhone}</p>
         <p style="margin:4px 0;font-size:12px;color:#64748b"><b>Delivery Addr:</b> ${orderData.customerAddress}</p>
-        <div style="margin:8px 0;padding:8px;background:#fff;border-radius:6px;border:1px solid #cbd5e1">
-          <p style="margin:0;font-size:10px;color:#7c3aed;font-weight:700"><b>Live Location:</b> ${detectedLocation || 'Not Shared'}</p>
-          ${locationManualInput ? `<p style="margin:4px 0 0;font-size:10px;color:#1d4ed8;font-weight:700"><b>Manual Selection:</b> ${locationManualInput}</p>` : ''}
-          <p style="margin:4px 0 0;font-size:10px;color:#64748b;font-weight:700"><b>Coords:</b> ${detectedLocation ? 'Auto-detected via GPS' : 'User provided'}</p>
-        </div>
-        ${orderData.customerNote ? `<p style="margin:8px 0 0;font-size:11px;color:#b45309;font-style:italic;padding-top:8px;border-top:1px dashed #cbd5e1"><b>Order Note:</b> ${orderData.customerNote}</p>` : ''}
       </div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
         <thead>
           <tr style="background:#1e293b;color:white">
-            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;border-radius:8px 0 0 0">Item</th>
+            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700">Item</th>
             <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700">Qty</th>
-            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;border-radius:0 8px 0 0">Price</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700">Price</th>
           </tr>
         </thead>
         <tbody>
           ${orderData.items.map((item, i) => `
             <tr style="background:${i%2===0?'white':'#f8fafc'}">
-              <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#1e293b">
-                ${item.name}
-                ${item.note ? `<br><span style="font-size:10px;color:#7c3aed;font-style:italic">📝 ${item.note}</span>` : ''}
-                ${item.isCustomized ? `<br><span style="font-size:10px;color:#16a34a;font-weight:900">✅ AI কাস্টম মূল্য</span>` : ''}
-              </td>
+              <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#1e293b">${item.name}</td>
               <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#64748b">${item.quantity}</td>
-              <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:900;color:#1e293b">${String.fromCharCode(2547)}${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
+              <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:900;color:#1e293b">৳${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -565,24 +549,21 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       <div style="border-top:2px solid #e2e8f0;padding-top:16px">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px">
           <span style="font-size:13px;color:#64748b;font-weight:600">Subtotal</span>
-          <span style="font-size:13px;font-weight:700;color:#1e293b">${String.fromCharCode(2547)}${orderData.items.reduce((s,i)=>s+parseFloat(i.price)*i.quantity,0).toFixed(0)}</span>
+          <span style="font-size:13px;font-weight:700;color:#1e293b">৳${orderData.items.reduce((s,i)=>s+parseFloat(i.price)*i.quantity,0).toFixed(0)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:12px">
           <span style="font-size:13px;color:#64748b;font-weight:600">Delivery</span>
-          <span style="font-size:13px;font-weight:700;color:${orderData.deliveryFee===0?'#16a34a':'#1e293b'}">${orderData.deliveryFee===0?'FREE':String.fromCharCode(2547)+orderData.deliveryFee}</span>
+          <span style="font-size:13px;font-weight:700;color:#1e293b">৳${orderData.deliveryFee}</span>
         </div>
         <div style="display:flex;justify-content:space-between;background:#7c3aed;color:white;padding:14px 16px;border-radius:12px">
           <span style="font-size:16px;font-weight:900">Total</span>
-          <span style="font-size:20px;font-weight:900">${String.fromCharCode(2547)}${orderData.total}</span>
+          <span style="font-size:20px;font-weight:900">৳${orderData.total}</span>
         </div>
       </div>
-      <p style="text-align:center;margin-top:20px;font-size:10px;color:#94a3b8">Thank you for shopping at ${orderData.shopName}!</p>
     `;
     document.body.appendChild(el);
-    
     const canvas = await html2canvas(el, { scale: 2, useCORS: true });
     document.body.removeChild(el);
-    
     const pdf = new jsPDF({ unit: 'px', format: 'a4' });
     const imgData = canvas.toDataURL('image/png');
     const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -592,8 +573,38 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
       
+      {/* 🚀 GOOGLE ANALYTICS DYNAMIC INJECTION */}
+      {shop.trackingConfig?.ga4Id && (
+        <>
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${shop.trackingConfig.ga4Id}`} strategy="afterInteractive" />
+          <Script id="ga4-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${shop.trackingConfig.ga4Id}', {
+                page_path: window.location.pathname,
+              });
+            `}
+          </Script>
+        </>
+      )}
+
+      {/* 🚀 MICROSOFT CLARITY DYNAMIC INJECTION */}
+      {shop.trackingConfig?.clarityId && (
+        <Script id="clarity-init" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "${shop.trackingConfig.clarityId}");
+          `}
+        </Script>
+      )}
+
       {/* ── Service Area Banner ── */}
       <ServiceBanner 
          shop={shop} 

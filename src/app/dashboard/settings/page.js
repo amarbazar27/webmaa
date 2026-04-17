@@ -111,6 +111,7 @@ export default function SettingsPage() {
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
   const [isStrictLocation, setIsStrictLocation] = useState(false);
+  const [trackingConfig, setTrackingConfig] = useState({ ga4Id: '', clarityId: '' });
   
   const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [] });
   const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', union: '' });
@@ -161,6 +162,10 @@ export default function SettingsPage() {
       setStaffEmails(data?.staffEmails || []);
       setServiceAreas(data?.serviceAreas || []);
       setIsStrictLocation(data?.isStrictLocation || false);
+      setTrackingConfig({
+        ga4Id: data?.trackingConfig?.ga4Id || '',
+        clarityId: data?.trackingConfig?.clarityId || ''
+      });
       
       setLoading(false);
     });
@@ -334,7 +339,8 @@ export default function SettingsPage() {
         aiConfig,
         staffEmails,
         serviceAreas,
-        isStrictLocation
+        isStrictLocation,
+        trackingConfig
       });
       toast.success('All settings synchronized! ✨');
     } catch (err) {
@@ -774,6 +780,33 @@ export default function SettingsPage() {
                    <Input label="WhatsApp (Number)" placeholder="e.g. 01700000000" value={socialLinks.wa} onChange={e => setSocialLinks({...socialLinks, wa: e.target.value})} />
                 </div>
              </Card>
+
+            <Card title="User Tracking (Analytics)" subtitle="Track User Behavior" icon={Users} className="border-2 border-slate-100 shadow-xl bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                   <Input 
+                     label="Google Analytics 4 (GA4) ID" 
+                     placeholder="G-XXXXXXX" 
+                     value={trackingConfig.ga4Id} 
+                     onChange={e => setTrackingConfig({...trackingConfig, ga4Id: e.target.value})} 
+                   />
+                   <p className="text-[10px] text-slate-400 mt-2 font-bold leading-relaxed">
+                     Tracks product clicks, add to cart, and checkout funnel. Enter your GA4 measurement ID.
+                   </p>
+                </div>
+                <div>
+                   <Input 
+                     label="Microsoft Clarity Project ID" 
+                     placeholder="a1b2c3d4e5" 
+                     value={trackingConfig.clarityId} 
+                     onChange={e => setTrackingConfig({...trackingConfig, clarityId: e.target.value})} 
+                   />
+                   <p className="text-[10px] text-slate-400 mt-2 font-bold leading-relaxed">
+                     Insanely powerful free tool. Provides session recordings and user heatmaps on your storefront.
+                   </p>
+                </div>
+              </div>
+            </Card>
 
             <Button
               variant="primary"

@@ -59,8 +59,8 @@ export async function POST(req) {
 
     if (isGemini) {
       // 🚀 Gemini API Call (2026 — Only live models)
-      // 🚀 Gemini API Call (Stable models — 2025)
-      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
+      // 🚀 Gemini API Call (Stable models — 2025/2026)
+      const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
       
       // Extract system message and user/bot messages separately
       // Gemini API does NOT accept 'system' role in contents — it must go in systemInstruction

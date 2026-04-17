@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ShoppingBag, LayoutDashboard, ArrowRight, Store, LogOut,
   Globe, Zap, ShieldCheck, Rocket, Sparkles, TrendingUp,
   Smartphone, BarChart3, Users, CheckCircle, Star, ChevronRight,
-  Package, CreditCard, Headphones, Mail, MessageSquare
+  Package, CreditCard, Headphones, Mail, MessageSquare, Facebook, Phone
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
-import { addRetailerRequest } from '@/lib/firestore';
+import { addRetailerRequest, subscribeGlobalConfig } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +22,11 @@ export default function Home() {
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestPhone, setRequestPhone] = useState('');
   const [requesting, setRequesting] = useState(false);
+  const [globalConfig, setGlobalConfig] = useState(null);
+ 
+  useEffect(() => {
+    return subscribeGlobalConfig(setGlobalConfig);
+  }, []);
 
   // Smart dashboard redirect based on user role
   const getDashboardHref = () => {
@@ -320,6 +325,84 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Contact & Support Section */}
+      <div id="contact" className="relative z-10 max-w-7xl mx-auto px-6 py-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="space-y-8">
+            <div>
+              <p className="text-[11px] font-bold text-purple-400 uppercase tracking-[0.3em] mb-4">Support</p>
+              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                We're Here to<br />
+                <span className="text-white/30">Help You Grow.</span>
+              </h2>
+            </div>
+            <p className="text-lg text-white/50 leading-relaxed font-medium">
+              Have questions about setting up your store or need technical assistance? Our team is available 24/7 to support your journey.
+            </p>
+            <div className="flex flex-col gap-4">
+              {globalConfig?.contactWa && (
+                <a href={`https://wa.me/${globalConfig.contactWa.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all group">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                    <Phone size={24} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">WhatsApp</p>
+                    <p className="text-white font-bold">{globalConfig.contactWa}</p>
+                  </div>
+                </a>
+              )}
+              {globalConfig?.contactFb && (
+                <a href={globalConfig.contactFb} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                    <Facebook size={24} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Facebook Message</p>
+                    <p className="text-white font-bold">Webmaa Official</p>
+                  </div>
+                </a>
+              )}
+              {globalConfig?.contactEmail && (
+                <a href={`mailto:${globalConfig.contactEmail}`} className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-purple-500/10 hover:border-purple-500/30 transition-all group">
+                  <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
+                    <Mail size={24} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Email Support</p>
+                    <p className="text-white font-bold">{globalConfig.contactEmail}</p>
+                  </div>
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="relative">
+             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 blur-[100px] rounded-full" />
+             <div className="relative bg-white/[0.03] backdrop-blur-xl border border-white/[0.1] rounded-[2.5rem] p-8 md:p-12 shadow-2xl">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center text-white mb-8 shadow-xl shadow-purple-500/20">
+                  <Headphones size={40} />
+                </div>
+                <h3 className="text-3xl font-black text-white mb-4">Dedicated Support</h3>
+                <p className="text-white/40 font-medium leading-relaxed mb-8">
+                  Every merchant on Webmaa gets access to a dedicated account manager to help with SEO, marketing strategies, and store optimization.
+                </p>
+                <div className="flex -space-x-3 mb-8">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[10px] font-black text-white">
+                      {['A','B','C','D'][i-1]}
+                    </div>
+                  ))}
+                  <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-purple-600 flex items-center justify-center text-[10px] font-black text-white">
+                    +12
+                  </div>
+                </div>
+                <div className="text-sm font-bold text-white/60 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Support members online
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
       {/* CTA Bottom Section */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-24 text-center">
         <div className="p-12 md:p-16 rounded-[2rem] bg-gradient-to-br from-purple-600/20 to-blue-600/20 backdrop-blur border border-purple-500/20 relative overflow-hidden">
@@ -399,7 +482,7 @@ export default function Home() {
               <Link href="/demo" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Demo</Link>
               <a href="#features" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Features</a>
               <a href="#stats" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Performance</a>
-              <a href="#contact" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Contact</a>
+              <a href="#contact" className="text-xs font-bold text-white/30 hover:text-white/60 transition-colors">Contact Support</a>
             </div>
             <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
               &copy; {new Date().getFullYear()} Webmaa. All rights reserved.

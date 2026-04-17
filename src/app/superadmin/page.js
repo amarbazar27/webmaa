@@ -24,7 +24,7 @@ export default function SuperAdminPage() {
   const [inviting, setInviting] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   
-  const [globalApiKey, setGlobalApiKey] = useState('');
+  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactWa: '', contactFb: '', contactEmail: '' });
   const [savingConfig, setSavingConfig] = useState(false);
   
   const router = useRouter();
@@ -57,7 +57,12 @@ export default function SuperAdminPage() {
   useEffect(() => { 
     loadData(); 
     const unsubscribe = subscribeGlobalConfig((configData) => {
-      setGlobalApiKey(configData?.geminiApiKey || '');
+      setGlobalConfig({
+        geminiApiKey: configData?.geminiApiKey || '',
+        contactWa: configData?.contactWa || '',
+        contactFb: configData?.contactFb || '',
+        contactEmail: configData?.contactEmail || ''
+      });
     });
     return () => unsubscribe();
   }, []);
@@ -116,8 +121,8 @@ export default function SuperAdminPage() {
     e.preventDefault();
     setSavingConfig(true);
     try {
-      await updateGlobalConfig({ geminiApiKey: globalApiKey });
-      toast.success('Global AI Configuration updated!');
+      await updateGlobalConfig(globalConfig);
+      toast.success('Global Configuration updated!');
     } catch (err) {
       toast.error('Failed to update global config');
     }
@@ -152,8 +157,8 @@ export default function SuperAdminPage() {
                    label="Global Groq API Key"
                    placeholder="gsk_..."
                    type={showKey ? "text" : "password"}
-                   value={globalApiKey}
-                   onChange={e => setGlobalApiKey(e.target.value)}
+                   value={globalConfig.geminiApiKey}
+                   onChange={e => setGlobalConfig({...globalConfig, geminiApiKey: e.target.value})}
                    icon={Key}
                  />
                  <button 
@@ -164,16 +169,27 @@ export default function SuperAdminPage() {
                    {showKey ? <EyeOff size={18} /> : <Eye size={18} />}
                  </button>
               </div>
-              {!showKey && globalApiKey && (
-                 <p className="text-xs font-mono text-purple-700 bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg mt-3 inline-block">Current Key: {maskKey(globalApiKey)}</p>
+              {!showKey && globalConfig.geminiApiKey && (
+                 <p className="text-xs font-mono text-purple-700 bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg mt-3 inline-block">Current Key: {maskKey(globalConfig.geminiApiKey)}</p>
               )}
               <p className="text-[10px] text-slate-400 font-bold mt-3 px-1 uppercase tracking-wider">
                 This key is used as a fallback if a retailer does not provide their own Groq API key.
               </p>
            </div>
-           <div className="md:col-span-2">
-              <Button type="submit" loading={savingConfig} className="w-full bg-slate-900 border-b-4 border-slate-950 hover:bg-black py-4">
-                Update
+           
+           <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-purple-100">
+             <div className="md:col-span-3">
+               <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Phone size={14}/> Platform Global Contact Links</p>
+               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Displayed on the Webmaa Landing Page for support</p>
+             </div>
+             <Input label="WhatsApp Number" placeholder="017XXX..." value={globalConfig.contactWa} onChange={e => setGlobalConfig({...globalConfig, contactWa: e.target.value})} />
+             <Input label="Facebook Page Link" placeholder="https://facebook.com/..." value={globalConfig.contactFb} onChange={e => setGlobalConfig({...globalConfig, contactFb: e.target.value})} />
+             <Input label="Support Email" placeholder="support@webmaa.cloud" value={globalConfig.contactEmail} onChange={e => setGlobalConfig({...globalConfig, contactEmail: e.target.value})} />
+           </div>
+
+           <div className="md:col-span-12 flex justify-end">
+              <Button type="submit" loading={savingConfig} className="bg-slate-900 border-b-4 border-slate-950 hover:bg-black w-40 h-12">
+                Update All settings
               </Button>
            </div>
         </form>
