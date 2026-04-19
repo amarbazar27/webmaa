@@ -191,7 +191,7 @@ export default function Home() {
       <div 
         className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
         style={{
-          background: \`radial-gradient(600px circle at \${mousePos.x}px \${mousePos.y}px, rgba(139, 92, 246, 0.07), transparent 40%)\`
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(139, 92, 246, 0.07), transparent 40%)`
         }}
       />
 
@@ -304,9 +304,9 @@ export default function Home() {
               onMouseEnter={() => setHoveredFeature(i)}
               onMouseLeave={() => setHoveredFeature(null)}
             >
-              <div className={\`absolute inset-0 bg-gradient-to-br \${feature.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500\`} />
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500`} />
               
-              <div className={\`w-14 h-14 rounded-2xl bg-gradient-to-br \${feature.color} flex items-center justify-center text-white mb-6 group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500 shadow-lg \${feature.shadow}/30\`}>
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-6 group-hover:scale-110 group-hover:rotate-[5deg] transition-all duration-500 shadow-lg ${feature.shadow}/30`}>
                 <feature.icon size={24} strokeWidth={2.5} />
               </div>
               <h3 className="text-xl font-black mb-3">{feature.title}</h3>
