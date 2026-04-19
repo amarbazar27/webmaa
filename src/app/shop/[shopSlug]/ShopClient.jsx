@@ -193,19 +193,39 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
     const uniName = uniItem?.bn_name || uniItem?.name;
 
     const parts = [divName, distName, upaName, uniName].filter(Boolean);
-    const areaString = parts.join(' > ');
-    
-    setManualInput(areaString);
-    const isAvailable = serviceAreas.includes(areaString);
+    const userAreaString = parts.join(' > ');
+    setManualInput(userAreaString);
+
+    // ── Smart prefix matching ───────────────────────────────────────────
+    // রিটেটিলার "রংপুর > রংপুর > রংপুর সদর" save করলে
+    // user "রংপুর > রংপুর > রংপুর সদর > ওয়ার্ড ৫" দিলেও match হবে
+    const isAvailable = serviceAreas.some(sa => {
+      if (!sa) return false;
+      // User's area starts with retailer's saved area → service available
+      if (userAreaString.startsWith(sa)) return true;
+      // Retailer saved a more specific area that starts with user's → also match
+      // (e.g. retailer saved ward, user selected only upazila — debatable, skip this)
+      // Exact match also works
+      if (sa === userAreaString) return true;
+      return false;
+    });
+
     setStatus(isAvailable ? 'available' : 'unavailable');
-    
+
     // TRACK Manual selection
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'location_manual_select', { area_name: areaString });
+      window.gtag('event', 'location_manual_select', { area_name: userAreaString, available: isAvailable });
     }
   };
 
   if (serviceAreas.length === 0 || status === 'idle') return null;
+
+  const showDropdowns = shop.showLocationSelector !== false;
+  const customAreas = shop.customAreas || [];
+  const allUnions = [
+    ...customAreas.map((name, i) => ({ id: `custom-${i}`, bn_name: `📍 ${name}`, name, _isCustom: true })),
+    ...geoData.unions,
+  ];
 
   if (status === 'checking') return (
     <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-2 text-blue-700 text-sm font-bold">
@@ -220,57 +240,67 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
            <MapPin size={14} className="text-purple-600" /> সার্ভিস এরিয়া যাচাই করুন
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-           <select 
-             value={geoSelections.division} 
-             onChange={e => setGeoSelections({...geoSelections, division: e.target.value})}
-             className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500"
-           >
-             <option value="">-- বিভাগ --</option>
-             {geoData.divisions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
-           </select>
+        {showDropdowns && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+             <select 
+               value={geoSelections.division} 
+               onChange={e => setGeoSelections({...geoSelections, division: e.target.value})}
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500"
+             >
+               <option value="">-- বিভাগ --</option>
+               {geoData.divisions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+             </select>
 
-           <select 
-             disabled={!geoSelections.division}
-             value={geoSelections.district} 
-             onChange={e => setGeoSelections({...geoSelections, district: e.target.value})}
-             className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
-           >
-             <option value="">-- জেলা --</option>
-             {geoData.districts.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
-           </select>
+             <select 
+               disabled={!geoSelections.division}
+               value={geoSelections.district} 
+               onChange={e => setGeoSelections({...geoSelections, district: e.target.value})}
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
+             >
+               <option value="">-- জেলা --</option>
+               {geoData.districts.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+             </select>
 
-           <select 
-             disabled={!geoSelections.district}
-             value={geoSelections.upazila} 
-             onChange={e => {
-               const sel = geoData.upazilas.find(u => u.id === e.target.value);
-               setGeoSelections({...geoSelections, upazila: e.target.value, upazilaName: sel?.bn_name || ''});
-             }}
-             className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
-           >
-             <option value="">-- উপজেলা --</option>
-             {geoData.upazilas.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
-           </select>
+             <select 
+               disabled={!geoSelections.district}
+               value={geoSelections.upazila} 
+               onChange={e => {
+                 const sel = geoData.upazilas.find(u => u.id === e.target.value);
+                 setGeoSelections({...geoSelections, upazila: e.target.value, upazilaName: sel?.bn_name || ''});
+               }}
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
+             >
+               <option value="">-- উপজেলা --</option>
+               {geoData.upazilas.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
+             </select>
 
-           <select 
-             disabled={!geoSelections.upazila}
-             value={geoSelections.union} 
-             onChange={e => setGeoSelections({...geoSelections, union: e.target.value})}
-             className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
-           >
-             <option value="">-- {geoData.unionsType === 'wards' ? 'ওয়ার্ড' : 'ইউনিয়ন'} --</option>
-             {geoData.unions.map(d => <option key={d.id} value={d.id}>{d.bn_name || d.name}</option>)}
-           </select>
-        </div>
+             <select 
+               disabled={!geoSelections.upazila}
+               value={geoSelections.union} 
+               onChange={e => setGeoSelections({...geoSelections, union: e.target.value})}
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
+             >
+               <option value="">-- {geoData.unionsType === 'wards' ? 'ওয়ার্ড' : 'ইউনিয়ন'} (ঐচ্ছিক) --</option>
+               {allUnions.map(d => <option key={d.id} value={d.id}>{d.bn_name || d.name}</option>)}
+             </select>
+          </div>
+        )}
 
-        <button 
-           onClick={checkUnifiedLocation}
-           disabled={!geoSelections.upazila || geoLoading}
-           className="w-full bg-slate-900 text-white py-2 rounded-xl text-xs font-black hover:bg-black transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-           {geoLoading ? <Loader2 size={14} className="animate-spin" /> : 'সার্ভিস যাচাই করুন'}
-        </button>
+        {showDropdowns && (
+          <button 
+             onClick={checkUnifiedLocation}
+             disabled={!geoSelections.upazila || geoLoading}
+             className="w-full bg-slate-900 text-white py-2 rounded-xl text-xs font-black hover:bg-black transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+             {geoLoading ? <Loader2 size={14} className="animate-spin" /> : 'সার্ভিস যাচাই করুন'}
+          </button>
+        )}
+
+        {!showDropdowns && (
+          <p className="text-xs font-bold text-slate-400 text-center py-2">
+            সার্ভিস এরিয়া অটোমেটিকভাবে যাচাই হয়েছে।
+          </p>
+        )}
 
         {manualInput && (
            <p className="text-[10px] font-bold text-red-500 text-center uppercase tracking-wider">

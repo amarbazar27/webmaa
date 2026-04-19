@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import {
   getRetailerInvites, addRetailerInvite, removeRetailerInvite, getAllShops,
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
-  subscribeGlobalConfig, updateGlobalConfig, getOrders
+  subscribeGlobalConfig, updateGlobalConfig, getOrders,
+  pauseShop, resumeShop, deleteRetailerRequest
 } from '@/lib/firestore';
 import {
-  UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck, Search,
+  UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
-  Globe, Link2
+  Globe, Link2, Pause, Play
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -24,6 +25,7 @@ export default function SuperAdminPage() {
   const [newEmail, setNewEmail] = useState('');
   const [inviting, setInviting] = useState(false);
   const [processingId, setProcessingId] = useState(null);
+  const [processingShopId, setProcessingShopId] = useState(null);
   
   const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactWa: '', contactFb: '', contactEmail: '', promotedLinks: [] });
   const [savingConfig, setSavingConfig] = useState(false);
@@ -139,6 +141,38 @@ export default function SuperAdminPage() {
       loadData();
     } catch (err) {
       toast.error('Denial failed');
+    }
+    setProcessingId(null);
+  };
+
+  const handlePauseShop = async (shop) => {
+    const action = shop.isActive !== false ? 'পজ' : 'চালু';
+    if (!confirm(`"${shop.shopName}" স্টোরটি ${action} করতে চান?`)) return;
+    setProcessingShopId(shop.id);
+    try {
+      if (shop.isActive !== false) {
+        await pauseShop(shop.id);
+        toast.success(`"${shop.shopName}" পজ করা হয়েছে।`);
+      } else {
+        await resumeShop(shop.id);
+        toast.success(`"${shop.shopName}" পুনরায় চালু হয়েছে!`);
+      }
+      loadData();
+    } catch (err) {
+      toast.error('স্টোর আপডেট করতে ব্যর্থ হয়েছে।');
+    }
+    setProcessingShopId(null);
+  };
+
+  const handleDeleteRequest = async (req) => {
+    if (!confirm(`${req.email}-এর আবেদনটি সম্পূর্ণ মুছে ফেলবেন? এরপর তারা আবার আবেদন করতে পারবে।`)) return;
+    setProcessingId(req.id);
+    try {
+      await deleteRetailerRequest(req.id);
+      toast.success('আবেদন মুছে ফেলা হয়েছে। ব্যবহারকারী আবার আবেদন করতে পারবে।');
+      loadData();
+    } catch (err) {
+      toast.error('মুছে ফেলতে সমস্যা হয়েছে।');
     }
     setProcessingId(null);
   };
@@ -319,8 +353,8 @@ export default function SuperAdminPage() {
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Processed History</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {processedRequests.map((req) => (
-                    <div key={req.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-3 overflow-hidden">
+                    <div key={req.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-3 overflow-hidden flex-1">
                         <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 font-black text-xs shrink-0">
                           {req.name?.[0] || 'U'}
                         </div>
@@ -329,11 +363,23 @@ export default function SuperAdminPage() {
                           <p className="text-[9px] text-slate-400 font-bold">{req.phone}</p>
                         </div>
                       </div>
-                      <span className={`text-[10px] font-black px-2 py-1 rounded-md ${
-                        req.status === 'approved' ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-700 bg-red-50 border border-red-200'
-                      }`}>
-                        {req.status === 'approved' ? 'Approved' : 'Denied'}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-[10px] font-black px-2 py-1 rounded-md ${
+                          req.status === 'approved' ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-700 bg-red-50 border border-red-200'
+                        }`}>
+                          {req.status === 'approved' ? 'Approved' : 'Denied'}
+                        </span>
+                        {req.status === 'denied' && (
+                          <button
+                            onClick={() => handleDeleteRequest(req)}
+                            disabled={processingId === req.id}
+                            title="মুছে ফেলুন (user আবার apply করতে পারবে)"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
+                          >
+                            {processingId === req.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -369,6 +415,7 @@ export default function SuperAdminPage() {
                       <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
                       <th className="pb-2 px-4 border-b border-slate-100 text-right">Status</th>
+                      <th className="pb-2 px-4 border-b border-slate-100 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -440,11 +487,30 @@ export default function SuperAdminPage() {
                               <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
                             </div>
                           </td>
+                          <td className="p-4 text-right">
+                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                               <span className={`w-1.5 h-1.5 rounded-full ${shop.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                               {shop.isActive !== false ? 'Live' : 'Paused'}
+                             </span>
+                          </td>
                           <td className="p-4 text-right last:rounded-r-2xl">
-                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${shop.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
-                              {shop.isActive !== false ? 'Live' : 'Suspended'}
-                            </span>
+                            <button
+                              onClick={() => handlePauseShop(shop)}
+                              disabled={processingShopId === shop.id}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all disabled:opacity-50 ${
+                                shop.isActive !== false
+                                  ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                              }`}
+                            >
+                              {processingShopId === shop.id ? (
+                                <Loader2 size={11} className="animate-spin" />
+                              ) : shop.isActive !== false ? (
+                                <><Pause size={11} /> Pause</>
+                              ) : (
+                                <><Play size={11} /> Resume</>
+                              )}
+                            </button>
                           </td>
                         </tr>
                       );

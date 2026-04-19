@@ -115,6 +115,9 @@ export default function SettingsPage() {
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
   const [isStrictLocation, setIsStrictLocation] = useState(false);
+  const [showLocationSelector, setShowLocationSelector] = useState(true);
+  const [customAreas, setCustomAreas] = useState([]);
+  const [newCustomArea, setNewCustomArea] = useState('');
   const [trackingConfig, setTrackingConfig] = useState({ ga4Id: '', clarityId: '' });
   
   const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [], unionsType: 'unions' });
@@ -167,6 +170,8 @@ export default function SettingsPage() {
       setStaffEmails(data?.staffEmails || []);
       setServiceAreas(data?.serviceAreas || []);
       setIsStrictLocation(data?.isStrictLocation || false);
+      setShowLocationSelector(data?.showLocationSelector !== false);
+      setCustomAreas(data?.customAreas || []);
       setTrackingConfig({
         ga4Id: data?.trackingConfig?.ga4Id || '',
         clarityId: data?.trackingConfig?.clarityId || ''
@@ -415,6 +420,8 @@ export default function SettingsPage() {
         staffEmails,
         serviceAreas,
         isStrictLocation,
+        showLocationSelector,
+        customAreas,
         trackingConfig
       });
       toast.success('All settings synchronized! ✨');
@@ -814,6 +821,52 @@ export default function SettingsPage() {
                     <input type="checkbox" className="sr-only peer" checked={isStrictLocation} onChange={e => setIsStrictLocation(e.target.checked)} />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                   </label>
+                </div>
+
+                <div className="flex items-center justify-between bg-blue-50 p-4 rounded-xl border border-blue-100">
+                  <div>
+                    <h4 className="text-sm font-black text-blue-900 flex items-center gap-2">
+                       <MapPin size={16} className="text-blue-600" /> কাস্টমারকে লোকেশন বক্স দেখাবেন?
+                    </h4>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase mt-1">অফ থাকলে শুধু GPS দিয়ে অটোমেটিক চেক হবে</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={showLocationSelector} onChange={e => setShowLocationSelector(e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-black text-slate-900">কাস্টম এলাকা যোগ করুন</h4>
+                    <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase">যে এলাকার নাম অটোমেটিক লিস্টে নেই (ঐচ্ছিক)</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input 
+                      placeholder="যেমন: নতুন বাজার, ব্লক সি" 
+                      value={newCustomArea}
+                      onChange={e => setNewCustomArea(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button type="button" onClick={() => {
+                      if (newCustomArea.trim() && !customAreas.includes(newCustomArea.trim())) {
+                         setCustomAreas([...customAreas, newCustomArea.trim()]);
+                         setNewCustomArea('');
+                      }
+                    }} className="h-[52px]">যোগ করুন</Button>
+                  </div>
+                  {customAreas.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {customAreas.map(area => (
+                        <div key={area} className="flex items-center gap-2 bg-white border border-slate-300 text-slate-800 px-3 py-1.5 rounded-xl text-sm font-black">
+                          {area}
+                          <button type="button" onClick={() => setCustomAreas(customAreas.filter(a => a !== area))} className="text-slate-400 hover:text-red-500 transition-colors ml-1">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">

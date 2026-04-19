@@ -36,6 +36,21 @@ export const updateShop = async (shopId, data) => {
   return updateDoc(shopDocRef, { ...data, updatedAt: serverTimestamp() });
 };
 
+// Super admin: স্টোর পজ করা (isActive = false)
+export const pauseShop = async (shopId) => {
+  return updateDoc(doc(db, 'shops', shopId), { isActive: false, pausedAt: serverTimestamp() });
+};
+
+// Super admin: স্টোর চালু করা (isActive = true)
+export const resumeShop = async (shopId) => {
+  return updateDoc(doc(db, 'shops', shopId), { isActive: true, pausedAt: null });
+};
+
+// Super admin: deny করা request চিরতরে মুছে ফেলা (user আবার apply করতে পারবে)
+export const deleteRetailerRequest = async (requestId) => {
+  return deleteDoc(doc(db, 'retailer_requests', requestId));
+};
+
 // ── PRODUCTS ──────────────────────────────────────
 export const getProducts = async (shopId) => {
   const q = query(
