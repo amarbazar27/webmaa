@@ -6,7 +6,7 @@ import {
   ShoppingBag, LayoutDashboard, ArrowRight, Store, LogOut,
   Globe, Zap, ShieldCheck, Rocket, Sparkles, TrendingUp,
   Smartphone, BarChart3, Users, CheckCircle, Star, ChevronRight,
-  Package, CreditCard, Headphones, Mail, MessageSquare, Phone
+  Package, CreditCard, Headphones, Mail, MessageSquare, Phone, ArrowUpRight
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
