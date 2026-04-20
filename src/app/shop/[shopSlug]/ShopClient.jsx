@@ -1342,31 +1342,33 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                 <div className="flex flex-col items-center justify-center h-full gap-5 py-6">
                   <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><User size={32} /></div>
                   <div className="text-center">
-                    <p className="font-black text-slate-900 text-lg">অর্ডার ট্র্যাক করুন</p>
-                    <p className="text-xs text-slate-500 font-bold mt-1">আপনার ফোন নম্বর দিয়ে পূর্বে করা অর্ডার ও স্ট্রিক দেখুন।</p>
+                    <p className="font-black text-slate-900 text-lg">আপনি লগইন করেননি</p>
+                    <p className="text-xs text-slate-500 font-bold mt-1">অর্ডার ইতিহাস ও ডেইলি স্ট্রিক দেখতে লগইন করুন।</p>
                   </div>
                   
-                  <div className="w-full space-y-3">
-                    <input type="text" maxLength={11} placeholder="01XXXXXXXXX" value={phoneInput} onChange={e => setPhoneInput(e.target.value.replace(/\D/g, ''))} className="w-full p-4 rounded-xl bg-white border-2 border-slate-200 text-center font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 transition-all shadow-sm" />
+                  <button onClick={handleGoogleLogin} className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
+                    গুগল দিয়ে লগইন
+                  </button>
+
+                  <div className="relative w-full my-2">
+                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                     <div className="relative flex justify-center text-[10px] font-black text-slate-400"><span className="bg-slate-50 px-3 uppercase tracking-widest text-[#ef4444]">অথবা</span></div>
+                  </div>
+
+                  {/* Phone Tracking Section / Fallback */}
+                  <div className="w-full space-y-2.5 p-4 rounded-xl border border-slate-200 bg-white">
+                    <p className="text-xs font-bold text-slate-600 text-center mb-1">ফোন নম্বর দিয়ে ট্র্যাক করুন</p>
+                    <input type="text" maxLength={11} placeholder="01XXXXXXXXX" value={phoneInput} onChange={e => setPhoneInput(e.target.value.replace(/\D/g, ''))} className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-center font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all text-sm" />
                     <button onClick={() => {
                       if(phoneInput.length === 11) {
                          setGuestPhone(phoneInput);
                          if(typeof window !== 'undefined') localStorage.setItem(`guestPhone_${shop.id}`, phoneInput);
                       } else toast.error('সঠিক ১১ ডিজিটের ফোন নম্বর দিন');
-                    }} className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-black shadow-lg hover:bg-slate-800 transition-colors">
+                    }} className="w-full py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors text-sm">
                       অর্ডার হিস্টোরি দেখুন
                     </button>
                   </div>
-
-                  <div className="relative w-full my-1">
-                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-                     <div className="relative flex justify-center text-[10px] font-black text-slate-400"><span className="bg-slate-50 px-3 uppercase tracking-widest">অথবা</span></div>
-                  </div>
-
-                  <button onClick={handleGoogleLogin} className="w-full py-3.5 bg-white border-2 border-slate-200 rounded-xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt=""/>
-                    গুগল দিয়ে লগইন
-                  </button>
                 </div>
               ) : (
                 <div className="w-full space-y-5">
