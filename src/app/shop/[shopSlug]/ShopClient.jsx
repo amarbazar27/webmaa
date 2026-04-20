@@ -151,27 +151,48 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
             'mymensingh': 'ময়মনসিংহ', 'comilla': 'কুমিল্লা',
             'gazipur': 'গাজীপুর', 'narayanganj': 'নারায়ণগঞ্জ',
             'metropolitan': 'মেট্রোপলিটন', 'sadar': 'সদর',
-            'cox': 'ককসবাজার', 'bogra': 'বগুড়া',
+            'cox': 'কক্সবাজার', 'cox\'s bazar': 'কক্সবাজার', 'bogra': 'বগুড়া',
             'lalbag': 'লালবাগ', 'dhap': 'ধাপ', 'modern mor': 'মর্ডান মোড়', 'mahi ganj': 'মাহিগঞ্জ',
             'sathmatha': 'সাতমাথা', 'jahaj company': 'জাহাজ কোম্পানি', 'shalbon': 'শালবন',
             'college road': 'কলেজ রোড', 'medical mor': 'মেডিকেল মোড়', 'checkpost': 'চেকপোস্ট'
           };
+          
+          // Remove problematic suffixes from OSM names before translating
+          const cleanOSMString = (str) => {
+            if (!str) return '';
+            return str.toLowerCase().replace(/ district| city| corporation| upazila| thana| zila/g, '').trim();
+          };
+
           const translateEN = (str) => str.toLowerCase().replace(/\b\w+\b/g, w => EN_TO_BN[w] || w);
           const translatedLabel = translateEN(fullLabel);
           
           const searchTargets = [area, district, address.county, address.municipality, address.city, address.town, address.village]
-            .filter(Boolean).map(s => s.toLowerCase().trim());
+            .filter(Boolean)
+            .map(s => cleanOSMString(s));
+            
           const translatedTargets = searchTargets.map(t => translateEN(t));
-          const allTargets = [...searchTargets, ...translatedTargets];
+          const allTargets = [...searchTargets, ...translatedTargets].filter(t => t.length > 2); // Ignore very short invalid targets
           
-          const isMatch = serviceAreas.some(sa => {
+          let isMatch = false;
+          // Only perform strict check if shop specifically disabled the location selector AND they actively have service Areas
+          // But even then, we want to be forgiving on auto-location because GPS reverse-geocode is inaccurate in BD.
+          isMatch = serviceAreas.some(sa => {
             if (!sa) return false;
             const normalizedSa = sa.toLowerCase().trim();
+            // If any cleaned OSM word or translated word is inside the Retailer's string
             if (allTargets.some(target => target.includes(normalizedSa) || normalizedSa.includes(target))) return true;
             if (fullLabel.toLowerCase().includes(normalizedSa)) return true;
             if (translatedLabel.includes(normalizedSa)) return true;
             return false;
           });
+          
+          // Extra leniency: if location mapping failed but the shop explicitly shows no dropdowns, 
+          // we shouldn't hard-block them on a false GPS read as BD GPS strings often lack matching.
+          // Let them proceed if the GPS at least found something. (The final order is still checked by the retailer anyway)
+          if (!isMatch && shop.showLocationSelector === false) {
+             isMatch = true; 
+          }
+
           setStatus(isMatch ? 'available' : 'unavailable');
         } catch (err) {
           setStatus('unavailable');
