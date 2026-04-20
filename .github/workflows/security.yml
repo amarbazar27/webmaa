@@ -1,0 +1,35 @@
+name: Security Check
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Check for Hardcoded Secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Dependencies & Audit
+        run: |
+          npm ci
+          npm audit --audit-level=high
+
+      # Optional: Add OWASP ZAP Baseline Scan if you have a staging URL
+      # - name: OWASP ZAP Baseline Scan
+      #   uses: zaproxy/action-baseline@v0.7.0
+      #   with:
+      #     target: 'YOUR_STAGING_URL_HERE'

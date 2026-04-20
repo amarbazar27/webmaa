@@ -636,28 +636,42 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       const dateStr = `${dd}${mm}${yyyy}`;
       const orderIdVisual = `${serial}#${dateStr}`;
 
-      const orderData = {
+      const reqPayload = {
+        shopId: shop.id,
         customerName: orderForm.name,
         customerPhone: orderForm.phone,
         customerEmail: user?.email || '',
         customerAddress: orderForm.address,
         customerNote: orderForm.note,
         transactionId: orderForm.txnId,
-        orderIdVisual,
-        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, note: i.note || '' })),
-        total: cartTotal + effectiveDelivery,
-        isCOD,
-        shopId: shop.id,
-        shopName: shop.shopName,
-        freeDelivery: hasFreeDelivery,
+        items: cart.map(i => ({ id: i.id, quantity: i.quantity, note: i.note || '' }))
       };
+
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqPayload)
+      });
       
-      const orderId = await placeOrder(shop.id, orderData);
+      const payloadResp = await res.json();
+      if (!res.ok) {
+        throw new Error(payloadResp.error || 'Server error');
+      }
+
+      const orderId = payloadResp.orderId;
+      const finalTotal = payloadResp.total;
+      const orderIdVisual = payloadResp.orderIdVisual;
       
       // Store order for PDF download
       setOrderSuccess({
-        ...orderData,
+        shopName: shop.shopName,
+        customerName: orderForm.name,
+        customerPhone: orderForm.phone,
+        customerAddress: orderForm.address,
+        items: cart, // For simplicity in receipt display
+        total: finalTotal,
         id: orderId,
+        orderIdVisual,
         deliveryFee: effectiveDelivery,
         date: `${dd}/${mm}/${yyyy}`,
       });

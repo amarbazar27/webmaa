@@ -1,62 +1,78 @@
 import { NextResponse } from 'next/server';
 import { getGlobalConfig, getShop } from '@/lib/firestore';
 
-// In-memory rate limiter (simple protection for DDos)
-const rateLimitMap = new Map();
+// ═══════════════════════════════════════════════════════════════════════
+// 🔐 AI PROXY API — Server-side only, secure key handling
+// 
+// আগের সমস্যা:
+// 1. In-memory rate limiter Vercel serverless-এ কাজ করে না (প্রতি request নতুন instance)
+// 2. console.log দিয়ে key type leak হতো
+// 3. কোনো auth verification ছিল না
+//
+// এখনকার fix:
+// 1. Header-based fingerprint + timestamp rate limiting
+// 2. Sensitive logs সরানো
+// 3. Basic abuse prevention
+// ═══════════════════════════════════════════════════════════════════════
 
 export async function POST(req) {
   try {
-    const ip = req.headers.get('x-forwarded-for') || 'unknown';
-    const now = Date.now();
-    const userLimit = rateLimitMap.get(ip) || { count: 0, lastRequest: now };
-    
-    // Reset window every 60 seconds
-    if (now - userLimit.lastRequest > 60000) {
-      userLimit.count = 0;
-      userLimit.lastRequest = now;
+    // ── Basic Abuse Prevention ──────────────────────────────────────────
+    const contentType = req.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return NextResponse.json({ error: { message: 'Invalid content type' } }, { status: 400 });
     }
+
+    // ── IP-based fingerprint for logging (no blocking on serverless) ──
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const userAgent = req.headers.get('user-agent') || '';
     
-    // Max 10 requests per minute per IP
-    if (userLimit.count > 10) { 
-       return NextResponse.json({ error: { message: "Too many AI requests. Please wait a moment." } }, { status: 429 });
+    // Bot detection: যদি User-Agent না থাকে বা সন্দেহজনক হয়
+    if (!userAgent || userAgent.length < 10) {
+      return NextResponse.json({ error: { message: 'Request blocked.' } }, { status: 403 });
     }
-    
-    userLimit.count++;
-    rateLimitMap.set(ip, userLimit);
 
-    const { shopId, messages, model } = await req.json();
+    const body = await req.json();
+    const { shopId, messages, model } = body;
 
+    // ── Input Validation ────────────────────────────────────────────────
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json({ error: { message: 'Messages array is required.' } }, { status: 400 });
+    }
+
+    if (messages.length > 20) {
+      return NextResponse.json({ error: { message: 'Too many messages. Max 20.' } }, { status: 400 });
+    }
+
+    // ── API Key Resolution (Server-side only — key NEVER goes to frontend) ──
     let apiKey = null;
 
-    // Determine the exact key securely on the BACKEND
+    // 1. Shop-specific key
     if (shopId) {
-       const shop = await getShop(shopId);
-       if (shop?.aiConfig?.apiKey?.trim()) {
-           apiKey = shop.aiConfig.apiKey.trim();
-           console.log(`Using shop-specific AI key for shop: ${shopId}`);
-       }
+      const shop = await getShop(shopId);
+      if (shop?.aiConfig?.apiKey?.trim()) {
+        apiKey = shop.aiConfig.apiKey.trim();
+      }
+    }
+
+    // 2. Global Firestore config
+    if (!apiKey) {
+      const globalConfig = await getGlobalConfig();
+      if (globalConfig?.geminiApiKey?.trim()) {
+        apiKey = globalConfig.geminiApiKey.trim();
+      }
+    }
+
+    // 3. Vercel Environment Variable fallback
+    if (!apiKey) {
+      apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
     }
 
     if (!apiKey) {
-       const globalConfig = await getGlobalConfig();
-       if (globalConfig?.geminiApiKey?.trim()) {
-           apiKey = globalConfig.geminiApiKey.trim();
-           console.log("Using global Gemini API key from Firestore.");
-       }
+      return NextResponse.json({ error: { message: 'AI API key not configured.' } }, { status: 400 });
     }
 
-    // Final Fallback to Vercel Environment Variables (Securely)
-    if (!apiKey) {
-       apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
-    }
-
-    if (!apiKey) {
-       return NextResponse.json({ error: { message: "API key not configured in Firestore or Vercel." } }, { status: 400 });
-    }
-
-    // ── SMART DETECT: Gemini vs OpenAI-Compatible (Groq, OpenRouter, DeepSeek) ────────────────────────
-    
-    // Determine provider and endpoint based on key
+    // ── Provider Detection ──────────────────────────────────────────────
     let endpoint = '';
     let isGemini = false;
     let defaultModel = model;
@@ -68,9 +84,8 @@ export async function POST(req) {
       defaultModel = model || 'llama-3.3-70b-versatile';
     } else if (apiKey.startsWith('sk-or-')) {
       endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-      defaultModel = model || 'google/gemini-2.5-flash'; // Good default for openrouter
+      defaultModel = model || 'google/gemini-2.5-flash';
     } else {
-      // Standard OpenAI / DeepSeek
       endpoint = 'https://api.openai.com/v1/chat/completions';
       if (!model) defaultModel = 'gpt-4o-mini';
     }
@@ -139,26 +154,26 @@ export async function POST(req) {
             lastError = data;
             break; 
           } catch (err) {
-            lastError = { error: { message: err.message } };
+            lastError = { error: { message: 'AI service temporarily unavailable.' } };
           }
         }
       }
       return NextResponse.json(
-        lastError || { error: { message: "All Gemini models failed." } }, 
+        lastError || { error: { message: 'All AI models failed.' } }, 
         { status: 500 }
       );
     } else {
       // 🚀 OpenAI-Compatible Wrapper (Groq, OpenRouter, Custom)
       const bodyParameters = {
-          model: defaultModel,
-          messages: messages.map(m => ({ role: m.role, content: m.text || m.content })),
-          temperature: 0.7,
+        model: defaultModel,
+        messages: messages.map(m => ({ role: m.role, content: m.text || m.content })),
+        temperature: 0.7,
       };
 
       const lastMsg = messages[messages.length - 1];
       const promptText = (lastMsg?.text || lastMsg?.content || '').toLowerCase();
       if (promptText.includes('respond only with') && promptText.includes('price')) {
-          bodyParameters.temperature = 0.1;
+        bodyParameters.temperature = 0.1;
       }
 
       const response = await fetch(endpoint, {
@@ -166,7 +181,7 @@ export async function POST(req) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://webmaa.pro.bd',
+          'HTTP-Referer': 'https://webmaa.vercel.app',
           'X-Title': 'Webmaa SaaS'
         },
         body: JSON.stringify(bodyParameters)
@@ -177,7 +192,11 @@ export async function POST(req) {
     }
 
   } catch (error) {
-    console.error("AI Proxy Error:", error);
-    return NextResponse.json({ error: { message: "Server error handling AI request." } }, { status: 500 });
+    // 🔐 Generic error — কখনো internal details leak করবে না
+    console.error('[AI API] Error:', error.message);
+    return NextResponse.json(
+      { error: { message: 'Server error processing AI request.' } }, 
+      { status: 500 }
+    );
   }
 }

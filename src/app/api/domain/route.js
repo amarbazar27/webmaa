@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getShopByDomain } from '@/lib/firestore';
+import { verifyAuth, AuthError } from '@/lib/verifyAuth';
 
 // Validate that a string looks like a real domain (basic but effective)
 function isValidDomain(domain) {
@@ -7,18 +8,27 @@ function isValidDomain(domain) {
 }
 
 // ── POST /api/domain ─────────────────────────────────────────────────────────
-// Called from the retailer settings page when they submit a custom domain.
-// 1. Validates the format
-// 2. Checks for duplicates across all shops
-// 3. Calls Vercel Domains API to register it (server-side only)
-// 4. Returns status for the UI to display
+// 🔐 Auth Required — শুধু শপের মালিক নিজের domain সেট করতে পারবে
 export async function POST(req) {
   try {
+    // ── Auth Verification ──────────────────────────────────────────────
+    let authUser;
+    try {
+      authUser = await verifyAuth(req);
+    } catch (err) {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { domain, shopId } = body;
 
     if (!domain || !shopId) {
       return NextResponse.json({ error: 'Domain and shopId are required.' }, { status: 400 });
+    }
+
+    // 🔐 Ownership check — শুধু নিজের শপে domain সেট করতে পারবে
+    if (authUser.uid !== shopId) {
+      return NextResponse.json({ error: 'You can only set domain for your own shop.' }, { status: 403 });
     }
 
     // 1. Format validation

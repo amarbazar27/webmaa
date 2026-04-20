@@ -4,16 +4,22 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
+// 🔐 Firebase config — ONLY from environment variables (never hardcode!)
+// .env.local ফাইলে NEXT_PUBLIC_FIREBASE_* ভেরিয়েবলগুলো সেট করতে হবে
 const firebaseConfig = {
-  apiKey: "AIzaSyAMMzATvPWghOT8islcllFz9hXlCJ6HdFk",
-  authDomain: "webmaa-app.firebaseapp.com",
-  projectId: "webmaa-app",
-  storageBucket: "webmaa-app.firebasestorage.app",
-  messagingSenderId: "156216219253",
-  appId: "1:156216219253:web:8fec080019c45244d0ca3c",
-  measurementId: "G-ZNTHE383S2"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
+
+// 🛡️ Validate: env vars ছাড়া অ্যাপ চলবে না
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('❌ Firebase environment variables missing! Check .env.local');
+}
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

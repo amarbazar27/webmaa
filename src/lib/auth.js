@@ -19,10 +19,11 @@ const determineRole = async (email) => {
     if (!email) return { role: 'user' };
     
     const currentEmail = email.toLowerCase().trim();
+    // 🔐 শুধু environment variable থেকে admin email নেবে
+    // ⚠️ আগে hardcoded fallback ছিল — এটা বিপজ্জনক!
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    const fallbackAdmin = 'rafiqunnabi07@gmail.com';
 
-    if (currentEmail === envAdmin || currentEmail === fallbackAdmin) {
+    if (envAdmin && currentEmail === envAdmin) {
       return { role: 'superadmin' };
     }
 
