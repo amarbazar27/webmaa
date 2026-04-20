@@ -12,29 +12,34 @@ export const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
 const determineRole = async (email) => {
-  if (!email) return { role: 'user' };
-  
-  const currentEmail = email.toLowerCase().trim();
-  const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-  const fallbackAdmin = 'rafiqunnabi07@gmail.com';
+  try {
+    if (!email) return { role: 'user' };
+    
+    const currentEmail = email.toLowerCase().trim();
+    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
+    const fallbackAdmin = 'rafiqunnabi07@gmail.com';
 
-  if (currentEmail === envAdmin || currentEmail === fallbackAdmin) {
-    return { role: 'superadmin' };
+    if (currentEmail === envAdmin || currentEmail === fallbackAdmin) {
+      return { role: 'superadmin' };
+    }
+
+    const q = query(collection(db, 'retailer_invites'), where('email', '==', currentEmail));
+    const snap = await getDocs(q);
+    if (!snap.empty) return { role: 'retailer' };
+
+    // Check if they are staff
+    const staffQuery = query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail));
+    const staffSnap = await getDocs(staffQuery);
+    if (!staffSnap.empty) {
+      const shopDoc = staffSnap.docs[0];
+      return { role: 'staff', accessShopId: shopDoc.id, shopSlug: shopDoc.data().shopSlug };
+    }
+
+    return { role: 'user' };
+  } catch (error) {
+    console.error("Role Check Error:", error);
+    return { role: 'user' }; // Fallback to normal user so login doesn't break
   }
-
-  const q = query(collection(db, 'retailer_invites'), where('email', '==', currentEmail));
-  const snap = await getDocs(q);
-  if (!snap.empty) return { role: 'retailer' };
-
-  // Check if they are staff
-  const staffQuery = query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail));
-  const staffSnap = await getDocs(staffQuery);
-  if (!staffSnap.empty) {
-    const shopDoc = staffSnap.docs[0];
-    return { role: 'staff', accessShopId: shopDoc.id, shopSlug: shopDoc.data().shopSlug };
-  }
-
-  return { role: 'user' };
 };
 
 /**

@@ -148,21 +148,13 @@ export async function GET(request) {
     // ── unions OR wards (smart detection) ─────────────────────────────────────
     if (type === 'unions' || type === 'wards') {
       const selectedUpazilaName = upazilaName || '';
-      
-      // Smart detection: 
-      // 1. Manual City Corp injection
-      // 2. Names in our explicit ward-list
-      // 3. Names containing "সদর" (typically District Sadar towns show wards)
-      const isWardArea = upazilaId?.startsWith('khulna-cc') || 
-                         (CITY_CORPORATION_WARDS[selectedUpazilaName] !== undefined && CITY_CORPORATION_WARDS[selectedUpazilaName] !== null) ||
-                         selectedUpazilaName.includes('সদর');
+      const ccWards = CITY_CORPORATION_WARDS[selectedUpazilaName];
+      const isCityCorp = upazilaId?.startsWith('khulna-cc') || (ccWards !== undefined && ccWards !== null);
+      const isSadar = selectedUpazilaName.includes('সদর');
 
-      if (isWardArea) {
-        // It's a Urban/City area — return wards
-        // Generate up to 30 wards if no specific count is defined
-        const wards = CITY_CORPORATION_WARDS[selectedUpazilaName] || 
-                      Array.from({length: 30}, (_, i) => `ওয়ার্ড ${i + 1}`);
-                      
+      if (isCityCorp) {
+        // It's a major City Corporation — return wards only
+        const wards = ccWards || Array.from({length: 30}, (_, i) => `ওয়ার্ড ${i + 1}`);
         const wardObjects = wards.map((w, i) => ({
           id: `ward-${i + 1}`,
           upazilla_id: upazilaId || '',
@@ -172,20 +164,32 @@ export async function GET(request) {
         }));
         return NextResponse.json({ data: wardObjects, type: 'wards' });
       } else {
-        // Rural upazila — return unions from bd-geodata
+        // Rural upazila OR general Sadar upazila
         let data = readGeoFile('unions');
         if (upazilaId) data = data.filter(d => d.upazilla_id === upazilaId);
         
-        // If NO unions found for this upazila (sometimes DB is missing rural unions), 
-        // fallback to wards or just an empty list.
+        // For Sadar upazilas, they usually have a Paurashava (Municipality) + rural unions
+        if (isSadar) {
+           const municipalityWards = Array.from({length: 9}, (_, i) => `পৌরসভা ওয়ার্ড ${i + 1}`);
+           const wardObjs = municipalityWards.map((w, i) => ({
+              id: `pward-${i+1}`,
+              upazilla_id: upazilaId || '',
+              bn_name: w,
+              name: w,
+              _type: 'ward'
+           }));
+           // Prepend wards so they appear first, then the rural unions
+           data = [...wardObjs, ...data];
+        }
+
+        // Fallback for empty data
         if (data.length === 0) {
-             // Fallback to wards if geodata is empty (better than nothing)
              const fallbackWards = Array.from({length: 15}, (_, i) => `ওয়ার্ড ${i + 1}`);
              const objs = fallbackWards.map((w, i) => ({ id: `w-${i+1}`, bn_name: w, name: w, _type: 'ward-fallback' }));
              return NextResponse.json({ data: objs, type: 'wards' });
         }
 
-        return NextResponse.json({ data: sortByBnName(data), type: 'unions' });
+        return NextResponse.json({ data: sortByBnName(data), type: isSadar ? 'wards' : 'unions' });
       }
     }
 

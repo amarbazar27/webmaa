@@ -443,8 +443,14 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       await loginWithGoogle();
       toast.success('সফলভাবে লগইন হয়েছে!');
       setIsProfileOpen(false);
-    } catch {
-      toast.error('লগইন করতে সমস্যা হয়েছে');
+    } catch (err) {
+      if (err?.code === 'auth/popup-blocked') {
+        toast.error('ব্রাউজার পপআপ ব্লক করেছে! Chrome বা Safari ব্যবহার করুন।', { duration: 5000 });
+      } else if (err?.code === 'auth/unauthorized-domain') {
+        toast.error('এই লিংক থেকে লগইন সম্ভব নয়। মেইন সাইটে যান।', { duration: 5000 });
+      } else {
+        toast.error('লগইন করতে সমস্যা হয়েছে');
+      }
     }
   };
 
