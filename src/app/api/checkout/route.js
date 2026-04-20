@@ -1,50 +1,91 @@
 export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 
-// ── Strict Payload Validation using Zod ───────────────────────────
+// ── Strict Payload Validation ───────────────────────────
 const CheckoutSchema = z.object({
-  shopId: z.string().min(1, "Shop ID string is required"),
-  customerName: z.string().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
-  customerPhone: z.string().regex(/^01[3-9]\d{8}$/, "Invalid BD Phone Number format"),
-  customerEmail: z.string().email("Invalid email").optional().or(z.literal('')),
-  customerAddress: z.string().min(5, "Address must be detailed").max(200, "Address too long"),
+  shopId: z.string().min(1),
+  customerName: z.string().min(2).max(100),
+  customerPhone: z.string().regex(/^01[3-9]\d{8}$/),
+  customerEmail: z.string().email().optional().or(z.literal('')),
+  customerAddress: z.string().min(5).max(200),
   customerNote: z.string().max(300).optional(),
   transactionId: z.string().max(50).optional(),
-  honeypot: z.string().max(0, "Bot detected").optional(), // Honeypot field for bot defense
+  honeypot: z.string().max(0).optional(),
   items: z.array(z.object({
     id: z.string().min(1),
-    quantity: z.number().int().positive().max(50, "Max 50 quantity per item"),
+    quantity: z.number().int().positive().max(50),
     note: z.string().max(100).optional()
-  })).min(1, "Cart cannot be empty")
+  })).min(1)
 });
+
+// ── Simple Rate Limit (in-memory, basic protection) ─────
+const rateLimitMap = new Map();
+function isRateLimited(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 min
+  const maxReq = 20;
+
+  if (!rateLimitMap.has(ip)) {
+    rateLimitMap.set(ip, { count: 1, time: now });
+    return false;
+  }
+
+  const data = rateLimitMap.get(ip);
+
+  if (now - data.time > windowMs) {
+    rateLimitMap.set(ip, { count: 1, time: now });
+    return false;
+  }
+
+  if (data.count >= maxReq) return true;
+
+  data.count++;
+  return false;
+}
 
 export async function POST(req) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+
+    // 🚨 Rate limit check
+    if (isRateLimited(ip)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const body = await req.json();
 
-    // ── Input Validation ────────────────────────────────────────────────
+    // ── Input Validation ────────────────────────────────
     const parsed = CheckoutSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', details: parsed.error.issues }, { status: 400 });
+      return NextResponse.json({ error: 'Validation failed' }, { status: 400 });
     }
 
-    const { shopId, customerName, customerPhone, customerEmail, customerAddress, customerNote, transactionId, honeypot, items } = parsed.data;
+    const {
+      shopId,
+      customerName,
+      customerPhone,
+      customerEmail,
+      customerAddress,
+      customerNote,
+      transactionId,
+      honeypot,
+      items
+    } = parsed.data;
 
-    // BOT DEFENSE: Honeypot logic
+    // 🛑 Honeypot bot defense
     if (honeypot && honeypot.length > 0) {
-      return NextResponse.json({ error: 'Suspicious request' }, { status: 403 });
+      return NextResponse.json({ error: 'Bot detected' }, { status: 403 });
     }
 
-    // Server-side validation only occurs if Firebase Admin is fully initialized.
     if (!adminDb) {
-       console.error("Firebase Admin DB not initialized. Cannot process checkout.");
-       return NextResponse.json({ error: 'System configuration error. Please contact admin.' }, { status: 500 });
+      return NextResponse.json({ error: 'Server config error' }, { status: 500 });
     }
 
-    // ── Server-Side Pricing Verification ─────────────────────────────────
+    // ── Fetch shop ─────────────────────────────────────
     const shopRef = adminDb.collection('shops').doc(shopId);
     const shopSnap = await shopRef.get();
 
@@ -53,91 +94,94 @@ export async function POST(req) {
     }
 
     const shopData = shopSnap.data();
-    
-    // Check if shop is paused/inactive
+
     if (shopData.isActive === false) {
-      return NextResponse.json({ error: 'Store is temporarily closed' }, { status: 400 });
+      return NextResponse.json({ error: 'Shop closed' }, { status: 400 });
     }
 
     const deliveryConfig = shopData.deliveryConfig || {};
-    const deliveryAdvanceFee = deliveryConfig.advanceFee ? parseInt(deliveryConfig.advanceFee) : 60;
+    const deliveryFee = deliveryConfig.advanceFee ? parseInt(deliveryConfig.advanceFee) : 60;
     const isCOD = deliveryConfig.isCOD !== false;
 
-    // Fetch product details securely from DB to prevent fake/zero-price order abuse
-    let computedCartTotal = 0;
+    // ── Secure product fetch & pricing ──────────────────
+    let total = 0;
     const verifiedItems = [];
 
     const productsRef = adminDb.collection('shops').doc(shopId).collection('products');
-    
+
     for (const item of items) {
       const pSnap = await productsRef.doc(item.id).get();
-      if (!pSnap.exists) {
-        return NextResponse.json({ error: `Product not found: ${item.id}` }, { status: 404 });
-      }
-      const productDb = pSnap.data();
-      const productActualPrice = parseFloat(productDb.price || 0);
 
-      // Add to computed total
-      computedCartTotal += (productActualPrice * item.quantity);
-      
+      if (!pSnap.exists) {
+        return NextResponse.json({ error: 'Invalid product' }, { status: 404 });
+      }
+
+      const product = pSnap.data();
+      const price = parseFloat(product.price);
+
+      // 🚨 Price validation
+      if (!price || price <= 0) {
+        return NextResponse.json({ error: 'Invalid product price' }, { status: 400 });
+      }
+
+      // 🚨 Stock validation (if exists)
+      if (product.stock && item.quantity > product.stock) {
+        return NextResponse.json({ error: 'Out of stock' }, { status: 400 });
+      }
+
+      total += price * item.quantity;
+
       verifiedItems.push({
         id: item.id,
-        name: productDb.name,
-        price: productActualPrice.toString(),
+        name: product.name,
+        price: price.toString(),
         quantity: item.quantity,
         note: item.note || ''
       });
     }
 
-    // Determine Free Delivery based on User Streak
-    let hasFreeDelivery = false;
-    if (customerEmail) {
-      // Calculate streak logic (simplified for server side check)
-      const userOrdersSnap = await adminDb.collection('shops').doc(shopId).collection('orders')
-        .where('customerEmail', '==', customerEmail.toLowerCase().trim())
-        .orderBy('createdAt', 'desc')
+    // ── Delivery logic ─────────────────────────────────
+    let freeDelivery = false;
+
+    if (customerPhone) {
+      const ordersSnap = await adminDb
+        .collection('shops')
+        .doc(shopId)
+        .collection('orders')
+        .where('customerPhone', '==', customerPhone)
         .get();
-        
-      // Count unique days
-      const dateSet = new Set();
-      userOrdersSnap.forEach(doc => {
-        const d = doc.data();
-        if (d.createdAt && d.createdAt.toDate) {
-            const dt = d.createdAt.toDate();
-            dateSet.add(`${dt.getDate()}${dt.getMonth()}${dt.getFullYear()}`);
-        }
-      });
-      // Basic free delivery check. In full implementation, it should match the advanced streak algo perfectly.
-      // Assuming 6 consecutive orders give free delivery on the 7th
-      if (dateSet.size >= 6) {
-         hasFreeDelivery = true;
+
+      if (ordersSnap.size >= 6) {
+        freeDelivery = true;
       }
     }
 
-    const effectiveDelivery = hasFreeDelivery ? 0 : deliveryAdvanceFee;
-    const finalTotal = computedCartTotal + effectiveDelivery;
+    const finalTotal = total + (freeDelivery ? 0 : deliveryFee);
 
-    // ── Generate Order Serial Number Securely ───────────────────────────
-    const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka' }).replace(/\//g, ''); // DDMMYY
+    // ── Order counter (atomic) ─────────────────────────
+    const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka' }).replace(/\//g, '');
     const counterRef = adminDb.collection('shops').doc(shopId).collection('counters').doc(`orders_${today}`);
-    
+
     let newCount = 0;
+
     await adminDb.runTransaction(async (tx) => {
       const snap = await tx.get(counterRef);
       const current = snap.exists ? (snap.data().count || 0) : 0;
       newCount = current + 1;
-      tx.set(counterRef, { count: newCount, date: today }, { merge: true });
+      tx.set(counterRef, { count: newCount }, { merge: true });
     });
-    
-    const serialStr = newCount.toString().padStart(2, '0');
-    
-    // Construct Visual ID
-    const dateStr = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka' }).replace(/\//g, '');
-    const orderIdVisual = `${serialStr}#${dateStr}`;
 
-    // ── Save Order Securely leveraging Admin SDK ────────────────────────
-    const newOrderRef = adminDb.collection('shops').doc(shopId).collection('orders').doc();
-    const orderData = {
+    const serial = newCount.toString().padStart(2, '0');
+    const orderIdVisual = `${serial}#${today}`;
+
+    // ── Save order ─────────────────────────────────────
+    const newOrderRef = adminDb
+      .collection('shops')
+      .doc(shopId)
+      .collection('orders')
+      .doc();
+
+    await newOrderRef.set({
       customerName,
       customerPhone,
       customerEmail: customerEmail || '',
@@ -150,16 +194,19 @@ export async function POST(req) {
       isCOD,
       shopId,
       shopName: shopData.shopName,
-      freeDelivery: hasFreeDelivery,
+      freeDelivery,
       status: 'pending',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
+    });
 
-    await newOrderRef.set(orderData);
+    return NextResponse.json({
+      success: true,
+      orderId: newOrderRef.id,
+      total: finalTotal
+    });
 
-    return NextResponse.json({ success: true, orderId: newOrderRef.id, total: finalTotal, orderIdVisual });
-  } catch (error) {
-     console.error('[CHECKOUT API ERROR]', error);
-     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  } catch (err) {
+    console.error('CHECKOUT ERROR:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
