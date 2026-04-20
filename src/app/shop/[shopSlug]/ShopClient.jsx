@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
@@ -460,19 +460,18 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   const handleGoogleLogin = async () => {
     try {
-      await loginWithGoogle();
-      toast.success('সফলভাবে লগইন হয়েছে!');
-      setIsProfileOpen(false);
-    } catch (err) {
-      if (err?.code === 'auth/popup-blocked') {
-        toast.error('ব্রাউজার পপআপ ব্লক করেছে! Chrome বা Safari ব্যবহার করুন।', { duration: 5000 });
-      } else if (err?.code === 'auth/unauthorized-domain') {
-        toast.error('গুগল লগইন সম্ভব নয়। দয়া করে আপনার ফোন নম্বর দিয়ে অর্ডার ট্র্যাক করুন।', { duration: 6000 });
-      } else {
-        toast.error('লগইন করতে সমস্যা হয়েছে');
+      const result = await loginWithGoogle();
+      // result is null when redirect flow started (page will auto-reload after Google login)
+      if (result) {
+        toast.success('সফলভাবে লগইন হয়েছে!');
+        setIsProfileOpen(false);
       }
+    } catch (err) {
+      console.error('Login error:', err);
+      toast.error('লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     }
   };
+
 
   // ── AI Chat ────────────────────────────────────
   const [chatMessages, setChatMessages] = useState([

@@ -1,7 +1,9 @@
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult, 
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -124,16 +126,38 @@ export const handleUserSession = async (user) => {
 
 export const loginWithGoogle = async () => {
   try {
+    // Try popup first (works on most browsers when domain is authorized)
     const result = await signInWithPopup(auth, googleProvider);
     return await handleUserSession(result.user);
   } catch (error) {
-    console.error("Google Auth Error:", error);
+    console.error("Google Auth Popup Error:", error);
+    
+    // If domain is not authorized for popup, use redirect flow instead.
+    // Redirect goes through Firebase's authDomain (firebaseapp.com) which is always whitelisted.
+    if (error?.code === 'auth/unauthorized-domain' || error?.code === 'auth/popup-blocked') {
+      console.log("[Auth] Popup failed, falling back to redirect...");
+      await signInWithRedirect(auth, googleProvider);
+      // Page will redirect — no return needed
+      return null;
+    }
+    
     throw error;
   }
 };
 
-// Optional backward compatibility just in case it's called elsewhere
-export const handleLoginRedirect = async () => null;
+// Process redirect result after page reloads from Google auth redirect
+export const handleLoginRedirect = async () => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      return await handleUserSession(result.user);
+    }
+    return null;
+  } catch (error) {
+    console.error("Redirect result error:", error);
+    return null;
+  }
+};
 
 export const logoutUser = () => signOut(auth);
 

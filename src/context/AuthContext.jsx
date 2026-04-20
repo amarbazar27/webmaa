@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthChange, handleUserSession } from '@/lib/auth';
+import { onAuthChange, handleUserSession, handleLoginRedirect } from '@/lib/auth';
 
 const AuthContext = createContext({});
 
@@ -10,6 +10,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Process any pending redirect login result (from signInWithRedirect)
+    handleLoginRedirect().catch(err => console.error("Redirect login check:", err));
+
     const unsub = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
