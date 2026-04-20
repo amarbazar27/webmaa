@@ -110,11 +110,16 @@ export const getOrders = async (shopId) => {
   } catch (err) { return []; }
 };
 
-export const getUserOrders = async (shopId, customerEmail) => {
-  if (!customerEmail) return [];
+export const getUserOrders = async (shopId, identifier) => {
+  if (!identifier) return [];
+  
+  const queryVal = identifier.toLowerCase().trim();
+  const isPhone = /^[0-9\+\-\s]+$/.test(queryVal);
+  const searchField = isPhone ? 'customerPhone' : 'customerEmail';
+
   const q = query(
     collection(db, 'shops', shopId, 'orders'),
-    where('customerEmail', '==', customerEmail.toLowerCase().trim()),
+    where(searchField, '==', isPhone ? queryVal.replace(/\D/g, '') : queryVal),
     orderBy('createdAt', 'desc')
   );
   try {
