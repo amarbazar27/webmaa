@@ -628,13 +628,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }
     setPlacing(true);
     try {
-      const serial = await getOrderSerial(shop.id);
       const now = new Date();
       const dd = String(now.getDate()).padStart(2,'0');
       const mm = String(now.getMonth()+1).padStart(2,'0');
       const yyyy = now.getFullYear();
-      const dateStr = `${dd}${mm}${yyyy}`;
-      const orderIdVisual = `${serial}#${dateStr}`;
 
       const reqPayload = {
         shopId: shop.id,
