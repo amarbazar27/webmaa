@@ -3,7 +3,7 @@ import {
   GoogleAuthProvider, 
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult, 
+  getRedirectResult,
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
@@ -12,6 +12,7 @@ import { app, db } from './firebase';
 
 export const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 const determineRole = async (email) => {
   try {
@@ -40,14 +41,10 @@ const determineRole = async (email) => {
     return { role: 'user' };
   } catch (error) {
     console.error("Role Check Error:", error);
-    return { role: 'user' }; // Fallback to normal user so login doesn't break
+    return { role: 'user' };
   }
 };
 
-/**
- * Handles the logic for a user after login (popup or redirect result)
- * Returns { user, userData }
- */
 export const handleUserSession = async (user) => {
   if (!user) return null;
 
@@ -124,28 +121,38 @@ export const handleUserSession = async (user) => {
   return { user, userData: finalUserData };
 };
 
+/**
+ * Google Login — tries popup first, falls back to full-page redirect.
+ * Redirect goes through Firebase's own authDomain (webmaa-app.firebaseapp.com).
+ * Returns { user, userData } on popup success, or null if redirect was started.
+ */
 export const loginWithGoogle = async () => {
   try {
-    // Try popup first (works on most browsers when domain is authorized)
     const result = await signInWithPopup(auth, googleProvider);
     return await handleUserSession(result.user);
   } catch (error) {
-    console.error("Google Auth Popup Error:", error);
-    
-    // If domain is not authorized for popup, use redirect flow instead.
-    // Redirect goes through Firebase's authDomain (firebaseapp.com) which is always whitelisted.
-    if (error?.code === 'auth/unauthorized-domain' || error?.code === 'auth/popup-blocked') {
-      console.log("[Auth] Popup failed, falling back to redirect...");
-      await signInWithRedirect(auth, googleProvider);
-      // Page will redirect — no return needed
-      return null;
+    console.error("[Auth] Popup error:", error.code, error.message);
+
+    if (
+      error?.code === 'auth/unauthorized-domain' ||
+      error?.code === 'auth/popup-blocked' ||
+      error?.code === 'auth/popup-closed-by-user'
+    ) {
+      // Fallback: full-page redirect through Firebase's always-trusted authDomain
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return null; // Page navigates away
+      } catch (redirectError) {
+        console.error("[Auth] Redirect also failed:", redirectError.code);
+        throw redirectError;
+      }
     }
-    
+
     throw error;
   }
 };
 
-// Process redirect result after page reloads from Google auth redirect
+// Called on page load to process any pending redirect login result
 export const handleLoginRedirect = async () => {
   try {
     const result = await getRedirectResult(auth);
@@ -154,7 +161,10 @@ export const handleLoginRedirect = async () => {
     }
     return null;
   } catch (error) {
-    console.error("Redirect result error:", error);
+    // Silently ignore — common if no redirect was in progress
+    if (error?.code !== 'auth/no-auth-event') {
+      console.error("[Auth] Redirect result error:", error.code);
+    }
     return null;
   }
 };

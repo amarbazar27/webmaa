@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
@@ -358,12 +358,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [orderSuccess, setOrderSuccess] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
-  const [guestPhone, setGuestPhone] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem(`guestPhone_${initialShop.id}`) || '';
-    return '';
-  });
-  const [phoneInput, setPhoneInput] = useState('');
-
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '' });
 
   // ── TRACKING HELPER ──
@@ -423,30 +417,19 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   // ── Fetch User Orders ───────────────────────────
   useEffect(() => {
     import('@/lib/firestore').then(lib => {
-      const identifier = user?.email || guestPhone;
-      if (identifier && shop?.id) {
+      if (user?.email && shop?.id) {
         setLoadingOrders(true);
-        lib.getUserOrders(shop.id, identifier)
+        lib.getUserOrders(shop.id, user.email)
           .then(setUserOrders)
           .finally(() => setLoadingOrders(false));
       } else {
         setUserOrders([]);
       }
     });
-  }, [user, guestPhone, shop?.id]);
+  }, [user, shop?.id]);
 
   const handleLogout = async () => {
     try {
-      if (guestPhone) {
-        setGuestPhone('');
-        if (typeof window !== 'undefined') localStorage.removeItem(`guestPhone_${shop.id}`);
-        if (!user) {
-           toast.success('অর্ডার ট্র্যাকিং বন্ধ হয়েছে');
-           setIsProfileOpen(false);
-           return;
-        }
-      }
-      
       if (user) {
         await logoutUser();
         toast.success('সফলভাবে লগআউট হয়েছে');
@@ -468,7 +451,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       }
     } catch (err) {
       console.error('Login error:', err);
-      toast.error('লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+      if (err?.code === 'auth/unauthorized-domain') {
+        toast.error('ডোমেইনটি ফায়ারবেসে যোগ নেই। শপমালিককে জানান।', { duration: 6000 });
+      } else {
+        toast.error('লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+      }
     }
   };
 
@@ -1332,12 +1319,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                 </div>
                 <button onClick={() => setIsProfileOpen(false)} className="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors"><X size={18} strokeWidth={2.5}/></button>
               </div>
-              <h3 className="text-2xl font-black relative z-10">{user ? (user.displayName || 'সম্মানিত কাস্টমার') : (guestPhone ? 'কাস্টমার' : 'অতিথি ইউজার')}</h3>
-              <p className="text-sm text-slate-300 font-bold relative z-10 mt-1">{user ? user.email : (guestPhone ? guestPhone : 'লগইন করা নেই')}</p>
+              <h3 className="text-2xl font-black relative z-10">{user ? (user.displayName || 'সম্মানিত কাস্টমার') : 'অতিথি ইউজার'}</h3>
+              <p className="text-sm text-slate-300 font-bold relative z-10 mt-1">{user ? user.email : 'লগইন করা নেই'}</p>
             </div>
 
             <div className="flex-1 p-5 space-y-5 overflow-y-auto w-full">
-              {!user && !guestPhone ? (
+              {!user ? (
                 <div className="flex flex-col items-center justify-center h-full gap-5 py-6">
                   <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><User size={32} /></div>
                   <div className="text-center">
@@ -1349,25 +1336,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
                     গুগল দিয়ে লগইন
                   </button>
-
-                  <div className="relative w-full my-2">
-                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-                     <div className="relative flex justify-center text-[10px] font-black text-slate-400"><span className="bg-slate-50 px-3 uppercase tracking-widest text-[#ef4444]">অথবা</span></div>
-                  </div>
-
-                  {/* Phone Tracking Section / Fallback */}
-                  <div className="w-full space-y-2.5 p-4 rounded-xl border border-slate-200 bg-white">
-                    <p className="text-xs font-bold text-slate-600 text-center mb-1">ফোন নম্বর দিয়ে ট্র্যাক করুন</p>
-                    <input type="text" maxLength={11} placeholder="01XXXXXXXXX" value={phoneInput} onChange={e => setPhoneInput(e.target.value.replace(/\D/g, ''))} className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 text-center font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all text-sm" />
-                    <button onClick={() => {
-                      if(phoneInput.length === 11) {
-                         setGuestPhone(phoneInput);
-                         if(typeof window !== 'undefined') localStorage.setItem(`guestPhone_${shop.id}`, phoneInput);
-                      } else toast.error('সঠিক ১১ ডিজিটের ফোন নম্বর দিন');
-                    }} className="w-full py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors text-sm">
-                      অর্ডার হিস্টোরি দেখুন
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <div className="w-full space-y-5">
