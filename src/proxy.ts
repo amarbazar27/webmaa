@@ -13,6 +13,23 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// ── Rate Limiting Store ──
+const rateLimitMap = new Map<{ count: number, startTime: number }>();
+
+function applySecurityHeaders(response: NextResponse, pathname: string): NextResponse {
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  if (pathname.startsWith('/api/')) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive');
+  }
+  return response;
+}
+
 // এই হোস্টগুলো কাস্টম ডোমেইন হিসেবে ধরা হবে না — সরাসরি পার হয়ে যাবে
 const BYPASS_HOSTS = [
   'webmaa.vercel.app',
@@ -44,17 +61,40 @@ function isBypassHost(host: string): boolean {
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const ip = request.headers.get('x-forwarded-for') || request.ip || '127.0.0.1';
+  const { pathname } = request.nextUrl;
+
+  // ── RATE LIMITING (APIs Only) ──
+  if (pathname.startsWith('/api/')) {
+    const windowStart = Date.now() - 60000;
+    const countData = rateLimitMap.get(ip) || { count: 0, startTime: Date.now() };
+
+    if (countData.startTime < windowStart) {
+      countData.count = 1;
+      countData.startTime = Date.now();
+    } else {
+      countData.count++;
+    }
+    
+    // In-memory update
+    rateLimitMap.set(ip, countData);
+
+    // Block if > 30 requests per minute from same IP to API
+    if (countData.count > 30) {
+      return applySecurityHeaders(NextResponse.json({ error: 'Too many requests, slow down.' }, { status: 429 }), pathname);
+    }
+  }
+
   const rawHost = request.headers.get('host') ?? '';
   const host = normalizeHost(rawHost);
 
   // ── বাইপাস: Webmaa নিজের ডোমেইন বা localhost ──────────────────────────
   if (!host || isBypassHost(host)) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
   // ── /shop/* পাথ আসলে আর domain lookup লাগবে না ──────────────────────
   // যেমন webmaa.vercel.app/shop/messerbazar → সরাসরি পার হয়
-  const { pathname } = request.nextUrl;
   if (
     pathname.startsWith('/shop/') ||
     pathname.startsWith('/api/') ||
@@ -67,7 +107,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/not-found-domain') ||
     pathname.startsWith('/icons/')
   ) {
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
   // ── কাস্টম ডোমেইন: Firestore থেকে slug খোঁজা ──────────────────────────
@@ -99,18 +139,18 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         // query string ঠিক রাখো (যদি থাকে)
         rewriteUrl.search = request.nextUrl.search;
 
-        return NextResponse.rewrite(rewriteUrl);
+        return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
       }
     }
 
     // ❌ ডোমেইন পাওয়া যায়নি — কাস্টম not-found পেজ দেখাও
     const notFoundUrl = new URL('/not-found-domain', request.url);
-    return NextResponse.rewrite(notFoundUrl);
+    return applySecurityHeaders(NextResponse.rewrite(notFoundUrl), pathname);
   } catch (err) {
     // Network বা অন্য error — graceful fallback
     console.error('[proxy] domain lookup failed:', err);
     const notFoundUrl = new URL('/not-found-domain', request.url);
-    return NextResponse.rewrite(notFoundUrl);
+    return applySecurityHeaders(NextResponse.rewrite(notFoundUrl), pathname);
   }
 }
 
