@@ -129,7 +129,8 @@ export const handleUserSession = async (user) => {
  */
 export const loginWithGoogle = async () => {
   try {
-    console.log("[Auth] Starting Google Popup login...");
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : 'SSR';
+    console.log(`[Auth] Starting Google Popup login from: ${currentUrl}`);
     const result = await signInWithPopup(auth, googleProvider);
     console.log("[Auth] Popup success:", result.user?.email);
     return await handleUserSession(result.user);
