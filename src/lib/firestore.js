@@ -27,7 +27,9 @@ export const getShopByDomain = async (rawDomain) => {
   if (!rawDomain) return null;
 
   console.log("=========================================");
-  console.log("ENV PROJECT ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+  console.log("DEBUG: PROD DATABASE CHECK");
+  console.log("PROJECT ID (Server):", process.env.FIREBASE_PROJECT_ID);
+  console.log("PROJECT ID (Public):", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
   console.log("COLLECTION USED:", "shops");
   console.log("HOST RAW:", rawDomain);
 
@@ -53,8 +55,27 @@ export const getShopByDomain = async (rawDomain) => {
     const shopsRef = collection(db, 'shops');
 
     // ── HARD TEST QUERY: Check if DB has ANY shops ──
-    const allSnapshot = await getDocs(shopsRef);
-    console.log("TEST DB: TOTAL SHOPS IN DB:", allSnapshot.size);
+    let allSnapshot = await getDocs(shopsRef);
+    console.log("CLIENT SDK: TOTAL SHOPS IN DB:", allSnapshot.size);
+
+    // If client SDK fails (0 shops), try Admin SDK as a fallback
+    if (allSnapshot.size === 0) {
+      const { adminDb } = await import('./firebase-admin');
+      if (adminDb) {
+        console.log("[Firestore] Falling back to Admin SDK for lookup...");
+        const adminSnap = await adminDb.collection('shops').get();
+        console.log("ADMIN SDK: TOTAL SHOPS IN DB:", adminSnap.size);
+        if (adminSnap.size > 0) {
+          // If admin SDK works, use those docs for the fallback loop below
+          allSnapshot = { 
+            size: adminSnap.size, 
+            docs: adminSnap.docs.map(d => ({ id: d.id, data: () => d.data() })) 
+          };
+        }
+      } else {
+        console.warn("[Firestore] Admin SDK not initialized (missing env vars).");
+      }
+    }
     // ────────────────────────────────────────────────
 
     // 3. Loop and query each variant
