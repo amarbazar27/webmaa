@@ -36,6 +36,8 @@ export default function DomainNotFound() {
         if (res.ok) {
           const data = await res.json();
           if (data.slug) {
+            setIsChecking(true); // Keep showing loading but change text
+            console.log("Domain found! Redirecting to shop...");
             router.replace(`/shop/${data.slug}`);
             return;
           }
@@ -54,9 +56,18 @@ export default function DomainNotFound() {
       <div style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#fff',
+        textAlign: 'center', padding: '2rem'
       }}>
-        <h2>ডোমেইন অনুসন্ধান করা হচ্ছে... (Checking domain...)</h2>
+        <div style={{ marginBottom: '20px', animation: 'pulse 2s infinite' }}>
+           <div style={{ width: '40px', height: '40px', border: '4px solid #7c3aed', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        </div>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>ডোমেইন অনুসন্ধান করা হচ্ছে...</h2>
+        <p style={{ opacity: 0.7, marginTop: '10px' }}>দয়া করে কিছুক্ষণ অপেক্ষা করুন। (Redirecting...)</p>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        `}</style>
       </div>
     );
   }

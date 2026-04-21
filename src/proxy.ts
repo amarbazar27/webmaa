@@ -110,7 +110,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // ── কাস্টম ডোমেইন: Firestore থেকে slug খোঁজা ──────────────────────────
   try {
     // Internal API call — domain → shop slug রেজোলিউশন
-    const lookupUrl = new URL('/api/domain-lookup', request.url);
+    // Use the primary platform domain to avoid edge routing loopback issues on custom domains
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://webmaa.vercel.app';
+    const lookupUrl = new URL('/api/domain-lookup', baseUrl);
     lookupUrl.searchParams.set('host', host);
 
     console.log(`[Proxy] Calling domain-lookup for host=${host}`);

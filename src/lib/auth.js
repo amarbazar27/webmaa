@@ -141,12 +141,18 @@ export const loginWithGoogle = async () => {
 
     // Specific triggers for redirect fallback
     const shouldFallback = 
-      errorCode === 'auth/unauthorized-domain' || 
       errorCode === 'auth/popup-blocked' || 
       errorCode === 'auth/popup-closed-by-user' ||
       errorCode === 'auth/cancelled-popup-request' ||
-      // If we are on a custom domain, popup might fail with generic errors in some browsers
-      (typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app') && !window.location.hostname.includes('localhost'));
+      // If we are on a custom domain, popup might fail with generic errors in some browsers, but if it's unauthorized-domain, we shouldn't fallback because redirect will also fail.
+      (typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app') && !window.location.hostname.includes('localhost') && errorCode !== 'auth/unauthorized-domain');
+
+    // If it's unauthorized domain, throw immediately so the UI can show the specific error
+    if (errorCode === 'auth/unauthorized-domain' || errorMsg.includes('unauthorized-domain')) {
+      const e = new Error("unauthorized-domain");
+      e.code = 'auth/unauthorized-domain';
+      throw e;
+    }
 
     if (shouldFallback) {
       console.log("[Auth] Falling back to Redirect login...");
