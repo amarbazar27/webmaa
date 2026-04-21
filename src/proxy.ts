@@ -62,26 +62,12 @@ function isBypassHost(host: string): boolean {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const rawHost = request.headers.get('host') ?? '';
-  console.log("HOST:", rawHost);
+  console.log("PROXY HOST RAW:", rawHost);
 
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip || '127.0.0.1';
   const { pathname } = request.nextUrl;
 
   const host = normalizeHost(rawHost);
-
-  // ---------------------------------------------------------
-  // 1. ORIGIN PROTECTION (Block malicious Vercel direct hits)
-  // ---------------------------------------------------------
-  const isVercelDomain = rawHost.includes('vercel.app');
-  const isSecondaryVercel = isVercelDomain && rawHost !== 'webmaa.vercel.app' && rawHost !== 'webmaa-backup.vercel.app';
-
-  // If it's a direct Vercel deployment URL (other than our official platform nodes), block it.
-  if (isSecondaryVercel && !pathname.startsWith('/_next/') && !pathname.includes('.')) {
-     return applySecurityHeaders(new NextResponse(
-       JSON.stringify({ error: '403 Forbidden', message: 'Direct Vercel access blocked.' }),
-       { status: 403, headers: { 'content-type': 'application/json' } }
-     ), pathname);
-  }
 
   // ---------------------------------------------------------
   // 2. RATE LIMITING (APIs Only)

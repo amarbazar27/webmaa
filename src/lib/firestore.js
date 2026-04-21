@@ -26,6 +26,11 @@ export const getShopBySlug = async (slug) => {
 export const getShopByDomain = async (rawDomain) => {
   if (!rawDomain) return null;
 
+  console.log("=========================================");
+  console.log("ENV PROJECT ID:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+  console.log("COLLECTION USED:", "shops");
+  console.log("HOST RAW:", rawDomain);
+
   // 1. Normalize Host (strip port, lowercase)
   const host = rawDomain.toLowerCase().trim().split(':')[0].split('/')[0];
   console.log("FINAL HOST:", host);
@@ -42,9 +47,15 @@ export const getShopByDomain = async (rawDomain) => {
 
   // Remove duplicates
   const uniqueVariants = [...new Set(variants)];
+  console.log("CHECKING VARIANTS:", uniqueVariants);
 
   try {
     const shopsRef = collection(db, 'shops');
+
+    // ── HARD TEST QUERY: Check if DB has ANY shops ──
+    const allSnapshot = await getDocs(shopsRef);
+    console.log("TEST DB: TOTAL SHOPS IN DB:", allSnapshot.size);
+    // ────────────────────────────────────────────────
 
     // 3. Loop and query each variant
     for (const variant of uniqueVariants) {
@@ -52,10 +63,12 @@ export const getShopByDomain = async (rawDomain) => {
       
       const q = query(shopsRef, where('domains', 'array-contains', variant));
       const snap = await getDocs(q);
+      
+      console.log(`QUERY HOST: ${variant} | RESULT SIZE: ${snap.size}`);
 
       if (!snap.empty) {
         const shopData = { id: snap.docs[0].id, ...snap.docs[0].data() };
-        console.log("SHOP FOUND:", shopData);
+        console.log("SHOP FOUND (Query Array Match):", { id: shopData.id, shopName: shopData.shopName, slug: shopData.subdomainSlug });
         return shopData;
       }
     }
@@ -63,14 +76,39 @@ export const getShopByDomain = async (rawDomain) => {
     // 4. Fallback to legacy field check (if variant loop failed)
     const legacyQ = query(shopsRef, where('customDomain', '==', naked));
     const legacySnap = await getDocs(legacyQ);
+    console.log(`QUERY LEGACY HOST: ${naked} | RESULT SIZE: ${legacySnap.size}`);
     
     if (!legacySnap.empty) {
       const shopData = { id: legacySnap.docs[0].id, ...legacySnap.docs[0].data() };
-      console.log("SHOP FOUND (legacy):", shopData);
+      console.log("SHOP FOUND (Legacy Query Match):", { id: shopData.id, shopName: shopData.shopName, slug: shopData.subdomainSlug });
       return shopData;
     }
 
-    console.log("SHOP FOUND: NULL");
+    // 5. FORCE FALLBACK: Manual loop over all shops
+    console.log("[Firestore] FORCE FALLBACK: Manual loop over all shops checking domains array and customDomain string directly...");
+    const shopsData = allSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    for (const s of shopsData) {
+        if (s.domains && Array.isArray(s.domains)) {
+            for (const v of uniqueVariants) {
+                if (s.domains.includes(v)) {
+                   console.log("SHOP FOUND (Manual Loop Array Match):", { id: s.id, shopName: s.shopName, slug: s.subdomainSlug });
+                   return s;
+                }
+            }
+        }
+        if (s.customDomain) {
+            for (const v of uniqueVariants) {
+                if (s.customDomain === v) {
+                   console.log("SHOP FOUND (Manual Loop String Match):", { id: s.id, shopName: s.shopName, slug: s.subdomainSlug });
+                   return s;
+                }
+            }
+        }
+    }
+
+    console.log("SHOP FOUND:", null);
+    console.log("=========================================");
     return null;
   } catch (error) {
     console.error(`[Firestore] getShopByDomain error:`, error);
