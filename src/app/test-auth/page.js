@@ -18,6 +18,7 @@ export default function TestAuthPage() {
         authDomain: activeConfig.authDomain || 'MISSING',
         projectId: activeConfig.projectId || 'MISSING',
         appId: activeConfig.appId ? `...${activeConfig.appId.substring(activeConfig.appId.length - 8)}` : 'MISSING',
+        buildHash: '341b01e' // Current commit fragment
       });
 
       // 🔌 Check connection state
@@ -49,6 +50,10 @@ export default function TestAuthPage() {
             <div className="flex justify-between border-b border-white/5 pb-2">
               <span className="text-white/60">Project ID:</span>
               <span className="font-bold text-cyan-400">{config.projectId}</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-2">
+              <span className="text-white/60">Build Hash:</span>
+              <span className="font-bold text-green-400 tracking-widest uppercase">{config.buildHash}</span>
             </div>
             <div className="flex justify-between border-b border-white/5 pb-2">
               <span className="text-white/60">Auth Domain:</span>
