@@ -14,7 +14,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // ── Rate Limiting Store ──
-const rateLimitMap = new Map<{ count: number, startTime: number }>();
+const rateLimitMap = new Map<string, { count: number, startTime: number }>();
 
 function applySecurityHeaders(response: NextResponse, pathname: string): NextResponse {
   response.headers.set('X-DNS-Prefetch-Control', 'on');
@@ -23,7 +23,7 @@ function applySecurityHeaders(response: NextResponse, pathname: string): NextRes
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+
   if (pathname.startsWith('/api/')) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive');
   }
@@ -62,36 +62,17 @@ function isBypassHost(host: string): boolean {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const rawHost = request.headers.get('host') ?? '';
-  console.log("PROXY HOST RAW:", rawHost);
-
-  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip || '127.0.0.1';
+  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '127.0.0.1';
   const { pathname } = request.nextUrl;
 
   const host = normalizeHost(rawHost);
 
+  console.log(`[Proxy] host=${host} pathname=${pathname}`);
+
   // ---------------------------------------------------------
-  // 2. API AUTHORIZATION (Public vs Private Separation)
+  // 1. RATE LIMITING (all requests, basic DDoS protection)
   // ---------------------------------------------------------
   if (pathname.startsWith('/api/')) {
-    const isPublicRoute = pathname === '/api/domain-lookup' && request.method === 'GET';
-    const clientSecretKey = request.headers.get('x-secret-key');
-    const serverSecretKey = process.env.API_SECRET_KEY;
-
-    // Allow public routes (like domain lookup) without a key.
-    // All other APIs must provide a valid x-secret-key.
-    if (!isPublicRoute) {
-      if (!serverSecretKey || clientSecretKey !== serverSecretKey) {
-        console.warn(`[Proxy-Auth] Unauthorized access attempt to ${pathname} from ${ip}`);
-        return applySecurityHeaders(
-          NextResponse.json({ error: 'unauthorized', message: 'Secret key missing or invalid.' }, { status: 401 }),
-          pathname
-        );
-      }
-    }
-
-    // ---------------------------------------------------------
-    // 3. RATE LIMITING (APIs Only)
-    // ---------------------------------------------------------
     const windowStart = Date.now() - 60000;
     const countData = rateLimitMap.get(ip) || { count: 0, startTime: Date.now() };
 
@@ -101,14 +82,18 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     } else {
       countData.count++;
     }
-    
-    // In-memory update
+
     rateLimitMap.set(ip, countData);
 
-    // Block if > 50 requests per minute from same IP to API
-    if (countData.count > 50) {
-      return applySecurityHeaders(NextResponse.json({ error: 'Too many requests. Rate limit exceeded.' }, { status: 429 }), pathname);
+    if (countData.count > 100) {
+      return applySecurityHeaders(
+        NextResponse.json({ error: 'Too many requests. Rate limit exceeded.' }, { status: 429 }),
+        pathname
+      );
     }
+
+    // API routes handle their own auth — let them through
+    return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
   // ── বাইপাস: Webmaa নিজের ডোমেইন বা localhost ──────────────────────────
@@ -116,11 +101,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
-  // ── /shop/* পাথ আসলে আর domain lookup লাগবে না ──────────────────────
-  // যেমন webmaa.vercel.app/shop/messerbazar → সরাসরি পার হয়
+  // ── এই পাথগুলো সরাসরি পার হবে — domain lookup লাগবে না ──────────────
   if (
     pathname.startsWith('/shop/') ||
-    pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/favicon') ||
     pathname.startsWith('/robots') ||
@@ -139,18 +122,22 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const lookupUrl = new URL('/api/domain-lookup', request.url);
     lookupUrl.searchParams.set('host', host);
 
+    console.log(`[Proxy] Calling domain-lookup for host=${host}`);
+
     const lookupResponse = await fetch(lookupUrl.toString(), {
       method: 'GET',
       headers: {
-        // Internal security token — বাইরে থেকে এই API call করা যাবে না
+        // Internal security token
         'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '',
       },
-      // Edge-এ cache করা যাবে — একই domain বারবার hit করলে fast হবে
       next: { revalidate: 60 }, // 60 সেকেন্ড cache
     });
 
+    console.log(`[Proxy] domain-lookup status=${lookupResponse.status}`);
+
     if (lookupResponse.ok) {
       const data = await lookupResponse.json();
+      console.log(`[Proxy] domain-lookup data=`, data);
 
       if (data.slug) {
         // ✅ ডোমেইন পাওয়া গেছে — /shop/[slug] এ rewrite করো
@@ -158,19 +145,18 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
           `/shop/${data.slug}${pathname === '/' ? '' : pathname}`,
           request.url
         );
-
-        // query string ঠিক রাখো (যদি থাকে)
         rewriteUrl.search = request.nextUrl.search;
 
+        console.log(`[Proxy] Rewriting to ${rewriteUrl.toString()}`);
         return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
       }
     }
 
     // ❌ ডোমেইন পাওয়া যায়নি — কাস্টম not-found পেজ দেখাও
+    console.warn(`[Proxy] Domain not found for host=${host}`);
     const notFoundUrl = new URL('/not-found-domain', request.url);
     return applySecurityHeaders(NextResponse.rewrite(notFoundUrl), pathname);
   } catch (err) {
-    // Network বা অন্য error — graceful fallback
     console.error('[proxy] domain lookup failed:', err);
     const notFoundUrl = new URL('/not-found-domain', request.url);
     return applySecurityHeaders(NextResponse.rewrite(notFoundUrl), pathname);
@@ -178,15 +164,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 }
 
 // ── Matcher Config ──────────────────────────────────────────────────────────
-// এই pattern-এর বাইরের path-এ proxy একদম চলবে না (performance)
 export const config = {
   matcher: [
-    /*
-     * সব path-এ চলবে, শুধু বাদ দেওয়া হবে:
-     * - _next/static  (static assets)
-     * - _next/image   (image optimization)
-     * - favicon.ico, robots.txt, sitemap.xml
-     */
     '/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|icons/).*)',
   ],
 };

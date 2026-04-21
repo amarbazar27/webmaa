@@ -17,12 +17,6 @@ if (!admin.apps.length && process.env.FIREBASE_PROJECT_ID) {
   }
 }
 
-// 🛡️ Helper to get instances safely
-const getAdminDb = () => admin.apps.length ? admin.firestore() : null;
-const getAdminAuth = () => admin.apps.length ? admin.auth() : null;
-
-// Exporting proxies/getters or handles
+// Export singletons — init must run before these lines
 export const adminDb = admin.apps.length ? admin.firestore() : null;
 export const adminAuth = admin.apps.length ? admin.auth() : null;
-
-export { adminDb, adminAuth };

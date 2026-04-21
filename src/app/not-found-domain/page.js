@@ -8,10 +8,58 @@
  * 'use client' — hover animation এর জন্য দরকার।
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function DomainNotFound() {
   const [hovered, setHovered] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkDomainClientSide = async () => {
+      try {
+        // 1. Detect current host in frontend
+        // 4. Add fallback (important): If hostname is empty, use window.location.host
+        const hostname = window.location.hostname || window.location.host;
+        
+        // 5. Logging (keep)
+        console.log("HOST SENT:", hostname);
+
+        if (!hostname || hostname.includes('localhost') || hostname.includes('webmaa.vercel.app')) {
+          setIsChecking(false);
+          return;
+        }
+
+        // 2 & 3. Update API call to include host correctly
+        const res = await fetch(`/api/domain-lookup?host=${hostname}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.slug) {
+            router.replace(`/shop/${data.slug}`);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Frontend domain lookup failed:", err);
+      }
+      setIsChecking(false);
+    };
+
+    checkDomainClientSide();
+  }, [router]);
+
+  if (isChecking) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff'
+      }}>
+        <h2>ডোমেইন অনুসন্ধান করা হচ্ছে... (Checking domain...)</h2>
+      </div>
+    );
+  }
 
   return (
     <div style={{
