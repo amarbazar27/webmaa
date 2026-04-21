@@ -14,18 +14,6 @@ import { getShopByDomain } from '@/lib/firestore-server';
 export const dynamic = 'force-dynamic'; // cache করব না, সবসময় fresh data
 
 export async function GET(request) {
-  // ── Security Check ──────────────────────────────────────────────────────
-  // শুধু proxy.ts থেকে আসা request গ্রহণ করব
-  const internalToken = request.headers.get('x-internal-token');
-  const expectedToken = process.env.INTERNAL_PROXY_SECRET;
-
-  if (!expectedToken || internalToken !== expectedToken) {
-    return NextResponse.json(
-      { error: 'unauthorized' },
-      { status: 401 }
-    );
-  }
-
   // ── Host Parameter ──────────────────────────────────────────────────────
   const { searchParams } = new URL(request.url);
   const host = searchParams.get('host');

@@ -70,9 +70,28 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const host = normalizeHost(rawHost);
 
   // ---------------------------------------------------------
-  // 2. RATE LIMITING (APIs Only)
+  // 2. API AUTHORIZATION (Public vs Private Separation)
   // ---------------------------------------------------------
   if (pathname.startsWith('/api/')) {
+    const isPublicRoute = pathname === '/api/domain-lookup' && request.method === 'GET';
+    const clientSecretKey = request.headers.get('x-secret-key');
+    const serverSecretKey = process.env.API_SECRET_KEY;
+
+    // Allow public routes (like domain lookup) without a key.
+    // All other APIs must provide a valid x-secret-key.
+    if (!isPublicRoute) {
+      if (!serverSecretKey || clientSecretKey !== serverSecretKey) {
+        console.warn(`[Proxy-Auth] Unauthorized access attempt to ${pathname} from ${ip}`);
+        return applySecurityHeaders(
+          NextResponse.json({ error: 'unauthorized', message: 'Secret key missing or invalid.' }, { status: 401 }),
+          pathname
+        );
+      }
+    }
+
+    // ---------------------------------------------------------
+    // 3. RATE LIMITING (APIs Only)
+    // ---------------------------------------------------------
     const windowStart = Date.now() - 60000;
     const countData = rateLimitMap.get(ip) || { count: 0, startTime: Date.now() };
 
