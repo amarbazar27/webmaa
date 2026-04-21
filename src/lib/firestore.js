@@ -26,41 +26,49 @@ export const getShopBySlug = async (slug) => {
 export const getShopByDomain = async (rawDomain) => {
   if (!rawDomain) return null;
 
-  // ── Normalize Host ──────────────────────────────────────────────────────
-  // Remove protocol, www., and ports to ensure robust matching
-  const domain = rawDomain
-    .toLowerCase()
-    .trim()
-    .replace(/^https?:\/\//i, '')
-    .replace(/^www\./i, '')
-    .split(':')[0]
-    .split('/')[0];
+  // ── Normalize Host Variations ──────────────────────────────────────────
+  const cleanHost = rawDomain.toLowerCase().trim().replace(/^https?:\/\//i, '').split(':')[0].split('/')[0];
+  const nakedHost = cleanHost.replace(/^www\./i, '');
+  const wwwHost = `www.${nakedHost}`;
 
-  console.log(`[Firestore] Looking up shop for domain: "${domain}" (raw: "${rawDomain}")`);
+  console.log(`[Domain-Resolution] Resolving host: "${cleanHost}" (Naked: "${nakedHost}", WWW: "${wwwHost}")`);
 
   try {
-    // 1. Try new 'domains' array field
-    const arrayQuery = query(collection(db, 'shops'), where('domains', 'array-contains', domain));
+    const shopsRef = collection(db, 'shops');
+
+    // 1. Check Array Field 'domains' — Firestore array-contains is exact match.
+    // We check for the exact cleaned host. 
+    // If it's a custom domain, both versions (naked and www) might be in the data.
+    const arrayQuery = query(shopsRef, where('domains', 'array-contains', nakedHost));
     const arraySnap = await getDocs(arrayQuery);
 
     if (!arraySnap.empty) {
-      console.log(`[Firestore] Shop found in "domains" array for: ${domain}`);
+      console.log(`[Domain-Resolution] Success: Found in "domains" array (Match: ${nakedHost})`);
       return { id: arraySnap.docs[0].id, ...arraySnap.docs[0].data() };
     }
 
+    // Try array search with WWW just in case the retailer stored it that way
+    const arrayQueryWww = query(shopsRef, where('domains', 'array-contains', wwwHost));
+    const arraySnapWww = await getDocs(arrayQueryWww);
+
+    if (!arraySnapWww.empty) {
+      console.log(`[Domain-Resolution] Success: Found in "domains" array (Match: ${wwwHost})`);
+      return { id: arraySnapWww.docs[0].id, ...arraySnapWww.docs[0].data() };
+    }
+
     // 2. Fallback to legacy 'customDomain' string field
-    const stringQuery = query(collection(db, 'shops'), where('customDomain', '==', domain));
+    const stringQuery = query(shopsRef, where('customDomain', '==', nakedHost));
     const stringSnap = await getDocs(stringQuery);
 
     if (!stringSnap.empty) {
-      console.log(`[Firestore] Shop found in legacy "customDomain" for: ${domain}`);
+      console.log(`[Domain-Resolution] Success: Found in legacy "customDomain" string`);
       return { id: stringSnap.docs[0].id, ...stringSnap.docs[0].data() };
     }
 
-    console.log(`[Firestore] No shop found for domain: ${domain}`);
+    console.log(`[Domain-Resolution] Failed: No mapping found for ${cleanHost}`);
     return null;
   } catch (error) {
-    console.error(`[Firestore] getShopByDomain error for ${domain}:`, error);
+    console.error(`[Domain-Resolution] Critical Error:`, error);
     return null;
   }
 };
