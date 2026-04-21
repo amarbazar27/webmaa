@@ -18,7 +18,7 @@ export default function TestAuthPage() {
         authDomain: activeConfig.authDomain || 'MISSING',
         projectId: activeConfig.projectId || 'MISSING',
         appId: activeConfig.appId ? `...${activeConfig.appId.substring(activeConfig.appId.length - 8)}` : 'MISSING',
-        buildHash: '341b01e' // Current commit fragment
+        buildHash: 'fa8bb29-nuclear' // Nuclear debug version
       });
 
       // 🔌 Check connection state

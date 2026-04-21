@@ -17,15 +17,7 @@ import type { NextRequest } from 'next/server';
 const rateLimitMap = new Map<string, { count: number, startTime: number }>();
 
 function applySecurityHeaders(response: NextResponse, pathname: string): NextResponse {
-  response.headers.set('X-DNS-Prefetch-Control', 'on');
-  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-
-  if (pathname.startsWith('/api/')) {
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow, nosnippet, noarchive');
-  }
+  // Disabled security headers temporarily to debug Auth conflict
   return response;
 }
 
