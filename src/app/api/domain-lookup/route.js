@@ -10,10 +10,18 @@
 
 import { NextResponse } from 'next/server';
 import { getShopByDomain } from '@/lib/firestore-server';
-
-export const dynamic = 'force-dynamic'; // cache করব না, সবসময় fresh data
-
 export async function GET(request) {
+  // ── Internal Token Check ────────────────────────────────────────────────
+  const internalToken = request.headers.get('x-internal-token');
+  const secretKey = process.env.INTERNAL_PROXY_SECRET || '';
+  
+  // Only check if secret is configured
+  if (secretKey && internalToken !== secretKey) {
+    console.warn('[Domain-Lookup] Unauthorized internal access attempt');
+    // We don't return 401 yet to avoid breaking if env is not synced, 
+    // but we log it for audit.
+  }
+
   // ── Host Parameter ──────────────────────────────────────────────────────
   const { searchParams } = new URL(request.url);
   const host = searchParams.get('host');
