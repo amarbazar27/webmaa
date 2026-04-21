@@ -61,10 +61,12 @@ function isBypassHost(host: string): boolean {
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const rawHost = request.headers.get('host') ?? '';
+  console.log("HOST:", rawHost);
+
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip || '127.0.0.1';
   const { pathname } = request.nextUrl;
 
-  const rawHost = request.headers.get('host') ?? '';
   const host = normalizeHost(rawHost);
 
   // ---------------------------------------------------------
