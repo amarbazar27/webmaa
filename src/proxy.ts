@@ -33,6 +33,7 @@ function applySecurityHeaders(response: NextResponse, pathname: string): NextRes
 // এই হোস্টগুলো কাস্টম ডোমেইন হিসেবে ধরা হবে না — সরাসরি পার হয়ে যাবে
 const BYPASS_HOSTS = [
   'webmaa.vercel.app',
+  'webmaa-backup.vercel.app',
   'localhost',
   '127.0.0.1',
 ];

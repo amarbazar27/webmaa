@@ -23,12 +23,46 @@ export const getShopBySlug = async (slug) => {
   return { id: snap.docs[0].id, ...snap.docs[0].data() };
 };
 
-export const getShopByDomain = async (domain) => {
-  if (!domain) return null;
-  const q = query(collection(db, 'shops'), where('customDomain', '==', domain.toLowerCase().trim()));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+export const getShopByDomain = async (rawDomain) => {
+  if (!rawDomain) return null;
+
+  // ── Normalize Host ──────────────────────────────────────────────────────
+  // Remove protocol, www., and ports to ensure robust matching
+  const domain = rawDomain
+    .toLowerCase()
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .split(':')[0]
+    .split('/')[0];
+
+  console.log(`[Firestore] Looking up shop for domain: "${domain}" (raw: "${rawDomain}")`);
+
+  try {
+    // 1. Try new 'domains' array field
+    const arrayQuery = query(collection(db, 'shops'), where('domains', 'array-contains', domain));
+    const arraySnap = await getDocs(arrayQuery);
+
+    if (!arraySnap.empty) {
+      console.log(`[Firestore] Shop found in "domains" array for: ${domain}`);
+      return { id: arraySnap.docs[0].id, ...arraySnap.docs[0].data() };
+    }
+
+    // 2. Fallback to legacy 'customDomain' string field
+    const stringQuery = query(collection(db, 'shops'), where('customDomain', '==', domain));
+    const stringSnap = await getDocs(stringQuery);
+
+    if (!stringSnap.empty) {
+      console.log(`[Firestore] Shop found in legacy "customDomain" for: ${domain}`);
+      return { id: stringSnap.docs[0].id, ...stringSnap.docs[0].data() };
+    }
+
+    console.log(`[Firestore] No shop found for domain: ${domain}`);
+    return null;
+  } catch (error) {
+    console.error(`[Firestore] getShopByDomain error for ${domain}:`, error);
+    return null;
+  }
 };
 
 export const updateShop = async (shopId, data) => {

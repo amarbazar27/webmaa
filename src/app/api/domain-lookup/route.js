@@ -39,6 +39,7 @@ export async function GET(request) {
 
   // ── Firestore Lookup ────────────────────────────────────────────────────
   try {
+    console.log(`[Domain-Lookup] Querying Firestore for host: ${host}`);
     // getShopByDomain ইতিমধ্যে lowercase + trim করে — src/lib/firestore.js থেকে
     const shop = await getShopByDomain(host);
 
