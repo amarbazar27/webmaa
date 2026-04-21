@@ -130,6 +130,14 @@ export const handleUserSession = async (user) => {
 export const loginWithGoogle = async () => {
   try {
     const currentUrl = typeof window !== 'undefined' ? window.location.href : 'SSR';
+    const isCustomDomain = typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app') && !window.location.hostname.includes('localhost');
+
+    if (isCustomDomain) {
+      console.log("[Auth] Custom domain detected. Using Redirect login immediately.");
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+
     console.log(`[Auth] Starting Google Popup login from: ${currentUrl}`);
     const result = await signInWithPopup(auth, googleProvider);
     console.log("[Auth] Popup success:", result.user?.email);

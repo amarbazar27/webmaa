@@ -473,9 +473,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     } catch (err) {
       console.error('Login error:', err);
       if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized')) {
-        toast.error('ডোমেইনটি ফায়ারবেসে যোগ নেই। শপমালিককে জানান। (Unauthorized Domain)', { duration: 6000 });
+        toast.error('ডোমেইনটি ফায়ারবেসে যোগ নেই। (Unauthorized Domain)', { duration: 6000 });
       } else {
-        toast.error('লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+        const errorHint = err?.code ? `(${err.code})` : (err?.message ? `(${err.message.slice(0,30)})` : '');
+        toast.error(`লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন। ${errorHint}`);
       }
     }
   };
