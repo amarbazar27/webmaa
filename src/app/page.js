@@ -49,10 +49,16 @@ export default function Home() {
     setLoggingIn(true);
     try {
       const result = await loginWithGoogle();
+      if (!result) return; // Wait for redirect or background session
+      
       const role = result?.userData?.role;
       if (role === 'superadmin') router.push('/superadmin');
       else if (role === 'retailer' || role === 'staff') router.push('/dashboard');
-    } catch (err) {} finally {
+      else toast.success(`স্বাগতম, ${result.user.displayName}!`);
+    } catch (err) {
+      console.error("[SmartLogin] Error:", err);
+      toast.error(err.message || 'লগইন করতে সমস্যা হয়েছে।');
+    } finally {
       setLoggingIn(false);
     }
   };

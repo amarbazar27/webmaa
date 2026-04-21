@@ -129,24 +129,38 @@ export const handleUserSession = async (user) => {
  */
 export const loginWithGoogle = async () => {
   try {
+    console.log("[Auth] Starting Google Popup login...");
     const result = await signInWithPopup(auth, googleProvider);
+    console.log("[Auth] Popup success:", result.user?.email);
     return await handleUserSession(result.user);
   } catch (error) {
-    console.error("[Auth] Popup error:", error.code, error.message);
+    const errorCode = error?.code || 'unknown';
+    const errorMsg = error?.message || '';
+    console.error(`[Auth] Popup error (${errorCode}):`, errorMsg);
 
-    if (
-      error?.code === 'auth/unauthorized-domain' ||
-      error?.code === 'auth/popup-blocked' ||
-      error?.code === 'auth/popup-closed-by-user'
-    ) {
-      // Fallback: full-page redirect through Firebase's always-trusted authDomain
+    // Specific triggers for redirect fallback
+    const shouldFallback = 
+      errorCode === 'auth/unauthorized-domain' || 
+      errorCode === 'auth/popup-blocked' || 
+      errorCode === 'auth/popup-closed-by-user' ||
+      errorCode === 'auth/cancelled-popup-request' ||
+      // If we are on a custom domain, popup might fail with generic errors in some browsers
+      (typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app') && !window.location.hostname.includes('localhost'));
+
+    if (shouldFallback) {
+      console.log("[Auth] Falling back to Redirect login...");
       try {
         await signInWithRedirect(auth, googleProvider);
-        return null; // Page navigates away
+        return null; // Navigation occurs
       } catch (redirectError) {
-        console.error("[Auth] Redirect also failed:", redirectError.code);
+        console.error("[Auth] Redirect initiation failed:", redirectError.code);
         throw redirectError;
       }
+    }
+
+    // Special handling for the "invalid action" error to provide better hint
+    if (errorMsg.toLowerCase().includes('invalid action') || errorCode === 'auth/invalid-action-code') {
+      throw new Error("লগইন সেশনটি অবৈধ হয়ে গেছে। দয়া করে পেজটি রিফ্রেশ করে আবার চেষ্টা করুন। (Auth state mismatch)");
     }
 
     throw error;
@@ -156,15 +170,26 @@ export const loginWithGoogle = async () => {
 // Called on page load to process any pending redirect login result
 export const handleLoginRedirect = async () => {
   try {
+    // Only attempt if we potentially came from a redirect
+    if (typeof window === 'undefined') return null;
+    
     const result = await getRedirectResult(auth);
     if (result?.user) {
+      console.log("[Auth] Redirect success:", result.user.email);
       return await handleUserSession(result.user);
     }
     return null;
   } catch (error) {
-    // Silently ignore — common if no redirect was in progress
-    if (error?.code !== 'auth/no-auth-event') {
-      console.error("[Auth] Redirect result error:", error.code);
+    const code = error?.code;
+    // Suppress common non-errors
+    if (code === 'auth/no-auth-event' || code === 'auth/user-not-found') return null;
+    
+    console.error("[Auth] Redirect processing error:", code, error.message);
+    
+    // If we get an "invalid action" here, it means state was corrupted
+    if (error.message.toLowerCase().includes('invalid action')) {
+      // Consuming the error so it doesn't crash the AuthProvider mount
+      return null;
     }
     return null;
   }

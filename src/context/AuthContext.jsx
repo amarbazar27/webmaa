@@ -10,8 +10,15 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Process any pending redirect login result (from signInWithRedirect)
-    handleLoginRedirect().catch(err => console.error("Redirect login check:", err));
+    // 1. Process any pending redirect login result
+    handleLoginRedirect().then(result => {
+      if (result?.user && result?.userData) {
+        setUser(result.user);
+        setUserData(result.userData);
+      }
+    }).catch(err => {
+      console.error("[AuthProvider] Redirect processing failed:", err);
+    });
 
     const unsub = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
