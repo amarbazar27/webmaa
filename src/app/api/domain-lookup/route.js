@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getShopByDomain } from '@/lib/firestore';
+import { getShopByDomain } from '@/lib/firestore-server';
 
 export const dynamic = 'force-dynamic'; // cache করব না, সবসময় fresh data
 

@@ -1,4 +1,5 @@
-import { getShopByDomain, getProducts, getCategories } from '@/lib/firestore';
+import { getProducts, getCategories } from '@/lib/firestore';
+import { getShopByDomain } from '@/lib/firestore-server';
 import ShopClient from '@/app/shop/[shopSlug]/ShopClient';
 import { notFound } from 'next/navigation';
 

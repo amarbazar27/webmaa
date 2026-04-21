@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getShopByDomain } from '@/lib/firestore';
+import { getShopByDomain } from '@/lib/firestore-server';
 import { verifyAuth, AuthError } from '@/lib/verifyAuth';
 
 // Validate that a string looks like a real domain (basic but effective)
