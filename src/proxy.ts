@@ -102,7 +102,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/sw.') ||
     pathname.startsWith('/manifest') ||
     pathname.startsWith('/not-found-domain') ||
-    pathname.startsWith('/icons/')
+    pathname.startsWith('/icons/') ||
+    pathname.startsWith('/__/')
   ) {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }

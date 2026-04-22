@@ -130,14 +130,6 @@ export const handleUserSession = async (user) => {
 export const loginWithGoogle = async () => {
   try {
     const currentUrl = typeof window !== 'undefined' ? window.location.href : 'SSR';
-    const isCustomDomain = typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app') && !window.location.hostname.includes('localhost');
-
-    if (isCustomDomain) {
-      console.log("[Auth] Custom domain detected. Using Redirect login immediately.");
-      await signInWithRedirect(auth, googleProvider);
-      return null;
-    }
-
     console.log(`[Auth] Starting Google Popup login from: ${currentUrl}`);
     const result = await signInWithPopup(auth, googleProvider);
     console.log("[Auth] Popup success:", result.user?.email);
@@ -151,9 +143,7 @@ export const loginWithGoogle = async () => {
     const shouldFallback = 
       errorCode === 'auth/popup-blocked' || 
       errorCode === 'auth/popup-closed-by-user' ||
-      errorCode === 'auth/cancelled-popup-request' ||
-      // If we are on a custom domain, popup might fail with generic errors in some browsers, but if it's unauthorized-domain, we shouldn't fallback because redirect will also fail.
-      (typeof window !== 'undefined' && !window.location.hostname.includes('vercel.app') && !window.location.hostname.includes('localhost') && errorCode !== 'auth/unauthorized-domain');
+      errorCode === 'auth/cancelled-popup-request';
 
     // If it's unauthorized domain, throw immediately so the UI can show the specific error
     if (errorCode === 'auth/unauthorized-domain' || errorMsg.includes('unauthorized-domain')) {
