@@ -696,6 +696,12 @@ export default function SettingsPage() {
                    onChange={e => setDeliveryConfig({...deliveryConfig, methods: e.target.value})}
                    placeholder="bKash: 017.., Nagad.."
                  />
+                 <Input
+                   label="Default Delivery Time (e.g. 30 minutes, 1 day)"
+                   value={deliveryConfig.defaultDeliveryTime || ''}
+                   onChange={e => setDeliveryConfig({...deliveryConfig, defaultDeliveryTime: e.target.value})}
+                   placeholder="e.g. 45 minutes"
+                 />
               </div>
               <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
                  {deliveryConfig.isCOD 

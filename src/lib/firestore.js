@@ -133,13 +133,24 @@ export const placeOrder = async (shopId, orderData) => {
   });
 };
 
-export const updateOrderStatus = async (shopId, orderId, status) => {
+export const saveUserData = async (uid, data) => {
+  return setDoc(doc(db, 'users', uid), data, { merge: true });
+};
+
+export const updateOrderStatus = async (shopId, orderId, status, deliveryTime = null) => {
   const orderRef = doc(db, 'shops', shopId, 'orders', orderId);
   const orderSnap = await getDoc(orderRef);
 
   if (orderSnap.exists()) {
      const orderData = orderSnap.data();
-     await updateDoc(orderRef, { status });
+     const updates = { status };
+     
+     if (status === 'confirmed' && deliveryTime) {
+       updates.deliveryTime = deliveryTime;
+       updates.confirmedAt = serverTimestamp();
+     }
+
+     await updateDoc(orderRef, updates);
 
      // Loyalty Point Logic Isolation
      if (status === 'completed' && orderData.status !== 'completed' && orderData.customerId) {

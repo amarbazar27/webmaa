@@ -24,9 +24,9 @@ export default function RootLayout({ children }) {
               {children}
             </main>
             <Toaster 
-              position="bottom-right" 
+              position="bottom-left" 
               toastOptions={{ 
-                style: { marginBottom: '20px', marginRight: '20px' } 
+                style: { marginBottom: '20px', marginLeft: '20px' } 
               }} 
             />
             {/* PWA and DevTools Blocker removed per user request */}

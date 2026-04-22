@@ -62,7 +62,8 @@ export default function OrdersPage() {
 
   const proceedStatusUpdate = async (orderId, newStatus) => {
     try {
-      await updateOrderStatus(activeShopId, orderId, newStatus);
+      const deliveryTime = newStatus === 'confirmed' ? shop?.deliveryConfig?.defaultDeliveryTime : null;
+      await updateOrderStatus(activeShopId, orderId, newStatus, deliveryTime);
       toast.success(`Order marked as ${newStatus}`);
       setAuthModal({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
     } catch (err) {

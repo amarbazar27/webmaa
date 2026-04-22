@@ -14,6 +14,7 @@ const CheckoutSchema = z.object({
   customerAddress: z.string().min(5).max(200),
   customerNote: z.string().max(300).optional(),
   transactionId: z.string().max(50).optional(),
+  paymentNumber: z.string().max(15).optional(),
   honeypot: z.string().max(0).optional(),
   items: z.array(z.object({
     id: z.string().min(1),
@@ -72,6 +73,7 @@ export async function POST(req) {
       customerAddress,
       customerNote,
       transactionId,
+      paymentNumber,
       honeypot,
       items
     } = parsed.data;
@@ -188,6 +190,7 @@ export async function POST(req) {
       customerAddress,
       customerNote: customerNote || '',
       transactionId: transactionId || '',
+      paymentNumber: paymentNumber || '',
       orderIdVisual,
       items: verifiedItems,
       total: finalTotal,
