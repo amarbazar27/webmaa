@@ -378,28 +378,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const { user, userData, loading: authLoading } = useAuth();
   const [shop] = useState(initialShop);
   
-  if (authLoading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-      <Loader2 className="animate-spin text-purple-600 mb-4" size={40} />
-      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">লোড হচ্ছে...</p>
-    </div>
-  );
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-        <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-8 scale-110">
-          <CuteAIIcon />
-        </div>
-        <h1 className="text-3xl font-black text-slate-900 mb-4">স্বাগতম {shop.shopName}-এ!</h1>
-        <p className="text-slate-500 font-bold mb-8 max-w-sm">দয়া করে কেনাকাটা শুরু করার আগে আপনার গুগল অ্যাকাউন্ট দিয়ে লগইন করুন।</p>
-        <button onClick={() => loginWithGoogle()} className="w-full max-w-xs py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
-          গুগল দিয়ে লগইন
-        </button>
-      </div>
-    );
-  }
 
   const [products] = useState(initialProducts);
   const [categories] = useState([{ id: 'all', name: 'সব' }, ...initialCategories]);
@@ -848,6 +827,29 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(`Order_${orderData.orderIdVisual}.pdf`);
   };
+
+  if (authLoading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+      <Loader2 className="animate-spin text-purple-600 mb-4" size={40} />
+      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">লোড হচ্ছে...</p>
+    </div>
+  );
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
+        <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-8 scale-110">
+          <CuteAIIcon />
+        </div>
+        <h1 className="text-3xl font-black text-slate-900 mb-4">স্বাগতম {shop.shopName}-এ!</h1>
+        <p className="text-slate-500 font-bold mb-8 max-w-sm">দয়া করে কেনাকাটা শুরু করার আগে আপনার গুগল অ্যাকাউন্ট দিয়ে লগইন করুন।</p>
+        <button onClick={() => loginWithGoogle()} className="w-full max-w-xs py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
+          গুগল দিয়ে লগইন
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
