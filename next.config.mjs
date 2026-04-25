@@ -50,6 +50,16 @@ const nextConfig = {
       },
     ];
   },
+
+  // ⚡ CRITICAL FIX: Required for Firebase Auth to work on custom domains
+  async rewrites() {
+    return [
+      {
+        source: '/__/auth/:path*',
+        destination: `https://webmaa-app.firebaseapp.com/__/auth/:path*`,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
