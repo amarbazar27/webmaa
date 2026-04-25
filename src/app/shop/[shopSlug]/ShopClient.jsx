@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
+import LoadingScreen from '@/components/ui/LoadingScreen';
 import { 
   ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart,
@@ -828,12 +829,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     pdf.save(`Order_${orderData.orderIdVisual}.pdf`);
   };
 
-  if (authLoading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-      <Loader2 className="animate-spin text-purple-600 mb-4" size={40} />
-      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">লোড হচ্ছে...</p>
-    </div>
-  );
+  if (authLoading) return <LoadingScreen text="Preparing Storefront" />;
+
 
   if (!user) {
     return (

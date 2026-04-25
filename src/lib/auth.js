@@ -7,7 +7,7 @@ import {
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, collection, query, where, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { app, db } from './firebase';
 
 export const auth = getAuth(app);
@@ -20,7 +20,6 @@ const determineRole = async (email) => {
     
     const currentEmail = email.toLowerCase().trim();
     // 🔐 শুধু environment variable থেকে admin email নেবে
-    // ⚠️ আগে hardcoded fallback ছিল — এটা বিপজ্জনক!
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
 
     if (envAdmin && currentEmail === envAdmin) {
@@ -54,177 +53,117 @@ export const handleUserSession = async (user) => {
   let finalUserData = null;
 
   if (!userDocSnap.exists()) {
+    // New user — determine role from invites/staff lists
     const roleData = await determineRole(user.email);
     finalUserData = {
       uid: user.uid,
       email: user.email.toLowerCase(),
       name: user.displayName || 'User',
       photoURL: user.photoURL || '',
-      role: roleData.role,
-      ...(roleData.accessShopId ? { accessShopId: roleData.accessShopId, accessShopSlug: roleData.shopSlug } : {}),
       createdAt: serverTimestamp(),
       lastLogin: serverTimestamp(),
-      subscription: 'free',
+      ...roleData
     };
     await setDoc(userDocRef, finalUserData);
 
-    if (roleData.role === 'retailer') {
-      const slugName = (user.displayName || 'shop').toLowerCase().replace(/\s+/g, '-');
-      const shopSlug = `${slugName}-${Date.now()}`;
+    // If they became a retailer, initialize their shop
+    if (finalUserData.role === 'retailer') {
+      const shopSlug = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
       await setDoc(doc(db, 'shops', user.uid), {
         ownerId: user.uid,
         shopName: `${user.displayName || 'My'}'s Premium Store`,
         shopSlug,
-        description: 'Welcome to our brand new store.',
-        coverImg: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200',
-        domainType: 'platform',
         subdomainSlug: shopSlug,
-        staffEmails: [],
         isActive: true,
-        totalOrders: 0,
         createdAt: serverTimestamp(),
+        staffEmails: [],
+        banners: [
+          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
+          'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200'
+        ]
       });
     }
   } else {
+    // Existing user
     const existingData = userDocSnap.data();
-    const roleData = await determineRole(user.email);
-    const freshRole = roleData.role;
-    const updates = {
-      lastLogin: serverTimestamp(),
-      name: user.displayName || existingData.name,
-      photoURL: user.photoURL || existingData.photoURL,
-      role: freshRole,
-    };
-
-    // TASK 3 FIX: Properly handle role-specific fields
-    if (roleData.accessShopId) {
-      // User is staff — set their shop access
-      updates.accessShopId = roleData.accessShopId;
-      updates.accessShopSlug = roleData.shopSlug;
-    } else if (existingData.accessShopId && freshRole !== 'staff') {
-      // User WAS staff but no longer — clean up stale access
-      const { deleteField } = await import('firebase/firestore');
-      updates.accessShopId = deleteField();
-      updates.accessShopSlug = deleteField();
-    }
-
-    await setDoc(userDocRef, updates, { merge: true });
     
-    // Build clean finalUserData (without deleteField sentinels)
-    const cleanData = { ...existingData, ...updates };
-    if (freshRole !== 'staff') {
-      delete cleanData.accessShopId;
-      delete cleanData.accessShopSlug;
-    }
-    finalUserData = cleanData;
-
-    if (existingData.role !== freshRole && freshRole === 'retailer') {
-      const shopDoc = await getDoc(doc(db, 'shops', user.uid));
-      if (!shopDoc.exists()) {
-        const slugName = (user.displayName || 'shop').toLowerCase().replace(/\s+/g, '-');
-        const shopSlug = `${slugName}-${Date.now()}`;
-        await setDoc(doc(db, 'shops', user.uid), {
-          ownerId: user.uid,
-          shopName: `${user.displayName || 'My'}'s Premium Store`,
-          shopSlug,
-          description: 'Welcome to our brand new store.',
-          coverImg: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200',
-          domainType: 'platform',
-          subdomainSlug: shopSlug,
-          staffEmails: [],
-          isActive: true,
-          totalOrders: 0,
-          createdAt: serverTimestamp(),
-        });
+    // 🔥 TASK 3 FIX: If they are currently just a "user", re-verify role
+    // This allows staff/retailer invitations to take effect instantly
+    if (existingData.role === 'user' || !existingData.role) {
+      const freshRole = await determineRole(user.email);
+      if (freshRole.role !== 'user') {
+        console.log(`[Auth] Promoting user ${user.email} to ${freshRole.role}`);
+        await updateDoc(userDocRef, { ...freshRole });
+        finalUserData = { ...existingData, ...freshRole };
+        
+        // If they just became a retailer, initialize their shop
+        if (freshRole.role === 'retailer') {
+          const shopDoc = await getDoc(doc(db, 'shops', user.uid));
+          if (!shopDoc.exists()) {
+            const shopSlug = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
+            await setDoc(doc(db, 'shops', user.uid), {
+              ownerId: user.uid,
+              shopName: `${user.displayName || 'My'}'s Premium Store`,
+              shopSlug,
+              subdomainSlug: shopSlug,
+              isActive: true,
+              createdAt: serverTimestamp(),
+              staffEmails: [],
+              banners: [
+                'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
+                'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200'
+              ]
+            });
+          }
+        }
+      } else {
+        finalUserData = existingData;
       }
+    } else {
+      // Periodic check even for non-users (e.g. staff changes)
+      // For now, just trust existing role but we could re-verify occasionally
+      finalUserData = existingData;
     }
+
+    // Refresh last login
+    await updateDoc(userDocRef, { lastLogin: serverTimestamp() });
   }
   return { user, userData: finalUserData };
 };
 
 /**
  * Google Login — tries popup first, falls back to full-page redirect.
- * Redirect goes through Firebase's own authDomain (webmaa-app.firebaseapp.com).
- * Returns { user, userData } on popup success, or null if redirect was started.
  */
 export const loginWithGoogle = async () => {
   try {
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : 'SSR';
-    console.log(`[Auth] Starting Google Popup login from: ${currentUrl}`);
     const result = await signInWithPopup(auth, googleProvider);
-    console.log("[Auth] Popup success:", result.user?.email);
     return await handleUserSession(result.user);
   } catch (error) {
-    const errorCode = error?.code || 'unknown';
-    const errorMsg = error?.message || '';
-    console.error(`[Auth] Popup error (${errorCode}):`, errorMsg);
-
-    // Specific triggers for redirect fallback
-    const shouldFallback = 
-      errorCode === 'auth/popup-blocked' || 
-      errorCode === 'auth/popup-closed-by-user' ||
-      errorCode === 'auth/cancelled-popup-request';
-
-    // If it's unauthorized domain, throw immediately so the UI can show the specific error
-    if (errorCode === 'auth/unauthorized-domain' || errorMsg.includes('unauthorized-domain')) {
-      const e = new Error("unauthorized-domain");
-      e.code = 'auth/unauthorized-domain';
-      throw e;
+    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+      await signInWithRedirect(auth, googleProvider);
+    } else {
+      console.error("Google login failed:", error);
+      throw error;
     }
-
-    if (shouldFallback) {
-      console.log("[Auth] Falling back to Redirect login...");
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        return null; // Navigation occurs
-      } catch (redirectError) {
-        console.error("[Auth] Redirect initiation failed:", redirectError.code);
-        throw redirectError;
-      }
-    }
-
-    // Special handling for the "invalid action" error to provide better hint
-    if (errorMsg.toLowerCase().includes('invalid action') || errorCode === 'auth/invalid-action-code') {
-      throw new Error("লগইন সেশনটি অবৈধ হয়ে গেছে। দয়া করে পেজটি রিফ্রেশ করে আবার চেষ্টা করুন। (Auth state mismatch)");
-    }
-
-    throw error;
   }
 };
 
-// Called on page load to process any pending redirect login result
+/**
+ * Handle user session after redirect login
+ */
 export const handleLoginRedirect = async () => {
   try {
-    // Only attempt if we potentially came from a redirect
-    if (typeof window === 'undefined') return null;
-    
     const result = await getRedirectResult(auth);
-    if (result?.user) {
-      console.log("[Auth] Redirect success:", result.user.email);
-      return await handleUserSession(result.user);
-    }
+    if (result) return await handleUserSession(result.user);
     return null;
   } catch (error) {
-    const code = error?.code;
-    // Suppress common non-errors
-    if (code === 'auth/no-auth-event' || code === 'auth/user-not-found') return null;
-    
-    console.error("[Auth] Redirect processing error:", code, error.message);
-    
-    // If we get an "invalid action" here, it means state was corrupted
-    if (error.message.toLowerCase().includes('invalid action')) {
-      // Consuming the error so it doesn't crash the AuthProvider mount
-      return null;
-    }
-    return null;
+    console.error("Redirect result error:", error);
+    throw error;
   }
 };
 
 export const logoutUser = () => signOut(auth);
 
-export const getUserData = async (uid) => {
-  const snap = await getDoc(doc(db, 'users', uid));
-  return snap.exists() ? snap.data() : null;
+export const onAuthChange = (callback) => {
+  return onAuthStateChanged(auth, callback);
 };
-
-export const onAuthChange = (callback) => onAuthStateChanged(auth, callback);

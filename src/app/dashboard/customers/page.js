@@ -7,17 +7,17 @@ import { Users, Mail, Phone, ShoppingBag, Calendar, Search, MapPin, TrendingUp, 
 import { Card, Input } from '@/components/ui';
 
 export default function CustomersPage() {
-  const { user } = useAuth();
+  const { user, activeShopId } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (!user) return;
+    if (!activeShopId) return;
     const fetchCustomers = async () => {
       setLoading(true);
       try {
-        const orders = await getOrders(user.uid);
+        const orders = await getOrders(activeShopId);
         
         // Extract unique customers from orders
         const customerMap = {};

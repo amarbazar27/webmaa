@@ -125,8 +125,8 @@ export default function SettingsPage() {
   const [geoLoading, setGeoLoading] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    getShop(user.uid).then(data => {
+    if (!activeShopId) return;
+    getShop(activeShopId).then(data => {
       if (data) {
         setShop({
           shopName: data.shopName || '',
@@ -371,7 +371,7 @@ export default function SettingsPage() {
     try {
       const url = await uploadImage(file);
       const newBanners = [...(shop.banners || []), url];
-      await updateShop(user.uid, { banners: newBanners });
+      await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
       toast.success('ব্যানার আপলোড সফল হয়েছে! 🖼️');
     } catch (err) {
@@ -394,7 +394,7 @@ export default function SettingsPage() {
       const url = await uploadImage(file);
       const newBanners = [...(shop.banners || [])];
       newBanners[index] = url;
-      await updateShop(user.uid, { banners: newBanners });
+      await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
       toast.success('ব্যানার পরিবর্তন সফল হয়েছে! 🔄');
     } catch (err) {
@@ -408,7 +408,7 @@ export default function SettingsPage() {
     const newBanners = shop.banners.filter((_, i) => i !== index);
     setSaving(true);
     try {
-      await updateShop(user.uid, { banners: newBanners });
+      await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
       toast.success('ব্যানার সরানো হয়েছে');
     } catch (err) {
@@ -425,10 +425,10 @@ export default function SettingsPage() {
     try {
       let logoUrl = shop.logoUrl || '';
       if (logoFile) {
-        logoUrl = await uploadShopLogo(user.uid, logoFile);
+        logoUrl = await uploadShopLogo(activeShopId, logoFile);
       }
       
-      await updateShop(user.uid, { 
+      await updateShop(activeShopId, { 
         shopName: shop.shopName,
         slogan: shop.slogan,
         notices: shop.notices,

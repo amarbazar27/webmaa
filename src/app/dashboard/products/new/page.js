@@ -61,34 +61,50 @@ export default function NewProductPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !activeShopId) {
+      toast.error('Session error. Please refresh.');
+      return;
+    }
     
+    // Validation
+    const price = parseFloat(form.price);
+    const stock = parseInt(form.stock);
+    
+    if (isNaN(price) || price < 0) {
+      toast.error('দয়া করে সঠিক মূল্য দিন।');
+      return;
+    }
+    if (isNaN(stock) || stock < 0) {
+      toast.error('দয়া করে সঠিক স্টকের পরিমাণ দিন।');
+      return;
+    }
+
     setLoading(true);
-      try {
-        let imageUrl = '';
-        if (imageFile) {
-          try {
-             imageUrl = await uploadProductImage(activeShopId, imageFile);
-          } catch (uploadErr) {
-             console.error("Image Upload Failed:", uploadErr);
-             toast.error(uploadErr.message || 'Image upload failed. Product will be saved without image.');
-          }
+    try {
+      let imageUrl = '';
+      if (imageFile) {
+        try {
+           imageUrl = await uploadProductImage(activeShopId, imageFile);
+        } catch (uploadErr) {
+           console.error("Image Upload Failed:", uploadErr);
+           toast.error('Image upload failed. Product will be saved without image.');
         }
-  
-        await addProduct(activeShopId, {
-          ...form,
-          price: parseFloat(form.price),
-          stock: parseInt(form.stock),
-          sizes: form.sizes.map(s => ({ ...s, price: parseFloat(s.price) })),
-          imageUrl,
-          ownerId: activeShopId,
-        });
+      }
+
+      await addProduct(activeShopId, {
+        ...form,
+        price: price,
+        stock: stock,
+        sizes: form.sizes.map(s => ({ ...s, price: parseFloat(s.price) || 0 })),
+        imageUrl,
+        ownerId: activeShopId, // Correctly using activeShopId as the logical owner
+      });
 
       toast.success('Product indexed successfully! 🚀');
       router.push('/dashboard/products');
     } catch (err) {
       console.error("Database save failed:", err);
-      toast.error('Failed to add product database entry. Please try again.');
+      toast.error('Failed to add product. Please check your permissions.');
     } finally {
       setLoading(false);
     }

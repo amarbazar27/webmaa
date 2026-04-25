@@ -4,44 +4,38 @@ service cloud.firestore {
     
     // ═══════════════════════════════════════════════════════════════
     // 🔐 WEBMAA PRODUCTION FIRESTORE RULES
-    // Last Updated: 2026-04-20
     // Principle: DENY BY DEFAULT, allow only what's necessary
     // ═══════════════════════════════════════════════════════════════
 
     // ── Helper Functions ──────────────────────────────────────────
 
-    // ইউজার লগইন করা কিনা
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // সুপার অ্যাডমিন কিনা (Firestore-এ role চেক করা)
     function isSuperAdmin() {
       return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
 
-    // এই শপের মালিক কিনা (shopId = user UID)
     function isShopOwner(shopId) {
       return isAuthenticated() && request.auth.uid == shopId;
     }
 
-    // এই শপের Staff কিনা (staffEmails array-তে email আছে কিনা)
     function isStaffOf(shopId) {
       return isAuthenticated() && 
+             exists(/databases/$(database)/documents/shops/$(shopId)) &&
              request.auth.token.email in get(/databases/$(database)/documents/shops/$(shopId)).data.staffEmails;
     }
 
-    // শপ মালিক অথবা Staff
     function isShopAdmin(shopId) {
-      return isShopOwner(shopId) || isStaffOf(shopId) || isSuperAdmin();
+      return isShopOwner(shopId) || isSuperAdmin() || isStaffOf(shopId);
     }
 
 
     // ═══════════════════════════════════════════════════════════════
     // 1. GLOBAL CONFIG (API Keys etc)
-    //    ⚠️ আগে allow read: if true ছিল — এখন auth লাগবে
-    //    Gemini API key এখানে store হয়, তাই public করা যাবে না
     // ═══════════════════════════════════════════════════════════════
     match /config/{document=**} {
       allow read: if isAuthenticated();
@@ -50,13 +44,10 @@ service cloud.firestore {
 
     // ═══════════════════════════════════════════════════════════════
     // 2. RETAILER REQUESTS & INVITES
-    //    Request: সবাই নিজের জন্য তৈরি করতে পারবে
-    //    Invite: শুধু সুপার অ্যাডমিন
     // ═══════════════════════════════════════════════════════════════
     match /retailer_requests/{docId} {
       allow create: if isAuthenticated() && request.auth.uid == docId;
-      allow read: if isSuperAdmin() || 
-                    (isAuthenticated() && request.auth.uid == docId);
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == docId);
       allow update, delete: if isSuperAdmin();
     }
     
@@ -67,34 +58,24 @@ service cloud.firestore {
 
     // ═══════════════════════════════════════════════════════════════
     // 3. USERS COLLECTION
-    //    প্রত্যেকে শুধু নিজের ডাটা পড়তে/লিখতে পারবে
-    //    সুপার অ্যাডমিন সবার ডাটা পড়তে পারবে
     // ═══════════════════════════════════════════════════════════════
     match /users/{userId} {
-      allow read: if isSuperAdmin() || 
-                    (isAuthenticated() && request.auth.uid == userId);
+      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow update: if isAuthenticated() && request.auth.uid == userId;
-      allow delete: if false; // ইউজার ডিলিট করা যাবে না
+      allow delete: if false;
     }
 
     // ═══════════════════════════════════════════════════════════════
     // 4. SHOPS & ALL SUB-COLLECTIONS
-    //    Read: পাবলিক (স্টোরফ্রন্ট দেখার জন্য)
-    //    Write: শুধু Shop Owner (uid == shopId)
     // ═══════════════════════════════════════════════════════════════
     match /shops/{shopId} {
-      // যেকেউ শপ দেখতে পারবে (storefront)
       allow read: if true;
-      
-      // শুধু শপের মালিক বা সুপার অ্যাডমিন লিখতে পারবে
-      // ⚠️ আগে allow write: if isAuthenticated() ছিল — যেকেউ অন্যের শপ বদলাতে পারতো!
       allow create: if isAuthenticated() && request.auth.uid == shopId;
       allow update: if isShopOwner(shopId) || isSuperAdmin();
       allow delete: if isSuperAdmin();
 
       // ── Products ──────────────────────────────────────────────
-      // পড়া: পাবলিক | লেখা: শপ মালিক/স্টাফ
       match /products/{productId} {
         allow read: if true;
         allow write: if isShopAdmin(shopId);
@@ -107,25 +88,15 @@ service cloud.firestore {
       }
 
       // ── Orders ────────────────────────────────────────────────
-      // ⚠️ আগে allow read, create: if true ছিল — বট দিয়ে ফেক অর্ডার দেওয়া যেতো!
-      // এখন: create এ auth optional (guest checkout সাপোর্ট), 
-      // কিন্তু বাধ্যতামূলক ফিল্ড ভ্যালিডেশন আছে
       match /orders/{orderId} {
-        // 🚨 ZERO TRUST: Frontend can no longer create orders.
-        // Orders MUST be created securely via the Next.js API (/api/checkout)
-        allow create: if false;
-        
-        // অর্ডার পড়া: শপ মালিক/স্টাফ, অথবা অর্ডারের মালিক
-        allow read: if isShopAdmin(shopId) ||
-                      (isAuthenticated() && resource.data.customerEmail == request.auth.token.email);
-        
-        // অর্ডার আপডেট/ডিলিট: শুধু শপ মালিক/স্টাফ
+        allow create: if false; // Only via API
+        allow read: if isShopAdmin(shopId) || (isAuthenticated() && resource.data.customerEmail == request.auth.token.email);
         allow update, delete: if isShopAdmin(shopId);
       }
 
-      // ── Order Counters (Serial Number) ────────────────────────
+      // ── Order Counters ────────────────────────────────────────
       match /counters/{counterId} {
-        allow read, write: if true;  // Transaction-based, short-lived
+        allow read, write: if true;
       }
 
       // ── Staff ──────────────────────────────────────────────────
@@ -141,11 +112,6 @@ service cloud.firestore {
       }
     }
     
-    // ═══════════════════════════════════════════════════════════════
-    // 🚫 FALLBACK: বাকি সব কিছু BLOCK
-    // এটা সবচেয়ে গুরুত্বপূর্ণ — নতুন collection তৈরি হলে
-    // সেটা by default বন্ধ থাকবে
-    // ═══════════════════════════════════════════════════════════════
     match /{document=**} {
       allow read, write: if false;
     }
