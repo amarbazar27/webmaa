@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Compute activeShopId: Either they own the shop (uid) or they are staff (accessShopId)
-  const activeShopId = userData?.role === 'retailer' ? user?.uid : userData?.accessShopId;
+  const activeShopId = (userData?.role === 'retailer' || userData?.role === 'superadmin') ? user?.uid : userData?.accessShopId;
 
   return (
     <AuthContext.Provider value={{ user, userData, loading, activeShopId }}>
