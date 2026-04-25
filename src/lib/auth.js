@@ -94,10 +94,29 @@ export const handleUserSession = async (user) => {
       name: user.displayName || existingData.name,
       photoURL: user.photoURL || existingData.photoURL,
       role: freshRole,
-      ...(roleData.accessShopId ? { accessShopId: roleData.accessShopId, accessShopSlug: roleData.shopSlug } : {})
     };
+
+    // TASK 3 FIX: Properly handle role-specific fields
+    if (roleData.accessShopId) {
+      // User is staff — set their shop access
+      updates.accessShopId = roleData.accessShopId;
+      updates.accessShopSlug = roleData.shopSlug;
+    } else if (existingData.accessShopId && freshRole !== 'staff') {
+      // User WAS staff but no longer — clean up stale access
+      const { deleteField } = await import('firebase/firestore');
+      updates.accessShopId = deleteField();
+      updates.accessShopSlug = deleteField();
+    }
+
     await setDoc(userDocRef, updates, { merge: true });
-    finalUserData = { ...existingData, ...updates };
+    
+    // Build clean finalUserData (without deleteField sentinels)
+    const cleanData = { ...existingData, ...updates };
+    if (freshRole !== 'staff') {
+      delete cleanData.accessShopId;
+      delete cleanData.accessShopSlug;
+    }
+    finalUserData = cleanData;
 
     if (existingData.role !== freshRole && freshRole === 'retailer') {
       const shopDoc = await getDoc(doc(db, 'shops', user.uid));
@@ -112,6 +131,7 @@ export const handleUserSession = async (user) => {
           coverImg: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200',
           domainType: 'platform',
           subdomainSlug: shopSlug,
+          staffEmails: [],
           isActive: true,
           totalOrders: 0,
           createdAt: serverTimestamp(),

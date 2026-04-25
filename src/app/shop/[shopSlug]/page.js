@@ -15,6 +15,8 @@ function serializeData(obj) {
   return plain;
 }
 
+export const revalidate = 60; // Cache the page for 60 seconds (ISR)
+
 export async function generateMetadata({ params }) {
   const { shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);

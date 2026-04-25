@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -12,69 +12,69 @@ import {
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
 
-// Bangladesh Districts (partial list — key ones)
+// Bangladesh Districts (partial list â€” key ones)
 const BD_DISTRICTS = [
-  'ঢাকা', 'চট্টগ্রাম', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'সিলেট', 'রংপুর', 'ময়মনসিংহ',
-  'কুমিল্লা', 'নারায়ণগঞ্জ', 'গাজীপুর', 'জামালপুর', 'নোয়াখালী', 'ফেনী', 'বিক্রমপুর',
-  'মাদারীপুর', 'গোপালগঞ্জ', 'কিশোরগঞ্জ', 'হবিগঞ্জ', 'মৌলভীবাজার', 'সুনামগঞ্জ',
-  'পঞ্চগড়', 'ঠাকুরগাঁও', 'দিনাজপুর', 'নীলফামারী', 'কুড়িগ্রাম', 'লালমনিরহাট',
-  'বগুড়া', 'জয়পুরহাট', 'চাঁপাইনবাবগঞ্জ', 'রাজবাড়ী', 'রাঙামাটি', 'খাগড়াছড়ি',
-  'বান্দরবান', 'চাঁদপুর', 'লক্ষ্মীপুর', 'শরীয়তপুর', 'পিরোজপুর', 'খুলনা', 'সাতক্ষীরা', 'বাগেরহাট',
-  'নাটোর', 'পাবনা', 'সিরাজগঞ্জ', 'মানিকগঞ্জ', 'মুন্শীগঞ্জ', 'শরিয়তপুর', 'ককসবাজার', 'টাঙ্গাইল',
+  'à¦¢à¦¾à¦•à¦¾', 'à¦šà¦Ÿà§à¦Ÿà¦—à§à¦°à¦¾à¦®', 'à¦°à¦¾à¦œà¦¶à¦¾à¦¹à§€', 'à¦–à§à¦²à¦¨à¦¾', 'à¦¬à¦°à¦¿à¦¶à¦¾à¦²', 'à¦¸à¦¿à¦²à§‡à¦Ÿ', 'à¦°à¦‚à¦ªà§à¦°', 'à¦®à§Ÿà¦®à¦¨à¦¸à¦¿à¦‚à¦¹',
+  'à¦•à§à¦®à¦¿à¦²à§à¦²à¦¾', 'à¦¨à¦¾à¦°à¦¾à§Ÿà¦£à¦—à¦žà§à¦œ', 'à¦—à¦¾à¦œà§€à¦ªà§à¦°', 'à¦œà¦¾à¦®à¦¾à¦²à¦ªà§à¦°', 'à¦¨à§‹à§Ÿà¦¾à¦–à¦¾à¦²à§€', 'à¦«à§‡à¦¨à§€', 'à¦¬à¦¿à¦•à§à¦°à¦®à¦ªà§à¦°',
+  'à¦®à¦¾à¦¦à¦¾à¦°à§€à¦ªà§à¦°', 'à¦—à§‹à¦ªà¦¾à¦²à¦—à¦žà§à¦œ', 'à¦•à¦¿à¦¶à§‹à¦°à¦—à¦žà§à¦œ', 'à¦¹à¦¬à¦¿à¦—à¦žà§à¦œ', 'à¦®à§Œà¦²à¦­à§€à¦¬à¦¾à¦œà¦¾à¦°', 'à¦¸à§à¦¨à¦¾à¦®à¦—à¦žà§à¦œ',
+  'à¦ªà¦žà§à¦šà¦—à§œ', 'à¦ à¦¾à¦•à§à¦°à¦—à¦¾à¦à¦“', 'à¦¦à¦¿à¦¨à¦¾à¦œà¦ªà§à¦°', 'à¦¨à§€à¦²à¦«à¦¾à¦®à¦¾à¦°à§€', 'à¦•à§à§œà¦¿à¦—à§à¦°à¦¾à¦®', 'à¦²à¦¾à¦²à¦®à¦¨à¦¿à¦°à¦¹à¦¾à¦Ÿ',
+  'à¦¬à¦—à§à§œà¦¾', 'à¦œà§Ÿà¦ªà§à¦°à¦¹à¦¾à¦Ÿ', 'à¦šà¦¾à¦à¦ªà¦¾à¦‡à¦¨à¦¬à¦¾à¦¬à¦—à¦žà§à¦œ', 'à¦°à¦¾à¦œà¦¬à¦¾à§œà§€', 'à¦°à¦¾à¦™à¦¾à¦®à¦¾à¦Ÿà¦¿', 'à¦–à¦¾à¦—à§œà¦¾à¦›à§œà¦¿',
+  'à¦¬à¦¾à¦¨à§à¦¦à¦°à¦¬à¦¾à¦¨', 'à¦šà¦¾à¦à¦¦à¦ªà§à¦°', 'à¦²à¦•à§à¦·à§à¦®à§€à¦ªà§à¦°', 'à¦¶à¦°à§€à¦¯à¦¼à¦¤à¦ªà§à¦°', 'à¦ªà¦¿à¦°à§‹à¦œà¦ªà§à¦°', 'à¦–à§à¦²à¦¨à¦¾', 'à¦¸à¦¾à¦¤à¦•à§à¦·à§€à¦°à¦¾', 'à¦¬à¦¾à¦—à§‡à¦°à¦¹à¦¾à¦Ÿ',
+  'à¦¨à¦¾à¦Ÿà§‹à¦°', 'à¦ªà¦¾à¦¬à¦¨à¦¾', 'à¦¸à¦¿à¦°à¦¾à¦œà¦—à¦žà§à¦œ', 'à¦®à¦¾à¦¨à¦¿à¦•à¦—à¦žà§à¦œ', 'à¦®à§à¦¨à§à¦¶à§€à¦—à¦žà§à¦œ', 'à¦¶à¦°à¦¿à¦¯à¦¼à¦¤à¦ªà§à¦°', 'à¦•à¦•à¦¸à¦¬à¦¾à¦œà¦¾à¦°', 'à¦Ÿà¦¾à¦™à§à¦—à¦¾à¦‡à¦²',
   'Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Barishal', 'Sylhet', 'Rangpur', 'Mymensingh',
   'Comilla', 'Narayanganj', 'Gazipur', 'Jamalpur', 'Noakhali', 'Feni'
 ];
 
 const RANGPUR_WARDS = [
-  { id: '1', name: 'ওয়ার্ড ১ (ধাপ, কেরানীপাড়া)', areas: ['ধাপ', 'কেরানীপাড়া'] },
-  { id: '2', name: 'ওয়ার্ড ২ (মুন্সিপাড়া, সেনপাড়া)', areas: ['মুন্সিপাড়া', 'সেনপাড়া'] },
-  { id: '3', name: 'ওয়ার্ড ৩ (কলেজ রোড, ধাপ রোড)', areas: ['কলেজ রোড', 'ধাপ রোড'] },
-  { id: '4', name: 'ওয়ার্ড ৪ (লালকুঠি, স্টেশন রোড)', areas: ['লালকুঠি', 'স্টেশন রোড'] },
-  { id: '5', name: 'ওয়ার্ড ৫ (মেডিকেল মোড়, সেন্ট্রাল রোড)', areas: ['মেডিকেল মোড়', 'সেন্ট্রাল রোড'] },
-  { id: '6', name: 'ওয়ার্ড ৬ (লালবাগ, নিউ লালবাগ)', areas: ['লালবাগ', 'নিউ লালবাগ'] },
-  { id: '7', name: 'ওয়ার্ড ৭ (মাহিগঞ্জ রোড, লালবাগ বাজার)', areas: ['মাহিগঞ্জ রোড', 'লালবাগ বাজার'] },
-  { id: '8', name: 'ওয়ার্ড ৮ (আলমনগর আংশিক)', areas: ['আলমনগর'] },
-  { id: '9', name: 'ওয়ার্ড ৯ (মাস্টারপাড়া, খলিফাপাড়া)', areas: ['মাস্টারপাড়া', 'খলিফাপাড়া'] },
-  { id: '10', name: 'ওয়ার্ড ১০ (পায়রাচত্বর)', areas: ['পায়রাচত্বর'] },
-  { id: '11', name: 'ওয়ার্ড ১১ (রাজারহাট)', areas: ['রাজারহাট'] },
-  { id: '12', name: 'ওয়ার্ড ১২ (শালবন)', areas: ['শালবন'] },
-  { id: '13', name: 'ওয়ার্ড ১৩ (কুঠিবাড়ি)', areas: ['কুঠিবাড়ি'] },
-  { id: '14', name: 'ওয়ার্ড ১৪ (মডার্ন মোড়)', areas: ['মডার্ন মোড়'] },
-  { id: '15', name: 'ওয়ার্ড ১৫ (আবাসিক এলাকা)', areas: ['আবাসিক এলাকা'] },
-  { id: '16', name: 'ওয়ার্ড ১৬ (আলমনগর)', areas: ['আলমনগর'] },
-  { id: '17', name: 'ওয়ার্ড ১৭ (জুম্মাপাড়া)', areas: ['জুম্মাপাড়া'] },
-  { id: '18', name: 'ওয়ার্ড ১৮ (ইসলামবাগ)', areas: ['ইসলামবাগ'] },
-  { id: '19', name: 'ওয়ার্ড ১৯ (মডেল কলোনি)', areas: ['মডেল কলোনি'] },
-  { id: '20', name: 'ওয়ার্ড ২০ (স্যাটেলাইট টাউন)', areas: ['স্যাটেলাইট টাউন'] },
-  { id: '21', name: 'ওয়ার্ড ২১ (স্যাটেলাইট এক্সটেনশন)', areas: ['স্যাটেলাইট এক্সটেনশন'] },
-  { id: '22', name: 'ওয়ার্ড ২২ (ইঞ্জিনিয়ারিং কলেজ)', areas: ['ইঞ্জিনিয়ারিং কলেজ'] },
-  { id: '23', name: 'ওয়ার্ড ২৩ (মেডিকেল কলেজ)', areas: ['মেডিকেল কলেজ'] },
-  { id: '24', name: 'ওয়ার্ড ২৪ (চৌধুরীপাড়া)', areas: ['চৌধুরীপাড়া'] },
-  { id: '25', name: 'ওয়ার্ড ২৫ (তাজহাট)', areas: ['তাজহাট'] },
-  { id: '26', name: 'ওয়ার্ড ২৬ (হরিদেবপুর)', areas: ['হরিদেবপুর'] },
-  { id: '27', name: 'ওয়ার্ড ২৭ (বাহিরের আবাসিক)', areas: ['বাহিরের আবাসিক'] },
-  { id: '28', name: 'ওয়ার্ড ২৮ (নতুন কলোনি)', areas: ['নতুন কলোনি'] },
-  { id: '29', name: 'ওয়ার্ড ২৯ (গ্রোথ এরিয়া)', areas: ['গ্রোথ এরিয়া'] },
-  { id: '30', name: 'ওয়ার্ড ৩০ (আউটার রিং)', areas: ['আউটার রিং'] },
-  { id: '31', name: 'ওয়ার্ড ৩১ (পল্লী এলাকা)', areas: ['পল্লী এলাকা'] },
-  { id: '32', name: 'ওয়ার্ড ৩২ (শহরতলী এলাকা)', areas: ['শহরতলী এলাকা'] },
-  { id: '33', name: 'ওয়ার্ড ৩৩ (এক্সটেন্ডেড সিটি)', areas: ['এক্সটেন্ডেড সিটি'] }
+  { id: '1', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§ (à¦§à¦¾à¦ª, à¦•à§‡à¦°à¦¾à¦¨à§€à¦ªà¦¾à§œà¦¾)', areas: ['à¦§à¦¾à¦ª', 'à¦•à§‡à¦°à¦¾à¦¨à§€à¦ªà¦¾à§œà¦¾'] },
+  { id: '2', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨ (à¦®à§à¦¨à§à¦¸à¦¿à¦ªà¦¾à§œà¦¾, à¦¸à§‡à¦¨à¦ªà¦¾à§œà¦¾)', areas: ['à¦®à§à¦¨à§à¦¸à¦¿à¦ªà¦¾à§œà¦¾', 'à¦¸à§‡à¦¨à¦ªà¦¾à§œà¦¾'] },
+  { id: '3', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§© (à¦•à¦²à§‡à¦œ à¦°à§‹à¦¡, à¦§à¦¾à¦ª à¦°à§‹à¦¡)', areas: ['à¦•à¦²à§‡à¦œ à¦°à§‹à¦¡', 'à¦§à¦¾à¦ª à¦°à§‹à¦¡'] },
+  { id: '4', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§ª (à¦²à¦¾à¦²à¦•à§à¦ à¦¿, à¦¸à§à¦Ÿà§‡à¦¶à¦¨ à¦°à§‹à¦¡)', areas: ['à¦²à¦¾à¦²à¦•à§à¦ à¦¿', 'à¦¸à§à¦Ÿà§‡à¦¶à¦¨ à¦°à§‹à¦¡'] },
+  { id: '5', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§« (à¦®à§‡à¦¡à¦¿à¦•à§‡à¦² à¦®à§‹à§œ, à¦¸à§‡à¦¨à§à¦Ÿà§à¦°à¦¾à¦² à¦°à§‹à¦¡)', areas: ['à¦®à§‡à¦¡à¦¿à¦•à§‡à¦² à¦®à§‹à§œ', 'à¦¸à§‡à¦¨à§à¦Ÿà§à¦°à¦¾à¦² à¦°à§‹à¦¡'] },
+  { id: '6', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¬ (à¦²à¦¾à¦²à¦¬à¦¾à¦—, à¦¨à¦¿à¦‰ à¦²à¦¾à¦²à¦¬à¦¾à¦—)', areas: ['à¦²à¦¾à¦²à¦¬à¦¾à¦—', 'à¦¨à¦¿à¦‰ à¦²à¦¾à¦²à¦¬à¦¾à¦—'] },
+  { id: '7', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§­ (à¦®à¦¾à¦¹à¦¿à¦—à¦žà§à¦œ à¦°à§‹à¦¡, à¦²à¦¾à¦²à¦¬à¦¾à¦— à¦¬à¦¾à¦œà¦¾à¦°)', areas: ['à¦®à¦¾à¦¹à¦¿à¦—à¦žà§à¦œ à¦°à§‹à¦¡', 'à¦²à¦¾à¦²à¦¬à¦¾à¦— à¦¬à¦¾à¦œà¦¾à¦°'] },
+  { id: '8', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§® (à¦†à¦²à¦®à¦¨à¦—à¦° à¦†à¦‚à¦¶à¦¿à¦•)', areas: ['à¦†à¦²à¦®à¦¨à¦—à¦°'] },
+  { id: '9', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¯ (à¦®à¦¾à¦¸à§à¦Ÿà¦¾à¦°à¦ªà¦¾à§œà¦¾, à¦–à¦²à¦¿à¦«à¦¾à¦ªà¦¾à§œà¦¾)', areas: ['à¦®à¦¾à¦¸à§à¦Ÿà¦¾à¦°à¦ªà¦¾à§œà¦¾', 'à¦–à¦²à¦¿à¦«à¦¾à¦ªà¦¾à§œà¦¾'] },
+  { id: '10', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§¦ (à¦ªà¦¾à§Ÿà¦°à¦¾à¦šà¦¤à§à¦¬à¦°)', areas: ['à¦ªà¦¾à§Ÿà¦°à¦¾à¦šà¦¤à§à¦¬à¦°'] },
+  { id: '11', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§§ (à¦°à¦¾à¦œà¦¾à¦°à¦¹à¦¾à¦Ÿ)', areas: ['à¦°à¦¾à¦œà¦¾à¦°à¦¹à¦¾à¦Ÿ'] },
+  { id: '12', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§¨ (à¦¶à¦¾à¦²à¦¬à¦¨)', areas: ['à¦¶à¦¾à¦²à¦¬à¦¨'] },
+  { id: '13', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§© (à¦•à§à¦ à¦¿à¦¬à¦¾à§œà¦¿)', areas: ['à¦•à§à¦ à¦¿à¦¬à¦¾à§œà¦¿'] },
+  { id: '14', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§ª (à¦®à¦¡à¦¾à¦°à§à¦¨ à¦®à§‹à§œ)', areas: ['à¦®à¦¡à¦¾à¦°à§à¦¨ à¦®à§‹à§œ'] },
+  { id: '15', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§« (à¦†à¦¬à¦¾à¦¸à¦¿à¦• à¦à¦²à¦¾à¦•à¦¾)', areas: ['à¦†à¦¬à¦¾à¦¸à¦¿à¦• à¦à¦²à¦¾à¦•à¦¾'] },
+  { id: '16', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§¬ (à¦†à¦²à¦®à¦¨à¦—à¦°)', areas: ['à¦†à¦²à¦®à¦¨à¦—à¦°'] },
+  { id: '17', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§­ (à¦œà§à¦®à§à¦®à¦¾à¦ªà¦¾à§œà¦¾)', areas: ['à¦œà§à¦®à§à¦®à¦¾à¦ªà¦¾à§œà¦¾'] },
+  { id: '18', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§® (à¦‡à¦¸à¦²à¦¾à¦®à¦¬à¦¾à¦—)', areas: ['à¦‡à¦¸à¦²à¦¾à¦®à¦¬à¦¾à¦—'] },
+  { id: '19', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§§à§¯ (à¦®à¦¡à§‡à¦² à¦•à¦²à§‹à¦¨à¦¿)', areas: ['à¦®à¦¡à§‡à¦² à¦•à¦²à§‹à¦¨à¦¿'] },
+  { id: '20', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§¦ (à¦¸à§à¦¯à¦¾à¦Ÿà§‡à¦²à¦¾à¦‡à¦Ÿ à¦Ÿà¦¾à¦‰à¦¨)', areas: ['à¦¸à§à¦¯à¦¾à¦Ÿà§‡à¦²à¦¾à¦‡à¦Ÿ à¦Ÿà¦¾à¦‰à¦¨'] },
+  { id: '21', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§§ (à¦¸à§à¦¯à¦¾à¦Ÿà§‡à¦²à¦¾à¦‡à¦Ÿ à¦à¦•à§à¦¸à¦Ÿà§‡à¦¨à¦¶à¦¨)', areas: ['à¦¸à§à¦¯à¦¾à¦Ÿà§‡à¦²à¦¾à¦‡à¦Ÿ à¦à¦•à§à¦¸à¦Ÿà§‡à¦¨à¦¶à¦¨'] },
+  { id: '22', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§¨ (à¦‡à¦žà§à¦œà¦¿à¦¨à¦¿à§Ÿà¦¾à¦°à¦¿à¦‚ à¦•à¦²à§‡à¦œ)', areas: ['à¦‡à¦žà§à¦œà¦¿à¦¨à¦¿à§Ÿà¦¾à¦°à¦¿à¦‚ à¦•à¦²à§‡à¦œ'] },
+  { id: '23', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§© (à¦®à§‡à¦¡à¦¿à¦•à§‡à¦² à¦•à¦²à§‡à¦œ)', areas: ['à¦®à§‡à¦¡à¦¿à¦•à§‡à¦² à¦•à¦²à§‡à¦œ'] },
+  { id: '24', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§ª (à¦šà§Œà¦§à§à¦°à§€à¦ªà¦¾à§œà¦¾)', areas: ['à¦šà§Œà¦§à§à¦°à§€à¦ªà¦¾à§œà¦¾'] },
+  { id: '25', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§« (à¦¤à¦¾à¦œà¦¹à¦¾à¦Ÿ)', areas: ['à¦¤à¦¾à¦œà¦¹à¦¾à¦Ÿ'] },
+  { id: '26', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§¬ (à¦¹à¦°à¦¿à¦¦à§‡à¦¬à¦ªà§à¦°)', areas: ['à¦¹à¦°à¦¿à¦¦à§‡à¦¬à¦ªà§à¦°'] },
+  { id: '27', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§­ (à¦¬à¦¾à¦¹à¦¿à¦°à§‡à¦° à¦†à¦¬à¦¾à¦¸à¦¿à¦•)', areas: ['à¦¬à¦¾à¦¹à¦¿à¦°à§‡à¦° à¦†à¦¬à¦¾à¦¸à¦¿à¦•'] },
+  { id: '28', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§® (à¦¨à¦¤à§à¦¨ à¦•à¦²à§‹à¦¨à¦¿)', areas: ['à¦¨à¦¤à§à¦¨ à¦•à¦²à§‹à¦¨à¦¿'] },
+  { id: '29', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§¨à§¯ (à¦—à§à¦°à§‹à¦¥ à¦à¦°à¦¿à§Ÿà¦¾)', areas: ['à¦—à§à¦°à§‹à¦¥ à¦à¦°à¦¿à§Ÿà¦¾'] },
+  { id: '30', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§©à§¦ (à¦†à¦‰à¦Ÿà¦¾à¦° à¦°à¦¿à¦‚)', areas: ['à¦†à¦‰à¦Ÿà¦¾à¦° à¦°à¦¿à¦‚'] },
+  { id: '31', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§©à§§ (à¦ªà¦²à§à¦²à§€ à¦à¦²à¦¾à¦•à¦¾)', areas: ['à¦ªà¦²à§à¦²à§€ à¦à¦²à¦¾à¦•à¦¾'] },
+  { id: '32', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§©à§¨ (à¦¶à¦¹à¦°à¦¤à¦²à§€ à¦à¦²à¦¾à¦•à¦¾)', areas: ['à¦¶à¦¹à¦°à¦¤à¦²à§€ à¦à¦²à¦¾à¦•à¦¾'] },
+  { id: '33', name: 'à¦“à§Ÿà¦¾à¦°à§à¦¡ à§©à§© (à¦à¦•à§à¦¸à¦Ÿà§‡à¦¨à§à¦¡à§‡à¦¡ à¦¸à¦¿à¦Ÿà¦¿)', areas: ['à¦à¦•à§à¦¸à¦Ÿà§‡à¦¨à§à¦¡à§‡à¦¡ à¦¸à¦¿à¦Ÿà¦¿'] }
 ];
 
 const getCityWards = (district) => {
-  if (district === 'রংপুর' || district === 'Rangpur') return RANGPUR_WARDS;
+  if (district === 'à¦°à¦‚à¦ªà§à¦°' || district === 'Rangpur') return RANGPUR_WARDS;
   
   const cityWardsCount = {
-    'ঢাকা': 129, 'Dhaka': 129,
-    'চট্টগ্রাম': 41, 'Chittagong': 41,
-    'রাজশাহী': 30, 'Rajshahi': 30,
-    'খুলনা': 31, 'Khulna': 31,
-    'বরিশাল': 30, 'Barishal': 30,
-    'সিলেট': 42, 'Sylhet': 42,
-    'ময়মনসিংহ': 33, 'Mymensingh': 33,
-    'কুমিল্লা': 27, 'Comilla': 27,
-    'নারায়ণগঞ্জ': 27, 'Narayanganj': 27,
-    'গাজীপুর': 57, 'Gazipur': 57
+    'à¦¢à¦¾à¦•à¦¾': 129, 'Dhaka': 129,
+    'à¦šà¦Ÿà§à¦Ÿà¦—à§à¦°à¦¾à¦®': 41, 'Chittagong': 41,
+    'à¦°à¦¾à¦œà¦¶à¦¾à¦¹à§€': 30, 'Rajshahi': 30,
+    'à¦–à§à¦²à¦¨à¦¾': 31, 'Khulna': 31,
+    'à¦¬à¦°à¦¿à¦¶à¦¾à¦²': 30, 'Barishal': 30,
+    'à¦¸à¦¿à¦²à§‡à¦Ÿ': 42, 'Sylhet': 42,
+    'à¦®à§Ÿà¦®à¦¨à¦¸à¦¿à¦‚à¦¹': 33, 'Mymensingh': 33,
+    'à¦•à§à¦®à¦¿à¦²à§à¦²à¦¾': 27, 'Comilla': 27,
+    'à¦¨à¦¾à¦°à¦¾à§Ÿà¦£à¦—à¦žà§à¦œ': 27, 'Narayanganj': 27,
+    'à¦—à¦¾à¦œà§€à¦ªà§à¦°': 57, 'Gazipur': 57
   };
   
   const count = cityWardsCount[district] || 0;
@@ -82,7 +82,7 @@ const getCityWards = (district) => {
   
   const wards = [];
   for (let i = 1; i <= count; i++) {
-    wards.push({ id: `ward_${i}`, name: `ওয়ার্ড ${i}` });
+    wards.push({ id: `ward_${i}`, name: `à¦“à§Ÿà¦¾à¦°à§à¦¡ ${i}` });
   }
   return wards;
 };
@@ -164,7 +164,7 @@ export default function SettingsPage() {
       });
       setAiConfig({ 
         apiKey: data?.aiConfig?.apiKey || '', 
-        botName: data?.aiConfig?.botName || 'বজার এআই', 
+        botName: data?.aiConfig?.botName || 'à¦¬à¦œà¦¾à¦° à¦à¦†à¦‡', 
         botTone: data?.aiConfig?.botTone || 'funny' 
       });
       setStaffEmails(data?.staffEmails || []);
@@ -182,14 +182,14 @@ export default function SettingsPage() {
     });
   }, [user]);
 
-  // ── Geo: load divisions once ────────────────────────────────────────────
+  // â”€â”€ Geo: load divisions once â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     fetch('/api/geo?type=divisions').then(r => r.json()).then(data => {
       setGeoData(prev => ({ ...prev, divisions: Array.isArray(data) ? data : [] }));
     });
   }, []);
 
-  // ── Geo: load districts when division changes ────────────────────────────
+  // â”€â”€ Geo: load districts when division changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!geoSelections.division) return;
     setGeoLoading(true);
@@ -201,7 +201,7 @@ export default function SettingsPage() {
       });
   }, [geoSelections.division]);
 
-  // ── Geo: load upazilas when district changes ─────────────────────────────
+  // â”€â”€ Geo: load upazilas when district changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!geoSelections.district) return;
     setGeoLoading(true);
@@ -213,7 +213,7 @@ export default function SettingsPage() {
       });
   }, [geoSelections.district]);
 
-  // ── Geo: load unions OR wards based on upazila type ──────────────────────
+  // â”€â”€ Geo: load unions OR wards based on upazila type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!geoSelections.upazila) return;
     setGeoLoading(true);
@@ -273,6 +273,71 @@ export default function SettingsPage() {
     return '';
   };
 
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦¸à¦¾à¦‡à¦œ à§« à¦®à§‡à¦—à¦¾à¦¬à¦¾à¦‡à¦Ÿà§‡à¦° à¦¬à§‡à¦¶à¦¿ à¦¹à¦“à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾à¥¤');
+      return;
+    }
+    if ((shop.banners?.length || 0) >= 5) {
+      toast.error('à¦†à¦ªà¦¨à¦¿ à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à§«à¦Ÿà¦¿ à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦†à¦ªà¦²à§‹à¦¡ à¦•à¦°à¦¤à§‡ à¦ªà¦¾à¦°à¦¬à§‡à¦¨à¥¤');
+      return;
+    }
+    
+    const { uploadImage } = await import('@/lib/storage');
+    setSaving(true);
+    try {
+      const url = await uploadImage(file);
+      const newBanners = [...(shop.banners || []), url];
+      await updateShop(user.uid, { banners: newBanners });
+      setShop(s => ({ ...s, banners: newBanners }));
+      toast.success('à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦†à¦ªà¦²à§‹à¦¡ à¦¸à¦«à¦² à¦¹à¦¯à¦¼à§‡à¦›à§‡! ðŸ–¼ï¸');
+    } catch (err) {
+      toast.error(err.message || 'à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦†à¦ªà¦²à§‹à¦¡ à¦¬à§à¦¯à¦°à§à¦¥ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // TASK 5: Replace an existing banner at a specific index
+  const replaceBanner = async (e, index) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦¸à¦¾à¦‡à¦œ à§« à¦®à§‡à¦—à¦¾à¦¬à¦¾à¦‡à¦Ÿà§‡à¦° à¦¬à§‡à¦¶à¦¿ à¦¹à¦“à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¬à§‡ à¦¨à¦¾à¥¤');
+      return;
+    }
+    const { uploadImage } = await import('@/lib/storage');
+    setSaving(true);
+    try {
+      const url = await uploadImage(file);
+      const newBanners = [...(shop.banners || [])];
+      newBanners[index] = url;
+      await updateShop(user.uid, { banners: newBanners });
+      setShop(s => ({ ...s, banners: newBanners }));
+      toast.success('à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨ à¦¸à¦«à¦² à¦¹à¦¯à¦¼à§‡à¦›à§‡! ðŸ”„');
+    } catch (err) {
+      toast.error(err.message || 'à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦†à¦ªà¦²à§‹à¦¡ à¦¬à§à¦¯à¦°à§à¦¥ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeBanner = async (index) => {
+    const newBanners = shop.banners.filter((_, i) => i !== index);
+    setSaving(true);
+    try {
+      await updateShop(user.uid, { banners: newBanners });
+      setShop(s => ({ ...s, banners: newBanners }));
+      toast.success('à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦¸à¦°à¦¾à¦¨à§‹ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    } catch (err) {
+      toast.error('à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦° à¦¸à¦°à¦¾à¦¤à§‡ à¦¸à¦®à¦¸à§à¦¯à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSlugSave = async () => {
     const err = validateSlug(slugInput);
     if (err) { setSlugError(err); return; }
@@ -281,7 +346,7 @@ export default function SettingsPage() {
     try {
       await updateShop(user.uid, { subdomainSlug: slugInput, shopSlug: slugInput });
       setShop(s => ({ ...s, subdomainSlug: slugInput, shopSlug: slugInput }));
-      toast.success('Store URL updated! 🔗');
+      toast.success('Store URL updated! ðŸ”—');
       setSlugEditing(false);
     } catch (err) {
       toast.error('Failed to update URL');
@@ -322,7 +387,7 @@ export default function SettingsPage() {
       setCustomDomainEditing(false);
 
       if (newStatus === 'pending_manual') {
-        toast('Domain saved. Add the domain manually in Vercel dashboard.', { icon: '⚠️' });
+        toast('Domain saved. Add the domain manually in Vercel dashboard.', { icon: 'âš ï¸' });
       } else {
         toast.success('Domain registered! Now configure DNS below.');
       }
@@ -344,7 +409,7 @@ export default function SettingsPage() {
           setDomainStatus('connected');
           await updateShop(user.uid, { domainStatus: 'connected' });
           setShop(s => ({ ...s, domainStatus: 'connected' }));
-          toast.success(`✅ ${shop.customDomain} is now live!`);
+          toast.success(`âœ… ${shop.customDomain} is now live!`);
         }
       } catch (e) { /* silent */ }
     };
@@ -353,47 +418,6 @@ export default function SettingsPage() {
     return () => clearInterval(interval);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shop?.customDomain, domainStatus]);
-
-  const handleBannerUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('ব্যানার সাইজ ৫ মেগাবাইটের বেশি হওয়া যাবে না।');
-      return;
-    }
-    if ((shop.banners?.length || 0) >= 5) {
-      toast.error('আপনি সর্বোচ্চ ৫টি ব্যানার আপলোড করতে পারবেন।');
-      return;
-    }
-    
-    const { uploadImage } = await import('@/lib/storage');
-    setSaving(true);
-    try {
-      const url = await uploadImage(file);
-      const newBanners = [...(shop.banners || []), url];
-      await updateShop(user.uid, { banners: newBanners });
-      setShop(s => ({ ...s, banners: newBanners }));
-      toast.success('ব্যানার আপলোড সফল হয়েছে! 🖼️');
-    } catch (err) {
-      toast.error(err.message || 'ব্যানার আপলোড ব্যর্থ হয়েছে');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const removeBanner = async (index) => {
-    const newBanners = shop.banners.filter((_, i) => i !== index);
-    setSaving(true);
-    try {
-      await updateShop(user.uid, { banners: newBanners });
-      setShop(s => ({ ...s, banners: newBanners }));
-      toast.success('ব্যানার সরানো হয়েছে');
-    } catch (err) {
-      toast.error('ব্যানার সরাতে সমস্যা হয়েছে');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -424,7 +448,7 @@ export default function SettingsPage() {
         customAreas,
         trackingConfig
       });
-      toast.success('All settings synchronized! ✨');
+      toast.success('All settings synchronized! âœ¨');
     } catch (err) {
       console.error(err);
       toast.error('Settings update failed');
@@ -534,7 +558,7 @@ export default function SettingsPage() {
                           )}
                         </div>
 
-                        {/* DNS Instructions — only show when not yet connected */}
+                        {/* DNS Instructions â€” only show when not yet connected */}
                         {domainStatus !== 'connected' && (
                           <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs">
                             <p className="font-bold text-slate-800 mb-2">DNS Instructions (Add in your Domain Panel):</p>
@@ -551,13 +575,13 @@ export default function SettingsPage() {
                               </div>
                             </div>
                             <p className="text-[9px] text-amber-600 font-bold mt-2">
-                              ⏱ DNS changes take 10–30 minutes. This page auto-checks every 30 seconds.
+                              â± DNS changes take 10â€“30 minutes. This page auto-checks every 30 seconds.
                             </p>
                           </div>
                         )}
                         {domainStatus === 'connected' && (
                           <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[10px] font-bold text-emerald-700">
-                            ✅ Your custom domain is live with SSL! Customers can now access your store via <span className="underline">{shop.customDomain}</span>.
+                            âœ… Your custom domain is live with SSL! Customers can now access your store via <span className="underline">{shop.customDomain}</span>.
                           </div>
                         )}
                       </div>
@@ -684,7 +708,7 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 pt-6">
                  <Input
-                   label={deliveryConfig.isCOD ? "Advance Delivery Fee (৳)" : "Flat Delivery Fee (৳)"}
+                   label={deliveryConfig.isCOD ? "Advance Delivery Fee (à§³)" : "Flat Delivery Fee (à§³)"}
                    type="number"
                    value={deliveryConfig.advanceFee}
                    onChange={e => setDeliveryConfig({...deliveryConfig, advanceFee: e.target.value})}
@@ -732,13 +756,13 @@ export default function SettingsPage() {
                         <label className="flex-1 cursor-pointer">
                            <input type="radio" name="tone" value="funny" checked={aiConfig.botTone === 'funny'} onChange={e => setAiConfig({...aiConfig, botTone: e.target.value})} className="peer sr-only"/>
                            <div className="p-4 border-2 border-slate-100 rounded-2xl text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
-                              <p className="font-black text-slate-900 text-sm">Funny & Witty 🎭</p>
+                              <p className="font-black text-slate-900 text-sm">Funny & Witty ðŸŽ­</p>
                            </div>
                         </label>
                         <label className="flex-1 cursor-pointer">
                            <input type="radio" name="tone" value="formal" checked={aiConfig.botTone === 'formal'} onChange={e => setAiConfig({...aiConfig, botTone: e.target.value})} className="peer sr-only"/>
                            <div className="p-4 border-2 border-slate-100 rounded-2xl text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
-                              <p className="font-black text-slate-900 text-sm">Strictly Formal 👔</p>
+                              <p className="font-black text-slate-900 text-sm">Strictly Formal ðŸ‘”</p>
                            </div>
                         </label>
                      </div>
@@ -774,23 +798,32 @@ export default function SettingsPage() {
 
                 <div className="space-y-3 pt-4 border-t border-slate-100">
                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shop Banners (Max 5, 5MB each)</label>
-                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {shop.banners?.map((url, i) => (
                          <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group">
-                            <img src={url} className="w-full h-full object-cover" alt="" />
-                            <button 
-                              type="button" 
-                              onClick={() => removeBanner(i)}
-                              className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-lg"
-                            >
-                               <X size={14} />
-                            </button>
+                            <img src={url} className="w-full h-full object-cover" alt={`Banner ${i+1}`} />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
+                              {/* Replace Banner */}
+                              <label className="bg-white text-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase cursor-pointer hover:bg-purple-100 transition-colors shadow-lg">
+                                ðŸ”„ à¦ªà¦°à¦¿à¦¬à¦°à§à¦¤à¦¨
+                                <input type="file" accept="image/*" className="hidden" onChange={(e) => replaceBanner(e, i)} />
+                              </label>
+                              {/* Delete Banner */}
+                              <button 
+                                type="button" 
+                                onClick={() => removeBanner(i)}
+                                className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-colors shadow-lg"
+                              >
+                                âœ• à¦®à§à¦›à§à¦¨
+                              </button>
+                            </div>
+                            <span className="absolute top-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-md">{i+1}/{shop.banners.length}</span>
                          </div>
                       ))}
                       {(shop.banners?.length || 0) < 5 && (
-                         <label className="aspect-video rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 cursor-pointer transition-colors group">
-                            <ImageIcon size={20} className="text-slate-300 group-hover:text-purple-500" />
-                            <span className="text-[10px] font-black text-slate-400">Add Slide</span>
+                         <label className="aspect-video rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition-colors group">
+                            <ImageIcon size={24} className="text-slate-300 group-hover:text-purple-500 transition-colors" />
+                            <span className="text-[10px] font-black text-slate-400 group-hover:text-purple-600">+ à¦¨à¦¤à§à¦¨ à¦¬à§à¦¯à¦¾à¦¨à¦¾à¦°</span>
                             <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
                          </label>
                       )}
@@ -814,14 +847,14 @@ export default function SettingsPage() {
             </Card>
 
             {/* Service Area Location */}
-            <Card title="সার্ভিস এলাকা" subtitle="কোথায় ডেলিভারি করেন তা সেট করুন" icon={MapPin} className="border-l-4 border-l-emerald-500">
+            <Card title="à¦¸à¦¾à¦°à§à¦­à¦¿à¦¸ à¦à¦²à¦¾à¦•à¦¾" subtitle="à¦•à§‹à¦¥à¦¾à¦¯à¦¼ à¦¡à§‡à¦²à¦¿à¦­à¦¾à¦°à¦¿ à¦•à¦°à§‡à¦¨ à¦¤à¦¾ à¦¸à§‡à¦Ÿ à¦•à¦°à§à¦¨" icon={MapPin} className="border-l-4 border-l-emerald-500">
               <div className="space-y-6">
                 <div className="flex items-center justify-between bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                   <div>
                     <h4 className="text-sm font-black text-emerald-900 flex items-center gap-2">
-                       <ShieldCheck size={16} className="text-emerald-600" /> স্ট্রিক্ট লোকেশন ম্যাচ (Strict Match)
+                       <ShieldCheck size={16} className="text-emerald-600" /> à¦¸à§à¦Ÿà§à¦°à¦¿à¦•à§à¦Ÿ à¦²à§‹à¦•à§‡à¦¶à¦¨ à¦®à§à¦¯à¦¾à¦š (Strict Match)
                     </h4>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase mt-1">লোকেশনের বাইরে কেউ অর্ডার করতে পারবে না</p>
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase mt-1">à¦²à§‹à¦•à§‡à¦¶à¦¨à§‡à¦° à¦¬à¦¾à¦‡à¦°à§‡ à¦•à§‡à¦‰ à¦…à¦°à§à¦¡à¦¾à¦° à¦•à¦°à¦¤à§‡ à¦ªà¦¾à¦°à¦¬à§‡ à¦¨à¦¾</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={isStrictLocation} onChange={e => setIsStrictLocation(e.target.checked)} />
@@ -832,9 +865,9 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between bg-blue-50 p-4 rounded-xl border border-blue-100">
                   <div>
                     <h4 className="text-sm font-black text-blue-900 flex items-center gap-2">
-                       <MapPin size={16} className="text-blue-600" /> কাস্টমারকে লোকেশন বক্স দেখাবেন?
+                       <MapPin size={16} className="text-blue-600" /> à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦°à¦•à§‡ à¦²à§‹à¦•à§‡à¦¶à¦¨ à¦¬à¦•à§à¦¸ à¦¦à§‡à¦–à¦¾à¦¬à§‡à¦¨?
                     </h4>
-                    <p className="text-[10px] font-bold text-blue-600 uppercase mt-1">অফ থাকলে শুধু GPS দিয়ে অটোমেটিক চেক হবে</p>
+                    <p className="text-[10px] font-bold text-blue-600 uppercase mt-1">à¦…à¦« à¦¥à¦¾à¦•à¦²à§‡ à¦¶à§à¦§à§ GPS à¦¦à¦¿à§Ÿà§‡ à¦…à¦Ÿà§‹à¦®à§‡à¦Ÿà¦¿à¦• à¦šà§‡à¦• à¦¹à¦¬à§‡</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={showLocationSelector} onChange={e => setShowLocationSelector(e.target.checked)} />
@@ -844,12 +877,12 @@ export default function SettingsPage() {
 
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
                   <div>
-                    <h4 className="text-sm font-black text-slate-900">কাস্টম এলাকা যোগ করুন</h4>
-                    <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase">যে এলাকার নাম অটোমেটিক লিস্টে নেই (ঐচ্ছিক)</p>
+                    <h4 className="text-sm font-black text-slate-900">à¦•à¦¾à¦¸à§à¦Ÿà¦® à¦à¦²à¦¾à¦•à¦¾ à¦¯à§‹à¦— à¦•à¦°à§à¦¨</h4>
+                    <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase">à¦¯à§‡ à¦à¦²à¦¾à¦•à¦¾à¦° à¦¨à¦¾à¦® à¦…à¦Ÿà§‹à¦®à§‡à¦Ÿà¦¿à¦• à¦²à¦¿à¦¸à§à¦Ÿà§‡ à¦¨à§‡à¦‡ (à¦à¦šà§à¦›à¦¿à¦•)</p>
                   </div>
                   <div className="flex gap-2">
                     <Input 
-                      placeholder="যেমন: নতুন বাজার, ব্লক সি" 
+                      placeholder="à¦¯à§‡à¦®à¦¨: à¦¨à¦¤à§à¦¨ à¦¬à¦¾à¦œà¦¾à¦°, à¦¬à§à¦²à¦• à¦¸à¦¿" 
                       value={newCustomArea}
                       onChange={e => setNewCustomArea(e.target.value)}
                       className="flex-1"
@@ -859,7 +892,7 @@ export default function SettingsPage() {
                          setCustomAreas([...customAreas, newCustomArea.trim()]);
                          setNewCustomArea('');
                       }
-                    }} className="h-[52px]">যোগ করুন</Button>
+                    }} className="h-[52px]">à¦¯à§‹à¦— à¦•à¦°à§à¦¨</Button>
                   </div>
                   {customAreas.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -877,40 +910,40 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   <p className="text-xs text-slate-500 font-bold leading-relaxed">
-                    বাংলাদেশ জিও-ডেটা অনুযায়ী সার্ভিস এলাকা বেছে নিন (বিভাগ {' > '} জেলা {' > '} উপজেলা {' > '} ইউনিয়ন/সিটি)। কাস্টমাররা অর্ডারের সময় এই এলাকার সাথে লোকেশন ম্যাচিং হবে।
+                    à¦¬à¦¾à¦‚à¦²à¦¾à¦¦à§‡à¦¶ à¦œà¦¿à¦“-à¦¡à§‡à¦Ÿà¦¾ à¦…à¦¨à§à¦¯à¦¾à§Ÿà§€ à¦¸à¦¾à¦°à§à¦­à¦¿à¦¸ à¦à¦²à¦¾à¦•à¦¾ à¦¬à§‡à¦›à§‡ à¦¨à¦¿à¦¨ (à¦¬à¦¿à¦­à¦¾à¦— {' > '} à¦œà§‡à¦²à¦¾ {' > '} à¦‰à¦ªà¦œà§‡à¦²à¦¾ {' > '} à¦‡à¦‰à¦¨à¦¿à§Ÿà¦¨/à¦¸à¦¿à¦Ÿà¦¿)à¥¤ à¦•à¦¾à¦¸à§à¦Ÿà¦®à¦¾à¦°à¦°à¦¾ à¦…à¦°à§à¦¡à¦¾à¦°à§‡à¦° à¦¸à¦®à§Ÿ à¦à¦‡ à¦à¦²à¦¾à¦•à¦¾à¦° à¦¸à¦¾à¦¥à§‡ à¦²à§‹à¦•à§‡à¦¶à¦¨ à¦®à§à¦¯à¦¾à¦šà¦¿à¦‚ à¦¹à¦¬à§‡à¥¤
                   </p>
                   
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {/* 1. Division */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">বিভাগ</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">à¦¬à¦¿à¦­à¦¾à¦—</label>
                       <select
                         value={geoSelections.division}
                         onChange={e => setGeoSelections({ ...geoSelections, division: e.target.value })}
                         className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer"
                       >
-                        <option value="">-- বিভাগ --</option>
+                        <option value="">-- à¦¬à¦¿à¦­à¦¾à¦— --</option>
                         {geoData.divisions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
                     {/* 2. District */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">জেলা</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">à¦œà§‡à¦²à¦¾</label>
                       <select
                         disabled={!geoSelections.division || !geoData.districts.length}
                         value={geoSelections.district}
                         onChange={e => setGeoSelections({ ...geoSelections, district: e.target.value })}
                         className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer disabled:bg-slate-50 disabled:opacity-60"
                       >
-                        <option value="">-- জেলা --</option>
+                        <option value="">-- à¦œà§‡à¦²à¦¾ --</option>
                         {geoData.districts.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
                     {/* 3. Upazila */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">উপজেলা</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">à¦‰à¦ªà¦œà§‡à¦²à¦¾</label>
                       <select
                         disabled={!geoSelections.district || !geoData.upazilas.length}
                         value={geoSelections.upazila}
@@ -920,15 +953,15 @@ export default function SettingsPage() {
                         }}
                         className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer disabled:bg-slate-50 disabled:opacity-60"
                       >
-                        <option value="">-- উপজেলা --</option>
+                        <option value="">-- à¦‰à¦ªà¦œà§‡à¦²à¦¾ --</option>
                         {geoData.upazilas.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
                       </select>
                     </div>
 
-                    {/* 4. Ward / Union — label changes based on type returned by API */}
+                    {/* 4. Ward / Union â€” label changes based on type returned by API */}
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">
-                        {geoData.unionsType === 'wards' ? 'সিটি ওয়ার্ড' : 'ইউনিয়ন'}
+                        {geoData.unionsType === 'wards' ? 'à¦¸à¦¿à¦Ÿà¦¿ à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡' : 'à¦‡à¦‰à¦¨à¦¿à¦¯à¦¼à¦¨'}
                       </label>
                       <select
                         disabled={!geoSelections.upazila || geoLoading}
@@ -936,7 +969,7 @@ export default function SettingsPage() {
                         onChange={e => setGeoSelections({ ...geoSelections, union: e.target.value })}
                         className="w-full bg-white border-2 border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-purple-500 appearance-none cursor-pointer disabled:bg-slate-50 disabled:opacity-60"
                       >
-                        <option value="">{geoLoading ? 'লোড হচ্ছে...' : `-- ${geoData.unionsType === 'wards' ? 'ওয়ার্ড' : 'ইউনিয়ন'} (ঐচ্ছিক) --`}</option>
+                        <option value="">{geoLoading ? 'à¦²à§‹à¦¡ à¦¹à¦šà§à¦›à§‡...' : `-- ${geoData.unionsType === 'wards' ? 'à¦“à¦¯à¦¼à¦¾à¦°à§à¦¡' : 'à¦‡à¦‰à¦¨à¦¿à¦¯à¦¼à¦¨'} (à¦à¦šà§à¦›à¦¿à¦•) --`}</option>
                         {geoData.unions.map(d => <option key={d.id} value={d.id}>{d.bn_name || d.name}</option>)}
                       </select>
                     </div>
@@ -949,7 +982,7 @@ export default function SettingsPage() {
                     className="w-full py-3.5 bg-purple-600 text-white rounded-2xl font-black text-sm hover:bg-purple-700 active:scale-95 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {geoLoading ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <Plus size={16} />}
-                    এলাকা যোগ করুন
+                    à¦à¦²à¦¾à¦•à¦¾ à¦¯à§‹à¦— à¦•à¦°à§à¦¨
                   </button>
                 </div>
 
@@ -970,7 +1003,7 @@ export default function SettingsPage() {
                 )}
 
                 {serviceAreas.length === 0 && (
-                  <p className="text-center text-slate-400 text-xs font-bold py-4 border-2 border-dashed border-slate-100 rounded-xl">কোনো সার্ভিস এলাকা সেট করা হয়নি। সব জায়গায় সার্ভিস দেখানো হবে।</p>
+                  <p className="text-center text-slate-400 text-xs font-bold py-4 border-2 border-dashed border-slate-100 rounded-xl">à¦•à§‹à¦¨à§‹ à¦¸à¦¾à¦°à§à¦­à¦¿à¦¸ à¦à¦²à¦¾à¦•à¦¾ à¦¸à§‡à¦Ÿ à¦•à¦°à¦¾ à¦¹à¦¯à¦¼à¦¨à¦¿à¥¤ à¦¸à¦¬ à¦œà¦¾à¦¯à¦¼à¦—à¦¾à¦¯à¦¼ à¦¸à¦¾à¦°à§à¦­à¦¿à¦¸ à¦¦à§‡à¦–à¦¾à¦¨à§‹ à¦¹à¦¬à§‡à¥¤</p>
                 )}
               </div>
             </Card>

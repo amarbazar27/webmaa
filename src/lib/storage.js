@@ -10,8 +10,8 @@ export const uploadImage = async (file) => {
   if (!file.type.startsWith('image/')) {
     throw new Error('অবৈধ ফাইল টাইপ! শুধুমাত্র ছবি (Image) আপলোড করা যাবে।');
   }
-  if (file.size > 1024 * 1024) {
-    throw new Error('ফাইল সাইজ ১ মেগাবাইটের বেশি! অনুগ্রহ করে ছোট ছবি ব্যবহার করুন।');
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error('ফাইল সাইজ ৫ মেগাবাইটের বেশি! অনুগ্রহ করে ছোট ছবি ব্যবহার করুন।');
   }
   
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dcsecgwzc';
