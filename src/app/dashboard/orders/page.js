@@ -16,7 +16,7 @@ const STATUS_CONFIG = {
 };
 
 export default function OrdersPage() {
-  const { user, activeShopId } = useAuth();
+  const { user, userData, activeShopId } = useAuth();
   const [shop, setShop] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,10 +63,17 @@ export default function OrdersPage() {
   const proceedStatusUpdate = async (orderId, newStatus) => {
     try {
       const deliveryTime = newStatus === 'confirmed' ? shop?.deliveryConfig?.defaultDeliveryTime : null;
-      await updateOrderStatus(activeShopId, orderId, newStatus, deliveryTime);
+      const actorInfo = {
+        uid: user.uid,
+        name: userData?.name || user.displayName || 'Unknown',
+        role: userData?.role || 'staff'
+      };
+      // Pass named actor fields so each action is independently tracked
+      await updateOrderStatus(activeShopId, orderId, newStatus, deliveryTime, actorInfo);
       toast.success(`Order marked as ${newStatus}`);
       setAuthModal({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
     } catch (err) {
+      console.error('Status update error:', err);
       toast.error('Failed to update status');
     }
   };
@@ -254,6 +261,26 @@ export default function OrdersPage() {
                                      </div>
                                   </div>
                                   <p className="text-xs font-bold text-slate-400">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('en-GB') : 'Just now'}</p>
+                                  {/* Who confirmed / delivered this order */}
+                                  {(order.confirmedBy || order.deliveredBy || order.updatedBy) && (
+                                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                      {order.confirmedBy && (
+                                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                                          ✓ Confirmed: {order.confirmedBy.name}
+                                        </span>
+                                      )}
+                                      {order.deliveredBy && (
+                                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                                          🚚 Delivered: {order.deliveredBy.name}
+                                        </span>
+                                      )}
+                                      {!order.confirmedBy && !order.deliveredBy && order.updatedBy && (
+                                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-purple-700 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full">
+                                          ↻ Updated: {order.updatedBy.name}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                                </div>
                             </div>
                             

@@ -61,8 +61,12 @@ export default function NewProductPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user || !activeShopId) {
-      toast.error('Session error. Please refresh.');
+    if (!user) {
+      toast.error('লগইন সেশন শেষ হয়ে গেছে। পুনরায় লগইন করুন।');
+      return;
+    }
+    if (!activeShopId) {
+      toast.error('শপ আইডি পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করুন।');
       return;
     }
     
@@ -104,7 +108,13 @@ export default function NewProductPage() {
       router.push('/dashboard/products');
     } catch (err) {
       console.error("Database save failed:", err);
-      toast.error('Failed to add product. Please check your permissions.');
+      if (err?.code === 'permission-denied') {
+        toast.error('অনুমতি নেই (permission-denied)। অ্যাডমিনকে জানান।');
+      } else if (err?.code === 'unavailable') {
+        toast.error('ইন্টারনেট সংযোগ নেই। আবার চেষ্টা করুন।');
+      } else {
+        toast.error(`প্রোডাক্ট যোগ ব্যর্থ: ${err?.code || err?.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }

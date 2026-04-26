@@ -7,7 +7,7 @@ import {
   ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
-  ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink
+  ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag
 } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -401,6 +401,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [detectedLocation, setDetectedLocation] = useState('');
   const [locationManualInput, setLocationManualInput] = useState('');
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [userOrders, setUserOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [placing, setPlacing] = useState(false);
@@ -851,6 +852,29 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
       
+      {/* ── Category Drawer (Mobile) ── */}
+      <div className={`fixed inset-0 z-[100] md:hidden transition-all duration-300 ${isCategoryMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsCategoryMenuOpen(false)} />
+        <div className={`absolute top-0 right-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isCategoryMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <h2 className="text-lg font-black text-slate-900 flex items-center gap-2"><Tag size={18} className="text-purple-600" /> ক্যাটাগরি সমূহ</h2>
+            <button onClick={() => setIsCategoryMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 hover:bg-slate-900 transition-colors">
+              <X size={16} strokeWidth={3} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+            {categories.map(c => (
+              <button 
+                key={c.id} 
+                onClick={() => { setActiveCategory(c.name); setIsCategoryMenuOpen(false); }} 
+                className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === c.name ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
       {/* 🚀 GOOGLE ANALYTICS DYNAMIC INJECTION */}
       {shop.trackingConfig?.ga4Id && (
         <>
@@ -911,6 +935,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-row-reverse justify-between items-center">
           {/* Logo/Brand (Right Side as requested) */}
           <div className="flex items-center gap-3">
+            <button onClick={() => setIsCategoryMenuOpen(true)} className="md:hidden w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors shadow-sm">
+              <Menu size={20} strokeWidth={2.5} />
+            </button>
             <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{shop.shopName}</h1>
             {shop.logoUrl ? (
               <img src={shop.logoUrl} className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-slate-200 object-cover shadow-sm" alt="Logo" />
@@ -1006,13 +1033,16 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
             </select>
           </div>
 
-          <div className="w-[1px] h-8 bg-slate-200 shrink-0 mx-1" />
+          <div className="w-[1px] h-8 bg-slate-200 shrink-0 mx-1 hidden md:block" />
 
-          {categories.map(c => (
-            <button key={c.id} onClick={() => setActiveCategory(c.name)} className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}>
-              {c.name}
-            </button>
-          ))}
+          {/* Hidden on mobile, visible on md+ */}
+          <div className="hidden md:flex items-center gap-2">
+            {categories.map(c => (
+              <button key={c.id} onClick={() => setActiveCategory(c.name)} className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}>
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ── Product Grid ── */}

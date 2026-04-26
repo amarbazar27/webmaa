@@ -34,6 +34,10 @@ export default function CategoriesPage() {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!newCat.trim()) return;
+    if (!activeShopId) {
+      toast.error('শপ আইডি পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করুন।');
+      return;
+    }
     setAdding(true);
     try {
       await addCategory(activeShopId, { name: newCat.trim() });
@@ -41,7 +45,12 @@ export default function CategoriesPage() {
       setNewCat('');
       fetchCategories();
     } catch (err) {
-      toast.error('Failed to create category');
+      console.error('Category add error:', err);
+      if (err?.code === 'permission-denied') {
+        toast.error('অনুমতি নেই (permission-denied)। অ্যাডমিনকে জানান।');
+      } else {
+        toast.error(`ক্যাটাগরি যোগ ব্যর্থ: ${err?.code || err?.message || 'Unknown error'}`);
+      }
     } finally {
       setAdding(false);
     }
@@ -54,7 +63,12 @@ export default function CategoriesPage() {
       toast.success('Category removed');
       fetchCategories();
     } catch (err) {
-      toast.error('Failed to delete');
+      console.error('Category delete error:', err);
+      if (err?.code === 'permission-denied') {
+        toast.error('অনুমতি নেই (permission-denied)।');
+      } else {
+        toast.error(`ডিলিট ব্যর্থ: ${err?.code || err?.message || 'Unknown'}`);
+      }
     }
   };
 

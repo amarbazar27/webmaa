@@ -19,20 +19,20 @@ const determineRole = async (email) => {
     if (!email) return { role: 'user' };
     
     const currentEmail = email.toLowerCase().trim();
-    // 🔐 শুধু environment variable থেকে admin email নেবে
+    // 🔐 Super Admin Check
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-
     if (envAdmin && currentEmail === envAdmin) {
       return { role: 'superadmin' };
     }
 
-    const q = query(collection(db, 'retailer_invites'), where('email', '==', currentEmail));
-    const snap = await getDocs(q);
-    if (!snap.empty) return { role: 'retailer' };
+    // Parallelize role checks for speed
+    const [inviteSnap, staffSnap] = await Promise.all([
+      getDocs(query(collection(db, 'retailer_invites'), where('email', '==', currentEmail))),
+      getDocs(query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail)))
+    ]);
 
-    // Check if they are staff
-    const staffQuery = query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail));
-    const staffSnap = await getDocs(staffQuery);
+    if (!inviteSnap.empty) return { role: 'retailer' };
+    
     if (!staffSnap.empty) {
       const shopDoc = staffSnap.docs[0];
       return { role: 'staff', accessShopId: shopDoc.id, shopSlug: shopDoc.data().shopSlug };
@@ -53,7 +53,7 @@ export const handleUserSession = async (user) => {
   let finalUserData = null;
 
   if (!userDocSnap.exists()) {
-    // New user — determine role from invites/staff lists
+    // New user path
     const roleData = await determineRole(user.email);
     finalUserData = {
       uid: user.uid,
@@ -66,74 +66,53 @@ export const handleUserSession = async (user) => {
     };
     await setDoc(userDocRef, finalUserData);
 
-    // If they became a retailer, initialize their shop
     if (finalUserData.role === 'retailer') {
-      const shopSlug = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
-      await setDoc(doc(db, 'shops', user.uid), {
-        ownerId: user.uid,
-        shopName: `${user.displayName || 'My'}'s Premium Store`,
-        shopSlug,
-        subdomainSlug: shopSlug,
-        isActive: true,
-        createdAt: serverTimestamp(),
-        staffEmails: [],
-        banners: [
-          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
-          'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200'
-        ]
-      });
+      await initializeShop(user);
     }
   } else {
-    // Existing user
+    // Existing user path - PERFORMANCE OPTIMIZATION
     const existingData = userDocSnap.data();
     
-    // 🔥 TASK 3 FIX: If they are currently just a "user", re-verify role
-    // This allows staff/retailer invitations to take effect instantly
+    // Only re-verify role if they are still a basic "user"
     if (existingData.role === 'user' || !existingData.role) {
       const freshRole = await determineRole(user.email);
       if (freshRole.role !== 'user') {
-        console.log(`[Auth] Promoting user ${user.email} to ${freshRole.role}`);
         await updateDoc(userDocRef, { ...freshRole });
         finalUserData = { ...existingData, ...freshRole };
-        
-        // If they just became a retailer, initialize their shop
-        if (freshRole.role === 'retailer') {
-          const shopDoc = await getDoc(doc(db, 'shops', user.uid));
-          if (!shopDoc.exists()) {
-            const shopSlug = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
-            await setDoc(doc(db, 'shops', user.uid), {
-              ownerId: user.uid,
-              shopName: `${user.displayName || 'My'}'s Premium Store`,
-              shopSlug,
-              subdomainSlug: shopSlug,
-              isActive: true,
-              createdAt: serverTimestamp(),
-              staffEmails: [],
-              banners: [
-                'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
-                'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200'
-              ]
-            });
-          }
-        }
+        if (freshRole.role === 'retailer') await initializeShop(user);
       } else {
         finalUserData = existingData;
       }
     } else {
-      // Periodic check even for non-users (e.g. staff changes)
-      // For now, just trust existing role but we could re-verify occasionally
       finalUserData = existingData;
     }
 
-    // Refresh last login
-    await updateDoc(userDocRef, { lastLogin: serverTimestamp() });
+    // Background update lastLogin to avoid blocking UI
+    updateDoc(userDocRef, { lastLogin: serverTimestamp() }).catch(e => console.error("Login update failed", e));
   }
   return { user, userData: finalUserData };
 };
 
-/**
- * Google Login — tries popup first, falls back to full-page redirect.
- */
+const initializeShop = async (user) => {
+  const shopDoc = await getDoc(doc(db, 'shops', user.uid));
+  if (!shopDoc.exists()) {
+    const shopSlug = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
+    await setDoc(doc(db, 'shops', user.uid), {
+      ownerId: user.uid,
+      shopName: `${user.displayName || 'My'}'s Premium Store`,
+      shopSlug,
+      subdomainSlug: shopSlug,
+      isActive: true,
+      createdAt: serverTimestamp(),
+      staffEmails: [],
+      banners: [
+        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
+        'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200'
+      ]
+    });
+  }
+};
+
 export const loginWithGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
@@ -148,9 +127,6 @@ export const loginWithGoogle = async () => {
   }
 };
 
-/**
- * Handle user session after redirect login
- */
 export const handleLoginRedirect = async () => {
   try {
     const result = await getRedirectResult(auth);

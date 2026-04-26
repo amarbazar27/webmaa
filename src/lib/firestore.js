@@ -137,7 +137,7 @@ export const saveUserData = async (uid, data) => {
   return setDoc(doc(db, 'users', uid), data, { merge: true });
 };
 
-export const updateOrderStatus = async (shopId, orderId, status, deliveryTime = null) => {
+export const updateOrderStatus = async (shopId, orderId, status, deliveryTime = null, updaterInfo = null) => {
   const orderRef = doc(db, 'shops', shopId, 'orders', orderId);
   const orderSnap = await getDoc(orderRef);
 
@@ -148,6 +148,20 @@ export const updateOrderStatus = async (shopId, orderId, status, deliveryTime = 
      if (status === 'confirmed' && deliveryTime) {
        updates.deliveryTime = deliveryTime;
        updates.confirmedAt = serverTimestamp();
+     }
+
+     // Track who performed each specific action
+     if (updaterInfo) {
+       updates.updatedBy = updaterInfo;
+       if (status === 'confirmed') {
+         updates.confirmedBy = updaterInfo;
+       } else if (status === 'completed') {
+         updates.deliveredBy = updaterInfo;
+         updates.deliveredAt = serverTimestamp();
+       } else if (status === 'cancelled') {
+         updates.rejectedBy = updaterInfo;
+         updates.rejectedAt = serverTimestamp();
+       }
      }
 
      await updateDoc(orderRef, updates);

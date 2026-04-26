@@ -2,11 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ═══════════════════════════════════════════════════════════════
-    // 🔐 WEBMAA PRODUCTION FIRESTORE RULES
-    // Principle: DENY BY DEFAULT, allow only what's necessary
-    // ═══════════════════════════════════════════════════════════════
-
     // ── Helper Functions ──────────────────────────────────────────
 
     function isAuthenticated() {
@@ -23,28 +18,52 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == shopId;
     }
 
+    // Dual check: prevents email case mismatch issues while remaining secure
     function isStaffOf(shopId) {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/shops/$(shopId)) &&
-             request.auth.token.email in get(/databases/$(database)/documents/shops/$(shopId)).data.staffEmails;
+      return isAuthenticated() && (
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff' &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accessShopId == shopId
+        )
+        ||
+        (
+          exists(/databases/$(database)/documents/shops/$(shopId)) &&
+          request.auth.token.email != null &&
+          request.auth.token.email in get(/databases/$(database)/documents/shops/$(shopId)).data.get('staffEmails', [])
+        )
+      );
     }
 
     function isShopAdmin(shopId) {
       return isShopOwner(shopId) || isSuperAdmin() || isStaffOf(shopId);
     }
 
+    function isUnchanged(field) {
+      return !(field in request.resource.data) || request.resource.data[field] == resource.data[field];
+    }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 1. GLOBAL CONFIG (API Keys etc)
-    // ═══════════════════════════════════════════════════════════════
+    // Secure Role Assignment: Blocks Superadmin escalation but allows Staff IF verified against the shop's email list
+    function isValidRoleAssignment() {
+      let role = request.resource.data.get('role', 'user');
+      let shopId = request.resource.data.get('accessShopId', 'none');
+      
+      return role != 'superadmin' && (
+        role != 'staff' || 
+        (
+          exists(/databases/$(database)/documents/shops/$(shopId)) &&
+          request.auth.token.email != null &&
+          request.auth.token.email in get(/databases/$(database)/documents/shops/$(shopId)).data.get('staffEmails', [])
+        )
+      );
+    }
+
+    // ── Config & Invites ──────────────────────────────────────────
     match /config/{document=**} {
       allow read: if isAuthenticated();
       allow write: if isSuperAdmin();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 2. RETAILER REQUESTS & INVITES
-    // ═══════════════════════════════════════════════════════════════
     match /retailer_requests/{docId} {
       allow create: if isAuthenticated() && request.auth.uid == docId;
       allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == docId);
@@ -56,62 +75,61 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 3. USERS COLLECTION
-    // ═══════════════════════════════════════════════════════════════
+    // ── Users ─────────────────────────────────────────────────────
     match /users/{userId} {
       allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Apply secure role validation on creation
+      allow create: if isAuthenticated() && request.auth.uid == userId && isValidRoleAssignment();
+      
+      // Apply secure role validation on update (fixes staff login permission issue)
+      allow update: if isAuthenticated() && request.auth.uid == userId
+                    && (
+                      (isUnchanged('role') && isUnchanged('accessShopId')) ||
+                      isValidRoleAssignment()
+                    );
       allow delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 4. SHOPS & ALL SUB-COLLECTIONS
-    // ═══════════════════════════════════════════════════════════════
+    // ── Shops & Sub-collections ───────────────────────────────────
     match /shops/{shopId} {
       allow read: if true;
       allow create: if isAuthenticated() && request.auth.uid == shopId;
-      allow update: if isShopOwner(shopId) || isSuperAdmin();
+      allow update: if isShopAdmin(shopId);
       allow delete: if isSuperAdmin();
 
-      // ── Products ──────────────────────────────────────────────
       match /products/{productId} {
         allow read: if true;
         allow write: if isShopAdmin(shopId);
       }
 
-      // ── Categories ────────────────────────────────────────────
       match /categories/{categoryId} {
         allow read: if true;
-        allow write: if isShopAdmin(shopId);
+        allow write: if isShopOwner(shopId) || isSuperAdmin();
       }
 
-      // ── Orders ────────────────────────────────────────────────
       match /orders/{orderId} {
-        allow create: if false; // Only via API
+        allow create: if false; 
         allow read: if isShopAdmin(shopId) || (isAuthenticated() && resource.data.customerEmail == request.auth.token.email);
         allow update, delete: if isShopAdmin(shopId);
       }
 
-      // ── Order Counters ────────────────────────────────────────
       match /counters/{counterId} {
-        allow read, write: if true;
+        allow read, write: if isShopAdmin(shopId);
       }
 
-      // ── Staff ──────────────────────────────────────────────────
       match /staff/{staffId} {
         allow read: if isShopAdmin(shopId);
         allow write: if isShopOwner(shopId) || isSuperAdmin();
       }
 
-      // ── Customers ──────────────────────────────────────────────
       match /customers/{customerId} {
         allow read: if isShopAdmin(shopId);
         allow write: if isShopAdmin(shopId);
       }
     }
     
+    // ── Default Deny ───────────────────────
     match /{document=**} {
       allow read, write: if false;
     }
