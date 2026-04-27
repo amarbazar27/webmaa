@@ -127,15 +127,25 @@ export async function POST(req) {
         if (product.variants?.length > 0) {
           // Parse "Size: M, Color: Red"
           const selectedPairs = item.variantsText.split(', ').map(s => s.split(': '));
-          let adjustment = 0;
+          let hasVariantPrice = false;
+          let maxVariantPrice = 0;
+          
           for (const [vName, vLabel] of selectedPairs) {
              const variantGroup = product.variants.find(v => v.name === vName);
              if (variantGroup) {
                 const opt = variantGroup.options?.find(o => o.label === vLabel);
-                if (opt) adjustment += parseFloat(opt.price) || 0;
+                if (opt) {
+                   const p = parseFloat(opt.price);
+                   if (p > 0) {
+                      hasVariantPrice = true;
+                      if (p > maxVariantPrice) maxVariantPrice = p;
+                   }
+                }
              }
           }
-          price += adjustment;
+          if (hasVariantPrice) {
+             price = maxVariantPrice;
+          }
         } else if (product.sizes?.length > 0) {
           // Legacy sizes
           const selectedSize = product.sizes.find(s => s.label === item.variantsText);

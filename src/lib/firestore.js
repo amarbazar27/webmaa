@@ -57,6 +57,11 @@ export const getProducts = async (shopId) => {
   } catch (err) { return []; } 
 };
 
+export const getProduct = async (shopId, productId) => {
+  const snap = await getDoc(doc(db, 'shops', shopId, 'products', productId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
 export const addProduct = async (shopId, productData) => {
   return addDoc(collection(db, 'shops', shopId, 'products'), {
     ...productData,

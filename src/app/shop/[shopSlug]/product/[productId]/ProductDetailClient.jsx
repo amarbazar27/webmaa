@@ -64,11 +64,18 @@ export default function ProductDetailClient({ shop, product }) {
   if (isLegacySizes && selectedSize) {
     calculatedBasePrice = parseFloat(selectedSize.price) || 0;
   } else if (!isLegacySizes && variants.length > 0) {
-    let adjustment = 0;
+    let hasVariantPrice = false;
+    let maxVariantPrice = 0;
     Object.values(selectedVariants).forEach(opt => {
-      adjustment += parseFloat(opt.price) || 0;
+      let p = parseFloat(opt.price);
+      if (p > 0) {
+        hasVariantPrice = true;
+        if (p > maxVariantPrice) maxVariantPrice = p;
+      }
     });
-    calculatedBasePrice += adjustment;
+    if (hasVariantPrice) {
+      calculatedBasePrice = maxVariantPrice;
+    }
   }
   const basePrice = calculatedBasePrice;
   const displayPrice = aiPrice !== null ? aiPrice : basePrice * qty;
@@ -277,21 +284,16 @@ export default function ProductDetailClient({ shop, product }) {
                           setAiPrice(null);
                           setAiResult('');
                         }}
-                        className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${
+                        className={`min-w-[4rem] px-4 py-2 rounded-xl font-bold text-sm transition-all border-2 flex flex-col items-center justify-center ${
                           isSelected
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-purple-400 hover:text-purple-700'
+                            ? 'bg-purple-50 border-purple-600 text-purple-700 shadow-sm ring-1 ring-purple-600'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-purple-300 hover:bg-purple-50/30'
                         }`}
                       >
                         {opt.label}
                         {parseFloat(opt.price) > 0 && (
-                          <span className={`block text-[10px] mt-0.5 font-bold uppercase ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
-                            +৳{opt.price}
-                          </span>
-                        )}
-                        {parseFloat(opt.price) < 0 && (
-                          <span className={`block text-[10px] mt-0.5 font-bold uppercase ${isSelected ? 'text-rose-300' : 'text-rose-400'}`}>
-                            -৳{Math.abs(opt.price)}
+                          <span className={`block text-[10px] mt-0.5 font-bold ${isSelected ? 'text-purple-600' : 'text-slate-500'}`}>
+                            ৳{opt.price}
                           </span>
                         )}
                       </button>

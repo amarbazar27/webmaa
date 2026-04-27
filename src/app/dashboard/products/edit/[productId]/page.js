@@ -1,17 +1,22 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { addProduct, getCategories } from '@/lib/firestore';
+import { getProduct, updateProduct, getCategories } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
 import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown, Sparkles, Plus, Trash2, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
-export default function NewProductPage() {
+export default function EditProductPage({ params }) {
+  // Use React.use() to unwrap params
+  const unwrappedParams = use(params);
+  const { productId } = unwrappedParams;
+
   const { user, activeShopId } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -25,16 +30,55 @@ export default function NewProductPage() {
     description: '',
     allowCustomize: false,
     allowNote: false,
-    variants: [], // Array of { name: 'Size', options: [{ label: 'S', price: 0 }] }
+    variants: [], 
   });
 
-  // Fetch categories on mount
+  // Fetch product data and categories
   useEffect(() => {
-    if (!activeShopId) return;
-    getCategories(activeShopId).then(cats => {
-      setCategories(cats);
-    }).catch(err => console.error('Failed to load categories:', err));
-  }, [activeShopId]);
+    if (!activeShopId || !productId) return;
+
+    const loadData = async () => {
+      try {
+        const cats = await getCategories(activeShopId);
+        setCategories(cats);
+
+        const product = await getProduct(activeShopId, productId);
+        if (product) {
+          setForm({
+            name: product.name || '',
+            category: product.category || '',
+            price: product.price?.toString() || '',
+            stock: product.stock?.toString() || '',
+            description: product.description || '',
+            allowCustomize: product.allowCustomize || false,
+            allowNote: product.allowNote || false,
+            variants: product.variants || [],
+          });
+          if (product.imageUrl) {
+            setImagePreview(product.imageUrl);
+          }
+          
+          // Check if product category is in existing categories
+          if (product.category && cats.length > 0) {
+            const isExisting = cats.some(c => c.name === product.category);
+            if (!isExisting) {
+              setShowCustomCat(true);
+            }
+          }
+        } else {
+          toast.error('Product not found.');
+          router.push('/dashboard/products');
+        }
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        toast.error('Failed to load product data.');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadData();
+  }, [activeShopId, productId, router]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -70,7 +114,6 @@ export default function NewProductPage() {
       return;
     }
     
-    // Validation
     const price = parseFloat(form.price);
     const stock = parseInt(form.stock);
     
@@ -85,17 +128,7 @@ export default function NewProductPage() {
 
     setLoading(true);
     try {
-      let imageUrl = '';
-      if (imageFile) {
-        try {
-           imageUrl = await uploadProductImage(activeShopId, imageFile);
-        } catch (uploadErr) {
-           console.error("Image Upload Failed:", uploadErr);
-           toast.error('Image upload failed. Product will be saved without image.');
-        }
-      }
-
-      await addProduct(activeShopId, {
+      let updateData = {
         ...form,
         price: price,
         stock: stock,
@@ -104,28 +137,40 @@ export default function NewProductPage() {
            options: v.options.map(opt => ({ 
              ...opt, 
              price: parseFloat(opt.price) || 0,
-             stock: opt.stock !== '' ? parseInt(opt.stock) : null
+             stock: opt.stock !== '' && opt.stock != null ? parseInt(opt.stock) : null
            }))
-        })),
-        imageUrl,
-        ownerId: activeShopId, // Correctly using activeShopId as the logical owner
-      });
+        }))
+      };
 
-      toast.success('Product indexed successfully! 🚀');
+      if (imageFile) {
+        try {
+           updateData.imageUrl = await uploadProductImage(activeShopId, imageFile);
+        } catch (uploadErr) {
+           console.error("Image Upload Failed:", uploadErr);
+           toast.error('Image upload failed. Continuing without new image.');
+        }
+      }
+
+      await updateProduct(activeShopId, productId, updateData);
+
+      toast.success('Product updated successfully! ✅');
       router.push('/dashboard/products');
     } catch (err) {
-      console.error("Database save failed:", err);
-      if (err?.code === 'permission-denied') {
-        toast.error('অনুমতি নেই (permission-denied)। অ্যাডমিনকে জানান।');
-      } else if (err?.code === 'unavailable') {
-        toast.error('ইন্টারনেট সংযোগ নেই। আবার চেষ্টা করুন।');
-      } else {
-        toast.error(`প্রোডাক্ট যোগ ব্যর্থ: ${err?.code || err?.message || 'Unknown error'}`);
-      }
+      console.error("Database update failed:", err);
+      toast.error(`আপডেট ব্যর্থ: ${err?.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="py-20 text-center">
+        <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-purple-600" />
+        <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Loading Product...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-slide-in pb-12">
@@ -134,8 +179,8 @@ export default function NewProductPage() {
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">New Product Listing</h1>
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Expand your digital inventory</p>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Edit Product</h1>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Update product details</p>
         </div>
       </div>
 
@@ -180,7 +225,7 @@ export default function NewProductPage() {
               />
             </div>
 
-            {/* Category Selector - shows saved categories in a dropdown */}
+            {/* Category Selector */}
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
                 <Tag size={12} /> Category
@@ -410,9 +455,9 @@ export default function NewProductPage() {
             className="btn-primary w-full py-4.5 rounded-xl font-black flex items-center justify-center gap-3 text-lg disabled:opacity-50 shadow-lg shadow-purple-500/20"
           >
             {loading ? (
-              <><Loader2 className="animate-spin" size={24} /> Indexing Product...</>
+              <><Loader2 className="animate-spin" size={24} /> Updating Product...</>
             ) : (
-              <><Save size={24} /> Publish to Store</>
+              <><Save size={24} /> Save Changes</>
             )}
           </button>
         </div>

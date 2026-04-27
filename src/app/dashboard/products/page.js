@@ -70,6 +70,8 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('latest');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [expandedId, setExpandedId] = useState(null);
 
   const fetchProducts = useCallback(async () => {
@@ -128,10 +130,20 @@ export default function ProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+
+  let filteredProducts = products.filter(p =>
+    (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.category?.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (selectedCategory === '' || p.category === selectedCategory)
   );
+
+  filteredProducts.sort((a, b) => {
+    if (sortBy === 'price_asc') return (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0);
+    if (sortBy === 'price_desc') return (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0);
+    if (sortBy === 'oldest') return (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0);
+    return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
+  });
 
   const totalValue = products.reduce((acc, p) => acc + (parseFloat(p.price) || 0) * (parseInt(p.stock) || 0), 0);
 
@@ -162,16 +174,42 @@ export default function ProductsPage() {
         <span>নামের, দামের বা স্টকের ঘরে <strong>ক্লিক করুন</strong> এবং সরাসরি এডিট করুন। ফোকাস সরলেই অটো-সেভ হয়ে যাবে।</span>
       </div>
 
-      {/* Search */}
-      <div className="bg-white border border-slate-100 p-2 rounded-2xl flex items-center gap-3 shadow-sm">
-        <div className="pl-4 text-slate-400"><Search size={18} /></div>
-        <input
-          type="text"
-          placeholder="Search by name or category..."
-          className="bg-transparent border-none outline-none w-full py-3 text-sm font-bold text-slate-700 placeholder:text-slate-400"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      {/* Search & Filter */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white border border-slate-100 p-2 rounded-2xl flex-1 flex items-center gap-3 shadow-sm">
+          <div className="pl-4 text-slate-400"><Search size={18} /></div>
+          <input
+            type="text"
+            placeholder="Search by name or category..."
+            className="bg-transparent border-none outline-none w-full py-2 text-sm font-bold text-slate-700 placeholder:text-slate-400"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="flex gap-3">
+          <select 
+            value={sortBy} 
+            onChange={e => setSortBy(e.target.value)}
+            className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none cursor-pointer min-w-[140px]"
+          >
+            <option value="latest">Latest</option>
+            <option value="oldest">Oldest</option>
+            <option value="price_asc">Price Low to High</option>
+            <option value="price_desc">Price High to Low</option>
+          </select>
+
+          <select 
+            value={selectedCategory} 
+            onChange={e => setSelectedCategory(e.target.value)}
+            className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none cursor-pointer min-w-[140px]"
+          >
+            <option value="">All Categories</option>
+            {uniqueCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -291,15 +329,15 @@ export default function ProductsPage() {
                  </button>
               </div>
 
-              {/* Delete */}
+              {/* Edit / Delete */}
               <div className="col-span-1 flex justify-end gap-2">
-                <button
-                  onClick={() => setExpandedId(expandedId === product.id ? null : product.id)}
-                  className={`p-3 rounded-xl transition-all ${expandedId === product.id ? 'bg-purple-600 text-white' : 'hover:bg-purple-100 text-slate-400'}`}
-                  title="Edit Description"
+                <Link
+                  href={`/dashboard/products/edit/${product.id}`}
+                  className="p-3 rounded-xl transition-all hover:bg-purple-100 text-slate-400 hover:text-purple-600 group-hover:opacity-100"
+                  title="Edit Product"
                 >
                   <Pencil size={18} />
-                </button>
+                </Link>
                 <Button
                   variant="ghost"
                   icon={Trash2}
@@ -308,24 +346,7 @@ export default function ProductsPage() {
                 />
               </div>
 
-              {/* Expandable Description Area */}
-              {expandedId === product.id && (
-                <div className="col-span-12 mt-4 pt-4 border-t border-slate-100 animate-slide-in">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block mb-2">Product Description</label>
-                   <textarea
-                     rows={4}
-                     className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all resize-none"
-                     value={product.description || ''}
-                     placeholder="কোনো ডেসক্রিপশন সেট করা নেই..."
-                     onChange={(e) => {
-                        const newDesc = e.target.value;
-                        setProducts(prev => prev.map(p => p.id === product.id ? { ...p, description: newDesc } : p));
-                     }}
-                     onBlur={(e) => handleUpdate(product.id, 'description', e.target.value)}
-                   />
-                   <p className="text-[10px] text-slate-400 font-bold mt-2 italic px-1">Note: Description saves automatically on blur (clicking outside).</p>
-                </div>
-              )}
+
             </div>
           ))}
         </div>
