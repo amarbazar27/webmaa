@@ -20,9 +20,22 @@ export default function ProductDetailClient({ shop, product }) {
   const router = useRouter();
   const { user } = useAuth();
 
-  // Size variant state
-  const sizes = product.sizes || []; // [{label:'Small', price:100}, ...]
+  // Variant State (Shopify style)
+  const isLegacySizes = !product.variants && (product.sizes?.length > 0);
+  const variants = product.variants || [];
+  
+  // For legacy sizes
+  const sizes = product.sizes || [];
   const [selectedSize, setSelectedSize] = useState(sizes.length > 0 ? sizes[0] : null);
+
+  // For new variants system
+  const [selectedVariants, setSelectedVariants] = useState(() => {
+    const init = {};
+    variants.forEach(v => {
+      if(v.options?.length) init[v.name] = v.options[0];
+    });
+    return init;
+  });
 
   // Quantity
   const [qty, setQty] = useState(1);
@@ -46,7 +59,18 @@ export default function ProductDetailClient({ shop, product }) {
     catch { return []; }
   };
 
-  const basePrice = selectedSize ? parseFloat(selectedSize.price) : parseFloat(product.price);
+  // Price Calculation Logic
+  let calculatedBasePrice = parseFloat(product.price) || 0;
+  if (isLegacySizes && selectedSize) {
+    calculatedBasePrice = parseFloat(selectedSize.price) || 0;
+  } else if (!isLegacySizes && variants.length > 0) {
+    let adjustment = 0;
+    Object.values(selectedVariants).forEach(opt => {
+      adjustment += parseFloat(opt.price) || 0;
+    });
+    calculatedBasePrice += adjustment;
+  }
+  const basePrice = calculatedBasePrice;
   const displayPrice = aiPrice !== null ? aiPrice : basePrice * qty;
 
   // Auto-scroll to customization if parameter is set
@@ -131,16 +155,26 @@ export default function ProductDetailClient({ shop, product }) {
   const handleAddToCart = () => {
     const cart = getCart();
     const finalPrice = aiPrice !== null ? aiPrice : basePrice * qty;
+    
+    // Build variants summary
+    let variantString = '';
+    if (isLegacySizes && selectedSize) {
+      variantString = selectedSize.label;
+    } else if (!isLegacySizes && variants.length > 0) {
+      variantString = Object.entries(selectedVariants).map(([name, opt]) => `${name}: ${opt.label}`).join(', ');
+    }
+    
     const cartItem = {
-      id: product.id + (selectedSize ? `_${selectedSize.label}` : '') + (customInput ? `_custom_${Date.now()}` : ''),
+      id: product.id + (variantString ? `_${variantString.replace(/\s+/g, '-')}` : '') + (customInput ? `_custom_${Date.now()}` : ''),
       productId: product.id,
-      name: product.name + (selectedSize ? ` (${selectedSize.label})` : ''),
+      name: product.name + (variantString ? ` (${variantString})` : ''),
       price: aiPrice !== null ? aiPrice / qty : basePrice,
       quantity: qty,
       imageUrl: product.imageUrl || '',
       note: (customInput ? `কাস্টমাইজ: ${customInput}` : '') + (customerNote ? (customInput ? ' | ' : '') + `নোট: ${customerNote}` : ''),
       isCustomized: aiPrice !== null,
-      customizedPrice: aiPrice
+      customizedPrice: aiPrice,
+      variantsText: variantString // save exact variant info
     };
     
     // Check if same non-customized product already exists
@@ -223,8 +257,54 @@ export default function ProductDetailClient({ shop, product }) {
           </div>
         </div>
 
-        {/* Size Variants */}
-        {sizes.length > 0 && (
+        {/* Variants UI (New Shopify-style) */}
+        {!isLegacySizes && variants.length > 0 && (
+          <div className="space-y-4">
+            {variants.map((variant, vIdx) => (
+              <div key={vIdx} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <Layers size={18} className="text-slate-600" />
+                  <h3 className="font-black text-slate-900">{variant.name} বেছে নিন</h3>
+                </div>
+                <div className="flex gap-3 flex-wrap">
+                  {variant.options?.map((opt, oIdx) => {
+                    const isSelected = selectedVariants[variant.name]?.label === opt.label;
+                    return (
+                      <button
+                        key={oIdx}
+                        onClick={() => {
+                          setSelectedVariants(prev => ({ ...prev, [variant.name]: opt }));
+                          setAiPrice(null);
+                          setAiResult('');
+                        }}
+                        className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${
+                          isSelected
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-purple-400 hover:text-purple-700'
+                        }`}
+                      >
+                        {opt.label}
+                        {parseFloat(opt.price) > 0 && (
+                          <span className={`block text-[10px] mt-0.5 font-bold uppercase ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
+                            +৳{opt.price}
+                          </span>
+                        )}
+                        {parseFloat(opt.price) < 0 && (
+                          <span className={`block text-[10px] mt-0.5 font-bold uppercase ${isSelected ? 'text-rose-300' : 'text-rose-400'}`}>
+                            -৳{Math.abs(opt.price)}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Legacy Size Variants */}
+        {isLegacySizes && sizes.length > 0 && (
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Layers size={18} className="text-slate-600" />

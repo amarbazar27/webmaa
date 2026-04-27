@@ -54,8 +54,7 @@ export async function GET(request) {
       {
         status: 200,
         headers: {
-          // proxy layer-এ 60 সেকেন্ড cache — বারবার Firestore hit কমাবে
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+          'Cache-Control': 'no-store, max-age=0',
         },
       }
     );

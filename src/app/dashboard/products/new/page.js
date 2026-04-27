@@ -25,7 +25,7 @@ export default function NewProductPage() {
     description: '',
     allowCustomize: false,
     allowNote: false,
-    sizes: [], // Array of { name: 'Small', label: 'S', price: 0 }
+    variants: [], // Array of { name: 'Size', options: [{ label: 'S', price: 0 }] }
   });
 
   // Fetch categories on mount
@@ -99,7 +99,10 @@ export default function NewProductPage() {
         ...form,
         price: price,
         stock: stock,
-        sizes: form.sizes.map(s => ({ ...s, price: parseFloat(s.price) || 0 })),
+        variants: form.variants.map(v => ({
+           name: v.name,
+           options: v.options.map(opt => ({ ...opt, price: parseFloat(opt.price) || 0 }))
+        })),
         imageUrl,
         ownerId: activeShopId, // Correctly using activeShopId as the logical owner
       });
@@ -281,64 +284,101 @@ export default function NewProductPage() {
                 </label>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">প্রোডাক্ট ভ্যারিয়েন্ট বা সাইজ</label>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">প্রোডাক্ট ভ্যারিয়েন্ট (Variants)</label>
+                    <p className="text-[10px] text-slate-500 font-bold ml-1">যেমন: Size, Color, Weight ইত্যাদি</p>
+                  </div>
                   <button 
                     type="button" 
-                    onClick={() => setForm({...form, sizes: [...form.sizes, { name: '', label: '', price: '' }]})}
-                    className="text-[10px] font-black uppercase text-purple-600 hover:text-purple-800 flex items-center gap-1 bg-purple-50 px-2 py-1 rounded"
+                    onClick={() => setForm({...form, variants: [...form.variants, { name: '', options: [{ label: '', price: '' }] }]})}
+                    className="text-[10px] font-black uppercase text-purple-600 hover:text-purple-800 flex items-center gap-1 bg-purple-50 px-3 py-2 rounded-lg"
                   >
-                    <Plus size={12} /> সাইজ যোগ করুন
+                    <Plus size={12} /> ভ্যারিয়েন্ট যোগ করুন
                   </button>
                 </div>
-                {form.sizes.length === 0 ? (
-                  <div className="text-center py-4 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    কোনো সাইজ সেট করা নেই (ডিফল্ট সাইজ ব্যবহার হবে)
+
+                {form.variants.length === 0 ? (
+                  <div className="text-center py-6 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    কোনো ভ্যারিয়েন্ট সেট করা নেই (ডিফল্ট প্রাইস ব্যবহার হবে)
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {form.sizes.map((sz, idx) => (
-                      <div key={idx} className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-2 rounded-xl">
-                        <input
-                          type="text"
-                          placeholder="Name (e.g. Small)"
-                          className="flex-1 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
-                          value={sz.name}
-                          onChange={(e) => {
-                            const newSizes = [...form.sizes];
-                            newSizes[idx].name = e.target.value;
-                            setForm({...form, sizes: newSizes});
-                          }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Label (S/M/L) (Optional)"
-                          className="w-24 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
-                          value={sz.label}
-                          onChange={(e) => {
-                            const newSizes = [...form.sizes];
-                            newSizes[idx].label = e.target.value;
-                            setForm({...form, sizes: newSizes});
-                          }}
-                        />
-                        <input
-                          type="number"
-                          placeholder="Price (৳)"
-                          className="w-28 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-purple-700"
-                          value={sz.price}
-                          onChange={(e) => {
-                            const newSizes = [...form.sizes];
-                            newSizes[idx].price = e.target.value;
-                            setForm({...form, sizes: newSizes});
-                          }}
-                        />
-                        <button type="button" onClick={() => {
-                          const newSizes = form.sizes.filter((_, i) => i !== idx);
-                          setForm({...form, sizes: newSizes});
-                        }} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                          <Trash2 size={16} />
-                        </button>
+                  <div className="space-y-4">
+                    {form.variants.map((variant, vIdx) => (
+                      <div key={vIdx} className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            required
+                            placeholder="Variant Name (e.g. Size, Color)"
+                            className="flex-1 px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-black text-slate-900"
+                            value={variant.name}
+                            onChange={(e) => {
+                              const newVariants = [...form.variants];
+                              newVariants[vIdx].name = e.target.value;
+                              setForm({...form, variants: newVariants});
+                            }}
+                          />
+                          <button type="button" onClick={() => {
+                            const newVariants = form.variants.filter((_, i) => i !== vIdx);
+                            setForm({...form, variants: newVariants});
+                          }} className="p-2 text-slate-400 hover:text-red-500 bg-white border border-slate-200 rounded-lg transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        
+                        {/* Variant Options */}
+                        <div className="pl-4 border-l-2 border-purple-200 space-y-2">
+                           {variant.options.map((opt, oIdx) => (
+                              <div key={oIdx} className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="Option (e.g. Small, Red)"
+                                  className="flex-1 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
+                                  value={opt.label}
+                                  onChange={(e) => {
+                                    const newVariants = [...form.variants];
+                                    newVariants[vIdx].options[oIdx].label = e.target.value;
+                                    setForm({...form, variants: newVariants});
+                                  }}
+                                />
+                                <div className="relative">
+                                  <span className="absolute left-3 top-2 text-xs font-black text-slate-400">+৳</span>
+                                  <input
+                                    type="number"
+                                    placeholder="Price (+)"
+                                    className="w-28 pl-8 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-black text-purple-700"
+                                    value={opt.price}
+                                    onChange={(e) => {
+                                      const newVariants = [...form.variants];
+                                      newVariants[vIdx].options[oIdx].price = e.target.value;
+                                      setForm({...form, variants: newVariants});
+                                    }}
+                                  />
+                                </div>
+                                <button type="button" onClick={() => {
+                                  const newVariants = [...form.variants];
+                                  newVariants[vIdx].options = newVariants[vIdx].options.filter((_, i) => i !== oIdx);
+                                  setForm({...form, variants: newVariants});
+                                }} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                           ))}
+                           <button 
+                             type="button" 
+                             onClick={() => {
+                               const newVariants = [...form.variants];
+                               newVariants[vIdx].options.push({ label: '', price: '' });
+                               setForm({...form, variants: newVariants});
+                             }}
+                             className="text-xs font-bold text-slate-500 hover:text-purple-600 flex items-center gap-1 mt-2"
+                           >
+                             <Plus size={12} /> অপশন যোগ করুন
+                           </button>
+                        </div>
                       </div>
                     ))}
                   </div>

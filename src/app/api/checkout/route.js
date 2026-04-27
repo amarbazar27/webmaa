@@ -19,7 +19,9 @@ const CheckoutSchema = z.object({
   items: z.array(z.object({
     id: z.string().min(1),
     quantity: z.number().int().positive().max(50),
-    note: z.string().max(100).optional()
+    note: z.string().max(200).optional(),
+    variantsText: z.string().max(200).optional(),
+    clientPrice: z.number().positive().optional()
   })).min(1)
 });
 
@@ -118,8 +120,35 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Invalid product' }, { status: 404 });
       }
 
-      const product = pSnap.data();
-      const price = parseFloat(product.price);
+      let price = parseFloat(product.price) || 0;
+
+      // Calculate dynamic price based on variants from DB
+      if (item.variantsText) {
+        if (product.variants?.length > 0) {
+          // Parse "Size: M, Color: Red"
+          const selectedPairs = item.variantsText.split(', ').map(s => s.split(': '));
+          let adjustment = 0;
+          for (const [vName, vLabel] of selectedPairs) {
+             const variantGroup = product.variants.find(v => v.name === vName);
+             if (variantGroup) {
+                const opt = variantGroup.options?.find(o => o.label === vLabel);
+                if (opt) adjustment += parseFloat(opt.price) || 0;
+             }
+          }
+          price += adjustment;
+        } else if (product.sizes?.length > 0) {
+          // Legacy sizes
+          const selectedSize = product.sizes.find(s => s.label === item.variantsText);
+          if (selectedSize) {
+             price = parseFloat(selectedSize.price) || price;
+          }
+        }
+      }
+
+      // If product allows AI customization, trust the clientPrice (beta feature)
+      if (product.allowCustomize && item.clientPrice && item.clientPrice > 0) {
+         price = item.clientPrice;
+      }
 
       // 🚨 Price validation
       if (!price || price <= 0) {
@@ -135,7 +164,7 @@ export async function POST(req) {
 
       verifiedItems.push({
         id: item.id,
-        name: product.name,
+        name: product.name + (item.variantsText ? ` (${item.variantsText})` : ''),
         price: price.toString(),
         quantity: item.quantity,
         note: item.note || ''

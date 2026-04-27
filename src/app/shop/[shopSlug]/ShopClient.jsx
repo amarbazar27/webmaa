@@ -745,7 +745,13 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         customerNote: orderForm.note,
         transactionId: orderForm.txnId,
         paymentNumber: orderForm.paymentNumber,
-        items: cart.map(i => ({ id: i.id, quantity: i.quantity, note: i.note || '' }))
+        items: cart.map(i => ({ 
+          id: i.productId || i.id, 
+          quantity: i.quantity, 
+          note: i.note || '',
+          variantsText: i.variantsText || '',
+          clientPrice: i.customizedPrice || undefined
+        }))
       };
 
       const res = await fetch('/api/checkout', {
@@ -1163,7 +1169,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                           <Plus size={15} strokeWidth={2.5} /> কার্টে যোগ করুন
                         </button>
                       )}
-                      {(product.allowCustomize || (product.sizes && product.sizes.length > 0)) && (
+                      {(product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
                         <button
                           onClick={() => router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}?customize=true`)}
                           className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"

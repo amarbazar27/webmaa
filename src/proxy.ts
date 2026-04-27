@@ -124,7 +124,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         // Internal security token
         'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '',
       },
-      next: { revalidate: 60 }, // 60 সেকেন্ড cache
+      cache: 'no-store', // Disable aggressive caching for domain resolution to prevent "not found" loop
     });
 
     console.log(`[Proxy] domain-lookup status=${lookupResponse.status}`);
