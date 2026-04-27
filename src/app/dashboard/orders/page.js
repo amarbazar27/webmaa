@@ -30,6 +30,7 @@ export default function OrdersPage() {
 
   // Security Auth Modal State
   const [authModal, setAuthModal] = useState({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
+  const [downloadingPdf, setDownloadingPdf] = useState(null);
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -62,14 +63,14 @@ export default function OrdersPage() {
 
   const proceedStatusUpdate = async (orderId, newStatus) => {
     try {
-      const deliveryTime = newStatus === 'confirmed' ? shop?.deliveryConfig?.defaultDeliveryTime : null;
+      const deliveryConfig = newStatus === 'confirmed' ? shop?.deliveryConfig : null;
       const actorInfo = {
         uid: user.uid,
         name: userData?.name || user.displayName || 'Unknown',
         role: userData?.role || 'staff'
       };
       // Pass named actor fields so each action is independently tracked
-      await updateOrderStatus(activeShopId, orderId, newStatus, deliveryTime, actorInfo);
+      await updateOrderStatus(activeShopId, orderId, newStatus, deliveryConfig, actorInfo);
       toast.success(`Order marked as ${newStatus}`);
       setAuthModal({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
     } catch (err) {
@@ -125,80 +126,96 @@ export default function OrdersPage() {
 
   // ── Admin PDF Generator ──────────────────────────
   const generateAdminPDF = async (order) => {
-    const { default: html2canvas } = await import('html2canvas');
-    const { default: jsPDF } = await import('jspdf');
+    if (downloadingPdf === order.id) return;
+    setDownloadingPdf(order.id);
+    const toastId = toast.loading('আপনার PDF তৈরি হচ্ছে...');
     
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:595px;padding:40px;background:white;font-family:Arial,sans-serif';
-    const taka = String.fromCharCode(2547);
-    el.innerHTML = `
-      <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:20px;margin-bottom:20px">
-        <h1 style="font-size:24px;font-weight:900;color:#1e293b;margin:0">${shop?.shopName || 'Store'}</h1>
-        <p style="font-size:12px;color:#64748b;margin:4px 0 0">Admin Order Invoice</p>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0">Order ID</p>
-          <p style="font-size:18px;font-weight:900;color:#7c3aed;margin:4px 0 0">#${order.orderIdVisual || order.id.slice(-6).toUpperCase()}</p>
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const { default: jsPDF } = await import('jspdf');
+      
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;left:-9999px;top:0;width:595px;padding:40px;background:white;font-family:Arial,sans-serif;color:black;';
+      const taka = String.fromCharCode(2547);
+      
+      // BLACK & WHITE THEME
+      el.innerHTML = `
+        <div style="text-align:center;border-bottom:2px solid black;padding-bottom:20px;margin-bottom:20px">
+          <h1 style="font-size:24px;font-weight:900;color:black;margin:0">${shop?.shopName || 'Store'}</h1>
+          <p style="font-size:12px;color:black;margin:4px 0 0">Order Invoice</p>
         </div>
-        <div style="text-align:right">
-          <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0">Status</p>
-          <p style="font-size:14px;font-weight:900;color:#1e293b;margin:4px 0 0">${order.status || 'Pending'}</p>
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <p style="font-size:10px;color:#333;text-transform:uppercase;font-weight:700;margin:0">Order ID</p>
+            <p style="font-size:18px;font-weight:900;color:black;margin:4px 0 0">#${order.orderNumber || order.orderIdVisual || order.id.slice(-6).toUpperCase()}</p>
+          </div>
+          <div style="text-align:right">
+            <p style="font-size:10px;color:#333;text-transform:uppercase;font-weight:700;margin:0">Status</p>
+            <p style="font-size:14px;font-weight:900;color:black;margin:4px 0 0">${order.status || 'Pending'}</p>
+          </div>
         </div>
-      </div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
-        <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0 0 8px">Customer</p>
-        <p style="margin:4px 0;font-size:13px;font-weight:700;color:#1e293b">${order.customerEmail || order.customerPhone || 'N/A'}</p>
-        <p style="margin:4px 0;font-size:12px;color:#64748b">${order.customerAddress || ''}</p>
-        ${order.transactionId ? `<p style="margin:8px 0 0;font-size:11px;color:#16a34a;font-weight:700">TxnID: ${order.transactionId}</p>` : ''}
-        ${order.customerNote ? `<p style="margin:4px 0 0;font-size:11px;color:#7c3aed;font-style:italic">Note: ${order.customerNote}</p>` : ''}
-      </div>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
-        <thead><tr style="background:#1e293b;color:white">
-          <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;border-radius:8px 0 0 0">Item</th>
-          <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700">Qty</th>
-          <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;border-radius:0 8px 0 0">Price</th>
-        </tr></thead>
-        <tbody>
-          ${(order.items || []).map((item, i) => `
-            <tr style="background:${i%2===0?'white':'#f8fafc'}">
-              <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#1e293b">${item.name}${item.note ? `<br><span style="font-size:10px;color:#7c3aed">${item.note}</span>` : ''}</td>
-              <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#64748b">${item.quantity}</td>
-              <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:900;color:#1e293b">${taka}${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      <div style="display:flex;justify-content:space-between;background:#7c3aed;color:white;padding:14px 16px;border-radius:12px">
-        <span style="font-size:16px;font-weight:900">Total</span>
-        <span style="font-size:20px;font-weight:900">${taka}${order.total}</span>
-      </div>
-      <p style="text-align:center;margin-top:20px;font-size:10px;color:#94a3b8">Generated by Webmaa Admin Panel</p>
-    `;
-    document.body.appendChild(el);
-    const canvas = await html2canvas(el, { scale: 2, useCORS: true });
-    document.body.removeChild(el);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    
-    let heightLeft = pdfHeight;
-    let position = 0;
-    
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-    heightLeft -= pageHeight;
-    
-    while (heightLeft >= 0) {
-      position = heightLeft - pdfHeight;
-      pdf.addPage();
+        <div style="border:1px solid black;padding:16px;margin-bottom:16px">
+          <p style="font-size:10px;color:#333;text-transform:uppercase;font-weight:700;margin:0 0 8px">Customer</p>
+          <p style="margin:4px 0;font-size:13px;font-weight:700;color:black">${order.customerEmail || order.customerPhone || 'N/A'}</p>
+          <p style="margin:4px 0;font-size:12px;color:black">${order.customerAddress || ''}</p>
+          ${order.transactionId ? `<p style="margin:8px 0 0;font-size:11px;color:black;font-weight:700">TxnID: ${order.transactionId}</p>` : ''}
+          ${order.customerNote ? `<p style="margin:4px 0 0;font-size:11px;color:black;font-style:italic">Note: ${order.customerNote}</p>` : ''}
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+          <thead><tr style="border-bottom:2px solid black;color:black">
+            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700">Item</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700">Qty</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700">Price</th>
+          </tr></thead>
+          <tbody>
+            ${(order.items || []).map((item, i) => `
+              <tr style="border-bottom:1px solid #ccc;">
+                <td style="padding:10px 12px;font-size:12px;font-weight:700;color:black">${item.name}${item.note ? `<br><span style="font-size:10px;color:#555">${item.note}</span>` : ''}</td>
+                <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:black">${item.quantity}</td>
+                <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:900;color:black">${taka}${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="display:flex;justify-content:space-between;border:2px solid black;color:black;padding:14px 16px;">
+          <span style="font-size:16px;font-weight:900">Total</span>
+          <span style="font-size:20px;font-weight:900">${taka}${order.total}</span>
+        </div>
+        <p style="text-align:center;margin-top:20px;font-size:10px;color:#333">Generated by Webmaa Admin Panel</p>
+      `;
+      document.body.appendChild(el);
+      
+      toast.loading('PDF রেন্ডার হচ্ছে... (50%)', { id: toastId });
+      const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+      document.body.removeChild(el);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      let heightLeft = pdfHeight;
+      let position = 0;
+      
+      toast.loading('PDF সেভ হচ্ছে... (90%)', { id: toastId });
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
       heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`Invoice_${order.orderNumber || order.orderIdVisual || order.id.slice(-6)}.pdf`);
+      toast.success('PDF সফলভাবে ডাউনলোড হয়েছে! 📄', { id: toastId });
+    } catch (err) {
+      toast.error('PDF ডাউনলোড ব্যর্থ হয়েছে!', { id: toastId });
+      console.error(err);
+    } finally {
+      setDownloadingPdf(null);
     }
-    
-    pdf.save(`Invoice_${order.orderIdVisual || order.id.slice(-6)}.pdf`);
-    toast.success('PDF ডাউনলোড হয়েছে! 📄');
   };
 
   // Grouping by Phone/Email algorithm
@@ -371,8 +388,12 @@ export default function OrdersPage() {
                             <div className="w-full text-right bg-slate-50 p-4 rounded-xl border border-slate-200">
                                <p className="text-xs font-black text-slate-500">{order.items?.length || 0} Products Total</p>
                                <p className="text-2xl font-black text-slate-900 mt-1">৳{order.total}</p>
-                               <button onClick={() => generateAdminPDF(order)} className="mt-3 flex items-center justify-center gap-2 w-full py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-bold hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors shadow-sm">
-                                 <Download size={14} strokeWidth={2.5}/> PDF ডাউনলোড
+                               <button 
+                                 onClick={() => generateAdminPDF(order)} 
+                                 disabled={downloadingPdf === order.id}
+                                 className="mt-3 flex items-center justify-center gap-2 w-full py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-bold hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors shadow-sm disabled:opacity-50"
+                               >
+                                 {downloadingPdf === order.id ? <><div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-700 rounded-full animate-spin"></div> তৈরি হচ্ছে...</> : <><Download size={14} strokeWidth={2.5}/> PDF ডাউনলোড</>}
                                </button>
                             </div>
                          </div>

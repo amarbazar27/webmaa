@@ -719,12 +719,14 @@ export default function SettingsPage() {
                    onChange={e => setDeliveryConfig({...deliveryConfig, methods: e.target.value})}
                    placeholder="bKash: 017.., Nagad.."
                  />
-                 <Input
-                   label="Default Delivery Time (e.g. 30 minutes, 1 day)"
-                   value={deliveryConfig.defaultDeliveryTime || ''}
-                   onChange={e => setDeliveryConfig({...deliveryConfig, defaultDeliveryTime: e.target.value})}
-                   placeholder="e.g. 45 minutes"
-                 />
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Default Delivery Time (Live Countdown)</label>
+                    <div className="grid grid-cols-3 gap-2">
+                       <input type="number" placeholder="দিন" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border-2 border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={deliveryConfig.deliveryDays ?? ''} onChange={e => setDeliveryConfig({...deliveryConfig, deliveryDays: e.target.value})} />
+                       <input type="number" placeholder="ঘণ্টা" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border-2 border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={deliveryConfig.deliveryHours ?? ''} onChange={e => setDeliveryConfig({...deliveryConfig, deliveryHours: e.target.value})} />
+                       <input type="number" placeholder="মিনিট" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border-2 border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={deliveryConfig.deliveryMinutes ?? ''} onChange={e => setDeliveryConfig({...deliveryConfig, deliveryMinutes: e.target.value})} />
+                    </div>
+                 </div>
               </div>
               <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
                  {deliveryConfig.isCOD 

@@ -137,7 +137,7 @@ export const saveUserData = async (uid, data) => {
   return setDoc(doc(db, 'users', uid), data, { merge: true });
 };
 
-export const updateOrderStatus = async (shopId, orderId, status, deliveryTime = null, updaterInfo = null) => {
+export const updateOrderStatus = async (shopId, orderId, status, deliveryConfig = null, updaterInfo = null) => {
   const orderRef = doc(db, 'shops', shopId, 'orders', orderId);
   const orderSnap = await getDoc(orderRef);
 
@@ -145,8 +145,29 @@ export const updateOrderStatus = async (shopId, orderId, status, deliveryTime = 
      const orderData = orderSnap.data();
      const updates = { status };
      
-     if (status === 'confirmed' && deliveryTime) {
-       updates.deliveryTime = deliveryTime;
+     if (status === 'confirmed' && deliveryConfig) {
+       // Support old string format or new object format
+       if (typeof deliveryConfig === 'string') {
+         updates.deliveryTime = deliveryConfig;
+       } else {
+         const d = parseInt(deliveryConfig.deliveryDays) || 0;
+         const h = parseInt(deliveryConfig.deliveryHours) || 0;
+         const m = parseInt(deliveryConfig.deliveryMinutes) || 0;
+         
+         if (d > 0 || h > 0 || m > 0) {
+           const now = new Date();
+           const etaMillis = now.getTime() + (d * 86400000) + (h * 3600000) + (m * 60000);
+           updates.deliveryETA = serverTimestamp(); // We use local logic in frontend, but need real TS.
+           // Actually, firestore doesn't let us add millis to serverTimestamp easily, so we use JS date
+           updates.deliveryETA = new Date(etaMillis); 
+           
+           let fmt = '';
+           if (d) fmt += `${d} দিন `;
+           if (h) fmt += `${h} ঘণ্টা `;
+           if (m) fmt += `${m} মিনিট`;
+           updates.deliveryCountdownFormatted = fmt.trim();
+         }
+       }
        updates.confirmedAt = serverTimestamp();
      }
 

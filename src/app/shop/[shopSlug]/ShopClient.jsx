@@ -374,6 +374,50 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
   );
 }
 
+// ── Live Countdown Component ──
+function LiveCountdown({ deliveryETA }) {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    if (!deliveryETA) return;
+    
+    // Parse timestamp
+    const etaMillis = typeof deliveryETA.toMillis === 'function' 
+      ? deliveryETA.toMillis() 
+      : new Date(deliveryETA).getTime();
+      
+    const interval = setInterval(() => {
+      const diff = etaMillis - Date.now();
+      if (diff <= 0) {
+        setTimeLeft('ডেলিভারি হয়ে যাওয়ার কথা');
+        clearInterval(interval);
+        return;
+      }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      
+      const parts = [];
+      if (d > 0) parts.push(`${d} দিন`);
+      if (h > 0) parts.push(`${String(h).padStart(2,'0')} ঘণ্টা`);
+      parts.push(`${String(m).padStart(2,'0')} মিনিট`);
+      parts.push(`${String(s).padStart(2,'0')} সেঃ`);
+      
+      setTimeLeft(parts.join(' '));
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [deliveryETA]);
+
+  return (
+    <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl">
+      <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Clock size={12}/> লাইভ কাউন্টডাউন</p>
+      <p className="text-sm font-black text-blue-900 font-mono tracking-wider">{timeLeft || 'হিসাব করা হচ্ছে...'}</p>
+    </div>
+  );
+}
+
 export default function ShopClient({ initialShop, initialProducts, initialCategories }) {
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
@@ -962,7 +1006,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
           {/* Actions (Left side of the brand) */}
           <div className="flex items-center gap-2 md:gap-4">
-            {userData?.role === 'staff' && userData?.accessShopId === shop.id && (
+            {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
               <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-lg">
                 <Settings size={15} /> <span className="hidden sm:inline">প্যানেলে যান</span>
               </button>
@@ -1555,12 +1599,14 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
                         {expandedOrder === order.id && (
                           <div className="p-4 border-t-2 border-slate-100 space-y-3">
                             <p className="text-xs font-bold text-slate-500 font-mono">তারিখ: {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('en-GB') : 'Just now'}</p>
-                            {order.deliveryTime && order.status === 'confirmed' && (
+                            {order.deliveryETA ? (
+                              <LiveCountdown deliveryETA={order.deliveryETA} />
+                            ) : order.deliveryCountdownFormatted ? (
                               <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl animate-pulse">
-                                <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">⏲️ ডেলিভারি কাউন্টডাউন</p>
-                                <p className="text-sm font-bold text-blue-900">আপনার অর্ডারটি কনফার্ম করা হয়েছে। ডেলিভারি সময়: <span className="font-black text-blue-700">{order.deliveryTime}</span></p>
+                                <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">⏲️ ডেলিভারি সময়</p>
+                                <p className="text-sm font-bold text-blue-900">ডেলিভারি সময়: <span className="font-black text-blue-700">{order.deliveryCountdownFormatted}</span></p>
                               </div>
-                            )}
+                            ) : null}
                             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                               {order.paymentNumber && (
                                 <p className="text-xs font-bold text-slate-600">
