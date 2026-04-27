@@ -119,6 +119,7 @@ export async function POST(req) {
       if (!pSnap.exists) {
         return NextResponse.json({ error: 'Invalid product' }, { status: 404 });
       }
+      const product = pSnap.data();
 
       let price = parseFloat(product.price) || 0;
 
