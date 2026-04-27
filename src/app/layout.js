@@ -7,8 +7,22 @@ import { Toaster } from 'react-hot-toast';
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata = {
-  title: 'Webmaa - Premium Storefront',
-  description: 'Buy products easily and securely',
+  title: 'Messer Bazar',
+  description: 'Online grocery & daily needs marketplace',
+  openGraph: {
+    title: 'Messer Bazar',
+    description: 'Online grocery & daily needs marketplace',
+    images: [{ url: '/logo.png', width: 512, height: 512, alt: 'Messer Bazar Logo' }]
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/logo.png',
+  },
   manifest: '/manifest.json',
 };
 

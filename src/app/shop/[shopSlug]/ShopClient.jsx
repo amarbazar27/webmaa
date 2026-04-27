@@ -14,6 +14,7 @@ import { logoutUser, loginWithGoogle } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import { saveUserData } from '@/lib/firestore';
+import Logo from '@/components/ui/Logo';
 
 const CuteAIIcon = () => (
   <div className="relative w-12 h-12 flex items-center justify-center animate-bounce">
@@ -996,18 +997,13 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
       {/* ── Header ── */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-row-reverse justify-between items-center">
-          {/* Logo/Brand (Right Side as requested) */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+          {/* Logo/Brand (Left Side) */}
           <div className="flex items-center gap-3">
             <button onClick={() => setIsCategoryMenuOpen(true)} className="md:hidden w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors shadow-sm">
               <Menu size={20} strokeWidth={2.5} />
             </button>
-            <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{shop.shopName}</h1>
-            {shop.logoUrl ? (
-              <img src={shop.logoUrl} className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-slate-200 object-cover shadow-sm" alt="Logo" />
-            ) : (
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black shadow-sm text-xl">{shop.shopName?.[0]}</div>
-            )}
+            <Logo href={`/shop/${shop.id}`} />
           </div>
 
           {/* Actions (Left side of the brand) */}

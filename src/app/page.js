@@ -13,6 +13,7 @@ import { logoutUser, loginWithGoogle } from '@/lib/auth';
 import { addRetailerRequest, subscribeGlobalConfig } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import Logo from '@/components/ui/Logo';
 
 export default function Home() {
   const { user, userData } = useAuth();
@@ -230,9 +231,7 @@ export default function Home() {
       <nav className="relative z-40 max-w-7xl mx-auto px-6 pt-8">
         <div className="flex justify-between items-center glass-panel rounded-full px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center font-black text-xl shadow-[0_0_20px_rgba(255,255,255,0.5)]">W</div>
-            <span className="text-xl font-black tracking-tight">Webmaa</span>
-            <span className="px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-[9px] font-black uppercase tracking-widest text-white/70">Pro</span>
+            <Logo href="/" className="text-white" />
           </div>
 
           <div className="hidden md:flex items-center gap-8">

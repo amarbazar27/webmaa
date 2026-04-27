@@ -1,0 +1,48 @@
+# Webmaa System Memory (Messer Bazar)
+
+## 🧠 Developer Identity
+- **Role:** Senior Full Stack Web Developer
+- **Rules:** Follow instructions strictly, no unrequested modifications, preserve existing functionality, handle sensitive logic carefully.
+- **Language:** Communicate in Bangla, but write code/comments/implementation in English.
+
+## 🧩 Project Architecture
+- **Framework:** Next.js (App Router, version 16.2.3 with Turbopack)
+- **Database:** Firebase Firestore (Admin SDK for backend, Client SDK for frontend)
+- **Authentication:** Firebase Auth (Google Sign-In, multiple domain handling)
+- **Deployment:** Vercel (Auto-deployed from GitHub `main` branch)
+- **Styling:** Tailwind CSS
+
+### 📂 Key Directories & Files
+- `src/app/api/*`: Backend API routes (checkout, auth, domains, etc.)
+- `src/app/shop/[shopSlug]/*`: Storefront UI for end-customers.
+- `src/app/dashboard/*`: Retailer/Admin dashboard for inventory and order management.
+- `src/lib/firestore.js`: Frontend Firestore interactions (queries, updates).
+- `src/lib/firebase-admin.js`: Backend Firebase Admin SDK configuration.
+- `src/components/*`: Reusable UI components.
+- `firestore.rules`: Critical security rules for database access.
+
+### ⚙️ Important Features
+- **Multi-tenant Architecture:** Customers see individual shops via `/[shopSlug]` or custom domains.
+- **Variant & Pricing Logic:** Product prices can be absolute (variant overrides) or base prices. Checked heavily in `api/checkout/route.js`.
+- **Order Management:** Includes free delivery tracking, streak tracking, and countdowns.
+- **AI Customization:** Beta feature for users to request custom sizes/quantities, priced dynamically via AI.
+
+## ⚠️ Risk Awareness
+- **Sensitive Logic:**
+  - `src/app/api/checkout/route.js`: Handles pricing validation and order creation. ANY bugs here can cause revenue loss or build failures.
+  - `firestore.rules`: Changing this can expose sensitive user/order data.
+  - Authentication flow across subdomains/custom domains.
+- **Race Conditions:**
+  - Order serial generation uses Firestore transactions (`counters/{counterId}`) to prevent duplicates.
+
+## 🔁 Deployment Workflow
+1. Apply fix locally.
+2. Mental testing for edge cases.
+3. Push to GitHub (`git add . ; git commit -m "..." ; git push`).
+4. Deploy to Vercel (`npx vercel --prod --yes` or wait for GitHub trigger).
+5. WAIT for successful deployment before providing the final summary.
+
+## 🔄 Auto Recovery
+- If Vercel build fails: Detect error (run local build if needed), fix, and redeploy until SUCCESS.
+
+*(This file is automatically updated after major system changes.)*
