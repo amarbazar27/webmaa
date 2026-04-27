@@ -226,13 +226,17 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
 
           setStatus(isMatch ? 'available' : 'unavailable');
         } catch (err) {
-          setStatus('unavailable');
+          console.warn('Geolocation reverse geocoding failed:', err);
+          setStatus(shop.showLocationSelector === false ? 'available' : 'unavailable');
         }
       },
-      () => setStatus('unavailable'),
-      { enableHighAccuracy: true, timeout: 5000 }
+      (err) => {
+        console.warn('Geolocation position error:', err);
+        setStatus(shop.showLocationSelector === false ? 'available' : 'unavailable');
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 }
     );
-  }, [serviceAreas.length]);
+  }, [serviceAreas.length, shop.showLocationSelector]);
 
   const checkUnifiedLocation = () => {
     const { division, district, upazila, upazilaName, union } = geoSelections;
@@ -490,16 +494,33 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   };
 
   useEffect(() => {
-    const installed = localStorage.getItem('pwa_installed');
-    if (!installed) setPwaInstalled(false);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone) {
+      setPwaInstalled(true);
+      return;
+    }
 
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setPwaInstalled(false);
+      localStorage.removeItem('pwa_installed'); // Reset if uninstalled
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+
+    const installed = localStorage.getItem('pwa_installed');
+    if (!installed) setPwaInstalled(false);
+
+    const onInstall = () => {
+      setPwaInstalled(true);
+      localStorage.setItem('pwa_installed', 'true');
+    };
+    window.addEventListener('appinstalled', onInstall);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', onInstall);
+    };
   }, []);
 
   const handleAppDownload = async () => {
@@ -513,7 +534,12 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         toast.success('অ্যাপ ইন্সটল হয়েছে! 🎉');
       }
     } else {
-      toast('আপনার ব্রাউজার বা অ্যাপটি ইতিমধ্যেই ইন্সটল আছে।', { icon: 'ℹ️' });
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        toast('আইফোনে ইন্সটল করতে নিচে "Share" আইকনে ক্লিক করে "Add to Home Screen" নির্বাচন করুন।', { duration: 6000 });
+      } else {
+        toast('আপনার ব্রাউজারের মেনু (⋮) থেকে "Install App" বা "Add to Home screen" নির্বাচন করুন।', { duration: 5000 });
+      }
     }
   };
 

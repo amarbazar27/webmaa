@@ -103,7 +103,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/manifest') ||
     pathname.startsWith('/not-found-domain') ||
     pathname.startsWith('/icons/') ||
-    pathname.startsWith('/__/')
+    pathname.startsWith('/__/') ||
+    pathname.startsWith('/logo.png')
   ) {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
