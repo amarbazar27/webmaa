@@ -96,7 +96,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (
     pathname.startsWith('/shop/') ||
     pathname.startsWith('/_next/') ||
-    pathname.startsWith('/favicon') ||
     pathname.startsWith('/robots') ||
     pathname.startsWith('/sitemap') ||
     pathname.startsWith('/sw.') ||
