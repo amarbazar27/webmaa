@@ -227,12 +227,12 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
           setStatus(isMatch ? 'available' : 'unavailable');
         } catch (err) {
           console.warn('Geolocation reverse geocoding failed:', err);
-          setStatus(shop.showLocationSelector === false ? 'available' : 'unavailable');
+          setStatus('unavailable');
         }
       },
       (err) => {
         console.warn('Geolocation position error:', err);
-        setStatus(shop.showLocationSelector === false ? 'available' : 'unavailable');
+        setStatus('unavailable');
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 }
     );
