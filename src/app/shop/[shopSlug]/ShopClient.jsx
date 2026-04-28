@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import { saveUserData } from '@/lib/firestore';
 import Logo from '@/components/ui/Logo';
+import Image from 'next/image';
 
 const CuteAIIcon = () => (
   <div className="relative w-12 h-12 flex items-center justify-center animate-bounce">
@@ -435,7 +436,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOption, setSortOption] = useState('newest');
+  const [sortOption, setSortOption] = useState('name_asc');
   
   const CART_KEY = `cart_${initialShop.id}`;
   const [cart, setCart] = useState(() => {
@@ -660,9 +661,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   filteredProducts = filteredProducts.sort((a, b) => {
     if (sortOption === 'price_asc') return parseFloat(a.price) - parseFloat(b.price);
     if (sortOption === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
-    if (sortOption === 'name_asc') return a.name.localeCompare(b.name);
-    if (sortOption === 'name_desc') return b.name.localeCompare(a.name);
-    return 0;
+    if (sortOption === 'name_desc') return b.name.localeCompare(a.name, 'bn');
+    if (sortOption === 'newest') return (b.createdAt ? new Date(b.createdAt) : 0) - (a.createdAt ? new Date(a.createdAt) : 0);
+    // Default: name_asc (A→Z)
+    return a.name.localeCompare(b.name, 'bn');
   });
 
   // ── Cart Actions ───────────────────────────────
@@ -1140,14 +1142,21 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-            {filteredProducts.map(product => {
+            {filteredProducts.map((product, index) => {
               const cartItem = cart.find(i => i.id === product.id);
               return (
                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 flex flex-col">
                   {/* Image — clickable to detail page */}
                   <div className="relative h-44 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" onClick={() => router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}`)}>
                     {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <Image 
+                        src={product.imageUrl} 
+                        alt={product.name} 
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        priority={index < 4}
+                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                      />
                     ) : (
                       <div className={`w-full h-full flex items-center justify-center p-4 text-center ${getFallbackColor(product.name)}`}>
                         <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-md leading-tight">{product.name}</h3>

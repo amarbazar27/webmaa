@@ -1,7 +1,7 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthChange, handleUserSession, handleLoginRedirect } from '@/lib/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const AuthContext = createContext({});
@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
     // 1. Process any pending redirect login result
@@ -23,35 +24,67 @@ export function AuthProvider({ children }) {
     });
 
     let unsubUserDoc = null;
+    let unsubStaff = null;
 
     const unsub = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
 
-      // Clean up previous user document listener
-      if (unsubUserDoc) {
-        unsubUserDoc();
-        unsubUserDoc = null;
-      }
+      if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = null; }
+      if (unsubStaff) { unsubStaff(); unsubStaff = null; }
 
       if (firebaseUser) {
         try {
-          // Initial session setup (creates doc if missing, refreshes role)
           const result = await handleUserSession(firebaseUser);
           setUserData(result?.userData || null);
 
-          // TASK 3 FIX: Real-time listener on user document
-          // This ensures role changes (e.g. staff added by retailer) propagate instantly
-          // without requiring logout/login cycle
+          // Listen to own user document
           unsubUserDoc = onSnapshot(doc(db, 'users', firebaseUser.uid), (snap) => {
             if (snap.exists()) {
               setUserData(snap.data());
             }
-          }, (err) => {
-            console.error("[AuthProvider] User doc listener error:", err);
           });
+
+          // Listen to shops to see if they are added/removed as staff
+          const currentEmail = firebaseUser.email?.toLowerCase();
+          if (currentEmail) {
+            const q = query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail));
+            unsubStaff = onSnapshot(q, async (snap) => {
+              if (!snap.empty) {
+                const shopDoc = snap.docs[0];
+                const shopData = shopDoc.data();
+                
+                import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
+                  const userRef = doc(db, 'users', firebaseUser.uid);
+                  const userSnap = await getDoc(userRef);
+                  const data = userSnap.data();
+                  if (data?.role !== 'staff' || data?.accessShopId !== shopDoc.id) {
+                    await updateDoc(userRef, {
+                      role: 'staff',
+                      accessShopId: shopDoc.id,
+                      shopSlug: shopData.shopSlug
+                    });
+                  }
+                }).catch(err => console.error("Auto staff update failed:", err));
+              } else {
+                import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
+                  const userRef = doc(db, 'users', firebaseUser.uid);
+                  const userSnap = await getDoc(userRef);
+                  const data = userSnap.data();
+                  if (data?.role === 'staff') {
+                    await updateDoc(userRef, {
+                      role: 'user',
+                      accessShopId: null,
+                      shopSlug: null
+                    });
+                  }
+                }).catch(err => console.error("Auto staff downgrade failed:", err));
+              }
+            });
+          }
         } catch (err) {
           console.error("AuthContext fetch error:", err);
           setUserData(null);
+          setAuthError(err.message);
         }
       } else {
         setUserData(null);
@@ -62,6 +95,7 @@ export function AuthProvider({ children }) {
     return () => {
       unsub();
       if (unsubUserDoc) unsubUserDoc();
+      if (unsubStaff) unsubStaff();
     };
   }, []);
 

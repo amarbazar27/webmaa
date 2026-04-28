@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 // Deterministic fallback colors
 const FALLBACK_COLORS = ['bg-indigo-600','bg-emerald-600','bg-rose-600','bg-amber-600','bg-cyan-600','bg-fuchsia-600'];
@@ -219,7 +220,13 @@ export default function ProductDetailClient({ shop, product }) {
         {/* Product Image */}
         <div className="relative w-full h-72 rounded-3xl overflow-hidden shadow-xl bg-white border border-slate-200">
           {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+            <Image 
+              src={product.imageUrl} 
+              alt={product.name} 
+              fill
+              priority
+              className="object-cover" 
+            />
           ) : (
             <div className={`w-full h-full flex items-center justify-center ${getFallbackColor(product.name)}`}>
               <h2 className="text-4xl font-black text-white drop-shadow-xl text-center px-4">{product.name}</h2>

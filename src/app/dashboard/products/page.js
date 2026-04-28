@@ -70,7 +70,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('latest');
+  const [sortBy, setSortBy] = useState('name_asc');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [expandedId, setExpandedId] = useState(null);
 
@@ -142,7 +142,10 @@ export default function ProductsPage() {
     if (sortBy === 'price_asc') return (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0);
     if (sortBy === 'price_desc') return (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0);
     if (sortBy === 'oldest') return (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0);
-    return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
+    if (sortBy === 'latest') return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
+    if (sortBy === 'name_desc') return b.name.localeCompare(a.name, 'bn');
+    // Default: name_asc (A→Z)
+    return a.name.localeCompare(b.name, 'bn');
   });
 
   const totalValue = products.reduce((acc, p) => acc + (parseFloat(p.price) || 0) * (parseInt(p.stock) || 0), 0);
@@ -193,10 +196,12 @@ export default function ProductsPage() {
             onChange={e => setSortBy(e.target.value)}
             className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none cursor-pointer min-w-[140px]"
           >
-            <option value="latest">Latest</option>
-            <option value="oldest">Oldest</option>
-            <option value="price_asc">Price Low to High</option>
-            <option value="price_desc">Price High to Low</option>
+            <option value="name_asc">নাম (A→Z)</option>
+            <option value="name_desc">নাম (Z→A)</option>
+            <option value="latest">নতুন আগে</option>
+            <option value="oldest">পুরনো আগে</option>
+            <option value="price_asc">দাম কম থেকে বেশি</option>
+            <option value="price_desc">দাম বেশি থেকে কম</option>
           </select>
 
           <select 
