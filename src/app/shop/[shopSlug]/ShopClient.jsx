@@ -1029,7 +1029,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
             <button onClick={() => setIsCategoryMenuOpen(true)} className="md:hidden w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors shadow-sm">
               <Menu size={20} strokeWidth={2.5} />
             </button>
-            <Logo href={`/shop/${shop.id}`} />
+            <Logo href={`/shop/${shop.id}`} src={shop.logoUrl || '/logo.png'} text={shop.shopName || 'Shop'} />
           </div>
 
           {/* Actions (Left side of the brand) */}

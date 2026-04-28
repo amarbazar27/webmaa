@@ -20,10 +20,21 @@ export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 export async function generateMetadata({ params }) {
   const { shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
+  const logoUrl = shop?.logoUrl || '/logo.png';
   return {
     title: shop?.shopName || 'Webmaa Store',
     description: shop?.slogan || 'Welcome to our store',
-    manifest: `/api/manifest?shop=${shopSlug}`
+    manifest: `/api/manifest?shop=${shopSlug}`,
+    icons: {
+      icon: logoUrl,
+      shortcut: logoUrl,
+      apple: logoUrl,
+    },
+    openGraph: {
+      title: shop?.shopName || 'Webmaa Store',
+      description: shop?.slogan || 'Welcome to our store',
+      images: [{ url: logoUrl, width: 512, height: 512, alt: shop?.shopName || 'Logo' }],
+    }
   };
 }
 
