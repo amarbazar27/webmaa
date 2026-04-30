@@ -1,4 +1,19 @@
-'use client';
+const fs = require('fs');
+
+// Fix 1: Remove login wall from ShopClient.jsx
+let shopClient = fs.readFileSync('src/app/shop/[shopSlug]/ShopClient.jsx', 'utf8');
+
+// Remove the entire !user gate block
+shopClient = shopClient.replace(
+  /\n\n\s+if \(!user\) \{[\s\S]*?return \([\s\S]*?\);\s+\}\r?\n/,
+  '\n'
+);
+
+fs.writeFileSync('src/app/shop/[shopSlug]/ShopClient.jsx', shopClient);
+console.log('✅ Login wall removed from ShopClient!');
+
+// Fix 2: Update LoadingScreen to show product images as highlights
+const newLoadingScreen = `'use client';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
@@ -43,7 +58,7 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
     >
       {/* ── Islamic Geometric Pattern Overlay ── */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15zM0 30l15 15-15 15L-15 45zM60 30l15 15-15 15-15-15zM30 60l15 15-15 15-15-15z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+        backgroundImage: \`url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15zM0 30l15 15-15 15L-15 45zM60 30l15 15-15 15-15-15zM30 60l15 15-15 15-15-15z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")\`,
         backgroundSize: '80px 80px'
       }} />
 
@@ -96,9 +111,9 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
           {dhikr.map((_, i) => (
             <div
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${
+              className={\`h-1.5 rounded-full transition-all duration-500 \${
                 i === textIdx ? 'w-8 bg-purple-500' : 'w-1.5 bg-white/10'
-              }`}
+              }\`}
             />
           ))}
         </div>
@@ -132,7 +147,7 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
               {highlightProducts.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 rounded-full transition-all duration-500 ${i === productIdx ? 'w-4 bg-purple-500' : 'w-1 bg-white/20'}`}
+                  className={\`h-1 rounded-full transition-all duration-500 \${i === productIdx ? 'w-4 bg-purple-500' : 'w-1 bg-white/20'}\`}
                 />
               ))}
             </div>
@@ -140,9 +155,13 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{ __html: \`
         @keyframes spin { to { transform: rotate(360deg); } }
-      `}} />
+      \`}} />
     </div>
   );
 }
+`;
+
+fs.writeFileSync('src/components/ui/LoadingScreen.jsx', newLoadingScreen);
+console.log('✅ LoadingScreen updated with product image highlights!');
