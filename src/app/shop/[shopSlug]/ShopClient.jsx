@@ -672,12 +672,25 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         body: JSON.stringify({
           shopId: shop.id,
           messages: [
-            { role: 'system', content: `তুমি "${shop.shopName}"-এর এআই সাহায্যকারী। "আসসালামু আলাইকুম" দিয়ে শুরু করবে। 
-সার্ভিস এরিয়া (যেখানে আমরা ডেলিভারি দেই): ${(shop.serviceAreas || []).join(', ')}। 
-ইউজারের বর্তমান লোকেশন: ${detectedLocation || locationManualInput || 'জানা যায়নি'}। 
-যদি ইউজার তার এলাকায় ডেলিভারি হবে কি না জিজ্ঞেস করে, উপরের সার্ভিস এরিয়ার সাথে মিলিয়ে সঠিক উত্তর দিবে।
-সবসময় বাংলায় কথা বলবে।
-প্রোডাক্টের তালিকা: ${products.slice(0,25).map(p=>`${p.name}: ৳${p.price}`).join(', ')}` },
+            { role: 'system', content: `তুমি "${shop.shopName}"-এর স্মার্ট এআই সহকারী।
+
+🛍️ তোমার কাজ:
+- পণ্য খুঁজে দেওয়া, দাম জানানো, অর্ডার সহায়তা করা
+
+📦 প্রোডাক্ট লিস্ট (নাম: দাম):
+${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
+
+🚚 সার্ভিস এরিয়া: ${(shop.serviceAreas || []).join(', ')}
+📍 ইউজারের লোকেশন: ${detectedLocation || locationManualInput || 'অজানা'}
+
+⚠️ গুরুত্বপূর্ণ নিয়ম:
+1. "তাকা", "টাকা", "tk", "taka", "৳" এগুলো দিয়ে সবসময় মূল্য (price) বোঝায়, পরিমাণ (quantity/gram) নয়।
+   উদাহরণ: "১৫০ টাকার চাল" মানে যে চালের দাম ১৫০ টাকা — ১৫০ গ্রাম চাল নয়।
+2. যদি কেউ বলে "১৫০ টাকার X দাও" বা "150 taka er X", তাহলে ওই দামের বা কাছাকাছি দামের X পণ্যটি খুঁজে দাও।
+3. যদি ঠিক সেই দামের পণ্য না থাকে, সবচেয়ে কাছের দামের পণ্য suggest করো।
+4. "কত কেজি/গ্রাম" না বলা পর্যন্ত পরিমাণ ধরো না।
+5. সবসময় বাংলায় উত্তর দাও।
+6. উত্তর সংক্ষিপ্ত ও সহায়ক রাখো।` },
             { role: 'user', content: text }
           ]
         })
@@ -946,23 +959,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   };
 
   if (authLoading) return <LoadingScreen text="Preparing Storefront" shop={shop} products={products} />;
-
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center">
-        <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 mb-8 scale-110">
-          <CuteAIIcon />
-        </div>
-        <h1 className="text-3xl font-black text-slate-900 mb-4">স্বাগতম {shop.shopName}-এ!</h1>
-        <p className="text-slate-500 font-bold mb-8 max-w-sm">দয়া করে কেনাকাটা শুরু করার আগে আপনার গুগল অ্যাকাউন্ট দিয়ে লগইন করুন।</p>
-        <button onClick={() => loginWithGoogle()} className="w-full max-w-xs py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
-          গুগল দিয়ে লগইন
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
