@@ -457,9 +457,31 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         }
       });
     }
-  }, [isOnline]);
+    }, [isOnline]);
 
-  
+  const CART_KEY = `cart_${initialShop.id}`;
+  const [cart, setCart] = useState([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const local = localStorage.getItem(CART_KEY);
+      if (local) {
+        setCart(JSON.parse(local));
+      } else {
+        loadCartIDB(initialShop.id).then(items => {
+          if (items && items.length > 0) setCart(items);
+        });
+      }
+    }
+  }, [CART_KEY, initialShop.id]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && cart.length > 0) {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+      saveCartIDB(initialShop.id, cart);
+    }
+  }, [cart, CART_KEY, initialShop.id]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
