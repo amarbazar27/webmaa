@@ -187,6 +187,7 @@ export default function NewProductPage() {
                 <Tag size={12} /> Category
               </label>
               {categories.length > 0 && !showCustomCat ? (
+                <>
                 <div className="relative">
                   <select
                     required
@@ -217,7 +218,7 @@ export default function NewProductPage() {
                     <ChevronDown size={16} className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
                   </div>
                 )}
-              </div>
+              </>
               ) : (
                 <div className="space-y-2">
                   <input 
