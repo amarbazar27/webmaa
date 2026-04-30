@@ -1007,15 +1007,40 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-            {categories.map(c => (
-              <button 
-                key={c.id} 
-                onClick={() => { setActiveCategory(c.name); setIsCategoryMenuOpen(false); }} 
-                className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === c.name ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
-              >
-                {c.name}
-              </button>
-            ))}
+            <button
+              onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); setIsCategoryMenuOpen(false); }}
+              className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === 'All' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
+            >সব ক্যাটাগরি</button>
+            {categories.map(c => {
+              const hasSubs = c.subcategories && c.subcategories.length > 0;
+              const isActive = activeCategory === c.name;
+              return (
+                <div key={c.id} className="space-y-1">
+                  <button
+                    onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); if (!hasSubs) setIsCategoryMenuOpen(false); }}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all ${isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
+                  >
+                    <span>{c.name}</span>
+                    {hasSubs && <span className={`text-xs ${isActive ? 'text-white/70' : 'text-slate-400'}`}>{isActive ? '▲' : '▼'}</span>}
+                  </button>
+                  {isActive && hasSubs && (
+                    <div className="pl-4 space-y-1 border-l-2 border-purple-200 ml-4">
+                      <button
+                        onClick={() => setActiveSubcategory('')}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeSubcategory === '' ? 'bg-purple-100 text-purple-700 font-black' : 'text-slate-500 hover:bg-slate-100'}`}
+                      >সব</button>
+                      {c.subcategories.map((sub, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { setActiveSubcategory(sub); setIsCategoryMenuOpen(false); }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeSubcategory === sub ? 'bg-purple-100 text-purple-700 font-black' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
+                        >{sub}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -1175,14 +1200,61 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
           <div className="w-[1px] h-8 bg-slate-200 shrink-0 mx-1 hidden md:block" />
 
           {/* Hidden on mobile, visible on md+ */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide">
+            <button
+              onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
+              className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === 'All' ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}
+            >সব</button>
             {categories.map(c => (
-              <button key={c.id} onClick={() => setActiveCategory(c.name)} className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}>
+              <button key={c.id} onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }} className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}>
                 {c.name}
               </button>
             ))}
           </div>
         </div>
+
+        {/* ── Desktop Subcategory Strip ── */}
+        {activeCategory !== 'All' && (() => {
+          const activeCat = categories.find(c => c.name === activeCategory);
+          if (!activeCat?.subcategories?.length) return null;
+          return (
+            <div className="hidden md:flex flex-wrap gap-2 -mt-2 animate-slide-in">
+              <button
+                onClick={() => setActiveSubcategory('')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+              >সব</button>
+              {activeCat.subcategories.map((sub, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveSubcategory(sub)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === sub ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-purple-700'}`}
+                >{sub}</button>
+              ))}
+            </div>
+          );
+        })()}
+
+
+        {/* ── Mobile Subcategory Strip ── */}
+        {activeCategory !== 'All' && (() => {
+          const activeCat = categories.find(c => c.name === activeCategory);
+          if (!activeCat?.subcategories?.length) return null;
+          return (
+            <div className="md:hidden flex flex-wrap gap-2 -mt-2 animate-slide-in">
+              <button
+                onClick={() => setActiveSubcategory('')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200'}`}
+              >সব</button>
+              {activeCat.subcategories.map((sub, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveSubcategory(sub)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === sub ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-purple-700'}`}
+                >{sub}</button>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* ── Product Grid ── */}
         {filteredProducts.length === 0 ? (
@@ -1715,9 +1787,18 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
                                 <p className="text-sm font-bold text-amber-900">{order.returnNote}</p>
                               </div>
                             )}
-                            <button onClick={() => window.open(`/shop/${shop.shopSlug || shop.subdomainSlug}/invoice/${order.id}`, '_blank')} className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-black text-xs flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-md">
-                              <Download size={14} strokeWidth={2.5}/> ইনভয়েস ডাউনলোড (PDF)
+                            <button 
+                              onClick={() => generatePDF({...order, shopName: shop.shopName, date: order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : ''})} 
+                              disabled={isGeneratingPdf} 
+                              className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-black text-xs flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-md disabled:opacity-50 relative overflow-hidden"
+                            >
+                              {isGeneratingPdf && <div className="absolute left-0 top-0 bottom-0 bg-purple-500/50 transition-all duration-300" style={{ width: `${pdfProgress}%` }} />}
+                              <span className="relative z-10 flex items-center gap-2">
+                                {isGeneratingPdf ? <><Loader2 size={14} className="animate-spin" /> {pdfProgress}%</> : <><Download size={14} strokeWidth={2.5}/> ইনভয়েস ডাউনলোড (PDF)</>}
+                              </span>
                             </button>
+
+
                           </div>
                         )}
                       </div>
