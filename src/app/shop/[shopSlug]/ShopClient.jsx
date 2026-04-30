@@ -431,6 +431,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
   const [shop] = useState(initialShop);
+  const [products] = useState(initialProducts || []);
+  const [categories] = useState(initialCategories || []);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOption, setSortOption] = useState('name_asc');
   const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
