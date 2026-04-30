@@ -23,7 +23,8 @@ const CheckoutSchema = z.object({
     note: z.string().max(200).optional(),
     variantsText: z.string().max(200).optional(),
     clientPrice: z.number().positive().optional()
-  })).min(1)
+  })).min(1),
+  customerId: z.string().min(1)
 });
 
 // ── Simple Rate Limit (in-memory, basic protection) ─────
@@ -60,6 +61,19 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
+    // 🚨 Auth Check
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (err) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+    }
+
     const body = await req.json();
 
     // ── Input Validation ────────────────────────────────
@@ -79,8 +93,14 @@ export async function POST(req) {
       paymentNumber,
       honeypot,
       localId,
-      items
+      items,
+      customerId
     } = parsed.data;
+
+    // 🛑 Verify user ID matches token
+    if (customerId !== decodedToken.uid) {
+      return NextResponse.json({ error: 'Unauthorized: User ID mismatch' }, { status: 403 });
+    }
 
     // 🛑 Idempotency Check: Prevent duplicate processing if localId exists
     if (localId) {
@@ -264,6 +284,7 @@ export async function POST(req) {
       freeDelivery,
       status: 'pending',
       localId: localId || null,
+      customerId: customerId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 

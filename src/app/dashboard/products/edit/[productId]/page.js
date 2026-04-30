@@ -25,6 +25,7 @@ export default function EditProductPage({ params }) {
   const [form, setForm] = useState({
     name: '',
     category: '',
+    subcategory: '',
     price: '',
     stock: '',
     description: '',
@@ -47,6 +48,7 @@ export default function EditProductPage({ params }) {
           setForm({
             name: product.name || '',
             category: product.category || '',
+            subcategory: product.subcategory || '',
             price: product.price?.toString() || '',
             stock: product.stock?.toString() || '',
             description: product.description || '',
@@ -96,10 +98,10 @@ export default function EditProductPage({ params }) {
   const handleCategorySelect = (catName) => {
     if (catName === '__custom__') {
       setShowCustomCat(true);
-      setForm({...form, category: ''});
+      setForm({...form, category: '', subcategory: ''});
     } else {
       setShowCustomCat(false);
-      setForm({...form, category: catName});
+      setForm({...form, category: catName, subcategory: ''});
     }
   };
 
@@ -246,6 +248,22 @@ export default function EditProductPage({ params }) {
                   </select>
                   <ChevronDown size={16} className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
                 </div>
+                {form.category && categories.find(c => c.name === form.category)?.subcategories?.length > 0 && (
+                  <div className="relative mt-2">
+                    <select
+                      className="input-field w-full px-4 py-3.5 rounded-xl text-slate-900 font-medium appearance-none cursor-pointer border-t-2 border-purple-100"
+                      value={form.subcategory}
+                      onChange={(e) => setForm({...form, subcategory: e.target.value})}
+                    >
+                      <option value="">Select Subcategory (Optional)</option>
+                      {categories.find(c => c.name === form.category).subcategories.map((sub, i) => (
+                        <option key={i} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-4 text-slate-400 pointer-events-none" />
+                  </div>
+                )}
+              </div>
               ) : (
                 <div className="space-y-2">
                   <input 

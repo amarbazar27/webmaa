@@ -31,6 +31,7 @@ export default function OrdersPage() {
   // Security Auth Modal State
   const [authModal, setAuthModal] = useState({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
   const [downloadingPdf, setDownloadingPdf] = useState(null);
+  const [pdfProgress, setPdfProgress] = useState(0);
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -128,10 +129,12 @@ export default function OrdersPage() {
   const generateAdminPDF = async (order) => {
     if (downloadingPdf === order.id) return;
     setDownloadingPdf(order.id);
-    const toastId = toast.loading('আপনার PDF তৈরি হচ্ছে...');
+    setPdfProgress(10);
+    const toastId = toast.loading('আপনার PDF তৈরি হচ্ছে... (10%)');
     
     try {
       const { default: html2canvas } = await import('html2canvas');
+      setPdfProgress(30);
       const { default: jsPDF } = await import('jspdf');
       
       const el = document.createElement('div');
@@ -185,6 +188,7 @@ export default function OrdersPage() {
       `;
       document.body.appendChild(el);
       
+      setPdfProgress(50);
       toast.loading('PDF রেন্ডার হচ্ছে... (50%)', { id: toastId });
       const canvas = await html2canvas(el, { scale: 2, useCORS: true });
       document.body.removeChild(el);
@@ -197,6 +201,7 @@ export default function OrdersPage() {
       let heightLeft = pdfHeight;
       let position = 0;
       
+      setPdfProgress(90);
       toast.loading('PDF সেভ হচ্ছে... (90%)', { id: toastId });
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
       heightLeft -= pageHeight;
@@ -209,12 +214,16 @@ export default function OrdersPage() {
       }
       
       pdf.save(`Invoice_${order.orderNumber || order.orderIdVisual || order.id.slice(-6)}.pdf`);
+      setPdfProgress(100);
       toast.success('PDF সফলভাবে ডাউনলোড হয়েছে! 📄', { id: toastId });
     } catch (err) {
       toast.error('PDF ডাউনলোড ব্যর্থ হয়েছে!', { id: toastId });
       console.error(err);
     } finally {
-      setDownloadingPdf(null);
+      setTimeout(() => {
+        setDownloadingPdf(null);
+        setPdfProgress(0);
+      }, 500);
     }
   };
 
@@ -391,9 +400,12 @@ export default function OrdersPage() {
                                <button 
                                  onClick={() => generateAdminPDF(order)} 
                                  disabled={downloadingPdf === order.id}
-                                 className="mt-3 flex items-center justify-center gap-2 w-full py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-bold hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors shadow-sm disabled:opacity-50"
+                                 className="mt-3 flex items-center justify-center gap-2 w-full py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-bold hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors shadow-sm disabled:opacity-50 relative overflow-hidden"
                                >
-                                 {downloadingPdf === order.id ? <><div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-700 rounded-full animate-spin"></div> তৈরি হচ্ছে...</> : <><Download size={14} strokeWidth={2.5}/> PDF ডাউনলোড</>}
+                                 {downloadingPdf === order.id && <div className="absolute left-0 top-0 bottom-0 bg-purple-500/20 transition-all duration-300" style={{ width: `${pdfProgress}%` }} />}
+                                 <span className="relative z-10 flex items-center gap-2">
+                                   {downloadingPdf === order.id ? <><div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-slate-700 rounded-full animate-spin"></div> {pdfProgress}%</> : <><Download size={14} strokeWidth={2.5}/> PDF ডাউনলোড</>}
+                                 </span>
                                </button>
                             </div>
                          </div>

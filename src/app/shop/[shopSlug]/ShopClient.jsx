@@ -434,6 +434,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [products] = useState(initialProducts || []);
   const [categories] = useState(initialCategories || []);
   const [activeCategory, setActiveCategory] = useState('All');
+  const [activeSubcategory, setActiveSubcategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('name_asc');
   const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
@@ -484,8 +485,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     if (typeof window !== 'undefined' && cart.length > 0) {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
       saveCartIDB(initialShop.id, cart);
+      if (user?.uid) {
+        import('@/lib/firestore').then(lib => lib.saveUserCart(user.uid, shop.id, cart));
+      }
     }
-  }, [cart, CART_KEY, initialShop.id]);
+  }, [cart, CART_KEY, initialShop.id, user]);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
@@ -508,6 +512,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [expandedOrder, setExpandedOrder] = useState(null);
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '' });
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Autofill from userData
   useEffect(() => {
@@ -798,6 +804,12 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
       return;
     }
     if (cart.length === 0) return;
+    if (!user) {
+      toast.error('অর্ডার করতে অনুগ্রহ করে লগইন করুন।');
+      setIsOrderOpen(false);
+      setIsProfileOpen(true);
+      return;
+    }
     if (!validatePhone(orderForm.phone)) {
       setPhoneError('বৈধ বাংলাদেশি নম্বর লিখুন।');
       return;
@@ -825,7 +837,9 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
         note: i.note || '',
         variantsText: i.variantsText || '',
         clientPrice: i.customizedPrice || undefined
-      }))
+      })),
+      customerId: user.uid,
+      customerId: user.uid
     };
 
     const onSuccess = async (payloadResp) => {
@@ -850,9 +864,13 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
     };
 
     const sendOrder = async (payload) => {
+      const token = await user.getIdToken();
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
       const resp = await res.json();
@@ -891,7 +909,12 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
   };
 
     const generatePDF = async (orderData) => {
-    const { default: html2canvas } = await import('html2canvas');
+    if (isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+    setPdfProgress(10);
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      setPdfProgress(30);
     const { default: jsPDF } = await import('jspdf');
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;left:-9999px;top:0;width:500px;padding:30px;background:white;font-family:Arial,sans-serif;color:black;';
@@ -956,6 +979,16 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
     pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(`Order_${orderData.orderIdVisual}.pdf`);
+      setPdfProgress(100);
+      toast.success('PDF সফলভাবে ডাউনলোড হয়েছে!');
+    } catch(err) {
+      toast.error('PDF তৈরি করতে সমস্যা হয়েছে।');
+    } finally {
+      setTimeout(() => {
+        setIsGeneratingPdf(false);
+        setPdfProgress(0);
+      }, 500);
+    }
   };
 
   if (authLoading) return <LoadingScreen text="Preparing Storefront" shop={shop} products={products} />;

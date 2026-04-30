@@ -144,6 +144,15 @@ export const placeOrder = async (shopId, orderData) => {
   });
 };
 
+export const saveUserCart = async (uid, shopId, cartData) => {
+  return setDoc(doc(db, 'users', uid, 'carts', shopId), { items: cartData, updatedAt: serverTimestamp() }, { merge: true });
+};
+
+export const getUserCart = async (uid, shopId) => {
+  const snap = await getDoc(doc(db, 'users', uid, 'carts', shopId));
+  return snap.exists() ? (snap.data().items || []) : [];
+};
+
 export const saveUserData = async (uid, data) => {
   return setDoc(doc(db, 'users', uid), data, { merge: true });
 };

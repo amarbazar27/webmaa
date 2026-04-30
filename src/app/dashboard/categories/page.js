@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getCategories, addCategory, deleteCategory } from '@/lib/firestore';
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Tag, Plus, Trash2, Search, Loader2, LayoutGrid } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
@@ -13,6 +15,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [newCat, setNewCat] = useState('');
+  const [newSubcat, setNewSubcat] = useState({});
 
   const fetchCategories = async () => {
     if (!activeShopId) return;
@@ -53,6 +56,35 @@ export default function CategoriesPage() {
       }
     } finally {
       setAdding(false);
+    }
+  };
+
+
+  const handleAddSubcat = async (e, catId, existingSubcats = []) => {
+    e.preventDefault();
+    const sub = newSubcat[catId]?.trim();
+    if (!sub) return;
+    try {
+      const catRef = doc(db, 'shops', activeShopId, 'categories', catId);
+      const updatedSubcats = [...(existingSubcats || []), sub];
+      await updateDoc(catRef, { subcategories: updatedSubcats });
+      toast.success('সাবক্যাটাগরি যুক্ত হয়েছে!');
+      setNewSubcat({...newSubcat, [catId]: ''});
+      fetchCategories();
+    } catch (err) {
+      toast.error('ব্যর্থ হয়েছে!');
+    }
+  };
+
+  const handleRemoveSubcat = async (catId, subToRemove, existingSubcats = []) => {
+    try {
+      const catRef = doc(db, 'shops', activeShopId, 'categories', catId);
+      const updatedSubcats = existingSubcats.filter(s => s !== subToRemove);
+      await updateDoc(catRef, { subcategories: updatedSubcats });
+      toast.success('রিমুভ করা হয়েছে!');
+      fetchCategories();
+    } catch (err) {
+      toast.error('ব্যর্থ হয়েছে!');
     }
   };
 
@@ -119,22 +151,39 @@ export default function CategoriesPage() {
             ) : (
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {categories.map((cat) => (
-                    <div key={cat.id} className="bg-white p-5 flex items-center justify-between group rounded-2xl border border-slate-100 shadow-sm hover:border-purple-200 hover:shadow-lg hover:shadow-purple-500/5 transition-all">
-                       <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-500 font-black text-xs border border-slate-100 group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300 shadow-sm">
-                             {cat.name[0]?.toUpperCase()}
-                          </div>
-                          <div>
-                             <p className="font-bold text-slate-900 tracking-tight text-sm uppercase">{cat.name}</p>
-                             <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Asset Group</p>
-                          </div>
+                    <div key={cat.id} className="bg-white p-5 flex flex-col group rounded-2xl border border-slate-100 shadow-sm hover:border-purple-200 hover:shadow-lg transition-all">
+                       <div className="flex items-center justify-between w-full">
+                         <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-500 font-black text-xs border border-slate-100 group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300 shadow-sm">
+                               {cat.name[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                               <p className="font-bold text-slate-900 tracking-tight text-sm uppercase">{cat.name}</p>
+                               <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-0.5">Asset Group</p>
+                            </div>
+                         </div>
+                         <Button 
+                           variant="ghost" 
+                           icon={Trash2} 
+                           onClick={() => handleDelete(cat.id)}
+                           className="px-3 py-3 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all scale-90"
+                         />
                        </div>
-                       <Button 
-                         variant="ghost" 
-                         icon={Trash2} 
-                         onClick={() => handleDelete(cat.id)}
-                         className="opacity-0 group-hover:opacity-100 px-3 py-3 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all scale-90"
-                       />
+                       
+                       <div className="mt-4 pt-4 border-t border-slate-100 w-full space-y-3">
+                         <div className="flex flex-wrap gap-2">
+                           {(cat.subcategories || []).map((sub, i) => (
+                             <span key={i} className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 px-2 py-1 rounded-lg text-[10px] font-bold">
+                               {sub}
+                               <button onClick={() => handleRemoveSubcat(cat.id, sub, cat.subcategories)} className="hover:text-red-500 font-black">&times;</button>
+                             </span>
+                           ))}
+                         </div>
+                         <form onSubmit={(e) => handleAddSubcat(e, cat.id, cat.subcategories)} className="flex items-center gap-2">
+                           <input type="text" placeholder="Add Subcategory..." className="flex-1 text-[11px] font-bold p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-purple-500" value={newSubcat[cat.id] || ''} onChange={e => setNewSubcat({...newSubcat, [cat.id]: e.target.value})} />
+                           <button type="submit" className="bg-slate-900 text-white w-8 h-8 rounded-lg flex items-center justify-center hover:bg-purple-600"><Plus size={14}/></button>
+                         </form>
+                       </div>
                     </div>
                   ))}
                </div>
