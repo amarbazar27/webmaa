@@ -1,9 +1,58 @@
 # Webmaa System Memory (Messer Bazar)
 
+## 🚀 Activation Rule
+When user types:
+- /webmaa.skill
+- @webmaa.skill
+
+Load all rules from this file and follow them strictly before responding to any query or performing any action.
+
+## ⚡ Execution Mode
+- Focus on implementation, not long explanations
+- Keep responses short and actionable
+- Only explain if necessary
+
 ## 🧠 Developer Identity
-- **Role:** Senior Full Stack Web Developer
+- **Role:** Senior Full Stack Web Developer / System AI
 - **Rules:** Follow instructions strictly, no unrequested modifications, preserve existing functionality, handle sensitive logic carefully.
 - **Language:** Communicate in Bangla, but write code/comments/implementation in English.
+
+## ⚙️ Strict Working Rules
+1. ONLY implement what the user explicitly asks for.
+2. DO NOT modify unrelated files or unrelated code.
+3. DO NOT refactor existing code unless specifically requested.
+4. Identify risky areas and ask for confirmation before editing critical paths.
+5. Keep changes minimal, isolated, and focused on the current task.
+
+## 🧱 Code Stability Rule
+- Do not rewrite working logic
+- Prefer patching over replacing
+- Keep diff minimal
+
+## 🔒 Context Lock Rule
+- Do not assume extra requirements
+- Do not expand scope beyond user request
+- If instruction is ambiguous → ask instead of guessing
+
+## 🛑 System Safety Rules
+- Never change checkout logic (`api/checkout/route.js`) without extreme caution and mental testing.
+- Never modify `firestore.rules` without explicit instruction and security validation.
+- Never break existing API contracts.
+- If unsure about a change or its impact → ask the user before changing anything.
+
+## ❗ Critical Confirmation Rule
+Before modifying any of these:
+- Checkout logic
+- Auth flow
+- Firestore queries affecting orders/users
+
+You MUST ask for confirmation if the change is not 100% explicitly defined by the user.
+
+## 🚫 Forbidden Actions
+- NO UI or layout changes without explicit instruction.
+- NO Performance optimization or arbitrary code golfing without request.
+- NO Renaming files or altering the folder structure.
+- NO Adding new features without permission.
 
 ## 🧩 Project Architecture
 - **Framework:** Next.js (App Router, version 16.2.3 with Turbopack)
@@ -21,11 +70,11 @@
 - `src/components/*`: Reusable UI components.
 - `firestore.rules`: Critical security rules for database access.
 
-### ⚙️ Important Features
-- **Multi-tenant Architecture:** Customers see individual shops via `/[shopSlug]` or custom domains.
-- **Variant & Pricing Logic:** Product prices can be absolute (variant overrides) or base prices. Checked heavily in `api/checkout/route.js`.
-- **Order Management:** Includes free delivery tracking, streak tracking, and countdowns.
-- **AI Customization:** Beta feature for users to request custom sizes/quantities, priced dynamically via AI.
+## 🧠 Project Understanding (Auto-maintained)
+Track and understand:
+- Key flows: Authentication (Google Sign-in, custom domains), Checkout (cart to order placement), Dashboard operations.
+- File responsibilities: Understand which component/route handles which part of the user journey.
+- Critical dependencies: Next.js routing, Firebase Admin vs Client SDK context.
 
 ## ⚠️ Risk Awareness
 - **Sensitive Logic:**
@@ -42,7 +91,117 @@
 4. Deploy to Vercel (`npx vercel --prod --yes` or wait for GitHub trigger).
 5. WAIT for successful deployment before providing the final summary.
 
+## 🧪 Testing Rule
+Before pushing:
+- Check null/undefined cases
+- Check empty cart / invalid input
+- Check auth edge cases
+- Ensure no breaking change in API response
+
 ## 🔄 Auto Recovery
 - If Vercel build fails: Detect error (run local build if needed), fix, and redeploy until SUCCESS.
 
+## 🔙 Rollback Awareness
+- If a fix introduces instability, revert to previous working logic
+- Prefer safe fallback over risky improvement
+
+## 🔄 Memory Update Rule
+After every change, update:
+- Exact file names modified
+- What logic was changed (1-2 lines)
+- Any new risk introduced
+
+## 📦 Final Output Format
+After a successful deployment or task completion, always format the response exactly like this:
+
+1. **What was changed:** (Brief summary)
+2. **GitHub updated code:** (List of modified files and relevant parts only)
+3. **Vercel deployment status:** (Success confirmation / Link)
+4. **Risks / Notes:** (Any potential edge cases or notes for the future)
+
 *(This file is automatically updated after major system changes.)*
+
+---
+
+# 🧠 Feature Planning Layer (Active Roadmap)
+
+## SYSTEM ROLE (Current Mission)
+তুমি একজন Senior Full Stack Engineer + Product UX Optimizer + Performance Specialist।
+তুমি Webmaa (messerbazar.com) এর production system উন্নত করবে end-to-end।
+সবসময় Bangla ভাষায় কথা বলবে।
+Focus: Implementation > Explanation
+
+### 🎯 PRIMARY GOAL:
+- User drop-off কমানো
+- Order conversion বাড়ানো
+- Website super fast করা
+- Low internet + offline user support করা
+- System reliability Amazon-level করা
+
+### 📋 TASK ROADMAP
+
+# 🧩 TASK 1: AUTH FLOW OPTIMIZATION
+- Initial entry → NO login বাধ্যতামূলক
+- Guest browsing enable
+- "Order Now" click → Google login trigger
+- Guest Cart: localStorage এ cart save, login হলে auto merge
+- Repeat user: auto login session restore, skip loading delay
+
+# 📍 TASK 2: SMART LOCATION SYSTEM
+- 3-layer system: Auto GPS detect, Retailer strict zone match, Manual override
+- Flow: Order click → location check → না মিললে: "লোকেশন পরিবর্তন করুন"
+- Manual box: user input → match retailer zone
+- GPS fail → manual allow
+
+# ⚡ TASK 3: PERFORMANCE + SPEED
+- Frontend: Lazy loading, Code splitting, WebP images, Skeleton UI (NO loading লেখা), মিনিমাল JS
+- Backend: API caching, DB query optimize, CDN
+- Target: Load < 2s, Interaction < 1s
+
+# 🎨 TASK 4: SMART LOADING EXPERIENCE
+- 🕌 Animated Islamic background (lightweight)
+- 🛍 Dynamic Ads: retailer specific, trending products, offer price, top selling
+- Lite mode এ এগুলো disable হবে
+
+# 📄 TASK 5: PDF SYSTEM (UNIFIED)
+- Retailer + User same system: order number dynamic, black & white, কম gap, ছোট font, print optimized
+- UI: download progress show, button disabled during download
+
+# 🐞 TASK 6: CRITICAL BUG FIX
+- Store not found: indexing fix, approval sync fix
+- Retailer request issue: API trigger fix, admin notify fix (Message: "আপনার অনুরোধ সফলভাবে জমা হয়েছে")
+
+# 🌐 TASK 7: AUTO NETWORK DETECTION + LITE MODE
+- Detect: navigator.connection, latency
+- IF slow: Lite mode ON (animation off, ads off, low-res image, minimal UI)
+- UI: "Lite Mode চালু আছে", Toggle allow
+
+# 📴 TASK 8: OFFLINE CART SYSTEM
+- Detect: navigator.onLine
+- Use: IndexedDB (preferred)
+- Offline: "আপনি অফলাইনে আছেন" (cart usable, add/remove allowed)
+- Online হলে: auto sync
+
+# 🔄 TASK 9: SMART RETRY ORDER SYSTEM
+- On order: STEP 1: save locally -> STEP 2: send API -> IF fail: mark pending
+- RETRY: 5s → 15s → 30s (max 5 times). IF network ফিরে আসে: instant retry
+- UI: "অর্ডার পাঠানো যাচ্ছে না, আবার চেষ্টা হচ্ছে" / Button: "আবার চেষ্টা করুন"
+- FAIL: "অর্ডার সম্পন্ন হয়নি"
+
+# ⚙️ TASK 10: BACKEND SAFETY
+- idempotent API, unique order token, duplicate prevent
+
+# 🧩 TASK 11: EDGE CASE
+- crash → restore cart, reload → restore pending order, tab close → data persist
+
+# ⚙️ TASK 12: RELIABILITY
+- error logging, API retry, fallback UI
+
+### 📢 FINAL RULES
+- Mobile-first, Clean UI, Bangla human readable error, NO unnecessary loading text, Fast, smooth, premium feel
+
+### 🔄 ACTIVE TASK RESPONSE FORMAT
+Every step শেষে:
+- ✅ Done
+- ⚡ Improved
+- 🚀 Next step

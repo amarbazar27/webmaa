@@ -16,6 +16,9 @@ import toast from 'react-hot-toast';
 import { saveUserData } from '@/lib/firestore';
 import Logo from '@/components/ui/Logo';
 import Image from 'next/image';
+import { useNetworkStatus } from '@/lib/useNetworkStatus';
+import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
+
 
 const CuteAIIcon = () => (
   <div className="relative w-12 h-12 flex items-center justify-center animate-bounce">
@@ -428,21 +431,35 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
   const [shop] = useState(initialShop);
+  const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+
+  useEffect(() => {
+    if (isOnline) {
+      getPendingOrders().then(orders => {
+        if (orders && orders.length > 0) {
+          toast('ইন্টারনেট সংযোগ ফিরে এসেছে! আপনার পেন্ডিং অর্ডারটি এখন পাঠানো হচ্ছে...', { icon: '🚀', duration: 4000 });
+          setPendingOrdersCount(orders.length);
+          orders.forEach(async (order) => {
+            try {
+              const res = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(order)
+              });
+              if (res.ok) {
+                await removePendingOrder(order.localId);
+                setPendingOrdersCount(prev => Math.max(0, prev - 1));
+                toast.success('অফলাইন অর্ডার সফলভাবে সম্পন্ন হয়েছে! 🎉');
+              }
+            } catch (e) {}
+          });
+        }
+      });
+    }
+  }, [isOnline]);
+
   
-
-
-  const [products] = useState(initialProducts);
-  const [categories] = useState([{ id: 'all', name: 'সব' }, ...initialCategories]);
-
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortOption, setSortOption] = useState('name_asc');
-  
-  const CART_KEY = `cart_${initialShop.id}`;
-  const [cart, setCart] = useState(() => {
-    if (typeof window === 'undefined') return [];
-    try { return JSON.parse(localStorage.getItem(`cart_${initialShop.id}`) || '[]'); } catch { return []; }
-  });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -734,8 +751,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     else setPhoneError('');
   };
 
-  // ── Place Order ────────────────────────────────
-  const handlePlaceOrder = async (e) => {
+    const handlePlaceOrder = async (e) => {
     e.preventDefault();
     if (shop.isStrictLocation && locationStatus !== 'available') {
       toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই।');
@@ -746,155 +762,148 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       setPhoneError('বৈধ বাংলাদেশি নম্বর লিখুন।');
       return;
     }
-    if (orderForm.paymentNumber && orderForm.txnId) {
-      // Basic validation: Payment number must match transaction source (simulated check)
-      // The user requested: IF payment_number != transaction_source_number -> BLOCK
-      // Since we don't have an external API to verify transaction_source_number, 
-      // we assume they mean it must match a certain criteria or it's a manual check.
-      // However, the prompt says "Show warning: Payment number and Transaction ID do not match."
-      // If we don't have the REAL source, we might have to skip the strict check OR assume it's compared to something else.
-      // Wait, "IF payment_number != transaction_source_number" ... maybe they meant it must match the customer phone?
-      // "Order cannot be confirmed."
-      // I will implement the check and if they are different, show warning.
-    }
 
     setPlacing(true);
-    try {
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2,'0');
-      const mm = String(now.getMonth()+1).padStart(2,'0');
-      const yyyy = now.getFullYear();
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2,'0');
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const yyyy = now.getFullYear();
 
-      const reqPayload = {
-        shopId: shop.id,
-        customerName: orderForm.name,
-        customerPhone: orderForm.phone,
-        customerEmail: user?.email || '',
-        customerAddress: orderForm.address,
-        customerNote: orderForm.note,
-        transactionId: orderForm.txnId,
-        paymentNumber: orderForm.paymentNumber,
-        items: cart.map(i => ({ 
-          id: i.productId || i.id, 
-          quantity: i.quantity, 
-          note: i.note || '',
-          variantsText: i.variantsText || '',
-          clientPrice: i.customizedPrice || undefined
-        }))
-      };
+    const reqPayload = {
+      localId: `local_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      shopId: shop.id,
+      customerName: orderForm.name,
+      customerPhone: orderForm.phone,
+      customerEmail: user?.email || '',
+      customerAddress: orderForm.address,
+      customerNote: orderForm.note,
+      transactionId: orderForm.txnId,
+      paymentNumber: orderForm.paymentNumber,
+      items: cart.map(i => ({ 
+        id: i.productId || i.id, 
+        quantity: i.quantity, 
+        note: i.note || '',
+        variantsText: i.variantsText || '',
+        clientPrice: i.customizedPrice || undefined
+      }))
+    };
 
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reqPayload)
-      });
-      
-      const payloadResp = await res.json();
-      if (!res.ok) {
-        throw new Error(payloadResp.error || 'Server error');
-      }
-
-      // Save user data for next time
-      if (user?.uid) {
-        await saveUserData(user.uid, {
-          name: orderForm.name,
-          phone: orderForm.phone,
-          address: orderForm.address,
-          paymentNumber: orderForm.paymentNumber
-        });
-      }
-
-      const orderId = payloadResp.orderId;
-      const finalTotal = payloadResp.total;
-      const orderIdVisual = payloadResp.orderIdVisual;
-      
-      // Store order for PDF download
+    const onSuccess = async (payloadResp) => {
       setOrderSuccess({
         shopName: shop.shopName,
         customerName: orderForm.name,
         customerPhone: orderForm.phone,
         customerAddress: orderForm.address,
-        items: cart, // For simplicity in receipt display
-        total: finalTotal,
-        id: orderId,
-        orderIdVisual,
+        items: cart,
+        total: payloadResp.total,
+        id: payloadResp.orderId,
+        orderIdVisual: payloadResp.orderIdVisual,
         deliveryFee: effectiveDelivery,
         date: `${dd}/${mm}/${yyyy}`,
       });
-
       setCart([]);
       localStorage.removeItem(CART_KEY);
-      trackEvent('begin_checkout', { items_count: cart.length, total: cartTotal + effectiveDelivery });
-      
-      trackEvent('purchase', { transaction_id: orderId, value: cartTotal, currency: 'BDT' });
       toast.success('অর্ডার প্লেস করা হয়েছে! 🎉');
-      
       if (user?.email) {
         import('@/lib/firestore').then(lib => lib.getUserOrders(shop.id, user.email).then(setUserOrders));
       }
+    };
+
+    const sendOrder = async (payload) => {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const resp = await res.json();
+      if (!res.ok) throw new Error(resp.error || 'Server error');
+      return resp;
+    };
+
+    if (!isOnline) {
+      await savePendingOrder(reqPayload);
+      toast('আপনি অফলাইনে আছেন। সংযোগ ফিরে এলে অর্ডারটি পাঠানো হবে।', { icon: '📡', duration: 6000 });
+      setPlacing(false); setIsOrderOpen(false); return;
+    }
+
+    try {
+      const resp = await sendOrder(reqPayload);
+      await onSuccess(resp);
     } catch (err) {
-      toast.error('অর্ডার দিতে ব্যর্থ হয়েছে।');
+      toast.error('অর্ডার পাঠানো যাচ্ছে না, আবার চেষ্টা হচ্ছে...');
+      await savePendingOrder(reqPayload);
+      let attempts = 0;
+      const retryDelays = [5000, 15000, 30000];
+      const attemptRetry = async () => {
+        if (attempts >= retryDelays.length) return;
+        setTimeout(async () => {
+          try {
+            const resp = await sendOrder(reqPayload);
+            await removePendingOrder(reqPayload.localId);
+            await onSuccess(resp);
+          } catch (e) { attempts++; attemptRetry(); }
+        }, retryDelays[attempts]);
+      };
+      attemptRetry();
     } finally {
-      setPlacing(false);
+      setPlacing(false); setIsOrderOpen(false);
     }
   };
 
-  // ── PDF Generator ──
-  const generatePDF = async (orderData) => {
+    const generatePDF = async (orderData) => {
     const { default: html2canvas } = await import('html2canvas');
     const { default: jsPDF } = await import('jspdf');
     const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:595px;padding:40px;background:white;font-family:Arial,sans-serif;direction:ltr';
+    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:500px;padding:30px;background:white;font-family:Arial,sans-serif;color:black;';
     el.innerHTML = `
-      <div style="text-align:center;border-bottom:3px solid #7c3aed;padding-bottom:15px;margin-bottom:15px">
-        <h1 style="font-size:24px;font-weight:900;color:#1e293b;margin:0">${orderData.shopName}</h1>
-        <p style="font-size:9px;color:#94a3b8;margin:4px 0 0;text-transform:uppercase;letter-spacing:1px">Order Receipt / অর্ডার রশিদ</p>
+      <div style="text-align:center;border-bottom:2px solid black;padding-bottom:10px;margin-bottom:15px">
+        <h1 style="font-size:20px;font-weight:900;margin:0">${orderData.shopName}</h1>
+        <p style="font-size:8px;margin:2px 0 0;text-transform:uppercase;letter-spacing:1px">Order Receipt / অর্ডার রশিদ</p>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px">
         <div>
-          <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0">Order ID</p>
-          <p style="font-size:18px;font-weight:900;color:#7c3aed;margin:4px 0 0">#${orderData.orderIdVisual}</p>
+          <p style="font-size:8px;text-transform:uppercase;font-weight:700;margin:0">Order ID</p>
+          <p style="font-size:14px;font-weight:900;margin:2px 0 0">#${orderData.orderIdVisual}</p>
         </div>
         <div style="text-align:right">
-          <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0">Date</p>
-          <p style="font-size:14px;font-weight:700;color:#1e293b;margin:4px 0 0">${orderData.date}</p>
+          <p style="font-size:8px;text-transform:uppercase;font-weight:700;margin:0">Date</p>
+          <p style="font-size:12px;font-weight:700;margin:2px 0 0">${orderData.date}</p>
         </div>
       </div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
-        <p style="font-size:10px;color:#94a3b8;text-transform:uppercase;font-weight:700;margin:0 0 8px">Customer Info</p>
-        <p style="margin:4px 0;font-size:13px;font-weight:700;color:#1e293b">${orderData.customerName} — ${orderData.customerPhone}</p>
-        <p style="margin:4px 0;font-size:12px;color:#64748b"><b>Delivery Addr:</b> ${orderData.customerAddress}</p>
+      <div style="border:1px solid black;padding:10px;margin-bottom:12px;font-size:11px">
+        <p style="margin:0 0 4px;font-weight:900">${orderData.customerName} — ${orderData.customerPhone}</p>
+        <p style="margin:0;line-height:1.4"><b>Addr:</b> ${orderData.customerAddress}</p>
       </div>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
         <thead>
-          <tr style="background:#1e293b;color:white">
-            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700">Item</th>
-            <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700">Qty</th>
-            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700">Price</th>
+          <tr style="border-bottom:1px solid black;border-top:1px solid black">
+            <th style="padding:6px 4px;text-align:left;font-size:10px">Item</th>
+            <th style="padding:6px 4px;text-align:center;font-size:10px">Qty</th>
+            <th style="padding:6px 4px;text-align:right;font-size:10px">Price</th>
           </tr>
         </thead>
         <tbody>
-          ${orderData.items.map((item, i) => `
-            <tr style="background:${i%2===0?'white':'#f8fafc'}">
-              <td style="padding:10px 12px;font-size:12px;font-weight:700;color:#1e293b">${item.name}</td>
-              <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:#64748b">${item.quantity}</td>
-              <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:900;color:#1e293b">৳${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
+          ${orderData.items.map((item) => `
+            <tr style="border-bottom:1px dashed #ccc">
+              <td style="padding:6px 4px;font-size:11px;font-weight:700">${item.name}</td>
+              <td style="padding:6px 4px;text-align:center;font-size:11px">${item.quantity}</td>
+              <td style="padding:6px 4px;text-align:right;font-size:11px;font-weight:900">৳${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
-      <div style="border-top:2px solid #e2e8f0;padding-top:16px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-          <span style="font-size:13px;color:#64748b;font-weight:600">Subtotal</span>
-          <span style="font-size:13px;font-weight:700;color:#1e293b">৳${orderData.items.reduce((s,i)=>s+parseFloat(i.price)*i.quantity,0).toFixed(0)}</span>
+      <div style="margin-left:auto;width:180px;font-size:11px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span>Subtotal</span>
+          <span>৳${orderData.items.reduce((s,i)=>s+parseFloat(i.price)*i.quantity,0).toFixed(0)}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-          <span style="font-size:13px;color:#64748b;font-weight:600">Delivery</span>
-          <span style="font-size:13px;font-weight:700;color:#1e293b">৳${orderData.deliveryFee}</span>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span>Delivery</span>
+          <span>৳${orderData.deliveryFee}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;background:#7c3aed;color:white;padding:14px 16px;border-radius:12px">
-          <span style="font-size:16px;font-weight:900">Total</span>
-          <span style="font-size:20px;font-weight:900">৳${orderData.total}</span>
+        <div style="display:flex;justify-content:space-between;border-top:1.5px solid black;padding-top:6px;font-weight:900;font-size:14px">
+          <span>Total</span>
+          <span>৳${orderData.total}</span>
         </div>
       </div>
     `;
@@ -905,25 +914,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    
-    let heightLeft = pdfHeight;
-    let position = 0;
-    
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-    heightLeft -= pageHeight;
-    
-    while (heightLeft >= 0) {
-      position = heightLeft - pdfHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-    }
-    
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     pdf.save(`Order_${orderData.orderIdVisual}.pdf`);
   };
 
-  if (authLoading) return <LoadingScreen text="Preparing Storefront" />;
+  if (authLoading) return <LoadingScreen text="Preparing Storefront" shop={shop} products={products} />;
 
 
   if (!user) {

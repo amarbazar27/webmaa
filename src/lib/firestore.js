@@ -17,10 +17,16 @@ export const getAllShops = async () => {
 
 export const getShopBySlug = async (slug) => {
   if (!slug) return null;
-  const q = query(collection(db, 'shops'), where('subdomainSlug', '==', slug));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+  // Indexing fix: Check both fields as some legacy stores might use shopSlug
+  const q1 = query(collection(db, 'shops'), where('subdomainSlug', '==', slug));
+  const snap1 = await getDocs(q1);
+  if (!snap1.empty) return { id: snap1.docs[0].id, ...snap1.docs[0].data() };
+
+  const q2 = query(collection(db, 'shops'), where('shopSlug', '==', slug));
+  const snap2 = await getDocs(q2);
+  if (!snap2.empty) return { id: snap2.docs[0].id, ...snap2.docs[0].data() };
+  
+  return null;
 };
 
 

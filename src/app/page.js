@@ -84,7 +84,7 @@ export default function Home() {
     setRequesting(true);
     try {
       await addRetailerRequest(currentUser, requestPhone.trim());
-      toast.success('আবেদন জমা দেওয়া হয়েছে! অ্যাডমিন শীঘ্রই যাচাই করবেন। 🙏');
+      toast.success('আপনার অনুরোধ সফলভাবে জমা হয়েছে! অ্যাডমিন শীঘ্রই যাচাই করবেন। 🙏');
       setShowRequestModal(false);
       setRequestPhone('');
     } catch (err) {

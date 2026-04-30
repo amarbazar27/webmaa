@@ -16,6 +16,7 @@ const CheckoutSchema = z.object({
   transactionId: z.string().max(50).optional(),
   paymentNumber: z.string().max(15).optional(),
   honeypot: z.string().max(0).optional(),
+  localId: z.string().max(100).optional(), // Idempotency key from client
   items: z.array(z.object({
     id: z.string().min(1),
     quantity: z.number().int().positive().max(50),
@@ -77,8 +78,31 @@ export async function POST(req) {
       transactionId,
       paymentNumber,
       honeypot,
+      localId,
       items
     } = parsed.data;
+
+    // 🛑 Idempotency Check: Prevent duplicate processing if localId exists
+    if (localId) {
+      const existingOrderSnap = await adminDb
+        .collection('shops')
+        .doc(shopId)
+        .collection('orders')
+        .where('localId', '==', localId)
+        .limit(1)
+        .get();
+
+      if (!existingOrderSnap.empty) {
+        const existingData = existingOrderSnap.docs[0].data();
+        return NextResponse.json({
+          success: true,
+          orderId: existingOrderSnap.docs[0].id,
+          total: existingData.total,
+          orderIdVisual: existingData.orderIdVisual,
+          isDuplicate: true
+        });
+      }
+    }
 
     // 🛑 Honeypot bot defense
     if (honeypot && honeypot.length > 0) {
@@ -239,13 +263,15 @@ export async function POST(req) {
       shopName: shopData.shopName,
       freeDelivery,
       status: 'pending',
+      localId: localId || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return NextResponse.json({
       success: true,
       orderId: newOrderRef.id,
-      total: finalTotal
+      total: finalTotal,
+      orderIdVisual
     });
 
   } catch (err) {
