@@ -5,12 +5,12 @@ import {
   getRetailerInvites, addRetailerInvite, removeRetailerInvite, getAllShops,
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
-  pauseShop, resumeShop, deleteRetailerRequest
+  pauseShop, resumeShop, deleteRetailerRequest, deleteShop
 } from '@/lib/firestore';
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
-  Globe, Link2, Pause, Play
+  Globe, Link2, Pause, Play, ExternalLink
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -175,6 +175,28 @@ export default function SuperAdminPage() {
       toast.error('মুছে ফেলতে সমস্যা হয়েছে।');
     }
     setProcessingId(null);
+  };
+
+  const handleDeleteShop = async (shop) => {
+    const confirmText = prompt(`⚠️ এই অ্যাকশন অপরিবর্তনীয়!\n\nস্টোর "${shop.shopName}" মুছে ফেলতে CONFIRM টাইপ করুন:`);
+    if (confirmText !== 'CONFIRM') {
+      toast.error('ক্যান্সেল হয়েছে। CONFIRM টাইপ করা হয়নি।');
+      return;
+    }
+    const password = prompt('আপনার Superadmin পাসওয়ার্ড দিন:');
+    if (!password || password.length < 4) {
+      toast.error('পাসওয়ার্ড সঠিক নয়।');
+      return;
+    }
+    setProcessingShopId(shop.id);
+    try {
+      await deleteShop(shop.id);
+      toast.success(`"${shop.shopName}" সম্পূর্ণ মুছে ফেলা হয়েছে।`);
+      loadData();
+    } catch (err) {
+      toast.error('মুছে ফেলতে সমস্যা হয়েছে: ' + (err.message || 'Unknown error'));
+    }
+    setProcessingShopId(null);
   };
 
   const handleUpdateConfig = async (e) => {
@@ -494,23 +516,44 @@ export default function SuperAdminPage() {
                              </span>
                           </td>
                           <td className="p-4 text-right last:rounded-r-2xl">
-                            <button
-                              onClick={() => handlePauseShop(shop)}
-                              disabled={processingShopId === shop.id}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all disabled:opacity-50 ${
-                                shop.isActive !== false
-                                  ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                              }`}
-                            >
-                              {processingShopId === shop.id ? (
-                                <Loader2 size={11} className="animate-spin" />
-                              ) : shop.isActive !== false ? (
-                                <><Pause size={11} /> Pause</>
-                              ) : (
-                                <><Play size={11} /> Resume</>
+                            <div className="flex items-center justify-end gap-2">
+                              {(shop.subdomainSlug || shop.shopSlug) && (
+                                <a
+                                  href={`${typeof window !== 'undefined' ? window.location.origin : 'https://webmaa.vercel.app'}/shop/${shop.subdomainSlug || shop.shopSlug}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                                  title="Live shop খুলুন"
+                                >
+                                  <ExternalLink size={11} /> Live
+                                </a>
                               )}
-                            </button>
+                              <button
+                                onClick={() => handlePauseShop(shop)}
+                                disabled={processingShopId === shop.id}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all disabled:opacity-50 ${
+                                  shop.isActive !== false
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                }`}
+                              >
+                                {processingShopId === shop.id ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : shop.isActive !== false ? (
+                                  <><Pause size={11} /> Pause</>
+                                ) : (
+                                  <><Play size={11} /> Resume</>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteShop(shop)}
+                                disabled={processingShopId === shop.id}
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                                title="স্টোর ডিলিট করুন"
+                              >
+                                <Trash2 size={11} /> Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

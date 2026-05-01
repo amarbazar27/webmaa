@@ -7,7 +7,8 @@ import {
   ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
-  ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag
+  ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
+  Truck, ShieldCheck, Clock
 } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -718,6 +719,7 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
   // ── Filters & Sorting ──────────────────────────
   let filteredProducts = products.filter(p =>
     (activeCategory === 'All' || activeCategory === 'সব' || p.category === activeCategory) &&
+    (!activeSubcategory || p.subcategory === activeSubcategory) &&
     (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      p.description?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -804,7 +806,8 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
       return;
     }
     if (cart.length === 0) return;
-    if (!user) {
+    const requireLogin = shop.authSettings?.requireLoginBeforeOrder ?? true;
+    if (requireLogin && !user) {
       toast.error('অর্ডার করতে অনুগ্রহ করে লগইন করুন।');
       setIsOrderOpen(false);
       setIsProfileOpen(true);
@@ -840,7 +843,7 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
         baseUnit: i.baseUnit || '',
         clientPrice: i.customizedPrice || undefined
       })),
-      customerId: user.uid
+      customerId: user?.uid || `guest_${Date.now()}`
     };
 
     const onSuccess = async (payloadResp) => {
@@ -851,19 +854,29 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
       setIsOrderOpen(false);
       setPlacing(false);
       if (user?.email) {
-        import('@/lib/firestore').then(lib => lib.getUserOrders(shop.id, user.email).then(setUserOrders));
+        import('@/lib/firestore').then(lib => {
+          lib.getUserOrders(shop.id, user.email).then(setUserOrders);
+          if (user?.uid) {
+            lib.saveUserData(user.uid, {
+              name: orderForm.name,
+              phone: orderForm.phone,
+              address: orderForm.address
+            });
+          }
+        });
       }
       router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${orderId}`);
     };
 
     const sendOrder = async (payload) => {
-      const token = await user.getIdToken();
+      const headers = { 'Content-Type': 'application/json' };
+      if (user) {
+        const token = await user.getIdToken();
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify(payload)
       });
       const resp = await res.json();
@@ -1004,6 +1017,15 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
               onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); setIsCategoryMenuOpen(false); }}
               className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === 'All' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
             >সব ক্যাটাগরি</button>
+            <div className="flex items-center gap-2">
+              {/* static logo - no navigation to prevent 'No store found' error */}
+              <div className="flex items-center gap-2 select-none">
+                {shop.logoUrl ? (
+                  <img src={shop.logoUrl} className="w-9 h-9 rounded-xl object-contain border border-slate-200" alt={shop.shopName} />
+                ) : null}
+                <span className="font-black text-slate-900 text-lg leading-tight">{shop.shopName || 'Shop'}</span>
+              </div>
+            </div>
             {categories.map(c => {
               const hasSubs = c.subcategories && c.subcategories.length > 0;
               const isActive = activeCategory === c.name;
@@ -1100,7 +1122,17 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
             <button onClick={() => setIsCategoryMenuOpen(true)} className="md:hidden w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors shadow-sm">
               <Menu size={20} strokeWidth={2.5} />
             </button>
-            <Logo href={`/shop/${shop.id}`} src={shop.logoUrl || '/logo.png'} text={shop.shopName || 'Shop'} />
+            {/* Static logo - no href to prevent 'No store found' navigation */}
+            <div className="flex items-center gap-2 select-none cursor-default">
+              {shop.logoUrl ? (
+                <img src={shop.logoUrl} className="w-9 h-9 rounded-xl object-contain border border-slate-100" alt={shop.shopName} />
+              ) : (
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg">
+                  {shop.shopName?.[0] || 'S'}
+                </div>
+              )}
+              <span className="font-black text-slate-900 text-[17px] leading-tight">{shop.shopName || 'Shop'}</span>
+            </div>
           </div>
 
           {/* Actions (Left side of the brand) */}
@@ -1164,8 +1196,27 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
         )}
       </div>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
-
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
+        
+        {/* ── Store Features / Trust Badges ── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="bg-emerald-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-emerald-100 hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0"><Truck size={18} strokeWidth={2.5} /></div>
+            <div><p className="text-xs md:text-sm font-black text-emerald-900 leading-tight">Fast Delivery</p><p className="text-[9px] md:text-[10px] text-emerald-600 font-bold mt-0.5">Reliable & Secure</p></div>
+          </div>
+          <div className="bg-purple-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-purple-100 hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 shrink-0"><ShieldCheck size={18} strokeWidth={2.5} /></div>
+            <div><p className="text-xs md:text-sm font-black text-purple-900 leading-tight">100% Authentic</p><p className="text-[9px] md:text-[10px] text-purple-600 font-bold mt-0.5">Verified Products</p></div>
+          </div>
+          <div className="bg-blue-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-blue-100 hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shrink-0"><Clock size={18} strokeWidth={2.5} /></div>
+            <div><p className="text-xs md:text-sm font-black text-blue-900 leading-tight">24/7 Support</p><p className="text-[9px] md:text-[10px] text-blue-600 font-bold mt-0.5">Always here</p></div>
+          </div>
+          <div className="bg-amber-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-amber-100 hover:shadow-md transition-shadow">
+            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0"><Star size={18} strokeWidth={2.5} /></div>
+            <div><p className="text-xs md:text-sm font-black text-amber-900 leading-tight">Premium Quality</p><p className="text-[9px] md:text-[10px] text-amber-600 font-bold mt-0.5">Best in class</p></div>
+          </div>
+        </div>
         {/* ── Search, Sort & Categories ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3 overflow-x-auto scrollbar-hide">
           <div className="relative shrink-0 w-44 sm:w-52">
@@ -1294,7 +1345,11 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
 
                     {/* Cart Controls */}
                     <div className="mt-auto space-y-2">
-                      {cartItem ? (
+                      {product.stock === 0 ? (
+                        <div className="w-full py-2.5 rounded-xl font-black text-sm bg-slate-100 text-slate-400 border border-slate-200 flex items-center justify-center gap-2 cursor-not-allowed">
+                          ❌ স্টক নেই
+                        </div>
+                      ) : cartItem ? (
                         <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
                           <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm font-black border border-slate-200 shrink-0">
                             <Minus size={14} strokeWidth={2.5} />
@@ -1316,7 +1371,7 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
                           <Plus size={15} strokeWidth={2.5} /> কার্টে যোগ করুন
                         </button>
                       )}
-                      {(product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
+                      {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
                         <button
                           onClick={() => router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}?customize=true`)}
                           className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"
@@ -1393,23 +1448,33 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
               </div>
               <div className="flex gap-3 flex-wrap pt-2">
                 {shop.socialLinks?.fb && (
-                  <a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg font-black text-sm">
-                    fb
+                  <a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                   </a>
                 )}
                 {shop.socialLinks?.insta && (
-                  <a href={shop.socialLinks.insta} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-pink-600 hover:to-orange-500 hover:border-pink-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg font-black text-sm">
-                    ig
+                  <a href={shop.socialLinks.insta} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-pink-600 hover:to-orange-500 hover:border-pink-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                   </a>
                 )}
                 {shop.socialLinks?.yt && (
-                  <a href={shop.socialLinks.yt} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-600 hover:border-red-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg font-black text-sm">
-                    yt
+                  <a href={shop.socialLinks.yt} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-600 hover:border-red-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
                   </a>
                 )}
                 {shop.socialLinks?.wa && (
-                  <a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-emerald-600 hover:border-emerald-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg font-black text-sm">
-                    wa
+                  <a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-emerald-600 hover:border-emerald-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+                  </a>
+                )}
+                {shop.socialLinks?.linkedin && (
+                  <a href={shop.socialLinks.linkedin} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-blue-700 hover:border-blue-700 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                  </a>
+                )}
+                {shop.socialLinks?.tiktok && (
+                  <a href={shop.socialLinks.tiktok} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-slate-800 hover:border-slate-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
                   </a>
                 )}
               </div>
@@ -1462,7 +1527,32 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
         </button>
       </div>
 
-      {/* ── ORDER SUCCESS + PDF DOWNLOAD ── */}
+      {/* ── Mobile Bottom Nav Bar (hamburger + cart) ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-slate-200 shadow-xl flex items-center justify-around px-4 py-3 safe-bottom">
+        <button onClick={() => setIsCategoryMenuOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+          <Menu size={22} strokeWidth={2} />
+          <span className="text-[10px] font-black uppercase tracking-wide">মেনু</span>
+        </button>
+        <button onClick={() => setIsAiOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+          <svg width="22" height="22" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#a855f7" /><circle cx="35" cy="45" r="5" fill="white" /><circle cx="65" cy="45" r="5" fill="white" /><path d="M40,65 Q50,72 60,65" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg>
+          <span className="text-[10px] font-black uppercase tracking-wide">এআই</span>
+        </button>
+        <button onClick={() => setIsCartOpen(true)} className="relative flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+          <ShoppingCart size={22} strokeWidth={2} />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>
+          )}
+          <span className="text-[10px] font-black uppercase tracking-wide">কার্ট</span>
+        </button>
+        <button onClick={() => setIsProfileOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+          {user?.photoURL ? (
+            <img src={user.photoURL} className="w-6 h-6 rounded-full object-cover" alt="" />
+          ) : (
+            <User size={22} strokeWidth={2} />
+          )}
+          <span className="text-[10px] font-black uppercase tracking-wide">প্রফাইল</span>
+        </button>
+      </div>
       {orderSuccess && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={() => setOrderSuccess(null)} />

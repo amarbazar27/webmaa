@@ -107,8 +107,8 @@ export default function SettingsPage() {
   const [domainStatus, setDomainStatus] = useState(''); // '', 'pending_dns', 'connected', 'pending_manual'
 
   // Complex substates to prevent null referencing
-  const [socialLinks, setSocialLinks] = useState({ fb: '', insta: '', yt: '', wa: '' });
-  const [authSettings, setAuthSettings] = useState({ emailAuth: false, actionPin: '' });
+  const [socialLinks, setSocialLinks] = useState({ fb: '', insta: '', yt: '', wa: '', linkedin: '', tiktok: '' });
+  const [authSettings, setAuthSettings] = useState({ emailAuth: false, actionPin: '', requireLoginBeforeOrder: true });
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny' });
@@ -146,11 +146,14 @@ export default function SettingsPage() {
         fb: data?.socialLinks?.fb || '', 
         insta: data?.socialLinks?.insta || '', 
         yt: data?.socialLinks?.yt || '',
-        wa: data?.socialLinks?.wa || ''
+        wa: data?.socialLinks?.wa || '',
+        linkedin: data?.socialLinks?.linkedin || '',
+        tiktok: data?.socialLinks?.tiktok || ''
       });
       setAuthSettings({
         emailAuth: data?.authSettings?.emailAuth || false, 
-        actionPin: data?.authSettings?.actionPin || ''
+        actionPin: data?.authSettings?.actionPin || '',
+        requireLoginBeforeOrder: data?.authSettings?.requireLoginBeforeOrder ?? true
       });
       setPromoSettings({
         seventhDayFree: data?.promoSettings?.seventhDayFree || false
@@ -624,15 +627,28 @@ export default function SettingsPage() {
           </Card>
 
           <Card title="Customer Auth" subtitle="Sign-in Options" icon={Users}>
-             <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <div>
-                   <p className="text-xs font-black text-slate-900">Email & Password Auth</p>
-                   <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Allow custom registration</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" checked={authSettings.emailAuth} onChange={e => setAuthSettings({...authSettings, emailAuth: e.target.checked})} />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                </label>
+             <div className="flex flex-col gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+               <div className="flex items-center justify-between">
+                  <div>
+                     <p className="text-xs font-black text-slate-900">Email & Password Auth</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Allow custom registration</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={authSettings.emailAuth} onChange={e => setAuthSettings({...authSettings, emailAuth: e.target.checked})} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+               </div>
+               
+               <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+                  <div>
+                     <p className="text-xs font-black text-slate-900">Require Login Before Order</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Only logged in users can order</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={authSettings.requireLoginBeforeOrder} onChange={e => setAuthSettings({...authSettings, requireLoginBeforeOrder: e.target.checked})} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+               </div>
              </div>
           </Card>
         </div>
@@ -1010,11 +1026,13 @@ export default function SettingsPage() {
             </Card>
 
             <Card title="Social Ecosystem" subtitle="Connect Audiences" icon={Globe}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                    <Input label="Facebook" placeholder="Facebook URL" value={socialLinks.fb} onChange={e => setSocialLinks({...socialLinks, fb: e.target.value})} />
                    <Input label="Instagram" placeholder="Instagram URL" value={socialLinks.insta} onChange={e => setSocialLinks({...socialLinks, insta: e.target.value})} />
                    <Input label="YouTube" placeholder="YouTube URL" value={socialLinks.yt} onChange={e => setSocialLinks({...socialLinks, yt: e.target.value})} />
                    <Input label="WhatsApp (Number)" placeholder="e.g. 01700000000" value={socialLinks.wa} onChange={e => setSocialLinks({...socialLinks, wa: e.target.value})} />
+                   <Input label="LinkedIn" placeholder="LinkedIn URL" value={socialLinks.linkedin} onChange={e => setSocialLinks({...socialLinks, linkedin: e.target.value})} />
+                   <Input label="TikTok" placeholder="TikTok URL" value={socialLinks.tiktok} onChange={e => setSocialLinks({...socialLinks, tiktok: e.target.value})} />
                 </div>
              </Card>
 

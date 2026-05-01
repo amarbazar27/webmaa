@@ -46,6 +46,11 @@ export const resumeShop = async (shopId) => {
   return updateDoc(doc(db, 'shops', shopId), { isActive: true, pausedAt: null });
 };
 
+// Super admin: স্টোর সম্পূর্ণ মুছে ফেলা
+export const deleteShop = async (shopId) => {
+  return deleteDoc(doc(db, 'shops', shopId));
+};
+
 // Super admin: deny করা request চিরতরে মুছে ফেলা (user আবার apply করতে পারবে)
 export const deleteRetailerRequest = async (requestId) => {
   return deleteDoc(doc(db, 'retailer_requests', requestId));

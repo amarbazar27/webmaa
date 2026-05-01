@@ -6,7 +6,10 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
   const [show, setShow] = useState(true);
   const [textIdx, setTextIdx] = useState(0);
   const [productIdx, setProductIdx] = useState(0);
-  const dhikr = ['সুবহানআল্লাহ', 'আলহামদুলিল্লাহ', 'আল্লাহু আকবার', 'বিসমিল্লাহ'];
+  
+  const defaultText = ['সুবহানআল্লাহ', 'আলহামদুলিল্লাহ', 'আল্লাহু আকবার', 'বিসমিল্লাহ'];
+  const loadingTexts = shop?.loadingTexts?.length ? shop.loadingTexts : defaultText;
+  
   const highlightProducts = products.filter(p => p.imageUrl).slice(0, 5);
 
   useEffect(() => {
@@ -20,9 +23,9 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
   }, [visible, minDuration]);
 
   useEffect(() => {
-    const iv = setInterval(() => setTextIdx(i => (i + 1) % dhikr.length), 1800);
+    const iv = setInterval(() => setTextIdx(i => (i + 1) % loadingTexts.length), 1800);
     return () => clearInterval(iv);
-  }, [dhikr.length]);
+  }, [loadingTexts.length]);
 
   useEffect(() => {
     if (highlightProducts.length === 0) return;
@@ -67,33 +70,37 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
             boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
           }}
         >
-          <div className="text-white font-black">
-            <svg width="54" height="54" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="wm-grad-L" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#A5B4FC" />
-                  <stop offset="100%" stopColor="#F472B6" />
-                </linearGradient>
-              </defs>
-              <circle cx="50" cy="50" r="45" fill="url(#wm-grad-L)" opacity="0.1" />
-              <text x="50" y="65" textAnchor="middle" fill="url(#wm-grad-L)" fontSize="50" fontWeight="900">W</text>
-            </svg>
-          </div>
+          {shop?.logoUrl ? (
+            <img src={shop.logoUrl} alt={shop.shopName || 'Store'} className="w-full h-full object-contain p-2" />
+          ) : (
+            <div className="text-white font-black">
+              <svg width="54" height="54" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="wm-grad-L" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#A5B4FC" />
+                    <stop offset="100%" stopColor="#F472B6" />
+                  </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="45" fill="url(#wm-grad-L)" opacity="0.1" />
+                <text x="50" y="65" textAnchor="middle" fill="url(#wm-grad-L)" fontSize="50" fontWeight="900">{shop?.shopName ? shop.shopName.charAt(0).toUpperCase() : 'W'}</text>
+              </svg>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── Rotating dhikr text ── */}
+      {/* ── Rotating text ── */}
       <div className="flex flex-col items-center gap-3 mb-10">
         <div className="relative h-10 flex items-center justify-center" style={{ width: 300 }}>
           <p
             key={textIdx}
             className="absolute text-center font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-indigo-300 text-2xl animate-in fade-in slide-in-from-bottom-2 duration-500"
           >
-            {dhikr[textIdx]}
+            {loadingTexts[textIdx]}
           </p>
         </div>
         <div className="flex gap-1.5 mt-2">
-          {dhikr.map((_, i) => (
+          {loadingTexts.map((_, i) => (
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-500 ${

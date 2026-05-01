@@ -63,19 +63,6 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    // 🚨 Auth Check
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
-    }
-    const idToken = authHeader.split('Bearer ')[1];
-    let decodedToken;
-    try {
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-    } catch (err) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
-    }
-
     const body = await req.json();
 
     // ── Input Validation ────────────────────────────────
@@ -99,10 +86,58 @@ export async function POST(req) {
       customerId
     } = parsed.data;
 
-    // 🛑 Verify user ID matches token
-    if (customerId !== decodedToken.uid) {
-      return NextResponse.json({ error: 'Unauthorized: User ID mismatch' }, { status: 403 });
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Server config error' }, { status: 500 });
     }
+
+    // ── Fetch shop ─────────────────────────────────────
+    const shopRef = adminDb.collection('shops').doc(shopId);
+    const shopSnap = await shopRef.get();
+
+    if (!shopSnap.exists) {
+      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+    }
+
+    const shopData = shopSnap.data();
+
+    if (shopData.isActive === false) {
+      return NextResponse.json({ error: 'Shop closed' }, { status: 400 });
+    }
+
+    const requireLogin = shopData.authSettings?.requireLoginBeforeOrder ?? true;
+
+    // 🚨 Auth Check
+    const authHeader = req.headers.get('authorization');
+    let decodedToken = null;
+    
+    if (requireLogin) {
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+      }
+      const idToken = authHeader.split('Bearer ')[1];
+      try {
+        decodedToken = await admin.auth().verifyIdToken(idToken);
+      } catch (err) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+      }
+      
+      // 🛑 Verify user ID matches token
+      if (customerId !== decodedToken.uid) {
+        return NextResponse.json({ error: 'Unauthorized: User ID mismatch' }, { status: 403 });
+      }
+    } else {
+      // Guest allowed, but if token provided, verify it
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+          const idToken = authHeader.split('Bearer ')[1];
+          decodedToken = await admin.auth().verifyIdToken(idToken);
+        } catch (err) {
+          // ignore error for guests
+        }
+      }
+    }
+
+
 
     // 🛑 Idempotency Check: Prevent duplicate processing if localId exists
     if (localId) {
@@ -131,23 +166,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Bot detected' }, { status: 403 });
     }
 
-    if (!adminDb) {
-      return NextResponse.json({ error: 'Server config error' }, { status: 500 });
-    }
 
-    // ── Fetch shop ─────────────────────────────────────
-    const shopRef = adminDb.collection('shops').doc(shopId);
-    const shopSnap = await shopRef.get();
-
-    if (!shopSnap.exists) {
-      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
-    }
-
-    const shopData = shopSnap.data();
-
-    if (shopData.isActive === false) {
-      return NextResponse.json({ error: 'Shop closed' }, { status: 400 });
-    }
 
     const deliveryConfig = shopData.deliveryConfig || {};
     const deliveryFee = deliveryConfig.advanceFee ? parseInt(deliveryConfig.advanceFee) : 60;
