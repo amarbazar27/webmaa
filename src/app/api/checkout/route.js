@@ -22,6 +22,8 @@ const CheckoutSchema = z.object({
     quantity: z.number().int().positive().max(50),
     note: z.string().max(200).optional(),
     variantsText: z.string().max(200).optional(),
+    customizedText: z.string().max(200).optional(),
+    baseUnit: z.string().max(50).optional(),
     clientPrice: z.number().positive().optional()
   })).min(1),
   customerId: z.string().min(1)
@@ -222,7 +224,10 @@ export async function POST(req) {
         name: product.name + (item.variantsText ? ` (${item.variantsText})` : ''),
         price: price.toString(),
         quantity: item.quantity,
-        note: item.note || ''
+        note: item.note || '',
+        imageUrl: product.imageUrl || '',
+        customizedText: item.customizedText || '',
+        baseUnit: item.baseUnit || ''
       });
     }
 

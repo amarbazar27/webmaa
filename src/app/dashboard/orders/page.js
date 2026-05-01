@@ -32,6 +32,7 @@ export default function OrdersPage() {
   const [authModal, setAuthModal] = useState({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
   const [downloadingPdf, setDownloadingPdf] = useState(null);
   const [pdfProgress, setPdfProgress] = useState(0);
+  const [pdfState, setPdfState] = useState('');
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -173,7 +174,9 @@ export default function OrdersPage() {
           <tbody>
             ${(order.items || []).map((item, i) => `
               <tr style="border-bottom:1px solid #ccc;">
-                <td style="padding:10px 12px;font-size:12px;font-weight:700;color:black">${item.name}${item.note ? `<br><span style="font-size:10px;color:#555">${item.note}</span>` : ''}</td>
+                <td style="padding:10px 12px;font-size:12px;font-weight:700;color:black">${item.name}
+                  ${item.customizedText ? `<br><span style="font-size:10px;color:#555;font-weight:700;">→ Base: ${item.baseUnit || 'N/A'}</span><br><span style="font-size:10px;color:#9333ea;font-weight:900;">→ Customized: ${item.customizedText}</span>` : (item.note ? `<br><span style="font-size:10px;color:#555">${item.note}</span>` : '')}
+                </td>
                 <td style="padding:10px 12px;text-align:center;font-size:12px;font-weight:700;color:black">${item.quantity}</td>
                 <td style="padding:10px 12px;text-align:right;font-size:12px;font-weight:900;color:black">${taka}${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
               </tr>

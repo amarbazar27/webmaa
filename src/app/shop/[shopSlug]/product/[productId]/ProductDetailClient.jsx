@@ -185,10 +185,12 @@ export default function ProductDetailClient({ shop, product }) {
       price: aiPrice !== null ? aiPrice / qty : basePrice,
       quantity: qty,
       imageUrl: product.imageUrl || '',
-      note: (customInput ? `কাস্টমাইজ: ${customInput}` : '') + (customerNote ? (customInput ? ' | ' : '') + `নোট: ${customerNote}` : ''),
+      note: customerNote || '',
       isCustomized: aiPrice !== null,
       customizedPrice: aiPrice,
-      variantsText: variantString // save exact variant info
+      baseUnit: product.unit || '',
+      customizedText: customInput || '',
+      variantsText: variantString
     };
     
     // Check if same non-customized product already exists
