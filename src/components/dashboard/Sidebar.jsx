@@ -22,7 +22,7 @@ const navItems = [
   { href: '/dashboard/settings', icon: Settings, label: 'Preferences' },
 ];
 
-export default function Sidebar({ isOpen, onClose }) {
+export default function Sidebar({ isOpen, onClose, onOpen }) {
   const { userData, activeShopId } = useAuth();
   const [shop, setShop] = useState(null);
   const pathname = usePathname();
@@ -109,8 +109,8 @@ export default function Sidebar({ isOpen, onClose }) {
               className={clsx(
                 'group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200',
                 isActive
-                  ? 'bg-purple-50 text-purple-700'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                   ? 'bg-purple-50 text-purple-700'
+                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               )}
             >
               <div className="flex items-center gap-3">
@@ -172,7 +172,7 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       {/* Bottom Nav (Legacy / Backup) - keep only for quick actions if needed, or remove for cleaner look */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 px-2 pb-safe flex items-center justify-around py-3 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[80] bg-white border-t border-slate-100 px-2 pb-safe flex items-center justify-around py-3 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
          {visibleNavItems.slice(0, 4).map(({ href, icon: Icon, label }) => {
             const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
             return (
@@ -187,11 +187,20 @@ export default function Sidebar({ isOpen, onClose }) {
                </Link>
             );
          })}
-         <button onClick={onClose ? onClose : () => {}} className="flex flex-col items-center gap-1 w-14">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400">
+         <button 
+           onClick={() => {
+             if (isOpen) onClose();
+             else if (onOpen) onOpen();
+           }} 
+           className="flex flex-col items-center gap-1 w-14"
+         >
+            <div className={clsx(
+              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+              isOpen ? "bg-purple-100 text-purple-600" : "text-slate-400"
+            )}>
                <Menu size={20} />
             </div>
-            <span className="text-[8px] font-black uppercase tracking-tighter text-center text-slate-400">Menu</span>
+            <span className={clsx("text-[8px] font-black uppercase tracking-tighter text-center", isOpen ? "text-purple-600" : "text-slate-400")}>Menu</span>
          </button>
       </div>
     </>

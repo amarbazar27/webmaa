@@ -376,7 +376,6 @@ export default function Home() {
 
       {/* ── Architecture/Features Grid ── */}
       <section id="features" className="relative z-20 max-w-7xl mx-auto px-6 py-40">
-        <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-24">
         <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-32">
           <div className="max-w-3xl">
             <h2 className="text-6xl md:text-[120px] font-black tracking-tighter magazine-heading mb-10">

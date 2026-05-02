@@ -44,7 +44,11 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       {/* Primary Sidebar - Now supports mobile overlay */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        onOpen={() => setIsSidebarOpen(true)} 
+      />
 
       {/* Main Context Area */}
       <main className="flex-1 lg:ml-64 min-h-screen relative p-4 pb-32 md:p-8 md:pb-8">
