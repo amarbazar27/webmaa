@@ -234,16 +234,19 @@ export default function Home() {
             <Logo href="/" className="text-white" />
           </div>
 
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-xs font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors">Architecture</a>
-            <a href="#showcase" className="text-xs font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors">Showcase</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-xs font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors">Home</a>
+            <a href="#showcase" className="text-xs font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors">Stores</a>
+            <a href="#contact" className="text-xs font-bold text-white/60 hover:text-white uppercase tracking-widest transition-colors">Contact</a>
+            
             {user && getDashboardHref() ? (
               <Link href={getDashboardHref()} className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-xs font-black hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                 <LayoutDashboard size={14} /> Workspace
               </Link>
             ) : !user ? (
               <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-2 text-xs font-bold text-white/80 hover:text-white transition-colors uppercase tracking-widest">
-                {loggingIn ? "Connecting..." : "Portal Login"} <ArrowRight size={14} />
+                {loggingIn ? "Connecting..." : "Login"} <ArrowRight size={14} />
               </button>
             ) : null}
           </div>
@@ -362,7 +365,7 @@ export default function Home() {
       </div>
 
       {/* ── Contact Protocol ── */}
-      <footer className="relative z-20 border-t border-white/10 py-12 bg-black/50 backdrop-blur-3xl">
+      <footer id="contact" className="relative z-20 border-t border-white/10 py-12 bg-black/50 backdrop-blur-3xl">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-white text-black rounded-md flex items-center justify-center font-black text-[10px]">W</div>

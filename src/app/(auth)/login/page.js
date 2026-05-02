@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user: authUser, userData: authData, loading: authLoading } = useAuth();
+  const { user: authUser, userData: authData, loading: authLoading, forceUpdateAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -20,7 +20,7 @@ export default function LoginPage() {
       setRedirecting(true);
       handleRedirection(authUser, authData.role || 'user');
     }
-  }, [authUser, authData, authLoading, router]);
+  }, [authUser, authData, authLoading, router, redirecting]);
 
   const handleRedirection = (currUser, role) => {
     if (role === 'superadmin') {
@@ -40,6 +40,8 @@ export default function LoginPage() {
     try {
       const result = await loginWithGoogle();
       if (result?.user && result?.userData) {
+        forceUpdateAuth(result.user, result.userData);
+        setRedirecting(true);
         handleRedirection(result.user, result.userData.role || 'user');
       }
     } catch (err) {

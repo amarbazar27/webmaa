@@ -32,12 +32,13 @@ export default function SuperAdminPage() {
   
   const router = useRouter();
   const [showKey, setShowKey] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
 
   // Helper to mask key
   const maskKey = (key) => {
     if (!key) return '';
     if (key.length < 15) return '*'.repeat(key.length);
-    return `${key.substring(0, 4)}********${key.substring(key.length - 4)}`;
+    return `${key.substring(0, 5)}**********${key.substring(key.length - 5)}`;
   };
 
   const loadData = async () => {
@@ -177,26 +178,101 @@ export default function SuperAdminPage() {
     setProcessingId(null);
   };
 
-  const handleDeleteShop = async (shop) => {
-    const confirmText = prompt(`⚠️ এই অ্যাকশন অপরিবর্তনীয়!\n\nস্টোর "${shop.shopName}" মুছে ফেলতে CONFIRM টাইপ করুন:`);
-    if (confirmText !== 'CONFIRM') {
-      toast.error('ক্যান্সেল হয়েছে। CONFIRM টাইপ করা হয়নি।');
-      return;
-    }
-    const password = prompt('আপনার Superadmin পাসওয়ার্ড দিন:');
-    if (!password || password.length < 4) {
-      toast.error('পাসওয়ার্ড সঠিক নয়।');
-      return;
-    }
-    setProcessingShopId(shop.id);
+  const initiateDeleteShop = (shop) => {
+    setDeleteModal({ isOpen: true, shop, password: '', loading: false, otpSent: false, otp: '' });
+  };
+
+  const executeDeleteShop = async () => {
+    const { shop, password, otpSent, otp } = deleteModal;
+    if (!password) { toast.error('পাসওয়ার্ড দিন'); return; }
+
+    setDeleteModal(prev => ({ ...prev, loading: true }));
     try {
+      // 1. Verify password via API
+      const res = await fetch('/api/admin/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', password })
+      });
+      const data = await res.json();
+      
+      if (!data.success) {
+        if (data.error === 'NO_PASSWORD_SET') {
+          // If no password set, we can allow them to set it.
+          // For now, let's just use the set action
+          const setRes = await fetch('/api/admin/verify-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'set', password })
+          });
+          const setData = await setRes.json();
+          if (setData.success) {
+            toast.success('প্রথমবার লগইনের জন্য পাসওয়ার্ড সেট করা হয়েছে। আবার চেষ্টা করুন।');
+          } else {
+            toast.error(setData.error);
+          }
+        } else {
+          toast.error(data.error || 'Password verification failed');
+        }
+        setDeleteModal(prev => ({ ...prev, loading: false }));
+        return;
+      }
+
+      // 2. Verified -> Delete Store
       await deleteShop(shop.id);
       toast.success(`"${shop.shopName}" সম্পূর্ণ মুছে ফেলা হয়েছে।`);
       loadData();
+      setDeleteModal({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
     } catch (err) {
       toast.error('মুছে ফেলতে সমস্যা হয়েছে: ' + (err.message || 'Unknown error'));
+      setDeleteModal(prev => ({ ...prev, loading: false }));
     }
-    setProcessingShopId(null);
+  };
+
+  const handleForgotPassword = async () => {
+    setDeleteModal(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await fetch('/api/admin/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'forgot' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Admin ইমেইলে OTP পাঠানো হয়েছে।');
+        setDeleteModal(prev => ({ ...prev, otpSent: true, loading: false }));
+      } else {
+        toast.error(data.error);
+        setDeleteModal(prev => ({ ...prev, loading: false }));
+      }
+    } catch (err) {
+      toast.error('Failed to send OTP');
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const { password, otp } = deleteModal;
+    if (!password || !otp) { toast.error('OTP এবং নতুন পাসওয়ার্ড দিন'); return; }
+    setDeleteModal(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await fetch('/api/admin/verify-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set', password, otp })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('পাসওয়ার্ড রিসেট হয়েছে। এখন ডিলিট করুন।');
+        setDeleteModal(prev => ({ ...prev, otpSent: false, otp: '', loading: false }));
+      } else {
+        toast.error(data.error);
+        setDeleteModal(prev => ({ ...prev, loading: false }));
+      }
+    } catch (err) {
+      toast.error('Failed to reset password');
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+    }
   };
 
   const handleUpdateConfig = async (e) => {
@@ -546,7 +622,7 @@ export default function SuperAdminPage() {
                                 )}
                               </button>
                               <button
-                                onClick={() => handleDeleteShop(shop)}
+                                onClick={() => initiateDeleteShop(shop)}
                                 disabled={processingShopId === shop.id}
                                 className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
                                 title="স্টোর ডিলিট করুন"
@@ -631,6 +707,58 @@ export default function SuperAdminPage() {
           </Card>
         </div>
       </div>
+
+      {/* Delete Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full relative shadow-2xl animate-slide-in overflow-hidden">
+            <button onClick={() => setDeleteModal({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' })} className="absolute top-5 right-5 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors z-10">
+              <XCircle size={18} className="stroke-[3]" />
+            </button>
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-red-500/30">
+              <Trash2 size={32} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2">Delete "{deleteModal.shop?.shopName}"?</h3>
+            <p className="text-slate-500 text-sm font-bold mb-6">This action is irreversible. All data will be permanently lost.</p>
+            
+            <div className="space-y-4">
+              <Input
+                type="password"
+                label="Superadmin Password"
+                placeholder="Enter password to confirm"
+                value={deleteModal.password}
+                onChange={e => setDeleteModal(prev => ({ ...prev, password: e.target.value }))}
+                icon={Key}
+              />
+              {deleteModal.otpSent && (
+                <Input
+                  type="text"
+                  label="OTP (Check Admin Email)"
+                  placeholder="Enter 6-digit OTP"
+                  value={deleteModal.otp}
+                  onChange={e => setDeleteModal(prev => ({ ...prev, otp: e.target.value }))}
+                />
+              )}
+              <div className="flex flex-col gap-2 pt-2">
+                {!deleteModal.otpSent ? (
+                  <>
+                    <Button onClick={executeDeleteShop} loading={deleteModal.loading} variant="danger" className="w-full">
+                      Confirm Deletion
+                    </Button>
+                    <button type="button" onClick={handleForgotPassword} disabled={deleteModal.loading} className="text-xs font-bold text-slate-400 hover:text-purple-600 transition-colors py-2">
+                      Forgot Password?
+                    </button>
+                  </>
+                ) : (
+                  <Button onClick={handleResetPassword} loading={deleteModal.loading} variant="primary" className="w-full">
+                    Reset Password
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

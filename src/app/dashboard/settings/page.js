@@ -92,9 +92,15 @@ export default function SettingsPage() {
   const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', subdomainSlug: '', banners: [] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [showAiKey, setShowAiKey] = useState(false);
+
+  const maskKey = (key) => {
+    if (!key) return '';
+    if (key.length < 15) return '*'.repeat(key.length);
+    return `${key.substring(0, 5)}**********${key.substring(key.length - 5)}`;
+  };
   const [slugInput, setSlugInput] = useState('');
   const [slugEditing, setSlugEditing] = useState(false);
   const [slugError, setSlugError] = useState('');
@@ -754,13 +760,29 @@ export default function SettingsPage() {
 
             <Card title="Store AI Companion" subtitle="Smart Assistant" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/10">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Input
-                    label="LLM API Key (Gemini/OpenAI)"
-                    type="password"
-                    value={aiConfig.apiKey}
-                    onChange={e => setAiConfig({...aiConfig, apiKey: e.target.value})}
-                    placeholder="Enter your private API key"
-                  />
+                  <div className="relative">
+                     <Input
+                       label="LLM API Key (Gemini/OpenAI)"
+                       type={showAiKey ? "text" : "text"}
+                       value={showAiKey ? aiConfig.apiKey : maskKey(aiConfig.apiKey)}
+                       onChange={e => {
+                         // Only allow change if showing key or it's empty, otherwise they might edit the masked version
+                         if (showAiKey || !aiConfig.apiKey) {
+                           setAiConfig({...aiConfig, apiKey: e.target.value});
+                         }
+                       }}
+                       onFocus={() => setShowAiKey(true)}
+                       onBlur={() => setShowAiKey(false)}
+                       placeholder="Enter your private API key"
+                     />
+                     <button
+                       type="button"
+                       onClick={() => setShowAiKey(!showAiKey)}
+                       className="absolute right-4 top-10 text-xs font-bold text-purple-600 hover:text-purple-800"
+                     >
+                       {showAiKey ? 'Hide' : 'Show'}
+                     </button>
+                  </div>
                   <Input
                     label="AI Avatar Name"
                     value={aiConfig.botName}

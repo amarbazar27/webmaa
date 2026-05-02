@@ -12,6 +12,11 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
 
+  const forceUpdateAuth = (newUser, newUserData) => {
+    setUser(newUser);
+    setUserData(newUserData);
+  };
+
   useEffect(() => {
     // 1. Process any pending redirect login result
     handleLoginRedirect().then(result => {
@@ -103,7 +108,7 @@ export function AuthProvider({ children }) {
   const activeShopId = (userData?.role === 'retailer' || userData?.role === 'superadmin') ? user?.uid : userData?.accessShopId;
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, activeShopId }}>
+    <AuthContext.Provider value={{ user, userData, loading, activeShopId, forceUpdateAuth }}>
       {children}
     </AuthContext.Provider>
   );
