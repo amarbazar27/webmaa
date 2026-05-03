@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
+import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib/ruflo';
 
 // ── Strict Payload Validation ───────────────────────────
 const CheckoutSchema = z.object({
@@ -250,6 +251,12 @@ export async function POST(req) {
       });
     }
 
+    // 🚨 Minimum Order Amount enforcement
+    const minOrder = parseInt(deliveryConfig.minOrderAmount) || 0;
+    if (minOrder > 0 && total < minOrder) {
+      return NextResponse.json({ error: `Minimum order amount is ৳${minOrder}` }, { status: 400 });
+    }
+
     // ── Delivery logic ─────────────────────────────────
     let freeDelivery = false;
 
@@ -312,12 +319,33 @@ export async function POST(req) {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // 🔔 RUFLO: Fire-and-forget emails (non-blocking — never slows checkout)
+    const rufloPayload = { shopName: shopData.shopName, orderId: orderIdVisual, items: verifiedItems, total: finalTotal };
+
+    if (customerEmail) {
+      void sendOrderConfirmationEmail({
+        to: customerEmail,
+        customerName,
+        ...rufloPayload
+      }).catch(e => console.warn('[Ruflo] Customer email error:', e.message));
+    }
+
+    if (shopData.deliveryConfig?.contactEmail) {
+      void sendRetailerNotificationEmail({
+        to: shopData.deliveryConfig.contactEmail,
+        customerName,
+        customerPhone,
+        ...rufloPayload
+      }).catch(e => console.warn('[Ruflo] Retailer email error:', e.message));
+    }
+
     return NextResponse.json({
       success: true,
       orderId: newOrderRef.id,
       total: finalTotal,
       orderIdVisual
     });
+
 
   } catch (err) {
     console.error('CHECKOUT ERROR:', err);

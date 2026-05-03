@@ -214,18 +214,22 @@ export const updateOrderStatus = async (shopId, orderId, status, deliveryConfig 
 
      // Loyalty Point Logic Isolation
      if (status === 'completed' && orderData.status !== 'completed' && orderData.customerId) {
-        const userRef = doc(db, 'users', orderData.customerId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-           const userData = userSnap.data();
-           const todayStr = new Date().toISOString().split('T')[0];
-           
-           if (userData.lastLoyaltyDate !== todayStr) {
-              await updateDoc(userRef, {
-                 loyaltyPoints: (userData.loyaltyPoints || 0) + 1,
-                 lastLoyaltyDate: todayStr
-              });
+        try {
+           const userRef = doc(db, 'users', orderData.customerId);
+           const userSnap = await getDoc(userRef);
+           if (userSnap.exists()) {
+              const userData = userSnap.data();
+              const todayStr = new Date().toISOString().split('T')[0];
+              
+              if (userData.lastLoyaltyDate !== todayStr) {
+                 await updateDoc(userRef, {
+                    loyaltyPoints: (userData.loyaltyPoints || 0) + 1,
+                    lastLoyaltyDate: todayStr
+                 });
+              }
            }
+        } catch (e) {
+           console.warn("Could not update loyalty points (possibly guest or permission denied):", e);
         }
      }
   }

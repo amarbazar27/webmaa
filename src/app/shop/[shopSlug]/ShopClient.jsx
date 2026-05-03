@@ -482,6 +482,36 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }
   }, [CART_KEY, initialShop.id]);
 
+  // ── Cart Merge Logic (Guest -> Logged In User) ──
+  const hasMergedCart = useRef(false);
+  useEffect(() => {
+    if (user?.uid && !hasMergedCart.current) {
+      hasMergedCart.current = true;
+      import('@/lib/firestore').then(async (lib) => {
+        try {
+          const remoteCart = await lib.getUserCart(user.uid, shop.id);
+          if (remoteCart && remoteCart.length > 0) {
+            setCart(prevCart => {
+              if (prevCart.length === 0) return remoteCart;
+              
+              // Merge: Add remote items that are not in local cart
+              const merged = [...prevCart];
+              remoteCart.forEach(remoteItem => {
+                const existing = merged.find(i => (i.id || i.productId) === (remoteItem.id || remoteItem.productId));
+                if (!existing) {
+                   merged.push(remoteItem);
+                }
+              });
+              return merged;
+            });
+          }
+        } catch (e) {
+          console.warn('Cart merge failed:', e);
+        }
+      });
+    }
+  }, [user?.uid, shop.id]);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && cart.length > 0) {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
@@ -679,40 +709,62 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         body: JSON.stringify({
           shopId: shop.id,
           messages: [
-            { role: 'system', content: `তুমি "${shop.shopName}"-এর স্মার্ট এআই সহকারী।
+            { role: 'system', content: `তুমি "${shop.shopName}"-এর স্মার্ট AI বাজার সহকারী। তোমার নাম ${shop.aiConfig?.botName || 'Bazar Bot'}।
 
-🛍️ তোমার কাজ:
-- পণ্য খুঁজে দেওয়া, দাম জানানো, অর্ডার সহায়তা করা
+🛍️ তোমার কাজ: পণ্য খুঁজে দেওয়া, দাম জানানো, বাজার লিস্ট তৈরি করা, বাজেট ও লোক সংখ্যা বুঝে সঠিক পরিমাণ suggest করা।
 
-📦 প্রোডাক্ট লিস্ট (নাম: দাম):
-${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
+📦 সম্পূর্ণ পণ্য তালিকা:
+${products.map(p => `• ${p.name} | ৳${p.price}/${p.unit || 'piece'} | ${p.category || 'সাধারণ'}${p.stock === 0 ? ' [স্টক নেই]' : ''}`).join('\n')}
 
-🚚 সার্ভিস এরিয়া: ${(shop.serviceAreas || []).join(', ')}
-📍 ইউজারের লোকেশন: ${detectedLocation || locationManualInput || 'অজানা'}
+🚚 ডেলিভারি: ৳${shop.deliveryConfig?.advanceFee || 60} | ${shop.deliveryConfig?.isCOD !== false ? 'COD প্রযোজ্য' : 'অগ্রিম পেমেন্ট'}
+💳 পেমেন্ট: ${shop.deliveryConfig?.methods || 'বিকাশ/নগদ'}
+📍 এলাকা: ${detectedLocation || locationManualInput || 'অজানা'}
+${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর্ডার:\n${userOrders.slice(0,3).map(o => `- ${o.items?.map(i=>i.name).join(', ')} (৳${o.total})`).join('\n')}` : ''}
 
-⚠️ গুরুত্বপূর্ণ নিয়ম:
-1. "তাকা", "টাকা", "tk", "taka", "৳" এগুলো দিয়ে সবসময় মূল্য (price) বোঝায়, পরিমাণ (quantity/gram) নয়।
-   উদাহরণ: "১৫০ টাকার চাল" মানে যে চালের দাম ১৫০ টাকা — ১৫০ গ্রাম চাল নয়।
-2. যদি কেউ বলে "১৫০ টাকার X দাও" বা "150 taka er X", তাহলে ওই দামের বা কাছাকাছি দামের X পণ্যটি খুঁজে দাও।
-3. যদি ঠিক সেই দামের পণ্য না থাকে, সবচেয়ে কাছের দামের পণ্য suggest করো।
-4. "কত কেজি/গ্রাম" না বলা পর্যন্ত পরিমাণ ধরো না।
-5. সবসময় বাংলায় উত্তর দাও।
-6. উত্তর সংক্ষিপ্ত ও সহায়ক রাখো।` },
+⚠️ নিয়ম:
+1. "টাকা/৳/taka" = মূল্য, পরিমাণ নয়। "১৫০ টাকার চাল" = ৳১৫০ দামের চাল।
+2. বাজেটের মধ্যে সর্বোচ্চ পণ্য দাও। স্টক নেই এমন suggest করো না।
+3. বাজার লিস্ট suggest করলে শেষে লেখো: 🛒 [বাজার লিস্ট তৈরি]
+4. সবসময় বাংলায়, সংক্ষিপ্ত উত্তর দাও।` },
+            ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
         })
       });
       const data = await resp.json();
       if (data.error) {
-        setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: `⚠️ AI API Error: ${data.error.message || 'Unknown server error'}. ${!shop.aiConfig?.apiKey ? 'ড্যাশবোর্ডে API Key সেট করা নেই।' : ''}` }]);
+        setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: `⚠️ AI সমস্যা: ${data.error.message || 'Unknown error'}. ${!shop.aiConfig?.apiKey ? 'ড্যাশবোর্ডে API Key সেট করা নেই।' : ''}` }]);
       } else {
         const botText = data.choices?.[0]?.message?.content || getSmartBotReply(text);
-        setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: botText }]);
+        const hasSuggestions = botText.includes('🛒');
+        setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: botText, hasSuggestions }]);
       }
     } catch (err) {
       setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: `⚠️ Network Error: ${err.message}` }]);
     } finally {
       setIsAiTyping(false);
+    }
+  };
+
+  // ── Add All AI-suggested products to cart ─────
+  const addAllSuggestedToCart = (botText) => {
+    let added = 0;
+    products.forEach(product => {
+      if (product.stock === 0) return;
+      if (botText.toLowerCase().includes(product.name.toLowerCase())) {
+        const existing = cart.find(i => i.id === product.id);
+        if (!existing) {
+          setCart(prev => [...prev, { ...product, quantity: 1, note: '' }]);
+          added++;
+        }
+      }
+    });
+    if (added > 0) {
+      toast.success(`${added}টি পণ্য কার্টে যোগ হয়েছে! 🛒`);
+      setIsAiOpen(false);
+      setIsCartOpen(true);
+    } else {
+      toast('কোনো পণ্য match হয়নি। নিজে কার্টে যোগ করুন।', { icon: 'ℹ️' });
     }
   };
 
@@ -815,6 +867,13 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
     }
     if (!validatePhone(orderForm.phone)) {
       setPhoneError('বৈধ বাংলাদেশি নম্বর লিখুন।');
+      return;
+    }
+
+    // 🚨 Minimum Order Amount (frontend guard)
+    const minOrder = parseInt(shop.deliveryConfig?.minOrderAmount) || 0;
+    if (minOrder > 0 && cartTotal < minOrder) {
+      toast.error(`সর্বনিম্ন অর্ডার ৳${minOrder}। আরো পণ্য যোগ করুন।`);
       return;
     }
 
@@ -997,8 +1056,8 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
     }
   };
 
-  if (authLoading) return <LoadingScreen text="Preparing Storefront" shop={shop} products={products} />;
-
+  // NOTE: We no longer block the storefront on authLoading.
+  // Auth state resolves in background — shopping is always public.
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
       
@@ -1139,14 +1198,14 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
           <div className="flex items-center gap-2 md:gap-4">
             {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
               <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-lg">
-                <Settings size={15} /> <span className="hidden sm:inline">প্যানেলে যান</span>
+                <Settings size={15} /> <span>প্যানেলে যান</span>
               </button>
             )}
 
             {/* App Download */}
             {!pwaInstalled && (
               <button onClick={handleAppDownload} className="flex items-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition-colors shadow-sm">
-                <Download size={15} /> <span className="hidden sm:inline">অ্যাপ</span>
+                <Download size={15} /> <span>অ্যাপ</span>
               </button>
             )}
 
@@ -1590,14 +1649,27 @@ ${products.map(p=>`${p.name}: ৳${p.price}`).join('\n')}
                   <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">AI Shopping Assistant</p>
                 </div>
               </div>
-              <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: `আবার শুরু করলাম! কীভাবে সাহায্য করতে পারি?` }])} className="hover:bg-white/20 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-400 hover:text-white transition-colors uppercase tracking-widest" title="Clear History">Clear</button>
+                <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
+              </div>
             </div>
             <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto">
               {chatMessages.map(msg => (
-                <div key={msg.id} className={`max-w-[85%] p-3.5 rounded-2xl text-sm font-bold shadow-sm ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none self-start' : 'bg-purple-600 text-white rounded-tr-none self-end'}`}>
-                  {isAiTyping && msg === chatMessages[chatMessages.length-1] && msg.role === 'bot' ? (
-                    <div className="flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>
-                  ) : msg.text}
+                <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
+                  <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
+                    {isAiTyping && msg === chatMessages[chatMessages.length-1] && msg.role === 'bot' ? (
+                      <div className="flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>
+                    ) : msg.text}
+                  </div>
+                  {msg.hasSuggestions && (
+                    <button
+                      onClick={() => addAllSuggestedToCart(msg.text)}
+                      className="self-start flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-colors"
+                    >
+                      <ShoppingCart size={14} /> সব কার্টে যোগ করুন
+                    </button>
+                  )}
                 </div>
               ))}
               {isAiTyping && <div className="max-w-[85%] p-3.5 rounded-2xl bg-white border border-slate-200 self-start flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>}

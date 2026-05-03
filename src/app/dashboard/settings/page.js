@@ -116,7 +116,7 @@ export default function SettingsPage() {
   const [socialLinks, setSocialLinks] = useState({ fb: '', insta: '', yt: '', wa: '', linkedin: '', tiktok: '' });
   const [authSettings, setAuthSettings] = useState({ emailAuth: false, actionPin: '', requireLoginBeforeOrder: true });
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
-  const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true });
+  const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '' });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny' });
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
@@ -169,7 +169,8 @@ export default function SettingsPage() {
         methods: data?.deliveryConfig?.methods || '', 
         isCOD: data?.deliveryConfig?.isCOD ?? true,
         contactEmail: data?.deliveryConfig?.contactEmail || '',
-        contactWhatsapp: data?.deliveryConfig?.contactWhatsapp || ''
+        contactWhatsapp: data?.deliveryConfig?.contactWhatsapp || '',
+        minOrderAmount: data?.deliveryConfig?.minOrderAmount || ''
       });
       setAiConfig({ 
         apiKey: data?.aiConfig?.apiKey || '', 
@@ -740,6 +741,20 @@ export default function SettingsPage() {
                    value={deliveryConfig.methods}
                    onChange={e => setDeliveryConfig({...deliveryConfig, methods: e.target.value})}
                    placeholder="bKash: 017.., Nagad.."
+                 />
+                 <Input
+                   label="📧 Ruflo Alert Email (New Orders)"
+                   type="email"
+                   value={deliveryConfig.contactEmail}
+                   onChange={e => setDeliveryConfig({...deliveryConfig, contactEmail: e.target.value})}
+                   placeholder="your@gmail.com"
+                 />
+                 <Input
+                   label="Minimum Order Amount (৳)"
+                   type="number"
+                   value={deliveryConfig.minOrderAmount}
+                   onChange={e => setDeliveryConfig({...deliveryConfig, minOrderAmount: e.target.value})}
+                   placeholder="0 = no limit"
                  />
                  <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Default Delivery Time (Live Countdown)</label>
