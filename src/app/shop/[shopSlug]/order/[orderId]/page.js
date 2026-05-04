@@ -239,7 +239,14 @@ export default function OrderSummaryPage({ params }) {
                     : <Package size={18} className="text-slate-400" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-black text-slate-900 truncate">{item.name}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-black text-slate-900 truncate">{item.name}</p>
+                    {item.realBasePrice && (
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                        Base: ৳{item.realBasePrice}
+                      </span>
+                    )}
+                  </div>
                   {item.customizedText ? (
                     <div className="mt-1 space-y-0.5">
                       {item.baseUnit && <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">→ Base: {item.baseUnit}</p>}
@@ -275,102 +282,98 @@ export default function OrderSummaryPage({ params }) {
       {/* Hidden invoice template for PDF capture */}
       <div
         id="pdf-content"
-        style={{ display: 'none', position: 'fixed', top: 0, left: 0, background: 'white', width: '800px', zIndex: -1, padding: '48px', fontFamily: 'sans-serif', color: '#0f172a' }}
+        style={{ display: 'none', position: 'fixed', top: 0, left: 0, background: 'white', width: '650px', zIndex: -1, padding: '20px', fontFamily: 'sans-serif', color: '#000' }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: '24px', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '10px', marginBottom: '15px' }}>
           <div>
             {shop.logoUrl
-              ? <img src={shop.logoUrl} style={{ height: '64px', width: 'auto', marginBottom: '8px' }} alt="Logo" />
-              : <div style={{ fontSize: '28px', fontWeight: 900, color: '#7c3aed', marginBottom: '4px' }}>{shop.shopName}</div>}
+              ? <img src={shop.logoUrl} style={{ height: '40px', width: 'auto', marginBottom: '4px' }} alt="Logo" />
+              : <div style={{ fontSize: '20px', fontWeight: 900, marginBottom: '2px' }}>{shop.shopName}</div>}
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '36px', fontWeight: 900, color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '2px' }}>Invoice</div>
-            <div style={{ fontWeight: 800, fontSize: '13px', background: '#f1f5f9', padding: '4px 12px', borderRadius: '6px', display: 'inline-block', border: '1px solid #e2e8f0', marginTop: '8px' }}>
+            <div style={{ fontSize: '24px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>Invoice</div>
+            <div style={{ fontWeight: 800, fontSize: '11px', marginTop: '4px' }}>
               # {order.orderIdVisual || order.id.slice(-6).toUpperCase()}
             </div>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', marginTop: '8px' }}>
-              তারিখ: {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : 'N/A'}
+            <div style={{ fontSize: '10px', fontWeight: 700, marginTop: '4px' }}>
+              Date: {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : 'N/A'}
             </div>
           </div>
         </div>
 
         {/* Addresses */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px', fontSize: '13px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px', fontSize: '11px' }}>
           <div>
-            <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '2px', color: '#94a3b8', marginBottom: '8px' }}>প্রেরক (Billed From)</div>
-            <div style={{ fontWeight: 900, fontSize: '15px' }}>{shop.shopName}</div>
-            <div style={{ fontWeight: 700, color: '#475569' }}>Bangladesh</div>
+            <div style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 900, marginBottom: '4px' }}>Billed From</div>
+            <div style={{ fontWeight: 900, fontSize: '13px' }}>{shop.shopName}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '2px', color: '#94a3b8', marginBottom: '8px' }}>প্রাপক (Billed To)</div>
-            <div style={{ fontWeight: 900, fontSize: '15px' }}>{order.customerName}</div>
-            <div style={{ fontWeight: 700, color: '#475569', maxWidth: '200px', marginLeft: 'auto' }}>{order.customerAddress}</div>
-            <div style={{ fontWeight: 900, color: '#7c3aed' }}>{order.customerPhone}</div>
+            <div style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 900, marginBottom: '4px' }}>Billed To</div>
+            <div style={{ fontWeight: 900, fontSize: '13px' }}>{order.customerName}</div>
+            <div style={{ fontWeight: 700, maxWidth: '200px', marginLeft: 'auto' }}>{order.customerAddress}</div>
+            <div style={{ fontWeight: 900 }}>{order.customerPhone}</div>
           </div>
         </div>
 
         {/* Items Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '32px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
           <thead>
-            <tr style={{ borderBottom: '2px solid #0f172a', fontSize: '11px', textTransform: 'uppercase', fontWeight: 900, letterSpacing: '1px', color: '#64748b' }}>
-              <th style={{ padding: '12px 0', textAlign: 'left' }}>বিবরণ</th>
-              <th style={{ padding: '12px 0', textAlign: 'center' }}>পরিমাণ</th>
-              <th style={{ padding: '12px 0', textAlign: 'right' }}>মূল্য</th>
-              <th style={{ padding: '12px 0', textAlign: 'right' }}>মোট</th>
+            <tr style={{ borderBottom: '1px solid #000', borderTop: '1px solid #000', fontSize: '10px', textTransform: 'uppercase', fontWeight: 900 }}>
+              <th style={{ padding: '6px 0', textAlign: 'left' }}>Item</th>
+              <th style={{ padding: '6px 0', textAlign: 'center' }}>Qty</th>
+              <th style={{ padding: '6px 0', textAlign: 'right' }}>Price</th>
+              <th style={{ padding: '6px 0', textAlign: 'right' }}>Total</th>
             </tr>
           </thead>
           <tbody>
             {order.items?.map((item, idx) => (
-              <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                <td style={{ padding: '14px 0', fontWeight: 700 }}>
-                  <div style={{ fontWeight: 900 }}>{item.name}</div>
+              <tr key={idx} style={{ borderBottom: '1px dashed #ccc', fontSize: '11px' }}>
+                <td style={{ padding: '8px 0', fontWeight: 700 }}>
+                  <div style={{ fontWeight: 900 }}>
+                    {item.name} {item.realBasePrice && <span style={{ fontSize: '9px', fontWeight: 'bold' }}>(Base: ৳{item.realBasePrice})</span>}
+                  </div>
                   {item.customizedText ? (
-                    <div style={{ marginTop: '4px' }}>
-                      {item.baseUnit && <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>→ Base: {item.baseUnit}</div>}
-                      <div style={{ fontSize: '10px', color: '#7c3aed', fontWeight: 900, textTransform: 'uppercase' }}>→ Customized: {item.customizedText}</div>
+                    <div style={{ marginTop: '2px' }}>
+                      {item.baseUnit && <div style={{ fontSize: '9px', fontWeight: 700 }}>Base: {item.baseUnit}</div>}
+                      <div style={{ fontSize: '9px', fontWeight: 900 }}>Note: {item.customizedText}</div>
                     </div>
                   ) : item.note ? (
-                    <div style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic', marginTop: '2px' }}>নোট: {item.note}</div>
+                    <div style={{ fontSize: '9px', fontStyle: 'italic', marginTop: '2px' }}>Note: {item.note}</div>
                   ) : null}
                 </td>
-                <td style={{ padding: '14px 0', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>
-                <td style={{ padding: '14px 0', textAlign: 'right', fontWeight: 700 }}>৳{parseFloat(item.price).toLocaleString()}</td>
-                <td style={{ padding: '14px 0', textAlign: 'right', fontWeight: 900 }}>৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</td>
+                <td style={{ padding: '8px 0', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>
+                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 700 }}>৳{parseFloat(item.price).toLocaleString()}</td>
+                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 900 }}>৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         {/* Totals */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '64px' }}>
-          <div style={{ width: '256px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>
-              <span>সাবটোটাল</span><span>৳{subtotal.toLocaleString()}</span>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px' }}>
+          <div style={{ width: '200px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+              <span>Subtotal</span><span>৳{subtotal.toLocaleString()}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '12px' }}>
-              <span>ডেলিভারি চার্জ</span><span>৳{deliveryFee}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, marginBottom: '6px' }}>
+              <span>Delivery</span><span>৳{deliveryFee}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 900, borderTop: '2px solid #0f172a', paddingTop: '12px' }}>
-              <span>সর্বমোট</span><span>৳{parseFloat(order.total).toLocaleString()}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 900, borderTop: '1px solid #000', paddingTop: '6px' }}>
+              <span>Total</span><span>৳{parseFloat(order.total).toLocaleString()}</span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', fontSize: '11px', fontWeight: 700, color: '#64748b' }}>
+        <div style={{ borderTop: '1px solid #000', paddingTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '9px', fontWeight: 700 }}>
           <div>
             {order.transactionId && (
-              <p style={{ marginBottom: '4px' }}>
-                <span style={{ textTransform: 'uppercase', fontSize: '9px', letterSpacing: '1px', fontWeight: 900 }}>Advance Txn ID: </span>
-                <span style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#0f172a' }}>{order.transactionId}</span>
-              </p>
+              <p>Txn ID: {order.transactionId}</p>
             )}
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ textTransform: 'uppercase', fontSize: '10px', letterSpacing: '2px', fontWeight: 900, marginBottom: '8px' }}>অনুমোদিত স্বাক্ষর</p>
-            <div style={{ width: '128px', height: '1px', background: '#cbd5e1', marginLeft: 'auto', marginTop: '32px' }}></div>
-            <p style={{ marginTop: '8px', color: '#94a3b8' }}>ধন্যবাদ আমাদের সাথে থাকার জন্য!</p>
+            <p style={{ marginTop: '4px' }}>Thank you for your business!</p>
           </div>
         </div>
       </div>

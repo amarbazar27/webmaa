@@ -59,6 +59,11 @@ service cloud.firestore {
     }
 
     // ── Config & Invites ──────────────────────────────────────────
+    match /config/global {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
     match /config/{document=**} {
       allow read: if isAuthenticated();
       allow write: if isSuperAdmin();

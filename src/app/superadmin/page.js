@@ -28,7 +28,7 @@ export default function SuperAdminPage() {
   const [processingId, setProcessingId] = useState(null);
   const [processingShopId, setProcessingShopId] = useState(null);
   
-  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactWa: '', contactFb: '', contactEmail: '', promotedLinks: [] });
+  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactLinks: [], promotedLinks: [], defaultLayout: 'modern' });
   const [savingConfig, setSavingConfig] = useState(false);
   
   const router = useRouter();
@@ -89,10 +89,9 @@ export default function SuperAdminPage() {
     const unsubscribe = subscribeGlobalConfig((configData) => {
       setGlobalConfig({
         geminiApiKey: configData?.geminiApiKey || '',
-        contactWa: configData?.contactWa || '',
-        contactFb: configData?.contactFb || '',
-        contactEmail: configData?.contactEmail || '',
-        promotedLinks: configData?.promotedLinks || []
+        contactLinks: configData?.contactLinks || [],
+        promotedLinks: configData?.promotedLinks || [],
+        defaultLayout: configData?.defaultLayout || 'modern'
       });
     });
     return () => unsubscribe();
@@ -338,6 +337,25 @@ export default function SuperAdminPage() {
             </button>
           </div>
         </div>
+        
+        {/* Retailer Store Layout Selection */}
+        <div className="mt-4 flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+          <div>
+            <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Retailer Store Layout</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Choose the default UI/UX design for all new stores</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={globalConfig.defaultLayout || 'modern'}
+              onChange={e => setGlobalConfig({...globalConfig, defaultLayout: e.target.value})}
+              className="px-4 py-2 rounded-xl text-sm font-black border outline-none cursor-pointer bg-white text-slate-900 border-slate-200 hover:border-purple-400 transition-all focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="modern">Modern Premium</option>
+              <option value="classic">Classic E-Commerce</option>
+              <option value="minimal">Minimal Showcase</option>
+            </select>
+          </div>
+        </div>
         <p className="text-[10px] font-bold text-slate-400 mt-3 px-1">💡 Retailers can override this for their shop. Customers can further override for themselves.</p>
       </Card>
 
@@ -370,14 +388,34 @@ export default function SuperAdminPage() {
               </p>
            </div>
            
-           <div className="md:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-purple-100">
-             <div className="md:col-span-3">
+           <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">
+             <div>
                <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Phone size={14}/> Platform Global Contact Links</p>
                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Displayed on the Webmaa Landing Page for support</p>
              </div>
-             <Input label="WhatsApp Number" placeholder="017XXX..." value={globalConfig.contactWa} onChange={e => setGlobalConfig({...globalConfig, contactWa: e.target.value})} />
-             <Input label="Facebook Page Link" placeholder="https://facebook.com/..." value={globalConfig.contactFb} onChange={e => setGlobalConfig({...globalConfig, contactFb: e.target.value})} />
-             <Input label="Support Email" placeholder="support@webmaa.cloud" value={globalConfig.contactEmail} onChange={e => setGlobalConfig({...globalConfig, contactEmail: e.target.value})} />
+             
+             {globalConfig.contactLinks?.map((link, idx) => (
+               <div key={idx} className="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200">
+                 <input type="text" placeholder="Platform Name (e.g. WhatsApp, Facebook, Email)" className="w-1/3 px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold bg-white" value={link.name} onChange={e => {
+                   const newArr = [...globalConfig.contactLinks];
+                   newArr[idx].name = e.target.value;
+                   setGlobalConfig({...globalConfig, contactLinks: newArr});
+                 }} />
+                 <input type="text" placeholder="URL or Address (e.g., https://... or test@email.com)" className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-bold bg-white" value={link.url} onChange={e => {
+                   const newArr = [...globalConfig.contactLinks];
+                   newArr[idx].url = e.target.value;
+                   setGlobalConfig({...globalConfig, contactLinks: newArr});
+                 }} />
+                 <button type="button" onClick={() => {
+                   const newArr = globalConfig.contactLinks.filter((_, i) => i !== idx);
+                   setGlobalConfig({...globalConfig, contactLinks: newArr});
+                 }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={16} /></button>
+               </div>
+             ))}
+             
+             <button type="button" onClick={() => setGlobalConfig({...globalConfig, contactLinks: [...(globalConfig.contactLinks || []), { name: '', url: '' }]})} className="text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-xl w-max border border-purple-200">
+               + Add New
+             </button>
            </div>
 
            <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">

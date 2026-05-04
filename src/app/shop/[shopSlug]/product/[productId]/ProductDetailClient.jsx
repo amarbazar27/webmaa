@@ -119,21 +119,21 @@ export default function ProductDetailClient({ shop, product }) {
     setAiPrice(null);
 
     const shopApiKey = shop?.aiConfig?.apiKey;
-    const systemPrompt = `তুমি একটি Bangladeshi retail shop-এর AI কাস্টমাইজেশন অ্যাসিস্ট্যান্ট। তোমার কাজ হলো ইউজারের রিকোয়েস্ট অনুযায়ী সঠিক মূল্য (Price) নির্ধারণ করা।
+    const systemPrompt = `তুমি একটি Bangladeshi retail shop-এর AI কাস্টমাইজেশন অ্যাসিস্ট্যান্ট। তোমার কাজ হলো ইউজারের রিকোয়েস্ট অনুযায়ী সঠিক মূল্য (Price) এবং পরিমাণের হিসাব করা।
 
 📦 প্রোডাক্টের তথ্য:
 - নাম: ${product.name}
 - বেস মূল্য: ৳${basePrice} (${product.unit || 'প্রতি ইউনিট'})
 
 🧠 তোমার বিচারবুদ্ধি (Logic):
-১. **টাকা বনাম পরিমাণ:** ইউজার যদি "টাকা", "tk", "taka", "৳" উল্লেখ করে (যেমন: "১৫০ টাকার সয়াবিন তেল"), তবে সেটা সরাসরি মূল্য (PRICE)। সেটাকে গ্রামে রূপান্তর করবে না।
-২. **পরিমাণ ভিত্তিক মূল্য:** যদি ইউজার গ্রাম, কেজি, বা পিস উল্লেখ করে (যেমন: "১৫০ গ্রাম" বা "2 kg"), তখন ঐ পরিমাণের দাম বের করো। 
+১. **টাকা ভিত্তিক (Budget):** ইউজার যদি "টাকা", "tk", "taka", "৳" উল্লেখ করে (যেমন: "১৫০ টাকার তেল", "100 tk"), তবে সেটা সরাসরি মূল্য (PRICE = ১৫০)। ঐ টাকায় কতটুকু (gram/kg/pcs) পাওয়া যাবে তা হিসাব করে QUANTITY_NOTE এ লিখবে (যেমন: "১৫০ টাকায় পাবেন ৯০০ গ্রাম")।
+২. **পরিমাণ ভিত্তিক (Quantity):** যদি ইউজার গ্রাম, কেজি, বা পিস উল্লেখ করে (যেমন: "১৫০ গ্রাম" বা "2 kg", "250g"), তখন ঐ পরিমাণের দাম বের করো (PRICE = দাম)। 
    - হিসাব: (বেস মূল্য / ১০০০) * গ্রামের পরিমাণ। 
-৩. **বাজেট রিকোয়েস্ট:** যদি ইউজার বলে "১৫০ টাকার তেল চাই", তাহলে তুমি বলবে: "আপনি ১৫০ টাকার তেল কিনতে চান। ঐ দামে আপনি পাবেন (১৫০ / বেস মূল্য) কেজি/গ্রাম তেল।"
-৪. **উত্তর ফরম্যাট:**
+   - QUANTITY_NOTE এ লিখবে "১৫০ গ্রামের দাম"।
+৩. **উত্তর ফরম্যাট:**
    - সংক্ষেপে বাংলায় ব্যাখ্যা দাও।
-   - উত্তরের শেষে অবশ্যই "PRICE: [number]" লিখবে।
-   - অতিরিক্ত কোনো শুভেচ্ছা বা অপ্রাসঙ্গিক কথা বলবে না।`;
+   - উত্তরের শেষে অবশ্যই "PRICE: [number]" লিখবে (শুধুমাত্র সংখ্যা)।
+   - এবং "QUANTITY_NOTE: [পরিমাণ বা টাকার হিসাব]" লিখবে।`;
 
     try {
       const resp = await fetch('/api/ai', {
@@ -152,10 +152,16 @@ export default function ProductDetailClient({ shop, product }) {
       
       // Extract price from response
       const priceMatch = text.match(/PRICE:\s*(\d+(\.\d+)?)/i);
+      const noteMatch = text.match(/QUANTITY_NOTE:\s*(.+)/i);
       if (priceMatch) {
         const calculatedPrice = parseFloat(priceMatch[1]);
         setAiPrice(calculatedPrice);
-        setAiResult(text.replace(/PRICE:\s*[\d.]+/i, '').trim());
+        
+        let displayResult = text.replace(/PRICE:\s*[\d.]+/i, '').replace(/QUANTITY_NOTE:\s*.+/i, '').trim();
+        if (noteMatch) {
+           setCustomInput(noteMatch[1].trim()); // Store the calculated note as the custom text for cart
+        }
+        setAiResult(displayResult || noteMatch?.[1] || 'ক্যালকুলেশন সম্পন্ন হয়েছে।');
       } else {
         setAiResult(text || 'মূল্য নির্ধারণ করতে পারিনি। আবার চেষ্টা করুন।');
       }
@@ -183,6 +189,7 @@ export default function ProductDetailClient({ shop, product }) {
       productId: product.id,
       name: product.name + (variantString ? ` (${variantString})` : ''),
       price: aiPrice !== null ? aiPrice / qty : basePrice,
+      realBasePrice: basePrice, // Keep track of the original unit price
       quantity: qty,
       imageUrl: product.imageUrl || '',
       note: customerNote || '',
