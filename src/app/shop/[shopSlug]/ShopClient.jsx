@@ -18,6 +18,7 @@ import { saveUserData } from '@/lib/firestore';
 import Logo from '@/components/ui/Logo';
 import Image from 'next/image';
 import { useNetworkStatus } from '@/lib/useNetworkStatus';
+import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
 
 
@@ -1174,7 +1175,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
       )}
 
       {/* ── Header ── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+      <header className="border-b sticky top-0 z-40 shadow-sm" style={{background:'var(--surface)',borderColor:'var(--border-color)'}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
           {/* Logo/Brand (Left Side) */}
           <div className="flex items-center gap-3">
@@ -1208,6 +1209,9 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
                 <Download size={15} /> <span>অ্যাপ</span>
               </button>
             )}
+
+            {/* Theme Toggle */}
+            <ThemeToggleButton size="sm" />
 
             {/* Profile */}
             <button onClick={() => setIsProfileOpen(true)} className="w-10 h-10 md:w-11 md:h-11 aspect-square bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl transition-colors shadow-sm border border-purple-200 overflow-hidden flex items-center justify-center">

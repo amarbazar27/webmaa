@@ -1,6 +1,6 @@
 import './globals.css';
 import { Outfit } from 'next/font/google';
-import { ThemeProvider } from '@/components/ThemeContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 

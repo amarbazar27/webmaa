@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ShieldAlert, LogOut, ArrowLeft } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import Link from 'next/link';
+import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 
 export default function SuperAdminLayout({ children }) {
   const { user, userData, loading } = useAuth();
@@ -31,7 +32,7 @@ export default function SuperAdminLayout({ children }) {
   if (!user || userData?.role !== 'superadmin') return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen" style={{background:'var(--bg-color)',color:'var(--text-color)'}}>
       {/* Subtle Background Accent */}
       <div className="fixed top-0 inset-x-0 h-64 bg-gradient-to-b from-red-50 to-transparent pointer-events-none"></div>
 
@@ -50,7 +51,8 @@ export default function SuperAdminLayout({ children }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <ThemeToggleButton size="sm" showLabel />
           <Link href="/" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-all flex items-center gap-1.5">
             <ArrowLeft size={14} /> Back to Site
           </Link>

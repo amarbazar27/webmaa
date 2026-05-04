@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/dashboard/Sidebar';
 import { X, Info, LogOut, Menu } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
+import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 
 export default function DashboardLayout({ children }) {
   const { user, userData, loading } = useAuth();
@@ -42,7 +43,7 @@ export default function DashboardLayout({ children }) {
   if (!user || (userData?.role !== 'retailer' && userData?.role !== 'superadmin' && userData?.role !== 'staff')) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <div className="min-h-screen flex" style={{background:'var(--bg-color)',color:'var(--text-color)'}}>
       {/* Primary Sidebar - Now supports mobile overlay */}
       <Sidebar 
         isOpen={isSidebarOpen} 
@@ -69,6 +70,7 @@ export default function DashboardLayout({ children }) {
            </div>
            
            <div className="flex items-center gap-2">
+              <ThemeToggleButton size="sm" />
               <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-purple-600">
                 {userData?.name?.[0] || 'U'}
               </div>

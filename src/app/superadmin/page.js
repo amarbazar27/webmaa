@@ -16,6 +16,7 @@ import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function SuperAdminPage() {
   const [invites, setInvites] = useState([]);
@@ -33,6 +34,7 @@ export default function SuperAdminPage() {
   const router = useRouter();
   const [showKey, setShowKey] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
+  const { theme, setSystemDefault, systemDefault } = useTheme();
 
   // Helper to mask key
   const maskKey = (key) => {
@@ -305,6 +307,39 @@ export default function SuperAdminPage() {
         <Card title={pendingRequests.length} subtitle="Pending Requests" icon={Clock} className="border-l-4 border-l-amber-500" />
         <Card title="Healthy" subtitle="System Engine" icon={Activity} className="border-l-4 border-l-green-500" />
       </div>
+
+      {/* 🎨 System Theme Control */}
+      <Card title="Platform Appearance" subtitle="Set the system-wide default theme for all users" icon={Sparkles} className="border-2 border-indigo-100 bg-indigo-50/10">
+        <div className="flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+          <div>
+            <p className="text-sm font-black" style={{color:'var(--text-color)'}}>System Default Theme</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Users inherit this if they haven't set their own preference</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setSystemDefault('light'); toast.success('System default: Light Mode ☀️'); }}
+              className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${
+                systemDefault === 'light' || !systemDefault
+                  ? 'bg-amber-400 text-slate-900 border-amber-500 shadow-lg shadow-amber-400/30'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-amber-300'
+              }`}
+            >
+              ☀️ Light
+            </button>
+            <button
+              onClick={() => { setSystemDefault('dark'); toast.success('System default: Dark Mode 🌙'); }}
+              className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${
+                systemDefault === 'dark'
+                  ? 'bg-indigo-600 text-white border-indigo-700 shadow-lg shadow-indigo-500/30'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300'
+              }`}
+            >
+              🌙 Dark
+            </button>
+          </div>
+        </div>
+        <p className="text-[10px] font-bold text-slate-400 mt-3 px-1">💡 Retailers can override this for their shop. Customers can further override for themselves.</p>
+      </Card>
 
       {/* 🚀 Platform AI Intelligence (Global Settings) */}
       <Card title="Platform Intelligence" subtitle="Manage global AI nodes and API keys (Groq Engine)" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/20">

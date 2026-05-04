@@ -13,25 +13,55 @@
 
 @layer base {
   :root {
-    --bg-color: var(--color-bg-light);
-    --text-color: var(--color-text-main);
-    --panel-bg: var(--color-bg-white);
-    --border-color: rgba(0, 0, 0, 0.05);
+    /* ── Surfaces ── */
+    --bg-color: #f8fafc;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --surface-3: #e2e8f0;
+    /* ── Text ── */
+    --text-color: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
+    /* ── Border ── */
+    --border-color: #e2e8f0;
+    /* ── Panel (alias) ── */
+    --panel-bg: #ffffff;
+    /* ── Shadows ── */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    /* ── Status Colors ── */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
   }
 
-  /* Keep dark class for manual inversion if needed, but defaults are light now */
   .dark {
+    /* ── Surfaces ── */
     --bg-color: #0f111a;
+    --surface: #1e293b;
+    --surface-2: #283548;
+    --surface-3: #334155;
+    /* ── Text ── */
     --text-color: #f1f5f9;
+    --text-2: #94a3b8;
+    --text-3: #64748b;
+    /* ── Border ── */
+    --border-color: rgba(255,255,255,0.08);
+    /* ── Panel ── */
     --panel-bg: #1e293b;
-    --border-color: rgba(255, 255, 255, 0.1);
+    /* ── Shadows ── */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
   }
 
   body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--font-sans);
-    transition: background-color 0.4s ease, color 0.4s ease;
+    transition: background-color 0.35s ease, color 0.35s ease;
   }
 }
 

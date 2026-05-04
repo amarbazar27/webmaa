@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getShop } from '@/lib/firestore';
 import clsx from 'clsx';
 import AiCompanion from './AiCompanion';
+import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
@@ -139,9 +140,16 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
            </div>
         )}
 
+        <div className="flex items-center justify-between px-4 py-3 border-t" style={{borderColor:'var(--border-color)'}}>
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{color:'var(--text-3)'}}>
+            {false ? 'Dark' : ''}
+          </span>
+          <ThemeToggleButton size="sm" showLabel />
+        </div>
+
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black text-red-500 hover:bg-red-50 w-full transition-all group"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black text-red-500 hover:bg-red-50 w-full transition-all group mx-4 mb-2" style={{width:'calc(100% - 2rem)'}}
         >
           <LogOut size={18} />
           Sign Out
@@ -153,7 +161,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="w-64 hidden lg:flex flex-col h-screen fixed left-0 top-0 bg-white border-r border-slate-100 z-50 shadow-sm">
+      <aside className="w-64 hidden lg:flex flex-col h-screen fixed left-0 top-0 border-r z-50 shadow-sm" style={{background:'var(--surface)',borderColor:'var(--border-color)'}}>
         <SidebarContent />
       </aside>
 
@@ -164,9 +172,9 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
       )}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
         <aside className={clsx(
-          "absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col transition-transform duration-300 ease-out shadow-2xl",
+          "absolute left-0 top-0 bottom-0 w-72 flex flex-col transition-transform duration-300 ease-out shadow-2xl",
           isOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
+        )} style={{background:'var(--surface)'}}>
           <SidebarContent />
         </aside>
       </div>
