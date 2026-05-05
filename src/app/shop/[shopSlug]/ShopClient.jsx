@@ -22,6 +22,7 @@ import { useNetworkStatus } from '@/lib/useNetworkStatus';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
 import MessengerButton from '@/components/shop/MessengerButton';
+import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
 
 
 const CuteAIIcon = () => (
@@ -798,7 +799,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
     } else {
       const newCart = [...cart, { ...product, quantity: 1, note: '' }];
       setCart(newCart);
-      trackEvent('add_to_cart', { id: product.id, name: product.name, price: product.price });
+      trackStoreEvent('add_to_cart', { id: product.id, name: product.name, price: product.price });
       toast.success(`${product.name} ঝুড়িতে যোগ হয়েছে!`);
     }
   };
@@ -846,6 +847,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
       return;
     }
     if (cart.length === 0) return;
+    trackStoreEvent('begin_checkout', { value: cartTotal, currency: 'BDT', items: cart.map(i => i.name) });
     const requireLogin = shop.authSettings?.requireLoginBeforeOrder ?? true;
     if (requireLogin && !user) {
       toast.error('অর্ডার করতে অনুগ্রহ করে লগইন করুন।');
@@ -1048,7 +1050,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
   // Auth state resolves in background — shopping is always public.
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
-      
+      <StoreAnalytics shop={shop} />
       {/* ── Category Drawer (Mobile) ── */}
       <div className={`fixed inset-0 z-[100] md:hidden transition-all duration-300 ${isCategoryMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsCategoryMenuOpen(false)} />
@@ -1364,7 +1366,13 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
               return (
                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 flex flex-col">
                   {/* Image — clickable to detail page */}
-                  <div className="relative h-44 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" onClick={() => router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}`)}>
+                  <div 
+                    className="relative h-44 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
+                    onClick={() => {
+                      trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
+                      router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}`);
+                    }}
+                  >
                     {product.imageUrl ? (
                       <Image 
                         src={product.imageUrl} 

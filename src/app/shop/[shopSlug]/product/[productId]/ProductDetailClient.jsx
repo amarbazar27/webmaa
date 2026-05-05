@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import ReviewSection from '@/components/shop/ReviewSection';
+import { trackStoreEvent } from '@/components/shop/StoreAnalytics';
 
 // Deterministic fallback colors
 const FALLBACK_COLORS = ['bg-indigo-600','bg-emerald-600','bg-rose-600','bg-amber-600','bg-cyan-600','bg-fuchsia-600'];
@@ -209,6 +210,7 @@ export default function ProductDetailClient({ shop, product }) {
       cart.push(cartItem);
     }
     localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    trackStoreEvent('add_to_cart', { id: product.id, name: product.name, price: cartItem.price, quantity: qty });
     toast.success(`${product.name} কার্টে যোগ হয়েছে! 🛒`);
     setTimeout(() => router.back(), 300);
   };
