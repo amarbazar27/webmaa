@@ -190,8 +190,8 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
         return false;
       });
       
-      // Extra leniency: if shop explicitly shows no dropdowns
-      if (!isMatch && shop.showLocationSelector === false) {
+      // Extra leniency: if shop explicitly shows no dropdowns and NOT strict
+      if (!isMatch && shop.showLocationSelector === false && !shop.isStrictLocation) {
          isMatch = true; 
       }
 

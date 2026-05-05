@@ -275,18 +275,53 @@ export async function POST(req) {
 
     const finalTotal = total + (freeDelivery ? 0 : deliveryFee);
 
-    // ── Order counter (atomic) ─────────────────────────
+    // ── Order counter & Atomic Stock Reduction ──────────
     const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka' }).replace(/\//g, '');
     const counterRef = adminDb.collection('shops').doc(shopId).collection('counters').doc(`orders_${today}`);
 
     let newCount = 0;
 
-    await adminDb.runTransaction(async (tx) => {
-      const snap = await tx.get(counterRef);
-      const current = snap.exists ? (snap.data().count || 0) : 0;
-      newCount = current + 1;
-      tx.set(counterRef, { count: newCount }, { merge: true });
-    });
+    try {
+      await adminDb.runTransaction(async (tx) => {
+        // 1. Check stocks first
+        const productSnaps = {};
+        for (const item of verifiedItems) {
+          const pRef = productsRef.doc(item.id);
+          const pSnap = await tx.get(pRef);
+          if (!pSnap.exists) throw new Error(`Product not found: ${item.name}`);
+          productSnaps[item.id] = pSnap;
+        }
+
+        for (const item of verifiedItems) {
+          const pData = productSnaps[item.id].data();
+          if (pData.stock !== undefined && pData.stock !== null) {
+            if (pData.stock < item.quantity) {
+              throw new Error(`Out of stock: ${item.name}`);
+            }
+          }
+        }
+
+        // 2. Perform updates
+        for (const item of verifiedItems) {
+          const pRef = productsRef.doc(item.id);
+          const pData = productSnaps[item.id].data();
+          if (pData.stock !== undefined && pData.stock !== null) {
+            tx.update(pRef, { stock: pData.stock - item.quantity });
+          }
+        }
+
+        // 3. Update counter
+        const snap = await tx.get(counterRef);
+        const current = snap.exists ? (snap.data().count || 0) : 0;
+        newCount = current + 1;
+        tx.set(counterRef, { count: newCount }, { merge: true });
+      });
+    } catch (txError) {
+      if (txError.message.startsWith('Out of stock') || txError.message.startsWith('Product not found')) {
+        return NextResponse.json({ error: txError.message }, { status: 400 });
+      }
+      throw txError;
+    }
 
     const serial = newCount.toString().padStart(2, '0');
     const orderIdVisual = `${serial}#${today}`;
