@@ -176,6 +176,12 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
     }
 
     if (autoLoc) {
+      // 🚨 If auto-detect fell back to default, force manual selection UI
+      if (autoLoc.method === 'fallback') {
+        setStatus('unavailable');
+        return;
+      }
+
       if (autoLoc.district) {
          setDetectedLocation(`${autoLoc.district}${autoLoc.isSadar ? ' সদর' : ''} (${autoLoc.method.toUpperCase()})`);
       }
@@ -759,6 +765,26 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
     window.addEventListener('focus', syncCart);
     return () => window.removeEventListener('focus', syncCart);
   }, [CART_KEY]);
+
+  // ── Cart Auto-Clean (Stock Check) ──────────────────
+  useEffect(() => {
+    if (!products || products.length === 0 || cart.length === 0) return;
+    
+    let changed = false;
+    const newCart = cart.filter(item => {
+      const p = products.find(prod => prod.id === item.id);
+      if (p && p.stock === 0) {
+        toast.error(`${p.name} স্টকে নেই, কার্ট থেকে সরানো হয়েছে`);
+        changed = true;
+        return false;
+      }
+      return true;
+    });
+
+    if (changed) {
+      setCart(newCart);
+    }
+  }, [products, cart.length]); // Check when products load or cart size changes
 
   const addToCart = (product) => {
     if (product.stock === 0) {

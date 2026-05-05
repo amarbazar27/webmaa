@@ -362,7 +362,18 @@ export async function POST(req) {
         to: customerEmail,
         customerName,
         ...rufloPayload
-      }).catch(e => console.warn('[Ruflo] Customer email error:', e.message));
+      }).catch(e => {
+        console.warn('[Ruflo] Customer email error:', e.message);
+        adminDb.collection('system_logs').add({
+          type: 'email_failure',
+          context: 'customer_order_confirmation',
+          email: customerEmail,
+          shopId,
+          orderId: orderIdVisual,
+          error: e.message,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      });
     }
 
     if (shopData.deliveryConfig?.contactEmail) {
@@ -371,7 +382,18 @@ export async function POST(req) {
         customerName,
         customerPhone,
         ...rufloPayload
-      }).catch(e => console.warn('[Ruflo] Retailer email error:', e.message));
+      }).catch(e => {
+        console.warn('[Ruflo] Retailer email error:', e.message);
+        adminDb.collection('system_logs').add({
+          type: 'email_failure',
+          context: 'retailer_order_notification',
+          email: shopData.deliveryConfig.contactEmail,
+          shopId,
+          orderId: orderIdVisual,
+          error: e.message,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      });
     }
 
     return NextResponse.json({

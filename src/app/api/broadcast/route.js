@@ -40,9 +40,13 @@ export async function POST(req) {
     catch { return NextResponse.json({ error: 'Invalid token' }, { status: 401 }); }
 
     const body = await req.json();
-    const { shopId, subject, message, segment } = body;
-    if (!shopId || !subject || !message || !segment) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+    const { shopId, subject, message, segment, broadcastId } = body;
+    if (!shopId || !subject || !message || !segment || !broadcastId) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     if (subject.length > 200 || message.length > 2000) return NextResponse.json({ error: 'Content too long' }, { status: 400 });
+
+    const broadcastRef = adminDb.collection('shops').doc(shopId).collection('broadcasts').doc(broadcastId);
+    const existingBroadcast = await broadcastRef.get();
+    if (existingBroadcast.exists) return NextResponse.json({ success: true, message: 'Already sent' });
 
     const shopSnap = await adminDb.collection('shops').doc(shopId).get();
     if (!shopSnap.exists) return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
@@ -73,17 +77,24 @@ export async function POST(req) {
 
     const transporter = await getTransporter();
     let sent = 0, failed = 0;
+    const failures = [];
     const html = buildBroadcastHtml({ shopName: shopData.shopName || 'Store', subject, body: message.replace(/\n/g, '<br>') });
+    
     for (const email of targets) {
       try {
         await transporter.sendMail({ from: `"${shopData.shopName}" <${process.env.RUFLO_EMAIL}>`, to: email, subject, html });
         sent++;
-      } catch { failed++; }
+      } catch (e) { 
+        failed++; 
+        failures.push({ email, error: e.message });
+      }
     }
 
-    await adminDb.collection('shops').doc(shopId).collection('broadcasts').add({
+    await broadcastRef.set({
       subject, message, segment, totalTargets: targets.length, sent, failed,
       sentBy: decoded.uid, sentByName: decoded.name || 'Unknown',
+      status: failed === 0 ? 'success' : (sent === 0 ? 'failed' : 'partial'),
+      failures: failures.slice(0, 10), // Store first 10 failures for quick debugging
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 

@@ -274,9 +274,11 @@ export default function ProductDetailClient({ shop, product }) {
               {product.unit && <span className="text-xs text-purple-500 font-bold">/{product.unit}</span>}
             </div>
             {product.stock > 0 ? (
-              <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
-                <CheckCircle size={16} className="text-emerald-600" />
-                <span className="text-emerald-700 font-black text-sm">স্টকে আছে ({product.stock} পিস)</span>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${product.stock <= 5 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-100'}`}>
+                <CheckCircle size={16} className={product.stock <= 5 ? 'text-amber-600' : 'text-emerald-600'} />
+                <span className={`font-black text-sm ${product.stock <= 5 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                  {product.stock <= 5 ? `স্টক প্রায় শেষ (${product.stock} পিস)` : `স্টকে আছে (${product.stock} পিস)`}
+                </span>
               </div>
             ) : (
               <div className="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-xl border border-red-100">
