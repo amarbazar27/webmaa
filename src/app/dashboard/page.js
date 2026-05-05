@@ -83,7 +83,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
          <Card 
             title={`৳${totalRevenue.toLocaleString()}`} 
             subtitle="Gross Revenue" 
@@ -107,6 +107,12 @@ export default function DashboardPage() {
             subtitle="Store Visitors" 
             icon={Eye} 
             className="border-l-4 border-l-orange-500 shadow-sm" 
+         />
+         <Card 
+            title={`${((orders.length / estimatedVisitors) * 100).toFixed(1)}%`} 
+            subtitle="Conversion Rate" 
+            icon={Zap} 
+            className="border-l-4 border-l-yellow-500 shadow-sm" 
          />
       </div>
 

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib/ruflo';
+import { sendTelegramAlert } from '@/lib/telegram';
 
 // ── Strict Payload Validation ───────────────────────────
 const CheckoutSchema = z.object({
@@ -406,6 +407,14 @@ export async function POST(req) {
 
   } catch (err) {
     console.error('CHECKOUT ERROR:', err);
+    
+    // Send critical alert to Telegram on checkout failure
+    void sendTelegramAlert({
+      level: 'critical',
+      message: `Checkout API Failed: ${err.message}`,
+      context: { shopId: req.url || 'unknown', errorStack: err.stack }
+    });
+
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
