@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import ReviewSection from '@/components/shop/ReviewSection';
 
 // Deterministic fallback colors
 const FALLBACK_COLORS = ['bg-indigo-600','bg-emerald-600','bg-rose-600','bg-amber-600','bg-cyan-600','bg-fuchsia-600'];
@@ -472,6 +473,9 @@ export default function ProductDetailClient({ shop, product }) {
             ৳{aiPrice !== null ? aiPrice : (basePrice * qty).toFixed(0)}
           </span>
         </button>
+
+        {/* ── Verified Buyer Reviews ── */}
+        <ReviewSection shopId={shop.id} productId={product.id} />
 
         <div className="h-8" />
       </div>

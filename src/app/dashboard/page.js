@@ -7,6 +7,7 @@ import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users,
 import { Card, Button } from '@/components/ui';
 import Link from 'next/link';
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
+import AiInsightsPanel from '@/components/dashboard/AiInsightsPanel';
 
 export default function DashboardPage() {
   const { user, activeShopId } = useAuth();
@@ -111,6 +112,9 @@ export default function DashboardPage() {
 
       {/* Analytics Charts */}
       {orders.length > 0 && <AnalyticsCharts orders={orders} />}
+
+      {/* AI Insights */}
+      <AiInsightsPanel orders={orders} products={products} shopName={shop?.shopName} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Sales Feed */}

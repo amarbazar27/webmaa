@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
+import useLocation from '@/lib/useLocation';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import LoadingScreen from '@/components/ui/LoadingScreen';
@@ -20,6 +21,7 @@ import Image from 'next/image';
 import { useNetworkStatus } from '@/lib/useNetworkStatus';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
+import MessengerButton from '@/components/shop/MessengerButton';
 
 
 const CuteAIIcon = () => (
@@ -163,86 +165,41 @@ function ServiceBanner({ shop, status, setStatus, manualInput, setManualInput, d
       });
   }, [geoSelections.upazila]);
 
+  const { location: autoLoc, loading: autoLoading } = useLocation();
+
   useEffect(() => {
     if (serviceAreas.length === 0) return;
-    setStatus('checking');
-    navigator.geolocation?.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`, {
-            headers: { 'User-Agent': 'WebmaaShop/1.0' }
-          });
-          const data = await resp.json();
-          const address = data.address || {};
-          const area = address.suburb || address.neighbourhood || address.city_district || address.village || address.town || address.city || '';
-          const district = address.state_district || address.district || '';
-          
-          const fullLabel = [area, district, address.state].filter(Boolean).join(', ');
-          if (area) setDetectedLocation(fullLabel);
-          
-          const EN_TO_BN = {
-            'rangpur': 'রংপুর', 'dhaka': 'ঢাকা', 'chittagong': 'চট্টগ্রাম',
-            'sylhet': 'সিলেট', 'rajshahi': 'রাজশাহী', 'khulna': 'খুলনা',
-            'barisal': 'বরিশাল', 'barishal': 'বরিশাল',
-            'mymensingh': 'ময়মনসিংহ', 'comilla': 'কুমিল্লা',
-            'gazipur': 'গাজীপুর', 'narayanganj': 'নারায়ণগঞ্জ',
-            'metropolitan': 'মেট্রোপলিটন', 'sadar': 'সদর',
-            'cox': 'কক্সবাজার', 'cox\'s bazar': 'কক্সবাজার', 'bogra': 'বগুড়া',
-            'lalbag': 'লালবাগ', 'dhap': 'ধাপ', 'modern mor': 'মর্ডান মোড়', 'mahi ganj': 'মাহিগঞ্জ',
-            'sathmatha': 'সাতমাথা', 'jahaj company': 'জাহাজ কোম্পানি', 'shalbon': 'শালবন',
-            'college road': 'কলেজ রোড', 'medical mor': 'মেডিকেল মোড়', 'checkpost': 'চেকপোস্ট'
-          };
-          
-          // Remove problematic suffixes from OSM names before translating
-          const cleanOSMString = (str) => {
-            if (!str) return '';
-            return str.toLowerCase().replace(/ district| city| corporation| upazila| thana| zila/g, '').trim();
-          };
+    
+    if (autoLoading) {
+      setStatus('checking');
+      return;
+    }
 
-          const translateEN = (str) => str.toLowerCase().replace(/\b\w+\b/g, w => EN_TO_BN[w] || w);
-          const translatedLabel = translateEN(fullLabel);
-          
-          const searchTargets = [area, district, address.county, address.municipality, address.city, address.town, address.village]
-            .filter(Boolean)
-            .map(s => cleanOSMString(s));
-            
-          const translatedTargets = searchTargets.map(t => translateEN(t));
-          const allTargets = [...searchTargets, ...translatedTargets].filter(t => t.length > 2); // Ignore very short invalid targets
-          
-          let isMatch = false;
-          // Only perform strict check if shop specifically disabled the location selector AND they actively have service Areas
-          // But even then, we want to be forgiving on auto-location because GPS reverse-geocode is inaccurate in BD.
-          isMatch = serviceAreas.some(sa => {
-            if (!sa) return false;
-            const normalizedSa = sa.toLowerCase().trim();
-            // If any cleaned OSM word or translated word is inside the Retailer's string
-            if (allTargets.some(target => target.includes(normalizedSa) || normalizedSa.includes(target))) return true;
-            if (fullLabel.toLowerCase().includes(normalizedSa)) return true;
-            if (translatedLabel.includes(normalizedSa)) return true;
-            return false;
-          });
-          
-          // Extra leniency: if location mapping failed but the shop explicitly shows no dropdowns, 
-          // we shouldn't hard-block them on a false GPS read as BD GPS strings often lack matching.
-          // Let them proceed if the GPS at least found something. (The final order is still checked by the retailer anyway)
-          if (!isMatch && shop.showLocationSelector === false) {
-             isMatch = true; 
-          }
+    if (autoLoc) {
+      if (autoLoc.district) {
+         setDetectedLocation(`${autoLoc.district}${autoLoc.isSadar ? ' সদর' : ''} (${autoLoc.method.toUpperCase()})`);
+      }
+      
+      let isMatch = false;
+      const districtName = autoLoc.district || '';
+      
+      isMatch = serviceAreas.some(sa => {
+        if (!sa) return false;
+        const normalizedSa = sa.toLowerCase().trim();
+        if (districtName && normalizedSa.includes(districtName.toLowerCase())) return true;
+        return false;
+      });
+      
+      // Extra leniency: if shop explicitly shows no dropdowns
+      if (!isMatch && shop.showLocationSelector === false) {
+         isMatch = true; 
+      }
 
-          setStatus(isMatch ? 'available' : 'unavailable');
-        } catch (err) {
-          console.warn('Geolocation reverse geocoding failed:', err);
-          setStatus('unavailable');
-        }
-      },
-      (err) => {
-        console.warn('Geolocation position error:', err);
-        setStatus('unavailable');
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 }
-    );
-  }, [serviceAreas.length, shop.showLocationSelector]);
+      setStatus(isMatch ? 'available' : 'unavailable');
+    } else {
+      setStatus('unavailable');
+    }
+  }, [autoLoc, autoLoading, serviceAreas.length, shop.showLocationSelector]);
 
   const checkUnifiedLocation = () => {
     const { division, district, upazila, upazilaName, union } = geoSelections;
@@ -804,6 +761,10 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
   }, [CART_KEY]);
 
   const addToCart = (product) => {
+    if (product.stock === 0) {
+      toast.error('দুঃখিত, এই মুহূর্তে স্টকে নেই');
+      return;
+    }
     const existing = cart.find(item => item.id === product.id);
     if (existing) {
       setCart(prev => prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
@@ -1588,6 +1549,9 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
             </span>
           )}
         </button>
+
+        {/* Messenger Button */}
+        <MessengerButton shop={shop} />
       </div>
 
       {/* ── Mobile Bottom Nav Bar (hamburger + cart) ── */}

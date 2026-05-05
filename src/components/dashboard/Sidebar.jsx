@@ -20,6 +20,7 @@ const navItems = [
   { href: '/dashboard/categories', icon: Tag, label: 'Categories' },
   { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/dashboard/customers', icon: Users, label: 'Customers' },
+  { href: '/dashboard/broadcast', icon: Store, label: 'Broadcast' },
   { href: '/dashboard/settings', icon: Settings, label: 'Preferences' },
 ];
 

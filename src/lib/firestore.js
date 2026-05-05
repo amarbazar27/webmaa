@@ -445,3 +445,41 @@ export const subscribeGlobalConfig = (callback) => {
     }
   });
 };
+
+// ── REVIEWS ───────────────────────────────────────
+export const getReviews = async (shopId) => {
+  const q = query(
+    collection(db, 'shops', shopId, 'reviews'),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  );
+  try {
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) { return []; }
+};
+
+export const subscribeReviews = (shopId, callback) => {
+  const q = query(
+    collection(db, 'shops', shopId, 'reviews'),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+};
+
+// ── SHOP DESIGN (Realtime theme updates) ──────────
+export const subscribeShopDesign = (shopId, callback) => {
+  return onSnapshot(doc(db, 'shops', shopId), (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      callback({
+        designPreset: data.designPreset || 'classic',
+        designOverrides: data.designOverrides || {},
+        messengerLink: data.messengerLink || '',
+      });
+    }
+  });
+};

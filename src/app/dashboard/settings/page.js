@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
+import DesignThemeSelector from '@/components/dashboard/DesignThemeSelector';
 
 // Bangladesh Districts (partial list — key ones)
 const BD_DISTRICTS = [
@@ -898,6 +899,10 @@ export default function SettingsPage() {
                    </div>
                 </div>
               </div>
+            </Card>
+
+            <Card title="Design System" subtitle="10 Premium Themes" icon={Sparkles}>
+              <DesignThemeSelector shopId={activeShopId} />
             </Card>
 
             {/* Service Area Location */}

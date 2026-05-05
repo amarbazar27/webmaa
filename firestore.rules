@@ -132,6 +132,20 @@ service cloud.firestore {
         allow read: if isShopAdmin(shopId);
         allow write: if isShopAdmin(shopId);
       }
+
+      // Reviews: public read, created via server API (no client create)
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if false; // Server-only via Admin SDK
+        allow update, delete: if isShopAdmin(shopId);
+      }
+
+      // Broadcasts: admin-only (log of sent broadcasts)
+      match /broadcasts/{broadcastId} {
+        allow read: if isShopAdmin(shopId);
+        allow create: if false; // Server-only via Admin SDK
+        allow update, delete: if false;
+      }
     }
     
     // ── Default Deny ───────────────────────
