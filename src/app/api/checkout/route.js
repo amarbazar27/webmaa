@@ -285,7 +285,8 @@ export async function POST(req) {
 
     try {
       await adminDb.runTransaction(async (tx) => {
-        // 1. Check stocks first
+        // ═══ STEP 1: ALL READS FIRST (Firestore requirement) ═══
+        // Read all product snapshots
         const productSnaps = {};
         for (const item of verifiedItems) {
           const pRef = productsRef.doc(item.id);
@@ -294,16 +295,23 @@ export async function POST(req) {
           productSnaps[item.id] = pSnap;
         }
 
+        // Read counter (MUST be before any writes)
+        const counterSnap = await tx.get(counterRef);
+        const currentCount = counterSnap.exists ? (counterSnap.data().count || 0) : 0;
+        newCount = currentCount + 1;
+
+        // ═══ STEP 2: VALIDATE ═══
         for (const item of verifiedItems) {
           const pData = productSnaps[item.id].data();
           if (pData.stock !== undefined && pData.stock !== null) {
             if (pData.stock < item.quantity) {
-              throw new Error(`Out of stock: ${item.name}`);
+              throw new Error(`স্টক নেই: ${item.name}`);
             }
           }
         }
 
-        // 2. Perform updates
+        // ═══ STEP 3: ALL WRITES AFTER ALL READS ═══
+        // Update stock
         for (const item of verifiedItems) {
           const pRef = productsRef.doc(item.id);
           const pData = productSnaps[item.id].data();
@@ -312,10 +320,7 @@ export async function POST(req) {
           }
         }
 
-        // 3. Update counter
-        const snap = await tx.get(counterRef);
-        const current = snap.exists ? (snap.data().count || 0) : 0;
-        newCount = current + 1;
+        // Update counter
         tx.set(counterRef, { count: newCount }, { merge: true });
       });
     } catch (txError) {
