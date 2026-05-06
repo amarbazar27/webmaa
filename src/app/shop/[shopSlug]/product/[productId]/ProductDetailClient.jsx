@@ -1,9 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, ShoppingCart, Plus, Minus, Sparkles, Loader2,
-  CheckCircle, Package, Tag, Layers, MessageSquare, Info
+  CheckCircle, Package, Tag, Layers, MessageSquare, Info,
+  Share2, Link as LinkIcon, Send, Check
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
@@ -61,6 +62,61 @@ export default function ProductDetailClient({ shop, product }) {
     try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); }
     catch { return []; }
   };
+
+  // ── SSR-safe page URL (prevents hydration mismatch) ──
+  const [pageUrl, setPageUrl] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
+  useEffect(() => {
+    setPageUrl(window.location.href);
+  }, []);
+
+  const copyToClipboard = useCallback((url) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for older browsers / insecure contexts
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setLinkCopied(true);
+      toast.success('লিংক কপি করা হয়েছে! 📋');
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error('লিংক কপি করা যায়নি।');
+    }
+  }, []);
+
+  const handleShare = useCallback(async (platform) => {
+    if (!pageUrl) return;
+    trackStoreEvent('share', { content_type: 'product', item_id: product.id, method: platform || 'native' });
+
+    if (platform) return; // Platform-specific links handle themselves
+
+    const shareData = {
+      title: `${product.name} - ${shop.shopName}`,
+      text: product.description || `${shop.shopName}-এ দারুণ এই পণ্যটি দেখুন!`,
+      url: pageUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          copyToClipboard(pageUrl);
+        }
+      }
+    } else {
+      copyToClipboard(pageUrl);
+    }
+  }, [pageUrl, product.id, product.name, product.description, shop.shopName, copyToClipboard]);
 
   // Price Calculation Logic
   let calculatedBasePrice = parseFloat(product.price) || 0;
@@ -175,8 +231,20 @@ export default function ProductDetailClient({ shop, product }) {
   };
 
   const handleAddToCart = () => {
+    // 🚨 Stock guard
+    if (product.stock === 0) {
+      toast.error('এই পণ্যটি বর্তমানে স্টকে নেই।');
+      return;
+    }
+
     const cart = getCart();
     const finalPrice = aiPrice !== null ? aiPrice : basePrice * qty;
+
+    // 🚨 Price sanity check
+    if (finalPrice <= 0 || isNaN(finalPrice)) {
+      toast.error('মূল্য সঠিক নয়। আবার চেষ্টা করুন।');
+      return;
+    }
     
     // Build variants summary
     let variantString = '';
@@ -483,6 +551,53 @@ export default function ProductDetailClient({ shop, product }) {
 
         <div className="h-8" />
       </div>
+
+      {/* Floating Share Button */}
+      {(shop.settings?.enableProductSharing ?? true) && pageUrl && (
+        <div className="fixed bottom-24 right-4 z-50 flex flex-col items-end gap-2 group">
+          <div className="hidden group-hover:flex flex-col gap-2 mb-2 transition-all duration-300 origin-bottom">
+            <a 
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              onClick={() => handleShare('facebook')}
+              className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+            >
+               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" /></svg>
+            </a>
+            <a 
+              href={`https://wa.me/?text=${encodeURIComponent(product.name + ' - ' + pageUrl)}`}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              onClick={() => handleShare('whatsapp')}
+              className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+            >
+               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M17.498 14.382c-.301-.15-1.767-.867-2.04-.966-.273-.101-.473-.15-.673.15-.197.295-.771.964-.944 1.162-.175.195-.349.21-.646.065-.301-.15-1.265-.462-2.406-1.485-.888-.795-1.484-1.77-1.66-2.07-.174-.295-.019-.465.13-.615.136-.135.301-.345.451-.523.146-.181.194-.301.297-.496.098-.21.046-.395-.03-.546-.073-.15-.673-1.62-.922-2.206-.24-.584-.487-.51-.672-.51-.172-.015-.371-.015-.571-.015-.2 0-.523.074-.797.359-.273.3-1.045 1.02-1.045 2.475s1.07 2.865 1.219 3.075c.149.195 2.105 3.195 5.1 4.485.714.3 1.27.48 1.704.629.714.227 1.365.195 1.88.121.574-.091 1.767-.721 2.016-1.426.255-.705.255-1.29.18-1.425-.074-.135-.27-.21-.57-.345z" clipRule="evenodd" /><path fillRule="evenodd" d="M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.46 0 .104 5.334.104 11.894c0 2.096.549 4.14 1.595 5.945L0 24l6.335-1.65c1.745.95 3.68 1.46 5.695 1.46 6.585 0 11.941-5.344 11.941-11.904 0-3.181-1.24-6.165-3.45-8.457zM12.045 21.84c-1.78 0-3.52-.48-5.045-1.38l-.36-.21-3.75.975.99-3.645-.24-.375C2.7 15.69 2.155 13.82 2.155 11.894c0-5.435 4.43-9.855 9.89-9.855 2.64 0 5.115 1.02 6.98 2.895 1.86 1.86 2.88 4.335 2.88 6.96 0 5.42-4.43 9.856-9.86 9.856z" clipRule="evenodd" /></svg>
+            </a>
+            <a 
+              href={`https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(product.name)}`}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              onClick={() => handleShare('telegram')}
+              className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+            >
+               <Send size={18} className="-ml-1" />
+            </a>
+            <button 
+              onClick={() => { copyToClipboard(pageUrl); handleShare('copy'); }}
+              className={`w-10 h-10 rounded-full text-white flex items-center justify-center shadow-lg hover:scale-110 transition-all ${linkCopied ? 'bg-emerald-500' : 'bg-slate-800'}`}
+            >
+               {linkCopied ? <Check size={18} /> : <LinkIcon size={18} />}
+            </button>
+          </div>
+          <button
+            onClick={() => handleShare()}
+            className="w-14 h-14 rounded-full bg-white/90 backdrop-blur-md border border-slate-200/50 text-slate-800 flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:bg-white hover:scale-105 transition-all z-50 ring-4 ring-purple-500/10"
+          >
+            <Share2 size={24} className="text-purple-600" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

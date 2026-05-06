@@ -17,23 +17,38 @@ function serializeData(obj) {
 
 export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
+
 export async function generateMetadata({ params }) {
   const { shopSlug } = await params;
   const shop = await getShopBySlug(shopSlug);
-  const logoUrl = shop?.logoUrl || '/logo.png';
+  const rawLogo = shop?.logoUrl || '/logo.png';
+  const logoUrl = rawLogo.startsWith('http') ? rawLogo : `${BASE_URL}${rawLogo}`;
+  const canonicalUrl = `${BASE_URL}/shop/${shopSlug}`;
+
   return {
     title: shop?.shopName || 'Webmaa Store',
     description: shop?.slogan || 'Welcome to our store',
     manifest: `/api/manifest?shop=${shopSlug}`,
+    alternates: { canonical: canonicalUrl },
     icons: {
-      icon: logoUrl,
-      shortcut: logoUrl,
-      apple: logoUrl,
+      icon: rawLogo,
+      shortcut: rawLogo,
+      apple: rawLogo,
     },
     openGraph: {
       title: shop?.shopName || 'Webmaa Store',
       description: shop?.slogan || 'Welcome to our store',
+      url: canonicalUrl,
       images: [{ url: logoUrl, width: 512, height: 512, alt: shop?.shopName || 'Logo' }],
+      type: 'website',
+      siteName: shop?.shopName || 'Webmaa',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: shop?.shopName || 'Webmaa Store',
+      description: shop?.slogan || 'Welcome to our store',
+      images: [logoUrl],
     }
   };
 }

@@ -70,7 +70,8 @@ export async function POST(req) {
     // ── Input Validation ────────────────────────────────
     const parsed = CheckoutSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed' }, { status: 400 });
+      console.error('Validation Error:', parsed.error.errors);
+      return NextResponse.json({ error: 'Validation failed: ' + parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') }, { status: 400 });
     }
 
     const {

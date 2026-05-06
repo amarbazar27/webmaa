@@ -23,7 +23,7 @@ import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
 import MessengerButton from '@/components/shop/MessengerButton';
 import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
-
+import AiShoppingList from '@/components/shop/AiShoppingList';
 
 const CuteAIIcon = () => (
   <div className="relative w-12 h-12 flex items-center justify-center animate-bounce">
@@ -486,6 +486,17 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       }
     }
   }, [cart, CART_KEY, initialShop.id, user]);
+
+  useEffect(() => {
+    if (user && typeof sessionStorage !== 'undefined') {
+      if (sessionStorage.getItem('returnToCheckout') === 'true') {
+        sessionStorage.removeItem('returnToCheckout');
+        if (cart.length > 0) {
+          setIsOrderOpen(true);
+        }
+      }
+    }
+  }, [user, cart.length]);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
@@ -1174,7 +1185,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
             {/* Static logo - no href to prevent 'No store found' navigation */}
             <div className="flex items-center gap-2 select-none cursor-default">
               {shop.logoUrl ? (
-                <img src={shop.logoUrl} className="w-9 h-9 rounded-xl object-contain border border-slate-100" alt={shop.shopName} />
+                <img loading="lazy" src={shop.logoUrl} className="w-9 h-9 rounded-xl object-contain border border-slate-100" alt={shop.shopName} />
               ) : (
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg">
                   {shop.shopName?.[0] || 'S'}
@@ -1220,7 +1231,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
           <div className="relative w-full h-full">
             {shop.banners.map((img, i) => (
               <div key={i} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${i === activeBanner ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
-                <img src={img} alt={`Banner ${i+1}`} className="w-full h-full object-cover" />
+                <img src={img} loading={i === 0 ? "eager" : "lazy"} alt={`Banner ${i+1}`} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/20" />
               </div>
             ))}
@@ -1242,7 +1253,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
           </div>
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-purple-800 via-purple-600 to-blue-700 flex items-center justify-center p-6 text-center shadow-inner relative">
-            {shop.coverImg && <img src={shop.coverImg} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
+            {shop.coverImg && <img loading="eager" src={shop.coverImg} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
             <h2 className="relative z-10 text-3xl md:text-5xl font-black text-white drop-shadow-xl tracking-tight">{shop.welcomeMessage || 'স্বাগতম আমাদের স্টোরে!'}</h2>
           </div>
         )}
@@ -1269,6 +1280,26 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
             <div><p className="text-xs md:text-sm font-black text-amber-900 leading-tight">Premium Quality</p><p className="text-[9px] md:text-[10px] text-amber-600 font-bold mt-0.5">Best in class</p></div>
           </div>
         </div>
+
+        {/* ── AI Shopping List Upload ── */}
+        <AiShoppingList 
+          shop={shop} 
+          products={initialProducts} 
+          onAddToCart={(items) => {
+            let newCart = [...cart];
+            items.forEach(item => {
+               const existing = newCart.find(i => i.id === item.id);
+               if (existing) {
+                 existing.quantity += item.quantity;
+               } else {
+                 newCart.push(item);
+               }
+            });
+            setCart(newCart);
+            toast.success(`${items.length} টি পণ্য কার্টে যোগ হয়েছে!`);
+          }} 
+        />
+
         {/* ── Search, Sort & Categories ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3 overflow-x-auto scrollbar-hide">
           <div className="relative shrink-0 w-44 sm:w-52">
@@ -1460,7 +1491,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 {shop.logoUrl ? (
-                  <img src={shop.logoUrl} className="w-12 h-12 rounded-2xl border-2 border-purple-500/30 object-cover shadow-lg shadow-purple-900/30" alt="Logo" />
+                  <img loading="lazy" src={shop.logoUrl} className="w-12 h-12 rounded-2xl border-2 border-purple-500/30 object-cover shadow-lg shadow-purple-900/30" alt="Logo" />
                 ) : (
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-lg">{shop.shopName?.[0]}</div>
                 )}
@@ -1736,7 +1767,18 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
                       toast.error('দুঃখিত, আপনার লোকেশনে আমাদের সার্ভিস নেই। অর্ডার করা যাবে না।');
                       return;
                     }
+                    const requireLogin = shop.authSettings?.requireLoginBeforeOrder ?? true;
+                    if (requireLogin && !user) {
+                      toast.error('অর্ডার করতে অনুগ্রহ করে লগইন করুন।');
+                      if (typeof sessionStorage !== 'undefined') {
+                        sessionStorage.setItem('returnToCheckout', 'true');
+                      }
+                      setIsCartOpen(false);
+                      setIsProfileOpen(true);
+                      return;
+                    }
                     setIsOrderOpen(true);
+                    setIsCartOpen(false);
                   }} 
                   className="w-full py-4 bg-slate-900 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-lg"
                 >
