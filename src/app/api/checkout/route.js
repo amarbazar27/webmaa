@@ -11,9 +11,9 @@ import { sendTelegramAlert } from '@/lib/telegram';
 const CheckoutSchema = z.object({
   shopId: z.string().min(1),
   customerName: z.string().min(2).max(100),
-  customerPhone: z.string().regex(/^01[3-9]\d{8}$/),
+  customerPhone: z.string().regex(/^(\+88)?01[3-9]\d{8}$/),
   customerEmail: z.string().email().optional().or(z.literal('')),
-  customerAddress: z.string().min(5).max(200),
+  customerAddress: z.string().min(3).max(300),
   customerNote: z.string().max(300).optional(),
   transactionId: z.string().max(50).optional(),
   paymentNumber: z.string().max(15).optional(),
@@ -90,7 +90,7 @@ export async function POST(req) {
     } = parsed.data;
 
     if (!adminDb) {
-      return NextResponse.json({ error: 'Server config error' }, { status: 500 });
+      return NextResponse.json({ error: 'Server configuration error: Firebase Admin SDK not initialized. Check your environment variables (FIREBASE_PROJECT_ID, etc).' }, { status: 500 });
     }
 
     // ── Fetch shop ─────────────────────────────────────
@@ -416,6 +416,6 @@ export async function POST(req) {
       context: { shopId: req.url || 'unknown', errorStack: err.stack }
     });
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: `Checkout Failed: ${err.message}` }, { status: 500 });
   }
 }

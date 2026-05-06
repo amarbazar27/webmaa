@@ -54,7 +54,8 @@ const CuteAIIcon = () => (
 );
 
 function validatePhone(phone) {
-  return /^01[3-9]\d{8}$/.test(phone.replace(/\s/g, ''));
+  const cleaned = phone.replace(/[\s-]/g, '');
+  return /^(\+88)?01[3-9]\d{8}$/.test(cleaned);
 }
 
 // Deterministic bright colors for product fallbacks
@@ -760,6 +761,22 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
     return a.name.localeCompare(b.name, 'bn');
   });
 
+  const validatePhone = (num) => {
+    return /^01[3-9]\d{8}$/.test(num) || /^\+8801[3-9]\d{8}$/.test(num);
+  };
+
+  const handlePhoneChange = (e) => {
+    let val = e.target.value;
+    if (val.startsWith('+88')) {
+       val = '+' + val.replace(/\D/g, '');
+    } else {
+       val = val.replace(/\D/g, '').slice(0, 11);
+    }
+    setOrderForm(f => ({ ...f, phone: val }));
+    if (val.length >= 11 && !validatePhone(val)) setPhoneError('বৈধ ১১ ডিজিটের নম্বর লিখুন (যেমন: 017...)');
+    else setPhoneError('');
+  };
+
   // ── Cart Actions ───────────────────────────────
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -844,12 +861,7 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
     toast.error('কার্ট থেকে সরানো হয়েছে');
   };
 
-  const handlePhoneChange = (e) => {
-    const val = e.target.value.replace(/\D/g, '').slice(0, 11);
-    setOrderForm(f => ({ ...f, phone: val }));
-    if (val.length === 11 && !validatePhone(val)) setPhoneError('বৈধ বাংলাদেশি নম্বর লিখুন (01X-XXXXXXXX)');
-    else setPhoneError('');
-  };
+
 
     const handlePlaceOrder = async (e) => {
     e.preventDefault();
@@ -939,8 +951,13 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
         headers,
         body: JSON.stringify(payload)
       });
-      const resp = await res.json();
-      if (!res.ok) throw new Error(resp.error || 'Server error');
+      let resp;
+      try {
+        resp = await res.json();
+      } catch (e) {
+        throw new Error('Server returned invalid response. Please try again.');
+      }
+      if (!res.ok) throw new Error(resp.error || `Error ${res.status}: Server failed`);
       return resp;
     };
 
@@ -954,23 +971,10 @@ ${userOrders.length > 0 ? `\n📋 গ্রাহকের আগের অর�
       const resp = await sendOrder(reqPayload);
       await onSuccess(resp);
     } catch (err) {
-      toast.error('অর্ডার পাঠানো যাচ্ছে না, আবার চেষ্টা হচ্ছে...');
-      await savePendingOrder(reqPayload);
-      let attempts = 0;
-      const retryDelays = [5000, 15000, 30000];
-      const attemptRetry = async () => {
-        if (attempts >= retryDelays.length) return;
-        setTimeout(async () => {
-          try {
-            const resp = await sendOrder(reqPayload);
-            await removePendingOrder(reqPayload.localId);
-            await onSuccess(resp);
-          } catch (e) { attempts++; attemptRetry(); }
-        }, retryDelays[attempts]);
-      };
-      attemptRetry();
-    } finally {
-      setPlacing(false); setIsOrderOpen(false);
+      // Show the EXACT error to user — do NOT close modal
+      toast.error(`অর্ডার ব্যর্থ: ${err.message}`, { duration: 8000 });
+      setPlacing(false);
+      // Do NOT close modal — user needs to see error and retry
     }
   };
 

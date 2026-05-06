@@ -1,27 +1,13 @@
 'use client';
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Loader2, ListPlus, X, ShoppingCart, Sparkles, RotateCcw, AlertTriangle, Search } from 'lucide-react';
+import { Camera, Loader2, ListPlus, X, ShoppingCart, Sparkles, RotateCcw, AlertTriangle, Search, ImagePlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // ═══════════════════════════════════════════════════════════════════════
-// AI Shopping List — Production Hardened
-//
-// Fixes:
-// 1. Client-side image compression before upload
-// 2. MIME type validation
-// 3. Timeout handling with user feedback
-// 4. Retry button
-// 5. Confidence badges ("AI নিশ্চিত নয়")
-// 6. Manual search fallback
-// 7. Empty/error state handling
-// 8. File input reset after use
+// AI Shopping List — Production v3 (Full Fix)
 // ═══════════════════════════════════════════════════════════════════════
 
-const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
-
-// Compress image client-side to reduce upload size
-function compressImage(file, maxWidth = 1200, quality = 0.8) {
+function compressImage(file, maxWidth = 1200, quality = 0.75) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -29,12 +15,10 @@ function compressImage(file, maxWidth = 1200, quality = 0.8) {
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let { width, height } = img;
-
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
@@ -54,7 +38,7 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
   const [detectedItems, setDetectedItems] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState(null);
-  const [lastImage, setLastImage] = useState(null); // For retry
+  const [lastImage, setLastImage] = useState(null);
   const [manualSearch, setManualSearch] = useState('');
   const fileInputRef = useRef(null);
 
@@ -62,48 +46,49 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // ── Image Upload Handler ────────────────────────────────────────
   const handleImageUpload = useCallback(async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // MIME type validation
-    if (!ALLOWED_TYPES.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic|heif)$/i)) {
-      toast.error('শুধুমাত্র JPEG, PNG, বা WebP ছবি আপলোড করুন।');
-      resetInput();
-      return;
-    }
-
-    // Size check (pre-compression)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('১০ মেগাবাইটের চেয়ে ছোট ছবি ব্যবহার করুন।');
-      resetInput();
-      return;
-    }
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
     setError(null);
     setIsProcessing(true);
-    setDetectedItems([]);
 
     try {
-      // Compress image before upload
-      const compressed = await compressImage(file);
-      setLastImage(compressed);
-      await processImage(compressed);
+      for (const file of files) {
+        if (file.size > 15 * 1024 * 1024) {
+          toast.error(`${file.name} অনেক বড় (১৫MB এর কম ছবি দিন)`);
+          continue;
+        }
+
+        // iPhone HEIC check
+        if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+          toast.error('HEIC ফরম্যাট সাপোর্ট করে না। JPEG/PNG ছবি দিন।');
+          continue;
+        }
+
+        try {
+          const compressed = await compressImage(file);
+          setLastImage(compressed);
+          await processImage(compressed);
+        } catch (compErr) {
+          toast.error(`${file.name} প্রসেস করা যায়নি`);
+        }
+      }
     } catch (err) {
       setError('ছবি প্রসেস করতে সমস্যা হয়েছে।');
-      toast.error('ছবি প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {
       resetInput();
+      setIsProcessing(false);
     }
   }, [shop.id]);
 
+  // ── Process Image via API ───────────────────────────────────────
   const processImage = async (base64Img) => {
-    setIsProcessing(true);
     setError(null);
-    setDetectedItems([]);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 35000); // 35s client timeout
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
     try {
       const res = await fetch('/api/ai-vision', {
@@ -113,49 +98,52 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
         body: JSON.stringify({
           shopId: shop.id,
           imageBase64: base64Img
-          // NOTE: products NOT sent from client anymore — server fetches them securely
         })
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('সার্ভার থেকে ভুল রেসপন্স এসেছে');
+      }
 
       if (!res.ok) {
         if (res.status === 429) {
           setError('অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন।');
-          toast.error('অনেক বেশি রিকোয়েস্ট। এক মিনিট পর আবার চেষ্টা করুন।');
-        } else if (res.status === 408) {
-          setError('রিকোয়েস্ট টাইমআউট হয়েছে। ছোট ছবি ব্যবহার করুন।');
-          toast.error('টাইমআউট হয়েছে।');
+          toast.error('অনেক বেশি রিকোয়েস্ট। এক মিনিট পর চেষ্টা করুন।');
         } else {
-          throw new Error(data.error || 'Failed to process');
+          setError(`AI সমস্যা: ${data.error || 'Unknown error'}`);
+          toast.error(data.error || 'AI প্রসেসিং ব্যর্থ');
         }
         return;
       }
 
       if (data.items && data.items.length > 0) {
-        setDetectedItems(data.items);
+        setDetectedItems(prev => [...prev, ...data.items]);
         setShowModal(true);
-        toast.success(`${data.items.length}টি পণ্য সনাক্ত হয়েছে!`);
+        toast.success(`${data.items.length}টি পণ্য পাওয়া গেছে!`);
       } else {
-        setError('ছবি থেকে কোনো পণ্য সনাক্ত করা যায়নি। আবার চেষ্টা করুন বা ম্যানুয়ালি খুঁজুন।');
+        setError('ছবি থেকে কোনো পণ্য সনাক্ত হয়নি। আবার চেষ্টা করুন।');
         toast.error('কোনো পণ্য সনাক্ত হয়নি।');
       }
     } catch (err) {
       if (err.name === 'AbortError') {
-        setError('রিকোয়েস্ট টাইমআউট। ছোট ছবি দিয়ে আবার চেষ্টা করুন।');
+        setError('টাইমআউট হয়েছে। ছোট ছবি দিয়ে আবার চেষ্টা করুন।');
         toast.error('টাইমআউট হয়েছে।');
       } else {
-        setError('AI সার্ভিসে সংযোগ করা যাচ্ছে না।');
-        toast.error('সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+        setError(`AI সমস্যা: ${err.message || 'সার্ভারে সংযোগ করা যাচ্ছে না'}`);
+        toast.error('AI কানেকশন ব্যর্থ।');
       }
     } finally {
-      setIsProcessing(false);
+      clearTimeout(timeoutId);
     }
   };
 
   const handleRetry = () => {
     if (lastImage) {
-      processImage(lastImage);
+      setIsProcessing(true);
+      processImage(lastImage).finally(() => setIsProcessing(false));
     } else {
       fileInputRef.current?.click();
     }
@@ -197,7 +185,7 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
     setDetectedItems([]);
   };
 
-  // Manual search filter
+  // Manual search
   const filteredManualProducts = manualSearch.trim()
     ? products.filter(p =>
         p.name?.toLowerCase().includes(manualSearch.toLowerCase()) &&
@@ -233,7 +221,7 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
         সম্ভাব্য
       </span>
     );
-    return null; // high confidence — no badge needed
+    return null;
   };
 
   return (
@@ -250,25 +238,27 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
             </div>
             <div>
               <h3 className="font-black text-slate-900 text-lg">AI শপিং লিস্ট</h3>
-              <p className="text-sm font-bold text-slate-600 mt-0.5">হাতে লেখা ফর্দ আপলোড করুন, AI সব কার্টে যোগ করবে!</p>
+              <p className="text-sm font-bold text-slate-600 mt-0.5">ফর্দের ছবি তুলুন বা গ্যালারি থেকে দিন!</p>
             </div>
           </div>
 
           <div className="shrink-0 w-full sm:w-auto flex gap-2">
+            {/* Hidden file input - positioned offscreen for iOS compatibility */}
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic"
-              capture="environment"
-              className="hidden"
+              accept="image/*"
+              multiple
               ref={fileInputRef}
               onChange={handleImageUpload}
+              style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
+              tabIndex={-1}
             />
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
               className="flex-1 sm:flex-initial px-6 py-3 bg-purple-600 text-white font-black rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:transform-none"
             >
-              {isProcessing ? <><Loader2 className="animate-spin" size={18} /> প্রসেস হচ্ছে...</> : <><Camera size={18} /> ফর্দ আপলোড</>}
+              {isProcessing ? <><Loader2 className="animate-spin" size={18} /> প্রসেস হচ্ছে...</> : <><ImagePlus size={18} /> ছবি দিন</>}
             </button>
           </div>
         </div>
@@ -327,6 +317,15 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
                   </div>
                 )}
               </div>
+
+              {/* আরেকটা ছবি আপলোড বাটন */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+                className="w-full py-2.5 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 font-black text-sm hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <ImagePlus size={16} /> আরেকটা ছবি যোগ করুন
+              </button>
 
               {detectedItems.map((item, index) => {
                 const product = products.find(p => p.id === item.productId);

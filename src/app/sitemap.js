@@ -1,7 +1,7 @@
 import { getAllShops } from '@/lib/firestore';
 
 export default async function sitemap() {
-  const baseUrl = 'https://webmaa.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://messerbazar.com';
 
   try {
     const shops = await getAllShops();
