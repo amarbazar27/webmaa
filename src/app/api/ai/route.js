@@ -158,10 +158,36 @@ export async function POST(req) {
           }
         }
       }
+      // ── Gemini failed: try Groq as silent fallback ──────────────────
+      const groqKey = process.env.GROQ_API_KEY;
+      if (groqKey) {
+        const groqMessages = messages
+          .filter(m => m.role !== 'system')
+          .map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.text || m.content }));
+        
+        const systemMsg = messages.find(m => m.role === 'system');
+        if (systemMsg) groqMessages.unshift({ role: 'system', content: systemMsg.text || systemMsg.content });
+
+        try {
+          const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+            body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: groqMessages, temperature: 0.7, max_tokens: 1000 })
+          });
+          const groqData = await groqResp.json();
+          if (groqResp.ok && groqData.choices?.[0]?.message?.content) {
+            return NextResponse.json({ choices: [{ message: { content: groqData.choices[0].message.content } }] });
+          }
+        } catch (groqErr) {
+          // Groq also failed, return original error
+        }
+      }
+
       return NextResponse.json(
-        lastError || { error: { message: 'All AI models failed.' } }, 
-        { status: 500 }
+        lastError || { error: { message: 'AI service unavailable. Please configure a valid API key.' } }, 
+        { status: 503 }
       );
+
     } else {
       // 🚀 OpenAI-Compatible Wrapper (Groq, OpenRouter, Custom)
       const bodyParameters = {
