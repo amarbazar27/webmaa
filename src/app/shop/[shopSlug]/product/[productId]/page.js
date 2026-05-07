@@ -82,6 +82,19 @@ function ProductJsonLd({ shop, product, shopSlug }) {
   );
 }
 
+// Helper: recursively convert Firestore Timestamps to plain ISO strings
+function serializeData(obj) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (typeof obj.seconds === 'number' && typeof obj.nanoseconds === 'number') {
+    return new Date(obj.seconds * 1000).toISOString();
+  }
+  if (Array.isArray(obj)) return obj.map(serializeData);
+  const plain = {};
+  for (const key of Object.keys(obj)) plain[key] = serializeData(obj[key]);
+  return plain;
+}
+
 export default async function ProductDetailPage({ params }) {
   const { shopSlug, productId } = await params;
   const shop = await getShopBySlug(shopSlug);
@@ -94,7 +107,7 @@ export default async function ProductDetailPage({ params }) {
   return (
     <>
       <ProductJsonLd shop={shop} product={product} shopSlug={shopSlug} />
-      <ProductDetailClient shop={shop} product={product} />
+      <ProductDetailClient shop={serializeData(shop)} product={serializeData(product)} />
     </>
   );
 }
