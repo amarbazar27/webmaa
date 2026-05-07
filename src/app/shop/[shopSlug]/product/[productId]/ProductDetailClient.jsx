@@ -42,7 +42,15 @@ export default function ProductDetailClient({ shop, product }) {
     <ErrorBoundary>
       <div className="min-h-screen bg-slate-50">
         <Header router={logic.router} product={product} shop={shop} />
-        <ServiceBanner shop={shop} status={logic.locationStatus} setStatus={logic.setLocationStatus} />
+        <ServiceBanner 
+          shop={shop} 
+          status={logic.locationStatus} 
+          setStatus={logic.setLocationStatus} 
+          manualInput={logic.locationManualInput}
+          setManualInput={logic.setLocationManualInput}
+          detectedLocation={logic.detectedLocation}
+          setDetectedLocation={logic.setDetectedLocation}
+        />
         
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
           <ProductImage product={product} currentPrice={basePrice} />

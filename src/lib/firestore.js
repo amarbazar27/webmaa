@@ -491,7 +491,7 @@ export const sendBroadcast = async (data) => {
   });
 };
 
-export const subscribeBroadcasts = (callback) => {
+export const subscribeBroadcasts = (callback, errorCallback) => {
   const q = query(
     collection(db, 'broadcasts'),
     orderBy('createdAt', 'desc'),
@@ -499,5 +499,5 @@ export const subscribeBroadcasts = (callback) => {
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-  });
+  }, errorCallback);
 };

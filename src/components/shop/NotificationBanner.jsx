@@ -29,6 +29,8 @@ export default function NotificationBanner({ shopId = null }) {
         return false;
       });
       setNotifications(relevant);
+    }, (err) => {
+      console.warn('[NotificationBanner] Listener failed:', err.message);
     });
 
     return () => unsub();

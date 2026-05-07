@@ -1,8 +1,6 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
-import { trackStoreEvent } from '@/components/shop/StoreAnalytics';
 
 export function useProductLogic(shop, product) {
   const router = useRouter();
@@ -31,17 +29,24 @@ export function useProductLogic(shop, product) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState('');
 
+  // Location / Service Banner State
+  const [locationStatus, setLocationStatus] = useState('idle');
+  const [locationManualInput, setLocationManualInput] = useState('');
+  const [detectedLocation, setDetectedLocation] = useState('');
+
   // Persist note
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && product?.id) {
       const saved = localStorage.getItem(`note_${product.id}`);
       if (saved) setCustomerNote(saved);
     }
-  }, [product.id]);
+  }, [product?.id]);
 
   useEffect(() => {
-    localStorage.setItem(`note_${product.id}`, customerNote);
-  }, [customerNote, product.id]);
+    if (product?.id) {
+      localStorage.setItem(`note_${product.id}`, customerNote);
+    }
+  }, [customerNote, product?.id]);
 
   const handleQtyChange = (delta) => {
     setQty(prev => Math.max(1, Math.min(999, prev + delta)));
@@ -56,6 +61,9 @@ export function useProductLogic(shop, product) {
     aiPrice, setAiPrice,
     aiLoading, setAiLoading,
     aiResult, setAiResult,
+    locationStatus, setLocationStatus,
+    locationManualInput, setLocationManualInput,
+    detectedLocation, setDetectedLocation,
     selectedSize, setSelectedSize,
     selectedVariants, setSelectedVariants,
     handleQtyChange,

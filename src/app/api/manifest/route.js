@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase-admin';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const shopSlug = searchParams.get('shop');
 
-  // Default Webmaa Dashboard Manifest
   const defaultManifest = {
     name: "Webmaa Dashboard",
     short_name: "Webmaa",
@@ -22,13 +20,16 @@ export async function GET(request) {
     ]
   };
 
-  if (!shopSlug) {
+  if (!shopSlug || !adminDb) {
     return NextResponse.json(defaultManifest);
   }
 
   try {
-    const q = query(collection(db, 'shops'), where('subdomainSlug', '==', shopSlug));
-    const snap = await getDocs(q);
+    const shopsRef = adminDb.collection('shops');
+    let snap = await shopsRef.where('subdomainSlug', '==', shopSlug).limit(1).get();
+    if (snap.empty) {
+      snap = await shopsRef.where('shopSlug', '==', shopSlug).limit(1).get();
+    }
     
     if (snap.empty) {
       return NextResponse.json(defaultManifest);
@@ -36,7 +37,6 @@ export async function GET(request) {
     
     const shop = snap.docs[0].data();
     
-    // Custom Retailer Shop Manifest
     return NextResponse.json({
       name: shop.shopName || "Webmaa Store",
       short_name: shop.shopName ? shop.shopName.substring(0, 12) : "Store",
@@ -44,7 +44,7 @@ export async function GET(request) {
       start_url: `/shop/${shopSlug}`,
       display: "standalone",
       background_color: "#ffffff",
-      theme_color: "#9333ea", // Can also pull from shop settings if available
+      theme_color: "#9333ea",
       orientation: "portrait-primary",
       icons: [
         {
