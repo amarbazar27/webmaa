@@ -4,13 +4,15 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, ShoppingCart, Plus, Minus, Sparkles, Loader2,
   CheckCircle, Package, Tag, Layers, MessageSquare, Info,
-  Share2, Link as LinkIcon, Send, Check
+  Share2, Link as LinkIcon, Send, Check, Download, Star
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import Script from 'next/script';
 import ReviewSection from '@/components/shop/ReviewSection';
 import { trackStoreEvent } from '@/components/shop/StoreAnalytics';
+import ServiceBanner from '@/components/shop/ServiceBanner';
 
 // Deterministic fallback colors
 const FALLBACK_COLORS = ['bg-indigo-600','bg-emerald-600','bg-rose-600','bg-amber-600','bg-cyan-600','bg-fuchsia-600'];
@@ -22,7 +24,7 @@ function getFallbackColor(name = '') {
 
 export default function ProductDetailClient({ shop, product }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
 
   // Variant State (Shopify style)
   const isLegacySizes = !product.variants && (product.sizes?.length > 0);
@@ -48,6 +50,25 @@ export default function ProductDetailClient({ shop, product }) {
   const [customInput, setCustomInput] = useState('');
   const [aiPrice, setAiPrice] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+
+  // ── Location & Service Area ──
+  const [locationStatus, setLocationStatus] = useState('idle');
+  const [locationManualInput, setLocationManualInput] = useState('');
+  const [detectedLocation, setDetectedLocation] = useState('');
+
+  // ── PWA Install Logic ──
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+  
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
   const [aiResult, setAiResult] = useState('');
   const [customerNote, setCustomerNote] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -296,10 +317,46 @@ export default function ProductDetailClient({ shop, product }) {
           </button>
           <div>
             <h1 className="font-black text-slate-900 text-lg leading-tight truncate">{product.name}</h1>
-            <p className="text-xs text-slate-500 font-bold">{shop.shopName}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-slate-500 font-bold">{shop.shopName}</p>
+              {userData?.loyaltyPoints !== undefined && (
+                <span className="flex items-center gap-1 bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded-full text-[9px] font-black border border-amber-200">
+                  <Star size={8} className="fill-amber-600" /> {userData.loyaltyPoints}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="ml-auto">
+            {showInstallBtn && (
+              <button
+                onClick={() => {
+                  if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                      if (choiceResult.outcome === 'accepted') setShowInstallBtn(false);
+                      setDeferredPrompt(null);
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 bg-purple-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-700 transition-colors shadow-lg"
+              >
+                <Download size={12} /> অ্যাপ ইন্সটল
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      <ServiceBanner 
+         shop={shop} 
+         status={locationStatus} 
+         setStatus={setLocationStatus}
+         manualInput={locationManualInput}
+         setManualInput={setLocationManualInput}
+         detectedLocation={detectedLocation}
+         setDetectedLocation={setDetectedLocation}
+      />
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
 
