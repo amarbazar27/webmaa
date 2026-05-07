@@ -34,8 +34,20 @@ const ErrorFallback = () => (
 );
 
 export default function ProductDetailClient({ shop, product }) {
+  if (!shop || !product) {
+    console.warn('[ProductDetail] Missing props', { shop: !!shop, product: !!product });
+    return <ErrorFallback />;
+  }
+  
   const logic = useProductLogic(shop, product);
-  const basePrice = calculateBasePrice(product, logic.isLegacySizes, logic.selectedSize, logic.selectedVariants);
+  
+  let basePrice = 0;
+  try {
+    basePrice = calculateBasePrice(product, logic.isLegacySizes, logic.selectedSize, logic.selectedVariants);
+  } catch (err) {
+    console.error('[ProductDetail] Price calculation error:', err);
+  }
+  
   const totalPrice = logic.aiPrice !== null ? logic.aiPrice : (basePrice * logic.qty).toFixed(0);
 
   return (

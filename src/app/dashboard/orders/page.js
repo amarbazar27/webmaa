@@ -398,6 +398,17 @@ export default function OrdersPage() {
                             </div>
 
                             <div className="w-full text-right bg-slate-50 p-4 rounded-xl border border-slate-200">
+                               {order.customImage && (
+                                 <div className="mb-4 text-left">
+                                   <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FileText size={12}/> Customer Provided Image</p>
+                                   <div className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white" onClick={() => window.open(order.customImage, '_blank')}>
+                                     <img src={order.customImage} alt="Order Attachment" className="w-full h-32 object-contain group-hover:scale-105 transition-transform" />
+                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                       <span className="text-white text-[10px] font-black uppercase tracking-widest">বড় করে দেখুন</span>
+                                     </div>
+                                   </div>
+                                 </div>
+                               )}
                                <p className="text-xs font-black text-slate-500">{order.items?.length || 0} Products Total</p>
                                <p className="text-2xl font-black text-slate-900 mt-1">৳{order.total}</p>
                                <button 

@@ -164,6 +164,7 @@ function LiveCountdown({ deliveryETA }) {
   );
 }
 
+
 export default function ShopClient({ initialShop, initialProducts, initialCategories }) {
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
@@ -292,6 +293,14 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '' });
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [orderImage, setOrderImage] = useState(null);
+
+  const handleDirectOrderFromAi = (items, image) => {
+    setCart(items);
+    setOrderImage(image);
+    setIsOrderOpen(true);
+    toast.success('অর্ডারের জন্য প্রস্তুত! নিচের তথ্যগুলো দিন।');
+  };
 
   // Autofill from userData
   useEffect(() => {
@@ -709,7 +718,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         baseUnit: i.baseUnit || '',
         clientPrice: i.customizedPrice || undefined
       })),
-      customerId: user?.uid || `guest_${Date.now()}`
+      customerId: user?.uid || `guest_${Date.now()}`,
+      customImage: orderImage
     };
 
     const onSuccess = async (payloadResp) => {
@@ -717,6 +727,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
       setCart([]);
       localStorage.removeItem(CART_KEY);
       toast.success('অর্ডার প্লেস করা হয়েছে! 🎉');
+      setOrderImage(null);
       setIsOrderOpen(false);
       setPlacing(false);
       if (user?.email) {
@@ -964,6 +975,16 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
          detectedLocation={detectedLocation}
          setDetectedLocation={setDetectedLocation}
       />
+
+       <AiShoppingList 
+          shop={shop} 
+          products={products} 
+          onAddToCart={(items) => {
+            setCart(prev => [...prev, ...items]);
+            setIsCartOpen(true);
+          }}
+          onDirectOrder={handleDirectOrderFromAi}
+       />
 
       {/* ── Broadcast Notifications ── */}
       <NotificationBanner shopId={shop.id} />
@@ -1607,6 +1628,22 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                 <div>
                   <p className="font-black text-emerald-800 text-sm">🎉 ফ্রি ডেলিভারি প্রযোজ্য!</p>
                   <p className="text-emerald-600 text-xs font-bold">৬ দিনের ধারা সম্পন্ন হওয়ায় আজকে ডেলিভারি ফ্রি।</p>
+                </div>
+              </div>
+            )}
+
+            {orderImage && (
+              <div className="relative bg-slate-50 border-2 border-dashed border-purple-200 rounded-2xl p-4 space-y-3">
+                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest text-center">📷 সংযুক্ত ছবি (অর্ডারের সাথে যাবে)</p>
+                <div className="relative w-full h-40 rounded-xl overflow-hidden shadow-inner bg-white">
+                  <img src={orderImage} className="w-full h-full object-contain" alt="Custom Order" />
+                  <button 
+                    type="button"
+                    onClick={() => setOrderImage(null)}
+                    className="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-lg shadow-lg hover:bg-red-700 transition-colors"
+                  >
+                    <X size={14} strokeWidth={3} />
+                  </button>
                 </div>
               </div>
             )}

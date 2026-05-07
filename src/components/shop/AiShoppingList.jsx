@@ -33,7 +33,7 @@ function compressImage(file, maxWidth = 1200, quality = 0.75) {
   });
 }
 
-export default function AiShoppingList({ shop, products, onAddToCart }) {
+export default function AiShoppingList({ shop, products, onAddToCart, onDirectOrder }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [detectedItems, setDetectedItems] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -188,6 +188,35 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
     setShowModal(false);
     setLastImage(null);
     setDetectedItems([]);
+  };
+
+  const handleDirectOrder = () => {
+    if (detectedItems.length === 0) return;
+
+    const itemsToAdd = detectedItems.map(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (product && product.stock !== 0) {
+        return { ...product, quantity: item.quantity || 1, note: 'AI Detected' };
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (itemsToAdd.length === 0) {
+      toast.error('স্টকে থাকা কোনো পণ্য পাওয়া যায়নি।');
+      return;
+    }
+
+    if (onDirectOrder) {
+      onDirectOrder(itemsToAdd, lastImage);
+      setShowModal(false);
+      setLastImage(null);
+      setDetectedItems([]);
+    } else {
+      onAddToCart(itemsToAdd);
+      setShowModal(false);
+      setLastImage(null);
+      setDetectedItems([]);
+    }
   };
 
   // Manual search
@@ -391,13 +420,20 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
               )}
             </div>
 
-            <div className="p-4 border-t border-slate-200 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.03)] safe-bottom">
+            <div className="p-4 border-t border-slate-200 bg-white shadow-[0_-10px_20px_rgba(0,0,0,0.03)] safe-bottom flex gap-3">
               <button
                 onClick={handleAddAllToCart}
                 disabled={detectedItems.length === 0}
-                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 py-4 bg-slate-100 text-slate-900 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors disabled:opacity-40"
               >
-                <ShoppingCart size={20} strokeWidth={2.5} /> সব কার্টে যোগ করুন ({detectedItems.length})
+                <ShoppingCart size={18} /> কার্টে দিন
+              </button>
+              <button
+                onClick={handleDirectOrder}
+                disabled={detectedItems.length === 0}
+                className="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-xl disabled:opacity-40"
+              >
+                <Sparkles size={20} /> সরাসরি অর্ডার ({detectedItems.length})
               </button>
             </div>
           </div>
