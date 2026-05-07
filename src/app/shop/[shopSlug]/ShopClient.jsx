@@ -976,15 +976,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
          setDetectedLocation={setDetectedLocation}
       />
 
-       <AiShoppingList 
-          shop={shop} 
-          products={products} 
-          onAddToCart={(items) => {
-            setCart(prev => [...prev, ...items]);
-            setIsCartOpen(true);
-          }}
-          onDirectOrder={handleDirectOrderFromAi}
-       />
+
 
       {/* ── Broadcast Notifications ── */}
       <NotificationBanner shopId={shop.id} />
@@ -1106,11 +1098,11 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         {/* ── AI Shopping List Upload ── */}
         <AiShoppingList 
           shop={shop} 
-          products={initialProducts} 
+          products={products} 
           onAddToCart={(items) => {
             let newCart = [...cart];
             items.forEach(item => {
-               const existing = newCart.find(i => i.id === item.id);
+               const existing = newCart.find(i => i.id === (item.productId || item.id));
                if (existing) {
                  existing.quantity += item.quantity;
                } else {
@@ -1119,7 +1111,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
             });
             setCart(newCart);
             toast.success(`${items.length} টি পণ্য কার্টে যোগ হয়েছে!`);
-          }} 
+          }}
+          onDirectOrder={handleDirectOrderFromAi}
         />
 
         {/* ── Search, Sort & Categories ── */}

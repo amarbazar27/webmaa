@@ -322,12 +322,20 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
                 <p className="text-xs text-slate-500">এখন AI দিয়ে এনালাইজ করুন।</p>
               </div>
             </div>
-            <button
-              onClick={handleStartAnalysis}
-              className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-black text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <Sparkles size={16} /> এনালাইজ করুন
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleStartAnalysis}
+                className="px-6 py-2.5 bg-indigo-600 text-white font-black text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Sparkles size={16} /> এনালাইজ করুন
+              </button>
+              <button
+                onClick={() => onDirectOrder([], lastImage)}
+                className="px-6 py-2.5 bg-slate-900 text-white font-black text-sm rounded-lg hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-lg"
+              >
+                <Sparkles size={16} className="text-purple-400" /> সরাসরি অর্ডার
+              </button>
+            </div>
           </div>
         )}
       </div>

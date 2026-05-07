@@ -28,7 +28,8 @@ const CheckoutSchema = z.object({
     baseUnit: z.string().max(50).optional(),
     clientPrice: z.number().positive().optional()
   })).min(1),
-  customerId: z.string().min(1)
+  customerId: z.string().min(1),
+  customImage: z.string().max(2000000).optional()
 });
 
 // ── Simple Rate Limit (in-memory, basic protection) ─────
@@ -88,6 +89,9 @@ export async function POST(req) {
       items,
       customerId
     } = parsed.data;
+
+    // Extract customImage separately (not in strict destructure to avoid schema clash)
+    const customImage = body.customImage || null;
 
     if (!adminDb) {
       return NextResponse.json({ error: 'Server configuration error: Firebase Admin SDK not initialized. Check your environment variables (FIREBASE_PROJECT_ID, etc).' }, { status: 500 });
@@ -358,6 +362,7 @@ export async function POST(req) {
       status: 'pending',
       localId: localId || null,
       customerId: customerId,
+      customImage: customImage || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 

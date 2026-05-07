@@ -4,23 +4,65 @@ import { adminDb } from './firebase-admin';
  * Robustly converts any Firestore values (Timestamps, etc) into serializable JSON.
  */
 function toPlainObject(data) {
-  if (!data) return data;
+  if (data === null || data === undefined) return data;
+  if (typeof data !== 'object') return data;
   if (Array.isArray(data)) return data.map(item => toPlainObject(item));
   
-  // Handle Firestore Timestamps
-  if (typeof data === 'object' && data.seconds !== undefined && data.nanoseconds !== undefined) {
+  // Handle Firestore Timestamps (both Admin SDK and Client SDK formats)
+  if (data._seconds !== undefined && data._nanoseconds !== undefined) {
+    return new Date(data._seconds * 1000).toISOString();
+  }
+  if (data.seconds !== undefined && data.nanoseconds !== undefined) {
     return new Date(data.seconds * 1000).toISOString();
   }
   
-  if (typeof data === 'object' && data.constructor.name === 'Object') {
-    const plain = {};
-    for (const key of Object.keys(data)) {
-      plain[key] = toPlainObject(data[key]);
-    }
-    return plain;
+  // Handle Date objects
+  if (data instanceof Date) {
+    return data.toISOString();
   }
-  return data;
+
+  // Handle Buffer/Uint8Array (e.g. from Firestore Bytes)
+  if (Buffer.isBuffer(data) || data instanceof Uint8Array) {
+    return '[binary data]';
+  }
+
+  // Handle Firestore DocumentReference
+  if (data.firestore && data.path) {
+    return data.path;
+  }
+
+  // Handle Firestore GeoPoint
+  if (typeof data.latitude === 'number' && typeof data.longitude === 'number' && Object.keys(data).length === 2) {
+    return { latitude: data.latitude, longitude: data.longitude };
+  }
+
+  // Safe plain object check (handles Object.create(null) and prototype-less objects)
+  try {
+    const proto = Object.getPrototypeOf(data);
+    if (proto === null || proto === Object.prototype) {
+      const plain = {};
+      for (const key of Object.keys(data)) {
+        try {
+          plain[key] = toPlainObject(data[key]);
+        } catch (e) {
+          plain[key] = String(data[key]);
+        }
+      }
+      return plain;
+    }
+  } catch (e) {
+    // If getPrototypeOf fails, try to convert to string
+    return String(data);
+  }
+
+  // Fallback: convert unknown types to string
+  try {
+    return JSON.parse(JSON.stringify(data));
+  } catch {
+    return String(data);
+  }
 }
+
 
 export async function getShopServer(slug) {
   try {
