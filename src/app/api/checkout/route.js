@@ -27,7 +27,7 @@ const CheckoutSchema = z.object({
     customizedText: z.string().max(200).optional(),
     baseUnit: z.string().max(50).optional(),
     clientPrice: z.number().positive().optional()
-  })).min(1),
+  })).min(0),
   customerId: z.string().min(1),
   customImage: z.string().max(2000000).optional()
 });
@@ -92,6 +92,11 @@ export async function POST(req) {
 
     // Extract customImage separately (not in strict destructure to avoid schema clash)
     const customImage = body.customImage || null;
+
+    // 🚨 Custom validation: Either items or customImage must be present
+    if (items.length === 0 && !customImage) {
+      return NextResponse.json({ error: 'Please add items or upload an image to order.' }, { status: 400 });
+    }
 
     if (!adminDb) {
       return NextResponse.json({ error: 'Server configuration error: Firebase Admin SDK not initialized. Check your environment variables (FIREBASE_PROJECT_ID, etc).' }, { status: 500 });
@@ -180,7 +185,7 @@ export async function POST(req) {
     const isCOD = deliveryConfig.isCOD !== false;
 
     // ── Secure product fetch & pricing ──────────────────
-    let total = 0;
+    let total = (items.length === 0 && customImage) ? 1 : 0;
     const verifiedItems = [];
 
     const productsRef = adminDb.collection('shops').doc(shopId).collection('products');

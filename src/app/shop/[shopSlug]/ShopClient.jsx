@@ -672,8 +672,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
       toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই।');
       return;
     }
-    if (cart.length === 0) return;
-    trackStoreEvent('begin_checkout', { value: cartTotal, currency: 'BDT', items: cart.map(i => i.name) });
+    if (cart.length === 0 && !orderImage) return;
+    trackStoreEvent('begin_checkout', { value: cart.length === 0 && orderImage ? 1 : cartTotal, currency: 'BDT', items: cart.map(i => i.name) });
     const requireLogin = shop.authSettings?.requireLoginBeforeOrder ?? true;
     if (requireLogin && !user) {
       toast.error('অর্ডার করতে অনুগ্রহ করে লগইন করুন।');
@@ -686,9 +686,9 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
       return;
     }
 
-    // 🚨 Minimum Order Amount (frontend guard)
+    // 🚨 Minimum Order Amount (frontend guard) - bypass for image-only orders
     const minOrder = parseInt(shop.deliveryConfig?.minOrderAmount) || 0;
-    if (minOrder > 0 && cartTotal < minOrder) {
+    if (minOrder > 0 && cartTotal < minOrder && !orderImage) {
       toast.error(`সর্বনিম্ন অর্ডার ৳${minOrder}। আরো পণ্য যোগ করুন।`);
       return;
     }
@@ -1694,14 +1694,14 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
               {/* Order Summary */}
               <div className="bg-slate-100 border-2 border-slate-200 rounded-2xl p-5 space-y-3">
-                <div className="flex justify-between text-sm text-slate-600 font-bold"><span>প্রোডাক্টস (×{cartCount})</span><span className="text-slate-900 font-black">৳{cartTotal}</span></div>
+                <div className="flex justify-between text-sm text-slate-600 font-bold"><span>প্রোডাক্টস (×{cartCount || (orderImage ? 'ছবি থেকে' : 0)})</span><span className="text-slate-900 font-black">৳{cart.length === 0 && orderImage ? 1 : cartTotal}</span></div>
                 <div className="flex justify-between text-sm text-slate-600 font-bold">
                   <span>ডেলিভারি চার্জ</span>
                   <span className={`font-black ${effectiveDelivery === 0 ? 'text-emerald-600' : 'text-slate-900'}`}>{effectiveDelivery === 0 ? 'FREE 🎁' : `৳${effectiveDelivery}`}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t-2 border-slate-200 font-black text-slate-900 text-xl">
                   <span>সর্বমোট</span>
-                  <span className="text-purple-700 text-2xl">৳{cartTotal + effectiveDelivery}</span>
+                  <span className="text-purple-700 text-2xl">৳{(cart.length === 0 && orderImage ? 1 : cartTotal) + effectiveDelivery}</span>
                 </div>
               </div>
 
