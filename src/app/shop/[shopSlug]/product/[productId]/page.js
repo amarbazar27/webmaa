@@ -4,17 +4,42 @@ import ProductDetailClient from './ProductDetailClient';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
 
+/**
+ * Robust JSON serialization for Next.js Server-to-Client props.
+ * Specifically handles Firestore Timestamps and prevents circular/non-serializable errors.
+ */
+function safeSerialize(data) {
+  try {
+    return JSON.parse(JSON.stringify(data, (key, value) => {
+      // Handle Firestore Timestamps
+      if (value && typeof value === 'object' && 'seconds' in value && 'nanoseconds' in value) {
+        return new Date(value.seconds * 1000).toISOString();
+      }
+      // Handle potential Functions or undefined
+      if (typeof value === 'function' || typeof value === 'undefined') {
+        return null;
+      }
+      return value;
+    }));
+  } catch (err) {
+    console.error('[Serialization Error]', err);
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }) {
   const { shopSlug, productId } = await params;
+  console.log(`[ProductPage] Metadata check: shop=${shopSlug} product=${productId}`);
+  
   const shop = await getShopBySlug(shopSlug);
   if (!shop) return { title: 'পণ্য পাওয়া যায়নি' };
+  
   const products = await getProducts(shop.id);
   const product = products.find(p => p.id === productId);
 
   const title = product ? `${product.name} — ${shop.shopName}` : (shop?.shopName || 'পণ্য');
   const description = product?.description || `${shop?.shopName || 'Shop'}-এ কেনাকাটা করুন`;
   
-  // Ensure absolute URLs for OpenGraph images
   const rawImage = product?.imageUrl || shop?.logoUrl || '';
   const absoluteImage = (typeof rawImage === 'string' && rawImage.startsWith('http')) 
     ? rawImage 
@@ -44,74 +69,35 @@ export async function generateMetadata({ params }) {
   };
 }
 
-// JSON-LD Structured Data (Product + BreadcrumbList)
-function ProductJsonLd({ shop, product, shopSlug }) {
-  const productUrl = `${BASE_URL}/shop/${shopSlug}/product/${product.id}`;
-  const imageUrl = product.imageUrl || shop.logoUrl || '';
-
-  const productSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    description: product.description || `${product.name} — ${shop.shopName}`,
-    image: imageUrl || undefined,
-    url: productUrl,
-    brand: { '@type': 'Brand', name: shop.shopName },
-    offers: {
-      '@type': 'Offer',
-      price: parseFloat(product.price) || 0,
-      priceCurrency: 'BDT',
-      availability: product.stock === 0
-        ? 'https://schema.org/OutOfStock'
-        : 'https://schema.org/InStock',
-      seller: { '@type': 'Organization', name: shop.shopName },
-    },
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: shop.shopName, item: `${BASE_URL}/shop/${shopSlug}` },
-      { '@type': 'ListItem', position: 2, name: product.category || 'পণ্য', item: `${BASE_URL}/shop/${shopSlug}` },
-      { '@type': 'ListItem', position: 3, name: product.name, item: productUrl },
-    ],
-  };
-
-  return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-    </>
-  );
-}
-
-// Helper: recursively convert Firestore Timestamps to plain ISO strings
-function serializeData(obj) {
-  if (obj === null || obj === undefined) return obj;
-  if (typeof obj !== 'object') return obj;
-  if (typeof obj.seconds === 'number' && typeof obj.nanoseconds === 'number') {
-    return new Date(obj.seconds * 1000).toISOString();
-  }
-  if (Array.isArray(obj)) return obj.map(serializeData);
-  const plain = {};
-  for (const key of Object.keys(obj)) plain[key] = serializeData(obj[key]);
-  return plain;
-}
-
 export default async function ProductDetailPage({ params }) {
   const { shopSlug, productId } = await params;
+  console.log(`[ProductPage] Rendering: shop=${shopSlug} product=${productId}`);
+
   const shop = await getShopBySlug(shopSlug);
-  if (!shop) notFound();
+  if (!shop) {
+    console.error(`[ProductPage] Shop not found: ${shopSlug}`);
+    notFound();
+  }
 
   const products = await getProducts(shop.id);
   const product = products.find(p => p.id === productId);
-  if (!product) notFound();
+  if (!product) {
+    console.error(`[ProductPage] Product not found: ${productId} in shop ${shop.id}`);
+    notFound();
+  }
+
+  const serializedShop = safeSerialize(shop);
+  const serializedProduct = safeSerialize(product);
+
+  if (!serializedShop || !serializedProduct) {
+    console.error(`[ProductPage] Serialization failed for shop or product`);
+    throw new Error('Data serialization failed');
+  }
 
   return (
-    <>
-      <ProductJsonLd shop={shop} product={product} shopSlug={shopSlug} />
-      <ProductDetailClient shop={serializeData(shop)} product={serializeData(product)} />
-    </>
+    <ProductDetailClient 
+      shop={serializedShop} 
+      product={serializedProduct} 
+    />
   );
 }
