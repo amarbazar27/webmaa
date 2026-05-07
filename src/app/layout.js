@@ -18,7 +18,7 @@ export const metadata = {
   keywords: ['মেস বাজার', 'mess bazar', 'messer bazar', 'messerbazar', 'বাজার', 'bajar', 'bazar', 'অনলাইন বাজার', 'মেসের বাজার', 'mess bajar', 'grocery delivery bangladesh'],
   authors: [{ name: 'MesserBazar', url: BASE_URL }],
   creator: 'MesserBazar',
-  publisher: 'Webmaa',
+  publisher: 'MesserBazar',
   manifest: '/manifest.json',
   icons: {
     icon: '/logo.png',

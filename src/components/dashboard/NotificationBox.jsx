@@ -1,13 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { Send, Bell, Info, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
-import { sendBroadcast } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 
 export default function NotificationBox({ senderRole, shopId = null }) {
   const [message, setMessage] = useState('');
-  const [type, setType] = useState('info'); // info, warning, promo
-  const [target, setTarget] = useState('all'); // all, customers (if retailer)
+  const [type, setType] = useState('info');
+  const [target, setTarget] = useState('all');
   const [loading, setLoading] = useState(false);
 
   const handleSend = async () => {
@@ -18,18 +17,24 @@ export default function NotificationBox({ senderRole, shopId = null }) {
 
     setLoading(true);
     try {
-      await sendBroadcast({
-        message,
-        type,
-        target: senderRole === 'superadmin' ? target : 'shop_users',
-        senderRole,
-        shopId,
-        senderName: senderRole === 'superadmin' ? 'System Admin' : 'Shop Owner'
+      const res = await fetch('/api/broadcast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          type,
+          target: senderRole === 'superadmin' ? target : 'shop_users',
+          senderRole,
+          shopId,
+          senderName: senderRole === 'superadmin' ? 'System Admin' : 'Shop Owner'
+        }),
       });
-      toast.success('নোটিফিকেশন সফলভাবে পাঠানো হয়েছে! 🚀');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      toast.success('নোটিফিকেশন সফলভাবে পাঠানো হয়েছে! 🚀');
       setMessage('');
     } catch (err) {
-      toast.error('নোটিফিকেশন পাঠাতে সমস্যা হয়েছে');
+      toast.error(err.message || 'নোটিফিকেশন পাঠাতে সমস্যা হয়েছে');
       console.error(err);
     } finally {
       setLoading(false);
