@@ -83,11 +83,16 @@ export default async function ShopPage({ params }) {
 
     console.log(`[ShopPage] Data fetched: products=${products.length} categories=${categories.length}`);
 
+    // 🚨 FAIL-SAFE SERIALIZATION: Guarantee plain objects for Next.js SSR
+    const safeShop = JSON.parse(JSON.stringify(shop));
+    const safeProducts = JSON.parse(JSON.stringify(products));
+    const safeCategories = JSON.parse(JSON.stringify(categories));
+
     return (
       <ShopClient
-        initialShop={shop}
-        initialProducts={products}
-        initialCategories={categories}
+        initialShop={safeShop}
+        initialProducts={safeProducts}
+        initialCategories={safeCategories}
       />
     );
   } catch (err) {

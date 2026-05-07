@@ -69,10 +69,15 @@ export default async function ProductDetailPage({ params }) {
 
     console.log(`[ProductPage] Data fetched successfully for: ${product.name}`);
 
+    // 🚨 FAIL-SAFE SERIALIZATION: Guarantee plain objects for Next.js SSR
+    // This prevents "Error Ref: 1564185841@E237" which is almost always a serialization failure.
+    const safeShop = JSON.parse(JSON.stringify(shop));
+    const safeProduct = JSON.parse(JSON.stringify(product));
+
     return (
       <ProductDetailClient 
-        shop={shop} 
-        product={product} 
+        shop={safeShop} 
+        product={safeProduct} 
       />
     );
   } catch (err) {

@@ -262,9 +262,9 @@ export async function POST(req) {
       });
     }
 
-    // 🚨 Minimum Order Amount enforcement
+    // 🚨 Minimum Order Amount enforcement - bypass for image-only orders
     const minOrder = parseInt(deliveryConfig.minOrderAmount) || 0;
-    if (minOrder > 0 && total < minOrder) {
+    if (minOrder > 0 && total < minOrder && items.length > 0) {
       return NextResponse.json({ error: `Minimum order amount is ৳${minOrder}` }, { status: 400 });
     }
 
