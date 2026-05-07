@@ -1,6 +1,32 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Component } from 'react';
 import { useRouter } from 'next/navigation';
+
+// ── Error Boundary for Component Stability ──
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  componentDidCatch(error, errorInfo) { console.error("ProductDetail Error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center bg-white rounded-[2.5rem] border-2 border-dashed border-slate-200">
+          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-4">
+            <Info size={32} />
+          </div>
+          <h2 className="text-xl font-black text-slate-900 mb-2">পণ্যটি প্রদর্শনে সমস্যা হচ্ছে</h2>
+          <p className="text-sm font-bold text-slate-400 mb-6">আমরা দুঃখিত, কারিগরি ত্রুটির কারণে এটি লোড করা যাচ্ছে না।</p>
+          <button onClick={() => window.location.reload()} className="px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest">আবার চেষ্টা করুন</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 import {
   ArrowLeft, ShoppingCart, Plus, Minus, Sparkles, Loader2,
   CheckCircle, Package, Tag, Layers, MessageSquare, Info,
@@ -23,6 +49,20 @@ function getFallbackColor(name = '') {
 }
 
 export default function ProductDetailClient({ shop, product }) {
+  if (!shop || !product) return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="animate-spin text-slate-300" size={32} />
+    </div>
+  );
+
+  return (
+    <ErrorBoundary>
+      <ProductDetailContent shop={shop} product={product} />
+    </ErrorBoundary>
+  );
+}
+
+function ProductDetailContent({ shop, product }) {
   const router = useRouter();
   const { user, userData } = useAuth();
 
@@ -37,9 +77,11 @@ export default function ProductDetailClient({ shop, product }) {
   // For new variants system
   const [selectedVariants, setSelectedVariants] = useState(() => {
     const init = {};
-    variants.forEach(v => {
-      if(v.options?.length) init[v.name] = v.options[0];
-    });
+    if (Array.isArray(variants)) {
+      variants.forEach(v => {
+        if(v.name && v.options?.length) init[v.name] = v.options[0];
+      });
+    }
     return init;
   });
 

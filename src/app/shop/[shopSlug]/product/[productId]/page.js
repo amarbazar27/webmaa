@@ -2,7 +2,7 @@ import { getShopBySlug, getProducts } from '@/lib/firestore';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://messerbazar.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
 
 export async function generateMetadata({ params }) {
   const { shopSlug, productId } = await params;
@@ -11,12 +11,16 @@ export async function generateMetadata({ params }) {
   const products = await getProducts(shop.id);
   const product = products.find(p => p.id === productId);
 
-  const title = product ? `${product.name} — ${shop.shopName}` : shop.shopName;
-  const description = product?.description || `${shop.shopName}-এ কেনাকাটা করুন`;
+  const title = product ? `${product.name} — ${shop.shopName}` : (shop?.shopName || 'পণ্য');
+  const description = product?.description || `${shop?.shopName || 'Shop'}-এ কেনাকাটা করুন`;
+  
   // Ensure absolute URLs for OpenGraph images
   const rawImage = product?.imageUrl || shop?.logoUrl || '';
-  const absoluteImage = rawImage.startsWith('http') ? rawImage : rawImage ? `${BASE_URL}${rawImage}` : '';
-  const images = absoluteImage ? [{ url: absoluteImage, width: 1200, height: 630, alt: product?.name || shop?.shopName }] : [];
+  const absoluteImage = (typeof rawImage === 'string' && rawImage.startsWith('http')) 
+    ? rawImage 
+    : rawImage ? `${BASE_URL}${rawImage}` : '';
+    
+  const images = absoluteImage ? [{ url: absoluteImage, width: 1200, height: 630, alt: product?.name || shop?.shopName || 'Product' }] : [];
   const canonicalUrl = `${BASE_URL}/shop/${shopSlug}/product/${productId}`;
 
   return {
@@ -29,7 +33,7 @@ export async function generateMetadata({ params }) {
       url: canonicalUrl,
       images,
       type: 'product',
-      siteName: shop?.shopName || 'MesserBazar',
+      siteName: shop?.shopName || 'Webmaa',
     },
     twitter: {
       card: 'summary_large_image',
@@ -82,29 +86,16 @@ function ProductJsonLd({ shop, product, shopSlug }) {
   );
 }
 
-// Helper: recursively convert Firestore Timestamps & Dates to plain ISO strings
+// Helper: recursively convert Firestore Timestamps to plain ISO strings
 function serializeData(obj) {
   if (obj === null || obj === undefined) return obj;
-  if (obj instanceof Date) return obj.toISOString();
   if (typeof obj !== 'object') return obj;
-  
-  // Handle Firestore Timestamps
   if (typeof obj.seconds === 'number' && typeof obj.nanoseconds === 'number') {
-    try {
-      return new Date(obj.seconds * 1000).toISOString();
-    } catch (e) { return null; }
+    return new Date(obj.seconds * 1000).toISOString();
   }
-  
   if (Array.isArray(obj)) return obj.map(serializeData);
-  
   const plain = {};
-  for (const key of Object.keys(obj)) {
-    try {
-      plain[key] = serializeData(obj[key]);
-    } catch (e) {
-      plain[key] = null; // Skip non-serializable properties safely
-    }
-  }
+  for (const key of Object.keys(obj)) plain[key] = serializeData(obj[key]);
   return plain;
 }
 

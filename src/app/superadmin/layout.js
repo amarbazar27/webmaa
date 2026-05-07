@@ -44,7 +44,7 @@ export default function SuperAdminLayout({ children }) {
           </div>
           <div>
             <h1 className="font-black text-lg tracking-tighter text-slate-900 flex items-center gap-2">
-              MESSERBAZAR <span className="text-red-600">ADMIN</span>
+              WEBMAA <span className="text-red-600">OVERWATCH</span>
               <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Root</span>
             </h1>
             <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">Central Control Node</p>

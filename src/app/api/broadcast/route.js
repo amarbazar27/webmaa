@@ -14,6 +14,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'বার্তা লিখুন' }, { status: 400 });
     }
 
+    if (!adminDb) {
+      return NextResponse.json({ error: 'সিস্টেম রিফ্রেশ করুন (Database Error)' }, { status: 500 });
+    }
+
     await adminDb.collection('broadcasts').add({
       message: message.trim(),
       type,

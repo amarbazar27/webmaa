@@ -6,19 +6,19 @@ import { Toaster } from 'react-hot-toast';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://messerbazar.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
 
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'MesserBazar — মেস বাজার | অনলাইনে মেসের বাজার করুন',
-    template: '%s | MesserBazar',
+    default: 'Webmaa — আপনার ব্যবসার ডিজিটাল পার্টনার',
+    template: '%s | Webmaa',
   },
-  description: 'MesserBazar — বাংলাদেশের প্রথম মেস বাজার প্ল্যাটফর্ম। ঘরে বসে মেসের বাজার অর্ডার করুন। টাটকা মাছ, মাংস, সবজি, মশলা — সব এক জায়গায়।',
-  keywords: ['মেস বাজার', 'mess bazar', 'messer bazar', 'messerbazar', 'বাজার', 'bajar', 'bazar', 'অনলাইন বাজার', 'মেসের বাজার', 'mess bajar', 'grocery delivery bangladesh'],
-  authors: [{ name: 'MesserBazar', url: BASE_URL }],
-  creator: 'MesserBazar',
-  publisher: 'MesserBazar',
+  description: 'Webmaa — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
+  keywords: ['webmaa', 'ecommerce', 'saas', 'online store', 'bangladesh ecommerce', 'retailer platform'],
+  authors: [{ name: 'Webmaa', url: BASE_URL }],
+  creator: 'Webmaa',
+  publisher: 'Webmaa',
   manifest: '/manifest.json',
   icons: {
     icon: '/logo.png',
@@ -28,15 +28,15 @@ export const metadata = {
     type: 'website',
     locale: 'bn_BD',
     url: BASE_URL,
-    siteName: 'MesserBazar',
-    title: 'MesserBazar — মেস বাজার | অনলাইনে মেসের বাজার করুন',
-    description: 'বাংলাদেশের প্রথম মেস বাজার প্ল্যাটফর্ম। টাটকা মাছ, মাংস, সবজি — সব এক জায়গায়।',
+    siteName: 'Webmaa',
+    title: 'Webmaa — আপনার ব্যবসার ডিজিটাল পার্টনার',
+    description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম।',
     images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'MesserBazar Logo' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MesserBazar — মেস বাজার',
-    description: 'বাংলাদেশের প্রথম মেস বাজার প্ল্যাটফর্ম। ঘরে বসে মেসের বাজার অর্ডার করুন।',
+    title: 'Webmaa — ই-কমার্স প্ল্যাটফর্ম',
+    description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
     images: [`${BASE_URL}/logo.png`],
   },
   robots: {
@@ -55,12 +55,12 @@ function JsonLd() {
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "MesserBazar",
-      "alternateName": ["মেস বাজার", "Messer Bazar", "Mess Bazar", "Mess Bajar"],
+      "name": "Webmaa",
+      "alternateName": ["Webmaa SaaS", "webmaa.app"],
       "url": BASE_URL,
       "logo": `${BASE_URL}/logo.png`,
       "image": `${BASE_URL}/logo.png`,
-      "description": "বাংলাদেশের প্রথম মেস বাজার প্ল্যাটফর্ম",
+      "description": "বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম",
       "sameAs": [],
       "contactPoint": {
         "@type": "ContactPoint",
@@ -72,8 +72,8 @@ function JsonLd() {
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "MesserBazar",
-      "alternateName": "মেস বাজার",
+      "name": "Webmaa",
+      "alternateName": "Webmaa eCommerce",
       "url": BASE_URL
     }
   ];
