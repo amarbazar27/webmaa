@@ -106,7 +106,8 @@ Return valid JSON ONLY: {"items":[{"productId":"ID","name":"Product Name","quant
 
     const result = await response.json();
     if (!response.ok) {
-      return NextResponse.json({ error: `Gemini API Error: ${result.error?.message || 'Unknown'}` }, { status: response.status });
+      console.error('[AI Vision] API Error:', result.error?.message || 'Unknown');
+      return NextResponse.json({ error: 'AI service temporarily unavailable or key is invalid.' }, { status: 503 });
     }
 
     const botText = result.candidates?.[0]?.content?.parts?.[0]?.text || '{"items":[]}';

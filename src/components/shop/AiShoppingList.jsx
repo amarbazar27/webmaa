@@ -46,42 +46,47 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // ── Image Upload Handler ────────────────────────────────────────
+  // ── Image Upload Handler (Preview Only) ────────────────────────
   const handleImageUpload = useCallback(async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
     setError(null);
+    setDetectedItems([]);
+    
+    // Take the first valid file
+    const file = files[0];
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error(`${file.name} অনেক বড় (১৫MB এর কম ছবি দিন)`);
+      resetInput();
+      return;
+    }
+
+    if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+      toast.error('HEIC ফরম্যাট সাপোর্ট করে না। JPEG/PNG ছবি দিন।');
+      resetInput();
+      return;
+    }
+
     setIsProcessing(true);
-
     try {
-      for (const file of files) {
-        if (file.size > 15 * 1024 * 1024) {
-          toast.error(`${file.name} অনেক বড় (১৫MB এর কম ছবি দিন)`);
-          continue;
-        }
-
-        // iPhone HEIC check
-        if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
-          toast.error('HEIC ফরম্যাট সাপোর্ট করে না। JPEG/PNG ছবি দিন।');
-          continue;
-        }
-
-        try {
-          const compressed = await compressImage(file);
-          setLastImage(compressed);
-          await processImage(compressed);
-        } catch (compErr) {
-          toast.error(`${file.name} প্রসেস করা যায়নি`);
-        }
-      }
+      const compressed = await compressImage(file);
+      setLastImage(compressed);
+      // ⚠️ DO NOT AUTO-ANALYZE! Wait for user to click "Analyze"
     } catch (err) {
-      setError('ছবি প্রসেস করতে সমস্যা হয়েছে।');
+      toast.error('ছবি প্রসেস করতে সমস্যা হয়েছে');
     } finally {
       resetInput();
       setIsProcessing(false);
     }
   }, [shop.id]);
+
+  const handleStartAnalysis = () => {
+    if (lastImage) {
+      setIsProcessing(true);
+      processImage(lastImage).finally(() => setIsProcessing(false));
+    }
+  };
 
   // ── Process Image via API ───────────────────────────────────────
   const processImage = async (base64Img) => {
@@ -272,6 +277,27 @@ export default function AiShoppingList({ shop, products, onAddToCart }) {
               className="shrink-0 px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 font-black text-xs rounded-lg transition-colors flex items-center gap-1.5"
             >
               <RotateCcw size={14} /> আবার চেষ্টা
+            </button>
+          </div>
+        )}
+
+        {/* Preview State before Analysis */}
+        {lastImage && !isProcessing && detectedItems.length === 0 && !error && (
+          <div className="relative z-10 mt-4 bg-white border border-purple-100 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm animate-fade-in">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                <img src={lastImage} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-800">ছবি প্রস্তুত আছে!</p>
+                <p className="text-xs text-slate-500">এখন AI দিয়ে এনালাইজ করুন।</p>
+              </div>
+            </div>
+            <button
+              onClick={handleStartAnalysis}
+              className="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-black text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+            >
+              <Sparkles size={16} /> এনালাইজ করুন
             </button>
           </div>
         )}
