@@ -7,35 +7,40 @@ export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
 
 export async function generateMetadata({ params }) {
-  const { shopSlug } = await params;
-  const shop = await getShopServer(shopSlug);
-  if (!shop) return { title: 'Webmaa Store' };
+  try {
+    const { shopSlug } = await params;
+    const shop = await getShopServer(shopSlug);
+    if (!shop) return { title: 'Webmaa Store' };
 
-  const rawLogo = shop?.logoUrl || '/logo.png';
-  const logoUrl = rawLogo.startsWith('http') ? rawLogo : `${BASE_URL}${rawLogo}`;
-  const canonicalUrl = `${BASE_URL}/shop/${shopSlug}`;
+    const rawLogo = shop?.logoUrl || '/logo.png';
+    const logoUrl = rawLogo.startsWith('http') ? rawLogo : `${BASE_URL}${rawLogo}`;
+    const canonicalUrl = `${BASE_URL}/shop/${shopSlug}`;
 
-  return {
-    title: shop?.shopName || 'Webmaa Store',
-    description: shop?.slogan || 'Welcome to our store',
-    manifest: `/api/manifest?shop=${shopSlug}`,
-    alternates: { canonical: canonicalUrl },
-    icons: { icon: rawLogo, shortcut: rawLogo, apple: rawLogo },
-    openGraph: {
+    return {
       title: shop?.shopName || 'Webmaa Store',
       description: shop?.slogan || 'Welcome to our store',
-      url: canonicalUrl,
-      images: [{ url: logoUrl, width: 512, height: 512, alt: shop?.shopName || 'Logo' }],
-      type: 'website',
-      siteName: 'Webmaa',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: shop?.shopName || 'Webmaa Store',
-      description: shop?.slogan || 'Welcome to our store',
-      images: [logoUrl],
-    }
-  };
+      manifest: `/api/manifest?shop=${shopSlug}`,
+      alternates: { canonical: canonicalUrl },
+      icons: { icon: rawLogo, shortcut: rawLogo, apple: rawLogo },
+      openGraph: {
+        title: shop?.shopName || 'Webmaa Store',
+        description: shop?.slogan || 'Welcome to our store',
+        url: canonicalUrl,
+        images: [{ url: logoUrl, width: 512, height: 512, alt: shop?.shopName || 'Logo' }],
+        type: 'website',
+        siteName: 'Webmaa',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: shop?.shopName || 'Webmaa Store',
+        description: shop?.slogan || 'Welcome to our store',
+        images: [logoUrl],
+      }
+    };
+  } catch (err) {
+    console.error('[ShopPage] Metadata Error:', err);
+    return { title: 'Webmaa Store' };
+  }
 }
 
 function ShopPausedPage({ shopName }) {
@@ -58,25 +63,36 @@ function ShopPausedPage({ shopName }) {
 
 export default async function ShopPage({ params }) {
   const { shopSlug } = await params;
-  console.log(`[ShopPage] Server Render: ${shopSlug}`);
+  console.log(`[ShopPage] Server Render Request: ${shopSlug}`);
 
-  const shop = await getShopServer(shopSlug);
-  if (!shop) notFound();
+  try {
+    const shop = await getShopServer(shopSlug);
+    if (!shop) {
+      console.warn(`[ShopPage] Shop not found for slug: ${shopSlug}`);
+      notFound();
+    }
 
-  if (shop.isActive === false) {
-    return <ShopPausedPage shopName={shop.shopName} />;
+    if (shop.isActive === false) {
+      return <ShopPausedPage shopName={shop.shopName} />;
+    }
+
+    const [products, categories] = await Promise.all([
+      getProductsServer(shop.id),
+      getCategoriesServer(shop.id),
+    ]);
+
+    console.log(`[ShopPage] Data fetched: products=${products.length} categories=${categories.length}`);
+
+    return (
+      <ShopClient
+        initialShop={shop}
+        initialProducts={products}
+        initialCategories={categories}
+      />
+    );
+  } catch (err) {
+    console.error(`[ShopPage] FATAL RENDER ERROR for ${shopSlug}:`, err);
+    // Rethrow to let the top-level error.js handle it, but now we have logs
+    throw err;
   }
-
-  const [products, categories] = await Promise.all([
-    getProductsServer(shop.id),
-    getCategoriesServer(shop.id),
-  ]);
-
-  return (
-    <ShopClient
-      initialShop={shop}
-      initialProducts={products}
-      initialCategories={categories}
-    />
-  );
 }

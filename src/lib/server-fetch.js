@@ -1,85 +1,66 @@
 import { adminDb } from './firebase-admin';
 
 /**
- * Server-only fetcher for Shop data using Firebase Admin SDK.
- * Prevents serialization errors by manually mapping fields.
+ * Robustly converts any Firestore values (Timestamps, etc) into serializable JSON.
  */
-export async function getShopServer(slug) {
-  if (!adminDb) return null;
+function toPlainObject(data) {
+  if (!data) return data;
+  if (Array.isArray(data)) return data.map(item => toPlainObject(item));
   
-  // Check both subdomainSlug and shopSlug for compatibility
-  const shopsRef = adminDb.collection('shops');
-  
-  let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
-  if (snap.empty) {
-    snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
+  // Handle Firestore Timestamps
+  if (typeof data === 'object' && data.seconds !== undefined && data.nanoseconds !== undefined) {
+    return new Date(data.seconds * 1000).toISOString();
   }
   
-  if (snap.empty) return null;
-  
-  const doc = snap.docs[0];
-  const data = doc.data();
-  
-  return {
-    id: doc.id,
-    shopName: data.shopName || '',
-    shopSlug: data.shopSlug || data.subdomainSlug || '',
-    logoUrl: data.logoUrl || '',
-    coverImg: data.coverImg || '',
-    isActive: data.isActive !== false,
-    settings: data.settings || {},
-    aiConfig: data.aiConfig || {},
-    serviceAreas: data.serviceAreas || [],
-    customAreas: data.customAreas || [],
-    isStrictLocation: !!data.isStrictLocation,
-    showLocationSelector: data.showLocationSelector !== false
-  };
+  if (typeof data === 'object' && data.constructor.name === 'Object') {
+    const plain = {};
+    for (const key of Object.keys(data)) {
+      plain[key] = toPlainObject(data[key]);
+    }
+    return plain;
+  }
+  return data;
 }
 
-/**
- * Server-only fetcher for Products using Firebase Admin SDK.
- */
+export async function getShopServer(slug) {
+  try {
+    if (!adminDb) return null;
+    const shopsRef = adminDb.collection('shops');
+    let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
+    if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
+    if (snap.empty) return null;
+    const doc = snap.docs[0];
+    return { id: doc.id, ...toPlainObject(doc.data()) };
+  } catch (err) {
+    console.error(`[getShopServer] Error:`, err);
+    return null;
+  }
+}
+
 export async function getProductsServer(shopId) {
-  if (!adminDb) return [];
-  
-  const snap = await adminDb
-    .collection('shops')
-    .doc(shopId)
-    .collection('products')
-    .orderBy('createdAt', 'desc')
-    .get();
-    
-  return snap.docs.map(doc => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      name: data.name || '',
-      price: data.price || 0,
-      description: data.description || '',
-      imageUrl: data.imageUrl || '',
-      category: data.category || '',
-      unit: data.unit || '',
-      stock: data.stock || 0,
-      allowNote: !!data.allowNote,
-      allowCustomize: !!data.allowCustomize,
-      variants: data.variants || [],
-      sizes: data.sizes || []
-    };
-  });
+  try {
+    if (!adminDb || !shopId) return [];
+    // Fetch all and sort in memory to avoid missing index / missing field issues
+    const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
+    const products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    return products.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+  } catch (err) {
+    console.error(`[getProductsServer] Error:`, err);
+    return [];
+  }
 }
 
-/**
- * Server-only fetcher for Categories using Firebase Admin SDK.
- */
 export async function getCategoriesServer(shopId) {
-  if (!adminDb) return [];
-  
-  const snap = await adminDb
-    .collection('shops')
-    .doc(shopId)
-    .collection('categories')
-    .get();
-    
-  return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    if (!adminDb || !shopId) return [];
+    const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+  } catch (err) {
+    console.error(`[getCategoriesServer] Error:`, err);
+    return [];
+  }
 }
-
