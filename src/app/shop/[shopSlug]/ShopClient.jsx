@@ -25,6 +25,7 @@ import MessengerButton from '@/components/shop/MessengerButton';
 import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
 import AiShoppingList from '@/components/shop/AiShoppingList';
 import ServiceBanner from '@/components/shop/ServiceBanner';
+import NotificationBanner from '@/components/shop/NotificationBanner';
 
 const CuteAIIcon = () => (
   <div className="relative w-12 h-12 flex items-center justify-center animate-bounce">
@@ -963,6 +964,9 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
          detectedLocation={detectedLocation}
          setDetectedLocation={setDetectedLocation}
       />
+
+      {/* ── Broadcast Notifications ── */}
+      <NotificationBanner shopId={shop.id} />
 
       {/* ── Marquee Notice ── */}
       {shop.notices && (

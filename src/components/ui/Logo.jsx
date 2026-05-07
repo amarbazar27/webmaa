@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export default function Logo({ href = "/", className = "", src = "/logo.png", text = "Webmaa" }) {
+export default function Logo({ href = "/", className = "", src = "/logo.png", text = "Messer Bazar" }) {
   return (
     <Link href={href} className={`flex items-center gap-2 group ${className}`}>
       {src && (

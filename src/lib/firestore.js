@@ -483,3 +483,21 @@ export const subscribeShopDesign = (shopId, callback) => {
     }
   });
 };
+// ── BROADCAST NOTIFICATIONS ──────────────────────
+export const sendBroadcast = async (data) => {
+  return addDoc(collection(db, 'broadcasts'), {
+    ...data,
+    createdAt: serverTimestamp(),
+  });
+};
+
+export const subscribeBroadcasts = (callback) => {
+  const q = query(
+    collection(db, 'broadcasts'),
+    orderBy('createdAt', 'desc'),
+    limit(10)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+};

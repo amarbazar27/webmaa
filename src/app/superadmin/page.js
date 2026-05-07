@@ -7,6 +7,7 @@ import {
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop
 } from '@/lib/firestore';
+import NotificationBox from '@/components/dashboard/NotificationBox';
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
@@ -712,6 +713,11 @@ export default function SuperAdminPage() {
               </div>
             )}
           </Card>
+        </div>
+
+        {/* 🔔 Broadcast Notifications */}
+        <div className="lg:col-span-12">
+          <NotificationBox senderRole="superadmin" />
         </div>
 
         {/* Invitation Area */}

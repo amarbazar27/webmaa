@@ -8,6 +8,7 @@ import { Card, Button } from '@/components/ui';
 import Link from 'next/link';
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 import AiInsightsPanel from '@/components/dashboard/AiInsightsPanel';
+import NotificationBox from '@/components/dashboard/NotificationBox';
 
 export default function DashboardPage() {
   const { user, activeShopId } = useAuth();
@@ -191,6 +192,10 @@ export default function DashboardPage() {
            </Card>
         </div>
       </div>
+
+      {/* 🔔 Broadcast Notifications */}
+      <NotificationBox senderRole="retailer" shopId={activeShopId} />
+
     </div>
   );
 }
