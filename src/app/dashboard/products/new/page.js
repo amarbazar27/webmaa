@@ -142,7 +142,7 @@ export default function NewProductPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Image Upload */}
-        <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden flex flex-col items-center justify-center min-h-[250px] relative group cursor-pointer hover:border-purple-300 transition-colors shadow-sm">
+        <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden flex flex-col items-center justify-center aspect-[9/16] w-full max-w-[320px] mx-auto relative group cursor-pointer hover:border-purple-300 transition-colors shadow-sm bg-slate-50/30">
           <input 
             type="file" 
             accept="image/*" 
@@ -157,12 +157,13 @@ export default function NewProductPage() {
               </div>
             </div>
           ) : (
-            <div className="text-center p-12">
+            <div className="text-center p-6">
               <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-600 border border-purple-100 shadow-sm">
                 <Camera size={32} />
               </div>
               <p className="font-bold text-slate-700 text-sm">Upload Product Image</p>
-              <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">সর্বোচ্চ ১ মেগাবাইট (Max 1MB)</p>
+              <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">Portrait (9:16) Recommended</p>
+              <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">Max 1MB</p>
             </div>
           )}
         </div>

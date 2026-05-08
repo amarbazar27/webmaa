@@ -246,7 +246,7 @@ export default function ProductsPage() {
 
               {/* Product Info */}
               <div className="col-span-3 flex items-center gap-4 w-full">
-                <div className="relative group/img w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
+                <div className="relative group/img w-12 aspect-[9/16] rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
                   {updatingImageId === product.id ? (
                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
                         <Loader2 className="animate-spin text-purple-600" size={16} />

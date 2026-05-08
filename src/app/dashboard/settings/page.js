@@ -120,7 +120,7 @@ export default function SettingsPage() {
   const [authSettings, setAuthSettings] = useState({ emailAuth: false, actionPin: '', requireLoginBeforeOrder: true });
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '' });
-  const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny' });
+  const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true });
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
   const [isStrictLocation, setIsStrictLocation] = useState(false);
@@ -176,10 +176,8 @@ export default function SettingsPage() {
         contactWhatsapp: data?.deliveryConfig?.contactWhatsapp || '',
         minOrderAmount: data?.deliveryConfig?.minOrderAmount || ''
       });
-      setAiConfig({ 
-        apiKey: data?.aiConfig?.apiKey || '', 
-        botName: data?.aiConfig?.botName || 'বজার এআই', 
-        botTone: data?.aiConfig?.botTone || 'funny' 
+        botTone: data?.aiConfig?.botTone || 'funny',
+        enableAiShoppingList: data?.aiConfig?.enableAiShoppingList !== false
       });
       setStaffEmails(data?.staffEmails || []);
       setServiceAreas(data?.serviceAreas || []);
@@ -936,6 +934,19 @@ export default function SettingsPage() {
                        onChange={e => setShop({ ...shop, bannerInterval: parseInt(e.target.value) || 4 })}
                        className="w-20 text-center font-black text-lg bg-white border-2 border-slate-200 rounded-xl py-2 outline-none focus:border-purple-600 text-slate-900"
                      />
+                   </div>
+                </div>
+
+                <div className="md:col-span-2 border-t border-purple-100 pt-6 mt-2">
+                   <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-purple-100 shadow-sm">
+                      <div>
+                         <p className="text-xs font-black text-slate-900">Enable AI Shopping List (Vision)</p>
+                         <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Allows users to upload photos of hand-written lists</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={aiConfig.enableAiShoppingList} onChange={e => setAiConfig({...aiConfig, enableAiShoppingList: e.target.checked})} />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      </label>
                    </div>
                 </div>
               </div>

@@ -241,8 +241,8 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
     if (!showModal) setShowModal(true);
   };
 
-  // Feature toggle
-  if (shop.settings?.enableAiShoppingList === false) return null;
+  // Feature toggle - check both paths for compatibility
+  if (shop.aiConfig?.enableAiShoppingList === false || shop.settings?.enableAiShoppingList === false) return null;
 
   const confidenceBadge = (level) => {
     if (level === 'low') return (
@@ -313,8 +313,8 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
         {/* Preview State before Analysis */}
         {lastImage && !isProcessing && detectedItems.length === 0 && !error && (
           <div className="relative z-10 mt-4 bg-white border border-purple-100 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm animate-fade-in">
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-              <div className="w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+              <div className="w-full sm:w-32 aspect-[9/16] rounded-2xl overflow-hidden border-2 border-purple-200 shrink-0 shadow-lg">
                 <img src={lastImage} alt="Preview" className="w-full h-full object-cover" />
               </div>
               <div>
