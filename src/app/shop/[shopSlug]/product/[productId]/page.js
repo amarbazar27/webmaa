@@ -6,11 +6,16 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app'
 
 export async function generateMetadata({ params }) {
   try {
-    const { shopSlug, productId } = await params;
+    console.log('[PRODUCT PAGE] generateMetadata start');
+    const resolvedParams = await params;
+    if (!resolvedParams || !resolvedParams.shopSlug || !resolvedParams.productId) {
+      return { title: 'Product', description: 'Product page' };
+    }
+    const { shopSlug, productId } = resolvedParams;
     const shop = await getShopServer(shopSlug);
     if (!shop) return { title: 'পণ্য পাওয়া যায়নি' };
     
-    const products = await getProductsServer(shop.id);
+    const products = await getProductsServer(shop.id) || [];
     const product = products.find(p => p.id === productId);
 
     const title = product ? `${product.name} — ${shop.shopName}` : (shop?.shopName || 'পণ্য');
@@ -50,27 +55,40 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductDetailPage({ params }) {
-  const { shopSlug, productId } = await params;
-  console.log(`[ProductPage] Server Render Request: shop=${shopSlug} product=${productId}`);
-
+  console.log('[PRODUCT PAGE] Server Render Request start');
+  
   try {
+    const resolvedParams = await params;
+    console.log('[PRODUCT PAGE] params', resolvedParams);
+    
+    if (!resolvedParams || !resolvedParams.shopSlug || !resolvedParams.productId) {
+      console.warn('[PRODUCT PAGE] Missing params');
+      return <ProductDetailClient shop={null} product={null} />;
+    }
+    
+    const { shopSlug, productId } = resolvedParams;
+    console.log('[PRODUCT PAGE] shopSlug', shopSlug);
+    console.log('[PRODUCT PAGE] productId', productId);
+    
+    console.log('[PRODUCT PAGE] product fetch start');
     const shop = await getShopServer(shopSlug);
+    console.log('[PRODUCT PAGE] shop fetch result', shop ? 'found' : 'missing');
+    
     if (!shop) {
       console.warn(`[ProductPage] Shop not found: ${shopSlug}`);
-      notFound();
+      return <ProductDetailClient shop={null} product={null} />;
     }
 
-    const products = await getProductsServer(shop.id);
-    const product = products.find(p => p.id === productId);
+    const products = await getProductsServer(shop.id) || [];
+    const product = products.find(p => p?.id === productId);
+    console.log('[PRODUCT PAGE] product fetch result', product ? 'found' : 'missing');
+    
     if (!product) {
       console.warn(`[ProductPage] Product not found: ${productId} in shop ${shop.id}`);
-      notFound();
+      return <ProductDetailClient shop={null} product={null} />;
     }
 
-    console.log(`[ProductPage] Data fetched successfully for: ${product.name}`);
-
     // 🚨 FAIL-SAFE SERIALIZATION: Guarantee plain objects for Next.js SSR
-    // This prevents "Error Ref: 1564185841@E237" which is almost always a serialization failure.
     const safeShop = JSON.parse(JSON.stringify(shop));
     const safeProduct = JSON.parse(JSON.stringify(product));
 
@@ -81,7 +99,8 @@ export default async function ProductDetailPage({ params }) {
       />
     );
   } catch (err) {
-    console.error(`[ProductPage] FATAL RENDER ERROR for ${productId}:`, err);
-    throw err;
+    console.error(`[PRODUCT PAGE] FATAL RENDER ERROR:`, err);
+    // Never throw server exceptions. Render a safe fallback UI.
+    return <ProductDetailClient shop={null} product={null} />;
   }
 }

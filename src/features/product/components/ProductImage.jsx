@@ -17,14 +17,23 @@ export default function ProductImage({ product, currentPrice }) {
   return (
     <div className="relative w-full h-72 rounded-3xl overflow-hidden shadow-xl bg-white border border-slate-200">
       {product?.imageUrl && !imgError ? (
-        <Image 
-          src={product.imageUrl} 
-          alt={safeName} 
-          fill
-          priority
-          className="object-cover"
-          onError={() => setImgError(true)}
-        />
+        product.imageUrl.startsWith('http') ? (
+          <img 
+            src={product.imageUrl} 
+            alt={safeName} 
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <Image 
+            src={product.imageUrl} 
+            alt={safeName} 
+            fill
+            priority
+            className="object-cover"
+            onError={() => setImgError(true)}
+          />
+        )
       ) : (
         <div className={`w-full h-full flex items-center justify-center ${getFallbackColor(safeName)}`}>
           <h2 className="text-4xl font-black text-white drop-shadow-xl text-center px-4">{safeName}</h2>
