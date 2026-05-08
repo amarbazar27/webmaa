@@ -41,7 +41,9 @@ const ErrorFallback = () => (
 
 export default function ProductDetailClient({ shop, product }) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
     return (

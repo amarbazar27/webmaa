@@ -55,42 +55,42 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductDetailPage({ params }) {
+  let shop = null;
+  let product = null;
+
   try {
     const resolvedParams = await params;
-    if (!resolvedParams) return <ProductDetailClient shop={null} product={null} />;
-
-    const { shopSlug, productId } = resolvedParams;
-    if (!shopSlug || !productId) return <ProductDetailClient shop={null} product={null} />;
-    
-    const shop = await getShopServer(shopSlug);
-    if (!shop) return <ProductDetailClient shop={null} product={null} />;
-
-    const products = await getProductsServer(shop.id) || [];
-    const product = products.find(p => p?.id === productId);
-    
-    if (!product) return <ProductDetailClient shop={null} product={null} />;
-
-    const deepClone = (obj) => {
-      try {
-        if (!obj) return null;
-        return JSON.parse(JSON.stringify(obj));
-      } catch (e) {
-        return null;
+    if (resolvedParams) {
+      const { shopSlug, productId } = resolvedParams;
+      if (shopSlug && productId) {
+        shop = await getShopServer(shopSlug);
+        if (shop) {
+          const products = await getProductsServer(shop.id) || [];
+          product = products.find(p => p?.id === productId);
+        }
       }
-    };
-
-    const safeShop = deepClone(shop);
-    const safeProduct = deepClone(product);
-
-    return (
-      <ProductDetailClient 
-        shop={safeShop || null} 
-        product={safeProduct || null} 
-      />
-    );
+    }
   } catch (err) {
-    console.error(`[PRODUCT PAGE] CRITICAL RENDER ERROR:`, err);
-    return <ProductDetailClient shop={null} product={null} />;
+    console.error(`[PRODUCT PAGE] CRITICAL DATA FETCH ERROR:`, err);
   }
+
+  const deepClone = (obj) => {
+    try {
+      if (!obj) return null;
+      return JSON.parse(JSON.stringify(obj));
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const safeShop = deepClone(shop);
+  const safeProduct = deepClone(product);
+
+  return (
+    <ProductDetailClient 
+      shop={safeShop} 
+      product={safeProduct} 
+    />
+  );
 }
 
