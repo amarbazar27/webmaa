@@ -6,27 +6,28 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app'
 
 export async function generateMetadata({ params }) {
   try {
-    console.log('[PRODUCT PAGE] generateMetadata start');
     const resolvedParams = await params;
-    if (!resolvedParams || !resolvedParams.shopSlug || !resolvedParams.productId) {
-      return { title: 'Product', description: 'Product page' };
-    }
-    const { shopSlug, productId } = resolvedParams;
+    const shopSlug = resolvedParams?.shopSlug;
+    const productId = resolvedParams?.productId;
+
+    if (!shopSlug || !productId) return { title: 'পণ্য' };
+    
     const shop = await getShopServer(shopSlug);
-    if (!shop) return { title: 'পণ্য পাওয়া যায়নি' };
+    if (!shop) return { title: 'শপ পাওয়া যায়নি' };
     
     const products = await getProductsServer(shop.id) || [];
     const product = products.find(p => p.id === productId);
 
-    const title = product ? `${product.name} — ${shop.shopName}` : (shop?.shopName || 'পণ্য');
-    const description = product?.description || `${shop?.shopName || 'Shop'}-এ কেনাকাটা করুন`;
+    const title = product?.name ? `${product.name} — ${shop.shopName}` : (shop?.shopName || 'পণ্য');
+    const description = String(product?.description || `${shop?.shopName || 'Shop'}-এ কেনাকাটা করুন`).slice(0, 160);
     
     const rawImage = product?.imageUrl || shop?.logoUrl || '';
-    const absoluteImage = (typeof rawImage === 'string' && rawImage.startsWith('http')) 
-      ? rawImage 
-      : rawImage ? `${BASE_URL}${rawImage}` : '';
+    let absoluteImage = '';
+    if (typeof rawImage === 'string' && rawImage) {
+      absoluteImage = rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage}`;
+    }
       
-    const images = absoluteImage ? [{ url: absoluteImage, width: 1200, height: 630, alt: product?.name || shop?.shopName || 'Product' }] : [];
+    const images = absoluteImage ? [{ url: absoluteImage }] : [];
     const canonicalUrl = `${BASE_URL}/shop/${shopSlug}/product/${productId}`;
 
     return {
@@ -39,7 +40,6 @@ export async function generateMetadata({ params }) {
         url: canonicalUrl,
         images,
         type: 'product',
-        siteName: 'Webmaa',
       },
       twitter: {
         card: 'summary_large_image',
@@ -49,48 +49,32 @@ export async function generateMetadata({ params }) {
       }
     };
   } catch (err) {
-    console.error('[ProductPage] Metadata Error:', err);
+    console.error('[PRODUCT PAGE] Metadata Error:', err);
     return { title: 'পণ্য' };
   }
 }
 
 export default async function ProductDetailPage({ params }) {
-  console.log('[PRODUCT PAGE] Server Render Request start');
-  
   try {
-    const resolvedParams = await params || {};
-    const { shopSlug, productId } = resolvedParams;
-    
-    console.log('[PRODUCT PAGE] Context:', { shopSlug, productId });
-    
-    if (!shopSlug || !productId) {
-      console.warn('[PRODUCT PAGE] Missing required params');
-      return <ProductDetailClient shop={null} product={null} />;
-    }
-    
-    console.log('[PRODUCT PAGE] Fetching shop data...');
-    const shop = await getShopServer(shopSlug);
-    
-    if (!shop) {
-      console.warn(`[PRODUCT PAGE] Shop not found: ${shopSlug}`);
-      return <ProductDetailClient shop={null} product={null} />;
-    }
+    const resolvedParams = await params;
+    if (!resolvedParams) return <ProductDetailClient shop={null} product={null} />;
 
-    console.log('[PRODUCT PAGE] Fetching products for shop:', shop.id);
+    const { shopSlug, productId } = resolvedParams;
+    if (!shopSlug || !productId) return <ProductDetailClient shop={null} product={null} />;
+    
+    const shop = await getShopServer(shopSlug);
+    if (!shop) return <ProductDetailClient shop={null} product={null} />;
+
     const products = await getProductsServer(shop.id) || [];
     const product = products.find(p => p?.id === productId);
     
-    if (!product) {
-      console.warn(`[PRODUCT PAGE] Product not found: ${productId}`);
-      return <ProductDetailClient shop={null} product={null} />;
-    }
+    if (!product) return <ProductDetailClient shop={null} product={null} />;
 
-    // 🚨 FAIL-SAFE SERIALIZATION: Use a recursive helper or JSON trick to ensure NO non-serializable data leaks to Client
     const deepClone = (obj) => {
       try {
+        if (!obj) return null;
         return JSON.parse(JSON.stringify(obj));
       } catch (e) {
-        console.error('[PRODUCT PAGE] Serialization failed:', e);
         return null;
       }
     };
@@ -98,20 +82,14 @@ export default async function ProductDetailPage({ params }) {
     const safeShop = deepClone(shop);
     const safeProduct = deepClone(product);
 
-    if (!safeShop || !safeProduct) {
-       console.error('[PRODUCT PAGE] Serialization produced null data');
-       return <ProductDetailClient shop={null} product={null} />;
-    }
-
     return (
       <ProductDetailClient 
-        shop={safeShop} 
-        product={safeProduct} 
+        shop={safeShop || null} 
+        product={safeProduct || null} 
       />
     );
   } catch (err) {
     console.error(`[PRODUCT PAGE] CRITICAL RENDER ERROR:`, err);
-    // Never throw server exceptions. Render a safe fallback UI.
     return <ProductDetailClient shop={null} product={null} />;
   }
 }
