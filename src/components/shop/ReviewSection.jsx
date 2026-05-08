@@ -18,7 +18,6 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
-
   const fetchReviews = async () => {
     try {
       const res = await fetch(`/api/review?shopId=${shopId}`);
@@ -29,6 +28,8 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
   };
 
   useEffect(() => { if (shopId) fetchReviews(); }, [shopId]);
+
+  if (!shopId) return null;
 
   const handleSubmit = async () => {
     if (!user) { toast.error('রিভিউ দিতে লগইন করুন'); return; }
