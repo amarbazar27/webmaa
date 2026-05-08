@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getShop, updateShop } from '@/lib/firestore';
-import { uploadShopLogo } from '@/lib/storage';
+import { getShop, updateShop, saveUserData } from '@/lib/firestore';
+import { uploadShopLogo, uploadImage } from '@/lib/storage';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
@@ -95,6 +95,8 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [userPhotoFile, setUserPhotoFile] = useState(null);
+  const [userPhotoPreview, setUserPhotoPreview] = useState(null);
   const [showAiKey, setShowAiKey] = useState(false);
 
   const maskKey = (key) => {
@@ -146,6 +148,7 @@ export default function SettingsPage() {
         });
       }
       setLogoPreview(data?.logoUrl || null);
+      setUserPhotoPreview(userData?.photoURL || null);
       setSlugInput(data?.subdomainSlug || '');
       setCustomDomainInput(data?.customDomain || '');
       
@@ -274,6 +277,14 @@ export default function SettingsPage() {
     if (file) {
       setLogoFile(file);
       setLogoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleUserPhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUserPhotoFile(file);
+      setUserPhotoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -437,6 +448,12 @@ export default function SettingsPage() {
       let logoUrl = shop.logoUrl || '';
       if (logoFile) {
         logoUrl = await uploadShopLogo(activeShopId, logoFile);
+      }
+
+      if (userPhotoFile) {
+        const uploadedUrl = await uploadImage(userPhotoFile);
+        await saveUserData(user.uid, { photoURL: uploadedUrl });
+        toast.success('Profile photo updated!');
       }
       
       await updateShop(activeShopId, { 
@@ -620,6 +637,29 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
+
+          <Card title="Account Profile" subtitle="Your Identity" icon={Users} className="shadow-sm border-l-4 border-l-purple-500">
+            <div className="flex flex-col items-center">
+              <div className="relative group w-24 h-24 mb-4">
+                <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-md flex items-center justify-center">
+                  {userPhotoPreview ? (
+                    <img src={userPhotoPreview} alt="User" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-2xl font-black text-purple-600 uppercase">{userData?.name?.[0] || 'U'}</div>
+                  )}
+                </div>
+                <label className="absolute bottom-0 right-0 p-2 bg-purple-600 text-white rounded-full shadow-lg cursor-pointer hover:bg-purple-700 transition-all border-2 border-white">
+                  <ImageIcon size={14} />
+                  <input type="file" accept="image/*" onChange={handleUserPhotoChange} className="hidden" />
+                </label>
+              </div>
+              <div className="text-center">
+                <p className="font-black text-slate-900 text-sm">{userData?.name || 'Retailer'}</p>
+                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">{userData?.role}</p>
+              </div>
+            </div>
+          </Card>
+
           
           <Card title="Loyalty & Promo" subtitle="Customer Retention" icon={Gift} className="border-l-4 border-l-emerald-400">
              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">

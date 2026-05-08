@@ -58,39 +58,50 @@ export default async function ProductDetailPage({ params }) {
   console.log('[PRODUCT PAGE] Server Render Request start');
   
   try {
-    const resolvedParams = await params;
-    console.log('[PRODUCT PAGE] params', resolvedParams);
+    const resolvedParams = await params || {};
+    const { shopSlug, productId } = resolvedParams;
     
-    if (!resolvedParams || !resolvedParams.shopSlug || !resolvedParams.productId) {
-      console.warn('[PRODUCT PAGE] Missing params');
+    console.log('[PRODUCT PAGE] Context:', { shopSlug, productId });
+    
+    if (!shopSlug || !productId) {
+      console.warn('[PRODUCT PAGE] Missing required params');
       return <ProductDetailClient shop={null} product={null} />;
     }
     
-    const { shopSlug, productId } = resolvedParams;
-    console.log('[PRODUCT PAGE] shopSlug', shopSlug);
-    console.log('[PRODUCT PAGE] productId', productId);
-    
-    console.log('[PRODUCT PAGE] product fetch start');
+    console.log('[PRODUCT PAGE] Fetching shop data...');
     const shop = await getShopServer(shopSlug);
-    console.log('[PRODUCT PAGE] shop fetch result', shop ? 'found' : 'missing');
     
     if (!shop) {
-      console.warn(`[ProductPage] Shop not found: ${shopSlug}`);
+      console.warn(`[PRODUCT PAGE] Shop not found: ${shopSlug}`);
       return <ProductDetailClient shop={null} product={null} />;
     }
 
+    console.log('[PRODUCT PAGE] Fetching products for shop:', shop.id);
     const products = await getProductsServer(shop.id) || [];
     const product = products.find(p => p?.id === productId);
-    console.log('[PRODUCT PAGE] product fetch result', product ? 'found' : 'missing');
     
     if (!product) {
-      console.warn(`[ProductPage] Product not found: ${productId} in shop ${shop.id}`);
+      console.warn(`[PRODUCT PAGE] Product not found: ${productId}`);
       return <ProductDetailClient shop={null} product={null} />;
     }
 
-    // 🚨 FAIL-SAFE SERIALIZATION: Guarantee plain objects for Next.js SSR
-    const safeShop = JSON.parse(JSON.stringify(shop));
-    const safeProduct = JSON.parse(JSON.stringify(product));
+    // 🚨 FAIL-SAFE SERIALIZATION: Use a recursive helper or JSON trick to ensure NO non-serializable data leaks to Client
+    const deepClone = (obj) => {
+      try {
+        return JSON.parse(JSON.stringify(obj));
+      } catch (e) {
+        console.error('[PRODUCT PAGE] Serialization failed:', e);
+        return null;
+      }
+    };
+
+    const safeShop = deepClone(shop);
+    const safeProduct = deepClone(product);
+
+    if (!safeShop || !safeProduct) {
+       console.error('[PRODUCT PAGE] Serialization produced null data');
+       return <ProductDetailClient shop={null} product={null} />;
+    }
 
     return (
       <ProductDetailClient 
@@ -99,8 +110,9 @@ export default async function ProductDetailPage({ params }) {
       />
     );
   } catch (err) {
-    console.error(`[PRODUCT PAGE] FATAL RENDER ERROR:`, err);
+    console.error(`[PRODUCT PAGE] CRITICAL RENDER ERROR:`, err);
     // Never throw server exceptions. Render a safe fallback UI.
     return <ProductDetailClient shop={null} product={null} />;
   }
 }
+
