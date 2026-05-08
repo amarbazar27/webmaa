@@ -1,8 +1,17 @@
 import { getShopServer, getProductsServer } from '@/lib/server-fetch';
-import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
+
+// 🚨 Fail-safe serialization utility moved outside component
+const deepClone = (obj) => {
+  if (!obj) return null;
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (e) {
+    return null;
+  }
+};
 
 export async function generateMetadata({ params }) {
   try {
@@ -27,7 +36,8 @@ export async function generateMetadata({ params }) {
       absoluteImage = rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage}`;
     }
       
-    const images = absoluteImage ? [{ url: absoluteImage }] : [];
+    // Next.js metadata images should ideally have width/height to avoid OG issues
+    const images = absoluteImage ? [{ url: absoluteImage, width: 800, height: 600 }] : [];
     const canonicalUrl = `${BASE_URL}/shop/${shopSlug}/product/${productId}`;
 
     return {
@@ -49,7 +59,6 @@ export async function generateMetadata({ params }) {
       }
     };
   } catch (err) {
-    console.error('[PRODUCT PAGE] Metadata Error:', err);
     return { title: 'পণ্য' };
   }
 }
@@ -60,36 +69,25 @@ export default async function ProductDetailPage({ params }) {
 
   try {
     const resolvedParams = await params;
-    if (resolvedParams) {
-      const { shopSlug, productId } = resolvedParams;
-      if (shopSlug && productId) {
-        shop = await getShopServer(shopSlug);
-        if (shop) {
-          const products = await getProductsServer(shop.id) || [];
-          product = products.find(p => p?.id === productId);
-        }
+    if (resolvedParams?.shopSlug && resolvedParams?.productId) {
+      shop = await getShopServer(resolvedParams.shopSlug);
+      if (shop?.id) {
+        const products = await getProductsServer(shop.id) || [];
+        product = products.find(p => p?.id === resolvedParams.productId);
       }
     }
   } catch (err) {
-    console.error(`[PRODUCT PAGE] CRITICAL DATA FETCH ERROR:`, err);
+    console.error(`[PRODUCT PAGE] FETCH ERROR:`, err);
   }
 
-  const deepClone = (obj) => {
-    try {
-      if (!obj) return null;
-      return JSON.parse(JSON.stringify(obj));
-    } catch (e) {
-      return null;
-    }
-  };
-
+  // Final serialization pass to ensure NO complex objects (Timestamps, etc) hit the client
   const safeShop = deepClone(shop);
   const safeProduct = deepClone(product);
 
   return (
     <ProductDetailClient 
-      shop={safeShop} 
-      product={safeProduct} 
+      shop={safeShop || null} 
+      product={safeProduct || null} 
     />
   );
 }
