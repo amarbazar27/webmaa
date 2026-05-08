@@ -176,6 +176,7 @@ export default function SettingsPage() {
         contactWhatsapp: data?.deliveryConfig?.contactWhatsapp || '',
         minOrderAmount: data?.deliveryConfig?.minOrderAmount || ''
       });
+      setAiConfig({
         botTone: data?.aiConfig?.botTone || 'funny',
         enableAiShoppingList: data?.aiConfig?.enableAiShoppingList !== false
       });
