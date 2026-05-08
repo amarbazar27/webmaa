@@ -1,4 +1,5 @@
 'use client';
+// Build trigger: v1.0.2 - Fixed hydration and 9:16 aspect ratio
 import { Component, Suspense, useState, useEffect } from 'react';
 import { Loader2, Info, ArrowLeft } from 'lucide-react';
 import { useProductLogic } from '@/features/product/hooks/useProductLogic';
