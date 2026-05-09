@@ -128,6 +128,8 @@ export default function SettingsPage() {
   const [customAreas, setCustomAreas] = useState([]);
   const [newCustomArea, setNewCustomArea] = useState('');
   const [trackingConfig, setTrackingConfig] = useState({ ga4Id: '', clarityId: '' });
+  const [loadingMedia, setLoadingMedia] = useState({ type: 'default', imageUrl: '', texts: [] });
+  const [newLoadingText, setNewLoadingText] = useState('');
   
   const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [], unionsType: 'unions' });
   const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', upazilaName: '', union: '' });
@@ -158,7 +160,11 @@ export default function SettingsPage() {
         yt: data?.socialLinks?.yt || '',
         wa: data?.socialLinks?.wa || '',
         linkedin: data?.socialLinks?.linkedin || '',
-        tiktok: data?.socialLinks?.tiktok || ''
+        tiktok: data?.socialLinks?.tiktok || '',
+        twitter: data?.socialLinks?.twitter || '',
+        telegram: data?.socialLinks?.telegram || '',
+        threads: data?.socialLinks?.threads || '',
+        pinterest: data?.socialLinks?.pinterest || ''
       });
       setAuthSettings({
         emailAuth: data?.authSettings?.emailAuth || false, 
@@ -188,6 +194,11 @@ export default function SettingsPage() {
       setTrackingConfig({
         ga4Id: data?.trackingConfig?.ga4Id || '',
         clarityId: data?.trackingConfig?.clarityId || ''
+      });
+      setLoadingMedia({
+        type: data?.loadingMedia?.type || 'default',
+        imageUrl: data?.loadingMedia?.imageUrl || '',
+        texts: data?.loadingMedia?.texts || []
       });
       setDomainStatus(data?.domainStatus || '');
       
@@ -472,7 +483,8 @@ export default function SettingsPage() {
         isStrictLocation,
         showLocationSelector,
         customAreas,
-        trackingConfig
+        trackingConfig,
+        loadingMedia
       });
       toast.success('All settings synchronized! ✨');
     } catch (err) {
@@ -682,6 +694,17 @@ export default function SettingsPage() {
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={authSettings.emailAuth} onChange={e => setAuthSettings({...authSettings, emailAuth: e.target.checked})} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+               </div>
+               
+               <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+                  <div>
+                     <p className="text-xs font-black text-slate-900 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Google Login Auth</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">1-tap login without password</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={authSettings.googleAuth !== false} onChange={e => setAuthSettings({...authSettings, googleAuth: e.target.checked})} />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                   </label>
                </div>
@@ -929,14 +952,106 @@ export default function SettingsPage() {
                        <p className="text-xs font-black text-slate-900">Auto-slide Interval</p>
                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Seconds per banner (default: 4s)</p>
                      </div>
-                     <input
-                       type="number" min="1" max="60"
-                       value={shop.bannerInterval || 4}
-                       onChange={e => setShop({ ...shop, bannerInterval: parseInt(e.target.value) || 4 })}
-                       className="w-20 text-center font-black text-lg bg-white border-2 border-slate-200 rounded-xl py-2 outline-none focus:border-purple-600 text-slate-900"
-                     />
-                   </div>
-                </div>
+                      <input
+                        type="number" min="1" max="60"
+                        value={shop.bannerInterval || 4}
+                        onChange={e => setShop({ ...shop, bannerInterval: parseInt(e.target.value) || 4 })}
+                        className="w-20 text-center font-black text-lg bg-white border-2 border-slate-200 rounded-xl py-2 outline-none focus:border-purple-600 text-slate-900"
+                      />
+                    </div>
+                 </div>
+
+                 {/* ── Loading Screen Customization ── */}
+                 <div className="border-t border-slate-100 pt-6 mt-2 space-y-4">
+                    <div>
+                       <p className="text-xs font-black text-slate-900 flex items-center gap-2"><Clock size={14} /> লোডিং স্ক্রিন কাস্টমাইজেশন</p>
+                       <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">শপ লোড হওয়ার সময় কি দেখাবে তা বেছে নিন</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                       {[
+                         { v: 'default', label: 'ডিফল্ট', desc: 'শপ লোগো' },
+                         { v: 'image', label: 'কাস্টম ছবি', desc: 'নিজের ছবি' },
+                         { v: 'text', label: 'কাস্টম টেক্সট', desc: 'ঘূর্ণায়মান লেখা' },
+                       ].map(opt => (
+                         <label key={opt.v} className="cursor-pointer">
+                           <input type="radio" name="loadingType" value={opt.v} checked={loadingMedia.type === opt.v} onChange={() => setLoadingMedia({...loadingMedia, type: opt.v})} className="peer sr-only" />
+                           <div className="p-3 border-2 border-slate-100 rounded-2xl text-center peer-checked:border-purple-600 peer-checked:bg-purple-50 transition-all">
+                             <p className="font-black text-slate-900 text-xs">{opt.label}</p>
+                             <p className="text-[9px] text-slate-500 font-bold mt-0.5">{opt.desc}</p>
+                           </div>
+                         </label>
+                       ))}
+                    </div>
+                    {loadingMedia.type === 'image' && (
+                       <div className="space-y-3">
+                         <p className="text-[10px] font-black text-slate-500 uppercase">লোডিং স্ক্রিনের জন্য ছবির URL দিন (বা আপলোড করুন):</p>
+                         <div className="flex gap-2">
+                           <input
+                             type="text"
+                             placeholder="https://... বা ছবি আপলোড করুন"
+                             value={loadingMedia.imageUrl}
+                             onChange={e => setLoadingMedia({...loadingMedia, imageUrl: e.target.value})}
+                             className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-purple-600 text-slate-900"
+                           />
+                           <label className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-black cursor-pointer hover:bg-purple-700 transition-all whitespace-nowrap flex items-center gap-1">
+                             📷 আপলোড
+                             <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                               const file = e.target.files[0];
+                               if (!file) return;
+                               const { uploadImage } = await import('@/lib/storage');
+                               try {
+                                 const url = await uploadImage(file);
+                                 setLoadingMedia(prev => ({...prev, imageUrl: url}));
+                                 toast.success('ছবি আপলোড হয়েছে!');
+                               } catch { toast.error('আপলোড ব্যর্থ'); }
+                             }} />
+                           </label>
+                         </div>
+                         {loadingMedia.imageUrl && (
+                           <div className="relative w-40 h-24 rounded-xl overflow-hidden border-2 border-purple-200">
+                             <img src={loadingMedia.imageUrl} alt="Loading preview" className="w-full h-full object-cover" />
+                             <button type="button" onClick={() => setLoadingMedia({...loadingMedia, imageUrl: ''})} className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✕</button>
+                           </div>
+                         )}
+                       </div>
+                    )}
+                    {loadingMedia.type === 'text' && (
+                       <div className="space-y-3">
+                         <p className="text-[10px] font-black text-slate-500 uppercase">লোডিং স্ক্রিনে ঘুরে ঘুরে দেখাবে (max 6টি):</p>
+                         <div className="flex gap-2">
+                           <input
+                             type="text"
+                             placeholder="যেমন: আমাদের সেরা পণ্য দেখুন!"
+                             value={newLoadingText}
+                             onChange={e => setNewLoadingText(e.target.value)}
+                             className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-purple-600 text-slate-900"
+                             onKeyDown={e => {
+                               if (e.key === 'Enter' && newLoadingText.trim() && (loadingMedia.texts?.length || 0) < 6) {
+                                 setLoadingMedia(prev => ({...prev, texts: [...(prev.texts || []), newLoadingText.trim()]}));
+                                 setNewLoadingText('');
+                               }
+                             }}
+                           />
+                           <button type="button" onClick={() => {
+                             if (newLoadingText.trim() && (loadingMedia.texts?.length || 0) < 6) {
+                               setLoadingMedia(prev => ({...prev, texts: [...(prev.texts || []), newLoadingText.trim()]}));
+                               setNewLoadingText('');
+                             }
+                           }} className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-all">+ যোগ</button>
+                         </div>
+                         {(loadingMedia.texts?.length || 0) > 0 && (
+                           <div className="flex flex-wrap gap-2">
+                             {loadingMedia.texts.map((t, i) => (
+                               <div key={i} className="flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-800 px-3 py-1.5 rounded-xl text-xs font-black">
+                                 {t}
+                                 <button type="button" onClick={() => setLoadingMedia(prev => ({...prev, texts: prev.texts.filter((_, j) => j !== i)}))} className="text-purple-400 hover:text-red-500 ml-1"><X size={10} /></button>
+                               </div>
+                             ))}
+                           </div>
+                         )}
+                       </div>
+                    )}
+                 </div>
 
                 <div className="md:col-span-2 border-t border-purple-100 pt-6 mt-2">
                    <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-purple-100 shadow-sm">
@@ -1121,12 +1236,16 @@ export default function SettingsPage() {
 
             <Card title="Social Ecosystem" subtitle="Connect Audiences" icon={Globe}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                   <Input label="Facebook" placeholder="Facebook URL" value={socialLinks.fb} onChange={e => setSocialLinks({...socialLinks, fb: e.target.value})} />
-                   <Input label="Instagram" placeholder="Instagram URL" value={socialLinks.insta} onChange={e => setSocialLinks({...socialLinks, insta: e.target.value})} />
-                   <Input label="YouTube" placeholder="YouTube URL" value={socialLinks.yt} onChange={e => setSocialLinks({...socialLinks, yt: e.target.value})} />
-                   <Input label="WhatsApp (Number)" placeholder="e.g. 01700000000" value={socialLinks.wa} onChange={e => setSocialLinks({...socialLinks, wa: e.target.value})} />
-                   <Input label="LinkedIn" placeholder="LinkedIn URL" value={socialLinks.linkedin} onChange={e => setSocialLinks({...socialLinks, linkedin: e.target.value})} />
-                   <Input label="TikTok" placeholder="TikTok URL" value={socialLinks.tiktok} onChange={e => setSocialLinks({...socialLinks, tiktok: e.target.value})} />
+                   <Input label="💙 Facebook" placeholder="https://facebook.com/yourpage" value={socialLinks.fb} onChange={e => setSocialLinks({...socialLinks, fb: e.target.value})} />
+                   <Input label="💜 Instagram" placeholder="https://instagram.com/yourpage" value={socialLinks.insta} onChange={e => setSocialLinks({...socialLinks, insta: e.target.value})} />
+                   <Input label="📧 YouTube" placeholder="https://youtube.com/yourchannel" value={socialLinks.yt} onChange={e => setSocialLinks({...socialLinks, yt: e.target.value})} />
+                   <Input label="📱 WhatsApp (Number)" placeholder="e.g. 01700000000" value={socialLinks.wa} onChange={e => setSocialLinks({...socialLinks, wa: e.target.value})} />
+                   <Input label="💼 LinkedIn" placeholder="https://linkedin.com/in/yourprofile" value={socialLinks.linkedin} onChange={e => setSocialLinks({...socialLinks, linkedin: e.target.value})} />
+                   <Input label="🎙️ TikTok" placeholder="https://tiktok.com/@yourpage" value={socialLinks.tiktok} onChange={e => setSocialLinks({...socialLinks, tiktok: e.target.value})} />
+                   <Input label="💠 Twitter / X" placeholder="https://x.com/yourhandle" value={socialLinks.twitter || ''} onChange={e => setSocialLinks({...socialLinks, twitter: e.target.value})} />
+                   <Input label="✈️ Telegram" placeholder="https://t.me/yourchannel" value={socialLinks.telegram || ''} onChange={e => setSocialLinks({...socialLinks, telegram: e.target.value})} />
+                   <Input label="🧵 Threads" placeholder="https://threads.net/@yourpage" value={socialLinks.threads || ''} onChange={e => setSocialLinks({...socialLinks, threads: e.target.value})} />
+                   <Input label="📌 Pinterest" placeholder="https://pinterest.com/yourpage" value={socialLinks.pinterest || ''} onChange={e => setSocialLinks({...socialLinks, pinterest: e.target.value})} />
                 </div>
              </Card>
 

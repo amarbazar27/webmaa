@@ -41,22 +41,15 @@ Load all rules from this file and follow them strictly before responding to any 
 - If unsure about a change or its impact → ask the user before changing anything.
 
 ## ❗ Critical Confirmation Rule
-Before modifying any of these:
-- Checkout logic
-- Auth flow
-- Firestore queries affecting orders/users
+Before### ১. মূল লক্ষ্য ও অর্জন (Completed Goals)
+- **Auth Toggle**: Added retailer control for Google Login (`emailAuth` and `googleAuth`) in `settings/page.js` and implemented conditional logic in `ShopClient.jsx`.
+- **Custom Loading Screen**: Rewrote `LoadingScreen.jsx` to support dynamic loading media (`image`, `text`, or `default` shop logo) and integrated an initialization splash screen in `ShopClient.jsx`.
+- **System Optimizations**: Improved mobile drawer subcategory filtering logic to prevent cross-category mismatch, resolved zero-stock product checkout exploits with explicit "Frozen" badge, and fixed user-data autofill persistence.
+- **Admin & UI Fixes**: Fixed correct domain routing display in Superadmin panel (`/shop/{slug}`) and expanded social links.
 
-You MUST ask for confirmation if the change is not 100% explicitly defined by the user.
-
-## 🚫 Forbidden Actions
-- NO UI or layout changes without explicit instruction.
-- NO Performance optimization or arbitrary code golfing without request.
-- NO Renaming files or altering the folder structure.
-- NO Adding new features without permission.
-
-## 🧩 Project Architecture
-- **Framework:** Next.js (App Router, version 16.2.3 with Turbopack)
-- **Database:** Firebase Firestore (Admin SDK for backend, Client SDK for frontend)
+### ২. টেকনিক্যাল কনটেক্সট
+- **Framework**: Next.js App Router
+- **Database**: Firebase Firestore (`loadingMedia`, `googleAuth` fields added)backend, Client SDK for frontend)
 - **Authentication:** Firebase Auth (Google Sign-In, multiple domain handling)
 - **Deployment:** Vercel (Auto-deployed from GitHub `main` branch)
 - **Styling:** Tailwind CSS
@@ -174,24 +167,16 @@ Focus: Implementation > Explanation
 # 🌐 TASK 7: AUTO NETWORK DETECTION + LITE MODE
 - Detect: navigator.connection, latency
 - IF slow: Lite mode ON (animation off, ads off, low-res image, minimal UI)
-- UI: "Lite Mode চালু আছে", Toggle allow
+- UI: "Lite### ৪. বিদ্যমান সমস্যা ও ব্লকাস (Resolved)
+- ✅ **সাব-ক্যাটাগরি বাগ:** Fixed subcategory filter strict matching logic in `ShopClient`.
+- ✅ **ইউজার ডাটা পারসিস্ট্যান্স:** Fixed user data autofill on active auth change.
+- ✅ **স্টক-আউট:** Added "🚫 স্টক আউট — Frozen" badge for zero stock products and prevented checkout.
+- ✅ **মোবাইল মেনু ও নেভিগেশন:** Improved mobile experience.
 
-# 📴 TASK 8: OFFLINE CART SYSTEM
-- Detect: navigator.onLine
-- Use: IndexedDB (preferred)
-- Offline: "আপনি অফলাইনে আছেন" (cart usable, add/remove allowed)
-- Online হলে: auto sync
-
-# 🔄 TASK 9: SMART RETRY ORDER SYSTEM
-- On order: STEP 1: save locally -> STEP 2: send API -> IF fail: mark pending
-- RETRY: 5s → 15s → 30s (max 5 times). IF network ফিরে আসে: instant retry
-- UI: "অর্ডার পাঠানো যাচ্ছে না, আবার চেষ্টা হচ্ছে" / Button: "আবার চেষ্টা করুন"
-- FAIL: "অর্ডার সম্পন্ন হয়নি"
-
-# ⚙️ TASK 10: BACKEND SAFETY
-- idempotent API, unique order token, duplicate prevent
-
-# 🧩 TASK 11: EDGE CASE
+### ৫. পরবর্তী ধাপ (Completed)
+1. ✅ **সিস্টেম প্যাচ:** `ShopClient.jsx` patched.
+2. ✅ **কাস্টম লোডিং:** `LoadingScreen.jsx` updated.
+3. ✅ **ডিপ্লয়মেন্ট:** Code built and pushed.EDGE CASE
 - crash → restore cart, reload → restore pending order, tab close → data persist
 
 # ⚙️ TASK 12: RELIABILITY

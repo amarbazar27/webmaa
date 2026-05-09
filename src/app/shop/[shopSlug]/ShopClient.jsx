@@ -177,6 +177,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [sortOption, setSortOption] = useState('name_asc');
   const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [showSplash, setShowSplash] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setShowSplash(false), 1500); return () => clearTimeout(t); }, []);
 
   useEffect(() => {
     if (isOnline) {
@@ -549,12 +551,17 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
 
   // ── Filters & Sorting ──────────────────────────
-  let filteredProducts = products.filter(p =>
-    (activeCategory === 'All' || activeCategory === 'সব' || p.category === activeCategory) &&
-    (!activeSubcategory || p.subcategory === activeSubcategory) &&
-    (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     p.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  let filteredProducts = products.filter(p => {
+    // Category filter: if activeSubcategory is set, MUST match category too
+    const catMatch = activeCategory === 'All' || activeCategory === 'সব' || p.category === activeCategory;
+    // Subcategory filter: only show products of that exact subcategory
+    const subMatch = !activeSubcategory || p.subcategory === activeSubcategory;
+    // If subcategory is selected, also enforce category match (no 'All' bypass)
+    const strictCatMatch = !activeSubcategory ? catMatch : p.category === activeCategory;
+    const searchMatch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    return strictCatMatch && subMatch && searchMatch;
+  });
   filteredProducts = filteredProducts.sort((a, b) => {
     if (sortOption === 'price_asc') return parseFloat(a.price) - parseFloat(b.price);
     if (sortOption === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
@@ -870,6 +877,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
   // Auth state resolves in background — shopping is always public.
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
+      {/* ── Splash Loading Screen (1.5s, with shop branding) ── */}
+      {showSplash && <LoadingScreen visible={showSplash} shop={shop} products={products} minDuration={1500} />}
       <StoreAnalytics shop={shop} />
       {/* ── Category Drawer (Mobile) ── */}
       <div className={`fixed inset-0 z-[100] md:hidden transition-all duration-300 ${isCategoryMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
@@ -1250,8 +1259,9 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                     {/* Cart Controls */}
                     <div className="mt-auto space-y-2">
                       {product.stock === 0 ? (
-                        <div className="w-full py-2.5 rounded-xl font-black text-sm bg-slate-100 text-slate-400 border border-slate-200 flex items-center justify-center gap-2 cursor-not-allowed">
-                          ❌ স্টক নেই
+                        <div className="w-full py-2.5 rounded-xl font-black text-sm bg-red-50 text-red-500 border border-red-200 flex flex-col items-center justify-center gap-1 cursor-not-allowed">
+                          <div className="flex items-center gap-1.5"><span className="text-base">🚫</span> স্টক আউট</div>
+                          <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Frozen — অর্ডার বন্ধ</span>
                         </div>
                       ) : cartItem ? (
                         <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
@@ -1746,10 +1756,16 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                     <p className="text-xs text-slate-500 font-bold mt-1">অর্ডার ইতিহাস ও ডেইলি স্ট্রিক দেখতে লগইন করুন।</p>
                   </div>
                   
-                  <button onClick={handleGoogleLogin} className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
-                    গুগল দিয়ে লগইন
-                  </button>
+                  {shop.authSettings?.googleAuth !== false ? (
+                    <button onClick={handleGoogleLogin} className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
+                      গুগল দিয়ে লগইন
+                    </button>
+                  ) : (
+                    <div className="bg-slate-100 px-4 py-3 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-500 mt-2">
+                      এই শপে লগইন সিস্টেম সাময়িকভাবে বন্ধ আছে। আপনি অতিথি হিসেবে অর্ডার করতে পারেন।
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="w-full space-y-5">

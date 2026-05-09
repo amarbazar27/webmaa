@@ -1,14 +1,22 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 
 export default function LoadingScreen({ text, visible = true, minDuration = 1000, shop = null, products = [] }) {
   const [show, setShow] = useState(true);
   const [textIdx, setTextIdx] = useState(0);
   const [productIdx, setProductIdx] = useState(0);
   
+  // Determine loading content based on shop.loadingMedia setting
+  const loadingMedia = shop?.loadingMedia || { type: 'default' };
   const defaultText = ['সুবহানআল্লাহ', 'আলহামদুলিল্লাহ', 'আল্লাহু আকবার', 'বিসমিল্লাহ'];
-  const loadingTexts = shop?.loadingTexts?.length ? shop.loadingTexts : defaultText;
+  
+  // Text to show: custom texts if 'text' mode, else default
+  const loadingTexts = (loadingMedia.type === 'text' && loadingMedia.texts?.length > 0)
+    ? loadingMedia.texts
+    : (shop?.loadingTexts?.length ? shop.loadingTexts : defaultText);
+  
+  // Custom image: show if type === 'image' and imageUrl set
+  const customImageUrl = loadingMedia.type === 'image' && loadingMedia.imageUrl ? loadingMedia.imageUrl : null;
   
   const highlightProducts = products.filter(p => p.imageUrl).slice(0, 5);
 
@@ -40,9 +48,7 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
   return (
     <div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
-      style={{
-        background: 'linear-gradient(135deg, #050510 0%, #0a0a20 50%, #050510 100%)',
-      }}
+      style={{ background: 'linear-gradient(135deg, #050510 0%, #0a0a20 50%, #050510 100%)' }}
     >
       {/* ── Islamic Geometric Pattern Overlay ── */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
@@ -54,43 +60,51 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
       <div className="absolute w-[500px] h-[500px] rounded-full blur-[120px] animate-pulse bg-purple-600/10 -top-48 -left-48" />
       <div className="absolute w-[400px] h-[400px] rounded-full blur-[100px] animate-pulse bg-indigo-600/10 -bottom-32 -right-32" />
 
-      {/* ── Central logo with animated rings ── */}
-      <div className="relative flex items-center justify-center mb-10" style={{ width: 140, height: 140 }}>
-        <div className="absolute inset-0 rounded-full border border-purple-500/20 animate-[spin_8s_linear_infinite]" />
-        <div className="absolute inset-2 rounded-full border border-indigo-500/10 animate-[spin_12s_linear_infinite_reverse]" />
-        
-        <div
-          className="relative rounded-[32px] overflow-hidden flex items-center justify-center"
-          style={{
-            width: 90,
-            height: 90,
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            backdropFilter: 'blur(30px)',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-          }}
-        >
-          {shop?.logoUrl ? (
-            <img src={shop.logoUrl} alt={shop.shopName || 'Store'} className="w-full h-full object-contain p-2" />
-          ) : (
-            <div className="text-white font-black">
-              <svg width="54" height="54" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="wm-grad-L" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#A5B4FC" />
-                    <stop offset="100%" stopColor="#F472B6" />
-                  </linearGradient>
-                </defs>
-                <circle cx="50" cy="50" r="45" fill="url(#wm-grad-L)" opacity="0.1" />
-                <text x="50" y="65" textAnchor="middle" fill="url(#wm-grad-L)" fontSize="50" fontWeight="900">{shop?.shopName ? shop.shopName.charAt(0).toUpperCase() : 'W'}</text>
-              </svg>
-            </div>
-          )}
+      {/* ── Custom Image (full cover bg) OR Central Logo ── */}
+      {customImageUrl ? (
+        <div className="absolute inset-0">
+          <img src={customImageUrl} alt="Loading" className="w-full h-full object-cover opacity-70" />
+          <div className="absolute inset-0 bg-black/40" />
         </div>
-      </div>
+      ) : (
+        /* ── Central logo with animated rings ── */
+        <div className="relative flex items-center justify-center mb-10" style={{ width: 140, height: 140 }}>
+          <div className="absolute inset-0 rounded-full border border-purple-500/20 animate-[spin_8s_linear_infinite]" />
+          <div className="absolute inset-2 rounded-full border border-indigo-500/10 animate-[spin_12s_linear_infinite_reverse]" />
+          
+          <div
+            className="relative rounded-[32px] overflow-hidden flex items-center justify-center"
+            style={{
+              width: 90,
+              height: 90,
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(30px)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            }}
+          >
+            {shop?.logoUrl ? (
+              <img src={shop.logoUrl} alt={shop.shopName || 'Store'} className="w-full h-full object-contain p-2" />
+            ) : (
+              <div className="text-white font-black">
+                <svg width="54" height="54" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="wm-grad-L" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#A5B4FC" />
+                      <stop offset="100%" stopColor="#F472B6" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="50" cy="50" r="45" fill="url(#wm-grad-L)" opacity="0.1" />
+                  <text x="50" y="65" textAnchor="middle" fill="url(#wm-grad-L)" fontSize="50" fontWeight="900">{shop?.shopName ? shop.shopName.charAt(0).toUpperCase() : 'W'}</text>
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Rotating text ── */}
-      <div className="flex flex-col items-center gap-3 mb-10">
+      <div className={`relative flex flex-col items-center gap-3 mb-10 z-10`}>
         <div className="relative h-10 flex items-center justify-center" style={{ width: 300 }}>
           <p
             key={textIdx}
@@ -115,7 +129,7 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
       {featuredProduct && (
         <div
           key={productIdx}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700 z-10"
           style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', minWidth: 240, maxWidth: 300 }}
         >
           {/* Product Image */}

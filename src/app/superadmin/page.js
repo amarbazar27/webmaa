@@ -645,8 +645,8 @@ export default function SuperAdminPage() {
                                 </a>
                               )}
                               {shop.subdomainSlug && (
-                                <a href={`https://${shop.subdomainSlug}.webmaa.vercel.app`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
-                                  <Link2 size={11} /> {shop.subdomainSlug}
+                                <a href={`https://webmaa.vercel.app/shop/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
+                                  <Link2 size={11} /> /shop/{shop.subdomainSlug}
                                 </a>
                               )}
                             </div>
