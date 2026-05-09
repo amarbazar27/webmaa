@@ -1065,6 +1065,19 @@ export default function SettingsPage() {
                       </label>
                    </div>
                 </div>
+
+                <div className="md:col-span-2 border-t border-purple-100 pt-6 mt-2">
+                   <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-purple-100 shadow-sm">
+                      <div>
+                         <p className="text-xs font-black text-slate-900">Enable Smart Inventory (Auto Calculator)</p>
+                         <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Replace AI prompt with instant auto-calculator for quantities</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={aiConfig.smartCalcEnabled} onChange={e => setAiConfig({...aiConfig, smartCalcEnabled: e.target.checked})} />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      </label>
+                   </div>
+                </div>
               </div>
             </Card>
 

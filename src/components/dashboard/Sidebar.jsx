@@ -17,6 +17,7 @@ import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
   { href: '/dashboard/products', icon: ShoppingBag, label: 'Inventory' },
+  { href: '/dashboard/smart-inventory', icon: ShoppingBag, label: 'Smart Inventory' },
   { href: '/dashboard/categories', icon: Tag, label: 'Categories' },
   { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/dashboard/customers', icon: Users, label: 'Customers' },

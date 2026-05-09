@@ -14,6 +14,7 @@ import ProductVariants from '@/features/product/components/ProductVariants';
 import LegacySizes from '@/features/product/components/LegacySizes';
 import ProductQuantity from '@/features/product/components/ProductQuantity';
 import AiCustomization from '@/features/product/components/AiCustomization';
+import SmartCalculator from '@/features/product/components/SmartCalculator';
 import ProductActions from '@/features/product/components/ProductActions';
 import ReviewSection from '@/components/shop/ReviewSection';
 import ServiceBanner from '@/components/shop/ServiceBanner';
@@ -105,7 +106,11 @@ function ProductDetailInner({ shop, product }) {
           <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
           
           <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
-          <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
+          {safeShop?.aiConfig?.smartCalcEnabled && safeProduct?.smartCalc?.enabled ? (
+            <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
+          ) : (
+            <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
+          )}
           
           <ProductActions product={safeProduct} customerNote={logic.customerNote} setCustomerNote={logic.setCustomerNote} totalPrice={totalPrice} onAddToCart={() => addToCart({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice, router: logic.router})} />
           <ReviewSection shopId={safeShop?.id} />
