@@ -49,7 +49,7 @@ export async function generateMetadata({ params }) {
         description,
         url: canonicalUrl,
         images,
-        type: 'product',
+        type: 'website',
       },
       twitter: {
         card: 'summary_large_image',

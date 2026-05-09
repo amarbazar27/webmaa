@@ -15,7 +15,7 @@ export default function ProductImage({ product, currentPrice }) {
   const safeName = String(product?.name || 'Unknown');
 
   return (
-    <div className="relative w-full aspect-[9/16] max-h-[600px] rounded-[2rem] overflow-hidden shadow-2xl bg-white border border-slate-200 group">
+    <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-2xl bg-white border border-slate-200 group">
       {product?.imageUrl && !imgError ? (
         product.imageUrl.startsWith('http') ? (
           <img 

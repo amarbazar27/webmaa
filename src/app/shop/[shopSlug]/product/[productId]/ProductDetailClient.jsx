@@ -106,11 +106,12 @@ function ProductDetailInner({ shop, product }) {
           <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
           
           <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
-          {safeShop?.aiConfig?.smartCalcEnabled && safeProduct?.smartCalc?.enabled ? (
+          
+          {safeShop?.aiConfig?.smartCalcEnabled ? (
             <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
-          ) : (
+          ) : safeProduct?.allowCustomize ? (
             <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
-          )}
+          ) : null}
           
           <ProductActions product={safeProduct} customerNote={logic.customerNote} setCustomerNote={logic.setCustomerNote} totalPrice={totalPrice} onAddToCart={() => addToCart({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice, router: logic.router})} />
           <ReviewSection shopId={safeShop?.id} />

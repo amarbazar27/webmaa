@@ -292,7 +292,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [orderSuccess, setOrderSuccess] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
-  const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '' });
+  const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [orderImage, setOrderImage] = useState(null);
@@ -749,7 +749,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         clientPrice: i.customizedPrice || undefined
       })),
       customerId: user?.uid || `guest_${Date.now()}`,
-      customImage: orderImage
+      customImage: orderImage,
+      coordinates: orderForm.coordinates
     };
 
     const onSuccess = async (payloadResp) => {
@@ -841,6 +842,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
       <div style="border:1px solid black;padding:10px;margin-bottom:12px;font-size:11px">
         <p style="margin:0 0 4px;font-weight:900">${orderData.customerName} — ${orderData.customerPhone}</p>
         <p style="margin:0;line-height:1.4"><b>Addr:</b> ${orderData.customerAddress}</p>
+        ${orderData.coordinates?.link ? `<p style="margin:4px 0 0;font-size:9px;color:#2563eb"><b>Map:</b> ${orderData.coordinates.link}</p>` : ''}
       </div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
         <thead>
@@ -1688,8 +1690,13 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ঠিকানা *</label>
-                    <button type="button" onClick={handleGetLocation} className="text-[10px] bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 px-2 py-1 rounded-lg font-black tracking-wider flex items-center gap-1 transition-colors border border-red-200 shadow-sm active:scale-95">
-                      <MapPin size={12} /> আমার বর্তমান লোকেশন দিন
+                    <button 
+                      type="button" 
+                      onClick={handleGetLocation} 
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 border-2 ${orderForm.coordinates ? 'bg-emerald-500 border-emerald-200 text-white' : 'bg-red-500 border-red-200 text-white animate-pulse'}`}
+                      title="আমার বর্তমান লোকেশন দিন"
+                    >
+                      <MapPin size={20} strokeWidth={2.5} />
                     </button>
                   </div>
                   <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} />
