@@ -180,38 +180,6 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         </aside>
       </div>
 
-      {/* Bottom Nav (Legacy / Backup) - keep only for quick actions if needed, or remove for cleaner look */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[80] bg-white border-t border-slate-100 px-2 pb-safe flex items-center justify-around py-3 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
-         {visibleNavItems.slice(0, 4).map(({ href, icon: Icon, label }) => {
-            const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
-            return (
-               <Link key={href} href={href} className="flex flex-col items-center gap-1 w-14">
-                  <div className={clsx(
-                     "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                     isActive ? "bg-purple-100 text-purple-600" : "text-slate-400"
-                  )}>
-                     <Icon size={20} />
-                  </div>
-                  <span className={clsx("text-[8px] font-black uppercase tracking-tighter text-center", isActive ? "text-purple-600" : "text-slate-400")}>{label.split(' ')[0]}</span>
-               </Link>
-            );
-         })}
-         <button 
-           onClick={() => {
-             if (isOpen) onClose();
-             else if (onOpen) onOpen();
-           }} 
-           className="flex flex-col items-center gap-1 w-14"
-         >
-            <div className={clsx(
-              "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-              isOpen ? "bg-purple-100 text-purple-600" : "text-slate-400"
-            )}>
-               <Menu size={20} />
-            </div>
-            <span className={clsx("text-[8px] font-black uppercase tracking-tighter text-center", isOpen ? "text-purple-600" : "text-slate-400")}>Menu</span>
-         </button>
-      </div>
     </>
   );
 }
