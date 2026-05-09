@@ -1,5 +1,8 @@
 import { adminDb } from './firebase-admin';
 
+const FIRESTORE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+const FIRESTORE_REST_BASE = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
+
 /**
  * Robustly converts any Firestore values (Timestamps, etc) into serializable JSON.
  */
@@ -46,7 +49,6 @@ function toPlainObject(data) {
   let hasValidKeys = false;
   
   try {
-    // We only iterate over own properties to avoid prototype pollution or complex class instances
     const keys = Object.keys(data);
     for (const key of keys) {
       plain[key] = toPlainObject(data[key]);
@@ -56,8 +58,6 @@ function toPlainObject(data) {
     return String(data);
   }
 
-  // If it's an object but had no keys and isn't one of our handled types, 
-  // it might be a complex instance. Try JSON fallback.
   if (!hasValidKeys) {
     try {
       return JSON.parse(JSON.stringify(data));
@@ -69,16 +69,108 @@ function toPlainObject(data) {
   return plain;
 }
 
+/**
+ * Converts Firestore REST API field values to plain JS values.
+ * REST API returns: { stringValue: "foo" }, { integerValue: "5" }, { booleanValue: true }, etc.
+ */
+function fromFirestoreRest(fields) {
+  if (!fields) return {};
+  const result = {};
+  for (const [key, val] of Object.entries(fields)) {
+    result[key] = parseRestValue(val);
+  }
+  return result;
+}
+
+function parseRestValue(val) {
+  if (!val) return null;
+  if ('stringValue' in val) return val.stringValue;
+  if ('integerValue' in val) return parseInt(val.integerValue, 10);
+  if ('doubleValue' in val) return val.doubleValue;
+  if ('booleanValue' in val) return val.booleanValue;
+  if ('nullValue' in val) return null;
+  if ('timestampValue' in val) return val.timestampValue; // already ISO string
+  if ('arrayValue' in val) {
+    const values = val.arrayValue?.values || [];
+    return values.map(v => parseRestValue(v));
+  }
+  if ('mapValue' in val) {
+    return fromFirestoreRest(val.mapValue?.fields || {});
+  }
+  if ('geoPointValue' in val) {
+    return { latitude: val.geoPointValue.latitude, longitude: val.geoPointValue.longitude };
+  }
+  return null;
+}
+
+/**
+ * Query Firestore via REST API (no SDK needed, works on any server).
+ */
+async function firestoreRestQuery(collectionId, fieldPath, operator, fieldValue) {
+  const url = `${FIRESTORE_REST_BASE}:runQuery`;
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath },
+          op: operator,
+          value: { stringValue: fieldValue },
+        },
+      },
+      limit: 1,
+    },
+  };
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (!Array.isArray(data) || !data[0]?.document) return null;
+  const doc = data[0].document;
+  const id = doc.name.split('/').pop();
+  return { id, ...fromFirestoreRest(doc.fields) };
+}
+
+/**
+ * List all documents in a subcollection via REST API.
+ */
+async function firestoreRestCollection(path) {
+  const url = `${FIRESTORE_REST_BASE}/${path}`;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  if (!data.documents) return [];
+  return data.documents.map(doc => {
+    const id = doc.name.split('/').pop();
+    return { id, ...fromFirestoreRest(doc.fields) };
+  });
+}
+
 
 export async function getShopServer(slug) {
   try {
-    if (!adminDb) return null;
-    const shopsRef = adminDb.collection('shops');
-    let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
-    if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
-    if (snap.empty) return null;
-    const doc = snap.docs[0];
-    return { id: doc.id, ...toPlainObject(doc.data()) };
+    if (adminDb) {
+      // Admin SDK path (preferred - when env vars are set)
+      const shopsRef = adminDb.collection('shops');
+      let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
+      if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
+      if (snap.empty) return null;
+      const doc = snap.docs[0];
+      return { id: doc.id, ...toPlainObject(doc.data()) };
+    } else {
+      // REST API fallback (when admin SDK env vars are missing)
+      console.log(`[getShopServer] Using REST API fallback for slug: ${slug}`);
+      let shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', slug);
+      if (!shop) shop = await firestoreRestQuery('shops', 'shopSlug', 'EQUAL', slug);
+      return shop || null;
+    }
   } catch (err) {
     console.error(`[getShopServer] Error:`, err);
     return null;
@@ -87,15 +179,24 @@ export async function getShopServer(slug) {
 
 export async function getProductsServer(shopId) {
   try {
-    if (!adminDb || !shopId) return [];
-    // Fetch all and sort in memory to avoid missing index / missing field issues
-    const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
-    const products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
-    return products.sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA;
-    });
+    if (!shopId) return [];
+    if (adminDb) {
+      const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
+      const products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+      return products.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    } else {
+      console.log(`[getProductsServer] Using REST API fallback for shopId: ${shopId}`);
+      const products = await firestoreRestCollection(`shops/${shopId}/products`);
+      return products.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }
   } catch (err) {
     console.error(`[getProductsServer] Error:`, err);
     return [];
@@ -104,9 +205,14 @@ export async function getProductsServer(shopId) {
 
 export async function getCategoriesServer(shopId) {
   try {
-    if (!adminDb || !shopId) return [];
-    const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
-    return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    if (!shopId) return [];
+    if (adminDb) {
+      const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
+      return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    } else {
+      console.log(`[getCategoriesServer] Using REST API fallback for shopId: ${shopId}`);
+      return await firestoreRestCollection(`shops/${shopId}/categories`);
+    }
   } catch (err) {
     console.error(`[getCategoriesServer] Error:`, err);
     return [];
