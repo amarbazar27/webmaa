@@ -64,31 +64,41 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function ProductDetailPage({ params }) {
-  let shop = null;
-  let product = null;
-
   try {
-    const resolvedParams = await params;
-    if (resolvedParams?.shopSlug && resolvedParams?.productId) {
-      shop = await getShopServer(resolvedParams.shopSlug);
-      if (shop?.id) {
-        const products = await getProductsServer(shop.id) || [];
-        product = products.find(p => p?.id === resolvedParams.productId);
+    let shop = null;
+    let product = null;
+
+    try {
+      const resolvedParams = await params;
+      if (resolvedParams?.shopSlug && resolvedParams?.productId) {
+        shop = await getShopServer(resolvedParams.shopSlug);
+        if (shop?.id) {
+          const products = await getProductsServer(shop.id) || [];
+          product = products.find(p => p?.id === resolvedParams.productId);
+        }
       }
+    } catch (err) {
+      console.error(`[PRODUCT PAGE] FETCH ERROR:`, err);
     }
-  } catch (err) {
-    console.error(`[PRODUCT PAGE] FETCH ERROR:`, err);
+
+    // Final serialization pass to ensure NO complex objects (Timestamps, etc) hit the client
+    const safeShop = deepClone(shop);
+    const safeProduct = deepClone(product);
+
+    return (
+      <ProductDetailClient 
+        shop={safeShop || null} 
+        product={safeProduct || null} 
+      />
+    );
+  } catch (criticalError) {
+    console.error(`[PRODUCT PAGE] CRITICAL SSR ERROR:`, criticalError);
+    return (
+      <ProductDetailClient 
+        shop={null} 
+        product={null} 
+      />
+    );
   }
-
-  // Final serialization pass to ensure NO complex objects (Timestamps, etc) hit the client
-  const safeShop = deepClone(shop);
-  const safeProduct = deepClone(product);
-
-  return (
-    <ProductDetailClient 
-      shop={safeShop || null} 
-      product={safeProduct || null} 
-    />
-  );
 }
 

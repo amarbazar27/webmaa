@@ -1,4 +1,6 @@
 import { adminDb } from './firebase-admin';
+import { db } from './firebase';
+import { collection, query, where, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 
 /**
  * Robustly converts any Firestore values (Timestamps, etc) into serializable JSON.
@@ -72,13 +74,26 @@ function toPlainObject(data) {
 
 export async function getShopServer(slug) {
   try {
-    if (!adminDb) return null;
-    const shopsRef = adminDb.collection('shops');
-    let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
-    if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
-    if (snap.empty) return null;
-    const doc = snap.docs[0];
-    return { id: doc.id, ...toPlainObject(doc.data()) };
+    if (adminDb) {
+      const shopsRef = adminDb.collection('shops');
+      let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
+      if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
+      if (snap.empty) return null;
+      const doc = snap.docs[0];
+      return { id: doc.id, ...toPlainObject(doc.data()) };
+    } else {
+      // Fallback to client SDK if admin SDK is not initialized
+      const shopsRef = collection(db, 'shops');
+      let q = query(shopsRef, where('subdomainSlug', '==', slug), limit(1));
+      let snap = await getDocs(q);
+      if (snap.empty) {
+        q = query(shopsRef, where('shopSlug', '==', slug), limit(1));
+        snap = await getDocs(q);
+      }
+      if (snap.empty) return null;
+      const docSnap = snap.docs[0];
+      return { id: docSnap.id, ...toPlainObject(docSnap.data()) };
+    }
   } catch (err) {
     console.error(`[getShopServer] Error:`, err);
     return null;
@@ -87,10 +102,15 @@ export async function getShopServer(slug) {
 
 export async function getProductsServer(shopId) {
   try {
-    if (!adminDb || !shopId) return [];
-    // Fetch all and sort in memory to avoid missing index / missing field issues
-    const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
-    const products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    if (!shopId) return [];
+    let products = [];
+    if (adminDb) {
+      const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
+      products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    } else {
+      const snap = await getDocs(collection(db, 'shops', shopId, 'products'));
+      products = snap.docs.map(docSnap => ({ id: docSnap.id, ...toPlainObject(docSnap.data()) }));
+    }
     return products.sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -104,9 +124,14 @@ export async function getProductsServer(shopId) {
 
 export async function getCategoriesServer(shopId) {
   try {
-    if (!adminDb || !shopId) return [];
-    const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
-    return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    if (!shopId) return [];
+    if (adminDb) {
+      const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
+      return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    } else {
+      const snap = await getDocs(collection(db, 'shops', shopId, 'categories'));
+      return snap.docs.map(docSnap => ({ id: docSnap.id, ...toPlainObject(docSnap.data()) }));
+    }
   } catch (err) {
     console.error(`[getCategoriesServer] Error:`, err);
     return [];

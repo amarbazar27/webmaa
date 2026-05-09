@@ -594,6 +594,29 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
     }
   }, [cart, CART_KEY]);
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('আপনার ডিভাইস জিপিএস সমর্থন করে না।');
+      return;
+    }
+    toast.loading('লোকেশন বের করা হচ্ছে...', { id: 'geo' });
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const link = `https://maps.google.com/?q=${latitude},${longitude}`;
+        setOrderForm(f => ({ 
+          ...f, 
+          address: f.address ? `${f.address}\n\n[অটো-লোকেশন: ${link}]` : `[অটো-লোকেশন: ${link}]` 
+        }));
+        toast.success('লোকেশন সফলভাবে যুক্ত হয়েছে!', { id: 'geo' });
+      },
+      (error) => {
+        toast.error('লোকেশন অ্যাক্সেস করা যায়নি। দয়া করে জিপিএস চালু করে পারমিশন দিন।', { id: 'geo' });
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  };
+
   useEffect(() => {
     const syncCart = () => {
       try {
@@ -1663,8 +1686,13 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                   {phoneError && <p className="text-[11px] text-red-600 font-bold pl-1">{phoneError}</p>}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ঠিকানা *</label>
-                  <textarea required rows={2} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} />
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ঠিকানা *</label>
+                    <button type="button" onClick={handleGetLocation} className="text-[10px] bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 px-2 py-1 rounded-lg font-black tracking-wider flex items-center gap-1 transition-colors border border-red-200 shadow-sm active:scale-95">
+                      <MapPin size={12} /> আমার বর্তমান লোকেশন দিন
+                    </button>
+                  </div>
+                  <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">রিটেইলারকে নোট (ঐচ্ছিক)</label>

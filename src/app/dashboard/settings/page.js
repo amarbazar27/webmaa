@@ -184,7 +184,8 @@ export default function SettingsPage() {
       });
       setAiConfig({
         botTone: data?.aiConfig?.botTone || 'funny',
-        enableAiShoppingList: data?.aiConfig?.enableAiShoppingList !== false
+        enableAiShoppingList: data?.aiConfig?.enableAiShoppingList !== false,
+        smartCalcEnabled: data?.aiConfig?.smartCalcEnabled || false
       });
       setStaffEmails(data?.staffEmails || []);
       setServiceAreas(data?.serviceAreas || []);
