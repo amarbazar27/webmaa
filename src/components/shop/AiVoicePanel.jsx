@@ -31,8 +31,8 @@ function compressImage(file, maxWidth = 1200, quality = 0.75) {
  * AiVoicePanel — Combined AI Chat + Voice + OCR + Text Analysis panel
  * Replaces the old AiShoppingList component modal section
  */
-export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrder, isOpen, onClose }) {
-  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'voice' | 'image' | 'text'
+export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrder, isOpen, onClose, activeTab }) {
+  
   const [textInput, setTextInput] = useState('');
   const [isProcessingText, setIsProcessingText] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -139,16 +139,6 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tab Bar */}
-      <div className="flex border-b border-slate-200 bg-slate-50">
-        {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all ${activeTab === tab.id ? 'bg-white text-purple-600 border-b-2 border-purple-600' : 'text-slate-500 hover:text-slate-800'}`}>
-            {tab.icon} {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Voice Tab */}
       {activeTab === 'voice' && (
         <div className="flex-1 flex flex-col items-center justify-center p-6 gap-5">
@@ -176,7 +166,14 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             </div>
           )}
 
-          {voiceError && <p className="text-xs font-bold text-red-600 text-center">{voiceError}</p>}
+          {voiceError && (
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-xs font-bold text-red-600 text-center bg-red-50 px-3 py-2 rounded-xl">{voiceError}</p>
+              {voiceError.includes('অনুমতি') && (
+                <button onClick={() => navigator.mediaDevices.getUserMedia({ audio: true }).then(() => { toast.success('অ্যাক্সেস দেওয়া হয়েছে! এবার আবার মাইক বাটনে চাপুন।'); }).catch(() => toast.error('দয়া করে ব্রাউজার সেটিংস থেকে অনুমতি দিন।'))} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black shadow-md hover:bg-slate-800">মাইকের অ্যাক্সেস দিন</button>
+              )}
+            </div>
+          )}
 
           {!isVoiceSupported && <p className="text-xs font-bold text-amber-600 text-center bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">Chrome/Edge ব্রাউজার প্রয়োজন ভয়েসের জন্য।</p>}
 

@@ -634,6 +634,14 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
     );
   };
 
+  
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+    });
+  }, []);
+
   useEffect(() => {
     const syncCart = () => {
       try {
@@ -763,7 +771,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         variantsText: i.variantsText || '',
         customizedText: i.customizedText || '',
         baseUnit: i.baseUnit || '',
-        clientPrice: i.customizedPrice || undefined
+        clientPrice: i.clientPrice || i.price || undefined
       })),
       customerId: user?.uid || `guest_${Date.now()}`,
       customImage: orderImage || undefined,
@@ -1044,7 +1052,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
           {/* Logo/Brand (Left Side) */}
           <div className="flex items-center gap-3">
-            <button onClick={() => setIsCategoryMenuOpen(true)} className="md:hidden w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-200 hover:text-slate-900 transition-colors shadow-sm">
+            <button className="hidden">
               <Menu size={20} strokeWidth={2.5} />
             </button>
             {/* Static logo - no href to prevent 'No store found' navigation */}
@@ -1126,45 +1134,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
         
-        {/* ── Store Features / Trust Badges ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <div className="bg-emerald-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-emerald-100 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0"><Truck size={18} strokeWidth={2.5} /></div>
-            <div><p className="text-xs md:text-sm font-black text-emerald-900 leading-tight">Fast Delivery</p><p className="text-[9px] md:text-[10px] text-emerald-600 font-bold mt-0.5">Reliable & Secure</p></div>
-          </div>
-          <div className="bg-purple-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-purple-100 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 shrink-0"><ShieldCheck size={18} strokeWidth={2.5} /></div>
-            <div><p className="text-xs md:text-sm font-black text-purple-900 leading-tight">100% Authentic</p><p className="text-[9px] md:text-[10px] text-purple-600 font-bold mt-0.5">Verified Products</p></div>
-          </div>
-          <div className="bg-blue-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-blue-100 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shrink-0"><Clock size={18} strokeWidth={2.5} /></div>
-            <div><p className="text-xs md:text-sm font-black text-blue-900 leading-tight">24/7 Support</p><p className="text-[9px] md:text-[10px] text-blue-600 font-bold mt-0.5">Always here</p></div>
-          </div>
-          <div className="bg-amber-50 rounded-2xl p-3 md:p-4 flex items-center gap-3 border border-amber-100 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0"><Star size={18} strokeWidth={2.5} /></div>
-            <div><p className="text-xs md:text-sm font-black text-amber-900 leading-tight">Premium Quality</p><p className="text-[9px] md:text-[10px] text-amber-600 font-bold mt-0.5">Best in class</p></div>
-          </div>
-        </div>
-
         {/* ── AI Shopping List Upload ── */}
-        <AiShoppingList 
-          shop={shop} 
-          products={products} 
-          onAddToCart={(items) => {
-            let newCart = [...cart];
-            items.forEach(item => {
-               const existing = newCart.find(i => i.id === (item.productId || item.id));
-               if (existing) {
-                 existing.quantity += item.quantity;
-               } else {
-                 newCart.push(item);
-               }
-            });
-            setCart(newCart);
-            toast.success(`${items.length} টি পণ্য কার্টে যোগ হয়েছে!`);
-          }}
-          onDirectOrder={handleDirectOrderFromAi}
-        />
+        
 
         {/* ── Search, Sort & Categories ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3 overflow-x-auto scrollbar-hide">
@@ -1193,7 +1164,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
           <div className="w-[1px] h-8 bg-slate-200 shrink-0 mx-1 hidden md:block" />
 
           {/* Hidden on mobile, visible on md+ */}
-          <div className="hidden md:flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide w-full pb-2 md:pb-0">
             <button
               onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
               className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === 'All' ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}
@@ -1596,8 +1567,9 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                 onAddToCart={(item) => { setCart(prev => { const ex = prev.findIndex(i => i.id === item.id); if (ex >= 0) { const n = [...prev]; n[ex] = {...n[ex], quantity: n[ex].quantity + (item.quantity||1)}; return n; } return [...prev, item]; }); }}
                 onDirectOrder={handleDirectOrderFromAi}
                 isOpen={true}
-                onClose={() => setIsAiOpen(false)}
-              />
+                  onClose={() => setIsAiOpen(false)}
+                  activeTab={aiTab}
+                />
             )}
           </div>
         </div>
@@ -1633,7 +1605,10 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                       <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 bg-slate-900 text-white rounded flex items-center justify-center hover:bg-purple-600"><Plus size={12} strokeWidth={2.5}/></button>
                     </div>
                   </div>
-                  <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg"><X size={16} strokeWidth={2.5} /></button>
+                  <div className="flex flex-col gap-1">
+                      <button onClick={() => { trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${item.productId}`); setIsCartOpen(false); }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>
+                      <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg" title="Remove"><X size={16} strokeWidth={2.5} /></button>
+                    </div>
                 </div>
               ))}
             </div>

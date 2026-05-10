@@ -38,6 +38,7 @@ export const addToCart = ({
       productId: product.id,
       name: product.name + (variantString ? ` (${variantString})` : ''),
       price: safeAiPrice !== null ? safeAiPrice / safeQty : safeBasePrice,
+      clientPrice: safeAiPrice !== null ? safeAiPrice / safeQty : safeBasePrice,
       quantity: safeQty,
       imageUrl: product.imageUrl || '',
       note: customerNote || '',
