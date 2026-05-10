@@ -92,7 +92,7 @@ export async function POST(req) {
 
     if (isGemini) {
       // 🚀 Gemini Native API Call
-      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash'];
       
       let systemText = "Always greet with 'Assalamu Alaikum'. Never use 'Nomoskar'. Follow Muslim etiquette. Speak in Bengali for a Bangladeshi retail store.";
       const chatMessages = [];

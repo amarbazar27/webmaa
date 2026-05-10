@@ -29,7 +29,7 @@ const CheckoutSchema = z.object({
     clientPrice: z.number().positive().optional()
   })).min(0),
   customerId: z.string().min(1),
-  customImage: z.string().max(2000000).optional(),
+  customImage: z.string().max(2000000).optional().nullable(),
   coordinates: z.object({
     lat: z.number(),
     lng: z.number(),

@@ -30,6 +30,7 @@ export default function OrdersPage() {
 
   // Security Auth Modal State
   const [authModal, setAuthModal] = useState({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
+  const [checkedItems, setCheckedItems] = useState({});
   const [downloadingPdf, setDownloadingPdf] = useState(null);
   const [pdfProgress, setPdfProgress] = useState(0);
   const [pdfState, setPdfState] = useState('');

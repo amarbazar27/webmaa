@@ -93,8 +93,9 @@ function JsonLd() {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="bn" suppressHydrationWarning>
+    <html lang="bn" translate="no" suppressHydrationWarning>
       <head>
+        <meta name="google" content="notranslate" />
         <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="apple-touch-icon" href="/logo.png" />
         <JsonLd />

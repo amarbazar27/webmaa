@@ -24,6 +24,7 @@ import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, lo
 import MessengerButton from '@/components/shop/MessengerButton';
 import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
 import AiShoppingList from '@/components/shop/AiShoppingList';
+import AiVoicePanel from '@/components/shop/AiVoicePanel';
 import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 
@@ -180,8 +181,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [showSplash, setShowSplash] = useState(true);
   useEffect(() => { const t = setTimeout(() => setShowSplash(false), 1500); return () => clearTimeout(t); }, []);
 
+  const prevOnlineRef = useRef(null);
   useEffect(() => {
-    if (isOnline) {
+    if (isOnline && prevOnlineRef.current === false) {
       getPendingOrders().then(orders => {
         if (orders && orders.length > 0) {
           toast('ইন্টারনেট সংযোগ ফিরে এসেছে! আপনার পেন্ডিং অর্ডারটি এখন পাঠানো হচ্ছে...', { icon: '🚀', duration: 4000 });
@@ -203,7 +205,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         }
       });
     }
-    }, [isOnline]);
+    prevOnlineRef.current = isOnline;
+  }, [isOnline]);
 
   const CART_KEY = `cart_${initialShop.id}`;
   const [cart, setCart] = useState([]);
@@ -280,6 +283,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [detectedLocation, setDetectedLocation] = useState('');
   const [locationManualInput, setLocationManualInput] = useState('');
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiTab, setAiTab] = useState('chat');
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [userOrders, setUserOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -762,7 +766,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         clientPrice: i.customizedPrice || undefined
       })),
       customerId: user?.uid || `guest_${Date.now()}`,
-      customImage: orderImage,
+      customImage: orderImage || undefined,
       coordinates: orderForm.coordinates
     };
 
@@ -1530,55 +1534,76 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         </div>
       )}
 
-      {/* ── AI Chat Modal ── */}
+      {/* ── AI Modal (Chat + Voice + OCR + Text) ── */}
       {isAiOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAiOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[60vh] max-h-[600px] border border-slate-200 animate-slide-in">
-            <div className="bg-slate-900 text-white p-5 flex justify-between items-center border-b-[4px] border-purple-600">
+          <div className="relative w-full max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] max-h-[700px] border border-slate-200 animate-slide-in">
+            {/* Header */}
+            <div className="bg-slate-900 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-purple-100 overflow-hidden scale-75">
+                <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-purple-100 overflow-hidden" style={{transform:'scale(0.75)'}}>
                   <CuteAIIcon />
                 </div>
                 <div>
-                  <h3 className="font-black text-lg tracking-tight leading-tight">{shop.aiConfig?.botName || 'Bazar Bot'}</h3>
+                  <h3 className="font-black text-base tracking-tight leading-tight">{shop.aiConfig?.botName || 'Bazar Bot'}</h3>
                   <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">AI Shopping Assistant</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: `আবার শুরু করলাম! কীভাবে সাহায্য করতে পারি?` }])} className="hover:bg-white/20 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-400 hover:text-white transition-colors uppercase tracking-widest" title="Clear History">Clear</button>
-                <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
-              </div>
+              <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
             </div>
-            <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto">
-              {chatMessages.map(msg => (
-                <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
-                  <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
-                    {isAiTyping && msg === chatMessages[chatMessages.length-1] && msg.role === 'bot' ? (
-                      <div className="flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>
-                    ) : msg.text}
-                  </div>
-                  {msg.hasSuggestions && (
-                    <button
-                      onClick={() => addAllSuggestedToCart(msg.text)}
-                      className="self-start flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-colors"
-                    >
-                      <ShoppingCart size={14} /> সব কার্টে যোগ করুন
-                    </button>
-                  )}
-                </div>
+
+            {/* Tab Bar */}
+            <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
+              {[{id:'chat',label:'চ্যাট',icon:'💬'},{id:'voice',label:'ভয়েস',icon:'🎤'},{id:'image',label:'ছবি',icon:'📷'},{id:'text',label:'লিস্ট',icon:'📝'}].map(tab => (
+                <button key={tab.id} onClick={() => setAiTab(tab.id)}
+                  className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all ${aiTab === tab.id ? 'bg-white text-purple-600 border-b-2 border-purple-600' : 'text-slate-500 hover:text-slate-800'}`}>
+                  {tab.icon} {tab.label}
+                </button>
               ))}
-              {isAiTyping && <div className="max-w-[85%] p-3.5 rounded-2xl bg-white border border-slate-200 self-start flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>}
             </div>
-            <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2">
-              <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
-              <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md"><MessageCircle size={20} strokeWidth={2.5}/></button>
-            </div>
+
+            {/* Chat Tab */}
+            {aiTab === 'chat' && <>
+              <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto">
+                {chatMessages.map(msg => (
+                  <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
+                    <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
+                      {msg.text}
+                    </div>
+                    {msg.hasSuggestions && (
+                      <button onClick={() => addAllSuggestedToCart(msg.text)}
+                        className="self-start flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-colors">
+                        <ShoppingCart size={14} /> সব কার্টে যোগ করুন
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {isAiTyping && <div className="max-w-[85%] p-3.5 rounded-2xl bg-white border border-slate-200 self-start flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>}
+              </div>
+              <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0">
+                <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-[10px] font-black transition-colors" title="Clear">🗑</button>
+                <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
+                <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md"><MessageCircle size={20} strokeWidth={2.5}/></button>
+              </div>
+            </>}
+
+            {/* Voice / Image / Text tabs via AiVoicePanel */}
+            {aiTab !== 'chat' && (
+              <AiVoicePanel
+                shop={shop}
+                products={products}
+                onAddToCart={(item) => { setCart(prev => { const ex = prev.findIndex(i => i.id === item.id); if (ex >= 0) { const n = [...prev]; n[ex] = {...n[ex], quantity: n[ex].quantity + (item.quantity||1)}; return n; } return [...prev, item]; }); }}
+                onDirectOrder={handleDirectOrderFromAi}
+                isOpen={true}
+                onClose={() => setIsAiOpen(false)}
+              />
+            )}
           </div>
         </div>
       )}
 
-      {/* ── Cart Drawer ── */}
+            {/* ── Cart Drawer ── */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsCartOpen(false)} />

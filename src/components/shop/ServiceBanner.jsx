@@ -108,9 +108,7 @@ export default function ServiceBanner({
         return false;
       });
       
-      if (!isMatch && shop.showLocationSelector === false && !shop.isStrictLocation) {
-         isMatch = true; 
-      }
+      // Removed: no longer auto-approve non-matching locations
 
       setStatus(isMatch ? 'available' : 'unavailable');
     } else {
