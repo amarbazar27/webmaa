@@ -57,7 +57,7 @@ export default function InvoicePage({ params }) {
                    ) : (
                       <div className="text-3xl font-black text-purple-700 tracking-tight mb-1">{shop.shopName}</div>
                    )}
-                   <p className="text-sm font-bold text-slate-500">{window.location.origin}/shop/{shopSlug}</p>
+                   <p className="text-sm font-bold text-slate-500">{typeof window !== 'undefined' ? window.location.origin : ''}/shop/{shopSlug}</p>
                 </div>
                 <div className="text-right">
                    <h1 className="text-4xl font-black tracking-tight mb-2 uppercase text-slate-300">Invoice</h1>

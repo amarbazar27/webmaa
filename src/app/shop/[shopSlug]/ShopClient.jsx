@@ -6,7 +6,7 @@ import Script from 'next/script';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { 
   ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
-  CheckCircle, Package, ArrowRight, Loader2, ShoppingCart,
+  CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
   ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
   Truck, ShieldCheck, Clock
@@ -771,7 +771,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         variantsText: i.variantsText || '',
         customizedText: i.customizedText || '',
         baseUnit: i.baseUnit || '',
-        clientPrice: i.clientPrice || i.price || undefined
+        clientPrice: parseFloat(i.clientPrice || i.price) || undefined
       })),
       customerId: user?.uid || `guest_${Date.now()}`,
       customImage: orderImage || undefined,
