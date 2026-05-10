@@ -9,7 +9,9 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
   }
 
-  // Generate dynamic manifest
+  const logo = shop.logoUrl || "/retailer-fallback.png";
+
+  // Generate dynamic manifest with proper icon array
   const manifest = {
     name: shop.shopName || shop.subdomainSlug,
     short_name: shop.shopName || shop.subdomainSlug,
@@ -20,8 +22,14 @@ export async function GET(request, { params }) {
     theme_color: "#9333ea",
     icons: [
       {
-        src: shop.logoUrl || "/retailer-fallback.png",
-        sizes: "192x192 512x512",
+        src: logo,
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any maskable"
+      },
+      {
+        src: logo,
+        sizes: "512x512",
         type: "image/png",
         purpose: "any maskable"
       }

@@ -722,6 +722,11 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
 
     const handlePlaceOrder = async (e) => {
+    if (!orderForm.coordinates) {
+      toast.error('অর্ডার করতে আপনার লোকেশন (Map Button) সিলেক্ট করুন।', { icon: '📍', duration: 4000 });
+      return;
+    }
+
     e.preventDefault();
     if (shop.isStrictLocation && locationStatus !== 'available') {
       toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই।');
@@ -1606,7 +1611,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
-                      <button onClick={() => { trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${item.productId}`); setIsCartOpen(false); }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>
+                      <button onClick={() => { trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${item.productId || item.id}`); setIsCartOpen(false); }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>
                       <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg" title="Remove"><X size={16} strokeWidth={2.5} /></button>
                     </div>
                 </div>

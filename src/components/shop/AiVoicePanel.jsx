@@ -203,6 +203,10 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             <button onClick={() => fileInputRef.current?.click()} className="flex-1 border-2 border-dashed border-purple-300 rounded-2xl flex flex-col items-center justify-center gap-3 p-8 hover:bg-purple-50 transition-colors cursor-pointer">
               <ImagePlus size={40} className="text-purple-400" />
               <p className="font-black text-slate-600">বাজারের ফর্দের ছবি দিন</p>
+            <div className="flex flex-col items-center gap-2 mt-2">
+              <button onClick={() => navigator.mediaDevices.getUserMedia({ video: true }).then(() => { toast.success('ক্যামেরা অ্যাক্সেস দেওয়া হয়েছে!'); }).catch(() => toast.error('ব্রাউজার সেটিংস থেকে ক্যামেরা অ্যাক্সেস দিন।'))} className="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-black shadow-sm hover:bg-purple-700 transition-colors">ক্যামেরা/ফাইল অ্যাক্সেস দিন</button>
+            </div>
+
               <p className="text-xs text-slate-400 text-center">ছবি তুলুন বা গ্যালারি থেকে বেছে নিন। AI OCR দিয়ে পণ্য সনাক্ত হবে।</p>
             </button>
           ) : (

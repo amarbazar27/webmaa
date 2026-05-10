@@ -88,7 +88,7 @@ ${productList}
 
 Return valid JSON ONLY: {"items":[{"productId":"ID","name":"Product Name","quantity":1,"confidence":"high"}]}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(url, {
       method: 'POST',
@@ -107,7 +107,7 @@ Return valid JSON ONLY: {"items":[{"productId":"ID","name":"Product Name","quant
     const result = await response.json();
     if (!response.ok) {
       console.error('[AI Vision] API Error:', result.error?.message || 'Unknown');
-      return NextResponse.json({ error: 'AI service temporarily unavailable or key is invalid.' }, { status: 503 });
+      console.error('[AI Vision] API Error:', result.error); return NextResponse.json({ error: `AI Error: ${result.error?.message || 'Vision service unavailable'}` }, { status: 503 });
     }
 
     const botText = result.candidates?.[0]?.content?.parts?.[0]?.text || '{"items":[]}';
