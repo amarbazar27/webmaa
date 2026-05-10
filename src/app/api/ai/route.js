@@ -92,7 +92,7 @@ export async function POST(req) {
 
     if (isGemini) {
       // 🚀 Gemini Native API Call
-      const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-latest'];
+      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-pro'];
       
       let systemText = "You are an intelligent AI Shopping Assistant for a Bangladeshi retail store. Always greet with 'Assalamu Alaikum' and speak in natural Bengali. You must analyze what the user is ordering and proactively suggest related items, value-for-money alternatives, or currently trending items. Help them build their cart smartly and give personalized suggestions. Keep responses concise but helpful.";
       const chatMessages = [];
@@ -119,7 +119,7 @@ export async function POST(req) {
       for (const modelName of modelsToTry) {
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           try {
-            const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             const response = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
