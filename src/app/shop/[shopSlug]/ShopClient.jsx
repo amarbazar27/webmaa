@@ -382,7 +382,18 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       if (isIOS) {
         toast('আইফোনে ইন্সটল করতে নিচে "Share" আইকনে ক্লিক করে "Add to Home Screen" নির্বাচন করুন।', { duration: 6000 });
       } else {
-        toast('আপনার ব্রাউজারের মেনু (⋮) থেকে "Install App" বা "Add to Home screen" নির্বাচন করুন।', { duration: 5000 });
+        const isIOS2 = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS2) {
+        toast('আইফোনে: নিচের Share আইকন 🔗 → "Add to Home Screen" ট্যাপ করুন।', { icon: '📱', duration: 8000 });
+      } else {
+        // Try to trigger using window.deferredPrompt as fallback
+        if (window.deferredPrompt) {
+          window.deferredPrompt.prompt();
+          window.deferredPrompt.userChoice.then(c => { if (c.outcome === 'accepted') { setPwaInstalled(true); localStorage.setItem('pwa_installed','true'); toast.success('অ্যাপ ইন্সটল হয়েছে! 🎉'); } });
+        } else {
+          toast('এই ব্রাউজারে সরাসরি ইন্সটল সম্ভব নয়। Chrome ব্যবহার করুন।', { icon: '💡', duration: 6000 });
+        }
+      }
       }
     }
   };
@@ -470,6 +481,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shopId: shop.id,
+          orderHistory: (userOrders || []).slice(0, 5).map(o => ({ id: o.id, orderIdVisual: o.orderIdVisual, total: o.total, items: (o.items || []).map(i => ({ name: i.name, quantity: i.quantity, price: i.price })) })),
           messages: [
             { role: 'system', content: `তুমি "${shop.shopName}"-এর AI বাজার সহকারী। নাম: ${shop.aiConfig?.botName || 'Bazar Bot'}।
 
@@ -482,7 +494,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 1. বাজার লিস্ট suggest করলে শেষে লেখো: 🛒 [বাজার লিস্ট তৈরি]
 2. তারপর এই ফরম্যাটে লেখো: PRODUCTS_JSON:[{"id":"PRODUCT_ID_HERE","qty":1}]
 3. শুধু স্টক আছে এমন পণ্য দাও। টাকা/৳ = মূল্য।
-4. বাংলায়, সংক্ষিপ্ত উত্তর।` },
+4. বাংলায়, সংক্ষিপ্ত উত্তর।
+5. কাস্টমারের অর্ডার ইতিহাস দেখে পার্সোনালাইজড value-for-money সাজেশন দাও।` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]

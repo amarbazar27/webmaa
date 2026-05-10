@@ -1,102 +1,92 @@
 import { NextResponse } from 'next/server';
 import { getGlobalConfig, getShop } from '@/lib/firestore';
 
-// ═══════════════════════════════════════════════════════════════════════
-// 🔐 AI PROXY API — Server-side only, secure key handling
-// 
-// আগের সমস্যা:
-// 1. In-memory rate limiter Vercel serverless-এ কাজ করে না (প্রতি request নতুন instance)
-// 2. console.log দিয়ে key type leak হতো
-// 3. কোনো auth verification ছিল না
-//
-// এখনকার fix:
-// 1. Header-based fingerprint + timestamp rate limiting
-// 2. Sensitive logs সরানো
-// 3. Basic abuse prevention
-// ═══════════════════════════════════════════════════════════════════════
-
 export async function POST(req) {
   try {
-    // ── Basic Abuse Prevention ──────────────────────────────────────────
     const contentType = req.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       return NextResponse.json({ error: { message: 'Invalid content type' } }, { status: 400 });
     }
 
-    // ── IP-based fingerprint for logging (no blocking on serverless) ──
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
     const userAgent = req.headers.get('user-agent') || '';
-    
-    // Bot detection: যদি User-Agent না থাকে বা সন্দেহজনক হয়
     if (!userAgent || userAgent.length < 10) {
       return NextResponse.json({ error: { message: 'Request blocked.' } }, { status: 403 });
     }
 
     const body = await req.json();
-    const { shopId, messages, model } = body;
+    const { shopId, messages, model, orderHistory } = body;
 
-    // ── Input Validation ────────────────────────────────────────────────
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: { message: 'Messages array is required.' } }, { status: 400 });
     }
-
     if (messages.length > 20) {
       return NextResponse.json({ error: { message: 'Too many messages. Max 20.' } }, { status: 400 });
     }
 
-    // ── API Key Resolution (Server-side only — key NEVER goes to frontend) ──
+    // ── API Key Resolution ──────────────────────────
     let apiKey = null;
-
-    // 1. Shop-specific key
     if (shopId) {
       const shop = await getShop(shopId);
-      if (shop?.aiConfig?.apiKey?.trim()) {
-        apiKey = shop.aiConfig.apiKey.trim();
-      }
+      if (shop?.aiConfig?.apiKey?.trim()) apiKey = shop.aiConfig.apiKey.trim();
     }
-
-    // 2. Global Firestore config
     if (!apiKey) {
       const globalConfig = await getGlobalConfig();
-      if (globalConfig?.geminiApiKey?.trim()) {
-        apiKey = globalConfig.geminiApiKey.trim();
-      }
+      if (globalConfig?.geminiApiKey?.trim()) apiKey = globalConfig.geminiApiKey.trim();
     }
-
-    // 3. Vercel Environment Variable fallback
     if (!apiKey) {
-      apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
+      apiKey = process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY;
     }
 
     if (!apiKey) {
       return NextResponse.json({ error: { message: 'AI API key not configured.' } }, { status: 400 });
     }
 
-    // ── Provider Detection ──────────────────────────────────────────────
+    // ── Provider Detection ──────────────────────────
+    let isGemini = apiKey.startsWith('AIzaSy');
     let endpoint = '';
-    let isGemini = false;
     let defaultModel = model;
 
-    if (apiKey.startsWith('AIzaSy')) {
-      isGemini = true;
-    } else if (apiKey.startsWith('gsk_')) {
-      endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-      defaultModel = model || 'llama-3.3-70b-versatile';
-    } else if (apiKey.startsWith('sk-or-')) {
-      endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-      defaultModel = model || 'google/gemini-2.5-flash';
-    } else {
-      endpoint = 'https://api.openai.com/v1/chat/completions';
-      if (!model) defaultModel = 'gpt-4o-mini';
+    if (!isGemini) {
+      if (apiKey.startsWith('gsk_')) {
+        endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+        defaultModel = model || 'llama-3.3-70b-versatile';
+      } else if (apiKey.startsWith('sk-or-')) {
+        endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+        defaultModel = model || 'google/gemini-2.5-flash';
+      } else {
+        endpoint = 'https://api.openai.com/v1/chat/completions';
+        defaultModel = model || 'gpt-4o-mini';
+      }
+    }
+
+    // ── Build System Context (Order history + Value for Money AI) ───
+    let systemText = `তুমি একটি বুদ্ধিমান AI Shopping Assistant। তুমি বাংলাদেশি রিটেইল স্টোরে কাজ করছ।
+
+নিয়মাবলী:
+- সর্বদা "আসসালামু আলাইকুম" দিয়ে শুরু করো (শুধু প্রথমবার)।
+- বাংলায় কথা বলো, সহজ ও প্রাকৃতিক ভাষায়।
+- ব্যবহারকারী কী অর্ডার করতে চাইছে তা বোঝো।
+- সম্পর্কিত পণ্য (value-for-money) প্রস্তাব করো।
+- ছোট ও সহায়ক উত্তর দাও।`;
+
+    // Add order history context if available
+    if (orderHistory && orderHistory.length > 0) {
+      const recentOrders = orderHistory.slice(0, 5);
+      const orderSummary = recentOrders.map(o =>
+        `- অর্ডার ${o.orderIdVisual || o.id}: ${(o.items || []).map(i => `${i.name} (×${i.quantity})`).join(', ')} | মোট: ৳${o.total}`
+      ).join('\n');
+      systemText += `\n\nএই কাস্টমারের সাম্প্রতিক অর্ডার ইতিহাস:\n${orderSummary}\n\nএই তথ্য ব্যবহার করে পার্সোনালাইজড সাজেশন দাও।`;
     }
 
     if (isGemini) {
-      // 🚀 Gemini Native API Call
-      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-pro'];
-      
-      let systemText = "You are an intelligent AI Shopping Assistant for a Bangladeshi retail store. Always greet with 'Assalamu Alaikum' and speak in natural Bengali. You must analyze what the user is ordering and proactively suggest related items, value-for-money alternatives, or currently trending items. Help them build their cart smartly and give personalized suggestions. Keep responses concise but helpful.";
+      // 🚀 Gemini with fallback chain
+      const modelsToTry = [
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+      ];
+
       const chatMessages = [];
-      
       for (const m of messages) {
         const text = m.text || m.content || '';
         if (m.role === 'system') {
@@ -110,65 +100,58 @@ export async function POST(req) {
       }
 
       if (chatMessages.length === 0 || chatMessages[0].role !== 'user') {
-        chatMessages.unshift({ role: 'user', parts: [{ text: 'Hello' }] });
+        chatMessages.unshift({ role: 'user', parts: [{ text: 'হ্যালো' }] });
       }
-
-      let lastError = null;
-      const MAX_RETRIES = 2;
 
       for (const modelName of modelsToTry) {
-        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-          try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-            const response = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                systemInstruction: { parts: [{ text: systemText }] },
-                contents: chatMessages,
-                generationConfig: { maxOutputTokens: 1000 }
-              })
-            });
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemText }] },
+              contents: chatMessages,
+              generationConfig: { maxOutputTokens: 1024 }
+            })
+          });
 
-            const data = await response.json();
+          const data = await response.json();
 
-            if (response.ok) {
-              const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
-              return NextResponse.json({
-                choices: [{ message: { content: botText } }]
-              });
-            }
-
-            if (response.status === 429 || data.error?.status === 'RESOURCE_EXHAUSTED') {
-              if (attempt < MAX_RETRIES) {
-                await new Promise(r => setTimeout(r, 3000));
-                continue;
-              }
-            }
-
-            if (response.status === 404 || data.error?.message?.includes('not found')) {
-              lastError = data;
-              break; 
-            }
-
-            lastError = data;
-            break; 
-          } catch (err) {
-            lastError = { error: { message: 'AI service temporarily unavailable.' } };
+          if (response.ok) {
+            const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'দুঃখিত, কোনো উত্তর পাওয়া যায়নি।';
+            return NextResponse.json({ choices: [{ message: { content: botText } }] });
           }
+
+          // Model not found — try next
+          if (response.status === 404 || data.error?.message?.includes('not found')) {
+            console.warn(`[AI] Model ${modelName} not found, trying next...`);
+            continue;
+          }
+
+          // Rate limit — wait and retry same model once
+          if (response.status === 429) {
+            await new Promise(r => setTimeout(r, 2000));
+            continue;
+          }
+
+          console.error(`[AI] Gemini ${modelName} error:`, data.error?.message);
+          break;
+        } catch (err) {
+          console.error(`[AI] Gemini ${modelName} threw:`, err.message);
+          continue;
         }
       }
-      // ── Gemini failed: try Groq as silent fallback ──────────────────
+
+      // Silent Groq fallback
       const groqKey = process.env.GROQ_API_KEY;
       if (groqKey) {
-        const groqMessages = messages
-          .filter(m => m.role !== 'system')
-          .map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.text || m.content }));
-        
-        const systemMsg = messages.find(m => m.role === 'system');
-        if (systemMsg) groqMessages.unshift({ role: 'system', content: systemMsg.text || systemMsg.content });
-
         try {
+          const groqMessages = messages
+            .filter(m => m.role !== 'system')
+            .map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.text || m.content }));
+          groqMessages.unshift({ role: 'system', content: systemText });
+
           const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
@@ -179,28 +162,25 @@ export async function POST(req) {
             return NextResponse.json({ choices: [{ message: { content: groqData.choices[0].message.content } }] });
           }
         } catch (groqErr) {
-          // Groq also failed, return original error
+          console.error('[AI] Groq fallback failed:', groqErr.message);
         }
       }
 
-      return NextResponse.json(
-        lastError || { error: { message: 'AI service unavailable. Please configure a valid API key.' } }, 
-        { status: 503 }
-      );
+      return NextResponse.json({ error: { message: 'AI সার্ভিস সাময়িকভাবে অনুপলব্ধ। পরে চেষ্টা করুন।' } }, { status: 503 });
 
     } else {
-      // 🚀 OpenAI-Compatible Wrapper (Groq, OpenRouter, Custom)
+      // OpenAI-compatible (Groq/OpenRouter)
       const bodyParameters = {
         model: defaultModel,
-        messages: messages.map(m => ({ role: m.role, content: m.text || m.content })),
+        messages: [
+          { role: 'system', content: systemText },
+          ...messages.filter(m => m.role !== 'system').map(m => ({
+            role: m.role === 'bot' ? 'assistant' : m.role,
+            content: m.text || m.content
+          }))
+        ],
         temperature: 0.7,
       };
-
-      const lastMsg = messages[messages.length - 1];
-      const promptText = (lastMsg?.text || lastMsg?.content || '').toLowerCase();
-      if (promptText.includes('respond only with') && promptText.includes('price')) {
-        bodyParameters.temperature = 0.1;
-      }
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -218,11 +198,7 @@ export async function POST(req) {
     }
 
   } catch (error) {
-    // 🔐 Generic error — কখনো internal details leak করবে না
     console.error('[AI API] Error:', error.message);
-    return NextResponse.json(
-      { error: { message: 'Server error processing AI request.' } }, 
-      { status: 500 }
-    );
+    return NextResponse.json({ error: { message: 'Server error processing AI request.' } }, { status: 500 });
   }
 }
