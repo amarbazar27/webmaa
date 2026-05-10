@@ -915,6 +915,12 @@ export default function SettingsPage() {
                   onChange={e => setShop({ ...shop, welcomeMessage: e.target.value })}
                   placeholder="Welcome message if no banner is set"
                 />
+                <Input
+                  label="How to Order Video URL (YouTube)"
+                  value={shop.howToOrderVideo || ''}
+                  onChange={e => setShop({ ...shop, howToOrderVideo: e.target.value })}
+                  placeholder="e.g. https://youtube.com/watch?v=..."
+                />
 
                 <div className="space-y-3 pt-4 border-t border-slate-100">
                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shop Banners (Max 5, 5MB each)</label>

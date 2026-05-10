@@ -66,7 +66,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
     } catch (err) {
       setMicPermission('denied');
       if (err.name === 'NotAllowedError') {
-        toast.error('আপনার ব্রাউজার থেকে মাইক্রোফোনের অনুমতি দিন।', { duration: 4000 });
+        toast.error('ব্রাউজার বা ডিভাইসের সেটিংসে মাইক্রোফোনের অনুমতি দিন।', { duration: 5000 });
       } else {
         toast.error(`মাইক্রোফোন সমস্যা: ${err.message}`, { duration: 5000 });
       }
@@ -192,7 +192,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           {micPermission === 'denied' && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
               <p className="text-xs font-black text-amber-700">মাইক্রোফোনের অ্যাক্সেস বন্ধ আছে।</p>
-              <p className="text-[11px] text-amber-600">দয়া করে ব্রাউজার থেকে মাইক্রোফোন ব্যবহারের অনুমতি দিন।</p>
+              <p className="text-[11px] text-amber-600">দয়া করে ব্রাউজার এবং আপনার ডিভাইসের সেটিংসে মাইক্রোফোনের অনুমতি দিন।</p>
               <button
                 onClick={() => { setMicPermission('unknown'); handleMicClick(); }}
                 className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black hover:bg-amber-700"
@@ -255,7 +255,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
       {/* ── Image OCR Tab ────────────────────────────────────────────── */}
       {activeTab === 'image' && (
         <div className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
-          <input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
 
           {!imagePreview ? (
             <div className="flex-1 flex flex-col gap-3">

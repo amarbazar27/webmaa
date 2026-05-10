@@ -9,7 +9,7 @@ import {
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
   ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
-  Truck, ShieldCheck, Clock
+  Truck, ShieldCheck, Clock, PlayCircle
 } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -1096,6 +1096,13 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
               </button>
             )}
 
+            {/* How to Order Video */}
+            {shop.howToOrderVideo && (
+              <a href={shop.howToOrderVideo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black transition-colors shadow-sm whitespace-nowrap">
+                <PlayCircle size={15} /> <span className="hidden md:inline">কিভাবে অর্ডার করবেন?</span><span className="md:hidden">ভিডিও</span>
+              </a>
+            )}
+
             {/* App Download */}
             {!pwaInstalled && (
               <button onClick={handleAppDownload} className="flex items-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition-colors shadow-sm">
@@ -1561,12 +1568,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
             {/* Chat Tab */}
             {aiTab === 'chat' && <>
-              <div className="absolute top-[68px] right-4 z-10">
-                <button onClick={() => setShowAiSuggestionModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
-                  <Sparkles size={12}/> স্মার্ট সাজেশন
-                </button>
-              </div>
-              <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto relative pt-12">
+              <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto relative pb-16">
                 {chatMessages.map(msg => (
                   <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
                     <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
@@ -1582,14 +1584,19 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                 ))}
                 {isAiTyping && <div className="max-w-[85%] p-3.5 rounded-2xl bg-white border border-slate-200 self-start flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>}
               </div>
-              <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0">
+              <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0 relative">
+                <div className="absolute -top-10 right-4 z-10">
+                  <button onClick={() => setShowAiSuggestionModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
+                    <Sparkles size={12}/> স্মার্ট সাজেশন
+                  </button>
+                </div>
                 <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-[10px] font-black transition-colors" title="Clear">🗑</button>
                 <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
                 <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md"><MessageCircle size={20} strokeWidth={2.5}/></button>
               </div>
               
               {showAiSuggestionModal && (
-                <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 rounded-2xl">
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end justify-center p-4 z-50 rounded-2xl pb-16">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border border-purple-100 flex flex-col gap-4 animate-in zoom-in-95">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1606,7 +1613,13 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                     <button 
                       onClick={() => {
                         setShowAiSuggestionModal(false);
-                        sendChatMessage(`আমাদের মেসের বর্ডার ${suggestionForm.members || 1} জন। বাজারের বাজেট ${suggestionForm.budget || 500} টাকা। এই বাজেটে সেরা ভ্যালু ফর মানি এবং টপ সেল বাজার লিস্ট তৈরি করো।`);
+                        sendChatMessage(`আমাদের মেসের বর্ডার ${suggestionForm.members || 1} জন। বাজারের বাজেট ${suggestionForm.budget || 500} টাকা। 
+নিয়ম: 
+১. সকালে ভাতের সাথে ভর্তা বা শাক। 
+২. দুপুরে যেকোনো আমিষ এবং ২-১ টা সবজি। 
+৩. রাতেও দুপুরের মত একই। 
+৪. বয়লার মুরগির পিস সাজেস্ট করবে না, বরং আস্ত মুরগি নিয়ে পিস করে নিতে বলবে। 
+এই নিয়মে সেরা ভ্যালু ফর মানি এবং টপ সেল বাজার লিস্ট তৈরি করো।`);
                         setSuggestionForm({ members: '', budget: '' });
                       }}
                       className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm hover:bg-purple-700 transition-colors">
