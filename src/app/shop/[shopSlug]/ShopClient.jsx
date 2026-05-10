@@ -483,6 +483,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shopId: shop.id,
+          botTone: shop.aiConfig?.botTone || 'friendly',
           orderHistory: (userOrders || []).slice(0, 5).map(o => ({ id: o.id, orderIdVisual: o.orderIdVisual, total: o.total, items: (o.items || []).map(i => ({ name: i.name, quantity: i.quantity, price: i.price })) })),
           messages: [
             { role: 'system', content: `তুমি "${shop.shopName}"-এর AI বাজার সহকারী। নাম: ${shop.aiConfig?.botName || 'Bazar Bot'}।

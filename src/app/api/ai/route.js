@@ -14,7 +14,7 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { shopId, messages, model, orderHistory } = body;
+    const { shopId, messages, model, orderHistory, botTone } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: { message: 'Messages array is required.' } }, { status: 400 });
@@ -65,9 +65,10 @@ export async function POST(req) {
 নিয়মাবলী:
 - সর্বদা "আসসালামু আলাইকুম" দিয়ে শুরু করো (শুধু প্রথমবার)।
 - বাংলায় কথা বলো, সহজ ও প্রাকৃতিক ভাষায়।
+- কথা বলার স্টাইল/টোন হবে: ${botTone || 'বন্ধুত্বপূর্ণ ও সাহায্যকারী (Friendly)'}।
 - ব্যবহারকারী কী অর্ডার করতে চাইছে তা বোঝো।
 - সম্পর্কিত পণ্য (value-for-money) প্রস্তাব করো।
-- ছোট ও সহায়ক উত্তর দাও।`;
+- ছোট ও সহায়ক উত্তর দাও, কিন্তু কোনো অবস্থাতেই উত্তর মাঝপথে থামাবে না। সম্পূর্ণ উত্তর শেষ করবে।`;
 
     // Add order history context if available
     if (orderHistory && orderHistory.length > 0) {
@@ -112,7 +113,7 @@ export async function POST(req) {
             body: JSON.stringify({
               systemInstruction: { parts: [{ text: systemText }] },
               contents: chatMessages,
-              generationConfig: { maxOutputTokens: 1024 }
+              generationConfig: { maxOutputTokens: 8192 }
             })
           });
 
@@ -155,7 +156,7 @@ export async function POST(req) {
           const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-            body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: groqMessages, temperature: 0.7, max_tokens: 1000 })
+            body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: groqMessages, temperature: 0.7, max_tokens: 4000 })
           });
           const groqData = await groqResp.json();
           if (groqResp.ok && groqData.choices?.[0]?.message?.content) {
