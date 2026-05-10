@@ -117,9 +117,16 @@ export default function OrdersPage() {
         if (h) formattedCountdown += `${h} ঘণ্টা `;
         if (m) formattedCountdown += `${m} মিনিট`;
 
+        // Calculate actual ETA timestamp
+        let etaMillis = 0;
+        if (d) etaMillis += parseInt(d) * 24 * 60 * 60 * 1000;
+        if (h) etaMillis += parseInt(h) * 60 * 60 * 1000;
+        if (m) etaMillis += parseInt(m) * 60 * 1000;
+
         await updateDoc(orderRef, {
            returnNote: customNote[orderId] || '',
-           deliveryCountdownFormatted: formattedCountdown.trim()
+           deliveryCountdownFormatted: formattedCountdown.trim(),
+           deliveryETA: etaMillis > 0 ? new Date(Date.now() + etaMillis) : null
         });
         toast.success('অতিরিক্ত তথ্য সেভ হয়েছে!');
      } catch (err) {

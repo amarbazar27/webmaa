@@ -66,7 +66,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
     } catch (err) {
       setMicPermission('denied');
       if (err.name === 'NotAllowedError') {
-        toast.error('মাইক্রোফোনের অ্যাক্সেস বন্ধ করা আছে। ব্রাউজারের অ্যাড্রেস বারে 🔒 আইকনে ক্লিক করে Allow করুন।', { duration: 8000 });
+        toast.error('আপনার ব্রাউজার থেকে মাইক্রোফোনের অনুমতি দিন।', { duration: 4000 });
       } else {
         toast.error(`মাইক্রোফোন সমস্যা: ${err.message}`, { duration: 5000 });
       }
@@ -192,7 +192,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           {micPermission === 'denied' && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
               <p className="text-xs font-black text-amber-700">মাইক্রোফোনের অ্যাক্সেস বন্ধ আছে।</p>
-              <p className="text-[11px] text-amber-600">ব্রাউজারের অ্যাড্রেস বারে 🔒 বা 🎤 আইকনে ক্লিক করে <strong>Microphone → Allow</strong> করুন, তারপর পেজ রিফ্রেশ দিন।</p>
+              <p className="text-[11px] text-amber-600">দয়া করে ব্রাউজার থেকে মাইক্রোফোন ব্যবহারের অনুমতি দিন।</p>
               <button
                 onClick={() => { setMicPermission('unknown'); handleMicClick(); }}
                 className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black hover:bg-amber-700"

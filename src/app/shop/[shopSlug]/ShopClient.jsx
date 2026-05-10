@@ -460,6 +460,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
+  const [showAiSuggestionModal, setShowAiSuggestionModal] = useState(false);
+  const [suggestionForm, setSuggestionForm] = useState({ members: '', budget: '' });
 
   const getSmartBotReply = (text) => {
     const q = text.toLowerCase();
@@ -735,12 +737,11 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
 
     const handlePlaceOrder = async (e) => {
+    e.preventDefault();
     if (!orderForm.coordinates) {
-      toast.error('অর্ডার করতে আপনার লোকেশন (Map Button) সিলেক্ট করুন।', { icon: '📍', duration: 4000 });
+      toast.error('📍 অর্ডার করতে লোকেশন বাটনে ক্লিক করে আপনার ঠিকানা নিশ্চিত করুন।', { duration: 4000 });
       return;
     }
-
-    e.preventDefault();
     if (shop.isStrictLocation && locationStatus !== 'available') {
       toast.error('দুঃখিত, আপনার লোকেশনে আমাদের ডেলিভারি সার্ভিস নেই।');
       return;
@@ -1544,7 +1545,12 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
             {/* Tab Bar */}
             <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
-              {[{id:'chat',label:'চ্যাট',icon:'💬'},{id:'voice',label:'ভয়েস',icon:'🎤'},{id:'image',label:'ছবি',icon:'📷'},{id:'text',label:'লিস্ট',icon:'📝'}].map(tab => (
+              {[
+                {id:'chat',label:'চ্যাট',icon:'💬', always: true},
+                {id:'voice',label:'ভয়েস',icon:'🎤', always: true},
+                {id:'image',label:'ছবি OCR',icon:'📷', show: shop.aiConfig?.enableAiShoppingList !== false},
+                {id:'text',label:'লিস্ট',icon:'📝', always: true},
+              ].filter(tab => tab.always || tab.show).map(tab => (
                 <button key={tab.id} onClick={() => setAiTab(tab.id)}
                   className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all ${aiTab === tab.id ? 'bg-white text-purple-600 border-b-2 border-purple-600' : 'text-slate-500 hover:text-slate-800'}`}>
                   {tab.icon} {tab.label}
@@ -1554,7 +1560,12 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
             {/* Chat Tab */}
             {aiTab === 'chat' && <>
-              <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto">
+              <div className="absolute top-[68px] right-4 z-10">
+                <button onClick={() => setShowAiSuggestionModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
+                  <Sparkles size={12}/> স্মার্ট সাজেশন
+                </button>
+              </div>
+              <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto relative pt-12">
                 {chatMessages.map(msg => (
                   <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
                     <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
@@ -1575,6 +1586,34 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                 <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
                 <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md"><MessageCircle size={20} strokeWidth={2.5}/></button>
               </div>
+              
+              {showAiSuggestionModal && (
+                <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 rounded-2xl">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border border-purple-100 flex flex-col gap-4 animate-in zoom-in-95">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><Sparkles size={16}/></div>
+                        <h3 className="font-black text-sm text-slate-800">AI স্মার্ট সাজেশন</h3>
+                      </div>
+                      <button onClick={() => setShowAiSuggestionModal(false)} className="text-slate-400 hover:text-slate-700"><X size={20}/></button>
+                    </div>
+                    <p className="text-xs text-slate-500 font-bold leading-relaxed">আপনার মেসের সাইজ এবং বাজেট অনুযায়ী বেস্ট ভ্যালু ফর মানি বাজার লিস্ট তৈরি করে দিবে AI।</p>
+                    <div className="space-y-3">
+                      <input type="number" placeholder="মেসের বর্ডার কয়জন? (যেমন: ৫)" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600" value={suggestionForm.members} onChange={e => setSuggestionForm({...suggestionForm, members: e.target.value})} />
+                      <input type="number" placeholder="মোট বাজেট কত টাকা? (যেমন: ২০০০)" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600" value={suggestionForm.budget} onChange={e => setSuggestionForm({...suggestionForm, budget: e.target.value})} />
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setShowAiSuggestionModal(false);
+                        sendChatMessage(`আমাদের মেসের বর্ডার ${suggestionForm.members || 1} জন। বাজারের বাজেট ${suggestionForm.budget || 500} টাকা। এই বাজেটে সেরা ভ্যালু ফর মানি এবং টপ সেল বাজার লিস্ট তৈরি করো।`);
+                        setSuggestionForm({ members: '', budget: '' });
+                      }}
+                      className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm hover:bg-purple-700 transition-colors">
+                      সাজেশন নিন
+                    </button>
+                  </div>
+                </div>
+              )}
             </>}
 
             {/* Voice / Image / Text tabs via AiVoicePanel */}
