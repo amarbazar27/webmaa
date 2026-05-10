@@ -29,7 +29,12 @@ const CheckoutSchema = z.object({
     clientPrice: z.number().positive().optional()
   })).min(0),
   customerId: z.string().min(1),
-  customImage: z.string().max(2000000).optional()
+  customImage: z.string().max(2000000).optional(),
+  coordinates: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    link: z.string()
+  }).optional().nullable()
 });
 
 // ── Simple Rate Limit (in-memory, basic protection) ─────
@@ -71,8 +76,9 @@ export async function POST(req) {
     // ── Input Validation ────────────────────────────────
     const parsed = CheckoutSchema.safeParse(body);
     if (!parsed.success) {
-      console.error('Validation Error:', parsed.error.errors);
-      return NextResponse.json({ error: 'Validation failed: ' + parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') }, { status: 400 });
+      console.error('Validation Error:', parsed.error.issues);
+      const errMsgs = parsed.error.issues ? parsed.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') : 'Invalid payload';
+      return NextResponse.json({ error: 'Validation failed: ' + errMsgs }, { status: 400 });
     }
 
     const {
@@ -87,7 +93,8 @@ export async function POST(req) {
       honeypot,
       localId,
       items,
-      customerId
+      customerId,
+      coordinates
     } = parsed.data;
 
     // Extract customImage separately (not in strict destructure to avoid schema clash)
@@ -368,6 +375,7 @@ export async function POST(req) {
       localId: localId || null,
       customerId: customerId,
       customImage: customImage || null,
+      coordinates: coordinates || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 

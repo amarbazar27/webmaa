@@ -96,7 +96,15 @@ export default function ServiceBanner({
       isMatch = serviceAreas.some(sa => {
         if (!sa) return false;
         const normalizedSa = sa.toLowerCase().trim();
-        if (districtName && normalizedSa.includes(districtName.toLowerCase())) return true;
+        const distMatched = districtName && normalizedSa.includes(districtName.toLowerCase());
+        
+        if (distMatched) {
+           const requiresSadar = normalizedSa.includes('সদর') || normalizedSa.includes('sadar');
+           if (requiresSadar && !autoLoc.isSadar) {
+              return false; // Retailer set Sadar, but user is outside Sadar
+           }
+           return true;
+        }
         return false;
       });
       

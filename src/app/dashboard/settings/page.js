@@ -183,6 +183,8 @@ export default function SettingsPage() {
         minOrderAmount: data?.deliveryConfig?.minOrderAmount || ''
       });
       setAiConfig({
+        apiKey: data?.aiConfig?.apiKey || '',
+        botName: data?.aiConfig?.botName || '',
         botTone: data?.aiConfig?.botTone || 'funny',
         enableAiShoppingList: data?.aiConfig?.enableAiShoppingList !== false,
         smartCalcEnabled: data?.aiConfig?.smartCalcEnabled || false

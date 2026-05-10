@@ -37,9 +37,9 @@ export default function useLocation() {
       try {
         const pos = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: false,
-            timeout: 5000,
-            maximumAge: 300000,
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
           });
         });
 

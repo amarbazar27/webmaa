@@ -601,12 +601,25 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
     }
     toast.loading('লোকেশন বের করা হচ্ছে...', { id: 'geo' });
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         const link = `https://maps.google.com/?q=${latitude},${longitude}`;
+        
+        let readableAddress = '';
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=bn`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            readableAddress = data.display_name;
+          }
+        } catch (e) {
+          console.warn('Reverse geocoding failed', e);
+        }
+
         setOrderForm(f => ({ 
           ...f, 
-          address: f.address ? `${f.address}\n\n[অটো-লোকেশন: ${link}]` : `[অটো-লোকেশন: ${link}]` 
+          address: readableAddress ? `${readableAddress}\n[ম্যাপ: ${link}]` : `[অটো-লোকেশন: ${link}]`,
+          coordinates: { lat: latitude, lng: longitude, link }
         }));
         toast.success('লোকেশন সফলভাবে যুক্ত হয়েছে!', { id: 'geo' });
       },
