@@ -1,7 +1,8 @@
 'use client';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, MicOff, Loader2, ShoppingCart, X } from 'lucide-react';
 import useVoiceOrder from '@/hooks/useVoiceOrder';
+import useMicrophonePermission from '@/hooks/useMicrophonePermission';
 import toast from 'react-hot-toast';
 import { ImagePlus, Sparkles } from 'lucide-react';
 
@@ -28,7 +29,7 @@ function compressImage(file, maxWidth = 1200, quality = 0.75) {
 }
 
 export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrder, isOpen, onClose, activeTab }) {
-  const [micPermission, setMicPermission] = useState('unknown'); // 'unknown' | 'granted' | 'denied'
+  const { permissionState, error: micHookError, requestMicrophone, stopMicrophone: stopMicStream, isSupported: isMicSupported } = useMicrophonePermission();
   const [textInput, setTextInput] = useState('');
   const [isProcessingText, setIsProcessingText] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -44,34 +45,33 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
     startVoice, stopVoice, addVoiceResultToCart, isVoiceSupported
   } = useVoiceOrder({ products, shopId: shop.id, onAddToCart });
 
+  // ── Clean up stream on modal close ───────────────────────────────
+  useEffect(() => {
+    if (!isOpen) stopMicStream();
+  }, [isOpen, stopMicStream]);
+
   // ── Request microphone permission FIRST, then start voice ────────────────
   const handleMicClick = useCallback(async () => {
     if (isListening) {
       stopVoice();
+      stopMicStream();
       return;
     }
 
-    if (micPermission === 'granted') {
+    if (permissionState === 'granted') {
       startVoice();
       return;
     }
 
-    // Ask for permission
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      setMicPermission('granted');
+    // Direct request without setTimeout to preserve user-gesture token for Safari/iOS
+    const granted = await requestMicrophone();
+    if (granted) {
       toast.success('মাইক্রোফোন অ্যাক্সেস পাওয়া গেছে!', { duration: 2000 });
-      // Small delay then start listening
       setTimeout(() => startVoice(), 300);
-    } catch (err) {
-      setMicPermission('denied');
-      if (err.name === 'NotAllowedError') {
-        toast.error('ব্রাউজার বা ডিভাইসের সেটিংসে মাইক্রোফোনের অনুমতি দিন।', { duration: 5000 });
-      } else {
-        toast.error(`মাইক্রোফোন সমস্যা: ${err.message}`, { duration: 5000 });
-      }
+    } else {
+      toast.error('মাইক্রোফোন অ্যাক্সেস পাওয়া যায়নি।', { duration: 4000 });
     }
-  }, [isListening, micPermission, startVoice, stopVoice]);
+  }, [isListening, permissionState, startVoice, stopVoice, requestMicrophone, stopMicStream]);
 
   // ── Image upload & OCR ───────────────────────────────────────────────────
   const handleImageSelect = useCallback(async (e) => {
@@ -189,34 +189,43 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           </div>
 
           {/* Permission denied banner */}
-          {micPermission === 'denied' && (
+          {permissionState === 'denied' && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
               <p className="text-xs font-black text-amber-700">মাইক্রোফোনের অ্যাক্সেস বন্ধ আছে।</p>
-              <p className="text-[11px] text-amber-600">দয়া করে ব্রাউজার এবং আপনার ডিভাইসের সেটিংসে মাইক্রোফোনের অনুমতি দিন।</p>
+              <p className="text-[11px] text-amber-600">
+                দয়া করে <strong>Chrome &gt; Settings &gt; Site Settings &gt; Microphone</strong> এ গিয়ে Allow করুন।
+              </p>
               <button
-                onClick={() => { setMicPermission('unknown'); handleMicClick(); }}
+                onClick={handleMicClick}
                 className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black hover:bg-amber-700"
               >
                 আবার চেষ্টা করুন
               </button>
             </div>
           )}
+          
+          {permissionState === 'unsupported' && (
+            <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-4 text-center space-y-2">
+              <p className="text-xs font-black text-red-700">ব্রাউজার সাপোর্ট করে না</p>
+              <p className="text-[11px] text-red-600">{micHookError}</p>
+            </div>
+          )}
 
           {/* Mic button */}
-          {micPermission !== 'denied' && (
+          {permissionState !== 'denied' && permissionState !== 'unsupported' && (
             <button
               onClick={handleMicClick}
-              disabled={!isVoiceSupported || isVoiceProcessing}
+              disabled={!isVoiceSupported || isVoiceProcessing || permissionState === 'requesting'}
               className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all
-                ${isListening ? 'bg-red-500 animate-pulse scale-110' : isVoiceProcessing ? 'bg-purple-400' : micPermission === 'unknown' ? 'bg-slate-700 hover:bg-slate-900' : 'bg-purple-600 hover:bg-purple-700'}
+                ${isListening ? 'bg-red-500 animate-pulse scale-110' : isVoiceProcessing || permissionState === 'requesting' ? 'bg-purple-400' : (permissionState === 'loading' || permissionState === 'prompt') ? 'bg-slate-700 hover:bg-slate-900' : 'bg-purple-600 hover:bg-purple-700'}
                 text-white disabled:opacity-50`}
             >
-              {isVoiceProcessing ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
+              {isVoiceProcessing || permissionState === 'requesting' ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
             </button>
           )}
 
           <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
-            {isListening ? '🔴 শুনছি...' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : micPermission === 'unknown' ? 'মাইক বাটনে চাপুন (অ্যাক্সেস চাইবে)' : 'মাইক বাটনে চাপুন'}
+            {isListening ? '🔴 শুনছি...' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : permissionState === 'requesting' ? 'অনুমতি চাওয়া হচ্ছে...' : (permissionState === 'loading' || permissionState === 'prompt') ? 'মাইক বাটনে চাপুন (অ্যাক্সেস চাইবে)' : 'মাইক বাটনে চাপুন'}
           </p>
 
           {!isVoiceSupported && (
