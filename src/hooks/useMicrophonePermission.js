@@ -17,10 +17,22 @@ export default function useMicrophonePermission() {
       return;
     }
 
+    console.log('[Mic Audit] navigator.userAgent:', window.navigator.userAgent);
+    console.log('[Mic Audit] window.isSecureContext:', window.isSecureContext);
+
+    // Detect In-App Browsers (Facebook, Instagram, Line, etc.) which often block mic
+    const ua = window.navigator.userAgent || '';
+    if (ua.match(/FBAN|FBAV|Instagram|Line/i)) {
+      setPermissionState('unsupported');
+      setError('In-app ব্রাউজার (যেমন Facebook/Instagram) মাইক সাপোর্ট করে না। দয়া করে লিংকে ক্লিক করে Open in Chrome/Safari নির্বাচন করুন।');
+      console.warn('[Mic] In-app browser detected and blocked.');
+      return;
+    }
+
     if (!window.isSecureContext) {
       setPermissionState('unsupported');
       setError('Secure context (HTTPS) is required for microphone access.');
-      console.warn('[Mic] Non-secure context detected.');
+      console.warn('[Mic Audit] Non-secure context detected.');
       return;
     }
 
@@ -73,9 +85,19 @@ export default function useMicrophonePermission() {
   }, []);
 
   const requestMicrophone = useCallback(async () => {
-    console.log('[Mic] Requesting microphone access...');
+    console.log('[Mic Audit] Requesting microphone access...');
     setPermissionState('requesting');
     setError(null);
+
+    // Log available devices for debugging Samsung hardware lock issues
+    if (navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+          const audioDevices = devices.filter(d => d.kind === 'audioinput');
+          console.log('[Mic Audit] Audio Devices:', audioDevices.length ? audioDevices : 'None found');
+        })
+        .catch(err => console.warn('[Mic Audit] enumerateDevices failed:', err));
+    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -93,13 +115,15 @@ export default function useMicrophonePermission() {
       setPermissionState('granted');
       return true;
     } catch (err) {
-      console.error('[Mic] getUserMedia Error:', err.name, err.message);
+      console.error('[Mic Audit] getUserMedia Error:', err.name, '| Message:', err.message);
       setPermissionState('denied');
       
       if (err.name === 'NotAllowedError') {
          setError('Microphone permission denied by user or device settings.');
       } else if (err.name === 'NotFoundError') {
          setError('No microphone found on this device.');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+         setError('Hardware error: Microphone is busy or blocked by another app.');
       } else {
          setError(`Microphone error: ${err.message}`);
       }

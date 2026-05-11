@@ -17,6 +17,11 @@ export function createRecognition({ lang = 'bn-BD', onResult, onEnd, onError } =
     onError?.('আপনার ব্রাউজার ভয়েস ইনপুট সাপোর্ট করে না। Chrome ব্যবহার করুন।');
     return null;
   }
+  
+  if (recognition) {
+    try { recognition.abort(); } catch (e) {}
+  }
+
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   recognition.lang = lang;
@@ -37,19 +42,28 @@ export function createRecognition({ lang = 'bn-BD', onResult, onEnd, onError } =
 
   recognition.onend = () => onEnd?.();
   recognition.onerror = (e) => {
+    console.error('[Speech] Recognition error:', e.error);
     const msgs = {
       'not-allowed': 'মাইক্রোফোনের অনুমতি দিন।',
       'no-speech': 'কোনো কথা শোনা যায়নি। আবার চেষ্টা করুন।',
       'network': 'নেটওয়ার্ক সমস্যা।',
+      'aborted': 'ভয়েস ইনপুট বাতিল করা হয়েছে।',
     };
-    onError?.(msgs[e.error] || `Speech error: ${e.error}`);
+    onError?.(msgs[e.error] || `Voice recognition unavailable: ${e.error}`);
   };
 
   return recognition;
 }
 
 export function startListening(rec) {
-  try { rec?.start(); } catch (e) { /* already started */ }
+  try { 
+    if (rec) {
+      rec.abort(); // Ensure clean state before starting
+      setTimeout(() => {
+        try { rec.start(); } catch(e) { console.warn('Speech start error:', e); }
+      }, 50); // slight delay to allow abort to process
+    }
+  } catch (e) { console.warn('Speech start wrapper error:', e); }
 }
 
 export function stopListening(rec) {
