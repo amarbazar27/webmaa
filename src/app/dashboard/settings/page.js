@@ -119,17 +119,21 @@ export default function SettingsPage() {
   const [socialLinks, setSocialLinks] = useState({ fb: '', insta: '', yt: '', wa: '', linkedin: '', tiktok: '' });
   const [authSettings, setAuthSettings] = useState({ emailAuth: false, actionPin: '', requireLoginBeforeOrder: true });
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
-  const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '' });
+  const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '' });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true });
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
   const [isStrictLocation, setIsStrictLocation] = useState(false);
+  const [requireLocationForOrder, setRequireLocationForOrder] = useState(true);
   const [showLocationSelector, setShowLocationSelector] = useState(true);
   const [customAreas, setCustomAreas] = useState([]);
   const [newCustomArea, setNewCustomArea] = useState('');
   const [trackingConfig, setTrackingConfig] = useState({ ga4Id: '', clarityId: '' });
   const [loadingMedia, setLoadingMedia] = useState({ type: 'default', imageUrl: '', texts: [] });
   const [newLoadingText, setNewLoadingText] = useState('');
+  const [faqItems, setFaqItems] = useState([]);
+  const [newFaqQ, setNewFaqQ] = useState('');
+  const [newFaqA, setNewFaqA] = useState('');
   
   const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [], unionsType: 'unions' });
   const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', upazilaName: '', union: '' });
@@ -180,7 +184,10 @@ export default function SettingsPage() {
         isCOD: data?.deliveryConfig?.isCOD ?? true,
         contactEmail: data?.deliveryConfig?.contactEmail || '',
         contactWhatsapp: data?.deliveryConfig?.contactWhatsapp || '',
-        minOrderAmount: data?.deliveryConfig?.minOrderAmount || ''
+        minOrderAmount: data?.deliveryConfig?.minOrderAmount || '',
+        deliveryDays: data?.deliveryConfig?.deliveryDays ?? '',
+        deliveryHours: data?.deliveryConfig?.deliveryHours ?? '',
+        deliveryMinutes: data?.deliveryConfig?.deliveryMinutes ?? ''
       });
       setAiConfig({
         apiKey: data?.aiConfig?.apiKey || '',
@@ -192,6 +199,7 @@ export default function SettingsPage() {
       setStaffEmails(data?.staffEmails || []);
       setServiceAreas(data?.serviceAreas || []);
       setIsStrictLocation(data?.isStrictLocation || false);
+      setRequireLocationForOrder(data?.requireLocationForOrder !== false);
       setShowLocationSelector(data?.showLocationSelector !== false);
       setCustomAreas(data?.customAreas || []);
       setTrackingConfig({
@@ -203,6 +211,7 @@ export default function SettingsPage() {
         imageUrl: data?.loadingMedia?.imageUrl || '',
         texts: data?.loadingMedia?.texts || []
       });
+      setFaqItems(data?.faqItems || []);
       setDomainStatus(data?.domainStatus || '');
       
       setLoading(false);
@@ -475,6 +484,7 @@ export default function SettingsPage() {
         notices: shop.notices,
         welcomeMessage: shop.welcomeMessage,
         bannerInterval: shop.bannerInterval || 4,
+        howToOrderVideo: shop.howToOrderVideo || '',
         logoUrl,
         socialLinks,
         authSettings,
@@ -484,10 +494,12 @@ export default function SettingsPage() {
         staffEmails,
         serviceAreas,
         isStrictLocation,
+        requireLocationForOrder,
         showLocationSelector,
         customAreas,
         trackingConfig,
-        loadingMedia
+        loadingMedia,
+        faqItems
       });
       toast.success('All settings synchronized! ✨');
     } catch (err) {
@@ -780,6 +792,19 @@ export default function SettingsPage() {
                      onChange={e => setAuthSettings({...authSettings, actionPin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
                   />
                </div>
+            </Card>
+
+            <Card title="FAQ Management" subtitle="Common Queries" icon={HelpCircle}>
+              <div className="space-y-3">
+                {faqItems.map((item, i) => (
+                  <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <input type="text" placeholder="Question" className="w-full text-xs font-bold p-2 bg-white rounded border border-slate-200" value={item.q} onChange={e => setFaqItems(faqItems.map((f, idx) => idx === i ? {...f, q: e.target.value} : f))} />
+                    <input type="text" placeholder="Answer" className="w-full text-xs font-bold p-2 bg-white rounded border border-slate-200" value={item.a} onChange={e => setFaqItems(faqItems.map((f, idx) => idx === i ? {...f, a: e.target.value} : f))} />
+                    <button type="button" onClick={() => setFaqItems(faqItems.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 font-bold">Remove</button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={() => setFaqItems([...faqItems, {q: '', a: ''}])} className="w-full">+ Add FAQ</Button>
+              </div>
             </Card>
 
             <Card title="Checkout & Delivery" subtitle="Payments & COD" icon={Truck}>
@@ -1097,6 +1122,19 @@ export default function SettingsPage() {
             {/* Service Area Location */}
             <Card title="সার্ভিস এলাকা" subtitle="কোথায় ডেলিভারি করেন তা সেট করুন" icon={MapPin} className="border-l-4 border-l-emerald-500">
               <div className="space-y-6">
+                <div className="flex items-center justify-between bg-purple-50 p-4 rounded-xl border border-purple-100">
+                  <div>
+                    <h4 className="text-sm font-black text-purple-900 flex items-center gap-2">
+                       <MapPin size={16} className="text-purple-600" /> অর্ডারে লোকেশন বাধ্যতামূলক?
+                    </h4>
+                    <p className="text-[10px] font-bold text-purple-600 uppercase mt-1">অফ করলে লোকেশন ছাড়াই অর্ডার করা যাবে</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={requireLocationForOrder} onChange={e => setRequireLocationForOrder(e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+                </div>
+
                 <div className="flex items-center justify-between bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                   <div>
                     <h4 className="text-sm font-black text-emerald-900 flex items-center gap-2">
@@ -1252,6 +1290,45 @@ export default function SettingsPage() {
 
                 {serviceAreas.length === 0 && (
                   <p className="text-center text-slate-400 text-xs font-bold py-4 border-2 border-dashed border-slate-100 rounded-xl">কোনো সার্ভিস এলাকা সেট করা হয়নি। সব জায়গায় সার্ভিস দেখানো হবে।</p>
+                )}
+              </div>
+            </Card>
+
+            {/* FAQ Section */}
+            <Card title="FAQ / প্রশ্ন-উত্তর" subtitle="কাস্টমারদের জন্য সাধারণ প্রশ্ন ও উত্তর" icon={MessageSquare} className="border-l-4 border-l-amber-500">
+              <div className="space-y-4">
+                <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                  কাস্টমারদের কাছে শো হবে এমন প্রশ্ন ও উত্তর যোগ করুন। এগুলো শপ পেজে FAQ সেকশনে দেখা যাবে।
+                </p>
+                <div className="space-y-3">
+                  <Input placeholder="প্রশ্ন লিখুন (যেমন: ডেলিভারি কতক্ষণ লাগে?)" value={newFaqQ} onChange={e => setNewFaqQ(e.target.value)} />
+                  <textarea
+                    placeholder="উত্তর লিখুন..."
+                    rows={2}
+                    className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-purple-600 text-slate-900 resize-none"
+                    value={newFaqA}
+                    onChange={e => setNewFaqA(e.target.value)}
+                  />
+                  <Button type="button" onClick={() => {
+                    if (newFaqQ.trim() && newFaqA.trim()) {
+                      setFaqItems([...faqItems, { q: newFaqQ.trim(), a: newFaqA.trim() }]);
+                      setNewFaqQ(''); setNewFaqA('');
+                    }
+                  }} className="h-[44px]">+ প্রশ্ন যোগ করুন</Button>
+                </div>
+                {faqItems.length > 0 && (
+                  <div className="space-y-2">
+                    {faqItems.map((faq, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 relative">
+                        <button type="button" onClick={() => setFaqItems(faqItems.filter((_, i) => i !== idx))} className="absolute top-2 right-2 text-slate-400 hover:text-red-500"><X size={14} /></button>
+                        <p className="text-sm font-black text-slate-900 mb-1">❓ {faq.q}</p>
+                        <p className="text-xs font-bold text-slate-600 leading-relaxed">{faq.a}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {faqItems.length === 0 && (
+                  <p className="text-center text-slate-400 text-xs font-bold py-4 border-2 border-dashed border-slate-100 rounded-xl">কোনো FAQ যোগ করা হয়নি।</p>
                 )}
               </div>
             </Card>

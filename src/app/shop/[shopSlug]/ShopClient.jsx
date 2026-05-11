@@ -295,6 +295,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [orderSuccess, setOrderSuccess] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
   const [pdfProgress, setPdfProgress] = useState(0);
@@ -488,17 +489,19 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
           messages: [
             { role: 'system', content: `তুমি "${shop.shopName}"-এর AI বাজার সহকারী। নাম: ${shop.aiConfig?.botName || 'Bazar Bot'}।
 
-পণ্য তালিকা (ID|নাম|দাম):
-${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.stock === 0 ? '|[স্টক নেই]' : ''}`).join('\n')}
+পণ্য তালিকা (ID|নাম|দাম|ইউনিট):
+${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|${p.unit || 'piece'}`).join('\n')}
 
-ডেলিভারি: ৳${shop.deliveryConfig?.advanceFee || 60} | পেমেন্ট: ${shop.deliveryConfig?.methods || 'বিকাশ/নগদ'}
+ডেলিভারি: ৳${shop.deliveryConfig?.advanceFee || 60} | পেমেন্ট: ${shop.deliveryConfig?.methods || 'বিকাশ/নগদ'}${shop.aiConfig?.customPrompt ? `\n\nবিশেষ নির্দেশনা: ${shop.aiConfig.customPrompt}` : ''}
 
-নিয়ম:
-1. বাজার লিস্ট suggest করলে শেষে লেখো: 🛒 [বাজার লিস্ট তৈরি]
-2. তারপর এই ফরম্যাটে লেখো: PRODUCTS_JSON:[{"id":"PRODUCT_ID_HERE","qty":1}]
-3. শুধু স্টক আছে এমন পণ্য দাও। টাকা/৳ = মূল্য।
-4. বাংলায়, সংক্ষিপ্ত উত্তর।
-5. কাস্টমারের অর্ডার ইতিহাস দেখে পার্সোনালাইজড value-for-money সাজেশন দাও।` },
+🔴 কঠোর নিয়ম:
+1. উত্তর সবসময় সম্পূর্ণ করবে — কখনো মাঝপথে থামবে না।
+2. পণ্যের লিস্ট দিলে শেষে লেখো: 🛒 [বাজার লিস্ট তৈরি]
+3. তারপর এই ফরম্যাটে লেখো: PRODUCTS_JSON:[{"id":"ID","qty":1}]
+4. শুধু স্টক আছে এমন পণ্য দাও।
+5. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।
+6. পণ্য সাজেস্ট করার পর অবশ্যই লেখো: "উপরের 'সব কার্টে যোগ করুন' বোতাম চাপুন 🛒"
+7. কাস্টমারের অর্ডার ইতিহাস দেখে পার্সোনালাইজড সাজেশন দাও।` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
@@ -646,7 +649,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
       (error) => {
         toast.error('লোকেশন অ্যাক্সেস করা যায়নি। দয়া করে জিপিএস চালু করে পারমিশন দিন।', { id: 'geo' });
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
     );
   };
 
@@ -739,7 +742,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
 
     const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (!orderForm.coordinates) {
+    const requiresLocation = shop.requireLocationForOrder !== false;
+    if (requiresLocation && !orderForm.coordinates) {
       toast.error('📍 অর্ডার করতে লোকেশন বাটনে ক্লিক করে আপনার ঠিকানা নিশ্চিত করুন।', { duration: 4000 });
       return;
     }
@@ -751,9 +755,8 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
     trackStoreEvent('begin_checkout', { value: cart.length === 0 && orderImage ? 1 : cartTotal, currency: 'BDT', items: cart.map(i => i.name) });
     const requireLogin = shop.authSettings?.requireLoginBeforeOrder ?? true;
     if (requireLogin && !user) {
-      toast.error('অর্ডার করতে অনুগ্রহ করে লগইন করুন।');
       setIsOrderOpen(false);
-      setIsProfileOpen(true);
+      setShowLoginModal(true);
       return;
     }
     if (!validatePhone(orderForm.phone)) {
@@ -946,7 +949,7 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
   // NOTE: We no longer block the storefront on authLoading.
   // Auth state resolves in background — shopping is always public.
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
+    <div className="min-h-screen bg-[#f8f7f4] font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
       {/* ── Splash Loading Screen (1.5s, with shop branding) ── */}
       {showSplash && <LoadingScreen visible={showSplash} shop={shop} products={products} minDuration={1500} />}
       <StoreAnalytics shop={shop} />
@@ -1164,9 +1167,9 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         {/* ── AI Shopping List Upload ── */}
         
 
-        {/* ── Search, Sort & Categories ── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3 overflow-x-auto scrollbar-hide">
-          <div className="relative shrink-0 w-44 sm:w-52">
+        {/* ── Search & Sort ── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3.5 top-3 text-slate-500" size={15} strokeWidth={2.5} />
             <input
               type="text"
@@ -1176,7 +1179,6 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-
           <div className="relative shrink-0">
             <ArrowUpDown size={13} className="absolute left-3 top-3.5 text-slate-500" strokeWidth={2.5} />
             <select className="pl-8 pr-5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer hover:bg-slate-200 transition-colors" value={sortOption} onChange={e => setSortOption(e.target.value)}>
@@ -1187,22 +1189,23 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
               <option value="name_desc">নাম (Z-A)</option>
             </select>
           </div>
+        </div>
 
-          <div className="w-[1px] h-8 bg-slate-200 shrink-0 mx-1 hidden md:block" />
-
-          {/* Hidden on mobile, visible on md+ */}
-          <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide w-full pb-2 md:pb-0">
+        {/* ── Category Strip (Always Visible on Mobile & Desktop) ── */}
+        {categories.length > 0 && (
+          <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide pb-1">
             <button
               onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
-              className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === 'All' ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}
-            >সব</button>
+              className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === 'All' ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
+            >🏪 সব</button>
             {categories.map(c => (
-              <button key={c.id} onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }} className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-105' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'}`}>
-                {c.name}
-              </button>
+              <button key={c.id}
+                onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
+                className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
+              >{c.name}</button>
             ))}
           </div>
-        </div>
+        )}
 
         {/* ── Desktop Subcategory Strip ── */}
         {activeCategory !== 'All' && (() => {
@@ -1246,6 +1249,29 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
             </div>
           );
         })()}
+
+        {/* ── FAQ Section ── */}
+        {shop.faqItems && shop.faqItems.length > 0 && (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <span className="text-lg">❓</span>
+              <h3 className="font-black text-slate-900 text-base">সাধারণ প্রশ্নোত্তর (FAQ)</h3>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {shop.faqItems.map((faq, idx) => (
+                <details key={idx} className="group">
+                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none hover:bg-slate-50 transition-colors">
+                    <span className="font-bold text-sm text-slate-800 pr-4">{faq.q}</span>
+                    <ChevronRight size={16} className="text-slate-400 shrink-0 group-open:rotate-90 transition-transform" />
+                  </summary>
+                  <div className="px-5 pb-4 pt-1">
+                    <p className="text-sm text-slate-600 font-medium leading-relaxed">{faq.a}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Product Grid ── */}
         {filteredProducts.length === 0 ? (
@@ -1454,6 +1480,24 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
         </div>
       </footer>
 
+      {/* ── Scroll To Top / Bottom Buttons ── */}
+      <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="w-11 h-11 bg-white border border-slate-200 shadow-lg rounded-2xl flex items-center justify-center text-slate-600 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all active:scale-90"
+          title="উপরে যান"
+        >
+          <ChevronLeft size={18} style={{transform:'rotate(90deg)'}} strokeWidth={2.5}/>
+        </button>
+        <button
+          onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+          className="w-11 h-11 bg-white border border-slate-200 shadow-lg rounded-2xl flex items-center justify-center text-slate-600 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all active:scale-90"
+          title="নিচে যান"
+        >
+          <ChevronRight size={18} style={{transform:'rotate(90deg)'}} strokeWidth={2.5}/>
+        </button>
+      </div>
+
       {/* ── Floating Buttons (Right Bottom - Updated) ── */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-4">
         
@@ -1527,6 +1571,36 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
             </button>
             <button onClick={() => setOrderSuccess(null)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-2xl font-black hover:bg-slate-200 transition-colors">
               বন্ধ করুন
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Login Required Modal ── */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowLoginModal(false)} />
+          <div className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 text-center animate-slide-in space-y-5">
+            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
+              <User size={28} className="text-purple-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-900">লগইন প্রয়োজন</h2>
+              <p className="text-sm text-slate-500 font-bold mt-2">অর্ডার করতে অনুগ্রহ করে গুগল দিয়ে লগইন করুন।</p>
+            </div>
+            {shop.authSettings?.googleAuth !== false ? (
+              <button
+                onClick={async () => { setShowLoginModal(false); await handleGoogleLogin(); }}
+                className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm"
+              >
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
+                গুগল দিয়ে লগইন
+              </button>
+            ) : (
+              <p className="text-sm text-slate-500 font-bold">এই শপে লগইন সুবিধা বন্ধ আছে। অতিথি হিসেবে অর্ডার করুন।</p>
+            )}
+            <button onClick={() => setShowLoginModal(false)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-2xl font-black hover:bg-slate-200 transition-colors">
+              পরে করব
             </button>
           </div>
         </div>
@@ -1703,12 +1777,11 @@ ${products.map(p => `${p.id}|${p.name}|৳${p.price}/${p.unit || 'piece'}${p.sto
                     }
                     const requireLogin = shop.authSettings?.requireLoginBeforeOrder ?? true;
                     if (requireLogin && !user) {
-                      toast.error('অর্ডার করতে অনুগ্রহ করে লগইন করুন।');
                       if (typeof sessionStorage !== 'undefined') {
                         sessionStorage.setItem('returnToCheckout', 'true');
                       }
                       setIsCartOpen(false);
-                      setIsProfileOpen(true);
+                      setShowLoginModal(true);
                       return;
                     }
                     setIsOrderOpen(true);
