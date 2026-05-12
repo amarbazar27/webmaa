@@ -486,22 +486,21 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
           shopId: shop.id,
           botTone: shop.aiConfig?.botTone || 'friendly',
           orderHistory: (userOrders || []).slice(0, 5).map(o => ({ id: o.id, orderIdVisual: o.orderIdVisual, total: o.total, items: (o.items || []).map(i => ({ name: i.name, quantity: i.quantity, price: i.price })) })),
-          messages: [
+    messages: [
             { role: 'system', content: `তুমি "${shop.shopName}"-এর AI বাজার সহকারী। নাম: ${shop.aiConfig?.botName || 'Bazar Bot'}।
 
 পণ্য তালিকা (ID|নাম|দাম|ইউনিট):
 ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|${p.unit || 'piece'}`).join('\n')}
 
-ডেলিভারি: ৳${shop.deliveryConfig?.advanceFee || 60} | পেমেন্ট: ${shop.deliveryConfig?.methods || 'বিকাশ/নগদ'}${shop.aiConfig?.customPrompt ? `\n\nবিশেষ নির্দেশনা: ${shop.aiConfig.customPrompt}` : ''}
+🔴 বিশেষ নির্দেশ (স্মার্ট ক্যালকুলেটর):
+১. যদি ইউজার নির্দিষ্ট টাকার (যেমন: ৫০০ টাকার মাংস) বা নির্দিষ্ট ওজনের (যেমন: ৩৫০ গ্রাম আলু) কথা বলে, তবে সেটা ক্যালকুলেট করবে।
+২. মাছ বা মাংসের ক্ষেত্রে পিস (Piece) উল্লেখ থাকলে, মোট ওজন বের করবে এবং প্রতি পিসের গড় ওজন নোটে লিখে দিবে।
+৩. উত্তর সবসময় সম্পূর্ণ করবে।
+৪. উত্তর শেষে PRODUCTS_JSON ফরম্যাটে ডাটা দিবে।
 
-🔴 কঠোর নিয়ম:
-1. উত্তর সবসময় সম্পূর্ণ করবে — কখনো মাঝপথে থামবে না।
-2. পণ্যের লিস্ট দিলে শেষে লেখো: 🛒 [বাজার লিস্ট তৈরি]
-3. তারপর এই ফরম্যাটে লেখো: PRODUCTS_JSON:[{"id":"ID","qty":1}]
-4. শুধু স্টক আছে এমন পণ্য দাও।
-5. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।
-6. পণ্য সাজেস্ট করার পর অবশ্যই লেখো: "উপরের 'সব কার্টে যোগ করুন' বোতাম চাপুন 🛒"
-7. কাস্টমারের অর্ডার ইতিহাস দেখে পার্সোনালাইজড সাজেশন দাও।` },
+FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৫ পিস, প্রতি পিস ১০০ গ্রাম","customizedText":"৫০০ টাকার মাংস"}]
+
+৫. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
@@ -533,11 +532,16 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
       try {
         const items = JSON.parse(jsonMatch[1]);
         items.forEach(item => {
-          const product = products.find(p => p.id === item.id && p.stock !== 0);
+          const product = products.find(p => p.id === (item.id || item.productId) && p.stock !== 0);
           if (product && !addedIds.has(product.id)) {
-            const qty = Math.max(1, parseInt(item.qty) || 1);
+            const qty = item.qty || item.quantity || 1;
             if (!cart.find(i => i.id === product.id)) {
-              setCart(prev => [...prev, { ...product, quantity: qty, note: '' }]);
+              setCart(prev => [...prev, { 
+                ...product, 
+                quantity: qty, 
+                note: item.note || '',
+                customizedText: item.customizedText || ''
+              }]);
               addedIds.add(product.id);
               added++;
             }
@@ -742,7 +746,7 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
 
     const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    const requiresLocation = shop.requireLocationForOrder !== false;
+    const requiresLocation = shop.requireLocationForOrder === true;
     if (requiresLocation && !orderForm.coordinates) {
       toast.error('📍 অর্ডার করতে লোকেশন বাটনে ক্লিক করে আপনার ঠিকানা নিশ্চিত করুন।', { duration: 4000 });
       return;
@@ -871,30 +875,30 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
       setPdfProgress(30);
     const { default: jsPDF } = await import('jspdf');
     const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:500px;padding:30px;background:white;font-family:Arial,sans-serif;color:black;';
+    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:500px;padding:20px;background:white;font-family:Arial,sans-serif;color:black;line-height:1.2;';
     el.innerHTML = `
-      <div style="text-align:center;border-bottom:2px solid black;padding-bottom:10px;margin-bottom:15px">
-        <h1 style="font-size:20px;font-weight:900;margin:0">${orderData.shopName}</h1>
-        <p style="font-size:8px;margin:2px 0 0;text-transform:uppercase;letter-spacing:1px">Order Receipt / অর্ডার রশিদ</p>
+      <div style="text-align:center;border-bottom:2px solid black;padding-bottom:10px;margin-bottom:10px">
+        <h1 style="font-size:24px;font-weight:900;margin:0">${orderData.shopName}</h1>
+        <p style="font-size:10px;margin:2px 0 0;text-transform:uppercase;letter-spacing:1px">Order Receipt / অর্ডার রশিদ</p>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
         <div>
           <p style="font-size:8px;text-transform:uppercase;font-weight:700;margin:0">Order ID</p>
-          <p style="font-size:14px;font-weight:900;margin:2px 0 0">#${orderData.orderIdVisual}</p>
+          <p style="font-size:16px;font-weight:900;margin:2px 0 0">#${orderData.orderIdVisual}</p>
         </div>
         <div style="text-align:right">
           <p style="font-size:8px;text-transform:uppercase;font-weight:700;margin:0">Date</p>
           <p style="font-size:12px;font-weight:700;margin:2px 0 0">${orderData.date}</p>
         </div>
       </div>
-      <div style="border:1px solid black;padding:10px;margin-bottom:12px;font-size:11px">
-        <p style="margin:0 0 4px;font-weight:900">${orderData.customerName} — ${orderData.customerPhone}</p>
-        <p style="margin:0;line-height:1.4"><b>Addr:</b> ${orderData.customerAddress}</p>
-        ${orderData.coordinates?.link ? `<p style="margin:4px 0 0;font-size:9px;color:#2563eb"><b>Map:</b> ${orderData.coordinates.link}</p>` : ''}
+      <div style="border:1.5px solid black;padding:10px;margin-bottom:10px;font-size:12px;background:#f9fafb">
+        <p style="margin:0 0-4px;font-weight:900">${orderData.customerName} — ${orderData.customerPhone}</p>
+        <p style="margin:5px 0 0;line-height:1.3"><b>Addr:</b> ${orderData.customerAddress}</p>
+        ${orderData.coordinates?.link ? `<p style="margin:5px 0 0;font-size:10px;color:#2563eb"><b>Map:</b> ${orderData.coordinates.link}</p>` : ''}
       </div>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
         <thead>
-          <tr style="border-bottom:1px solid black;border-top:1px solid black">
+          <tr style="border-bottom:2px solid black;border-top:2px solid black;background:#f3f4f6">
             <th style="padding:6px 4px;text-align:left;font-size:10px">Item</th>
             <th style="padding:6px 4px;text-align:center;font-size:10px">Qty</th>
             <th style="padding:6px 4px;text-align:right;font-size:10px">Price</th>
@@ -902,15 +906,19 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
         </thead>
         <tbody>
           ${orderData.items.map((item) => `
-            <tr style="border-bottom:1px dashed #ccc">
-              <td style="padding:6px 4px;font-size:11px;font-weight:700">${item.name}</td>
+            <tr style="border-bottom:1px solid #eee">
+              <td style="padding:6px 4px;">
+                <div style="font-size:11px;font-weight:700">${item.name}</div>
+                ${item.note ? `<div style="font-size:9px;color:#666;font-style:italic">Note: ${item.note}</div>` : ''}
+                ${item.customizedText ? `<div style="font-size:9px;color:#7c3aed;font-weight:bold">${item.customizedText}</div>` : ''}
+              </td>
               <td style="padding:6px 4px;text-align:center;font-size:11px">${item.quantity}</td>
               <td style="padding:6px 4px;text-align:right;font-size:11px;font-weight:900">৳${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
-      <div style="margin-left:auto;width:180px;font-size:11px">
+      <div style="margin-left:auto;width:180px;font-size:12px">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px">
           <span>Subtotal</span>
           <span>৳${orderData.items.reduce((s,i)=>s+parseFloat(i.price)*i.quantity,0).toFixed(0)}</span>
@@ -919,10 +927,14 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
           <span>Delivery</span>
           <span>৳${orderData.deliveryFee}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;border-top:1.5px solid black;padding-top:6px;font-weight:900;font-size:14px">
+        <div style="display:flex;justify-content:space-between;border-top:2px solid black;padding-top:6px;font-weight:900;font-size:16px">
           <span>Total</span>
           <span>৳${orderData.total}</span>
         </div>
+      </div>
+      <div style="margin-top:20px;text-align:center;border-top:1px dashed #ccc;padding-top:10px">
+        <p style="font-size:10px;font-weight:bold;margin:0">ধন্যবাদ, আবার আসবেন!</p>
+        <p style="font-size:8px;color:#888;margin:2px 0 0">Powered by Webmaa AI</p>
       </div>
     `;
     document.body.appendChild(el);
@@ -932,7 +944,17 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    
+    // If total height exceeds one A4 page, scale it down to fit
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    let finalWidth = pdfWidth;
+    let finalHeight = pdfHeight;
+    if (pdfHeight > pageHeight) {
+      finalHeight = pageHeight - 10;
+      finalWidth = (canvas.width * finalHeight) / canvas.height;
+    }
+    
+    pdf.addImage(imgData, 'PNG', (pdfWidth - finalWidth) / 2, 0, finalWidth, finalHeight);
     pdf.save(`Order_${orderData.orderIdVisual}.pdf`);
       setPdfProgress(100);
       toast.success('PDF সফলভাবে ডাউনলোড হয়েছে!');
@@ -1192,6 +1214,22 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black rounded-lg border border-purple-100"><Package size={14} /> প্রয়োজনীয় নিত্যপণ্য</span>
           </div>
         </div>
+
+        {/* ── AI Shopping List (Vision Component) ── */}
+        {(shop.aiConfig?.enableAiShoppingList !== false || shop.settings?.enableAiShoppingList !== false) && (
+          <AiShoppingList 
+            shop={shop} 
+            products={products} 
+            onAddToCart={(items) => {
+              if (Array.isArray(items)) {
+                items.forEach(item => addToCart(item));
+              } else {
+                addToCart(items);
+              }
+            }} 
+            onDirectOrder={handleDirectOrderFromAi}
+          />
+        )}
 
         {/* ── Search & Sort ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3">
@@ -1612,19 +1650,48 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900">লগইন প্রয়োজন</h2>
-              <p className="text-sm text-slate-500 font-bold mt-2">অর্ডার করতে অনুগ্রহ করে গুগল দিয়ে লগইন করুন।</p>
+              <p className="text-sm text-slate-500 font-bold mt-2">অর্ডার করতে অনুগ্রহ করে লগইন করুন।</p>
             </div>
-            {shop.authSettings?.googleAuth !== false ? (
-              <button
-                onClick={async () => { setShowLoginModal(false); await handleGoogleLogin(); }}
-                className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm"
-              >
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
-                গুগল দিয়ে লগইন
-              </button>
-            ) : (
-              <p className="text-sm text-slate-500 font-bold">এই শপে লগইন সুবিধা বন্ধ আছে। অতিথি হিসেবে অর্ডার করুন।</p>
-            )}
+            
+            <div className="space-y-3">
+              {shop.authSettings?.googleAuth !== false && (
+                <button
+                  onClick={async () => { setShowLoginModal(false); await handleGoogleLogin(); }}
+                  className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
+                  গুগল দিয়ে লগইন
+                </button>
+              )}
+
+              {shop.authSettings?.emailAuth && (
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                  <input 
+                    type="email" 
+                    placeholder="ইমেইল" 
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="পাসওয়ার্ড" 
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                  />
+                  <button 
+                    onClick={handleEmailLogin}
+                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-sm hover:bg-purple-600 transition-colors"
+                  >
+                    ইমেইল দিয়ে লগইন
+                  </button>
+                </div>
+              )}
+
+              {!shop.authSettings?.googleAuth && !shop.authSettings?.emailAuth && (
+                <p className="text-sm text-slate-500 font-bold">এই শপে লগইন সুবিধা বন্ধ আছে। অতিথি হিসেবে অর্ডার করুন।</p>
+              )}
+            </div>
+
             <button onClick={() => setShowLoginModal(false)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-2xl font-black hover:bg-slate-200 transition-colors">
               পরে করব
             </button>
@@ -1876,7 +1943,13 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
                     <button 
                       type="button" 
                       onClick={handleGetLocation} 
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 border-2 ${orderForm.coordinates ? 'bg-emerald-500 border-emerald-200 text-white' : 'bg-red-500 border-red-200 text-white animate-pulse'}`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 border-2 ${
+                        orderForm.coordinates 
+                          ? 'bg-emerald-500 border-emerald-200 text-white' 
+                          : shop.requireLocationForOrder === true 
+                            ? 'bg-red-500 border-red-200 text-white animate-pulse' 
+                            : 'bg-slate-100 border-slate-200 text-slate-400'
+                      }`}
                       title="আমার বর্তমান লোকেশন দিন"
                     >
                       <MapPin size={20} strokeWidth={2.5} />

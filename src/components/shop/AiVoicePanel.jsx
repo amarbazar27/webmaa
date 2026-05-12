@@ -91,8 +91,8 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
   const handleImageAreaClick = useCallback(async () => {
     // Try to request camera/file access (triggers browser prompt for camera on mobile)
     try {
-      // This will trigger the browser permission popup if needed
-      await navigator.mediaDevices.getUserMedia({ video: true }).catch(() => {});
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach(track => track.stop());
     } catch {}
     // Open file input regardless
     fileInputRef.current?.click();
