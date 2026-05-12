@@ -1164,8 +1164,34 @@ ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
         
-        {/* ── AI Shopping List Upload ── */}
-        
+        {/* ── SEO Brand Hero & Intro ── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 text-center space-y-4">
+          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
+            {shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার' 
+              ? 'মেসের বাজার — Messer Bazar' 
+              : shop.shopName}
+          </h1>
+          <p className="text-sm md:text-base text-slate-600 font-bold max-w-2xl mx-auto leading-relaxed">
+            {shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার'
+              ? 'মেসে থাকা ছাত্র, ব্যাচেলর ও চাকরিজীবীদের জন্য সহজ অনলাইন বাজার সার্ভিস। শাকসবজি, মাছ, মাংস, চাল, ডাল, ডিম, তেল ও নিত্যপ্রয়োজনীয় পণ্য এখন ঘরে বসেই অর্ডার করুন।'
+              : shop.slogan || 'আপনার বিশ্বস্ত অনলাইন শপ। সহজে অর্ডার করুন, দ্রুত ডেলিভারি পান।'}
+          </p>
+          
+          {(shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার') && (
+            <div className="mt-6 text-left bg-slate-50 p-5 rounded-xl border border-slate-100 max-w-3xl mx-auto">
+              <h2 className="text-lg font-black text-slate-800 mb-2">মেসের বাজার কী?</h2>
+              <p className="text-sm text-slate-600 font-medium leading-relaxed">
+                Messer Bazar বা মেসের বাজার হলো মেসে থাকা ছাত্র, ব্যাচেলর, চাকরিজীবী ও ছোট পরিবারের জন্য অনলাইন বাজার করার সহজ ব্যবস্থা। এখানে শাকসবজি, মাছ, মাংস, চাল, ডাল, ডিম, তেল, মসলা ও নিত্যপ্রয়োজনীয় পণ্য অর্ডার করা যায়। আপনি যদি মেসে থাকেন এবং প্রতিদিন বাজার করতে সময় না পান, তাহলে Messer Bazar আপনার জন্য তৈরি।
+              </p>
+            </div>
+          )}
+          
+          <div className="pt-2 flex flex-wrap justify-center gap-3">
+             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-lg border border-emerald-100"><CheckCircle size={14} /> দ্রুত অর্ডার</span>
+             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-black rounded-lg border border-blue-100"><ShieldCheck size={14} /> মেস লাইফের জন্য সহজ বাজার</span>
+             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black rounded-lg border border-purple-100"><Package size={14} /> প্রয়োজনীয় নিত্যপণ্য</span>
+          </div>
+        </div>
 
         {/* ── Search & Sort ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3">

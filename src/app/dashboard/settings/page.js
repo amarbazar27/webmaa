@@ -794,18 +794,6 @@ export default function SettingsPage() {
                </div>
             </Card>
 
-            <Card title="FAQ Management" subtitle="Common Queries" icon={HelpCircle}>
-              <div className="space-y-3">
-                {faqItems.map((item, i) => (
-                  <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                    <input type="text" placeholder="Question" className="w-full text-xs font-bold p-2 bg-white rounded border border-slate-200" value={item.q} onChange={e => setFaqItems(faqItems.map((f, idx) => idx === i ? {...f, q: e.target.value} : f))} />
-                    <input type="text" placeholder="Answer" className="w-full text-xs font-bold p-2 bg-white rounded border border-slate-200" value={item.a} onChange={e => setFaqItems(faqItems.map((f, idx) => idx === i ? {...f, a: e.target.value} : f))} />
-                    <button type="button" onClick={() => setFaqItems(faqItems.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 font-bold">Remove</button>
-                  </div>
-                ))}
-                <Button type="button" variant="outline" size="sm" onClick={() => setFaqItems([...faqItems, {q: '', a: ''}])} className="w-full">+ Add FAQ</Button>
-              </div>
-            </Card>
 
             <Card title="Checkout & Delivery" subtitle="Payments & COD" icon={Truck}>
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">

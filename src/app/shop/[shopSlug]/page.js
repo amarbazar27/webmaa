@@ -1,6 +1,7 @@
 import { getShopServer, getProductsServer, getCategoriesServer } from '@/lib/server-fetch';
 import ShopClient from './ShopClient';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 
 export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 
@@ -14,26 +15,55 @@ export async function generateMetadata({ params }) {
 
     const rawLogo = shop?.logoUrl || '/logo.png';
     const logoUrl = rawLogo.startsWith('http') ? rawLogo : `${BASE_URL}${rawLogo}`;
-    const canonicalUrl = `${BASE_URL}/shop/${shopSlug}`;
+    const canonicalUrl = shop?.customDomain
+      ? `https://${shop.customDomain}`
+      : `${BASE_URL}/shop/${shopSlug}`;
+
+    const shopName = shop?.shopName || 'Webmaa Store';
+    const slogan = shop?.slogan || '';
+
+    // Rich title: "ShopName | ShopName Bengali – slogan"
+    const metaTitle = slogan
+      ? `${shopName} – ${slogan}`
+      : shopName;
+
+    // Rich description combining shop info, welcome message and product context
+    const metaDesc = shop?.seoDescription ||
+      (slogan
+        ? `${shopName}: ${slogan}. ${shop?.welcomeMessage || ''} অনলাইনে অর্ডার করুন।`
+        : `${shopName} — অনলাইনে সহজে অর্ডার করুন। ${shop?.welcomeMessage || 'দ্রুত ডেলিভারি, সেরা পণ্য।'}`);
+
+    const keywords = [
+      shopName,
+      slogan,
+      shop?.welcomeMessage,
+      'অনলাইন বাজার',
+      'অনলাইন শপিং',
+      'ডেলিভারি',
+      shopSlug,
+    ].filter(Boolean).join(', ');
 
     return {
-      title: shop?.shopName || 'Webmaa Store',
-      description: shop?.slogan || 'Welcome to our store',
+      title: metaTitle,
+      description: metaDesc,
+      keywords,
       manifest: `/api/manifest?shop=${shopSlug}`,
       alternates: { canonical: canonicalUrl },
       icons: { icon: rawLogo, shortcut: rawLogo, apple: rawLogo },
+      robots: { index: true, follow: true },
       openGraph: {
-        title: shop?.shopName || 'Webmaa Store',
-        description: shop?.slogan || 'Welcome to our store',
+        title: metaTitle,
+        description: metaDesc,
         url: canonicalUrl,
-        images: [{ url: logoUrl, width: 512, height: 512, alt: shop?.shopName || 'Logo' }],
+        images: [{ url: logoUrl, width: 512, height: 512, alt: shopName }],
         type: 'website',
-        siteName: 'Webmaa',
+        siteName: shopName,
+        locale: 'bn_BD',
       },
       twitter: {
         card: 'summary_large_image',
-        title: shop?.shopName || 'Webmaa Store',
-        description: shop?.slogan || 'Welcome to our store',
+        title: metaTitle,
+        description: metaDesc,
         images: [logoUrl],
       }
     };
@@ -88,12 +118,44 @@ export default async function ShopPage({ params }) {
     const safeProducts = JSON.parse(JSON.stringify(products));
     const safeCategories = JSON.parse(JSON.stringify(categories));
 
+    // Build Organization schema (supports multi-language brand names)
+    const canonicalUrl = shop?.customDomain
+      ? `https://${shop.customDomain}`
+      : `${BASE_URL}/shop/${shopSlug}`;
+
+    const alternateNames = [
+      ...(shop?.altNames || []),           // retailer-defined alt names
+      shop?.shopName,
+      shop?.slogan,
+    ].filter(Boolean);
+
+    const orgSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'Store',
+      name: shop.shopName,
+      ...(alternateNames.length > 1 ? { alternateName: alternateNames } : {}),
+      url: canonicalUrl,
+      ...(shop.logoUrl ? { logo: shop.logoUrl } : {}),
+      description: shop?.seoDescription || shop?.slogan || `${shop.shopName} — অনলাইনে অর্ডার করুন`,
+      ...(shop?.socialLinks?.wa ? { telephone: shop.socialLinks.wa } : {}),
+      ...(shop?.serviceAreas?.length ? {
+        areaServed: shop.serviceAreas.map(a => ({ '@type': 'City', name: a }))
+      } : {}),
+    };
+
     return (
-      <ShopClient
-        initialShop={safeShop}
-        initialProducts={safeProducts}
-        initialCategories={safeCategories}
-      />
+      <>
+        <Script
+          id={`org-schema-${shopSlug}`}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        />
+        <ShopClient
+          initialShop={safeShop}
+          initialProducts={safeProducts}
+          initialCategories={safeCategories}
+        />
+      </>
     );
   } catch (err) {
     console.error(`[ShopPage] FATAL RENDER ERROR for ${shopSlug}:`, err);
