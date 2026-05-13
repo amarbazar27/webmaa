@@ -127,7 +127,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           shopId: shop.id,
           messages: [{
             role: 'user',
-            content: `এই বাজারের লিস্ট থেকে পণ্য বের করো:\n"${textInput}"\n\nউপলব্ধ পণ্য (ID|নাম|দাম):\n${productList}\n\nশুধু এই JSON দাও: {"items":[{"productId":"ID","quantity":1}]}`
+            content: `এই বাজারের লিস্ট থেকে পণ্য বের করো:\n"${textInput}"\n\nউপলব্ধ পণ্য (ID|নাম|দাম):\n${productList}\n\nশুধু এই JSON দাও: {"items":[{"productId":"ID","quantity":1,"customizedText":"৪০০ গ্রাম"}]}\nযদি ইউজার নির্দিষ্ট কোনো পরিমাণ বলে (যেমন: ৪০০ গ্রাম বা ২০ পিস), তবে quantity তে বেস ইউনিটের ভিত্তিতে সংখ্যা বা ১ দিবে এবং customizedText এ "৪০০ গ্রাম" বা "২০ পিস" লিখে দিবে।`
           }]
         })
       });
@@ -141,6 +141,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           productId: item.productId || item.id,
           name: products.find(p => p.id === (item.productId || item.id))?.name || item.name,
           quantity: parseInt(item.quantity) || 1,
+          customizedText: item.customizedText || '',
           confidence: 'high'
         })).filter(i => products.some(p => p.id === i.productId));
         setDetectedItems(mapped);
@@ -155,7 +156,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
     const items = detectedItems.map(item => {
       const product = products.find(p => p.id === item.productId);
       if (!product) return null;
-      return { ...product, quantity: item.quantity || 1, note: 'AI Detected' };
+      return { ...product, quantity: item.quantity || 1, customizedText: item.customizedText || '', note: item.customizedText ? '' : 'AI Detected' };
     }).filter(Boolean);
     if (items.length === 0) { toast.error('কোনো পণ্য পাওয়া যায়নি'); return; }
     items.forEach(item => onAddToCart(item));
@@ -205,8 +206,21 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             </div>
           )}
 
+          {permissionState === 'hardware_error' && (
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
+              <p className="text-xs font-black text-amber-700">হার্ডওয়্যার বা সিস্টেম সমস্যা</p>
+              <p className="text-[11px] text-amber-600 font-bold">{micHookError}</p>
+              <button
+                onClick={handleMicClick}
+                className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black hover:bg-amber-700 mt-2"
+              >
+                আবার চেষ্টা করুন
+              </button>
+            </div>
+          )}
+
           {/* Mic button */}
-          {permissionState !== 'denied' && permissionState !== 'unsupported' && (
+          {permissionState !== 'denied' && permissionState !== 'unsupported' && permissionState !== 'hardware_error' && (
             <button
               onClick={handleMicClick}
               disabled={!isVoiceSupported || isVoiceProcessing || permissionState === 'requesting'}
@@ -309,7 +323,14 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                 if (!prod) return null;
                 return (
                   <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
-                    <div><p className="text-sm font-bold text-slate-900">{prod.name}</p><p className="text-xs text-purple-600 font-black">৳{prod.price}</p></div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{prod.name}</p>
+                      {item.customizedText ? (
+                        <p className="text-[10px] text-purple-600 font-black">{item.customizedText}</p>
+                      ) : (
+                        <p className="text-xs text-purple-600 font-black">৳{prod.price}</p>
+                      )}
+                    </div>
                     <span className="text-xs font-black bg-purple-100 text-purple-700 px-2 py-1 rounded-md">×{item.quantity}</span>
                   </div>
                 );
@@ -345,7 +366,14 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                 if (!prod) return null;
                 return (
                   <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
-                    <div><p className="text-sm font-bold text-slate-900">{prod.name}</p><p className="text-xs text-purple-600 font-black">৳{prod.price}</p></div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{prod.name}</p>
+                      {item.customizedText ? (
+                        <p className="text-[10px] text-purple-600 font-black">{item.customizedText}</p>
+                      ) : (
+                        <p className="text-xs text-purple-600 font-black">৳{prod.price}</p>
+                      )}
+                    </div>
                     <span className="text-xs font-black bg-purple-100 text-purple-700 px-2 py-1 rounded-md">×{item.quantity}</span>
                   </div>
                 );

@@ -1732,7 +1732,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               {[
                 {id:'chat',label:'চ্যাট',icon:'💬', always: true},
                 {id:'voice',label:'ভয়েস',icon:'🎤', always: true},
-                {id:'image',label:'ছবি OCR',icon:'📷', show: shop.aiConfig?.enableAiShoppingList !== false},
+                {id:'image',label:'ছবি OCR',icon:'📷', always: true},
                 {id:'text',label:'লিস্ট',icon:'📝', always: true},
               ].filter(tab => tab.always || tab.show).map(tab => (
                 <button key={tab.id} onClick={() => setAiTab(tab.id)}

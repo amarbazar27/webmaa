@@ -128,8 +128,9 @@ export async function POST(req) {
 Match the items you see ONLY to these available products (Format: ID|Name|Price):
 ${productList}
 
-Return ONLY valid JSON: {"items":[{"productId":"ID","name":"Product Name","quantity":1,"confidence":"high"}]}
-If nothing matches, return {"items":[]}. Do NOT add any explanation.`;
+Return ONLY valid JSON: {"items":[{"productId":"ID","name":"Product Name","quantity":1,"customizedText":"৪০০ গ্রাম","confidence":"high"}]}
+If nothing matches, return {"items":[]}. Do NOT add any explanation.
+If the user specifies a specific amount like '400 gram' or '10 piece', set the quantity based on the base unit or set it to 1, and put '400 গ্রাম' or '১০ পিস' in the customizedText field.`;
 
     // ── Call Gemini Vision ──────────────────────────
     const { success, text, model } = await tryGeminiVision(apiKey, systemPrompt, base64Data, mimeType);
@@ -154,6 +155,7 @@ If nothing matches, return {"items":[]}. Do NOT add any explanation.`;
         productId: item.productId,
         name: item.name || activeProducts.find(p => p.id === item.productId)?.name || '',
         quantity: Math.max(1, parseInt(item.quantity) || 1),
+        customizedText: item.customizedText || '',
         confidence: item.confidence || 'medium'
       }));
 

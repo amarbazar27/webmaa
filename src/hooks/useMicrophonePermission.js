@@ -116,16 +116,19 @@ export default function useMicrophonePermission() {
       return true;
     } catch (err) {
       console.error('[Mic Audit] getUserMedia Error:', err.name, '| Message:', err.message);
-      setPermissionState('denied');
       
       if (err.name === 'NotAllowedError') {
+         setPermissionState('denied');
          setError('Microphone permission denied by user or device settings.');
       } else if (err.name === 'NotFoundError') {
-         setError('No microphone found on this device.');
+         setPermissionState('hardware_error');
+         setError('কোনো মাইক্রোফোন পাওয়া যায়নি।');
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-         setError('Hardware error: Microphone is busy or blocked by another app.');
+         setPermissionState('hardware_error');
+         setError('মাইক্রোফোন অন্য অ্যাপে ব্যবহৃত হচ্ছে। দয়া করে ব্যাকগ্রাউন্ড অ্যাপ বন্ধ করুন।');
       } else {
-         setError(`Microphone error: ${err.message}`);
+         setPermissionState('hardware_error');
+         setError(`মাইক্রোফোনে সমস্যা: ${err.message}`);
       }
       return false;
     }
