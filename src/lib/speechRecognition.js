@@ -44,7 +44,7 @@ export function createRecognition({ lang = 'bn-BD', onResult, onEnd, onError } =
   recognition.onerror = (e) => {
     console.error('[Speech] Recognition error:', e.error);
     const msgs = {
-      'not-allowed': 'মাইক্রোফোনের অনুমতি দিন।',
+      'not-allowed': 'মাইক্রোফোনের অনুমতি নেই। দয়া করে ব্রাউজার এবং ডিভাইসের (OS) মাইক্রোফোন সেটিংস চেক করুন।',
       'no-speech': 'কোনো কথা শোনা যায়নি। আবার চেষ্টা করুন।',
       'network': 'নেটওয়ার্ক সমস্যা।',
       'aborted': 'ভয়েস ইনপুট বাতিল করা হয়েছে।',

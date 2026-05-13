@@ -2,7 +2,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, MicOff, Loader2, ShoppingCart, X } from 'lucide-react';
 import useVoiceOrder from '@/hooks/useVoiceOrder';
-import useMicrophonePermission from '@/hooks/useMicrophonePermission';
 import toast from 'react-hot-toast';
 import { ImagePlus, Sparkles } from 'lucide-react';
 
@@ -29,7 +28,6 @@ function compressImage(file, maxWidth = 1200, quality = 0.75) {
 }
 
 export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrder, isOpen, onClose, activeTab }) {
-  const { permissionState, error: micHookError, requestMicrophone, stopMicrophone: stopMicStream, isSupported: isMicSupported } = useMicrophonePermission();
   const [textInput, setTextInput] = useState('');
   const [isProcessingText, setIsProcessingText] = useState(false);
   const [imageFile, setImageFile] = useState(null);
@@ -45,27 +43,13 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
     startVoice, stopVoice, addVoiceResultToCart, isVoiceSupported
   } = useVoiceOrder({ products, shopId: shop.id, onAddToCart });
 
-  // ── Clean up stream on modal close ───────────────────────────────
-  useEffect(() => {
-    if (!isOpen) stopMicStream();
-  }, [isOpen, stopMicStream]);
-
-  // ── Request microphone permission FIRST, then start voice ────────────────
   const handleMicClick = useCallback(async () => {
     if (isListening) {
       stopVoice();
-      stopMicStream();
       return;
     }
-
-    // Direct request to start voice triggers native browser prompt directly
     startVoice();
-
-    // Optionally request mic stream to update state
-    if (permissionState !== 'granted') {
-       requestMicrophone();
-    }
-  }, [isListening, permissionState, startVoice, stopVoice, requestMicrophone, stopMicStream]);
+  }, [isListening, startVoice, stopVoice]);
 
   // ── Image upload & OCR ───────────────────────────────────────────────────
   const handleImageSelect = useCallback(async (e) => {
@@ -183,57 +167,21 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             </select>
           </div>
 
-          {/* Permission denied banner */}
-          {permissionState === 'denied' && (
-            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
-              <p className="text-xs font-black text-amber-700">মাইক্রোফোনের অ্যাক্সেস বন্ধ আছে।</p>
-              <p className="text-[11px] text-amber-600">
-                দয়া করে <strong>Chrome &gt; Settings &gt; Site Settings &gt; Microphone</strong> এ গিয়ে Allow করুন।
-              </p>
-              <button
-                onClick={handleMicClick}
-                className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black hover:bg-amber-700"
-              >
-                আবার চেষ্টা করুন
-              </button>
-            </div>
-          )}
-          
-          {permissionState === 'unsupported' && (
-            <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-4 text-center space-y-2">
-              <p className="text-xs font-black text-red-700">ব্রাউজার সাপোর্ট করে না</p>
-              <p className="text-[11px] text-red-600">{micHookError}</p>
-            </div>
-          )}
 
-          {permissionState === 'hardware_error' && (
-            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
-              <p className="text-xs font-black text-amber-700">হার্ডওয়্যার বা সিস্টেম সমস্যা</p>
-              <p className="text-[11px] text-amber-600 font-bold">{micHookError}</p>
-              <button
-                onClick={handleMicClick}
-                className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black hover:bg-amber-700 mt-2"
-              >
-                আবার চেষ্টা করুন
-              </button>
-            </div>
-          )}
 
           {/* Mic button */}
-          {permissionState !== 'denied' && permissionState !== 'unsupported' && permissionState !== 'hardware_error' && (
             <button
               onClick={handleMicClick}
-              disabled={!isVoiceSupported || isVoiceProcessing || permissionState === 'requesting'}
+              disabled={!isVoiceSupported || isVoiceProcessing}
               className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all
-                ${isListening ? 'bg-red-500 animate-pulse scale-110' : isVoiceProcessing || permissionState === 'requesting' ? 'bg-purple-400' : (permissionState === 'loading' || permissionState === 'prompt') ? 'bg-slate-700 hover:bg-slate-900' : 'bg-purple-600 hover:bg-purple-700'}
+                ${isListening ? 'bg-red-500 animate-pulse scale-110' : isVoiceProcessing ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'}
                 text-white disabled:opacity-50`}
             >
-              {isVoiceProcessing || permissionState === 'requesting' ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
+              {isVoiceProcessing ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
             </button>
-          )}
 
           <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
-            {isListening ? '🔴 শুনছি...' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : permissionState === 'requesting' ? 'অনুমতি চাওয়া হচ্ছে...' : (permissionState === 'loading' || permissionState === 'prompt') ? 'মাইক বাটনে চাপুন (অ্যাক্সেস চাইবে)' : 'মাইক বাটনে চাপুন'}
+            {isListening ? '🔴 শুনছি...' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'মাইক বাটনে চাপুন'}
           </p>
 
           {!isVoiceSupported && (
@@ -248,8 +196,8 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             </div>
           )}
 
-          {voiceError && !voiceError.includes('অনুমতি') && (
-            <p className="text-xs font-bold text-red-600 text-center bg-red-50 px-3 py-2 rounded-xl">{voiceError}</p>
+          {voiceError && (
+            <p className="text-xs font-bold text-red-600 text-center bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{voiceError}</p>
           )}
 
           {voiceResult && voiceResult.length > 0 && (
