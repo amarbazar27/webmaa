@@ -103,7 +103,7 @@ export default function InvoicePage({ params }) {
                             <td className="py-2.5 px-3">
                                <div className="font-black text-slate-800">{item.name}</div>
                                {item.note && <div className="text-[9px] text-slate-400 italic font-medium mt-0.5">নোট: {item.note}</div>}
-                               {item.customizedText && <div className="text-[9px] text-purple-600 font-black mt-0.5">{item.customizedText}</div>}
+                               {item.customizedText && <div className="text-[9px] text-purple-600 font-black mt-0.5">Customized: {item.customizedText}</div>}
                             </td>
                             <td className="py-2.5 px-3 text-center text-slate-600 font-black">{item.quantity}</td>
                             <td className="py-2.5 px-3 text-right font-black text-slate-900">৳{(parseFloat(item.price) * item.quantity).toFixed(0)}</td>

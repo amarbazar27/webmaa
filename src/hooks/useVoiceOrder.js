@@ -41,8 +41,9 @@ export default function useVoiceOrder({ products, shopId, onAddToCart }) {
 ${productList}
 
 শুধু JSON রিটার্ন করো এই ফরম্যাটে:
-{"items":[{"id":"PRODUCT_ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস"}]}
+{"items":[{"id":"PRODUCT_ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস", "customizedText":"৪০০ গ্রাম"}]}
 
+যদি ইউজার কোনো নির্দিষ্ট পরিমাণ (যেমন: ৪০০ গ্রাম) বলে এবং বেস ইউনিট কেজি হয়, তবে quantity এর জায়গায় ১ দিবে এবং customizedText এ "৪০০ গ্রাম" লিখে দিবে। 
 যদি কোনো পণ্য না মিলে, {"items":[]} রিটার্ন করো।`
           }]
         })
@@ -57,7 +58,7 @@ ${productList}
       const matched = (parsed.items || []).map(item => {
         const product = products.find(p => p.id === item.id && p.stock !== 0);
         if (!product) return null;
-        return { product, quantity: Math.max(1, parseInt(item.quantity) || 1), unit: item.unit };
+        return { product, quantity: Math.max(1, parseInt(item.quantity) || 1), unit: item.unit, customizedText: item.customizedText || '' };
       }).filter(Boolean);
 
       setVoiceResult(matched);
@@ -135,8 +136,8 @@ ${productList}
 
   const addVoiceResultToCart = useCallback(() => {
     if (!voiceResult || voiceResult.length === 0) return;
-    voiceResult.forEach(({ product, quantity }) => {
-      onAddToCart({ ...product, quantity, note: 'Voice Order' });
+    voiceResult.forEach(({ product, quantity, customizedText }) => {
+      onAddToCart({ ...product, quantity, note: 'Voice Order', customizedText });
     });
     speak(`${voiceResult.length}টি পণ্য কার্টে যোগ হয়েছে!`);
     setVoiceResult(null);

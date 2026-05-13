@@ -247,14 +247,15 @@ export default function OrderSummaryPage({ params }) {
                       </span>
                     )}
                   </div>
-                  {item.customizedText ? (
+                  {item.customizedText && (
                     <div className="mt-1 space-y-0.5">
                       {item.baseUnit && <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">→ Base: {item.baseUnit}</p>}
                       <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest">→ Customized: {item.customizedText}</p>
                     </div>
-                  ) : item.note ? (
-                    <p className="text-xs text-slate-500 font-bold italic mt-1">{item.note}</p>
-                  ) : null}
+                  )}
+                  {item.note && (
+                    <p className="text-xs text-slate-500 font-bold italic mt-1">নোট: {item.note}</p>
+                  )}
                   <span className="inline-block text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md mt-2">
                     {item.quantity} × ৳{parseFloat(item.price).toLocaleString()}
                   </span>
@@ -333,14 +334,15 @@ export default function OrderSummaryPage({ params }) {
                   <div style={{ fontWeight: 900 }}>
                     {item.name} {item.realBasePrice && <span style={{ fontSize: '9px', fontWeight: 'bold' }}>(Base: ৳{item.realBasePrice})</span>}
                   </div>
-                  {item.customizedText ? (
+                  {item.customizedText && (
                     <div style={{ marginTop: '2px' }}>
                       {item.baseUnit && <div style={{ fontSize: '9px', fontWeight: 700 }}>Base: {item.baseUnit}</div>}
-                      <div style={{ fontSize: '9px', fontWeight: 900 }}>Note: {item.customizedText}</div>
+                      <div style={{ fontSize: '9px', fontWeight: 900, color: '#7c3aed' }}>Customized: {item.customizedText}</div>
                     </div>
-                  ) : item.note ? (
-                    <div style={{ fontSize: '9px', fontStyle: 'italic', marginTop: '2px' }}>Note: {item.note}</div>
-                  ) : null}
+                  )}
+                  {item.note && (
+                    <div style={{ fontSize: '9px', fontStyle: 'italic', marginTop: '2px', color: '#666' }}>Note: {item.note}</div>
+                  )}
                 </td>
                 <td style={{ padding: '8px 0', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>
                 <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 700 }}>৳{parseFloat(item.price).toLocaleString()}</td>
