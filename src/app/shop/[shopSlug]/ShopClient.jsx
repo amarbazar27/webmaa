@@ -492,15 +492,17 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 পণ্য তালিকা (ID|নাম|দাম|ইউনিট):
 ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|${p.unit || 'piece'}`).join('\n')}
 
-🔴 বিশেষ নির্দেশ (স্মার্ট ক্যালকুলেটর):
-১. যদি ইউজার নির্দিষ্ট টাকার (যেমন: ৫০০ টাকার মাংস) বা নির্দিষ্ট ওজনের (যেমন: ৩৫০ গ্রাম আলু) কথা বলে, তবে সেটা ক্যালকুলেট করবে।
-২. মাছ বা মাংসের ক্ষেত্রে পিস (Piece) উল্লেখ থাকলে, মোট ওজন বের করবে এবং প্রতি পিসের গড় ওজন নোটে লিখে দিবে।
-৩. উত্তর সবসময় সম্পূর্ণ করবে।
-৪. উত্তর শেষে PRODUCTS_JSON ফরম্যাটে ডাটা দিবে।
+🔴 কঠোর নির্দেশ (অবশ্যই মানতে হবে):
+১. ইউজার যত গ্রাম/কেজি/পিস বলবে EXACTLY সেটাই qty তে দাও। নিজে থেকে বাড়াবে না।
+   - "৪০০ গ্রাম আলু" = qty:0.4, note:"৪০০ গ্রাম"
+   - "২৫টা ডিম" = qty:25, note:"২৫ পিস"
+২. মাছ/মাংসের পিস উল্লেখ থাকলে মোট ওজন বের করে note-এ লেখো।
+৩. কার্টে যোগ করতে বললে PRODUCTS_JSON দাও।
+৪. উত্তর শেষে সবসময় PRODUCTS_JSON দাও।
 
-FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৫ পিস, প্রতি পিস ১০০ গ্রাম","customizedText":"৫০০ টাকার মাংস"}]
+FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"বিস্তারিত","customizedText":"মূল কথা"}]
 
-৫. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।` },
+৫. বাংলায় লেখো, উত্তর সংক্ষিপ্ত ও সম্পূর্ণ রাখো.` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
@@ -724,7 +726,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৫ পিস, প্রতি
 
   const setQuantityDirect = (id, qty) => {
     const v = parseInt(qty);
-    if (isNaN(v) || v < 1) return;
+    if (isNaN(v)) return; // allow empty/partial typing
+    if (v <= 0) {
+      // Remove from cart when quantity reaches 0
+      setCart(prev => prev.filter(item => item.id !== id));
+      return;
+    }
     setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: v } : item));
   };
 
@@ -740,6 +747,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৫ পিস, প্রতি
   const removeFromCart = (id) => {
     setCart(prev => prev.filter(item => item.id !== id));
     toast.error('কার্ট থেকে সরানো হয়েছে');
+  };
+
+  const updateItemNote = (id, note) => {
+    setCart(prev => prev.map(item => item.id === id ? { ...item, note } : item));
   };
 
 
@@ -1598,16 +1609,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৫ পিস, প্রতি
           <Menu size={22} strokeWidth={2} />
           <span className="text-[10px] font-black uppercase tracking-wide">মেনু</span>
         </button>
-        <button onClick={() => setIsAiOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
-          <svg width="22" height="22" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#a855f7" /><circle cx="35" cy="45" r="5" fill="white" /><circle cx="65" cy="45" r="5" fill="white" /><path d="M40,65 Q50,72 60,65" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg>
-          <span className="text-[10px] font-black uppercase tracking-wide">এআই</span>
-        </button>
+        {/* Cart button BEFORE AI button on mobile — easier reach */}
         <button onClick={() => setIsCartOpen(true)} className="relative flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
           <ShoppingCart size={22} strokeWidth={2} />
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>
+            <span className="absolute -top-1 right-0 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>
           )}
           <span className="text-[10px] font-black uppercase tracking-wide">কার্ট</span>
+        </button>
+        <button onClick={() => setIsAiOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+          <svg width="22" height="22" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#a855f7" /><circle cx="35" cy="45" r="5" fill="white" /><circle cx="65" cy="45" r="5" fill="white" /><path d="M40,65 Q50,72 60,65" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg>
+          <span className="text-[10px] font-black uppercase tracking-wide">এআই</span>
         </button>
         <button onClick={() => setIsProfileOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
           {user?.photoURL ? (
@@ -1829,24 +1841,33 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৫ পিস, প্রতি
                   <p className="font-extrabold text-slate-400">আপনার কার্ট খালি আছে</p>
                 </div>
               ) : cart.map(item => (
-                <div key={item.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex gap-4 items-center shadow-sm">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-white border border-slate-100">
-                    {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className={`w-full h-full flex items-center justify-center ${getFallbackColor(item.name)}`}><p className="text-[10px] font-black text-white px-1 truncate">{item.name}</p></div>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-black text-sm text-slate-900 truncate">{item.name}</h4>
-                    {item.note && <p className="text-[10px] font-bold text-purple-600 truncate mt-0.5 italic">নোট: {item.note}</p>}
-                    <p className="font-black text-purple-700 text-sm mt-0.5">৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 bg-white border border-slate-200 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100"><Minus size={12} strokeWidth={2.5}/></button>
-                      <input type="number" min="1" value={item.quantity} onChange={e => setQuantityDirect(item.id, e.target.value)} className="w-10 text-center text-sm font-black text-slate-900 bg-slate-50 border border-slate-200 rounded outline-none focus:border-purple-500" />
-                      <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 bg-slate-900 text-white rounded flex items-center justify-center hover:bg-purple-600"><Plus size={12} strokeWidth={2.5}/></button>
+                <div key={item.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col gap-2 shadow-sm">
+                  <div className="flex gap-3 items-center">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-white border border-slate-100">
+                      {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" alt="" /> : <div className={`w-full h-full flex items-center justify-center ${getFallbackColor(item.name)}`}><p className="text-[10px] font-black text-white px-1 truncate">{item.name}</p></div>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-black text-sm text-slate-900 truncate">{item.name}</h4>
+                      <p className="font-black text-purple-700 text-sm mt-0.5">৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 bg-white border border-slate-200 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100"><Minus size={12} strokeWidth={2.5}/></button>
+                        <input type="number" min="0" value={item.quantity} onChange={e => setQuantityDirect(item.id, e.target.value)} className="w-10 text-center text-sm font-black text-slate-900 bg-slate-50 border border-slate-200 rounded outline-none focus:border-purple-500" />
+                        <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 bg-slate-900 text-white rounded flex items-center justify-center hover:bg-purple-600"><Plus size={12} strokeWidth={2.5}/></button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <button onClick={() => { trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${item.productId || item.id}`); setIsCartOpen(false); }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>
+                        <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg" title="Remove"><X size={16} strokeWidth={2.5} /></button>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                      <button onClick={() => { trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${item.productId || item.id}`); setIsCartOpen(false); }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>
-                      <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg" title="Remove"><X size={16} strokeWidth={2.5} /></button>
-                    </div>
+                  {/* Per-item note input - shows in order summary & PDF */}
+                  <input
+                    type="text"
+                    placeholder="পণ্যের বিশেষ নির্দেশ... (যেমন: ২৫০ গ্রাম, ফ্রেশ রাখবেন)"
+                    value={item.note || ''}
+                    onChange={e => updateItemNote(item.id, e.target.value)}
+                    className="w-full text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-purple-400 placeholder:text-slate-400"
+                  />
                 </div>
               ))}
             </div>
@@ -1995,7 +2016,25 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৫ পিস, প্রতি
 
               {/* Order Summary */}
               <div className="bg-slate-100 border-2 border-slate-200 rounded-2xl p-5 space-y-3">
-                <div className="flex justify-between text-sm text-slate-600 font-bold"><span>প্রোডাক্টস (×{cartCount || (orderImage ? 'ছবি থেকে' : 0)})</span><span className="text-slate-900 font-black">৳{cart.length === 0 && orderImage ? 1 : cartTotal}</span></div>
+                <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">অর্ডার সারসংক্ষেপ</p>
+                {cart.map(item => (
+                  <div key={item.id} className="bg-white rounded-xl px-3 py-2 border border-slate-200">
+                    <div className="flex justify-between text-sm font-bold text-slate-800">
+                      <span className="truncate mr-2">{item.name} ×{item.quantity}</span>
+                      <span className="font-black text-slate-900 shrink-0">৳{(parseFloat(item.price) * item.quantity).toFixed(0)}</span>
+                    </div>
+                    {item.note && <p className="text-[11px] text-purple-600 font-bold mt-0.5 italic">📝 {item.note}</p>}
+                    {item.customizedText && <p className="text-[11px] text-indigo-600 font-bold mt-0.5">✏️ {item.customizedText}</p>}
+                  </div>
+                ))}
+                {orderImage && <p className="text-xs font-bold text-purple-600 bg-purple-50 rounded-lg px-2 py-1">📷 কাস্টম ছবি সংযুক্ত</p>}
+                {orderForm.note?.trim() && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                    <p className="text-[11px] font-black text-amber-700 uppercase tracking-wide">আপনার নোট</p>
+                    <p className="text-xs font-bold text-amber-800 mt-0.5">{orderForm.note}</p>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm text-slate-600 font-bold pt-1"><span>সাবটোটাল</span><span className="text-slate-900 font-black">৳{cart.length === 0 && orderImage ? 1 : cartTotal}</span></div>
                 <div className="flex justify-between text-sm text-slate-600 font-bold">
                   <span>ডেলিভারি চার্জ</span>
                   <span className={`font-black ${effectiveDelivery === 0 ? 'text-emerald-600' : 'text-slate-900'}`}>{effectiveDelivery === 0 ? 'FREE 🎁' : `৳${effectiveDelivery}`}</span>

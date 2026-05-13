@@ -190,17 +190,20 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
 
           {/* Permission denied banner */}
           {permissionState === 'denied' && (
-            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
-              <p className="text-xs font-black text-amber-700">মাইক্রোফোনের অ্যাক্সেস বন্ধ আছে।</p>
-              <p className="text-[11px] text-amber-600">
-                দয়া করে <strong>Chrome &gt; Settings &gt; Site Settings &gt; Microphone</strong> এ গিয়ে Allow করুন।
+            <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-3">
+              <p className="text-sm font-black text-amber-700">🎤 মাইক্রোফোন অ্যাক্সেস দিন</p>
+              <p className="text-[11px] text-amber-600 leading-relaxed">
+                নিচের বাটনে ক্লিক করুন। ব্রাউজার অনুমতি চাইলে <strong>Allow</strong> করুন।
               </p>
               <button
                 onClick={handleMicClick}
-                className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-black hover:bg-amber-700"
+                className="w-full px-4 py-3 bg-purple-600 text-white rounded-xl text-sm font-black hover:bg-purple-700 flex items-center justify-center gap-2"
               >
-                আবার চেষ্টা করুন
+                <Mic size={16} /> মাইক্রোফোন Allow করুন
               </button>
+              <p className="text-[10px] text-amber-500">
+                কাজ না করলে: ব্রাউজারের Address bar-এ 🔒 আইকনে ক্লিক করে Microphone Allow করুন।
+              </p>
             </div>
           )}
           

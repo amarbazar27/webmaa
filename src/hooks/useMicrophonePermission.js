@@ -86,6 +86,7 @@ export default function useMicrophonePermission() {
 
   const requestMicrophone = useCallback(async () => {
     console.log('[Mic Audit] Requesting microphone access...');
+    // Reset denied state so UI shows mic button, then show browser popup
     setPermissionState('requesting');
     setError(null);
 
@@ -116,16 +117,20 @@ export default function useMicrophonePermission() {
       return true;
     } catch (err) {
       console.error('[Mic Audit] getUserMedia Error:', err.name, '| Message:', err.message);
-      setPermissionState('denied');
       
       if (err.name === 'NotAllowedError') {
-         setError('Microphone permission denied by user or device settings.');
+        // Could be a temporary dismissal — set back to 'prompt' to allow retry
+        setPermissionState('denied');
+        setError('Microphone permission denied. Click the button again or allow via browser address bar.');
       } else if (err.name === 'NotFoundError') {
-         setError('No microphone found on this device.');
+        setPermissionState('denied');
+        setError('No microphone found on this device.');
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-         setError('Hardware error: Microphone is busy or blocked by another app.');
+        setPermissionState('denied');
+        setError('Hardware error: Microphone is busy or blocked by another app.');
       } else {
-         setError(`Microphone error: ${err.message}`);
+        setPermissionState('denied');
+        setError(`Microphone error: ${err.message}`);
       }
       return false;
     }
