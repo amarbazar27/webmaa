@@ -1573,20 +1573,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"বিস্তারিত","
         </button>
       </div>
 
-      {/* ── Floating Buttons (Right Bottom - Updated) ── */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-4">
+      {/* ── Floating Buttons (Right Bottom) ── */}
+      <div className="fixed bottom-6 right-6 z-40 hidden md:flex flex-col items-end gap-4">
         
-        {/* AI Floating Companion (Stacked Above Cart) */}
-        <div className="relative group flex flex-col items-end gap-3">
-          <button onClick={() => setIsAiOpen(true)} className="w-[60px] h-[60px] bg-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.1)] flex items-center justify-center hover:scale-110 transition-transform relative group border-2 border-purple-100">
-            <CuteAIIcon />
-          </button>
-          <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-br-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 absolute right-[75px] bottom-0 pointer-events-none">
-            প্রশ্ন করুন! ✨
-          </div>
-        </div>
-
-        {/* Floating Cart Button */}
+        {/* Floating Cart Button (Above AI) */}
         <button 
           onClick={() => setIsCartOpen(true)} 
           className="relative w-[60px] h-[60px] bg-slate-900 text-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 transition-transform group"
@@ -1598,6 +1588,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"বিস্তারিত","
             </span>
           )}
         </button>
+
+        {/* AI Floating Companion (Below Cart) */}
+        <div className="relative group flex flex-col items-end gap-3">
+          <button onClick={() => setIsAiOpen(true)} className="w-[60px] h-[60px] bg-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.1)] flex items-center justify-center hover:scale-110 transition-transform relative group border-2 border-purple-100">
+            <CuteAIIcon />
+          </button>
+          <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-br-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 absolute right-[75px] bottom-0 pointer-events-none">
+            প্রশ্ন করুন! ✨
+          </div>
+        </div>
 
         {/* Messenger Button */}
         <MessengerButton shop={shop} />
