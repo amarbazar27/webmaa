@@ -1577,7 +1577,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         {/* Floating Cart Button */}
         <button 
           onClick={() => setIsCartOpen(true)} 
-          className="relative w-[60px] h-[60px] bg-slate-900 text-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 transition-transform group md:hidden"
+          className="relative w-[60px] h-[60px] bg-slate-900 text-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 transition-transform group"
         >
           <ShoppingCart size={24} className="group-hover:rotate-12 transition-transform" />
           {cartCount > 0 && (
