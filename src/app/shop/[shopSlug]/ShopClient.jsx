@@ -296,6 +296,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [orderSuccess, setOrderSuccess] = useState(null);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
   const [pdfProgress, setPdfProgress] = useState(0);
@@ -443,6 +446,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       if (result) {
         toast.success('সফলভাবে লগইন হয়েছে!');
         setIsProfileOpen(false);
+        // If returnToCheckout flag set, reopen the order modal
+        if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('returnToCheckout') === 'true') {
+          sessionStorage.removeItem('returnToCheckout');
+          if (cart.length > 0) setTimeout(() => setIsOrderOpen(true), 300);
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -451,6 +459,24 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       } else {
         toast.error(`লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন। [${err?.code || err?.message || 'Unknown'}]`, { duration: 6000 });
       }
+    }
+  };
+
+  const handleEmailLogin = async () => {
+    if (!loginEmail || !loginPassword) { toast.error('ইমেইল ও পাসওয়ার্ড দিন।'); return; }
+    setLoginLoading(true);
+    try {
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      const { auth } = await import('@/lib/firebase');
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      toast.success('লগইন সফল! 🎉');
+      setShowLoginModal(false);
+      setLoginEmail(''); setLoginPassword('');
+      if (cart.length > 0) setTimeout(() => setIsOrderOpen(true), 300);
+    } catch (err) {
+      toast.error(`লগইন ব্যর্থ: ${err?.code === 'auth/wrong-password' ? 'পাসওয়ার্ড ভুল' : err?.code === 'auth/user-not-found' ? 'ইমেইল পাওয়া যায়নি' : err.message}`);
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -1667,11 +1693,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="space-y-3">
               {shop.authSettings?.googleAuth !== false && (
                 <button
-                  onClick={async () => { setShowLoginModal(false); await handleGoogleLogin(); }}
+                  onClick={async () => {
+                    // Set flag so order modal reopens after successful login
+                    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('returnToCheckout', 'true');
+                    setShowLoginModal(false);
+                    await handleGoogleLogin();
+                  }}
                   className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm"
                 >
                   <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
-                  গুগল দিয়ে লগইন
+                  গুগল দিয়ে লগইন করুন
                 </button>
               )}
 

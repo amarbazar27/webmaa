@@ -31,6 +31,7 @@ export default function OrdersPage() {
   // Security Auth Modal State
   const [authModal, setAuthModal] = useState({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
   const [checkedItems, setCheckedItems] = useState({});
+  const [expandedSummary, setExpandedSummary] = useState({});
   const [downloadingPdf, setDownloadingPdf] = useState(null);
   const [pdfProgress, setPdfProgress] = useState(0);
   const [pdfState, setPdfState] = useState('');
@@ -238,6 +239,24 @@ export default function OrdersPage() {
     }
   };
 
+  // ── Helpers for item checklist ──────────────────────────────────
+  const allItemsChecked = (orderId, items) => {
+    if (!items || items.length === 0) return true;
+    return items.every((_, idx) => checkedItems[`${orderId}_${idx}`]);
+  };
+
+  const toggleItemCheck = (orderId, idx) => {
+    const key = `${orderId}_${idx}`;
+    setCheckedItems(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const checkAllItems = (orderId, items) => {
+    const allChecked = allItemsChecked(orderId, items);
+    const updates = {};
+    (items || []).forEach((_, idx) => { updates[`${orderId}_${idx}`] = !allChecked; });
+    setCheckedItems(prev => ({ ...prev, ...updates }));
+  };
+
   // Grouping by Phone/Email algorithm
   const groupedOrders = orders.reduce((acc, order) => {
      const identifier = order.customerEmail || order.customerPhone || 'Unknown Customer';
@@ -299,8 +318,9 @@ export default function OrdersPage() {
                 </div>
 
                 <div className="divide-y divide-slate-100">
-                   {filteredUserOrders.map(order => (
-                      <div key={order.id} className="p-6 grid grid-cols-1 xl:grid-cols-12 gap-8 hover:bg-slate-50/50 transition-colors">
+                    {filteredUserOrders.map(order => (
+                       <div key={order.id} className="border-b border-slate-100 last:border-0">
+                       <div className="p-6 grid grid-cols-1 xl:grid-cols-12 gap-8 hover:bg-slate-50/50 transition-colors">
                          {/* Order Info & Status */}
                          <div className="xl:col-span-4 space-y-5">
                             <div className="flex justify-between items-start">
@@ -395,7 +415,18 @@ export default function OrdersPage() {
                                   <button onClick={() => handleStatusAttempt(order.id, 'confirmed')} className="w-full px-3 py-2 rounded-lg text-xs font-black text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white transition-colors border border-blue-200 shadow-sm text-center">Confirm Order</button>
                                   <div className="grid grid-cols-2 gap-2">
                                      <button onClick={() => handleStatusAttempt(order.id, 'cancelled')} className="px-2 py-2 rounded-lg text-[11px] font-black text-red-700 bg-red-50 hover:bg-red-600 hover:text-white transition-colors border border-red-200 shadow-sm">Reject</button>
-                                     <button onClick={() => handleStatusAttempt(order.id, 'completed')} className="px-2 py-2 rounded-lg text-[11px] font-black text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white transition-colors border border-emerald-200 shadow-sm">Delivered</button>
+                                     <button 
+                                        onClick={() => handleStatusAttempt(order.id, 'completed')} 
+                                        disabled={!allItemsChecked(order.id, order.items)}
+                                        title={!allItemsChecked(order.id, order.items) ? 'সব আইটেম চেক করুন তারপর Delivered দিন' : ''}
+                                        className={`px-2 py-2 rounded-lg text-[11px] font-black transition-colors border shadow-sm ${
+                                          allItemsChecked(order.id, order.items)
+                                            ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border-emerald-200'
+                                            : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed'
+                                        }`}
+                                      >
+                                        {allItemsChecked(order.id, order.items) ? '✓ Delivered' : '🔒 Delivered'}
+                                      </button>
                                   </div>
                                   {order.status === 'completed' && (
                                     <button onClick={() => handleDeleteAttempt(order.id)} className="w-full mt-2 px-3 py-2 rounded-lg text-xs font-black text-red-600 bg-white hover:bg-red-50 transition-colors border border-red-100 flex items-center justify-center gap-2 shadow-sm">
@@ -419,10 +450,24 @@ export default function OrdersPage() {
                                 )}
                                <p className="text-xs font-black text-slate-500">{order.items?.length || 0} Products Total</p>
                                <p className="text-2xl font-black text-slate-900 mt-1">৳{order.total}</p>
-                               <button 
+
+                                {/* Packing Checklist Toggle */}
+                                <button
+                                  onClick={() => setExpandedSummary(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
+                                  className={`mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black transition-colors border shadow-sm ${
+                                    expandedSummary[order.id]
+                                      ? 'bg-amber-500 text-white border-amber-500'
+                                      : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                  }`}
+                                >
+                                  <Package size={14} />
+                                  {expandedSummary[order.id] ? 'চেকলিস্ট বন্ধ করুন ▲' : 'প্যাকিং চেকলিস্ট ▼'}
+                                </button>
+
+                                <button 
                                  onClick={() => generateAdminPDF(order)} 
                                  disabled={downloadingPdf === order.id}
-                                 className="mt-3 flex items-center justify-center gap-2 w-full py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-bold hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors shadow-sm disabled:opacity-50 relative overflow-hidden"
+                                 className="mt-2 flex items-center justify-center gap-2 w-full py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-bold hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors shadow-sm disabled:opacity-50 relative overflow-hidden"
                                >
                                  {downloadingPdf === order.id && <div className="absolute left-0 top-0 bottom-0 bg-purple-500/20 transition-all duration-300" style={{ width: `${pdfProgress}%` }} />}
                                  <span className="relative z-10 flex items-center gap-2">
@@ -432,6 +477,79 @@ export default function OrdersPage() {
                             </div>
                          </div>
                       </div>
+
+                      {/* ── Packing Checklist Expanded Panel ── */}
+                      {expandedSummary[order.id] && (
+                        <div className="mx-6 mb-6 bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm">
+                          <div className="px-5 py-3 bg-amber-100 border-b border-amber-200 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Package size={16} className="text-amber-700" />
+                              <p className="text-xs font-black text-amber-800 uppercase tracking-widest">অর্ডার প্যাকিং চেকলিস্ট</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-[10px] font-black text-amber-700">
+                                {(order.items || []).filter((_, idx) => checkedItems[`${order.id}_${idx}`]).length} / {order.items?.length || 0} চেক করা হয়েছে
+                              </span>
+                              <button
+                                onClick={() => checkAllItems(order.id, order.items)}
+                                className="text-[10px] font-black text-amber-700 bg-white border border-amber-300 px-2.5 py-1 rounded-lg hover:bg-amber-700 hover:text-white transition-colors"
+                              >
+                                {allItemsChecked(order.id, order.items) ? 'সব আনচেক' : 'সব চেক করুন'}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="divide-y divide-amber-100">
+                            {(order.items || []).map((item, idx) => {
+                              const isChecked = !!checkedItems[`${order.id}_${idx}`];
+                              return (
+                                <div
+                                  key={idx}
+                                  onClick={() => toggleItemCheck(order.id, idx)}
+                                  className={`flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-all ${
+                                    isChecked ? 'bg-emerald-50' : 'hover:bg-amber-100/50'
+                                  }`}
+                                >
+                                  <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                                    isChecked
+                                      ? 'bg-emerald-500 border-emerald-500 shadow-sm'
+                                      : 'border-amber-400 bg-white'
+                                  }`}>
+                                    {isChecked && <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-sm font-black leading-tight ${
+                                      isChecked ? 'text-emerald-700 line-through opacity-60' : 'text-slate-900'
+                                    }`}>{item.name}</p>
+                                    {item.customizedText && (
+                                      <p className="text-[10px] font-bold text-purple-600 mt-0.5">→ {item.customizedText}</p>
+                                    )}
+                                    {item.note && (
+                                      <p className="text-[10px] font-bold text-slate-400 italic mt-0.5">নোট: {item.note}</p>
+                                    )}
+                                  </div>
+                                  <div className="text-right flex-shrink-0">
+                                    <p className="text-xs font-black text-slate-700">{item.quantity} পিস</p>
+                                    <p className="text-[10px] font-bold text-slate-500">৳{parseFloat(item.price || 0) * (item.quantity || 1)}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {!allItemsChecked(order.id, order.items) && (
+                            <div className="px-5 py-3 bg-red-50 border-t border-amber-200 flex items-center gap-2">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                              <p className="text-xs font-black text-red-600">সব পণ্য চেক না হওয়া পর্যন্ত Delivered দেওয়া যাবে না</p>
+                            </div>
+                          )}
+                          {allItemsChecked(order.id, order.items) && order.items?.length > 0 && (
+                            <div className="px-5 py-3 bg-emerald-50 border-t border-amber-200 flex items-center gap-2">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                              <p className="text-xs font-black text-emerald-600">সব পণ্য প্যাক করা হয়েছে! এখন Delivered মার্ক করতে পারবেন।</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                       </div>
                    ))}
                  </div>
               </div>
