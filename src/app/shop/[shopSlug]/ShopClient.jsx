@@ -580,6 +580,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
   // ── Filters & Sorting ──────────────────────────
   let filteredProducts = products.filter(p => {
+    // 🔒 Hide products marked as hidden by retailer
+    if (p.isHidden === true) return false;
     // Category filter: if activeSubcategory is set, MUST match category too
     const catMatch = activeCategory === 'All' || activeCategory === 'সব' || p.category === activeCategory;
     // Subcategory filter: only show products of that exact subcategory
@@ -2103,10 +2105,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     ) : userOrders.map(order => (
                       <div
                         key={order.id}
-                        className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:border-purple-300 transition-colors cursor-pointer group"
-                        onClick={() => { setIsProfileOpen(false); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${order.id}`); }}
+                        className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:border-purple-300 transition-colors group"
                       >
-                        <div className="p-4 bg-slate-50">
+                        <div
+                          className="p-4 bg-slate-50 cursor-pointer"
+                          onClick={() => { setIsProfileOpen(false); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${order.id}`); }}
+                        >
                           <div className="flex justify-between items-center mb-1.5">
                             <span className="text-[11px] font-black text-purple-700 bg-purple-100 px-2 py-1 rounded-md border border-purple-200">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
                             <span className={`text-[11px] font-black px-2 py-1 rounded-md border ${order.status === 'completed' ? 'text-emerald-700 bg-emerald-100 border-emerald-200' : order.status === 'cancelled' ? 'text-red-700 bg-red-100 border-red-200' : 'text-amber-700 bg-amber-100 border-amber-200'}`}>{order.status || 'Pending'}</span>
@@ -2114,8 +2118,47 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           <p className="font-extrabold text-slate-900 text-base">{order.items?.length || 0} Items <span className="text-purple-600">(৳{order.total?.toLocaleString()})</span></p>
                           <p className="text-[10px] font-bold text-slate-400 mt-1">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : ''}</p>
                         </div>
-                        <div className="bg-slate-900 text-white text-center py-2 text-xs font-black group-hover:bg-purple-600 transition-colors">
-                          বিস্তারিত ও PDF ডাউনলোড →
+                        <div className="grid grid-cols-2 border-t border-slate-100">
+                          <button
+                            onClick={() => { setIsProfileOpen(false); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${order.id}`); }}
+                            className="py-2.5 text-xs font-black text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors border-r border-slate-100 flex items-center justify-center gap-1.5"
+                          >
+                            <Package size={13} /> বিস্তারিত
+                          </button>
+                          <button
+                            onClick={() => {
+                              // Reorder: load previous order items into cart
+                              const reorderItems = (order.items || []).reduce((acc, item) => {
+                                const product = products.find(p => p.id === (item.id || item.productId));
+                                if (product && !product.isHidden) {
+                                  const existing = acc.find(i => i.id === product.id);
+                                  if (existing) {
+                                    return acc.map(i => i.id === product.id ? { ...i, quantity: i.quantity + (Number(item.quantity) || 1) } : i);
+                                  }
+                                  return [...acc, { ...product, quantity: Number(item.quantity) || 1, note: item.note || '', customizedText: item.customizedText || '' }];
+                                }
+                                return acc;
+                              }, []);
+                              if (reorderItems.length === 0) {
+                                toast.error('আগের অর্ডারের পণ্যগুলো এখন পাওয়া যাচ্ছে না।');
+                                return;
+                              }
+                              setCart(prev => {
+                                const merged = [...prev];
+                                reorderItems.forEach(ri => {
+                                  const exists = merged.find(i => i.id === ri.id);
+                                  if (!exists) merged.push(ri);
+                                });
+                                return merged;
+                              });
+                              setIsProfileOpen(false);
+                              setIsCartOpen(true);
+                              toast.success(`${reorderItems.length}টি পণ্য কার্টে যোগ হয়েছে! এডিট করে অর্ডার দিন।`, { duration: 4000 });
+                            }}
+                            className="py-2.5 text-xs font-black text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white transition-colors flex items-center justify-center gap-1.5"
+                          >
+                            <Edit2 size={13} /> নতুন অর্ডার
+                          </button>
                         </div>
                       </div>
                     ))}

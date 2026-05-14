@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getProducts, deleteProduct, updateProduct } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -238,11 +238,12 @@ export default function ProductsPage() {
             <div className="col-span-1 text-center">Stock</div>
             <div className="col-span-1 text-center">Note</div>
             <div className="col-span-1 text-center">Custom</div>
-            <div className="col-span-2 text-right">Action</div>
+            <div className="col-span-1 text-center">Hide</div>
+            <div className="col-span-1 text-right">Action</div>
           </div>
 
           {filteredProducts.map(product => (
-            <div key={product.id} className="bg-white p-4 lg:grid lg:grid-cols-12 items-center gap-4 rounded-2xl border border-slate-100 hover:border-purple-200 hover:shadow-lg transition-all group flex flex-col lg:flex-row">
+            <div key={product.id} className={`bg-white p-4 lg:grid lg:grid-cols-12 items-center gap-4 rounded-2xl border hover:shadow-lg transition-all group flex flex-col lg:flex-row ${product.isHidden ? 'border-orange-200 bg-orange-50/30 opacity-70' : 'border-slate-100 hover:border-purple-200'}`}>
 
               {/* Product Info */}
               <div className="col-span-3 flex items-center gap-4 w-full">
@@ -331,6 +332,17 @@ export default function ProductsPage() {
                    title={product.allowCustomize ? "AI Customize is ON" : "AI Customize is OFF"}
                  >
                     <Sparkles size={18} strokeWidth={product.allowCustomize ? 3 : 2} />
+                 </button>
+              </div>
+
+              {/* Hide/Show Toggle */}
+              <div className="col-span-1 text-center">
+                 <button 
+                   onClick={() => handleUpdate(product.id, 'isHidden', !product.isHidden)}
+                   className={`p-2 rounded-xl transition-all ${product.isHidden ? 'bg-orange-100 text-orange-600 ring-2 ring-orange-500/30' : 'bg-slate-50 text-slate-300 hover:text-slate-500'}`}
+                   title={product.isHidden ? "Hidden from storefront — click to show" : "Visible in storefront — click to hide"}
+                 >
+                    {product.isHidden ? <EyeOff size={18} strokeWidth={2.5} /> : <Eye size={18} strokeWidth={2} />}
                  </button>
               </div>
 
