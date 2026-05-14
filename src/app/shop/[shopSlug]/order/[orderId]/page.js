@@ -1,9 +1,6 @@
 'use client';
 import { useEffect, useState, use } from 'react';
-import { getShopBySlug } from '@/lib/firestore';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { Loader2, Download, Package, ArrowLeft, Clock } from 'lucide-react';
+import { Loader2, Download, Package, ArrowLeft, Clock, ShieldAlert, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
@@ -56,6 +53,7 @@ export default function OrderSummaryPage({ params }) {
   const [order, setOrder] = useState(null);
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [pdfProgress, setPdfProgress] = useState(0);
   const [pdfState, setPdfState] = useState('');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -63,18 +61,48 @@ export default function OrderSummaryPage({ params }) {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const shopData = await getShopBySlug(shopSlug);
-        if (!shopData) throw new Error('Shop not found');
-        setShop(shopData);
-        const orderRef = doc(db, 'shops', shopData.id, 'orders', orderId);
-        const orderSnap = await getDoc(orderRef);
-        if (orderSnap.exists()) {
-          setOrder({ id: orderSnap.id, ...orderSnap.data() });
-        } else {
-          throw new Error('Order not found');
+        // Use API route to avoid Firestore client-side permission issues
+        const res = await fetch(`/api/order?shopSlug=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`);
+        if (res.status === 403) {
+          setError('permission');
+          return;
         }
+        if (!res.ok) {
+          // Fallback: try direct Firestore (will work if user is logged in)
+          const { getShopBySlug } = await import('@/lib/firestore');
+          const { db } = await import('@/lib/firebase');
+          const { doc, getDoc } = await import('firebase/firestore');
+          const shopData = await getShopBySlug(shopSlug);
+          if (!shopData) { setError('not_found'); return; }
+          setShop(shopData);
+          const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
+          if (!orderSnap.exists()) { setError('not_found'); return; }
+          setOrder({ id: orderSnap.id, ...orderSnap.data() });
+          return;
+        }
+        const data = await res.json();
+        setShop(data.shop);
+        setOrder(data.order);
       } catch (err) {
-        console.error(err);
+        console.error('[OrderPage]', err);
+        // Final fallback: try direct Firestore
+        try {
+          const { getShopBySlug } = await import('@/lib/firestore');
+          const { db } = await import('@/lib/firebase');
+          const { doc, getDoc } = await import('firebase/firestore');
+          const shopData = await getShopBySlug(shopSlug);
+          if (!shopData) { setError('not_found'); return; }
+          setShop(shopData);
+          const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
+          if (!orderSnap.exists()) { setError('not_found'); return; }
+          setOrder({ id: orderSnap.id, ...orderSnap.data() });
+        } catch (e) {
+          if (e?.code === 'permission-denied') {
+            setError('permission');
+          } else {
+            setError('not_found');
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -148,12 +176,42 @@ export default function OrderSummaryPage({ params }) {
     </div>
   );
 
-  if (!order || !shop) return (
-    <div className="text-center py-20 font-black text-2xl text-slate-500">অর্ডার পাওয়া যায়নি</div>
+  if (error === 'permission') return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
+      <div className="bg-white rounded-3xl border border-amber-200 p-8 max-w-sm w-full text-center shadow-sm space-y-4">
+        <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+          <ShieldAlert size={28} className="text-amber-600" />
+        </div>
+        <div>
+          <h2 className="text-lg font-black text-slate-900">অর্ডার দেখার অনুমতি নেই</h2>
+          <p className="text-sm text-slate-500 font-bold mt-2">এই অর্ডারটি দেখতে আপনাকে সংশ্লিষ্ট ইমেইল দিয়ে লগইন করতে হবে।</p>
+        </div>
+        <button onClick={() => router.back()} className="w-full py-3 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-purple-600 transition-colors flex items-center justify-center gap-2">
+          <ArrowLeft size={16} /> ফিরে যান
+        </button>
+      </div>
+    </div>
   );
 
-  const subtotal = parseFloat(order.total) - parseInt(shop.deliveryConfig?.advanceFee || 0);
-  const deliveryFee = parseInt(shop.deliveryConfig?.advanceFee || 0);
+  if (!order || !shop || error === 'not_found') return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 max-w-sm w-full text-center shadow-sm space-y-4">
+        <Package size={40} className="mx-auto text-slate-300" />
+        <p className="text-lg font-black text-slate-500">অর্ডার পাওয়া যায়নি</p>
+        <button onClick={() => router.back()} className="w-full py-3 bg-slate-100 text-slate-700 rounded-2xl font-black text-sm hover:bg-slate-200 transition-colors flex items-center justify-center gap-2">
+          <ArrowLeft size={16} /> ফিরে যান
+        </button>
+      </div>
+    </div>
+  );
+
+  // Safe number parsing helpers
+  const safeNum = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
+  const safeInt = (v) => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
+
+  const deliveryFee = safeInt(shop.deliveryConfig?.advanceFee || order.deliveryFee || 0);
+  const orderTotal = safeNum(order.total);
+  const subtotal = Math.max(0, orderTotal - deliveryFee);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20">
@@ -257,11 +315,11 @@ export default function OrderSummaryPage({ params }) {
                     <p className="text-xs text-slate-500 font-bold italic mt-1">নোট: {item.note}</p>
                   )}
                   <span className="inline-block text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md mt-2">
-                    {item.quantity} × ৳{parseFloat(item.price).toLocaleString()}
+                    {item.quantity} × ৳{safeNum(item.price).toLocaleString()}
                   </span>
                 </div>
                 <div className="text-right font-black text-slate-900 text-sm flex-shrink-0">
-                  ৳{(item.quantity * parseFloat(item.price)).toLocaleString()}
+                  ৳{(item.quantity * safeNum(item.price)).toLocaleString()}
                 </div>
               </div>
             ))}
@@ -274,7 +332,7 @@ export default function OrderSummaryPage({ params }) {
               <span>ডেলিভারি চার্জ</span><span>৳{deliveryFee}</span>
             </div>
             <div className="flex justify-between text-lg font-black text-slate-900 pt-2 border-t border-slate-200">
-              <span>সর্বমোট</span><span>৳{parseFloat(order.total).toLocaleString()}</span>
+              <span>সর্বমোট</span><span>৳{safeNum(order.total).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -345,8 +403,8 @@ export default function OrderSummaryPage({ params }) {
                   )}
                 </td>
                 <td style={{ padding: '8px 0', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>
-                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 700 }}>৳{parseFloat(item.price).toLocaleString()}</td>
-                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 900 }}>৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</td>
+                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 700 }}>৳{safeNum(item.price).toLocaleString()}</td>
+                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 900 }}>৳{(safeNum(item.price) * item.quantity).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -362,7 +420,7 @@ export default function OrderSummaryPage({ params }) {
               <span>Delivery</span><span>৳{deliveryFee}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: 900, borderTop: '1px solid #000', paddingTop: '6px' }}>
-              <span>Total</span><span>৳{parseFloat(order.total).toLocaleString()}</span>
+              <span>Total</span><span>৳{safeNum(order.total).toLocaleString()}</span>
             </div>
           </div>
         </div>
