@@ -7,11 +7,16 @@ import { uploadShopLogo, uploadImage } from '@/lib/storage';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
-  MapPin, Clock, Plus, ChevronDown
+  MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
 import DesignThemeSelector from '@/components/dashboard/DesignThemeSelector';
+import dynamic from 'next/dynamic';
+
+// Dynamic imports for heavy components (SSR-safe)
+const TemplateMarketplace = dynamic(() => import('@/components/dashboard/TemplateMarketplace'), { ssr: false, loading: () => <div className="py-12 text-center text-slate-400 text-sm font-bold">টেমপ্লেট লোড হচ্ছে...</div> });
+const StoreCustomizationPanel = dynamic(() => import('@/components/dashboard/StoreCustomizationPanel'), { ssr: false, loading: () => <div className="py-12 text-center text-slate-400 text-sm font-bold">কাস্টমাইজার লোড হচ্ছে...</div> });
 
 // Bangladesh Districts (partial list — key ones)
 const BD_DISTRICTS = [
@@ -521,15 +526,73 @@ export default function SettingsPage() {
 
   const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://webmaa.cloud'}/shop/${shop?.subdomainSlug}`;
 
+  // ── Settings Tabs State ──────────────────────────────────────
+  const [settingsTab, setSettingsTab] = useState('general');
+  const SETTINGS_TABS = [
+    { id: 'general', label: 'সাধারণ', icon: Store },
+    { id: 'templates', label: 'টেমপ্লেট', icon: LayoutTemplate },
+    { id: 'customizer', label: 'কাস্টমাইজার', icon: Sliders },
+    { id: 'theme', label: 'থিম', icon: Palette },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-slide-in pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Store Customizer</h1>
-          <p className="text-sm text-slate-500 font-medium">Configure deep integrations, auth, AI, and visuals.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">স্টোর কাস্টমাইজার</h1>
+          <p className="text-sm text-slate-500 font-medium">টেমপ্লেট, থিম, AI এবং সব সেটিং এক জায়গায়।</p>
         </div>
       </div>
 
+      {/* ── Tab Navigation ── */}
+      <div className="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200">
+        {SETTINGS_TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setSettingsTab(tab.id)}
+            className={`flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-t-xl text-xs font-black transition-all border-b-2 ${
+              settingsTab === tab.id
+                ? 'border-purple-600 text-purple-700 bg-purple-50'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <tab.icon size={14} />{tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Template Marketplace Tab ── */}
+      {settingsTab === 'templates' && (
+        <TemplateMarketplace
+          shopId={activeShopId}
+          activeTemplateId={shop?.templateId || 'modern-commerce'}
+          onTemplateApplied={(tid) => setShop(s => ({ ...s, templateId: tid }))}
+        />
+      )}
+
+      {/* ── Customization Panel Tab ── */}
+      {settingsTab === 'customizer' && (
+        <div className="max-w-2xl">
+          <StoreCustomizationPanel
+            shopId={activeShopId}
+            templateId={shop?.templateId || 'modern-commerce'}
+            currentOverrides={shop?.themeOverrides || {}}
+            onSave={({ theme }) => setShop(s => ({ ...s, themeOverrides: theme }))}
+          />
+        </div>
+      )}
+
+      {/* ── Theme Tab (existing DesignThemeSelector) ── */}
+      {settingsTab === 'theme' && (
+        <div className="max-w-4xl">
+          <Card title="স্টোর ডিজাইন থিম" subtitle="রঙ প্রিসেট" icon={Palette} className="border-l-4 border-l-purple-500">
+            <DesignThemeSelector shopId={activeShopId} />
+          </Card>
+        </div>
+      )}
+
+      {/* ── General Settings Tab ── */}
+      {settingsTab === 'general' && (
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Visual Identity & Left Col */}
         <div className="lg:col-span-4 space-y-8">
@@ -1375,6 +1438,7 @@ export default function SettingsPage() {
           </form>
         </div>
       </div>
+      )} {/* end general tab */}
     </div>
   );
 }

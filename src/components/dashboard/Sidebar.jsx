@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
-  Settings, LogOut, Store, ShieldCheck, Download, Menu, X 
+  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -15,14 +15,15 @@ import AiCompanion from './AiCompanion';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Overview' },
-  { href: '/dashboard/products', icon: ShoppingBag, label: 'Inventory' },
-  { href: '/dashboard/smart-inventory', icon: ShoppingBag, label: 'Smart Inventory' },
-  { href: '/dashboard/categories', icon: Tag, label: 'Categories' },
-  { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders' },
-  { href: '/dashboard/customers', icon: Users, label: 'Customers' },
-  { href: '/dashboard/broadcast', icon: Store, label: 'Broadcast' },
-  { href: '/dashboard/settings', icon: Settings, label: 'Preferences' },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Overview', staffAllowed: true },
+  { href: '/dashboard/products', icon: ShoppingBag, label: 'Inventory', staffAllowed: true },
+  { href: '/dashboard/smart-inventory', icon: ShoppingBag, label: 'Smart Inventory', staffAllowed: true },
+  { href: '/dashboard/categories', icon: Tag, label: 'Categories', staffAllowed: true },
+  { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders', staffAllowed: true },
+  { href: '/dashboard/customers', icon: Users, label: 'Customers', staffAllowed: false },
+  { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates', staffAllowed: false },
+  { href: '/dashboard/broadcast', icon: Store, label: 'Broadcast', staffAllowed: false },
+  { href: '/dashboard/settings', icon: Settings, label: 'Preferences', staffAllowed: false },
 ];
 
 export default function Sidebar({ isOpen, onClose, onOpen }) {
@@ -67,7 +68,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
 
   const isStaff = userData?.role === 'staff';
   const visibleNavItems = isStaff 
-    ? navItems.filter(item => item.label !== 'Preferences' && item.label !== 'Customers') 
+    ? navItems.filter(item => item.staffAllowed !== false) 
     : navItems;
 
   const handleLogout = async () => {
