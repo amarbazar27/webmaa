@@ -28,6 +28,55 @@ import AiVoicePanel from '@/components/shop/AiVoicePanel';
 import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 
+// ══════════════════════════════════════════════════════════════════
+// 🎨 SHOP THEME ENGINE — Maps designPreset → CSS variables
+// These MUST match the presets in /api/design/route.js
+// ══════════════════════════════════════════════════════════════════
+const SHOP_THEME_PRESETS = {
+  classic:  { primary: '#4f46e5', accent: '#7c3aed', bg: '#ffffff', text: '#0f172a', card: '#ffffff', border: '#e2e8f0', radius: '16px', font: 'Inter', headerBg: 'linear-gradient(135deg, #4f46e5, #7c3aed)', headerText: '#ffffff', btnText: '#ffffff' },
+  midnight: { primary: '#818cf8', accent: '#c084fc', bg: '#0f172a', text: '#f8fafc',  card: '#1e293b', border: '#334155', radius: '20px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #1e1b4b, #312e81)', headerText: '#e0e7ff', btnText: '#ffffff' },
+  forest:   { primary: '#059669', accent: '#34d399', bg: '#f0fdf4', text: '#064e3b',  card: '#ffffff', border: '#bbf7d0', radius: '12px', font: 'Inter', headerBg: 'linear-gradient(135deg, #065f46, #047857)', headerText: '#ecfdf5', btnText: '#ffffff' },
+  sunset:   { primary: '#ea580c', accent: '#f97316', bg: '#fff7ed', text: '#431407',  card: '#ffffff', border: '#fed7aa', radius: '24px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #c2410c, #ea580c)', headerText: '#fff7ed', btnText: '#ffffff' },
+  ocean:    { primary: '#0284c7', accent: '#38bdf8', bg: '#f0f9ff', text: '#0c4a6e',  card: '#ffffff', border: '#bae6fd', radius: '16px', font: 'Inter', headerBg: 'linear-gradient(135deg, #0369a1, #0284c7)', headerText: '#f0f9ff', btnText: '#ffffff' },
+  rose:     { primary: '#e11d48', accent: '#fb7185', bg: '#fff1f2', text: '#4c0519',  card: '#ffffff', border: '#fecdd3', radius: '20px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #9f1239, #e11d48)', headerText: '#fff1f2', btnText: '#ffffff' },
+  minimal:  { primary: '#18181b', accent: '#71717a', bg: '#fafafa', text: '#18181b',  card: '#ffffff', border: '#e4e4e7', radius: '8px',  font: 'Inter', headerBg: '#18181b', headerText: '#fafafa', btnText: '#ffffff' },
+  royal:    { primary: '#7c3aed', accent: '#a78bfa', bg: '#faf5ff', text: '#2e1065',  card: '#ffffff', border: '#ddd6fe', radius: '24px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #5b21b6, #7c3aed)', headerText: '#faf5ff', btnText: '#ffffff' },
+  earth:    { primary: '#92400e', accent: '#d97706', bg: '#fffbeb', text: '#451a03',  card: '#ffffff', border: '#fde68a', radius: '16px', font: 'Inter', headerBg: 'linear-gradient(135deg, #78350f, #92400e)', headerText: '#fefce8', btnText: '#ffffff' },
+  neon:     { primary: '#22d3ee', accent: '#a855f7', bg: '#020617', text: '#f8fafc',  card: '#0f172a', border: '#1e293b', radius: '20px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #0e7490, #7c3aed)', headerText: '#f0fdfa', btnText: '#000000' },
+};
+
+/**
+ * Builds the resolved theme object for a shop.
+ * Merges preset + any retailer overrides saved in designOverrides.
+ * SSR-safe: no window access.
+ */
+function buildShopTheme(shop) {
+  const presetKey = shop?.designPreset || 'classic';
+  const base = SHOP_THEME_PRESETS[presetKey] || SHOP_THEME_PRESETS.classic;
+  const overrides = shop?.designOverrides || {};
+  return { ...base, ...overrides };
+}
+
+/**
+ * Converts theme object → CSS custom properties object
+ * Applied as style on root div so all child elements can use var(--sp-*)
+ */
+function themeToVars(t) {
+  return {
+    '--sp-primary':     t.primary,
+    '--sp-accent':      t.accent,
+    '--sp-bg':          t.bg,
+    '--sp-text':        t.text,
+    '--sp-card':        t.card,
+    '--sp-border':      t.border,
+    '--sp-radius':      t.radius,
+    '--sp-header-bg':   t.headerBg,
+    '--sp-header-text': t.headerText,
+    '--sp-btn-text':    t.btnText || '#ffffff',
+    '--sp-font':        t.font || 'Inter',
+  };
+}
+
 const CuteAIIcon = () => (
   <div className="relative w-12 h-12 flex items-center justify-center animate-bounce">
     <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1005,10 +1054,37 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
   };
 
+  const themeVars = themeToVars(buildShopTheme(shop));
+
   // NOTE: We no longer block the storefront on authLoading.
   // Auth state resolves in background — shopping is always public.
   return (
-    <div className="min-h-screen bg-[#f8f7f4] font-sans pb-24 text-slate-900 selection:bg-purple-100 selection:text-purple-900">
+    <div 
+      className="min-h-screen font-sans pb-24"
+      style={{ 
+        ...themeVars, 
+        backgroundColor: 'var(--sp-bg)',
+        color: 'var(--sp-text)'
+      }}
+    >
+      {/* ── Dynamic Theme Styles ── */}
+      <style dangerouslySetInnerHTML={{__html: `
+        :root {
+          --sp-primary-light: color-mix(in srgb, var(--sp-primary) 20%, transparent);
+        }
+        .bg-purple-600 { background-color: var(--sp-primary) !important; }
+        .text-purple-600 { color: var(--sp-primary) !important; }
+        .bg-purple-50 { background-color: var(--sp-primary-light) !important; }
+        .text-purple-700 { color: var(--sp-primary) !important; }
+        .border-purple-200 { border-color: var(--sp-primary-light) !important; }
+        .from-purple-600 { --tw-gradient-from: var(--sp-primary) !important; }
+        .to-indigo-600 { --tw-gradient-to: var(--sp-accent) !important; }
+        .shadow-purple-500\\/20 { box-shadow: 0 4px 14px 0 var(--sp-primary-light) !important; }
+        .rounded-2xl { border-radius: var(--sp-radius) !important; }
+        .rounded-xl { border-radius: calc(var(--sp-radius) * 0.75) !important; }
+        body { font-family: var(--sp-font), sans-serif !important; }
+      `}} />
+
       {/* ── Splash Loading Screen (1.5s, with shop branding) ── */}
       {showSplash && <LoadingScreen visible={showSplash} shop={shop} products={products} minDuration={1500} />}
       <StoreAnalytics shop={shop} />

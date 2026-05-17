@@ -98,6 +98,8 @@ export default function SettingsPage() {
   const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', subdomainSlug: '', banners: [] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // ── Settings Tab (must be at top, before any conditional returns) ──
+  const [settingsTab, setSettingsTab] = useState('general');
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [userPhotoFile, setUserPhotoFile] = useState(null);
@@ -526,8 +528,7 @@ export default function SettingsPage() {
 
   const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://webmaa.cloud'}/shop/${shop?.subdomainSlug}`;
 
-  // ── Settings Tabs State ──────────────────────────────────────
-  const [settingsTab, setSettingsTab] = useState('general');
+  // ── Tabs config (plain object, NOT state — safe to define here) ──
   const SETTINGS_TABS = [
     { id: 'general', label: 'সাধারণ', icon: Store },
     { id: 'templates', label: 'টেমপ্লেট', icon: LayoutTemplate },
