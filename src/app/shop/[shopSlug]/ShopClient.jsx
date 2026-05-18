@@ -28,6 +28,7 @@ import AiVoicePanel from '@/components/shop/AiVoicePanel';
 import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 import PushNotificationSetup from '@/components/shop/PushNotificationSetup';
+import NotificationInbox from '@/components/shared/NotificationInbox';
 
 // ══════════════════════════════════════════════════════════════════
 // 🎨 SHOP THEME ENGINE — WCAG AA contrast-safe presets
@@ -1241,6 +1242,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
           {/* Actions (Left side of the brand) */}
           <div className="flex items-center gap-2 md:gap-4">
+            <NotificationInbox shopId={shop.id} isDashboard={false} />
+
             {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
               <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-lg">
                 <Settings size={15} /> <span>প্যানেলে যান</span>

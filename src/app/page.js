@@ -432,12 +432,12 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer id="contact" className="relative z-20 border-t border-white/5 pt-32 pb-16 bg-[#0a0a1a]">
+      <footer id="contact" className="relative z-20 border-t border-white/10 pt-32 pb-16 bg-[#030014]">
         <div className="max-w-7xl mx-auto px-6">
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-20 mb-32">
               <div className="lg:col-span-2">
                  <Logo href="/" className="text-white scale-[1.5] origin-left mb-12" />
-                 <p className="text-2xl text-white/50 max-w-lg font-medium leading-relaxed mb-12 italic">
+                 <p className="text-2xl text-white/90 max-w-lg font-medium leading-relaxed mb-12 italic">
                     &quot;The first e-commerce protocol designed for the high-end retailer. Built for speed, scaled with AI, and secured by default.&quot;
                  </p>
                  
@@ -448,7 +448,7 @@ export default function Home() {
                         href={link.url} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 flex items-center gap-2 hover:bg-white/20 transition-all text-xs font-bold text-white/80 hover:text-white uppercase tracking-wider"
+                        className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 flex items-center gap-2 hover:bg-white/30 transition-all text-xs font-bold text-white hover:text-white uppercase tracking-wider"
                       >
                          <ArrowUpRight size={14} />
                          {link.name}
@@ -458,22 +458,22 @@ export default function Home() {
               </div>
               
               <div>
-                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-10">Ecosystem</h4>
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80 mb-10">Ecosystem</h4>
                  <ul className="space-y-5">
-                    <li><a href="/showcase" className="text-base font-bold text-white/60 hover:text-white transition-colors">Live Showcase</a></li>
-                    <li><a href="#" className="text-base font-bold text-white/60 hover:text-white transition-colors">Developer Docs</a></li>
-                    <li><a href="#" className="text-base font-bold text-white/60 hover:text-white transition-colors">Retailer Hub</a></li>
-                    <li><a href="#" className="text-base font-bold text-white/60 hover:text-white transition-colors">Merchant Portal</a></li>
+                    <li><a href="/showcase" className="text-base font-bold text-white/80 hover:text-white transition-colors">Live Showcase</a></li>
+                    <li><a href="#" className="text-base font-bold text-white/80 hover:text-white transition-colors">Developer Docs</a></li>
+                    <li><a href="#" className="text-base font-bold text-white/80 hover:text-white transition-colors">Retailer Hub</a></li>
+                    <li><a href="#" className="text-base font-bold text-white/80 hover:text-white transition-colors">Merchant Portal</a></li>
                  </ul>
               </div>
 
               <div>
-                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/60 mb-10">Contact</h4>
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80 mb-10">Contact</h4>
                  <ul className="space-y-6">
                     {globalConfig?.contactLinks?.map((link, idx) => (
                       <li key={idx}>
-                         <a href={link.url} target="_blank" rel="noreferrer" className="flex items-center gap-4 text-base font-bold text-white/60 group hover:text-white transition-colors cursor-pointer">
-                           <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-white/60 group-hover:bg-white/20 group-hover:text-white transition-all">
+                         <a href={link.url} target="_blank" rel="noreferrer" className="flex items-center gap-4 text-base font-bold text-white/80 group hover:text-white transition-colors cursor-pointer">
+                           <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white group-hover:bg-white/30 transition-all">
                               <ArrowUpRight size={18} />
                            </div>
                            <span>{link.name}</span>
@@ -481,7 +481,7 @@ export default function Home() {
                       </li>
                     ))}
                     {(!globalConfig?.contactLinks || globalConfig.contactLinks.length === 0) && (
-                       <li className="text-sm font-bold text-white/40 uppercase tracking-widest">No contact info available</li>
+                       <li className="text-sm font-bold text-white/60 uppercase tracking-widest">No contact info available</li>
                     )}
                   </ul>
               </div>

@@ -13,6 +13,7 @@ import { getShop } from '@/lib/firestore';
 import clsx from 'clsx';
 import AiCompanion from './AiCompanion';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
+import NotificationInbox from '@/components/shared/NotificationInbox';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Overview', staffAllowed: true },
@@ -93,11 +94,14 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
               <span className="text-[10px] text-purple-600 font-black uppercase tracking-[0.1em] mt-1 block">Dashboard</span>
             </div>
           </div>
-          {onClose && (
-            <button onClick={onClose} className="lg:hidden p-2 text-slate-400 hover:text-slate-900 transition-colors">
-              <X size={20} />
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+             <NotificationInbox shopId={shop?.id} isDashboard={true} />
+             {onClose && (
+               <button onClick={onClose} className="lg:hidden p-2 text-slate-400 hover:text-slate-900 transition-colors">
+                 <X size={20} />
+               </button>
+             )}
+          </div>
         </div>
       </div>
 

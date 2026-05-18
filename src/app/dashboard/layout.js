@@ -6,6 +6,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import { X, Info, LogOut, Menu } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
+import NotificationInbox from '@/components/shared/NotificationInbox';
 
 export default function DashboardLayout({ children }) {
   const { user, userData, loading } = useAuth();
@@ -71,6 +72,7 @@ export default function DashboardLayout({ children }) {
            
            <div className="flex items-center gap-2">
               <ThemeToggleButton size="sm" />
+              <NotificationInbox shopId={userData?.activeShopId} isDashboard={true} />
               <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-purple-600">
                 {userData?.name?.[0] || 'U'}
               </div>
