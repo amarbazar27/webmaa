@@ -1,57 +1,100 @@
 @import "tailwindcss";
 
+/* ════════════════════════════════════════════════════════════════
+   WEBMAA GLOBAL DESIGN SYSTEM v3
+   • WCAG AA contrast compliance
+   • CSS custom property tokens
+   • Storefront style engine variables
+   • Per-theme structural overrides
+   ════════════════════════════════════════════════════════════════ */
+
 @theme {
-  --color-primary: #8a2be2;
-  --color-primary-dark: #6a1b9a;
-  --color-primary-light: #d8b4e2;
-  --color-bg-light: #f8fafc;
+  --color-primary: #6C47FF;
+  --color-primary-dark: #5035CC;
+  --color-primary-light: #C4B5FD;
+  --color-secondary: #8B5CF6;
+  --color-success: #10B981;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+  --color-info: #3B82F6;
+  --color-bg-light: #F8FAFC;
   --color-bg-white: #ffffff;
-  --color-text-main: #1e293b;
-  --color-text-muted: #64748b;
+  --color-text-main: #111827;
+  --color-text-muted: #4B5563;
   --font-sans: 'Outfit', 'Inter', sans-serif;
 }
 
+/* ── Light mode tokens ─────────────────────────────────────────── */
 @layer base {
   :root {
-    /* ── Surfaces ── */
-    --bg-color: #f8fafc;
-    --surface: #ffffff;
-    --surface-2: #f1f5f9;
-    --surface-3: #e2e8f0;
-    /* ── Text ── */
-    --text-color: #0f172a;
-    --text-2: #475569;
-    --text-3: #94a3b8;
-    /* ── Border ── */
-    --border-color: #e2e8f0;
-    /* ── Panel (alias) ── */
+    /* Surfaces */
+    --bg-color:    #F8FAFC;
+    --surface:     #ffffff;
+    --surface-2:   #F1F5F9;
+    --surface-3:   #E2E8F0;
+
+    /* Text — always high-contrast on light */
+    --text-color:  #111827;
+    --text-2:      #4B5563;
+    --text-3:      #9CA3AF;
+
+    /* Borders */
+    --border-color: #E2E8F0;
+
+    /* Panel */
     --panel-bg: #ffffff;
-    /* ── Shadows ── */
+
+    /* Brand */
+    --brand-primary:   #6C47FF;
+    --brand-secondary: #8B5CF6;
+    --brand-accent:    #F59E0B;
+
+    /* Status */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger:  #EF4444;
+    --color-info:    #3B82F6;
+
+    /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
     --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
-    /* ── Status Colors ── */
-    --color-success: #10b981;
-    --color-warning: #f59e0b;
-    --color-danger: #ef4444;
-    --color-info: #3b82f6;
+    --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
+
+    /* Storefront variables (defaults, overridden by SHOP_THEME_PRESETS) */
+    --sp-primary:     #6C47FF;
+    --sp-accent:      #8B5CF6;
+    --sp-bg:          #F8FAFC;
+    --sp-text:        #111827;
+    --sp-card:        #ffffff;
+    --sp-border:      #E2E8F0;
+    --sp-radius:      16px;
+    --sp-header-bg:   #6C47FF;
+    --sp-header-text: #ffffff;
+    --sp-btn-text:    #ffffff;
+    --sp-font:        'Outfit', sans-serif;
+
+    /* Contrast-aware text helpers */
+    --on-primary:   #ffffff;
+    --on-secondary: #ffffff;
+    --on-dark:      #F8FAFC;
+    --on-light:     #111827;
   }
 
+  /* ── Dark mode tokens ──────────────────────────────────────── */
   .dark {
-    /* ── Surfaces ── */
-    --bg-color: #0f111a;
-    --surface: #1e293b;
-    --surface-2: #283548;
-    --surface-3: #334155;
-    /* ── Text ── */
-    --text-color: #f1f5f9;
-    --text-2: #94a3b8;
-    --text-3: #64748b;
-    /* ── Border ── */
+    --bg-color:    #0F172A;
+    --surface:     #1E293B;
+    --surface-2:   #283548;
+    --surface-3:   #334155;
+
+    --text-color:  #F8FAFC;
+    --text-2:      #CBD5E1;
+    --text-3:      #94A3B8;
+
     --border-color: rgba(255,255,255,0.08);
-    /* ── Panel ── */
-    --panel-bg: #1e293b;
-    /* ── Shadows ── */
+    --panel-bg:     #1E293B;
+
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
     --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
@@ -62,29 +105,65 @@
     color: var(--text-color);
     font-family: var(--font-sans);
     transition: background-color 0.35s ease, color 0.35s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   CONTRAST-AWARE UTILITY CLASSES
+   Forces readable text regardless of background
+   ════════════════════════════════════════════════════════════════ */
+@layer utilities {
+  /* Auto-contrast text: use on ANY container */
+  .text-contrast-auto {
+    color: var(--sp-text, #111827);
+  }
+
+  /* Force white text — for dark/colored backgrounds */
+  .text-on-dark {
+    color: #F8FAFC !important;
+  }
+
+  /* Force dark text — for light backgrounds */
+  .text-on-light {
+    color: #111827 !important;
+  }
+
+  /* Readable muted on dark */
+  .text-muted-on-dark {
+    color: rgba(248,250,252,0.72) !important;
+  }
+
+  /* Readable muted on light */
+  .text-muted-on-light {
+    color: #4B5563 !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   COMPONENT LAYER — Dashboard & Shared UI
+   ════════════════════════════════════════════════════════════════ */
 @layer components {
   .glass-panel {
     background-color: var(--panel-bg);
     border: 1px solid var(--border-color);
     border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
   }
 
   .glass-panel:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
-    border-color: rgba(138, 43, 226, 0.2);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(108, 71, 255, 0.2);
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-    color: white;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+    color: #ffffff !important; /* Force white — never inherit dark text */
     font-weight: 700;
-    transition: all 0.3s ease;
-    box-shadow: 0 10px 15px -3px rgba(138, 43, 226, 0.25);
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 20px rgba(108, 71, 255, 0.25);
   }
 
   .btn-primary:active {
@@ -92,58 +171,316 @@
   }
 
   .btn-primary:hover:not(:disabled) {
-    box-shadow: 0 20px 25px -5px rgba(138, 43, 226, 0.3);
+    box-shadow: 0 16px 32px rgba(108, 71, 255, 0.35);
     transform: translateY(-2px);
   }
 
   .input-field {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background-color: var(--surface-2);
+    border: 1.5px solid var(--border-color);
     color: var(--text-color);
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
+    border-radius: 12px;
+  }
+
+  .input-field::placeholder {
+    color: var(--text-3);
   }
 
   .input-field:focus {
-    background-color: white;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 4px rgba(138, 43, 226, 0.15);
+    background-color: var(--surface);
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(108, 71, 255, 0.15);
+    outline: none;
   }
+
+  /* ── Status badges (always readable) ── */
+  .badge-success { background: #D1FAE5; color: #065F46; font-weight: 700; }
+  .badge-warning { background: #FEF3C7; color: #92400E; font-weight: 700; }
+  .badge-danger  { background: #FEE2E2; color: #991B1B; font-weight: 700; }
+  .badge-info    { background: #DBEAFE; color: #1E40AF; font-weight: 700; }
+
+  .dark .badge-success { background: rgba(16,185,129,0.2); color: #6EE7B7; }
+  .dark .badge-warning { background: rgba(245,158,11,0.2); color: #FCD34D; }
+  .dark .badge-danger  { background: rgba(239,68,68,0.2);  color: #FCA5A5; }
+  .dark .badge-info    { background: rgba(59,130,246,0.2); color: #93C5FD; }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   STOREFRONT STYLE ENGINE
+   Each [data-sf-style] class creates a completely different layout feel.
+   Applied by StyleEngine on the root storefront wrapper.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Style 1: Minimal Clean ─────────────────────────────────── */
+[data-sf-style="minimal-clean"] {
+  --sf-spacing: 1.5rem;
+  --sf-card-radius: 4px;
+  --sf-btn-radius: 4px;
+  --sf-hero-height: 40vh;
+  --sf-grid-cols: 4;
+  --sf-font-heading: 'DM Sans', sans-serif;
+  --sf-font-body: 'DM Sans', sans-serif;
+  --sf-shadow: none;
+  --sf-transition: 0.15s ease;
+  --sf-border-width: 1px;
+}
+
+[data-sf-style="minimal-clean"] .sf-hero {
+  min-height: var(--sf-hero-height);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--sp-border);
+}
+
+[data-sf-style="minimal-clean"] .sf-product-card {
+  border: 1px solid var(--sp-border);
+  border-radius: var(--sf-card-radius);
+  transition: border-color 0.15s ease;
+}
+
+[data-sf-style="minimal-clean"] .sf-product-card:hover {
+  border-color: var(--sp-primary);
+}
+
+/* ── Style 2: Modern Glass ──────────────────────────────────── */
+[data-sf-style="modern-glass"] {
+  --sf-spacing: 2rem;
+  --sf-card-radius: 20px;
+  --sf-btn-radius: 50px;
+  --sf-hero-height: 70vh;
+  --sf-grid-cols: 3;
+  --sf-font-heading: 'Outfit', sans-serif;
+  --sf-font-body: 'Outfit', sans-serif;
+  --sf-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  --sf-transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  --sf-blur: 16px;
+}
+
+[data-sf-style="modern-glass"] .sf-hero {
+  min-height: var(--sf-hero-height);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-sf-style="modern-glass"] .sf-product-card {
+  border-radius: var(--sf-card-radius);
+  backdrop-filter: blur(var(--sf-blur));
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: var(--sf-shadow);
+  transition: transform var(--sf-transition), box-shadow var(--sf-transition);
+}
+
+[data-sf-style="modern-glass"] .sf-product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.18);
+}
+
+/* ── Style 3: Bold Commerce ─────────────────────────────────── */
+[data-sf-style="bold-commerce"] {
+  --sf-spacing: 1rem;
+  --sf-card-radius: 8px;
+  --sf-btn-radius: 6px;
+  --sf-hero-height: 55vh;
+  --sf-grid-cols: 4;
+  --sf-font-heading: 'Inter', sans-serif;
+  --sf-font-body: 'Inter', sans-serif;
+  --sf-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  --sf-transition: 0.2s ease;
+  --sf-border-width: 2px;
+}
+
+[data-sf-style="bold-commerce"] .sf-hero {
+  min-height: var(--sf-hero-height);
+  position: relative;
+}
+
+[data-sf-style="bold-commerce"] .sf-product-card {
+  border-radius: var(--sf-card-radius);
+  border: 2px solid transparent;
+  transition: border-color var(--sf-transition), box-shadow var(--sf-transition);
+}
+
+[data-sf-style="bold-commerce"] .sf-product-card:hover {
+  border-color: var(--sp-primary);
+  box-shadow: var(--sf-shadow);
+}
+
+/* ── Style 4: Luxury Dark ───────────────────────────────────── */
+[data-sf-style="luxury-dark"] {
+  --sf-spacing: 3rem;
+  --sf-card-radius: 2px;
+  --sf-btn-radius: 0px;
+  --sf-hero-height: 90vh;
+  --sf-grid-cols: 2;
+  --sf-font-heading: 'Cormorant Garamond', 'Playfair Display', serif;
+  --sf-font-body: 'Cormorant Garamond', Georgia, serif;
+  --sf-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  --sf-transition: 0.5s ease;
+  --sf-letter-spacing: 0.15em;
+}
+
+[data-sf-style="luxury-dark"] .sf-hero {
+  min-height: var(--sf-hero-height);
+  display: flex;
+  align-items: center;
+}
+
+[data-sf-style="luxury-dark"] h1,
+[data-sf-style="luxury-dark"] h2,
+[data-sf-style="luxury-dark"] h3 {
+  font-family: var(--sf-font-heading);
+  letter-spacing: var(--sf-letter-spacing);
+  font-weight: 400;
+}
+
+[data-sf-style="luxury-dark"] .sf-product-card {
+  border-radius: var(--sf-card-radius);
+  border: 1px solid rgba(201,168,76,0.3);
+  transition: border-color var(--sf-transition);
+}
+
+[data-sf-style="luxury-dark"] .sf-product-card:hover {
+  border-color: rgba(201,168,76,0.8);
+}
+
+/* ── Style 5: Local Bazaar ──────────────────────────────────── */
+[data-sf-style="local-bazaar"] {
+  --sf-spacing: 0.75rem;
+  --sf-card-radius: 16px;
+  --sf-btn-radius: 50px;
+  --sf-hero-height: 30vh;
+  --sf-grid-cols: 3;
+  --sf-font-heading: 'Inter', sans-serif;
+  --sf-font-body: 'Inter', sans-serif;
+  --sf-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --sf-transition: 0.2s ease;
+}
+
+[data-sf-style="local-bazaar"] .sf-hero {
+  min-height: var(--sf-hero-height);
+}
+
+[data-sf-style="local-bazaar"] .sf-product-card {
+  border-radius: var(--sf-card-radius);
+  box-shadow: var(--sf-shadow);
+  transition: transform var(--sf-transition);
+}
+
+[data-sf-style="local-bazaar"] .sf-product-card:hover {
+  transform: scale(1.02);
+}
+
+/* ── Style 6: AI Futuristic ─────────────────────────────────── */
+[data-sf-style="ai-futuristic"] {
+  --sf-spacing: 2rem;
+  --sf-card-radius: 24px;
+  --sf-btn-radius: 50px;
+  --sf-hero-height: 80vh;
+  --sf-grid-cols: 3;
+  --sf-font-heading: 'Outfit', 'Rajdhani', sans-serif;
+  --sf-font-body: 'Outfit', sans-serif;
+  --sf-shadow: 0 0 32px rgba(108,71,255,0.3);
+  --sf-transition: 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  --sf-blur: 20px;
+  --sf-glow: 0 0 20px rgba(108,71,255,0.5);
+}
+
+[data-sf-style="ai-futuristic"] .sf-hero {
+  min-height: var(--sf-hero-height);
+  position: relative;
+  overflow: hidden;
+}
+
+[data-sf-style="ai-futuristic"] .sf-product-card {
+  border-radius: var(--sf-card-radius);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(108,71,255,0.3);
+  backdrop-filter: blur(var(--sf-blur));
+  transition: all var(--sf-transition);
+}
+
+[data-sf-style="ai-futuristic"] .sf-product-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(108,71,255,0.8);
+  box-shadow: var(--sf-glow);
+}
+
+/* ── AI Futuristic animated background ── */
+@keyframes sf-ai-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.1); }
+}
+
+[data-sf-style="ai-futuristic"] .sf-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(108,71,255,0.3) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 50%, rgba(139,92,246,0.2) 0%, transparent 60%);
+  animation: sf-ai-pulse 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SELECTION, SCROLLBAR, ANIMATIONS
+   ════════════════════════════════════════════════════════════════ */
 ::selection {
-  background-color: #d8b4e2; /* Primary light */
-  color: #4a148c; /* Dark purple for readability */
+  background-color: rgba(108, 71, 255, 0.2);
+  color: #4C1D95;
 }
 
 ::-moz-selection {
-  background-color: #d8b4e2;
-  color: #4a148c;
+  background-color: rgba(108, 71, 255, 0.2);
+  color: #4C1D95;
 }
 
+.custom-scrollbar::-webkit-scrollbar       { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
-}
-
-/* Base animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-slide-in {
-  animation: fadeIn 0.5s ease-out forwards;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-slide-in { animation: fadeIn 0.4s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
+.animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+
+.skeleton {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #1E293B 25%, #334155 50%, #1E293B 75%);
+  background-size: 1000px 100%;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ACCESSIBILITY — Focus visible ring
+   ════════════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

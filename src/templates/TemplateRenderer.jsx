@@ -1,23 +1,38 @@
 'use client';
 
 /**
- * TemplateRenderer - SSR-safe dynamic template renderer
- * Renders the correct template based on shop's templateId setting
+ * TemplateRenderer v3 — SSR-safe dynamic template renderer
+ * Uses StyleEngine + ContrastEngine for full visual identity injection.
+ * Renders the correct storefront style based on shop's templateId setting.
  */
 
-import { Suspense, memo, lazy, useCallback } from 'react';
+import { Suspense, memo, useEffect, useRef } from 'react';
 import { getTemplateById } from './index';
+import { buildStyleEngineOutput, applyDataAttrsToElement } from '@/lib/styleEngine';
 
-// ── Default fallback skeleton ──────────────────────────────────
-function TemplateSkeleton() {
+// ── Loading skeleton ───────────────────────────────────────────────────────
+function TemplateSkeleton({ isDark = false }) {
   return (
-    <div className="min-h-screen bg-white animate-pulse">
-      <div className="h-16 bg-slate-200" />
+    <div
+      className="min-h-screen animate-pulse"
+      style={{ background: isDark ? '#0A0A0A' : '#F8FAFC' }}
+    >
+      <div
+        className="h-16"
+        style={{ background: isDark ? '#111111' : '#E2E8F0' }}
+      />
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-4">
-        <div className="h-64 bg-slate-100 rounded-2xl" />
+        <div
+          className="h-64 rounded-2xl"
+          style={{ background: isDark ? '#1A1A1A' : '#E2E8F0' }}
+        />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1,2,3,4,5,6,7,8].map(i => (
-            <div key={i} className="h-48 bg-slate-100 rounded-xl" />
+            <div
+              key={i}
+              className="h-48 rounded-xl"
+              style={{ background: isDark ? '#1A1A1A' : '#E2E8F0' }}
+            />
           ))}
         </div>
       </div>
@@ -25,29 +40,33 @@ function TemplateSkeleton() {
   );
 }
 
-// ── Error boundary wrapper (function component pattern) ─────────
-function TemplateErrorFallback({ error, templateId }) {
+// ── Error fallback ─────────────────────────────────────────────────────────
+export function TemplateErrorFallback({ error, templateId }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-center p-8">
-        <div className="text-4xl mb-4">⚠️</div>
+      <div className="text-center p-8 max-w-sm">
+        <div className="text-5xl mb-4">⚠️</div>
         <h2 className="text-xl font-black text-slate-800 mb-2">টেমপ্লেট লোড হয়নি</h2>
-        <p className="text-sm text-slate-500 mb-4">Template: {templateId}</p>
-        <p className="text-xs text-red-400">{error?.message || 'Unknown error'}</p>
+        <p className="text-sm text-slate-500 mb-4 font-mono">{templateId}</p>
+        {error?.message && (
+          <p className="text-xs text-red-400 bg-red-50 p-3 rounded-xl font-mono break-all">
+            {error.message}
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
 /**
- * Main TemplateRenderer component
+ * Main TemplateRenderer
  * Props:
- * - shop: shop data from Firestore
- * - products: product list
- * - categories: category list
- * - templateId: which template to render
- * - customization: color/font overrides from retailer
- * - children: any additional content
+ *  - shop: Firestore shop document
+ *  - products: product array
+ *  - categories: category array
+ *  - templateId: which template to render
+ *  - customization: retailer overrides
+ *  - ShopClientComponent: the actual ShopClient (avoids circular imports)
  */
 function TemplateRenderer({
   shop,
@@ -55,50 +74,48 @@ function TemplateRenderer({
   categories = [],
   templateId,
   customization = {},
-  ShopClientComponent, // Pass the actual ShopClient component (avoids circular imports)
+  ShopClientComponent,
 }) {
-  const resolvedTemplateId = templateId || shop?.templateId || 'modern-commerce';
-  const template = getTemplateById(resolvedTemplateId);
+  const wrapperRef = useRef(null);
+  const resolvedId = templateId || shop?.templateId || 'bold-commerce';
+  const template = getTemplateById(resolvedId);
 
-  // Merge template defaults with retailer customizations
+  // Merge: template defaults → Firestore themeOverrides → retailer customization
   const mergedTheme = {
     ...template.defaultTheme,
     ...(shop?.themeOverrides || {}),
     ...customization,
   };
 
-  // Build CSS variables for the template
-  const cssVars = {
-    '--template-primary': mergedTheme.primaryColor,
-    '--template-secondary': mergedTheme.secondaryColor,
-    '--template-accent': mergedTheme.accentColor,
-    '--template-bg': mergedTheme.bgColor,
-    '--template-text': mergedTheme.textColor,
-    '--template-header-bg': mergedTheme.headerBg,
-    '--template-header-text': mergedTheme.headerText,
-    '--template-card-bg': mergedTheme.cardBg,
-    '--template-card-border': mergedTheme.cardBorder,
-    '--template-radius-btn': mergedTheme.buttonRadius,
-    '--template-radius-card': mergedTheme.cardRadius,
-    '--template-font': mergedTheme.fontFamily,
-  };
+  // Build style engine output (CSS vars + data attrs)
+  const { style, dataAttrs, isDark } = buildStyleEngineOutput(template, mergedTheme);
+
+  // Apply data-* attributes after mount (avoids SSR hydration mismatch)
+  useEffect(() => {
+    if (wrapperRef.current) {
+      applyDataAttrsToElement(wrapperRef.current, dataAttrs);
+    }
+  }, [resolvedId, JSON.stringify(dataAttrs)]);
 
   if (!ShopClientComponent) {
-    return <TemplateSkeleton />;
+    return <TemplateSkeleton isDark={isDark} />;
   }
 
   return (
     <div
-      data-template={resolvedTemplateId}
-      style={cssVars}
+      ref={wrapperRef}
+      id="sf-root"
+      style={style}
+      suppressHydrationWarning
     >
-      <Suspense fallback={<TemplateSkeleton />}>
+      <Suspense fallback={<TemplateSkeleton isDark={isDark} />}>
         <ShopClientComponent
           shop={shop}
           products={products}
           categories={categories}
           template={template}
           theme={mergedTheme}
+          isDark={isDark}
         />
       </Suspense>
     </div>
@@ -106,4 +123,4 @@ function TemplateRenderer({
 }
 
 export default memo(TemplateRenderer);
-export { TemplateSkeleton, TemplateErrorFallback };
+export { TemplateSkeleton };

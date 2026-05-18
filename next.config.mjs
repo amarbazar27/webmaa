@@ -16,7 +16,7 @@ const nextConfig = {
 
   // ⚡ TASK 1: Performance - Bundle Optimization
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
 
   // ⚡ TASK 1: Performance - Turbopack (dev only)
@@ -60,16 +60,35 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
       },
+      // ✅ FCM Service Worker — never cache, must use root scope
+      {
+        source: '/firebase-messaging-sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+        ],
+      },
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+        ],
+      },
     ];
   },
 
-  // ⚡ CRITICAL FIX: Required for Firebase Auth to work on custom domains
+  // ⚡ CRITICAL: Firebase Auth on custom domains
   async rewrites() {
     return [
       {
         source: '/__/auth/:path*',
         destination: `https://webmaa-app.firebaseapp.com/__/auth/:path*`,
       },
+      // NOTE: /firebase-messaging-sw.js is served as a static file from /public
+      // Do NOT add a rewrite for it — it would conflict with the static file
     ];
   },
 };

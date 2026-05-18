@@ -9,76 +9,71 @@ import { adminDb } from '@/lib/firebase-admin';
 // POST { shopId, preset }   → Apply theme preset
 // ═══════════════════════════════════════════════════════════════
 
+// ── WCAG AA contrast-safe theme presets
+// Rule: dark bg → light text | light bg → dark text (NO EXCEPTIONS)
+// These values MUST match SHOP_THEME_PRESETS in ShopClient.jsx
 const THEME_PRESETS = {
+  // Light backgrounds → dark text
   classic: {
-    name: 'Classic',
-    namebn: 'ক্লাসিক',
+    name: 'Classic', namebn: 'ক্লাসিক',
     primary: '#4f46e5', accent: '#7c3aed', bg: '#ffffff', text: '#0f172a',
     card: '#ffffff', border: '#e2e8f0', radius: '16px', font: 'Inter',
-    headerBg: 'linear-gradient(135deg, #4f46e5, #7c3aed)', headerText: '#ffffff',
-  },
-  midnight: {
-    name: 'Midnight',
-    namebn: 'মিডনাইট',
-    primary: '#818cf8', accent: '#c084fc', bg: '#0f172a', text: '#f8fafc',
-    card: '#1e293b', border: '#334155', radius: '20px', font: 'Outfit',
-    headerBg: 'linear-gradient(135deg, #1e1b4b, #312e81)', headerText: '#e0e7ff',
+    headerBg: 'linear-gradient(135deg, #4f46e5, #7c3aed)', headerText: '#ffffff', btnText: '#ffffff',
   },
   forest: {
-    name: 'Forest',
-    namebn: 'ফরেস্ট',
+    name: 'Forest', namebn: 'ফরেস্ট',
     primary: '#059669', accent: '#34d399', bg: '#f0fdf4', text: '#064e3b',
     card: '#ffffff', border: '#bbf7d0', radius: '12px', font: 'Inter',
-    headerBg: 'linear-gradient(135deg, #065f46, #047857)', headerText: '#ecfdf5',
+    headerBg: 'linear-gradient(135deg, #065f46, #047857)', headerText: '#ecfdf5', btnText: '#ffffff',
   },
   sunset: {
-    name: 'Sunset',
-    namebn: 'সানসেট',
+    name: 'Sunset', namebn: 'সানসেট',
     primary: '#ea580c', accent: '#f97316', bg: '#fff7ed', text: '#431407',
     card: '#ffffff', border: '#fed7aa', radius: '24px', font: 'Outfit',
-    headerBg: 'linear-gradient(135deg, #c2410c, #ea580c)', headerText: '#fff7ed',
+    headerBg: 'linear-gradient(135deg, #c2410c, #ea580c)', headerText: '#ffffff', btnText: '#ffffff',
   },
   ocean: {
-    name: 'Ocean',
-    namebn: 'ওসান',
+    name: 'Ocean', namebn: 'ওসান',
     primary: '#0284c7', accent: '#38bdf8', bg: '#f0f9ff', text: '#0c4a6e',
     card: '#ffffff', border: '#bae6fd', radius: '16px', font: 'Inter',
-    headerBg: 'linear-gradient(135deg, #0369a1, #0284c7)', headerText: '#f0f9ff',
+    headerBg: 'linear-gradient(135deg, #0369a1, #0284c7)', headerText: '#ffffff', btnText: '#ffffff',
   },
   rose: {
-    name: 'Rose Gold',
-    namebn: 'রোজ গোল্ড',
-    primary: '#e11d48', accent: '#fb7185', bg: '#fff1f2', text: '#4c0519',
+    name: 'Rose Gold', namebn: 'রোজ গোল্ড',
+    primary: '#be185d', accent: '#f43f5e', bg: '#fff1f2', text: '#4c0519',
     card: '#ffffff', border: '#fecdd3', radius: '20px', font: 'Outfit',
-    headerBg: 'linear-gradient(135deg, #9f1239, #e11d48)', headerText: '#fff1f2',
+    headerBg: 'linear-gradient(135deg, #9f1239, #be185d)', headerText: '#ffffff', btnText: '#ffffff',
   },
   minimal: {
-    name: 'Minimal',
-    namebn: 'মিনিমাল',
+    name: 'Minimal', namebn: 'মিনিমাল',
     primary: '#18181b', accent: '#71717a', bg: '#fafafa', text: '#18181b',
     card: '#ffffff', border: '#e4e4e7', radius: '8px', font: 'Inter',
-    headerBg: '#18181b', headerText: '#fafafa',
+    headerBg: '#18181b', headerText: '#fafafa', btnText: '#ffffff',
   },
   royal: {
-    name: 'Royal',
-    namebn: 'রয়েল',
+    name: 'Royal', namebn: 'রয়েল',
     primary: '#7c3aed', accent: '#a78bfa', bg: '#faf5ff', text: '#2e1065',
     card: '#ffffff', border: '#ddd6fe', radius: '24px', font: 'Outfit',
-    headerBg: 'linear-gradient(135deg, #5b21b6, #7c3aed)', headerText: '#faf5ff',
+    headerBg: 'linear-gradient(135deg, #5b21b6, #7c3aed)', headerText: '#ffffff', btnText: '#ffffff',
   },
   earth: {
-    name: 'Earth Tone',
-    namebn: 'আর্থ টোন',
+    name: 'Earth Tone', namebn: 'আর্থ টোন',
     primary: '#92400e', accent: '#d97706', bg: '#fffbeb', text: '#451a03',
     card: '#ffffff', border: '#fde68a', radius: '16px', font: 'Inter',
-    headerBg: 'linear-gradient(135deg, #78350f, #92400e)', headerText: '#fefce8',
+    headerBg: 'linear-gradient(135deg, #78350f, #92400e)', headerText: '#ffffff', btnText: '#ffffff',
+  },
+  // Dark backgrounds → light text (CRITICAL: always use light text on dark bg)
+  midnight: {
+    name: 'Midnight', namebn: 'মিডনাইট',
+    primary: '#a5b4fc', accent: '#c084fc', bg: '#0f172a', text: '#f8fafc',
+    card: '#1e293b', border: '#334155', radius: '20px', font: 'Outfit',
+    headerBg: 'linear-gradient(135deg, #1e1b4b, #312e81)', headerText: '#e0e7ff', btnText: '#ffffff',
   },
   neon: {
-    name: 'Neon Dark',
-    namebn: 'নিয়ন ডার্ক',
-    primary: '#22d3ee', accent: '#a855f7', bg: '#020617', text: '#f8fafc',
+    name: 'Neon Dark', namebn: 'নিয়ন ডার্ক',
+    primary: '#22d3ee', accent: '#a855f7', bg: '#020617', text: '#f0fdfa',
     card: '#0f172a', border: '#1e293b', radius: '20px', font: 'Outfit',
-    headerBg: 'linear-gradient(135deg, #0e7490, #7c3aed)', headerText: '#f0fdfa',
+    headerBg: 'linear-gradient(135deg, #0e7490, #7c3aed)', headerText: '#f0fdfa', btnText: '#ffffff',
   },
 };
 
