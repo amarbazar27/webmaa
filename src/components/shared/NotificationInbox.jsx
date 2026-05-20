@@ -13,21 +13,24 @@ const TYPE_CONFIG = {
 export default function NotificationInbox({ shopId = null, isDashboard = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [deletedIds, setDeletedIds] = useState([]);
+  const [readIds, setReadIds] = useState([]);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('deleted_notifications');
-      if (stored) setDeletedIds(JSON.parse(stored));
+      const storedDeleted = localStorage.getItem('deleted_notifications');
+      if (storedDeleted) setDeletedIds(JSON.parse(storedDeleted));
+      
+      const storedRead = localStorage.getItem('read_notifications');
+      if (storedRead) setReadIds(JSON.parse(storedRead));
     } catch {}
   }, []);
 
   useEffect(() => {
-    // Determine which notifications are relevant
     const unsub = subscribeBroadcasts((allBroadcasts) => {
       let relevant = allBroadcasts.filter(b => {
-        if (b.target === 'all') return true;
+        // Fix for old retailer broadcasts mistakenly sent as 'all'
+        if (b.target === 'all' && (b.senderRole === 'superadmin' || b.senderRole === 'system')) return true;
         
         // Dashboard user (Retailer/Staff)
         if (isDashboard) {
@@ -51,26 +54,15 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
       });
 
       setNotifications(relevant);
-
-      // Check read status from local storage
-      let readIds = [];
-      try {
-        const stored = localStorage.getItem('read_notifications');
-        if (stored) readIds = JSON.parse(stored);
-      } catch {}
-
-      // Filter out deleted notifications
-      relevant = relevant.filter(n => !deletedIds.includes(n.id));
-
-      const unread = relevant.filter(n => !readIds.includes(n.id)).length;
-      setUnreadCount(unread);
-
     }, (err) => {
       console.warn('[NotificationInbox] Listener failed:', err.message);
     });
 
     return () => unsub();
-  }, [shopId, isDashboard, deletedIds]);
+  }, [shopId, isDashboard]);
+
+  const visibleNotifications = notifications.filter(n => !deletedIds.includes(n.id));
+  const unreadCount = visibleNotifications.filter(n => !readIds.includes(n.id)).length;
 
   const handleDelete = (id) => {
     const newDeleted = [...deletedIds, id];
@@ -78,25 +70,23 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
     try {
       localStorage.setItem('deleted_notifications', JSON.stringify(newDeleted));
     } catch {}
-    setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
   const handleClearAll = () => {
-    const allIds = [...new Set([...deletedIds, ...notifications.map(n => n.id)])];
+    const allIds = [...new Set([...deletedIds, ...visibleNotifications.map(n => n.id)])];
     setDeletedIds(allIds);
     try {
       localStorage.setItem('deleted_notifications', JSON.stringify(allIds));
     } catch {}
-    setNotifications([]);
   };
 
   const handleOpen = () => {
     setIsOpen(true);
-    // Mark all as read
+    // Mark all visible as read
     try {
-      const readIds = notifications.map(n => n.id);
-      localStorage.setItem('read_notifications', JSON.stringify(readIds));
-      setUnreadCount(0);
+      const newReadIds = [...new Set([...readIds, ...visibleNotifications.map(n => n.id)])];
+      localStorage.setItem('read_notifications', JSON.stringify(newReadIds));
+      setReadIds(newReadIds);
     } catch {}
   };
 
@@ -132,7 +122,7 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Updates & Alerts</p>
               </div>
               <div className="flex items-center gap-1">
-                {notifications.length > 0 && (
+                {visibleNotifications.length > 0 && (
                   <button 
                     onClick={handleClearAll}
                     title="সব ডিলিট করুন"
@@ -152,7 +142,7 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
 
             {/* List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white custom-scrollbar">
-              {notifications.length === 0 ? (
+              {visibleNotifications.length === 0 ? (
                 <div className="text-center py-20 opacity-50 flex flex-col items-center">
                   <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
                      <Bell size={32} className="text-slate-300" />
@@ -160,7 +150,7 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                   <p className="font-bold text-slate-500">কোনো নোটিফিকেশন নেই</p>
                 </div>
               ) : (
-                notifications.map(notif => {
+                visibleNotifications.map(notif => {
                   const config = TYPE_CONFIG[notif.type] || TYPE_CONFIG.info;
                   const Icon = config.icon;
                   const isSystem = notif.senderRole === 'superadmin' || notif.senderRole === 'system';
