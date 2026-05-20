@@ -5,19 +5,21 @@ import {
   getRetailerInvites, addRetailerInvite, removeRetailerInvite, getAllShops,
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
-  pauseShop, resumeShop, deleteRetailerRequest, deleteShop
+  pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
+  getImpersonationLogs
 } from '@/lib/firestore';
 import NotificationBox from '@/components/dashboard/NotificationBox';
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
-  Globe, Link2, Pause, Play, ExternalLink
+  Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SuperAdminPage() {
   const [invites, setInvites] = useState([]);
@@ -28,6 +30,9 @@ export default function SuperAdminPage() {
   const [inviting, setInviting] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [processingShopId, setProcessingShopId] = useState(null);
+  const [impersonationLogs, setImpersonationLogs] = useState([]);
+  const [showLogs, setShowLogs] = useState(false);
+  const [impersonatingId, setImpersonatingId] = useState(null);
   
   const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactLinks: [], promotedLinks: [], defaultLayout: 'modern' });
   const [savingConfig, setSavingConfig] = useState(false);
@@ -36,6 +41,7 @@ export default function SuperAdminPage() {
   const [showKey, setShowKey] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
   const { theme, setSystemDefault, systemDefault } = useTheme();
+  const { loginAsRetailer } = useAuth();
 
   // Helper to mask key
   const maskKey = (key) => {
@@ -43,6 +49,37 @@ export default function SuperAdminPage() {
     if (key.length < 15) return '*'.repeat(key.length);
     return `${key.substring(0, 5)}**********${key.substring(key.length - 5)}`;
   };
+
+  // ── Impersonation: Retailer হিসেবে Login ────────────────────────
+  const handleLoginAsRetailer = async (shop) => {
+    setImpersonatingId(shop.id);
+    try {
+      await loginAsRetailer({
+        uid: shop.id,
+        email: shop.ownerEmail || '',
+        shopId: shop.id,
+        shopName: shop.shopName || 'Unknown Shop',
+      });
+      toast.success(`✅ "${shop.shopName}"-এর ড্যাশবোর্ডে প্রবেশ করছেন...`);
+      router.push('/dashboard');
+    } catch (err) {
+      toast.error('Login as retailer ব্যর্থ: ' + err.message);
+    }
+    setImpersonatingId(null);
+  };
+
+  // ── Load Impersonation Logs ──────────────────────────────────────
+  const loadImpersonationLogs = async () => {
+    try {
+      const logs = await getImpersonationLogs(20);
+      setImpersonationLogs(logs);
+      setShowLogs(true);
+    } catch (err) {
+      toast.error('Log লোড করতে সমস্যা');
+    }
+  };
+
+
 
   const loadData = async () => {
     setLoading(true);
@@ -667,6 +704,21 @@ export default function SuperAdminPage() {
                           </td>
                           <td className="p-4 text-right last:rounded-r-2xl">
                             <div className="flex items-center justify-end gap-2">
+                              {/* 🔐 Login as Retailer Button */}
+                              <button
+                                onClick={() => handleLoginAsRetailer(shop)}
+                                disabled={impersonatingId === shop.id}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
+                                title="এই রিটেইলারের ড্যাশবোর্ডে প্রবেশ করুন"
+                              >
+                                {impersonatingId === shop.id ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : (
+                                  <LogIn size={11} />
+                                )}
+                                Login as
+                              </button>
+
                               {(shop.subdomainSlug || shop.shopSlug) && (
                                 <a
                                   href={`${typeof window !== 'undefined' ? window.location.origin : 'https://webmaa.vercel.app'}/shop/${shop.subdomainSlug || shop.shopSlug}`}
@@ -715,8 +767,59 @@ export default function SuperAdminPage() {
           </Card>
         </div>
 
+        {/* 🔍 Impersonation Audit Logs */}
+        <div className="lg:col-span-12">
+          <Card
+            title="ইম্পার্সোনেশন অডিট লগ"
+            subtitle="সুপারঅ্যাডমিন কখন কোন রিটেইলারের ড্যাশবোর্ডে প্রবেশ করেছেন"
+            icon={ShieldAlert}
+            className="border-2 border-purple-100 bg-purple-50/10"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-slate-500 font-bold">সর্বশেষ ২০টি session</p>
+              <button
+                onClick={loadImpersonationLogs}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-all"
+              >
+                <History size={14} /> লগ লোড করুন
+              </button>
+            </div>
+
+            {showLogs && (
+              impersonationLogs.length === 0 ? (
+                <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <ShieldAlert size={32} className="mx-auto mb-3 text-slate-300" />
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">কোনো ইম্পার্সোনেশন লগ নেই</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {impersonationLogs.map((log) => (
+                    <div key={log.id} className="flex items-center justify-between bg-white border border-slate-100 rounded-xl p-3 hover:border-purple-200 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${log.isActive ? 'bg-red-500 animate-pulse' : 'bg-slate-300'}`} />
+                        <div>
+                          <p className="text-xs font-black text-slate-900">{log.shopName}</p>
+                          <p className="text-[10px] text-slate-500 font-bold">{log.retailerEmail}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-[10px] text-slate-400 font-bold">
+                        <span>IP: {log.ip}</span>
+                        <span className={`px-2 py-0.5 rounded-md font-black ${log.isActive ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500'}`}>
+                          {log.isActive ? '🔴 সক্রিয়' : '✅ শেষ'}
+                        </span>
+                        <span>{log.loginAt?.toDate?.()?.toLocaleString('bn-BD') || '—'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+          </Card>
+        </div>
+
         {/* 🔔 Broadcast Notifications */}
         <div className="lg:col-span-12">
+
           <NotificationBox senderRole="superadmin" />
         </div>
 

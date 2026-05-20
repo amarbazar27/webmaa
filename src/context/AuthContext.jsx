@@ -1,8 +1,15 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { onAuthChange, handleUserSession, handleLoginRedirect } from '@/lib/auth';
 import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import {
+  getImpersonationSession,
+  isImpersonating,
+  startImpersonation,
+  endImpersonation,
+} from '@/lib/impersonation';
+import { logImpersonationStart, logImpersonationEnd } from '@/lib/firestore';
 
 const AuthContext = createContext({});
 
@@ -12,20 +19,86 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
 
+  // ── Impersonation State ──────────────────────────────────────────
+  const [impersonation, setImpersonation] = useState(null); // { uid, email, shopId, shopName, logId, startedAt }
+
+  // On mount, restore impersonation session from sessionStorage
+  useEffect(() => {
+    const session = getImpersonationSession();
+    if (session) setImpersonation(session);
+  }, []);
+
   const forceUpdateAuth = (newUser, newUserData) => {
     setUser(newUser);
     setUserData(newUserData);
   };
 
+  // ── Impersonation: Superadmin রিটেইলারের dashboard খুলবেন ───────
+  const loginAsRetailer = useCallback(async (retailer) => {
+    if (!user || !userData || userData.role !== 'superadmin') {
+      console.error('Only superadmin can impersonate');
+      return;
+    }
+    try {
+      // IP সংগ্রহের চেষ্টা (best effort)
+      let ip = 'unknown';
+      try {
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        ip = ipData.ip || 'unknown';
+      } catch {}
+
+      // Firestore-এ audit log তৈরি
+      const logId = await logImpersonationStart({
+        superadminUid: user.uid,
+        superadminEmail: user.email,
+        retailerUid: retailer.uid,
+        retailerEmail: retailer.email || retailer.ownerEmail || 'unknown',
+        shopId: retailer.shopId || retailer.id,
+        shopName: retailer.shopName || 'Unknown Shop',
+        ip,
+      });
+
+      const session = {
+        uid: retailer.uid || retailer.id,
+        email: retailer.email || retailer.ownerEmail || '',
+        shopId: retailer.shopId || retailer.id,
+        shopName: retailer.shopName || 'Unknown Shop',
+        logId,
+      };
+
+      startImpersonation(session, logId);
+      setImpersonation(session);
+
+      return session;
+    } catch (err) {
+      console.error('Impersonation failed:', err);
+      throw err;
+    }
+  }, [user, userData]);
+
+  // ── Impersonation Exit ───────────────────────────────────────────
+  const exitImpersonation = useCallback(async () => {
+    try {
+      const logId = endImpersonation();
+      if (logId) {
+        await logImpersonationEnd(logId);
+      }
+    } catch (err) {
+      console.error('Exit impersonation log failed:', err);
+    }
+    setImpersonation(null);
+  }, []);
+
+  // ── Firebase Auth Listener ───────────────────────────────────────
   useEffect(() => {
-    // 1. Process any pending redirect login result
     handleLoginRedirect().then(result => {
       if (result?.user && result?.userData) {
         setUser(result.user);
         setUserData(result.userData);
       }
     }).catch(err => {
-      console.error("[AuthProvider] Redirect processing failed:", err);
+      console.error('[AuthProvider] Redirect processing failed:', err);
     });
 
     let unsubUserDoc = null;
@@ -57,7 +130,7 @@ export function AuthProvider({ children }) {
               if (!snap.empty) {
                 const shopDoc = snap.docs[0];
                 const shopData = shopDoc.data();
-                
+
                 import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
                   const userRef = doc(db, 'users', firebaseUser.uid);
                   const userSnap = await getDoc(userRef);
@@ -69,7 +142,7 @@ export function AuthProvider({ children }) {
                       shopSlug: shopData.shopSlug
                     });
                   }
-                }).catch(err => console.error("Auto staff update failed:", err));
+                }).catch(err => console.error('Auto staff update failed:', err));
               } else {
                 import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
                   const userRef = doc(db, 'users', firebaseUser.uid);
@@ -82,17 +155,20 @@ export function AuthProvider({ children }) {
                       shopSlug: null
                     });
                   }
-                }).catch(err => console.error("Auto staff downgrade failed:", err));
+                }).catch(err => console.error('Auto staff downgrade failed:', err));
               }
             });
           }
         } catch (err) {
-          console.error("AuthContext fetch error:", err);
+          console.error('AuthContext fetch error:', err);
           setUserData(null);
           setAuthError(err.message);
         }
       } else {
         setUserData(null);
+        // Logout হলে impersonation clear করুন
+        endImpersonation();
+        setImpersonation(null);
       }
       setLoading(false);
     });
@@ -104,11 +180,27 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  // Compute activeShopId: Either they own the shop (uid) or they are staff (accessShopId)
-  const activeShopId = (userData?.role === 'retailer' || userData?.role === 'superadmin') ? user?.uid : userData?.accessShopId;
+  // ── Active Shop ID ───────────────────────────────────────────────
+  // Priority: impersonation > retailer own shop > staff accessShopId
+  const activeShopId = impersonation
+    ? impersonation.shopId
+    : (userData?.role === 'retailer' || userData?.role === 'superadmin')
+      ? user?.uid
+      : userData?.accessShopId;
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, activeShopId, forceUpdateAuth }}>
+    <AuthContext.Provider value={{
+      user,
+      userData,
+      loading,
+      activeShopId,
+      forceUpdateAuth,
+      // Impersonation
+      impersonation,
+      loginAsRetailer,
+      exitImpersonation,
+      isImpersonating: !!impersonation,
+    }}>
       {children}
     </AuthContext.Provider>
   );

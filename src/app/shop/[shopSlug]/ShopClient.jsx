@@ -27,8 +27,9 @@ import AiShoppingList from '@/components/shop/AiShoppingList';
 import AiVoicePanel from '@/components/shop/AiVoicePanel';
 import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
-import PushNotificationSetup from '@/components/shop/PushNotificationSetup';
+import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import NotificationInbox from '@/components/shared/NotificationInbox';
+
 
 // ══════════════════════════════════════════════════════════════════
 // 🎨 SHOP THEME ENGINE — WCAG AA contrast-safe presets
@@ -1093,14 +1094,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Splash Loading Screen (1.5s, with shop branding) ── */}
       {showSplash && <LoadingScreen visible={showSplash} shop={shop} products={products} minDuration={1500} />}
       <StoreAnalytics shop={shop} />
-      {/* ── Push Notification Setup (non-intrusive, 3s delay) ── */}
-      <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:w-96 z-50">
-        <PushNotificationSetup
-          shopId={shop?.id}
-          userId={user?.uid || null}
-          shopName={shop?.shopName || 'স্টোর'}
-        />
-      </div>
+      {/* ── Push Notification Permission Modal (elegant, bottom-center, shows once) ── */}
+      <NotificationPermissionModal
+        shopId={shop?.id}
+        userId={user?.uid || null}
+      />
 
       {/* ── Category Drawer (Mobile) ── */}
       <div className={`fixed inset-0 z-[100] md:hidden transition-all duration-300 ${isCategoryMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>

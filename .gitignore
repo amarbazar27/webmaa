@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# ── Dependencies ───────────────────────────────
 /node_modules
 /.pnp
 .pnp.*
@@ -10,35 +8,69 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# ── Next.js Build Output ────────────────────────
 /.next/
 /out/
-
-# production
 /build
 
-# misc
+# ── Environment Variables (NEVER commit these!) ─
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.vercel.local
+
+# ── Vercel ──────────────────────────────────────
+.vercel
+
+# ── TypeScript ──────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts
+
+# ── OS & Editor ─────────────────────────────────
 .DS_Store
 *.pem
+Thumbs.db
+.vscode/settings.json
 
-# debug
+# ── Debug Logs ──────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# ── Test Coverage ───────────────────────────────
+/coverage
 
-# vercel
-.vercel
+# ── Patch/Fix Scripts (one-time use) ────────────
+fix_*.js
+build_*.js
+patch_*.js
+update_*.js
+add_*.js
+set_env.js
+scratch.jsx
+old_*.jsx
+old_*.js
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# ── Temporary & Debug Files ─────────────────────
+.tmp/
+.tmp_mv.js
+*.tmp
+rest_output.json
+test-domain.js
+test_product.js
 
-.vercel
-.env*.local
+# ── Uploaded/Extracted Docs ─────────────────────
+*.docx
+*.zip
+userorder_extracted/
+docx_text.txt
+webmaa_guide.txt
+*.pdf
+pdf_reader/
+
+# ── AI/Execution Artifacts ──────────────────────
+directives/
+execution/
+*.skill

@@ -501,3 +501,44 @@ export const subscribeBroadcasts = (callback, errorCallback) => {
     callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   }, errorCallback);
 };
+
+// ── IMPERSONATION AUDIT LOGS ──────────────────────
+/**
+ * Superadmin কোনো retailer-এর dashboard access করলে log করুন
+ */
+export const logImpersonationStart = async ({ superadminUid, superadminEmail, retailerUid, retailerEmail, shopId, shopName, ip = 'unknown' }) => {
+  const logRef = await addDoc(collection(db, 'impersonation_logs'), {
+    superadminUid,
+    superadminEmail,
+    retailerUid,
+    retailerEmail,
+    shopId,
+    shopName,
+    action: 'start',
+    ip,
+    loginAt: serverTimestamp(),
+    exitAt: null,
+    isActive: true,
+  });
+  return logRef.id;
+};
+
+export const logImpersonationEnd = async (logId) => {
+  if (!logId) return;
+  return updateDoc(doc(db, 'impersonation_logs', logId), {
+    exitAt: serverTimestamp(),
+    isActive: false,
+  });
+};
+
+export const getImpersonationLogs = async (limit_count = 50) => {
+  const q = query(
+    collection(db, 'impersonation_logs'),
+    orderBy('loginAt', 'desc'),
+    limit(limit_count)
+  );
+  try {
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) { return []; }
+};

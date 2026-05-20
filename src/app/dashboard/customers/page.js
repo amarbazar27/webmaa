@@ -45,7 +45,8 @@ export default function CustomersPage() {
       }
     };
     fetchCustomers();
-  }, [user]);
+  }, [user, activeShopId]);
+
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -57,7 +58,8 @@ export default function CustomersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Customer Database</h1>
-          <p className="text-sm text-slate-500 font-medium">Analyze and manage your shop's shopper base</p>
+          <p className="text-sm text-slate-500 font-medium">Analyze and manage your shop&apos;s shopper base</p>
+
         </div>
       </div>
 

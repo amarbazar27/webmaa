@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
 import { useRouter } from 'next/navigation';
 import { loginWithGoogle, handleLoginRedirect, getUserData } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -14,15 +15,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
-  // 1. Immediate redirect if already logged in via Context
-  useEffect(() => {
-    if (!authLoading && authUser && authData && !redirecting) {
-      setRedirecting(true);
-      handleRedirection(authUser, authData.role || 'user');
-    }
-  }, [authUser, authData, authLoading, router, redirecting]);
-
-  const handleRedirection = (currUser, role) => {
+  // Redirection logic — declared before useEffect to avoid hoisting issue
+  const handleRedirection = useCallback((currUser, role) => {
     if (role === 'superadmin') {
       toast.success(`Welcome back Admin! 👑`);
       router.push('/superadmin');
@@ -33,7 +27,15 @@ export default function LoginPage() {
       toast.success(`স্বাগতম, ${currUser.displayName}! 🎉`);
       router.push('/');
     }
-  };
+  }, [router]);
+
+  // 1. Immediate redirect if already logged in via Context
+  useEffect(() => {
+    if (!authLoading && authUser && authData && !redirecting) {
+      setRedirecting(true);
+      handleRedirection(authUser, authData.role || 'user');
+    }
+  }, [authUser, authData, authLoading, redirecting, handleRedirection]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
