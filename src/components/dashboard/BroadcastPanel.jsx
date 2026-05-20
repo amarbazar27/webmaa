@@ -40,7 +40,16 @@ export default function BroadcastPanel({ shopId }) {
       const res = await fetch('/api/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ shopId, subject, message, segment, broadcastId: crypto.randomUUID() }),
+        body: JSON.stringify({ 
+          shopId, 
+          subject, 
+          message, 
+          segment, 
+          target: 'specific_shop',
+          senderRole: 'retailer',
+          senderName: user?.displayName || 'Shop Owner',
+          broadcastId: crypto.randomUUID() 
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

@@ -33,6 +33,9 @@ export async function POST(request) {
     // 2. Send actual Push Notifications via FCM (if shopId is provided)
     if (shopId) {
       try {
+        const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+        const actualShopSlug = shopDoc.exists ? (shopDoc.data().subdomainSlug || shopDoc.data().shopSlug || shopSlug || '') : (shopSlug || '');
+        
         const tokensSnap = await adminDb.collection('shops').doc(shopId).collection('fcmTokens').get();
         const tokens = tokensSnap.docs.map(doc => doc.id);
 
@@ -44,8 +47,8 @@ export async function POST(request) {
             },
             data: {
               shopId,
-              shopSlug: shopSlug || '',
-              url: shopSlug ? `/shop/${shopSlug}` : '/',
+              shopSlug: actualShopSlug,
+              url: actualShopSlug ? `/shop/${actualShopSlug}` : '/',
             },
             tokens: tokens,
           };
