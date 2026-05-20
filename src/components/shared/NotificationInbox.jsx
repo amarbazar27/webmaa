@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, X, Info, AlertTriangle, Sparkles, Store, Search } from 'lucide-react';
+import { Bell, X, Info, AlertTriangle, Sparkles, Store, Search, Trash2, CheckCheck } from 'lucide-react';
 import { subscribeBroadcasts } from '@/lib/firestore';
 
 const TYPE_CONFIG = {
@@ -14,6 +14,14 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [deletedIds, setDeletedIds] = useState([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('deleted_notifications');
+      if (stored) setDeletedIds(JSON.parse(stored));
+    } catch {}
+  }, []);
 
   useEffect(() => {
     // Determine which notifications are relevant
@@ -51,6 +59,9 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
         if (stored) readIds = JSON.parse(stored);
       } catch {}
 
+      // Filter out deleted notifications
+      relevant = relevant.filter(n => !deletedIds.includes(n.id));
+
       const unread = relevant.filter(n => !readIds.includes(n.id)).length;
       setUnreadCount(unread);
 
@@ -59,7 +70,25 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
     });
 
     return () => unsub();
-  }, [shopId, isDashboard]);
+  }, [shopId, isDashboard, deletedIds]);
+
+  const handleDelete = (id) => {
+    const newDeleted = [...deletedIds, id];
+    setDeletedIds(newDeleted);
+    try {
+      localStorage.setItem('deleted_notifications', JSON.stringify(newDeleted));
+    } catch {}
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleClearAll = () => {
+    const allIds = [...new Set([...deletedIds, ...notifications.map(n => n.id)])];
+    setDeletedIds(allIds);
+    try {
+      localStorage.setItem('deleted_notifications', JSON.stringify(allIds));
+    } catch {}
+    setNotifications([]);
+  };
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -102,12 +131,23 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                  </h2>
                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Updates & Alerts</p>
               </div>
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
-              >
-                <X size={16} strokeWidth={3} />
-              </button>
+              <div className="flex items-center gap-1">
+                {notifications.length > 0 && (
+                  <button 
+                    onClick={handleClearAll}
+                    title="সব ডিলিট করুন"
+                    className="p-2 rounded-full hover:bg-red-50 text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors"
+                >
+                  <X size={16} strokeWidth={3} />
+                </button>
+              </div>
             </div>
 
             {/* List */}
@@ -132,8 +172,15 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                            System
                          </div>
                       )}
+                      <button
+                        onClick={() => handleDelete(notif.id)}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                        title="ডিলিট করুন"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                       
-                      <div className="flex items-start gap-3 relative z-10">
+                      <div className="flex items-start gap-3 relative z-10 pr-6">
                         <div className={`mt-0.5 shrink-0 ${config.iconColor}`}>
                           <Icon size={18} />
                         </div>

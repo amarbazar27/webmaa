@@ -148,6 +148,17 @@ service cloud.firestore {
       }
     }
     
+    // ── System Logs & Broadcasts ──────────────────────────────────
+    match /impersonation_logs/{logId} {
+      allow create: if isSuperAdmin();
+      allow read: if isSuperAdmin();
+    }
+
+    match /broadcasts/{broadcastId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+    
     // ── Default Deny ───────────────────────
     match /{document=**} {
       allow read, write: if false;
