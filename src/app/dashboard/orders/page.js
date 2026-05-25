@@ -21,6 +21,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   
   // States for advanced edits
   const [customNote, setCustomNote] = useState({});
@@ -295,8 +296,52 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      {/* Search + Filter Bar */}
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="flex-1 bg-white border border-slate-200 p-2 rounded-2xl flex items-center gap-3 shadow-sm">
+          <div className="pl-3 text-slate-400">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Search by customer name, phone, or order ID..."
+            className="bg-transparent border-none outline-none w-full py-2 text-sm font-bold text-slate-700 placeholder:text-slate-400"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {['all', 'pending', 'confirmed', 'shipped', 'completed', 'cancelled'].map(s => (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors border ${
+                filter === s
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              {s === 'all' ? 'All' : STATUS_CONFIG[s]?.label || s}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-10">
-        {identifierKeys.map(identifier => {
+        {identifierKeys
+          .filter(identifier => {
+            if (!searchTerm.trim()) return true;
+            const term = searchTerm.toLowerCase();
+            // Check if identifier (phone/email) matches
+            if (identifier.toLowerCase().includes(term)) return true;
+            // Check orders for name or order ID match
+            return groupedOrders[identifier].some(o =>
+              (o.customerName || '').toLowerCase().includes(term) ||
+              (o.orderIdVisual || '').toLowerCase().includes(term) ||
+              (o.id || '').toLowerCase().includes(term)
+            );
+          })
+          .map(identifier => {
            const userOrders = groupedOrders[identifier];
            const filteredUserOrders = filter === 'all' ? userOrders : userOrders.filter(o => o.status === filter);
            
@@ -552,9 +597,9 @@ export default function OrdersPage() {
                        </div>
                    ))}
                  </div>
-              </div>
-           );
-        })}
+               </div>
+            );
+          })}
       </div>
 
       {/* Security PIN Modal */}

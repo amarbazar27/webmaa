@@ -29,55 +29,66 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
   useEffect(() => {
     const unsub = subscribeBroadcasts((allBroadcasts) => {
       let relevant = allBroadcasts.filter(b => {
-        // Fix for old retailer broadcasts mistakenly sent as 'all'
-        if (b.target === 'all' && (b.senderRole === 'superadmin' || b.senderRole === 'system')) return true;
+        // Superadmin/system global broadcasts always show
+        if (b.senderRole === 'superadmin' || b.senderRole === 'system') return true;
+        if (b.target === 'all') return true;
         
-        // Dashboard user (Retailer/Staff)
+        // Dashboard user (Retailer/Staff) — only see their own shop's broadcasts
         if (isDashboard) {
-           if (b.target === 'shop_users') return true;
+           if (b.target === 'shop_users' && b.shopId === shopId) return true;
            if (b.target === 'specific_shop' && b.shopId === shopId) return true;
         } 
         // Storefront user (Customer)
         else {
            if (b.target === 'customers') return true;
            if (b.target === 'specific_shop' && b.shopId === shopId) return true;
-           if (b.target === 'shop_users' && b.shopId === shopId) return true; // Keep local broadcasts visible to customers too
+           if (b.target === 'shop_users' && b.shopId === shopId) return true;
         }
         return false;
       });
 
-      // Sort newest first
+      // Sort newest first, limit to 30
       relevant.sort((a, b) => {
-        const timeA = a.createdAt?.seconds || Date.now();
-        const timeB = b.createdAt?.seconds || Date.now();
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
         return timeB - timeA;
       });
 
-      setNotifications(relevant);
+      setNotifications(relevant.slice(0, 30));
     }, (err) => {
       console.warn('[NotificationInbox] Listener failed:', err.message);
-    });
+    }, shopId);
 
     return () => unsub();
   }, [shopId, isDashboard]);
 
-  const visibleNotifications = notifications.filter(n => !deletedIds.includes(n.id));
+  const visibleNotifications = notifications.filter(n => !deletedIds.includes(n.id)).slice(0, 20);
   const unreadCount = visibleNotifications.filter(n => !readIds.includes(n.id)).length;
 
   const handleDelete = (id) => {
-    const newDeleted = [...deletedIds, id];
-    setDeletedIds(newDeleted);
     try {
-      localStorage.setItem('deleted_notifications', JSON.stringify(newDeleted));
-    } catch {}
+      const stored = localStorage.getItem('deleted_notifications');
+      const persisted = stored ? JSON.parse(stored) : [];
+      const merged = [...new Set([...persisted, id])];
+      localStorage.setItem('deleted_notifications', JSON.stringify(merged));
+      setDeletedIds(merged);
+    } catch {
+      const newDeleted = [...new Set([...deletedIds, id])];
+      setDeletedIds(newDeleted);
+    }
   };
 
   const handleClearAll = () => {
-    const allIds = [...new Set([...deletedIds, ...visibleNotifications.map(n => n.id)])];
-    setDeletedIds(allIds);
     try {
-      localStorage.setItem('deleted_notifications', JSON.stringify(allIds));
-    } catch {}
+      const stored = localStorage.getItem('deleted_notifications');
+      const persisted = stored ? JSON.parse(stored) : [];
+      const merged = [...new Set([...persisted, ...visibleNotifications.map(n => n.id)])];
+      localStorage.setItem('deleted_notifications', JSON.stringify(merged));
+      setDeletedIds(merged);
+    } catch {
+      const allIds = [...new Set([...deletedIds, ...visibleNotifications.map(n => n.id)])];
+      setDeletedIds(allIds);
+    }
   };
 
   const handleOpen = () => {

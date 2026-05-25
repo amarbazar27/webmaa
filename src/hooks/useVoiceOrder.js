@@ -77,7 +77,7 @@ ${productList}
     }
   }, [products, shopId]);
 
-  const startVoice = useCallback(() => {
+  const startVoice = useCallback(async () => {
     if (!isSupported()) {
       setError('আপনার ব্রাউজার ভয়েস সাপোর্ট করে না। Chrome ব্যবহার করুন।');
       return;
@@ -86,6 +86,17 @@ ${productList}
     setTranscript('');
     setInterimTranscript('');
     setVoiceResult(null);
+
+    // Explicitly request microphone permission first
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Release the stream immediately — we only needed permission grant
+      stream.getTracks().forEach(t => t.stop());
+    } catch (permErr) {
+      setError('মাইক্রোফোনের অনুমতি দিন। ব্রাউজারের অনুমতি সেটিংস চেক করুন।');
+      speak('মাইক্রোফোনের অনুমতি নেই।', lang);
+      return;
+    }
 
     const rec = createRecognition({
       lang,

@@ -8,7 +8,7 @@ import {
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
   getImpersonationLogs
 } from '@/lib/firestore';
-import NotificationBox from '@/components/dashboard/NotificationBox';
+import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
@@ -817,10 +817,9 @@ export default function SuperAdminPage() {
           </Card>
         </div>
 
-        {/* 🔔 Broadcast Notifications */}
+        {/* 🔔 Broadcast Center */}
         <div className="lg:col-span-12">
-
-          <NotificationBox senderRole="superadmin" />
+          <SuperadminBroadcastPanel shops={shops} />
         </div>
 
         {/* Invitation Area */}

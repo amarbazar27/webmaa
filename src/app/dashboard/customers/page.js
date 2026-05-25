@@ -22,18 +22,24 @@ export default function CustomersPage() {
         // Extract unique customers from orders
         const customerMap = {};
         orders.forEach(order => {
-          if (!customerMap[order.customerPhone]) {
-            customerMap[order.customerPhone] = {
+          const key = order.customerPhone || order.customerEmail || 'unknown';
+          if (!customerMap[key]) {
+            customerMap[key] = {
               name: order.customerName,
               phone: order.customerPhone,
+              email: order.customerEmail || '',
               address: order.customerAddress,
               totalOrders: 1,
               totalSpent: parseFloat(order.total || 0),
               lastOrderAt: order.createdAt,
             };
           } else {
-            customerMap[order.customerPhone].totalOrders += 1;
-            customerMap[order.customerPhone].totalSpent += parseFloat(order.total || 0);
+            customerMap[key].totalOrders += 1;
+            customerMap[key].totalSpent += parseFloat(order.total || 0);
+            // Merge email if initially missing
+            if (!customerMap[key].email && order.customerEmail) {
+              customerMap[key].email = order.customerEmail;
+            }
           }
         });
 
@@ -48,10 +54,15 @@ export default function CustomersPage() {
   }, [user, activeShopId]);
 
 
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.phone.includes(searchTerm)
-  );
+  const filteredCustomers = customers.filter(c => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      (c.name || '').toLowerCase().includes(term) ||
+      (c.phone || '').includes(searchTerm) ||
+      (c.email || '').toLowerCase().includes(term)
+    );
+  });
 
   return (
     <div className="space-y-8 animate-slide-in pb-12">
@@ -121,9 +132,12 @@ export default function CustomersPage() {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-900 text-lg tracking-tight group-hover:text-purple-600 transition-colors uppercase">{customer.name}</h3>
-                    <div className="flex items-center gap-3 mt-1.5">
-                       <p className="text-[11px] text-slate-400 flex items-center gap-1.5 font-bold"><Phone size={12} className="text-purple-500"/> {customer.phone}</p>
-                    </div>
+                    <div className="flex flex-col gap-1 mt-1.5">
+                        <p className="text-[11px] text-slate-400 flex items-center gap-1.5 font-bold"><Phone size={12} className="text-purple-500"/> {customer.phone || 'N/A'}</p>
+                        {customer.email && (
+                          <p className="text-[11px] text-slate-400 flex items-center gap-1.5 font-bold"><Mail size={12} className="text-blue-400"/> {customer.email}</p>
+                        )}
+                     </div>
                   </div>
                 </div>
                 

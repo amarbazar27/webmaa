@@ -491,14 +491,24 @@ export const sendBroadcast = async (data) => {
   });
 };
 
-export const subscribeBroadcasts = (callback, errorCallback) => {
+export const subscribeBroadcasts = (callback, errorCallback, shopId = null) => {
+  // Fetch last 50 to have enough for client-side filtering
   const q = query(
     collection(db, 'broadcasts'),
     orderBy('createdAt', 'desc'),
-    limit(10)
+    limit(50)
   );
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Client-side filter: show global superadmin broadcasts + shop-specific ones matching this shopId
+    const filtered = all.filter(b => {
+      if (b.senderRole === 'superadmin' || b.senderRole === 'system') return true;
+      if (b.target === 'all') return true;
+      if (b.target === 'specific_shop' && b.shopId === shopId) return true;
+      if (b.target === 'shop_users' && b.shopId === shopId) return true;
+      return false;
+    });
+    callback(filtered);
   }, errorCallback);
 };
 

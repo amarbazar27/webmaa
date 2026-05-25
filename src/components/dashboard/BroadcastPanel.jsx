@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Send, Mail, Users, ShoppingBag, UserX, Loader2, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Send, Mail, Users, ShoppingBag, UserX, Loader2, CheckCircle, Clock, AlertTriangle, Trash2, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/auth';
+import { getOrders } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 
 const SEGMENTS = [
@@ -20,6 +21,76 @@ export default function BroadcastPanel({ shopId }) {
   const [history, setHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
+  // Customer email loading
+  const [allOrders, setAllOrders] = useState([]);
+  const [loadingEmails, setLoadingEmails] = useState(true);
+  const [showEmailList, setShowEmailList] = useState(false);
+  const [selectedEmails, setSelectedEmails] = useState(new Set());
+
+  // Load orders to extract emails
+  useEffect(() => {
+    if (!shopId) return;
+    setLoadingEmails(true);
+    getOrders(shopId)
+      .then(orders => {
+        setAllOrders(orders);
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoadingEmails(false));
+  }, [shopId]);
+
+  // Compute emails for selected segment
+  const segmentEmails = useMemo(() => {
+    const emailSet = new Set();
+    const emailInfo = {}; // email -> { name, segment }
+    allOrders.forEach(order => {
+      const email = order.customerEmail;
+      if (!email || !email.includes('@')) return;
+      const status = order.status || 'pending';
+      let seg = 'all';
+      if (status === 'completed') seg = 'buyers';
+      else seg = 'abandoned';
+      if (!emailInfo[email]) {
+        emailInfo[email] = { name: order.customerName || email.split('@')[0], seg };
+      }
+      emailSet.add(email);
+    });
+
+    const filtered = Object.entries(emailInfo)
+      .filter(([email, info]) => {
+        if (segment === 'all') return true;
+        if (segment === 'buyers') return info.seg === 'buyers';
+        if (segment === 'abandoned') return info.seg === 'abandoned';
+        return true;
+      })
+      .map(([email, info]) => ({ email, name: info.name }));
+
+    return filtered;
+  }, [allOrders, segment]);
+
+  // Re-initialize selected emails when segment changes
+  useEffect(() => {
+    setSelectedEmails(new Set(segmentEmails.map(e => e.email)));
+  }, [segmentEmails]);
+
+  const toggleEmail = (email) => {
+    setSelectedEmails(prev => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedEmails.size === segmentEmails.length) {
+      setSelectedEmails(new Set());
+    } else {
+      setSelectedEmails(new Set(segmentEmails.map(e => e.email)));
+    }
+  };
+
+  // Load history
   useEffect(() => {
     if (!shopId) return;
     fetch(`/api/broadcast?shopId=${shopId}`, {
@@ -33,6 +104,7 @@ export default function BroadcastPanel({ shopId }) {
   const handleSend = async () => {
     if (!subject.trim() || !message.trim()) { toast.error('বিষয় ও মেসেজ লিখুন'); return; }
     if (!user) { toast.error('লগইন করুন'); return; }
+    if (selectedEmails.size === 0) { toast.error('কমপক্ষে একটি ইমেইল সিলেক্ট করুন'); return; }
 
     setSending(true);
     try {
@@ -45,6 +117,7 @@ export default function BroadcastPanel({ shopId }) {
           subject, 
           message, 
           segment, 
+          emails: Array.from(selectedEmails),
           target: 'specific_shop',
           senderRole: 'retailer',
           senderName: user?.displayName || 'Shop Owner',
@@ -52,14 +125,15 @@ export default function BroadcastPanel({ shopId }) {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || 'ব্রডকাস্ট ব্যর্থ');
 
-      toast.success(`${data.sent}/${data.total} ইমেইল সফলভাবে পাঠানো হয়েছে! 📧`);
+      toast.success(`${data.sent || 0}/${data.total || selectedEmails.size} ইমেইল সফলভাবে পাঠানো হয়েছে! 📧`);
       setSubject(''); setMessage('');
 
       // Refresh history
+      const token2 = await auth.currentUser.getIdToken();
       const hRes = await fetch(`/api/broadcast?shopId=${shopId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token2}` },
       });
       const hData = await hRes.json();
       setHistory(hData.history || []);
@@ -102,6 +176,79 @@ export default function BroadcastPanel({ shopId }) {
         ))}
       </div>
 
+      {/* Email List Panel */}
+      <div className="border border-slate-200 rounded-2xl overflow-hidden">
+        <button
+          onClick={() => setShowEmailList(prev => !prev)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Mail size={14} className="text-blue-500" />
+            <span className="text-xs font-black text-slate-700">
+              {loadingEmails ? 'ইমেইল লোড হচ্ছে...' : `${selectedEmails.size} / ${segmentEmails.length} ইমেইল সিলেক্ট করা হয়েছে`}
+            </span>
+          </div>
+          {showEmailList ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+        </button>
+
+        {showEmailList && (
+          <div className="max-h-52 overflow-y-auto">
+            {loadingEmails ? (
+              <div className="py-6 text-center"><Loader2 size={16} className="animate-spin mx-auto text-slate-300" /></div>
+            ) : segmentEmails.length === 0 ? (
+              <p className="text-xs font-bold text-slate-400 text-center py-6">
+                এই সেগমেন্টে কোনো ইমেইল নেই
+              </p>
+            ) : (
+              <div className="p-3 space-y-1.5">
+                {/* Select All */}
+                <div
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl bg-blue-50 cursor-pointer"
+                  onClick={toggleAll}
+                >
+                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                    selectedEmails.size === segmentEmails.length ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'
+                  }`}>
+                    {selectedEmails.size === segmentEmails.length && (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    )}
+                  </div>
+                  <span className="text-xs font-black text-blue-700">সব সিলেক্ট / আনসিলেক্ট</span>
+                </div>
+                {segmentEmails.map(({ email, name }) => (
+                  <div
+                    key={email}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all ${
+                      selectedEmails.has(email) ? 'bg-emerald-50' : 'hover:bg-slate-50'
+                    }`}
+                    onClick={() => toggleEmail(email)}
+                  >
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      selectedEmails.has(email) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 bg-white'
+                    }`}>
+                      {selectedEmails.has(email) && (
+                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-900 truncate">{name}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{email}</p>
+                    </div>
+                    <button
+                      onClick={e => { e.stopPropagation(); toggleEmail(email); setSelectedEmails(prev => { const n2 = new Set(prev); n2.delete(email); return n2; }); }}
+                      className="p-1 hover:bg-red-100 rounded-lg text-slate-300 hover:text-red-500 transition-colors"
+                      title="Remove"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Compose */}
       <div className="space-y-4">
         <input
@@ -122,10 +269,10 @@ export default function BroadcastPanel({ shopId }) {
         />
         <button
           onClick={handleSend}
-          disabled={sending || !subject.trim() || !message.trim()}
+          disabled={sending || !subject.trim() || !message.trim() || selectedEmails.size === 0}
           className="w-full py-4 bg-blue-600 text-white rounded-xl text-sm font-black hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {sending ? <><Loader2 size={16} className="animate-spin" /> পাঠানো হচ্ছে...</> : <><Send size={16} /> ব্রডকাস্ট পাঠান ({SEGMENTS.find(s => s.key === segment)?.label})</>}
+          {sending ? <><Loader2 size={16} className="animate-spin" /> পাঠানো হচ্ছে...</> : <><Send size={16} /> ব্রডকাস্ট পাঠান ({selectedEmails.size} জনকে)</>}
         </button>
       </div>
 

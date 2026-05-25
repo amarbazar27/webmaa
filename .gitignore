@@ -74,3 +74,5 @@ pdf_reader/
 directives/
 execution/
 *.skill
+
+.env*.local

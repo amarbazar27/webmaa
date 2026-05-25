@@ -3,67 +3,156 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
+import nodemailer from 'nodemailer';
 
-// POST — Send a broadcast notification
+// ── Email Transporter ────────────────────────────────────────────────────
+function createTransporter() {
+  // Support multiple SMTP env var names
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '587');
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || process.env.GMAIL_PASS;
+
+  if (!user || !pass) return null;
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+}
+
+// POST — Send a broadcast
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { message, type = 'info', target = 'all', senderRole, shopId, senderName, shopSlug } = body;
-
-    if (!message?.trim()) {
-      return NextResponse.json({ error: 'বার্তা লিখুন' }, { status: 400 });
-    }
+    const { 
+      message, subject, type = 'info', target = 'all', senderRole, shopId, 
+      senderName, shopSlug, segment, emails, broadcastId 
+    } = body;
 
     if (!adminDb) {
       return NextResponse.json({ error: 'সিস্টেম রিফ্রেশ করুন (Database Error)' }, { status: 500 });
     }
 
-    // 1. Save to Firestore (for in-app banner)
-    await adminDb.collection('broadcasts').add({
-      message: message.trim(),
+    // ── Case 1: Retailer email broadcast ─────────────────────────────────
+    // Retailer sends email to specific customer emails
+    if (senderRole === 'retailer' && emails && Array.isArray(emails) && emails.length > 0 && subject) {
+      if (!message?.trim()) {
+        return NextResponse.json({ error: 'মেসেজ লিখুন' }, { status: 400 });
+      }
+
+      let sent = 0;
+      let failed = 0;
+
+      const transporter = createTransporter();
+      if (transporter) {
+        // Send emails in batches
+        const emailPromises = emails.map(async (email) => {
+          try {
+            await transporter.sendMail({
+              from: `"${senderName || 'Shop'}" <${process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
+              to: email,
+              subject: subject,
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+                  <div style="background:linear-gradient(135deg,#1e40af,#0891b2);padding:30px;border-radius:12px 12px 0 0;text-align:center">
+                    <h1 style="color:white;margin:0;font-size:24px">${senderName || 'Shop'}</h1>
+                  </div>
+                  <div style="background:#fff;padding:30px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
+                    <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${subject}</h2>
+                    <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${message}</div>
+                    <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0" />
+                    <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Webmaa</p>
+                  </div>
+                </div>
+              `,
+            });
+            sent++;
+          } catch (err) {
+            console.error(`[Email] Failed to send to ${email}:`, err.message);
+            failed++;
+          }
+        });
+        await Promise.all(emailPromises);
+      } else {
+        // No SMTP — log warning but don't fail, just record
+        console.warn('[Broadcast] No SMTP configured. Email not sent.');
+        failed = emails.length;
+      }
+
+      // Save to history
+      await adminDb.collection('broadcast_history').add({
+        shopId: shopId || null,
+        subject,
+        message: message.trim(),
+        segment: segment || 'all',
+        total: emails.length,
+        sent,
+        failed,
+        sentByName: senderName || 'Retailer',
+        senderRole: 'retailer',
+        broadcastId: broadcastId || null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return NextResponse.json({ success: true, sent, failed, total: emails.length });
+    }
+
+    // ── Case 2: Notification broadcast (superadmin or retailer push notification) ──
+    const notifMessage = message || subject;
+    if (!notifMessage?.trim()) {
+      return NextResponse.json({ error: 'বার্তা লিখুন' }, { status: 400 });
+    }
+
+    // Save notification to Firestore (for in-app banner)
+    // For retailer notifications: always scope to shopId so only that shop's users see it
+    // For superadmin: can target all, retailers only, or customers only
+    const broadcastDoc = {
+      message: notifMessage.trim(),
       type,
-      target,
+      target: senderRole === 'retailer' ? 'specific_shop' : (target || 'all'),
       senderRole: senderRole || 'system',
       shopId: shopId || null,
       senderName: senderName || 'System',
       active: true,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+    await adminDb.collection('broadcasts').add(broadcastDoc);
 
-    // 2. Send actual Push Notifications via FCM (if shopId is provided)
+    // Send FCM push notifications
     if (shopId) {
+      // Scoped to a specific shop
       try {
         const shopDoc = await adminDb.collection('shops').doc(shopId).get();
         const actualShopSlug = shopDoc.exists ? (shopDoc.data().subdomainSlug || shopDoc.data().shopSlug || shopSlug || '') : (shopSlug || '');
         
         const tokensSnap = await adminDb.collection('shops').doc(shopId).collection('fcmTokens').get();
-        const tokens = tokensSnap.docs.map(doc => doc.id);
+        const tokens = tokensSnap.docs.map(d => d.id);
 
         if (tokens.length > 0) {
           const payload = {
             notification: {
               title: senderName || 'Webmaa',
-              body: message.trim(),
+              body: notifMessage.trim(),
             },
             data: {
               shopId,
               shopSlug: actualShopSlug,
               url: actualShopSlug ? `/shop/${actualShopSlug}` : '/',
             },
-            tokens: tokens,
+            tokens,
           };
 
-          // Send to all devices
           const response = await admin.messaging().sendEachForMulticast(payload);
           
-          // Cleanup invalid tokens (unregistered, revoked, etc.)
           if (response.failureCount > 0) {
             const failedTokens = [];
             response.responses.forEach((resp, idx) => {
               if (!resp.success) {
                 const errCode = resp.error?.code;
-                if (errCode === 'messaging/invalid-registration-token' || 
-                    errCode === 'messaging/registration-token-not-registered') {
+                if (errCode === 'messaging/invalid-registration-token' || errCode === 'messaging/registration-token-not-registered') {
                   failedTokens.push(tokens[idx]);
                 }
               }
@@ -74,14 +163,35 @@ export async function POST(request) {
                 batch.delete(adminDb.collection('shops').doc(shopId).collection('fcmTokens').doc(token));
               });
               await batch.commit();
-              console.log(`[FCM] Cleaned up ${failedTokens.length} invalid tokens for shop ${shopId}`);
             }
           }
-          console.log(`[FCM] Successfully sent push to ${response.successCount} devices for shop ${shopId}`);
+          console.log(`[FCM] Sent to ${response.successCount} devices for shop ${shopId}`);
         }
       } catch (fcmErr) {
-        console.error('[FCM] Error sending push notifications:', fcmErr);
-        // We don't throw here to ensure the in-app broadcast still saves
+        console.error('[FCM] Error sending push notifications:', fcmErr.message);
+      }
+    } else if (senderRole === 'superadmin' && target === 'all') {
+      // Superadmin global broadcast — send to all shops' FCM tokens
+      try {
+        const shopsSnap = await adminDb.collection('shops').get();
+        const allTokens = [];
+        for (const shopDoc of shopsSnap.docs) {
+          const tokensSnap = await adminDb.collection('shops').doc(shopDoc.id).collection('fcmTokens').get();
+          tokensSnap.docs.forEach(d => allTokens.push(d.id));
+        }
+        if (allTokens.length > 0) {
+          // Send in batches of 500 (FCM limit)
+          const batchSize = 500;
+          for (let i = 0; i < allTokens.length; i += batchSize) {
+            const batch = allTokens.slice(i, i + batchSize);
+            await admin.messaging().sendEachForMulticast({
+              notification: { title: 'Webmaa', body: notifMessage.trim() },
+              tokens: batch,
+            });
+          }
+        }
+      } catch (fcmErr) {
+        console.error('[FCM] Global broadcast error:', fcmErr.message);
       }
     }
 
@@ -92,19 +202,34 @@ export async function POST(request) {
   }
 }
 
-// GET — Fetch recent broadcasts
-export async function GET() {
+// GET — Fetch recent broadcasts/history for a shop
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const shopId = searchParams.get('shopId');
+
+    if (shopId) {
+      // Return email broadcast history for this shop
+      const histSnap = await adminDb
+        .collection('broadcast_history')
+        .where('shopId', '==', shopId)
+        .orderBy('createdAt', 'desc')
+        .limit(10)
+        .get();
+      const history = histSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return NextResponse.json({ history });
+    }
+
+    // Return general broadcasts
     const snap = await adminDb
       .collection('broadcasts')
       .orderBy('createdAt', 'desc')
       .limit(10)
       .get();
-
     const broadcasts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     return NextResponse.json({ broadcasts });
   } catch (error) {
     console.error('Broadcast fetch error:', error);
-    return NextResponse.json({ broadcasts: [] });
+    return NextResponse.json({ broadcasts: [], history: [] });
   }
 }
