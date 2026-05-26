@@ -500,13 +500,13 @@ export const subscribeBroadcasts = (callback, errorCallback, shopId = null) => {
   );
   return onSnapshot(q, (snap) => {
     const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Client-side filter: show global superadmin broadcasts + shop-specific ones matching this shopId
+    // Client-side broad filter: if specific_shop or shop_users, it MUST match shopId.
+    // Global/all targets are preserved for client-side contextual role filtering.
     const filtered = all.filter(b => {
-      if (b.senderRole === 'superadmin' || b.senderRole === 'system') return true;
-      if (b.target === 'all') return true;
-      if (b.target === 'specific_shop' && b.shopId === shopId) return true;
-      if (b.target === 'shop_users' && b.shopId === shopId) return true;
-      return false;
+      if (b.target === 'specific_shop' || b.target === 'shop_users') {
+        return b.shopId === shopId;
+      }
+      return true;
     });
     callback(filtered);
   }, errorCallback);

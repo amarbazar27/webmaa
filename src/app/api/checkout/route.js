@@ -380,7 +380,7 @@ export async function POST(req) {
     });
 
     // 🔔 RUFLO: Fire-and-forget emails (non-blocking — never slows checkout)
-    const rufloPayload = { shopName: shopData.shopName, orderId: orderIdVisual, items: verifiedItems, total: finalTotal };
+    const rufloPayload = { shopId, shopName: shopData.shopName, orderId: orderIdVisual, items: verifiedItems, total: finalTotal };
 
     if (customerEmail) {
       void sendOrderConfirmationEmail({

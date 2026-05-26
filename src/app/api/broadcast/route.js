@@ -15,6 +15,14 @@ function createTransporter() {
 
   if (!user || !pass) return null;
 
+  // Use Gmail service helper if host is Gmail
+  if (host === 'smtp.gmail.com' || host.includes('gmail')) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass },
+    });
+  }
+
   return nodemailer.createTransport({
     host,
     port,
@@ -43,6 +51,18 @@ export async function POST(request) {
         return NextResponse.json({ error: 'মেসেজ লিখুন' }, { status: 400 });
       }
 
+      let activeSenderName = senderName || 'Shop';
+      if (shopId && adminDb) {
+        try {
+          const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+          if (shopDoc.exists) {
+            activeSenderName = shopDoc.data().shopName || activeSenderName;
+          }
+        } catch (err) {
+          console.warn(`[Broadcast] Failed to fetch shopName for ${shopId}:`, err.message);
+        }
+      }
+
       let sent = 0;
       let failed = 0;
 
@@ -52,13 +72,13 @@ export async function POST(request) {
         const emailPromises = emails.map(async (email) => {
           try {
             await transporter.sendMail({
-              from: `"${senderName || 'Shop'}" <${process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
+              from: `"${activeSenderName}" <${process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
               to: email,
               subject: subject,
               html: `
                 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
                   <div style="background:linear-gradient(135deg,#1e40af,#0891b2);padding:30px;border-radius:12px 12px 0 0;text-align:center">
-                    <h1 style="color:white;margin:0;font-size:24px">${senderName || 'Shop'}</h1>
+                    <h1 style="color:white;margin:0;font-size:24px">${activeSenderName}</h1>
                   </div>
                   <div style="background:#fff;padding:30px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
                     <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${subject}</h2>
@@ -91,7 +111,7 @@ export async function POST(request) {
         total: emails.length,
         sent,
         failed,
-        sentByName: senderName || 'Retailer',
+        sentByName: activeSenderName,
         senderRole: 'retailer',
         broadcastId: broadcastId || null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),

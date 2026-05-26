@@ -1,6 +1,6 @@
 'use client';
-import { useState } from 'react';
-import { Send, Bell, Mail, Users, Store, Loader2, Info, AlertTriangle, Sparkles, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Send, Bell, Mail, Users, Store, Loader2, Info, AlertTriangle, Sparkles, ChevronDown, ChevronUp, Check, X, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const NOTIFICATION_TYPES = [
@@ -12,7 +12,7 @@ const NOTIFICATION_TYPES = [
 export default function SuperadminBroadcastPanel({ shops = [] }) {
   const [tab, setTab] = useState('notification'); // 'notification' | 'email'
 
-  // Notification state
+  // ── Notification State ──────────────────────────────────────────────────
   const [notifMessage, setNotifMessage] = useState('');
   const [notifType, setNotifType] = useState('info');
   const [notifTarget, setNotifTarget] = useState('all'); // all | retailers | specific_retailer | specific_shop_customers
@@ -20,17 +20,119 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
   const [sendingNotif, setSendingNotif] = useState(false);
   const [showShopDropdown, setShowShopDropdown] = useState(false);
 
-  // Email state
+  // ── Email State ─────────────────────────────────────────────────────────
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
-  const [emailTarget, setEmailTarget] = useState('all_customers'); // all_customers | shop_customers
+  const [emailTarget, setEmailTarget] = useState('all_customers'); 
   const [emailShopId, setEmailShopId] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showEmailShopDropdown, setShowEmailShopDropdown] = useState(false);
 
+  // Email Checklist & Interactivity
+  const [emailList, setEmailList] = useState([]);
+  const [loadingEmails, setLoadingEmails] = useState(false);
+  const [showEmailList, setShowEmailList] = useState(false);
+  const [selectedEmails, setSelectedEmails] = useState(new Set());
+  const [emailSearch, setEmailSearch] = useState('');
+  const [excludedEmails, setExcludedEmails] = useState(new Set());
+
   const selectedShop = shops.find(s => s.id === selectedShopId);
   const selectedEmailShop = shops.find(s => s.id === emailShopId);
 
+  // ── Load Email List Reactively ──────────────────────────────────────────
+  useEffect(() => {
+    if (tab !== 'email') return;
+    
+    // Check if shop selection is required but not provided
+    const needsShop = ['shop_customers', 'shop_retailer', 'shop_everyone'].includes(emailTarget);
+    if (needsShop && !emailShopId) {
+      setEmailList([]);
+      setSelectedEmails(new Set());
+      setExcludedEmails(new Set());
+      return;
+    }
+
+    setLoadingEmails(true);
+    let url = `/api/superadmin/broadcast-email?target=${emailTarget}`;
+    if (emailShopId) url += `&shopId=${emailShopId}`;
+
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        const list = data.emails || [];
+        setEmailList(list);
+        setExcludedEmails(new Set());
+        setSelectedEmails(new Set(list.map(e => e.email)));
+      })
+      .catch(err => {
+        console.error(err);
+        toast.error('ইমেইল লিস্ট লোড করতে সমস্যা হয়েছে');
+      })
+      .finally(() => setLoadingEmails(false));
+  }, [emailTarget, emailShopId, tab]);
+
+  // Compute filtered email list based on search and exclusions
+  const filteredEmails = useMemo(() => {
+    return emailList
+      .filter(item => {
+        if (excludedEmails.has(item.email)) return false;
+        
+        const term = emailSearch.trim().toLowerCase();
+        if (!term) return true;
+
+        return (
+          item.email.toLowerCase().includes(term) ||
+          (item.name && item.name.toLowerCase().includes(term)) ||
+          (item.shopName && item.shopName.toLowerCase().includes(term))
+        );
+      });
+  }, [emailList, excludedEmails, emailSearch]);
+
+  const toggleEmail = (email) => {
+    setSelectedEmails(prev => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    const allFilteredEmails = filteredEmails.map(e => e.email);
+    const areAllSelected = allFilteredEmails.every(email => selectedEmails.has(email));
+
+    setSelectedEmails(prev => {
+      const next = new Set(prev);
+      if (areAllSelected) {
+        // Deselect all in filtered view
+        allFilteredEmails.forEach(email => next.delete(email));
+      } else {
+        // Select all in filtered view
+        allFilteredEmails.forEach(email => next.add(email));
+      }
+      return next;
+    });
+  };
+
+  const removeEmailFromList = (email) => {
+    setExcludedEmails(prev => {
+      const next = new Set(prev);
+      next.add(email);
+      return next;
+    });
+    setSelectedEmails(prev => {
+      const next = new Set(prev);
+      next.delete(email);
+      return next;
+    });
+  };
+
+  // Reset email list state on target change
+  useEffect(() => {
+    setEmailSearch('');
+  }, [emailTarget]);
+
+  // ── Dispatch Notification ───────────────────────────────────────────────
   const handleSendNotification = async () => {
     if (!notifMessage.trim()) { toast.error('বার্তা লিখুন'); return; }
     if ((notifTarget === 'specific_retailer' || notifTarget === 'specific_shop_customers') && !selectedShopId) {
@@ -73,9 +175,10 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
     }
   };
 
+  // ── Dispatch Email ──────────────────────────────────────────────────────
   const handleSendEmail = async () => {
     if (!emailSubject.trim() || !emailMessage.trim()) { toast.error('বিষয় ও মেসেজ লিখুন'); return; }
-    if (emailTarget === 'shop_customers' && !emailShopId) { toast.error('একটি শপ সিলেক্ট করুন'); return; }
+    if (selectedEmails.size === 0) { toast.error('কমপক্ষে একটি ইমেইল সিলেক্ট করুন'); return; }
     setSendingEmail(true);
     try {
       const res = await fetch('/api/superadmin/broadcast-email', {
@@ -84,13 +187,12 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
         body: JSON.stringify({
           subject: emailSubject,
           message: emailMessage,
-          target: emailTarget,
-          shopId: emailTarget === 'shop_customers' ? emailShopId : null,
+          emails: Array.from(selectedEmails),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'ইমেইল ব্যর্থ');
-      toast.success(`${data.sent || 0} জনকে ইমেইল পাঠানো হয়েছে! 📧`);
+      toast.success(`${data.sent || 0}/${data.total || selectedEmails.size} জনকে ইমেইল পাঠানো হয়েছে! 📧`);
       setEmailSubject(''); setEmailMessage('');
     } catch (err) {
       toast.error(err.message || 'ইমেইল পাঠাতে ব্যর্থ হয়েছে');
@@ -132,7 +234,7 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
         </button>
       </div>
 
-      {/* Notification Tab */}
+      {/* ── Notification Tab ──────────────────────────────────────────────── */}
       {tab === 'notification' && (
         <div className="space-y-6">
           {/* Type */}
@@ -177,7 +279,7 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
             </div>
           </div>
 
-          {/* Shop Selector (when specific shop) */}
+          {/* Shop Selector */}
           {(notifTarget === 'specific_retailer' || notifTarget === 'specific_shop_customers') && (
             <div className="relative">
               <button
@@ -213,11 +315,11 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
           <div className="relative">
             <textarea
               value={notifMessage}
-              onChange={e => setNotifMessage(e.target.value)}
+              onChange={e => setNotifMessage(e.target.value.substring(0, 200))}
               placeholder="আপনার বার্তা এখানে লিখুন..."
               className="w-full h-32 p-5 bg-slate-50 border-2 border-transparent rounded-3xl text-sm font-bold text-slate-900 placeholder:text-slate-300 outline-none focus:bg-white focus:border-indigo-500/30 transition-all resize-none"
             />
-            <span className={`absolute bottom-4 right-4 text-[10px] font-black ${notifMessage.length > 180 ? 'text-red-500' : 'text-slate-300'}`}>
+            <span className={`absolute bottom-4 right-4 text-[10px] font-black ${notifMessage.length >= 200 ? 'text-red-500' : 'text-slate-300'}`}>
               {notifMessage.length}/200
             </span>
           </div>
@@ -232,22 +334,26 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
         </div>
       )}
 
-      {/* Email Tab */}
+      {/* ── Email Tab ────────────────────────────────────────────────────── */}
       {tab === 'email' && (
         <div className="space-y-6">
-          {/* Target */}
+          {/* Target Selector */}
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Target</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {[
-                { id: 'all_customers', label: 'সব কাস্টমার', desc: 'All shops customers' },
-                { id: 'shop_customers', label: 'নির্দিষ্ট শপ', desc: 'One shop customers' },
+                { id: 'all_customers', label: 'সব কাস্টমার', desc: 'All customers' },
+                { id: 'all_retailers', label: 'সব রিটেইলার', desc: 'All retailers' },
+                { id: 'everyone', label: 'সবাইকে', desc: 'Retailers + Customers' },
+                { id: 'shop_customers', label: 'শপ কাস্টমার', desc: 'Shop Customers' },
+                { id: 'shop_retailer', label: 'শপ রিটেইলার', desc: 'Shop Retailer' },
+                { id: 'shop_everyone', label: 'শপের সবাই', desc: 'Shop Retailer + Customers' },
               ].map(opt => (
                 <button
                   key={opt.id}
                   onClick={() => setEmailTarget(opt.id)}
                   className={`p-3 rounded-xl border-2 text-left transition-all ${
-                    emailTarget === opt.id ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-slate-300'
+                    emailTarget === opt.id ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <p className="text-xs font-black text-slate-900">{opt.label}</p>
@@ -258,7 +364,7 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
           </div>
 
           {/* Shop Selector for email */}
-          {emailTarget === 'shop_customers' && (
+          {['shop_customers', 'shop_retailer', 'shop_everyone'].includes(emailTarget) && (
             <div className="relative">
               <button
                 onClick={() => setShowEmailShopDropdown(prev => !prev)}
@@ -289,6 +395,109 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
             </div>
           )}
 
+          {/* Recipient checklist - loaded reactively */}
+          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <button
+              onClick={() => setShowEmailList(prev => !prev)}
+              type="button"
+              className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Mail size={14} className="text-blue-500" />
+                <span className="text-xs font-black text-slate-700">
+                  {loadingEmails ? 'ইমেইল লোড হচ্ছে...' : `${selectedEmails.size} / ${filteredEmails.length + excludedEmails.size} প্রাপক নির্বাচিত`}
+                </span>
+              </div>
+              {showEmailList ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+            </button>
+
+            {showEmailList && (
+              <div className="border-t border-slate-100 bg-white">
+                {/* Search box inside list */}
+                <div className="p-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
+                  <Search size={14} className="text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="ইমেইল, নাম বা শপ দিয়ে খুঁজুন..."
+                    value={emailSearch}
+                    onChange={e => setEmailSearch(e.target.value)}
+                    className="w-full text-xs font-bold text-slate-900 bg-transparent outline-none placeholder:text-slate-400"
+                  />
+                  {emailSearch && (
+                    <button type="button" onClick={() => setEmailSearch('')} className="p-0.5 rounded-full hover:bg-slate-200"><X size={10} /></button>
+                  )}
+                </div>
+
+                <div className="max-h-56 overflow-y-auto">
+                  {loadingEmails ? (
+                    <div className="py-6 text-center"><Loader2 size={16} className="animate-spin mx-auto text-slate-300" /></div>
+                  ) : filteredEmails.length === 0 ? (
+                    <p className="text-xs font-bold text-slate-400 text-center py-6">
+                      কোনো ইমেইল পাওয়া যায়নি
+                    </p>
+                  ) : (
+                    <div className="p-3 space-y-1.5">
+                      {/* Select All */}
+                      <div
+                        className="flex items-center gap-3 px-3 py-2 rounded-xl bg-blue-50/50 cursor-pointer hover:bg-blue-50 transition-colors"
+                        onClick={toggleAll}
+                      >
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                          filteredEmails.every(e => selectedEmails.has(e.email)) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'
+                        }`}>
+                          {filteredEmails.every(e => selectedEmails.has(e.email)) && (
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          )}
+                        </div>
+                        <span className="text-xs font-black text-blue-700">সব সিলেক্ট / আনসিলেক্ট</span>
+                      </div>
+
+                      {/* Recipient rows */}
+                      {filteredEmails.map((item) => (
+                        <div
+                          key={item.email}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer transition-all ${
+                            selectedEmails.has(item.email) ? 'bg-emerald-50/30' : 'hover:bg-slate-50'
+                          }`}
+                          onClick={() => toggleEmail(item.email)}
+                        >
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                            selectedEmails.has(item.email) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 bg-white'
+                          }`}>
+                            {selectedEmails.has(item.email) && (
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-900 truncate flex items-center gap-1.5">
+                              {item.name}
+                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full shrink-0 uppercase tracking-wider ${
+                                item.role === 'retailer' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {item.role}
+                              </span>
+                            </p>
+                            <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                              {item.email} • {item.shopName}
+                            </p>
+                          </div>
+                          <button
+                            onClick={e => { e.stopPropagation(); removeEmailFromList(item.email); }}
+                            type="button"
+                            className="p-1 hover:bg-red-100 rounded-lg text-slate-300 hover:text-red-500 transition-colors"
+                            title="তালিকা থেকে রিমুভ করুন"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <input
             type="text"
             maxLength={200}
@@ -308,10 +517,10 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
 
           <button
             onClick={handleSendEmail}
-            disabled={sendingEmail || !emailSubject.trim() || !emailMessage.trim()}
+            disabled={sendingEmail || !emailSubject.trim() || !emailMessage.trim() || selectedEmails.size === 0}
             className="w-full py-5 bg-blue-600 text-white rounded-3xl font-black text-sm uppercase tracking-[0.2em] hover:bg-blue-700 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-3"
           >
-            {sendingEmail ? <><Loader2 size={18} className="animate-spin" /> পাঠানো হচ্ছে...</> : <><Mail size={18} /> ইমেইল পাঠান</>}
+            {sendingEmail ? <><Loader2 size={18} className="animate-spin" /> পাঠানো হচ্ছে...</> : <><Mail size={18} /> ইমেইল পাঠান ({selectedEmails.size} জনকে)</>}
           </button>
         </div>
       )}

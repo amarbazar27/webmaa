@@ -26,6 +26,7 @@ export default function BroadcastPanel({ shopId }) {
   const [loadingEmails, setLoadingEmails] = useState(true);
   const [showEmailList, setShowEmailList] = useState(false);
   const [selectedEmails, setSelectedEmails] = useState(new Set());
+  const [excludedEmails, setExcludedEmails] = useState(new Set());
 
   // Load orders to extract emails
   useEffect(() => {
@@ -39,6 +40,11 @@ export default function BroadcastPanel({ shopId }) {
       .finally(() => setLoadingEmails(false));
   }, [shopId]);
 
+  // Reset exclusions when segment changes
+  useEffect(() => {
+    setExcludedEmails(new Set());
+  }, [segment]);
+
   // Compute emails for selected segment
   const segmentEmails = useMemo(() => {
     const emailSet = new Set();
@@ -46,6 +52,7 @@ export default function BroadcastPanel({ shopId }) {
     allOrders.forEach(order => {
       const email = order.customerEmail;
       if (!email || !email.includes('@')) return;
+      if (excludedEmails.has(email)) return; // Filter out session-excluded emails
       const status = order.status || 'pending';
       let seg = 'all';
       if (status === 'completed') seg = 'buyers';
@@ -66,7 +73,7 @@ export default function BroadcastPanel({ shopId }) {
       .map(([email, info]) => ({ email, name: info.name }));
 
     return filtered;
-  }, [allOrders, segment]);
+  }, [allOrders, segment, excludedEmails]);
 
   // Re-initialize selected emails when segment changes
   useEffect(() => {
@@ -88,6 +95,19 @@ export default function BroadcastPanel({ shopId }) {
     } else {
       setSelectedEmails(new Set(segmentEmails.map(e => e.email)));
     }
+  };
+
+  const handleRemoveEmail = (email) => {
+    setExcludedEmails(prev => {
+      const next = new Set(prev);
+      next.add(email);
+      return next;
+    });
+    setSelectedEmails(prev => {
+      const next = new Set(prev);
+      next.delete(email);
+      return next;
+    });
   };
 
   // Load history
@@ -235,7 +255,7 @@ export default function BroadcastPanel({ shopId }) {
                       <p className="text-[10px] text-slate-400 truncate">{email}</p>
                     </div>
                     <button
-                      onClick={e => { e.stopPropagation(); toggleEmail(email); setSelectedEmails(prev => { const n2 = new Set(prev); n2.delete(email); return n2; }); }}
+                      onClick={e => { e.stopPropagation(); handleRemoveEmail(email); }}
                       className="p-1 hover:bg-red-100 rounded-lg text-slate-300 hover:text-red-500 transition-colors"
                       title="Remove"
                     >

@@ -187,34 +187,55 @@ function buildRetailerEmail({ shopName, orderId, customerName, customerPhone, it
 }
 
 // ══════════════════════════════════════════════════
+// Helper to get dynamic, realtime shopName from database
+async function getRealtimeShopName(shopId, defaultShopName) {
+  if (!shopId) return defaultShopName || 'Shop';
+  try {
+    const { adminDb } = await import('./firebase-admin');
+    if (adminDb) {
+      const shopSnap = await adminDb.collection('shops').doc(shopId).get();
+      if (shopSnap.exists) {
+        return shopSnap.data().shopName || defaultShopName || 'Shop';
+      }
+    }
+  } catch (err) {
+    console.warn(`[Ruflo] Failed to fetch realtime shopName for ${shopId}:`, err.message);
+  }
+  return defaultShopName || 'Shop';
+}
+
 // 📨 PUBLIC RUFLO API FUNCTIONS
 // ══════════════════════════════════════════════════
 
 /**
  * অর্ডার confirmation email পাঠাও (গ্রাহকের কাছে)
  */
-export async function sendOrderConfirmationEmail({ to, shopName, customerName, orderId, items, total }) {
+export async function sendOrderConfirmationEmail({ to, shopId, shopName, customerName, orderId, items, total }) {
   if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
 
+  const activeShopName = await getRealtimeShopName(shopId, shopName);
+
   return sendWithRetry({
-    from: `"${process.env.RUFLO_FROM_NAME || shopName}" <${process.env.RUFLO_EMAIL}>`,
+    from: `"${activeShopName}" <${process.env.RUFLO_EMAIL}>`,
     to,
-    subject: `✅ অর্ডার নিশ্চিত হয়েছে — #${orderId} | ${shopName}`,
-    html: buildOrderEmail({ shopName, customerName, orderId, items, total }),
+    subject: `✅ অর্ডার নিশ্চিত হয়েছে — #${orderId} | ${activeShopName}`,
+    html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, items, total }),
   });
 }
 
 /**
  * নতুন অর্ডারের notification email (রিটেইলারের কাছে)
  */
-export async function sendRetailerNotificationEmail({ to, shopName, orderId, customerName, customerPhone, items, total }) {
+export async function sendRetailerNotificationEmail({ to, shopId, shopName, orderId, customerName, customerPhone, items, total }) {
   if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
+
+  const activeShopName = await getRealtimeShopName(shopId, shopName);
 
   return sendWithRetry({
     from: `"Webmaa Ruflo" <${process.env.RUFLO_EMAIL}>`,
     to,
-    subject: `📦 নতুন অর্ডার #${orderId} — ${shopName}`,
-    html: buildRetailerEmail({ shopName, orderId, customerName, customerPhone, items, total }),
+    subject: `📦 নতুন অর্ডার #${orderId} — ${activeShopName}`,
+    html: buildRetailerEmail({ shopName: activeShopName, orderId, customerName, customerPhone, items, total }),
   });
 }
 
@@ -235,8 +256,10 @@ export async function sendOTPEmail({ to, name, otp, purpose = 'লগইন' }) 
 /**
  * Status update email পাঠাও (গ্রাহকের কাছে)
  */
-export async function sendStatusUpdateEmail({ to, shopName, customerName, orderId, items, total, status }) {
+export async function sendStatusUpdateEmail({ to, shopId, shopName, customerName, orderId, items, total, status }) {
   if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
+
+  const activeShopName = await getRealtimeShopName(shopId, shopName);
 
   const subjectMap = {
     confirmed: '✅ আপনার অর্ডার নিশ্চিত হয়েছে',
@@ -246,9 +269,9 @@ export async function sendStatusUpdateEmail({ to, shopName, customerName, orderI
   const subject = `${subjectMap[status] || 'অর্ডার আপডেট'} — #${orderId}`;
 
   return sendWithRetry({
-    from: `"${shopName}" <${process.env.RUFLO_EMAIL}>`,
+    from: `"${activeShopName}" <${process.env.RUFLO_EMAIL}>`,
     to,
     subject,
-    html: buildOrderEmail({ shopName, customerName, orderId, items, total, status }),
+    html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, items, total, status }),
   });
 }

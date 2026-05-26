@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react';
 import { Bell, X, Info, AlertTriangle, Sparkles, Store, Search, Trash2, CheckCheck } from 'lucide-react';
 import { subscribeBroadcasts } from '@/lib/firestore';
 
+const parseTimestamp = (ts) => {
+  if (!ts) return Date.now();
+  if (typeof ts.toMillis === 'function') return ts.toMillis();
+  if (ts.seconds) return ts.seconds * 1000 + (ts.nanoseconds ? ts.nanoseconds / 1000000 : 0);
+  if (ts instanceof Date) return ts.getTime();
+  if (typeof ts === 'number') return ts;
+  const parsed = new Date(ts).getTime();
+  return isNaN(parsed) ? Date.now() : parsed;
+};
+
 const TYPE_CONFIG = {
   info: { icon: Info, bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', iconColor: 'text-blue-500' },
   warning: { icon: AlertTriangle, bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', iconColor: 'text-amber-500' },
@@ -29,30 +39,31 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
   useEffect(() => {
     const unsub = subscribeBroadcasts((allBroadcasts) => {
       let relevant = allBroadcasts.filter(b => {
-        // Superadmin/system global broadcasts always show
-        if (b.senderRole === 'superadmin' || b.senderRole === 'system') return true;
-        if (b.target === 'all') return true;
-        
-        // Dashboard user (Retailer/Staff) — only see their own shop's broadcasts
-        if (isDashboard) {
-           if (b.target === 'shop_users' && b.shopId === shopId) return true;
-           if (b.target === 'specific_shop' && b.shopId === shopId) return true;
-        } 
-        // Storefront user (Customer)
-        else {
-           if (b.target === 'customers') return true;
-           if (b.target === 'specific_shop' && b.shopId === shopId) return true;
-           if (b.target === 'shop_users' && b.shopId === shopId) return true;
+        // 1. If specific shop, it must match shopId
+        if (b.target === 'specific_shop' || b.target === 'shop_users') {
+          return b.shopId === shopId;
         }
+        
+        // 2. If retailers only, must be in dashboard
+        if (b.target === 'retailers') {
+          return isDashboard;
+        }
+        
+        // 3. If customers only, must be in storefront
+        if (b.target === 'customers') {
+          return !isDashboard;
+        }
+        
+        // 4. Global target 'all' or empty target
+        if (b.target === 'all' || !b.target) {
+          return true;
+        }
+        
         return false;
       });
 
       // Sort newest first, limit to 30
-      relevant.sort((a, b) => {
-        const timeA = a.createdAt?.seconds || 0;
-        const timeB = b.createdAt?.seconds || 0;
-        return timeB - timeA;
-      });
+      relevant.sort((a, b) => parseTimestamp(b.createdAt) - parseTimestamp(a.createdAt));
 
       setNotifications(relevant.slice(0, 30));
     }, (err) => {
@@ -82,11 +93,12 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
     try {
       const stored = localStorage.getItem('deleted_notifications');
       const persisted = stored ? JSON.parse(stored) : [];
-      const merged = [...new Set([...persisted, ...visibleNotifications.map(n => n.id)])];
+      // Clear ALL loaded notifications in state to prevent hidden older ones from appearing!
+      const merged = [...new Set([...persisted, ...notifications.map(n => n.id)])];
       localStorage.setItem('deleted_notifications', JSON.stringify(merged));
       setDeletedIds(merged);
     } catch {
-      const allIds = [...new Set([...deletedIds, ...visibleNotifications.map(n => n.id)])];
+      const allIds = [...new Set([...deletedIds, ...notifications.map(n => n.id)])];
       setDeletedIds(allIds);
     }
   };
@@ -175,7 +187,7 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                       )}
                       <button
                         onClick={() => handleDelete(notif.id)}
-                        className="absolute top-2 right-2 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                        className="absolute top-2 right-2 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
                         title="ডিলিট করুন"
                       >
                         <Trash2 size={14} />
@@ -196,7 +208,7 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                              </span>
                              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                              <span className="text-[10px] font-bold opacity-50">
-                               {notif.createdAt?.seconds ? new Date(notif.createdAt.seconds * 1000).toLocaleDateString() : 'New'}
+                               {notif.createdAt ? new Date(parseTimestamp(notif.createdAt)).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'New'}
                              </span>
                           </div>
                         </div>

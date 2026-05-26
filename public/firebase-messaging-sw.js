@@ -11,11 +11,35 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
+// Static production Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAMMzATvPWghOT8islcllFz9hXlCJ6HdFk",
+  authDomain: "webmaa-app.firebaseapp.com",
+  projectId: "webmaa-app",
+  storageBucket: "webmaa-app.firebasestorage.app",
+  messagingSenderId: "156216219253",
+  appId: "1:156216219253:web:8fec080019c45244d0ca3c",
+  measurementId: "G-ZNTHE383S2"
+};
+
 // ── State ────────────────────────────────────────────────────────────────
 let _initialized = false;
 let _messaging   = null;
 
-// ── Initialize Firebase (called after config arrives via postMessage) ─────
+// Initialize statically on load to ensure instant background wakeups
+try {
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  _messaging = firebase.messaging();
+  _initialized = true;
+  _messaging.onBackgroundMessage(handleBackgroundMessage);
+  console.log('[FCM-SW] ✅ Static initialization successful, background listener active.');
+} catch (err) {
+  console.error('[FCM-SW] ⚠️ Static initialization error:', err.message);
+}
+
+// ── Initialize Firebase Fallback ─────────────────────────────────────────
 function tryInitFirebase(config) {
   if (_initialized || !config) return;
   _initialized = true;
@@ -25,7 +49,7 @@ function tryInitFirebase(config) {
       firebase.initializeApp(config);
     }
     _messaging = firebase.messaging();
-    console.log('[FCM-SW] ✅ Firebase initialized, scope:', self.registration.scope);
+    console.log('[FCM-SW] ✅ Firebase initialized via postMessage, scope:', self.registration.scope);
 
     // Register background message handler now that messaging is ready
     _messaging.onBackgroundMessage(handleBackgroundMessage);

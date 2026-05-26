@@ -395,6 +395,42 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
        }
     }
   };
+  // ── Register PWA Service Worker instantly to trigger beforeinstallprompt on first-visit ──
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+        .then(reg => {
+          console.log('[PWA] SW registered immediately, scope:', reg.scope);
+          // Inject Firebase config dynamically so it's SSR-safe
+          const config = {
+            apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+            authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+            projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+            storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+            messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+            appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+          };
+          const sendConfig = (sw) => {
+            if (sw) sw.postMessage({ type: 'FIREBASE_CONFIG', config });
+          };
+          if (reg.installing) sendConfig(reg.installing);
+          else if (reg.waiting) sendConfig(reg.waiting);
+          else if (reg.active) sendConfig(reg.active);
+
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            if (newSW) {
+              newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'activated') sendConfig(newSW);
+              });
+            }
+          });
+        })
+        .catch(err => {
+          console.error('[PWA] SW registration failed:', err);
+        });
+    }
+  }, []);
 
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -406,6 +442,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      window.deferredPrompt = e; // Store globally as robust fallback
       setPwaInstalled(false);
       localStorage.removeItem('pwa_installed'); // Reset if uninstalled
     };
@@ -615,18 +652,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         const items = JSON.parse(jsonMatch[1]);
         items.forEach(item => {
           const product = products.find(p => p.id === (item.id || item.productId) && p.stock !== 0);
-          if (product && !addedIds.has(product.id)) {
+          if (product) {
             const qty = item.qty || item.quantity || 1;
-            if (!cart.find(i => i.id === product.id)) {
-              setCart(prev => [...prev, { 
-                ...product, 
-                quantity: qty, 
-                note: item.note || '',
-                customizedText: item.customizedText || ''
-              }]);
-              addedIds.add(product.id);
-              added++;
-            }
+            addToCart(product, qty, item.customizedText || '', item.note || '');
+            addedIds.add(product.id);
+            added++;
           }
         });
       } catch (e) { /* fallback below */ }
@@ -640,11 +670,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         const nameWords = product.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
         const matchCount = nameWords.filter(w => cleanText.includes(w)).length;
         if (matchCount > 0 && matchCount >= Math.ceil(nameWords.length * 0.5)) {
-          if (!cart.find(i => i.id === product.id)) {
-            setCart(prev => [...prev, { ...product, quantity: 1, note: '' }]);
-            addedIds.add(product.id);
-            added++;
-          }
+          addToCart(product, 1, '', '');
+          addedIds.add(product.id);
+          added++;
         }
       });
     }
@@ -741,13 +769,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     );
   };
 
-  
-  useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      window.deferredPrompt = e;
-    });
-  }, []);
+
 
   useEffect(() => {
     const syncCart = () => {
@@ -780,17 +802,37 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
   }, [products, cart.length]); // Check when products load or cart size changes
 
-  const addToCart = (product) => {
+  const addToCart = (product, customQty = null, customizedText = null, customNote = null) => {
     if (product.stock === 0) {
       toast.error('দুঃখিত, এই মুহূর্তে স্টকে নেই');
       return;
     }
-    const existing = cart.find(item => item.id === product.id);
-    if (existing) {
-      setCart(prev => prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+    
+    // Resolve fields: prior parameter defaults first, then properties on the product object, else default values
+    const qtyToAdd = customQty !== null ? customQty : (product.quantity !== undefined ? Number(product.quantity) || 1 : 1);
+    const resolvedCustomizedText = customizedText !== null ? customizedText : (product.customizedText || '');
+    const resolvedNote = customNote !== null ? customNote : (product.note || '');
+
+    // Scoped variants matching: match by id AND customizedText!
+    const existingIndex = cart.findIndex(item => 
+      item.id === product.id && 
+      (item.customizedText || '') === (resolvedCustomizedText || '')
+    );
+
+    if (existingIndex > -1) {
+      setCart(prev => prev.map((item, idx) => 
+        idx === existingIndex 
+          ? { ...item, quantity: item.quantity + qtyToAdd, note: resolvedNote || item.note } 
+          : item
+      ));
       toast.success(`${product.name} পরিমাণ বাড়ানো হয়েছে`);
     } else {
-      const newCart = [...cart, { ...product, quantity: 1, note: '' }];
+      const newCart = [...cart, { 
+        ...product, 
+        quantity: qtyToAdd, 
+        note: resolvedNote, 
+        customizedText: resolvedCustomizedText 
+      }];
       setCart(newCart);
       trackStoreEvent('add_to_cart', { id: product.id, name: product.name, price: product.price });
       toast.success(`${product.name} ঝুড়িতে যোগ হয়েছে!`);

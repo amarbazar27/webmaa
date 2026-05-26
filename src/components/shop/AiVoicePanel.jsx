@@ -111,7 +111,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           shopId: shop.id,
           messages: [{
             role: 'user',
-            content: `এই বাজারের লিস্ট থেকে পণ্য বের করো:\n"${textInput}"\n\nউপলব্ধ পণ্য (ID|নাম|দাম):\n${productList}\n\nশুধু এই JSON দাও: {"items":[{"productId":"ID","quantity":1,"customizedText":"৪০০ গ্রাম"}]}\nযদি ইউজার নির্দিষ্ট কোনো পরিমাণ বলে (যেমন: ৪০০ গ্রাম বা ২০ পিস), তবে quantity তে বেস ইউনিটের ভিত্তিতে সংখ্যা বা ১ দিবে এবং customizedText এ "৪০০ গ্রাম" বা "২০ পিস" লিখে দিবে।`
+            content: `এই বাজারের লিস্ট থেকে পণ্য বের করো:\n"${textInput}"\n\nউপলব্ধ পণ্য (ID|নাম|দাম):\n${productList}\n\nধন্যবাদ! শুধু JSON রিটার্ন করো এই ফরম্যাটে:\n{"items":[{"productId":"ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস", "customizedText":"৪০০ গ্রাম", "note":"ভাল দেখে দিয়েন"}]}\n\n🔴 বিশেষ নির্দেশ:\n১. যদি ইউজার নির্দিষ্ট কোনো পরিমাণ বলে (যেমন: ৪০০ গ্রাম বা ২০ পিস), তবে quantity তে বেস ইউনিটের ভিত্তিতে সংখ্যা বা ১ দিবে এবং customizedText এ "৪০০ গ্রাম" বা "২০ পিস" লিখে দিবে।\n২. যদি ইউজার কোনো পণ্যের সাথে অতিরিক্ত নির্দেশনা বা অনুরোধ লেখে (যেমন: "ভাল দেখে দিয়েন", "পাকা লাল দেখে"), তবে তা "note" ফিল্ডে স্পষ্টভাবে লিখে দিবে।\n৩. যদি কোনো পণ্য না মিলে, {"items":[]} রিটার্ন করো।`
           }]
         })
       });
@@ -126,6 +126,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           name: products.find(p => p.id === (item.productId || item.id))?.name || item.name,
           quantity: parseInt(item.quantity) || 1,
           customizedText: item.customizedText || '',
+          note: item.note || '',
           confidence: 'high'
         })).filter(i => products.some(p => p.id === i.productId));
         setDetectedItems(mapped);
@@ -140,7 +141,12 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
     const items = detectedItems.map(item => {
       const product = products.find(p => p.id === item.productId);
       if (!product) return null;
-      return { ...product, quantity: item.quantity || 1, customizedText: item.customizedText || '', note: item.customizedText ? '' : 'AI Detected' };
+      return { 
+        ...product, 
+        quantity: item.quantity || 1, 
+        customizedText: item.customizedText || '', 
+        note: item.note || (item.customizedText ? '' : 'AI Detected') 
+      };
     }).filter(Boolean);
     if (items.length === 0) { toast.error('কোনো পণ্য পাওয়া যায়নি'); return; }
     items.forEach(item => onAddToCart(item));

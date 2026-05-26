@@ -40,11 +40,13 @@ export default function useVoiceOrder({ products, shopId, onAddToCart }) {
 এই পণ্যগুলো থেকে ম্যাচ করো (ID|নাম|দাম):
 ${productList}
 
-শুধু JSON রিটার্ন করো এই ফরম্যাটে:
-{"items":[{"id":"PRODUCT_ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস", "customizedText":"৪০০ গ্রাম"}]}
+ধন্যবাদ! শুধু JSON রিটার্ন করো এই ফরম্যাটে:
+{"items":[{"id":"PRODUCT_ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস", "customizedText":"৪০০ গ্রাম", "note":"ভাল দেখে দিয়েন"}]}
 
-যদি ইউজার কোনো নির্দিষ্ট পরিমাণ (যেমন: ৪০০ গ্রাম) বলে এবং বেস ইউনিট কেজি হয়, তবে quantity এর জায়গায় ১ দিবে এবং customizedText এ "৪০০ গ্রাম" লিখে দিবে। 
-যদি কোনো পণ্য না মিলে, {"items":[]} রিটার্ন করো।`
+🔴 বিশেষ নির্দেশ:
+১. যদি ইউজার কোনো নির্দিষ্ট পরিমাণ (যেমন: ৪০০ গ্রাম) বলে এবং বেস ইউনিট কেজি হয়, তবে quantity এর জায়গায় ১ দিবে এবং customizedText এ "৪০০ গ্রাম" লিখে দিবে।
+২. যদি ইউজার পণ্যের সাথে কোনো অতিরিক্ত কথা, অনুরোধ বা বিশেষ নির্দেশনা বলে (যেমন: "ভাল দেখে দিয়েন", "পিস করে দিন", "কম ঝাল", "পাকা দেখে দিয়েন"), তবে তা "note" ফিল্ডে স্পষ্টভাবে লিখে দিবে।
+৩. যদি কোনো পণ্য না মিলে, {"items":[]} রিটার্ন করো।`
           }]
         })
       });
@@ -56,9 +58,35 @@ ${productList}
 
       const parsed = JSON.parse(jsonMatch[0]);
       const matched = (parsed.items || []).map(item => {
-        const product = products.find(p => p.id === item.id && p.stock !== 0);
+        // Try finding by exact doc ID first
+        let product = products.find(p => p.id === item.id && p.stock !== 0);
+
+        // If not found, try matching by exact name
+        if (!product && item.name) {
+          product = products.find(p => p.name.toLowerCase() === item.name.toLowerCase() && p.stock !== 0);
+        }
+
+        // If still not found, try a fuzzy word match on name
+        if (!product && item.name) {
+          const itemWords = item.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
+          product = products.find(p => {
+            if (p.stock === 0) return false;
+            const pWords = p.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
+            // Check if there is high overlap (at least 70%)
+            const overlap = pWords.filter(w => itemWords.includes(w)).length;
+            return overlap >= Math.ceil(pWords.length * 0.7);
+          });
+        }
+
         if (!product) return null;
-        return { product, quantity: Math.max(1, parseInt(item.quantity) || 1), unit: item.unit, customizedText: item.customizedText || '' };
+
+        return { 
+          product, 
+          quantity: Math.max(1, parseInt(item.quantity) || 1), 
+          unit: item.unit || '', 
+          customizedText: item.customizedText || '',
+          note: item.note || '' 
+        };
       }).filter(Boolean);
 
       setVoiceResult(matched);
@@ -86,17 +114,6 @@ ${productList}
     setTranscript('');
     setInterimTranscript('');
     setVoiceResult(null);
-
-    // Explicitly request microphone permission first
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Release the stream immediately — we only needed permission grant
-      stream.getTracks().forEach(t => t.stop());
-    } catch (permErr) {
-      setError('মাইক্রোফোনের অনুমতি দিন। ব্রাউজারের অনুমতি সেটিংস চেক করুন।');
-      speak('মাইক্রোফোনের অনুমতি নেই।', lang);
-      return;
-    }
 
     const rec = createRecognition({
       lang,
@@ -147,8 +164,8 @@ ${productList}
 
   const addVoiceResultToCart = useCallback(() => {
     if (!voiceResult || voiceResult.length === 0) return;
-    voiceResult.forEach(({ product, quantity, customizedText }) => {
-      onAddToCart({ ...product, quantity, note: 'Voice Order', customizedText });
+    voiceResult.forEach(({ product, quantity, customizedText, note }) => {
+      onAddToCart({ ...product, quantity, note: note || 'Voice Order', customizedText });
     });
     speak(`${voiceResult.length}টি পণ্য কার্টে যোগ হয়েছে!`);
     setVoiceResult(null);

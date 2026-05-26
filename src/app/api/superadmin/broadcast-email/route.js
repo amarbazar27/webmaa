@@ -12,6 +12,14 @@ function createTransporter() {
 
   if (!user || !pass) return null;
 
+  // Use Gmail service helper if host is Gmail
+  if (host === 'smtp.gmail.com' || host.includes('gmail')) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user, pass },
+    });
+  }
+
   return nodemailer.createTransport({
     host,
     port,
@@ -20,10 +28,156 @@ function createTransporter() {
   });
 }
 
+// GET — Fetch compiled recipients for a target/shop
+export async function GET(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const target = searchParams.get('target') || 'all_customers';
+    const shopId = searchParams.get('shopId');
+
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Database Error' }, { status: 500 });
+    }
+
+    const emailMap = new Map(); // email -> { email, name, role, shopName }
+
+    if (target === 'all_retailers') {
+      const shopsSnap = await adminDb.collection('shops').get();
+      for (const shopDoc of shopsSnap.docs) {
+        const sData = shopDoc.data();
+        const email = sData.ownerEmail;
+        if (email && email.includes('@')) {
+          emailMap.set(email, {
+            email,
+            name: sData.shopName || 'Retailer',
+            role: 'retailer',
+            shopName: sData.shopName || 'N/A'
+          });
+        }
+      }
+    } else if (target === 'shop_retailer' && shopId) {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      if (shopDoc.exists) {
+        const sData = shopDoc.data();
+        const email = sData.ownerEmail;
+        if (email && email.includes('@')) {
+          emailMap.set(email, {
+            email,
+            name: sData.shopName || 'Retailer',
+            role: 'retailer',
+            shopName: sData.shopName || 'N/A'
+          });
+        }
+      }
+    } else if (target === 'shop_customers' && shopId) {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      const shopName = shopDoc.exists ? shopDoc.data().shopName : 'Shop';
+      const ordersSnap = await adminDb
+        .collection('shops').doc(shopId)
+        .collection('orders').get();
+      ordersSnap.docs.forEach(doc => {
+        const email = doc.data().customerEmail;
+        if (email && email.includes('@')) {
+          emailMap.set(email, {
+            email,
+            name: doc.data().customerName || email.split('@')[0],
+            role: 'customer',
+            shopName
+          });
+        }
+      });
+    } else if (target === 'all_customers') {
+      const shopsSnap = await adminDb.collection('shops').get();
+      for (const shopDoc of shopsSnap.docs) {
+        const shopName = shopDoc.data().shopName || 'Shop';
+        const ordersSnap = await adminDb
+          .collection('shops').doc(shopDoc.id)
+          .collection('orders').get();
+        ordersSnap.docs.forEach(doc => {
+          const email = doc.data().customerEmail;
+          if (email && email.includes('@')) {
+            emailMap.set(email, {
+              email,
+              name: doc.data().customerName || doc.data().customerPhone || email.split('@')[0],
+              role: 'customer',
+              shopName
+            });
+          }
+        });
+      }
+    } else if (target === 'shop_everyone' && shopId) {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      if (shopDoc.exists) {
+        const sData = shopDoc.data();
+        const shopName = sData.shopName || 'Shop';
+        const rEmail = sData.ownerEmail;
+        if (rEmail && rEmail.includes('@')) {
+          emailMap.set(rEmail, {
+            email: rEmail,
+            name: `${shopName} (Retailer)`,
+            role: 'retailer',
+            shopName
+          });
+        }
+        const ordersSnap = await adminDb
+          .collection('shops').doc(shopId)
+          .collection('orders').get();
+        ordersSnap.docs.forEach(doc => {
+          const email = doc.data().customerEmail;
+          if (email && email.includes('@')) {
+            emailMap.set(email, {
+              email,
+              name: doc.data().customerName || doc.data().customerPhone || email.split('@')[0],
+              role: 'customer',
+              shopName
+            });
+          }
+        });
+      }
+    } else if (target === 'everyone') {
+      const shopsSnap = await adminDb.collection('shops').get();
+      for (const shopDoc of shopsSnap.docs) {
+        const sData = shopDoc.data();
+        const shopName = sData.shopName || 'Shop';
+        const rEmail = sData.ownerEmail;
+        if (rEmail && rEmail.includes('@')) {
+          emailMap.set(rEmail, {
+            email: rEmail,
+            name: `${shopName} (Retailer)`,
+            role: 'retailer',
+            shopName
+          });
+        }
+        const ordersSnap = await adminDb
+          .collection('shops').doc(shopDoc.id)
+          .collection('orders').get();
+        ordersSnap.docs.forEach(doc => {
+          const email = doc.data().customerEmail;
+          if (email && email.includes('@')) {
+            emailMap.set(email, {
+              email,
+              name: doc.data().customerName || doc.data().customerPhone || email.split('@')[0],
+              role: 'customer',
+              shopName
+            });
+          }
+        });
+      }
+    }
+
+    const emails = Array.from(emailMap.values());
+    return NextResponse.json({ emails });
+  } catch (error) {
+    console.error('[SuperAdmin Recipient Fetch] Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// POST — Send emails to target or direct list
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { subject, message, target, shopId } = body;
+    const { subject, message, target, shopId, emails: passedEmails } = body;
 
     if (!subject?.trim() || !message?.trim()) {
       return NextResponse.json({ error: 'বিষয় ও মেসেজ লিখুন' }, { status: 400 });
@@ -33,33 +187,35 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Database Error' }, { status: 500 });
     }
 
-    // Collect unique customer emails
-    const emailSet = new Set();
-
-    if (target === 'shop_customers' && shopId) {
-      // Get emails from a specific shop's orders
-      const ordersSnap = await adminDb
-        .collection('shops').doc(shopId)
-        .collection('orders').get();
-      ordersSnap.docs.forEach(doc => {
-        const email = doc.data().customerEmail;
-        if (email && email.includes('@')) emailSet.add(email);
-      });
+    let emails = [];
+    if (passedEmails && Array.isArray(passedEmails) && passedEmails.length > 0) {
+      emails = passedEmails;
     } else {
-      // Get all customer emails across all shops
-      const shopsSnap = await adminDb.collection('shops').get();
-      for (const shopDoc of shopsSnap.docs) {
+      // Fallback compilation (backward compatibility)
+      const emailSet = new Set();
+      if (target === 'shop_customers' && shopId) {
         const ordersSnap = await adminDb
-          .collection('shops').doc(shopDoc.id)
+          .collection('shops').doc(shopId)
           .collection('orders').get();
         ordersSnap.docs.forEach(doc => {
           const email = doc.data().customerEmail;
           if (email && email.includes('@')) emailSet.add(email);
         });
+      } else {
+        const shopsSnap = await adminDb.collection('shops').get();
+        for (const shopDoc of shopsSnap.docs) {
+          const ordersSnap = await adminDb
+            .collection('shops').doc(shopDoc.id)
+            .collection('orders').get();
+          ordersSnap.docs.forEach(doc => {
+            const email = doc.data().customerEmail;
+            if (email && email.includes('@')) emailSet.add(email);
+          });
+        }
       }
+      emails = Array.from(emailSet);
     }
 
-    const emails = Array.from(emailSet);
     if (emails.length === 0) {
       return NextResponse.json({ success: true, sent: 0, total: 0, message: 'কোনো ইমেইল পাওয়া যায়নি' });
     }
