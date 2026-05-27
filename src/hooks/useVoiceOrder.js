@@ -115,6 +115,20 @@ ${productList}
     setInterimTranscript('');
     setVoiceResult(null);
 
+    // Pre-flight check: Explicitly prompt and ensure microphone permission is granted
+    try {
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop()); // release stream immediately
+      }
+    } catch (err) {
+      console.warn('[VoiceOrder] Microphone pre-flight permission check failed:', err.name, err.message);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('মাইক্রোফোনের অনুমতি নেই। দয়া করে ব্রাউজার এবং ডিভাইসের মাইক্রোফোন সেটিংস চেক করুন।');
+        return;
+      }
+    }
+
     const rec = createRecognition({
       lang,
       onResult: ({ final, interim }) => {
@@ -151,9 +165,17 @@ ${productList}
       };
       recRef.current = rec;
       recRef.current._finalText = '';
-      startListening(rec);
+      
       setIsListening(true);
-      speak('বলুন...', lang);
+      
+      // Speak "বলুন..." or "Speak now..." first in selected language
+      const promptText = lang === 'bn-BD' ? 'বলুন...' : 'Speak now...';
+      speak(promptText, lang);
+
+      // Stagger mic activation by 650ms to ensure SpeechSynthesis releases the audio channel
+      setTimeout(() => {
+        startListening(rec);
+      }, 650);
     }
   }, [lang, processWithAI]);
 

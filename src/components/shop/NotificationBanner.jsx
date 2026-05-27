@@ -52,10 +52,14 @@ export default function NotificationBanner({ shopId = null }) {
     } catch {}
   };
 
-  const visible = notifications.filter(n => !dismissed.includes(n.id));
-  if (visible.length === 0) return null;
+  if (notifications.length === 0) return null;
 
-  const latestNotif = visible[0];
+  const absoluteLatestNotif = notifications[0];
+
+  // If the absolute latest notification has been dismissed, do not show any notification banner
+  if (dismissed.includes(absoluteLatestNotif.id)) return null;
+
+  const latestNotif = absoluteLatestNotif;
   const config = TYPE_CONFIG[latestNotif.type] || TYPE_CONFIG.info;
   const Icon = config.icon;
 
@@ -77,9 +81,11 @@ export default function NotificationBanner({ shopId = null }) {
           </span>
           <button
             onClick={() => handleDismiss(latestNotif.id)}
-            className="shrink-0 p-1.5 rounded-lg hover:bg-black/5 transition-colors"
+            className="shrink-0 p-3 -m-2 rounded-full hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer"
+            title="বন্ধ করুন"
+            style={{ minWidth: '44px', minHeight: '44px' }}
           >
-            <X size={14} className="opacity-40" />
+            <X size={18} className="opacity-60 text-slate-700" strokeWidth={3} />
           </button>
         </div>
       </div>

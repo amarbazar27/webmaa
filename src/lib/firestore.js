@@ -491,6 +491,11 @@ export const sendBroadcast = async (data) => {
   });
 };
 
+export const deleteBroadcast = async (broadcastId) => {
+  return deleteDoc(doc(db, 'broadcasts', broadcastId));
+};
+
+
 export const subscribeBroadcasts = (callback, errorCallback, shopId = null) => {
   // Fetch last 50 to have enough for client-side filtering
   const q = query(

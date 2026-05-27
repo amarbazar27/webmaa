@@ -187,10 +187,11 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                       )}
                       <button
                         onClick={() => handleDelete(notif.id)}
-                        className="absolute top-2 right-2 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all"
+                        className="absolute top-1 right-1 p-3 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer"
                         title="ডিলিট করুন"
+                        style={{ minWidth: '40px', minHeight: '40px' }}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                       </button>
                       
                       <div className="flex items-start gap-3 relative z-10 pr-6">

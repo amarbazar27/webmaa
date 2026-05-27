@@ -156,11 +156,26 @@ export async function POST(request) {
             notification: {
               title: senderName || 'Webmaa',
               body: notifMessage.trim(),
+              icon: '/logo.png',
             },
             data: {
               shopId,
               shopSlug: actualShopSlug,
               url: actualShopSlug ? `/shop/${actualShopSlug}` : '/',
+            },
+            webpush: {
+              notification: {
+                title: senderName || 'Webmaa',
+                body: notifMessage.trim(),
+                icon: '/logo.png',
+                badge: '/logo.png',
+                tag: 'webmaa-msg',
+                requireInteraction: true,
+                vibrate: [200, 100, 200]
+              },
+              headers: {
+                Urgency: 'high'
+              }
             },
             tokens,
           };
@@ -205,7 +220,18 @@ export async function POST(request) {
           for (let i = 0; i < allTokens.length; i += batchSize) {
             const batch = allTokens.slice(i, i + batchSize);
             await admin.messaging().sendEachForMulticast({
-              notification: { title: 'Webmaa', body: notifMessage.trim() },
+              notification: { title: 'Webmaa', body: notifMessage.trim(), icon: '/logo.png' },
+              webpush: {
+                notification: {
+                  title: 'Webmaa',
+                  body: notifMessage.trim(),
+                  icon: '/logo.png',
+                  badge: '/logo.png',
+                  tag: 'webmaa-msg',
+                  requireInteraction: true,
+                },
+                headers: { Urgency: 'high' }
+              },
               tokens: batch,
             });
           }
@@ -251,5 +277,67 @@ export async function GET(request) {
   } catch (error) {
     console.error('Broadcast fetch error:', error);
     return NextResponse.json({ broadcasts: [], history: [] });
+  }
+}
+
+// DELETE — Delete a broadcast
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const broadcastId = searchParams.get('id');
+
+    if (!broadcastId) {
+      return NextResponse.json({ error: 'আইডি প্রয়োজন' }, { status: 400 });
+    }
+
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Database Error' }, { status: 500 });
+    }
+
+    // Verify token
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+    
+    if (!token) {
+      return NextResponse.json({ error: 'লগইন করুন' }, { status: 401 });
+    }
+
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const callerUid = decodedToken.uid;
+
+    // Fetch broadcast first to check owner
+    const broadcastDocRef = adminDb.collection('broadcasts').doc(broadcastId);
+    const docSnap = await broadcastDocRef.get();
+
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'নোটিফিকেশনটি পাওয়া যায়নি' }, { status: 404 });
+    }
+
+    const broadcastData = docSnap.data();
+
+    // Check permissions: either superadmin or the shop owner who owns this broadcast
+    let userRole = decodedToken.role || 'user';
+    try {
+      const userDoc = await adminDb.collection('users').doc(callerUid).get();
+      if (userDoc.exists) {
+        userRole = userDoc.data().role || userRole;
+      }
+    } catch (e) {}
+
+    const isSystemAdmin = userRole === 'superadmin';
+    const isOwner = broadcastData.shopId === callerUid;
+
+    if (!isSystemAdmin && !isOwner) {
+      return NextResponse.json({ error: 'এই নোটিফিকেশনটি ডিলিট করার অনুমতি আপনার নেই' }, { status: 403 });
+    }
+
+    // Delete from Firestore
+    await broadcastDocRef.delete();
+    console.log(`[Broadcast] Deleted doc ${broadcastId} by ${callerUid} (${userRole})`);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Broadcast delete error:', error);
+    return NextResponse.json({ error: 'মুছে ফেলতে ব্যর্থ হয়েছে' }, { status: 500 });
   }
 }

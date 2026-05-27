@@ -1,13 +1,42 @@
 'use client';
-import { useState } from 'react';
-import { Send, Bell, Info, AlertTriangle, Sparkles, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Send, Bell, Info, AlertTriangle, Sparkles, Loader2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { subscribeBroadcasts, deleteBroadcast } from '@/lib/firestore';
 
 export default function NotificationBox({ senderRole, shopId = null }) {
   const [message, setMessage] = useState('');
   const [type, setType] = useState('info');
   const [target, setTarget] = useState('all');
   const [loading, setLoading] = useState(false);
+
+  // ── Sent Box / History Broadcast State & Handlers ───────────────────────
+  const [broadcasts, setBroadcasts] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  useEffect(() => {
+    if (!shopId) return;
+    const unsub = subscribeBroadcasts((data) => {
+      // Filter: only show broadcasts sent by this retailer for this shop
+      const shopBroadcasts = data.filter(b => b.shopId === shopId && b.senderRole === 'retailer');
+      setBroadcasts(shopBroadcasts);
+      setLoadingHistory(false);
+    }, (err) => {
+      console.warn('[NotificationBox] Listener failed:', err.message);
+      setLoadingHistory(false);
+    }, shopId);
+    return () => unsub();
+  }, [shopId]);
+
+  const handleDeleteBroadcast = async (id) => {
+    if (!confirm('আপনি কি নিশ্চিত যে আপনি এই নোটিফিকেশনটি মুছে ফেলতে চান? এটি কাস্টমারদের স্ক্রীন থেকেও মুছে যাবে।')) return;
+    try {
+      await deleteBroadcast(id);
+      toast.success('নোটিফিকেশনটি সফলভাবে মুছে ফেলা হয়েছে! 🗑️');
+    } catch (err) {
+      toast.error('মুছে ফেলতে সমস্যা হয়েছে: ' + err.message);
+    }
+  };
 
   const handleSend = async () => {
     if (!message.trim()) {
@@ -127,6 +156,69 @@ export default function NotificationBox({ senderRole, shopId = null }) {
             </>
           )}
         </button>
+
+        {/* Sent History (Send Box) */}
+        <div className="mt-8 pt-8 border-t border-slate-100 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <Send size={12} className="text-purple-600" /> প্রেরিত বার্তা (Sent History)
+              </h4>
+              <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">আপনার সাম্প্রতিক প্রেরিত নোটিফিকেশন সমূহ</p>
+            </div>
+            <span className="text-[10px] font-black bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-100">
+              {broadcasts.length} টি প্রেরিত
+            </span>
+          </div>
+
+          {loadingHistory ? (
+            <div className="py-6 text-center">
+              <Loader2 className="animate-spin mx-auto text-slate-300 mb-2" size={16} />
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">লোড হচ্ছে...</p>
+            </div>
+          ) : broadcasts.length === 0 ? (
+            <p className="text-xs font-bold text-slate-400 text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              কোনো নোটিফিকেশন পাঠানো হয়নি
+            </p>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+              {broadcasts.map(notif => {
+                const isWarning = notif.type === 'warning';
+                const isPromo = notif.type === 'promo';
+                const bgClass = isWarning ? 'bg-amber-50 border-amber-100 text-amber-800' : isPromo ? 'bg-purple-50 border-purple-100 text-purple-800' : 'bg-blue-50 border-blue-100 text-blue-800';
+
+                return (
+                  <div key={notif.id} className={`p-4 rounded-2xl border flex items-start justify-between gap-4 shadow-sm relative group overflow-hidden ${bgClass}`}>
+                    <div className="flex-1 min-w-0 pr-8 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                          notif.type === 'warning' ? 'bg-amber-100 text-amber-700' : notif.type === 'promo' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {notif.type}
+                        </span>
+                      </div>
+                      <p className="text-xs font-bold leading-relaxed break-words">
+                        {notif.message}
+                      </p>
+                      <p className="text-[9px] opacity-65 font-bold">
+                        {notif.createdAt?.seconds ? new Date(notif.createdAt.seconds * 1000).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'নতুন'}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleDeleteBroadcast(notif.id)}
+                      className="shrink-0 p-2.5 bg-red-100/50 hover:bg-red-500 hover:text-white text-red-500 rounded-xl transition-all cursor-pointer flex items-center justify-center"
+                      title="মুছে ফেলুন"
+                      style={{ minWidth: '36px', minHeight: '36px' }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <p className="mt-6 text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">

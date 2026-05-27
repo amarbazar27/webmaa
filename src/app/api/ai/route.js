@@ -25,16 +25,27 @@ export async function POST(req) {
 
     // ── API Key Resolution ──────────────────────────
     let apiKey = null;
+    const isValidApiKey = (key) => {
+      if (!key || typeof key !== 'string') return false;
+      const k = key.trim();
+      return k.startsWith('AIza') || k.startsWith('gsk_') || k.startsWith('sk-') || k.startsWith('sk-or-');
+    };
+
     if (shopId) {
       const shop = await getShop(shopId);
-      if (shop?.aiConfig?.apiKey?.trim()) apiKey = shop.aiConfig.apiKey.trim();
+      const shopKey = shop?.aiConfig?.apiKey?.trim();
+      if (isValidApiKey(shopKey)) apiKey = shopKey;
     }
     if (!apiKey) {
       const globalConfig = await getGlobalConfig();
-      if (globalConfig?.geminiApiKey?.trim()) apiKey = globalConfig.geminiApiKey.trim();
+      const dbKey = globalConfig?.geminiApiKey?.trim();
+      if (isValidApiKey(dbKey)) apiKey = dbKey;
     }
     if (!apiKey) {
-      apiKey = process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY;
+      // Fallback to process.env
+      const envKey = process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY;
+      if (isValidApiKey(envKey)) apiKey = envKey;
+      else if (envKey) apiKey = envKey.trim();
     }
 
     if (!apiKey) {

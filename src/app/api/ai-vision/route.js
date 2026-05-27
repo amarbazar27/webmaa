@@ -109,12 +109,26 @@ export async function POST(req) {
     }
 
     // ── Resolve API Key ─────────────────────────────
-    let apiKey = shop?.aiConfig?.apiKey?.trim();
+    let apiKey = null;
+    const isValidApiKey = (key) => {
+      if (!key || typeof key !== 'string') return false;
+      const k = key.trim();
+      return k.startsWith('AIza') || k.startsWith('gsk_') || k.startsWith('sk-') || k.startsWith('sk-or-');
+    };
+
+    const shopKey = shop?.aiConfig?.apiKey?.trim();
+    if (isValidApiKey(shopKey)) apiKey = shopKey;
+
     if (!apiKey) {
       const globalSnap = await adminDb.collection('settings').doc('global').get();
-      apiKey = globalSnap.data()?.geminiApiKey?.trim();
+      const dbKey = globalSnap.data()?.geminiApiKey?.trim();
+      if (isValidApiKey(dbKey)) apiKey = dbKey;
     }
-    if (!apiKey) apiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
+    if (!apiKey) {
+      const envKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
+      if (isValidApiKey(envKey)) apiKey = envKey;
+      else if (envKey) apiKey = envKey.trim();
+    }
 
     if (!apiKey) {
       return NextResponse.json({ error: 'AI API Key missing. Add it in Dashboard → Settings → AI.' }, { status: 400 });
