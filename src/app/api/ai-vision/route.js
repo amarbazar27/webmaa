@@ -108,29 +108,38 @@ export async function POST(req) {
       return NextResponse.json({ error: 'No active products found' }, { status: 400 });
     }
 
-    // ── Resolve API Key ─────────────────────────────
-    let apiKey = null;
+    // ── API Key Resolution Fallback Chain ──────────────────────────
+    const keysToTry = [];
     const isValidApiKey = (key) => {
       if (!key || typeof key !== 'string') return false;
       const k = key.trim();
       return k.startsWith('AIza') || k.startsWith('gsk_') || k.startsWith('sk-') || k.startsWith('sk-or-');
     };
 
+    // 1. Try shop-specific API key first
     const shopKey = shop?.aiConfig?.apiKey?.trim();
-    if (isValidApiKey(shopKey)) apiKey = shopKey;
+    if (isValidApiKey(shopKey)) {
+      keysToTry.push({ key: shopKey, source: `Shop Custom Key (${shopId})` });
+    }
 
-    if (!apiKey) {
-      const globalSnap = await adminDb.collection('settings').doc('global').get();
+    // 2. Try global settings API key second (fixes settings -> config collection typo)
+    const globalSnap = await adminDb.collection('config').doc('global').get();
+    if (globalSnap.exists) {
       const dbKey = globalSnap.data()?.geminiApiKey?.trim();
-      if (isValidApiKey(dbKey)) apiKey = dbKey;
-    }
-    if (!apiKey) {
-      const envKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
-      if (isValidApiKey(envKey)) apiKey = envKey;
-      else if (envKey) apiKey = envKey.trim();
+      if (isValidApiKey(dbKey)) {
+        keysToTry.push({ key: dbKey, source: 'Global Config Key' });
+      }
     }
 
-    if (!apiKey) {
+    // 3. Try environment variables third
+    const envKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
+    if (isValidApiKey(envKey)) {
+      keysToTry.push({ key: envKey, source: 'System Environment Key' });
+    } else if (envKey && envKey.trim()) {
+      keysToTry.push({ key: envKey.trim(), source: 'System Environment Key (Raw)' });
+    }
+
+    if (keysToTry.length === 0) {
       return NextResponse.json({ error: 'AI API Key missing. Add it in Dashboard → Settings → AI.' }, { status: 400 });
     }
 
@@ -146,12 +155,32 @@ Return ONLY valid JSON: {"items":[{"productId":"ID","name":"Product Name","quant
 If nothing matches, return {"items":[]}. Do NOT add any explanation.
 If the user specifies a specific amount like '400 gram' or '10 piece', set the quantity based on the base unit or set it to 1, and put '400 গ্রাম' or '১০ পিস' in the customizedText field.`;
 
-    // ── Call Gemini Vision ──────────────────────────
-    const { success, text, model } = await tryGeminiVision(apiKey, systemPrompt, base64Data, mimeType);
+    let lastError = null;
+    let visionSuccess = false;
+    let text = null;
+    let model = null;
 
-    if (!success || !text) {
+    // Call Gemini Vision with key fallback chain
+    for (const keyObj of keysToTry) {
+      const currentApiKey = keyObj.key;
+      const keySource = keyObj.source;
+
+      console.log(`[AI Vision] Trying call using key source: ${keySource}`);
+      const result = await tryGeminiVision(currentApiKey, systemPrompt, base64Data, mimeType);
+
+      if (result.success && result.text) {
+        text = result.text;
+        model = result.model;
+        visionSuccess = true;
+        console.log(`[AI Vision] Success using key source: ${keySource}`);
+        break;
+      }
+      lastError = new Error(`API call failed or returned empty response using key source ${keySource}`);
+    }
+
+    if (!visionSuccess || !text) {
       return NextResponse.json({
-        error: 'ছবি বিশ্লেষণ করা যায়নি। API Key সঠিক আছে কিনা নিশ্চিত করুন।'
+        error: `ছবি विश्लेषण করা যায়নি। API Key সঠিক আছে কিনা নিশ্চিত করুন। (${lastError?.message || 'Quota exceeded or invalid API key'})`
       }, { status: 503 });
     }
 
