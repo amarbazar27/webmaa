@@ -2,6 +2,7 @@ import { getProducts, getCategories } from '@/lib/firestore';
 import { getShopByDomain } from '@/lib/firestore-server';
 import ShopClient from '@/app/shop/[shopSlug]/ShopClient';
 import { notFound } from 'next/navigation';
+import TemplateRenderer from '@/templates/TemplateRenderer';
 
 // Helper: recursively convert Firestore Timestamps to plain ISO strings
 function serializeData(obj) {
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }) {
   const shop = await getShopByDomain(decodedDomain);
 
   return {
-    title: shop?.shopName || 'Retailer Store',
+    title: { absolute: shop?.shopName || 'Retailer Store' },
     description: shop?.slogan || 'Welcome to our premium store',
     manifest: shop?.subdomainSlug ? `/api/manifest?shop=${shop.subdomainSlug}` : null
   };
@@ -51,10 +52,11 @@ export default async function CustomDomainShopPage({ params }) {
   ]);
 
   return (
-    <ShopClient 
-      initialShop={serializeData(shop)} 
-      initialProducts={serializeData(products)} 
-      initialCategories={serializeData(categories)} 
+    <TemplateRenderer
+      shop={serializeData(shop)}
+      products={serializeData(products)}
+      categories={serializeData(categories)}
+      ShopClientComponent={ShopClient}
       isCustomDomain={true}
     />
   );

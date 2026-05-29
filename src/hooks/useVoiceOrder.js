@@ -92,7 +92,17 @@ ${productList}
       setVoiceResult(matched);
 
       if (matched.length > 0) {
-        speak(`${matched.length}টি পণ্য পাওয়া গেছে। কার্টে যোগ করতে চাপুন।`);
+        // Automatically add matched products to the cart immediately
+        matched.forEach(({ product, quantity, customizedText, note }) => {
+          onAddToCart({ ...product, quantity, note: note || 'Voice Order', customizedText });
+        });
+        speak(`${matched.length}টি পণ্য কার্টে যোগ করা হয়েছে।`);
+        try {
+          const toast = (await import('react-hot-toast')).default;
+          toast.success(`${matched.length}টি পণ্য কার্টে যোগ হয়েছে! 🎉`);
+        } catch (e) {
+          console.warn('Toast display failed:', e);
+        }
       } else {
         speak('কোনো পণ্য মিলে যায়নি। আবার বলুন।');
         setError('পণ্য মিলে যায়নি। আরেকবার বলুন।');

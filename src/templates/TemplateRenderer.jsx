@@ -75,6 +75,7 @@ function TemplateRenderer({
   templateId,
   customization = {},
   ShopClientComponent,
+  ...rest
 }) {
   const wrapperRef = useRef(null);
   const resolvedId = templateId || shop?.templateId || 'bold-commerce';
@@ -116,6 +117,7 @@ function TemplateRenderer({
           template={template}
           theme={mergedTheme}
           isDark={isDark}
+          {...rest}
         />
       </Suspense>
     </div>

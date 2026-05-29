@@ -6,8 +6,14 @@ import { MessageCircle } from 'lucide-react';
  * Props: link (string) — full Messenger/WhatsApp URL
  */
 export default function MessengerButton({ shop }) {
-  const link = shop?.socialLinks?.messenger || shop?.socialLinks?.whatsapp || '';
+  let link = shop?.socialLinks?.messenger || shop?.socialLinks?.wa || shop?.socialLinks?.whatsapp || '';
   if (!link) return null;
+
+  // If link is a raw phone number, format it as a secure WhatsApp link
+  if (!link.startsWith('http') && /^\+?[0-9\s\-]+$/.test(link)) {
+    const cleaned = link.replace(/[^0-9]/g, '');
+    link = `https://wa.me/${cleaned}`;
+  }
 
   return (
     <a

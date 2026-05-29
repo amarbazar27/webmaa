@@ -2,6 +2,7 @@ import { getShopServer, getProductsServer, getCategoriesServer } from '@/lib/ser
 import ShopClient from './ShopClient';
 import { notFound } from 'next/navigation';
 import Script from 'next/script';
+import TemplateRenderer from '@/templates/TemplateRenderer';
 
 export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }) {
     ].filter(Boolean).join(', ');
 
     return {
-      title: metaTitle,
+      title: { absolute: metaTitle },
       description: metaDesc,
       keywords,
       manifest: `/api/manifest?shop=${shopSlug}`,
@@ -150,10 +151,11 @@ export default async function ShopPage({ params }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
         />
-        <ShopClient
-          initialShop={safeShop}
-          initialProducts={safeProducts}
-          initialCategories={safeCategories}
+        <TemplateRenderer
+          shop={safeShop}
+          products={safeProducts}
+          categories={safeCategories}
+          ShopClientComponent={ShopClient}
         />
       </>
     );

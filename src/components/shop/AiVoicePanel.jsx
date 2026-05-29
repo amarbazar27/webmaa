@@ -177,17 +177,38 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
 
           {/* Mic button */}
             <button
-              onClick={handleMicClick}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                if (!isVoiceSupported || isVoiceProcessing) return;
+                startVoice();
+              }}
+              onMouseUp={(e) => {
+                e.preventDefault();
+                if (isListening) stopVoice();
+              }}
+              onMouseLeave={() => {
+                if (isListening) stopVoice();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                if (!isVoiceSupported || isVoiceProcessing) return;
+                startVoice();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                if (isListening) stopVoice();
+              }}
               disabled={!isVoiceSupported || isVoiceProcessing}
-              className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all
-                ${isListening ? 'bg-red-500 animate-pulse scale-110' : isVoiceProcessing ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'}
+              className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all select-none cursor-pointer
+                ${isListening ? 'bg-red-500 animate-pulse scale-110 active:scale-105' : isVoiceProcessing ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700 active:scale-95'}
                 text-white disabled:opacity-50`}
+              title="কথা বলতে চেপে ধরে রাখুন"
             >
               {isVoiceProcessing ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
             </button>
 
-          <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
-            {isListening ? '🔴 শুনছি...' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'মাইক বাটনে চাপুন'}
+          <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center">
+            {isListening ? '🔴 শুনছি... কথা শেষ হলে বোতামটি ছেড়ে দিন' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'কথা বলতে বোতামটি চেপে ধরে রাখুন'}
           </p>
 
           {!isVoiceSupported && (

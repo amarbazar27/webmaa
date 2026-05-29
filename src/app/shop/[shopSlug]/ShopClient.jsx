@@ -23,6 +23,7 @@ import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
 import MessengerButton from '@/components/shop/MessengerButton';
 import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
+import { TEMPLATES } from '@/templates/index';
 import AiShoppingList from '@/components/shop/AiShoppingList';
 import AiVoicePanel from '@/components/shop/AiVoicePanel';
 import ServiceBanner from '@/components/shop/ServiceBanner';
@@ -57,6 +58,28 @@ const SHOP_THEME_PRESETS = {
  * SSR-safe: no window access.
  */
 function buildShopTheme(shop) {
+  // If template is set, resolve using template configuration!
+  if (shop?.templateId && TEMPLATES[shop.templateId]) {
+    const template = TEMPLATES[shop.templateId];
+    const base = template.defaultTheme || {};
+    const overrides = shop?.themeOverrides || {};
+    const merged = { ...base, ...overrides };
+    
+    return {
+      primary:    merged.primaryColor || merged.primary,
+      accent:     merged.accentColor || merged.accent,
+      bg:         merged.bgColor || merged.bg,
+      text:       merged.textColor || merged.text,
+      card:       merged.cardBg || merged.card,
+      border:     merged.cardBorder || merged.border,
+      radius:     merged.cardRadius || merged.radius,
+      font:       merged.fontFamily || merged.font,
+      headerBg:   merged.headerBg,
+      headerText: merged.headerText,
+      btnText:    merged.btnText || '#ffffff',
+    };
+  }
+
   const presetKey = shop?.designPreset || 'classic';
   const base = SHOP_THEME_PRESETS[presetKey] || SHOP_THEME_PRESETS.classic;
   const overrides = shop?.designOverrides || {};
@@ -1320,7 +1343,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       </header>
 
       {/* ── Banner/Carousel Section (20% height) ── */}
-      <div className="relative h-[22vh] md:h-[32vh] w-full bg-slate-900 overflow-hidden border-b border-slate-200 group/banner">
+      <div className="sf-hero relative h-[22vh] md:h-[32vh] w-full bg-slate-900 overflow-hidden border-b border-slate-200 group/banner">
         {shop.banners && shop.banners.length > 0 ? (
           <div className="relative w-full h-full">
             {shop.banners.map((img, i) => (
@@ -1518,7 +1541,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             {filteredProducts.map((product, index) => {
               const cartItem = cart.find(i => i.id === product.id);
               return (
-                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 flex flex-col">
+                <div key={product.id} className="sf-product-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 flex flex-col">
                   {/* Image — clickable to detail page */}
                   <div 
                     className="relative h-44 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
@@ -1647,16 +1670,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">যোগাযোগ করুন</h3>
               <div className="space-y-3">
                 {shop.deliveryConfig?.contactEmail && (
-                  <div className="flex items-center gap-2 text-slate-400 group">
+                  <a href={`mailto:${shop.deliveryConfig.contactEmail}`} className="flex items-center gap-2 text-slate-400 hover:text-purple-400 group transition-colors">
                     <Bot size={14} className="group-hover:text-purple-400" />
                     <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{shop.deliveryConfig.contactEmail}</span>
-                  </div>
+                  </a>
                 )}
                 {shop.deliveryConfig?.contactWhatsapp && (
-                  <div className="flex items-center gap-2 text-slate-400 group">
+                  <a href={`https://wa.me/${shop.deliveryConfig.contactWhatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-slate-400 hover:text-emerald-400 group transition-colors">
                     <Phone size={14} className="group-hover:text-emerald-400" />
                     <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{shop.deliveryConfig.contactWhatsapp}</span>
-                  </div>
+                  </a>
                 )}
               </div>
               <div className="flex gap-3 flex-wrap pt-2">
