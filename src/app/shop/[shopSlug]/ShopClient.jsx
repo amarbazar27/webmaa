@@ -1179,6 +1179,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
   };
 
+  // ── Grocery shop detection ──────────────────────────────────────
+  const isGroceryShop = (() => {
+    if (!shop) return false;
+    const groceryTemplates = ['local-bazaar', 'grocery-pro', 'food-delivery'];
+    if (groceryTemplates.includes(shop.templateId)) return true;
+    if (shop.industryFit === 'grocery' || shop.category === 'grocery') return true;
+    const groceryKeywords = ['grocery', 'groceries', 'বাজার', 'মেসের', 'messer', 'grocery', 'food', 'fresh', 'vegetable', 'মার্কেট'];
+    const nameSlug = ((shop.shopName || '') + ' ' + (shop.subdomainSlug || '') + ' ' + (shop.shopSlug || '')).toLowerCase();
+    return groceryKeywords.some(k => nameSlug.includes(k));
+  })();
+
   const themeVars = themeToVars(buildShopTheme(shop));
 
   // NOTE: We no longer block the storefront on authLoading.
