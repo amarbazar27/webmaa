@@ -111,6 +111,9 @@ function TemplateRenderer({
     >
       <Suspense fallback={<TemplateSkeleton isDark={isDark} />}>
         <ShopClientComponent
+          initialShop={shop}
+          initialProducts={products}
+          initialCategories={categories}
           shop={shop}
           products={products}
           categories={categories}
