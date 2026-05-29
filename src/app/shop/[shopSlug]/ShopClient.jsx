@@ -1435,20 +1435,20 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         {/* ── SEO Brand Hero & Intro ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 text-center space-y-4">
           <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
-            {shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার' 
+            {shop?.shopName === 'Messer Bazar' || shop?.shopName === 'মেসের বাজার' 
               ? 'মেসের বাজার — Messer Bazar' 
-              : shop.shopName}
+              : shop?.shopName || ''}
           </h1>
           <p className="text-sm md:text-base text-slate-600 font-bold max-w-2xl mx-auto leading-relaxed whitespace-pre-line">
-            {shop.description 
+            {shop?.description 
               ? shop.description 
               : (isGroceryShop
                   ? 'মেসে থাকা ছাত্র, ব্যাচেলর ও চাকরিজীবীদের জন্য সহজ অনলাইন বাজার সার্ভিস। শাকসবজি, মাছ, মাংস, চাল, ডাল, ডিম, তেল ও নিত্যপ্রয়োজনীয় পণ্য এখন ঘরে বসেই অর্ডার করুন।'
-                  : shop.slogan || 'আপনার বিশ্বস্ত অনলাইন শপ। সহজে অর্ডার করুন, দ্রুত ডেলিভারি পান।')}
+                  : shop?.slogan || 'আপনার বিশ্বস্ত অনলাইন শপ। সহজে অর্ডার করুন, দ্রুত ডেলিভারি পান।')}
           </p>
           
           {/* Render extra info only if it's grocery shop and they don't have custom description */}
-          {!shop.description && isGroceryShop && (
+          {shop && !shop.description && isGroceryShop && (
             <div className="mt-6 text-left bg-slate-50 p-5 rounded-xl border border-slate-100 max-w-3xl mx-auto">
               <h2 className="text-lg font-black text-slate-800 mb-2">মেসের বাজার কী?</h2>
               <p className="text-sm text-slate-600 font-medium leading-relaxed">
@@ -1997,16 +1997,18 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   return (
                     <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
                       <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
-                        {msg.text.replace(/PRODUCTS_JSON:.*$/s, '').trim()}
+                        {msg && msg.text && typeof msg.text === 'string' 
+                          ? msg.text.replace(/PRODUCTS_JSON:.*$/s, '').trim() 
+                          : (msg ? msg.text : '')}
                       </div>
                       
                       {/* Individual Suggested Products card layout */}
-                      {suggestedItems.length > 0 && (
+                      {suggestedItems && Array.isArray(suggestedItems) && suggestedItems.length > 0 && (
                         <div className="mt-1 flex flex-col gap-2 bg-slate-100/90 p-2.5 rounded-2xl border border-slate-200/60 max-w-full">
                           <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">AI সাজেস্টেড প্রোডাক্টস:</p>
                           <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
                             {suggestedItems.map(({ product, qty, customizedText, note }) => {
-                              const inCart = cart.find(item => item.id === product.id);
+                              const inCart = cart && Array.isArray(cart) ? cart.find(item => item.id === product.id) : null;
                               return (
                                 <div key={product.id} className="bg-white p-2 rounded-xl border border-slate-200/50 flex items-center justify-between gap-3 shadow-xs">
                                   <div className="flex items-center gap-2 min-w-0">
