@@ -51,6 +51,19 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
     startVoice();
   }, [isListening, startVoice, stopVoice]);
 
+  const requestMicPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      toast.success('মাইক্রোফোন অনুমতি সফল হয়েছে! 🎉');
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
+    } catch (err) {
+      toast.error('অনুমতি দেওয়া হয়নি। দয়া করে ব্রাউজার সেটিংস থেকে অনুমতি দিন।');
+    }
+  };
+
   // ── Image upload & OCR ───────────────────────────────────────────────────
   const handleImageSelect = useCallback(async (e) => {
     const file = e.target.files?.[0];
@@ -173,10 +186,13 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             </select>
           </div>
 
-
-
-          {/* Mic button */}
+          {/* Mic button with both hold-to-talk and click-to-toggle modes */}
+          <div className="relative">
             <button
+              onClick={(e) => {
+                e.preventDefault();
+                handleMicClick();
+              }}
               onMouseDown={(e) => {
                 e.preventDefault();
                 if (!isVoiceSupported || isVoiceProcessing) return;
@@ -202,13 +218,14 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
               className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all select-none cursor-pointer
                 ${isListening ? 'bg-red-500 animate-pulse scale-110 active:scale-105' : isVoiceProcessing ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700 active:scale-95'}
                 text-white disabled:opacity-50`}
-              title="কথা বলতে চেপে ধরে রাখুন"
+              title="কথা বলতে ক্লিক করুন অথবা চেপে রাখুন"
             >
               {isVoiceProcessing ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
             </button>
+          </div>
 
-          <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center">
-            {isListening ? '🔴 শুনছি... কথা শেষ হলে বোতামটি ছেড়ে দিন' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'কথা বলতে বোতামটি চেপে ধরে রাখুন'}
+          <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center leading-relaxed">
+            {isListening ? '🔴 শুনছি... কথা শেষ হলে আবার বোতামে ক্লিক করুন বা ছেড়ে দিন' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'কথা বলতে বোতামে ক্লিক করুন অথবা চেপে রাখুন'}
           </p>
 
           {!isVoiceSupported && (
@@ -224,7 +241,17 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           )}
 
           {voiceError && (
-            <p className="text-xs font-bold text-red-600 text-center bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{voiceError}</p>
+            <div className="w-full space-y-3">
+              <p className="text-xs font-bold text-red-600 text-center bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{voiceError}</p>
+              {voiceError.includes('অনুমতি') && (
+                <button
+                  onClick={requestMicPermission}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  🎤 মাইক্রোফোন অনুমতি দিন
+                </button>
+              )}
+            </div>
           )}
 
           {voiceResult && voiceResult.length > 0 && (
@@ -241,6 +268,13 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
               </button>
             </div>
           )}
+
+          <button 
+            onClick={onClose} 
+            className="mt-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-black rounded-xl transition-all uppercase tracking-wider"
+          >
+            ❌ ভয়েস প্যানেল বন্ধ করুন
+          </button>
         </div>
       )}
 

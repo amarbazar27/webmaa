@@ -20,6 +20,7 @@ export default function ServiceBanner({
   const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [], unionsType: 'unions' });
   const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', upazilaName: '', union: '' });
   const [geoLoading, setGeoLoading] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   // Load divisions once
   useEffect(() => {
@@ -144,7 +145,7 @@ export default function ServiceBanner({
     }
   };
 
-  if (serviceAreas.length === 0 || status === 'idle') return null;
+  if (dismissed || serviceAreas.length === 0 || status === 'idle') return null;
 
   const showDropdowns = shop.showLocationSelector !== false;
   const customAreas = shop.customAreas || [];
@@ -154,16 +155,28 @@ export default function ServiceBanner({
   ];
 
   if (status === 'checking') return (
-    <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center gap-2 text-blue-700 text-sm font-bold">
-      <Loader2 size={14} className="animate-spin" /> আপনার এলাকায় সার্ভিস আছে কিনা যাচাই করা হচ্ছে...
+    <div className="bg-blue-50 border-b border-blue-100 px-4 py-1.5 flex items-center justify-between gap-2 text-blue-700 text-xs font-bold animate-pulse">
+      <div className="flex items-center gap-2">
+        <Loader2 size={12} className="animate-spin" /> আপনার এলাকায় সার্ভিস আছে কিনা যাচাই করা হচ্ছে...
+      </div>
+      <button onClick={() => setDismissed(true)} className="text-blue-500 hover:text-blue-700 p-1 rounded-lg transition-colors">
+        <X size={14} />
+      </button>
     </div>
   );
 
   if (status === 'denied' || status === 'unavailable') return (
-    <div className={`border-b px-4 py-3 ${shop.isStrictLocation ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
-      <div className="max-w-7xl mx-auto space-y-3">
-        <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
-           <MapPin size={14} className={shop.isStrictLocation ? 'text-red-600' : 'text-purple-600'} /> 
+    <div className={`border-b px-4 py-2.5 relative ${shop.isStrictLocation ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+      <button 
+        onClick={() => setDismissed(true)} 
+        className="absolute top-2 right-2 text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-200/50 transition-colors"
+        title="বন্ধ করুন"
+      >
+        <X size={15} strokeWidth={2.5} />
+      </button>
+      <div className="max-w-7xl mx-auto space-y-2 pr-8">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+           <MapPin size={12} className={shop.isStrictLocation ? 'text-red-600' : 'text-purple-600'} /> 
            {shop.isStrictLocation ? '🚨 সার্ভিস এরিয়া যাচাই করুন (অর্ডার করতে অবশ্যই এরিয়া সিলেক্ট করতে হবে)' : 'সার্ভিস এরিয়া যাচাই করুন'}
         </div>
         
@@ -175,7 +188,7 @@ export default function ServiceBanner({
                  setGeoLoading(true);
                  setGeoSelections({...geoSelections, division: e.target.value});
                }}
-               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500"
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-purple-500"
              >
                <option value="">-- বিভাগ --</option>
                {geoData.divisions.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
@@ -188,7 +201,7 @@ export default function ServiceBanner({
                  setGeoLoading(true);
                  setGeoSelections({...geoSelections, district: e.target.value});
                }}
-               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-purple-500 disabled:opacity-50"
              >
                <option value="">-- জেলা --</option>
                {geoData.districts.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
@@ -202,7 +215,7 @@ export default function ServiceBanner({
                  const sel = geoData.upazilas.find(u => u.id === e.target.value);
                  setGeoSelections({...geoSelections, upazila: e.target.value, upazilaName: sel?.bn_name || ''});
                }}
-               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-purple-500 disabled:opacity-50"
              >
                <option value="">-- উপজেলা --</option>
                {geoData.upazilas.map(d => <option key={d.id} value={d.id}>{d.bn_name}</option>)}
@@ -212,7 +225,7 @@ export default function ServiceBanner({
                disabled={!geoSelections.upazila}
                value={geoSelections.union} 
                onChange={e => setGeoSelections({...geoSelections, union: e.target.value})}
-               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-purple-500 disabled:opacity-50"
+               className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:border-purple-500 disabled:opacity-50"
              >
                <option value="">-- {geoData.unionsType === 'wards' ? 'ওয়ার্ড' : 'ইউনিয়ন'} (ঐচ্ছিক) --</option>
                {allUnions.map(d => <option key={d.id} value={d.id}>{d.bn_name || d.name}</option>)}
@@ -224,24 +237,24 @@ export default function ServiceBanner({
           <button 
              onClick={checkUnifiedLocation}
              disabled={!geoSelections.upazila || geoLoading}
-             className={`w-full py-2 rounded-xl text-xs font-black transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${shop.isStrictLocation ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-slate-900 hover:bg-black text-white'}`}
+             className={`w-full py-1.5 rounded-xl text-[11px] font-black transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${shop.isStrictLocation ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-slate-900 hover:bg-black text-white'}`}
           >
-             {geoLoading ? <Loader2 size={14} className="animate-spin" /> : 'সার্ভিস যাচাই করুন'}
+             {geoLoading ? <Loader2 size={12} className="animate-spin" /> : 'সার্ভিস যাচাই করুন'}
           </button>
         )}
 
         {!showDropdowns && (
-          <p className="text-xs font-bold text-slate-400 text-center py-2">
+          <p className="text-[11px] font-bold text-slate-400 text-center py-1">
             সার্ভিস এরিয়া অটোমেটিকভাবে যাচাই হয়েছে।
           </p>
         )}
 
         {manualInput && (
-           <div className="bg-red-100/50 border border-red-200 rounded-xl p-3 text-center">
-              <p className="text-xs font-black text-red-600 uppercase tracking-wider">
+           <div className="bg-red-100/50 border border-red-200 rounded-xl p-2.5 text-center">
+              <p className="text-[11px] font-black text-red-600 uppercase tracking-wider">
                 আফসোস! {manualInput} এ আমাদের সার্ভিস নেই।
               </p>
-              {shop.isStrictLocation && <p className="text-[10px] font-bold text-red-500 mt-1">দুঃখিত, আপনি অর্ডার করতে পারবেন না।</p>}
+              {shop.isStrictLocation && <p className="text-[9px] font-bold text-red-500 mt-0.5">দুঃখিত, আপনি অর্ডার করতে পারবেন না।</p>}
            </div>
         )}
       </div>
@@ -249,12 +262,17 @@ export default function ServiceBanner({
   );
 
   return (
-    <div className={`sticky top-0 z-[60] border-b px-4 py-2 text-sm font-black shadow-md ${status === 'available' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+    <div className={`sticky top-0 z-[60] border-b px-4 py-1.5 text-xs font-black shadow-sm ${status === 'available' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {status === 'available' ? '✅ আপনি সার্ভিস এরিয়ার ভেতরে আছেন' : '❌ আপনি সার্ভিস এরিয়ার বাইরে আছেন'}
         </div>
-        <button onClick={() => setStatus('unavailable')} className="text-[10px] uppercase bg-white/50 px-2 py-1 rounded-lg border border-black/10 hover:bg-white transition-all">পরিবর্তন করুন</button>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setStatus('unavailable')} className="text-[9px] uppercase bg-white/60 px-2 py-0.5 rounded border border-black/5 hover:bg-white transition-all">পরিবর্তন করুন</button>
+          <button onClick={() => setDismissed(true)} className="text-slate-500 hover:text-slate-700 p-0.5 rounded transition-colors" title="বন্ধ করুন">
+            <X size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );

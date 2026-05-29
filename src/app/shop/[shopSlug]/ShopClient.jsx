@@ -629,20 +629,24 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
           orderHistory: (userOrders || []).slice(0, 5).map(o => ({ id: o.id, orderIdVisual: o.orderIdVisual, total: o.total, items: (o.items || []).map(i => ({ name: i.name, quantity: i.quantity, price: i.price })) })),
     messages: [
             { role: 'system', content: `তুমি "${shop.shopName}"-এর AI বাজার সহকারী। নাম: ${shop.aiConfig?.botName || 'Bazar Bot'}।
+${(shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার' || shop.subdomainSlug === 'messerbazar') ? 'বিশেষ দ্রষ্টব্য: বাংলায় এই স্টোরের নাম সর্বদা "মেসের বাজার" বলবে (কখনো "মেসার বাজার" বলবে না)।' : ''}
 
 পণ্য তালিকা (ID|নাম|দাম|ইউনিট):
 ${products.filter(p => p.stock !== 0).map(p => `${p.id}|${p.name}|৳${p.price}|${p.unit || 'piece'}`).join('\n')}
 
 🔴 বিশেষ নির্দেশ (স্মার্ট ক্যালকুলেটর):
-১. যদি ইউজার নির্দিষ্ট টাকার (যেমন: ৫০০ টাকার মাংস) বা নির্দিষ্ট ওজনের (যেমন: ৩৫০ গ্রাম আলু) কথা বলে, তবে সেটা ক্যালকুলেট করবে।
+${isGroceryShop ? `১. যদি ইউজার নির্দিষ্ট টাকার (যেমন: ৫০০ টাকার মাংস) বা নির্দিষ্ট ওজনের (যেমন: ৩৫০ গ্রাম আলু) কথা বলে, তবে সেটা ক্যালকুলেট করবে。
 ২. যদি প্রোডাক্টের বেস ইউনিট ১ কেজি হয় এবং ইউজার ৪০০ গ্রাম চায়, তবে qty ১ ই রাখবে কিন্তু note এবং customizedText এ '৪০০ গ্রাম' স্পষ্টভাবে লিখে দিবে।
 ৩. মাছ বা মাংসের ক্ষেত্রে পিস (Piece) উল্লেখ থাকলে, মোট ওজন বের করবে এবং প্রতি পিসের গড় ওজন নোটে লিখে দিবে।
-৪. উত্তর সবসময় সম্পূর্ণ করবে।
-৫. উত্তর শেষে PRODUCTS_JSON ফরম্যাটে ডাটা দিবে।
+৪. যদি ইউজার মেস বাজেট, প্রতিদিনের খাবারের তালিকা বা মেনু নির্ধারণ করতে বলে, তবে সেই নির্দেশনা এবং বাজেট অনুযায়ী তালিকা প্রস্তাব করবে। বয়লার মুরগির পিস সাজেস্ট করবে না, বরং আস্ত মুরগি নিয়ে পিস করে নিতে বলবে। সকালে ভর্তা বা শাক এবং দুপুরে/রাতে আমিষ ও সবজি সাজেস্ট করবে।` : `১. দোকানটিতে যে ধরণের পণ্য আছে (যেমন কসমেটিক্স, ফ্যাশন বা ইলেকট্রনিক্স) শুধুমাত্র সেই রিলেটেড ক্যাটাগরির পণ্যই রেকমেন্ড করবে。
+২. গ্রোসারি পণ্য (চাল, ডাল, শাকসবজি) বা খাবারের মেনু সাজেস্ট করবে না যদি না দোকানটি গ্রোসারি স্টোর হয়।`}
+৫. উত্তর সবসময় সম্পূর্ণ করবে।
+৬. উত্তর শেষে PRODUCTS_JSON ফরম্যাটে ডাটা দিবে।
 
 FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","customizedText":"৪০০ গ্রাম"}]
 
-৬. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।` },
+৭. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।
+৮. পণ্য তালিকার বাইরে থাকা কোনো পণ্য বা সেবার অর্ডার নিবে না বা সাজেস্ট করবে না। শুধুমাত্র প্রদত্ত পণ্য তালিকার পণ্যই রেকমেন্ড করবে।` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
@@ -661,6 +665,56 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     } finally {
       setIsAiTyping(false);
     }
+  };
+
+  // ── Parse AI-suggested products for displaying direct add-to-cart buttons ─────
+  const getSuggestedProductsForMessage = (msg) => {
+    if (msg.role !== 'bot') return [];
+    const botText = msg.text;
+    const itemsList = [];
+    const addedIds = new Set();
+
+    // Strategy 1: Parse PRODUCTS_JSON:[...]
+    const jsonMatch = botText.match(/PRODUCTS_JSON:(\[.*?\])/s);
+    if (jsonMatch) {
+      try {
+        const items = JSON.parse(jsonMatch[1]);
+        items.forEach(item => {
+          const product = products.find(p => p.id === (item.id || item.productId) && p.stock !== 0);
+          if (product && !addedIds.has(product.id)) {
+            itemsList.push({
+              product,
+              qty: item.qty || 1,
+              customizedText: item.customizedText || '',
+              note: item.note || ''
+            });
+            addedIds.add(product.id);
+          }
+        });
+      } catch (e) { /* fallback below */ }
+    }
+
+    // Strategy 2: Word-overlap fuzzy matching if strategy 1 yielded nothing
+    if (itemsList.length === 0) {
+      const cleanText = botText.replace(/PRODUCTS_JSON:.*$/s, '').toLowerCase();
+      products.forEach(product => {
+        if (product.stock === 0 || addedIds.has(product.id)) return;
+        const nameWords = product.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
+        if (nameWords.length === 0) return;
+        const matchCount = nameWords.filter(w => cleanText.includes(w)).length;
+        if (matchCount > 0 && matchCount >= Math.ceil(nameWords.length * 0.6)) {
+          itemsList.push({
+            product,
+            qty: 1,
+            customizedText: '',
+            note: ''
+          });
+          addedIds.add(product.id);
+        }
+      });
+    }
+
+    return itemsList;
   };
 
   // ── Add All AI-suggested products to cart (Smart Matching) ─────
@@ -1385,13 +1439,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               ? 'মেসের বাজার — Messer Bazar' 
               : shop.shopName}
           </h1>
-          <p className="text-sm md:text-base text-slate-600 font-bold max-w-2xl mx-auto leading-relaxed">
-            {shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার'
-              ? 'মেসে থাকা ছাত্র, ব্যাচেলর ও চাকরিজীবীদের জন্য সহজ অনলাইন বাজার সার্ভিস। শাকসবজি, মাছ, মাংস, চাল, ডাল, ডিম, তেল ও নিত্যপ্রয়োজনীয় পণ্য এখন ঘরে বসেই অর্ডার করুন।'
-              : shop.slogan || 'আপনার বিশ্বস্ত অনলাইন শপ। সহজে অর্ডার করুন, দ্রুত ডেলিভারি পান।'}
+          <p className="text-sm md:text-base text-slate-600 font-bold max-w-2xl mx-auto leading-relaxed whitespace-pre-line">
+            {shop.description 
+              ? shop.description 
+              : (isGroceryShop
+                  ? 'মেসে থাকা ছাত্র, ব্যাচেলর ও চাকরিজীবীদের জন্য সহজ অনলাইন বাজার সার্ভিস। শাকসবজি, মাছ, মাংস, চাল, ডাল, ডিম, তেল ও নিত্যপ্রয়োজনীয় পণ্য এখন ঘরে বসেই অর্ডার করুন।'
+                  : shop.slogan || 'আপনার বিশ্বস্ত অনলাইন শপ। সহজে অর্ডার করুন, দ্রুত ডেলিভারি পান।')}
           </p>
           
-          {(shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার') && (
+          {/* Render extra info only if it's grocery shop and they don't have custom description */}
+          {!shop.description && isGroceryShop && (
             <div className="mt-6 text-left bg-slate-50 p-5 rounded-xl border border-slate-100 max-w-3xl mx-auto">
               <h2 className="text-lg font-black text-slate-800 mb-2">মেসের বাজার কী?</h2>
               <p className="text-sm text-slate-600 font-medium leading-relaxed">
@@ -1400,11 +1457,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             </div>
           )}
           
-          <div className="pt-2 flex flex-wrap justify-center gap-3">
-             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-lg border border-emerald-100"><CheckCircle size={14} /> দ্রুত অর্ডার</span>
-             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-black rounded-lg border border-blue-100"><ShieldCheck size={14} /> মেস লাইফের জন্য সহজ বাজার</span>
-             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black rounded-lg border border-purple-100"><Package size={14} /> প্রয়োজনীয় নিত্যপণ্য</span>
-          </div>
+          {isGroceryShop && (
+            <div className="pt-2 flex flex-wrap justify-center gap-3">
+               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-lg border border-emerald-100"><CheckCircle size={14} /> দ্রুত অর্ডার</span>
+               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-black rounded-lg border border-blue-100"><ShieldCheck size={14} /> মেস লাইফের জন্য সহজ বাজার</span>
+               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black rounded-lg border border-purple-100"><Package size={14} /> প্রয়োজনীয় নিত্যপণ্য</span>
+            </div>
+          )}
         </div>
 
         {/* ── AI Shopping List (Vision Component) ── */}
@@ -1933,27 +1992,72 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             {/* Chat Tab */}
             {aiTab === 'chat' && <>
               <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto relative pb-16">
-                {chatMessages.map(msg => (
-                  <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
-                    <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
-                      {msg.text}
+                {chatMessages.map(msg => {
+                  const suggestedItems = getSuggestedProductsForMessage(msg);
+                  return (
+                    <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
+                      <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
+                        {msg.text.replace(/PRODUCTS_JSON:.*$/s, '').trim()}
+                      </div>
+                      
+                      {/* Individual Suggested Products card layout */}
+                      {suggestedItems.length > 0 && (
+                        <div className="mt-1 flex flex-col gap-2 bg-slate-100/90 p-2.5 rounded-2xl border border-slate-200/60 max-w-full">
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">AI সাজেস্টেড প্রোডাক্টস:</p>
+                          <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
+                            {suggestedItems.map(({ product, qty, customizedText, note }) => {
+                              const inCart = cart.find(item => item.id === product.id);
+                              return (
+                                <div key={product.id} className="bg-white p-2 rounded-xl border border-slate-200/50 flex items-center justify-between gap-3 shadow-xs">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {product.image ? (
+                                      <img src={product.image} alt={product.name} className="w-8 h-8 rounded-lg object-cover bg-slate-50 shrink-0" />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 text-xs font-black flex items-center justify-center shrink-0">🛍</div>
+                                    )}
+                                    <div className="min-w-0">
+                                      <h4 className="text-xs font-bold text-slate-800 truncate">{product.name}</h4>
+                                      <p className="text-[10px] text-slate-500 font-bold">
+                                        ৳{product.price} {product.unit ? `/ ${product.unit}` : ''}
+                                        {qty > 1 && ` (qty: ${qty})`}
+                                        {note && ` [${note}]`}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      addToCart(product, qty, customizedText, note);
+                                      toast.success(`${product.name} কার্টে যোগ হয়েছে!`);
+                                    }}
+                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shrink-0 ${inCart ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                  >
+                                    {inCart ? 'যুক্ত আছে' : '+ কার্ট'}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          
+                          {/* All-in-one button option */}
+                          <button onClick={() => addAllSuggestedToCart(msg.text)}
+                            className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl shadow-xs transition-colors uppercase tracking-wider">
+                            <ShoppingCart size={12} /> সব কার্টে যোগ করুন
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {msg.hasSuggestions && (
-                      <button onClick={() => addAllSuggestedToCart(msg.text)}
-                        className="self-start flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-colors">
-                        <ShoppingCart size={14} /> সব কার্টে যোগ করুন
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
                 {isAiTyping && <div className="max-w-[85%] p-3.5 rounded-2xl bg-white border border-slate-200 self-start flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>}
               </div>
               <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0 relative">
-                <div className="absolute -top-10 right-4 z-10">
-                  <button onClick={() => setShowAiSuggestionModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
-                    <Sparkles size={12}/> স্মার্ট সাজেশন
-                  </button>
-                </div>
+                {isGroceryShop && (
+                  <div className="absolute -top-10 right-4 z-10">
+                    <button onClick={() => setShowAiSuggestionModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
+                      <Sparkles size={12}/> স্মার্ট সাজেশন
+                    </button>
+                  </div>
+                )}
                 <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-[10px] font-black transition-colors" title="Clear">🗑</button>
                 <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
                 <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md"><MessageCircle size={20} strokeWidth={2.5}/></button>
