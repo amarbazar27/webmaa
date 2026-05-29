@@ -1,39 +1,28 @@
-import { getProducts, getCategories } from '@/lib/firestore';
+import { getProductsServer, getCategoriesServer } from '@/lib/server-fetch';
 import { getShopByDomain } from '@/lib/firestore-server';
 import ShopClient from '@/app/shop/[shopSlug]/ShopClient';
 import { notFound } from 'next/navigation';
 import TemplateRenderer from '@/templates/TemplateRenderer';
 
-// Helper: recursively convert Firestore Timestamps to plain ISO strings
-function serializeData(obj) {
-  if (obj === null || obj === undefined) return obj;
-  if (typeof obj !== 'object') return obj;
-  
-  if (typeof obj.seconds === 'number' && typeof obj.nanoseconds === 'number') {
-    return new Date(obj.seconds * 1000).toISOString();
-  }
-  
-  if (Array.isArray(obj)) {
-    return obj.map(serializeData);
-  }
-  
-  const plain = {};
-  for (const key of Object.keys(obj)) {
-    plain[key] = serializeData(obj[key]);
-  }
-  return plain;
-}
+export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 
 export async function generateMetadata({ params }) {
-  const { customDomain } = await params;
-  const decodedDomain = decodeURIComponent(customDomain);
-  const shop = await getShopByDomain(decodedDomain);
+  try {
+    const { customDomain } = await params;
+    const decodedDomain = decodeURIComponent(customDomain);
+    const shop = await getShopByDomain(decodedDomain);
 
-  return {
-    title: { absolute: shop?.shopName || 'Retailer Store' },
-    description: shop?.slogan || 'Welcome to our premium store',
-    manifest: shop?.subdomainSlug ? `/api/manifest?shop=${shop.subdomainSlug}` : null
-  };
+    if (!shop) return { title: 'Webmaa Store' };
+
+    const shopName = shop?.shopName || 'Webmaa Store';
+    return {
+      title: { absolute: shopName },
+      description: shop?.slogan || 'Welcome to our premium store',
+      manifest: shop?.subdomainSlug ? `/api/manifest?shop=${shop.subdomainSlug}` : null
+    };
+  } catch (err) {
+    return { title: 'Webmaa Store' };
+  }
 }
 
 export default async function CustomDomainShopPage({ params }) {
@@ -47,15 +36,20 @@ export default async function CustomDomainShopPage({ params }) {
   }
 
   const [products, categories] = await Promise.all([
-    getProducts(shop.id),
-    getCategories(shop.id),
+    getProductsServer(shop.id),
+    getCategoriesServer(shop.id),
   ]);
+
+  // 🚨 FAIL-SAFE SERIALIZATION: Guarantee plain objects for Next.js SSR
+  const safeShop = JSON.parse(JSON.stringify(shop));
+  const safeProducts = JSON.parse(JSON.stringify(products));
+  const safeCategories = JSON.parse(JSON.stringify(categories));
 
   return (
     <TemplateRenderer
-      shop={serializeData(shop)}
-      products={serializeData(products)}
-      categories={serializeData(categories)}
+      shop={safeShop}
+      products={safeProducts}
+      categories={safeCategories}
       ShopClientComponent={ShopClient}
       isCustomDomain={true}
     />
