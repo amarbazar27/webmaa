@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import useLocation from '@/lib/useLocation';
 import { useRouter } from 'next/navigation';
@@ -1407,14 +1407,25 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       </header>
 
-      {/* ── Banner/Carousel Section (20% height) ── */}
-      <div className="sf-hero relative h-[22vh] md:h-[32vh] w-full bg-slate-900 overflow-hidden border-b border-slate-200 group/banner">
+      {/* ── Banner/Carousel Section — Full Image, No Crop ── */}
+      <div className="sf-hero relative w-full bg-slate-900 overflow-hidden border-b border-slate-200 group/banner" style={{minHeight:'180px'}}>
         {shop.banners && shop.banners.length > 0 ? (
-          <div className="relative w-full h-full">
+          <div className="relative w-full">
             {shop.banners.map((img, i) => (
-              <div key={i} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${i === activeBanner ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
-                <img src={img} loading={i === 0 ? "eager" : "lazy"} alt={`Banner ${i+1}`} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/20" />
+              <div key={i} className={`transition-opacity duration-1000 ease-in-out ${i === activeBanner ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
+                {/* Blurred background for letterboxing */}
+                <div className="absolute inset-0 overflow-hidden">
+                  <img src={img} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-xl opacity-60" />
+                  <div className="absolute inset-0 bg-black/30" />
+                </div>
+                {/* Actual banner — full image visible, no crop */}
+                <img
+                  src={img}
+                  loading={i === 0 ? "eager" : "lazy"}
+                  alt={`Banner ${i+1}`}
+                  className="relative z-10 w-full h-auto max-h-[70vh] object-contain mx-auto block"
+                  style={{display:'block'}}
+                />
               </div>
             ))}
             {shop.banners.length > 1 && (
@@ -1443,38 +1454,43 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
         
-        {/* ── SEO Brand Hero & Intro ── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 text-center space-y-4">
-          <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">
-            {shop?.shopName === 'Messer Bazar' || shop?.shopName === 'মেসের বাজার' 
-              ? 'মেসের বাজার — Messer Bazar' 
-              : shop?.shopName || ''}
-          </h1>
-          <p className="text-sm md:text-base text-slate-600 font-bold max-w-2xl mx-auto leading-relaxed whitespace-pre-line">
-            {shop?.description 
-              ? shop.description 
-              : (isGroceryShop
-                  ? 'মেসে থাকা ছাত্র, ব্যাচেলর ও চাকরিজীবীদের জন্য সহজ অনলাইন বাজার সার্ভিস। শাকসবজি, মাছ, মাংস, চাল, ডাল, ডিম, তেল ও নিত্যপ্রয়োজনীয় পণ্য এখন ঘরে বসেই অর্ডার করুন।'
-                  : shop?.slogan || 'আপনার বিশ্বস্ত অনলাইন শপ। সহজে অর্ডার করুন, দ্রুত ডেলিভারি পান।')}
-          </p>
-          
-          {/* Render extra info only if it's grocery shop and they don't have custom description */}
-          {shop && !shop.description && isGroceryShop && (
-            <div className="mt-6 text-left bg-slate-50 p-5 rounded-xl border border-slate-100 max-w-3xl mx-auto">
-              <h2 className="text-lg font-black text-slate-800 mb-2">মেসের বাজার কী?</h2>
-              <p className="text-sm text-slate-600 font-medium leading-relaxed">
-                Messer Bazar বা মেসের বাজার হলো মেসে থাকা ছাত্র, ব্যাচেলর, চাকরিজীবী ও ছোট পরিবারের জন্য অনলাইন বাজার করার সহজ ব্যবস্থা। এখানে শাকসবজি, মাছ, মাংস, চাল, ডাল, ডিম, তেল, মসলা ও নিত্যপ্রয়োজনীয় পণ্য অর্ডার করা যায়। আপনি যদি মেসে থাকেন এবং প্রতিদিন বাজার করতে সময় না পান, তাহলে Messer Bazar আপনার জন্য তৈরি।
-              </p>
+        {/* ── Banner Description Box (Retailer Customizable) ── */}
+        <div
+          className="rounded-2xl shadow-sm border overflow-hidden"
+          style={{
+            borderColor: shop?.descBoxBorderColor || 'var(--sp-border, #e2e8f0)',
+            background: shop?.descBoxBg || 'var(--sp-card, #ffffff)',
+          }}
+        >
+          <div className="h-1.5 w-full bg-gradient-to-r from-purple-600 to-blue-600" />
+          <div className="p-5 md:p-8">
+            <div className="flex flex-col md:flex-row md:items-start gap-5">
+              {shop?.logoUrl && (
+                <div className="shrink-0 hidden md:block">
+                  <img src={shop.logoUrl} alt={shop.shopName} className="w-16 h-16 object-contain rounded-2xl border p-1 border-slate-200" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl md:text-2xl font-black tracking-tight mb-2 text-slate-900">
+                  {shop?.shopName || ''}
+                </h1>
+                <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-line text-slate-600">
+                  {shop?.bannerDescription || shop?.description || shop?.slogan || ''}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(shop?.descBoxBadges?.length > 0
+                    ? shop.descBoxBadges
+                    : ['\u2705 \u09a6\u09cd\u09b0\u09c1\u09a4 \u0985\u09b0\u09cd\u09a1\u09be\u09b0', '\ud83d\udd12 \u09a8\u09bf\u09b0\u09be\u09aa\u09a6 \u09aa\u09c7\u09ae\u09c7\u09a8\u09cd\u099f', '\ud83d\udce6 \u09ae\u09be\u09a8\u09b8\u09ae\u09cd\u09aa\u09a8\u09cd\u09a8 \u09aa\u09a3\u09cd\u09af']
+                  ).map((badge, bi) => (
+                    <span key={bi}
+                      className="inline-flex items-center px-3 py-1 text-xs font-black rounded-lg border bg-purple-50 text-purple-700 border-purple-200">
+                      {badge}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
-          )}
-          
-          {isGroceryShop && (
-            <div className="pt-2 flex flex-wrap justify-center gap-3">
-               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-black rounded-lg border border-emerald-100"><CheckCircle size={14} /> দ্রুত অর্ডার</span>
-               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-black rounded-lg border border-blue-100"><ShieldCheck size={14} /> মেস লাইফের জন্য সহজ বাজার</span>
-               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 text-xs font-black rounded-lg border border-purple-100"><Package size={14} /> প্রয়োজনীয় নিত্যপণ্য</span>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* ── AI Shopping List (Vision Component) ── */}

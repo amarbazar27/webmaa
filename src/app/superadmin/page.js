@@ -6,7 +6,7 @@ import {
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
-  getImpersonationLogs
+  getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop
 } from '@/lib/firestore';
 import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
 import {
@@ -33,7 +33,9 @@ export default function SuperAdminPage() {
   const [impersonationLogs, setImpersonationLogs] = useState([]);
   const [showLogs, setShowLogs] = useState(false);
   const [impersonatingId, setImpersonatingId] = useState(null);
-  
+  const [togglingShopId, setTogglingShopId] = useState(null);
+  const [superadminShop, setSuperadminShop] = useState(null);
+
   const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactLinks: [], promotedLinks: [], defaultLayout: 'modern' });
   const [savingConfig, setSavingConfig] = useState(false);
   
@@ -41,7 +43,7 @@ export default function SuperAdminPage() {
   const [showKey, setShowKey] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
   const { theme, setSystemDefault, systemDefault } = useTheme();
-  const { loginAsRetailer } = useAuth();
+  const { loginAsRetailer, user } = useAuth();
 
   // Helper to mask key
   const maskKey = (key) => {
@@ -121,6 +123,14 @@ export default function SuperAdminPage() {
     }
     setLoading(false);
   };
+
+  // Auto-create superadmin's own shop on first load
+  useEffect(() => {
+    if (!user) return;
+    createSuperadminShop(user.uid, user.email, 'Webmaa Store').then(shop => {
+      setSuperadminShop(shop);
+    }).catch(() => {});
+  }, [user]);
 
   useEffect(() => { 
     loadData(); 
@@ -202,6 +212,19 @@ export default function SuperAdminPage() {
       toast.error('স্টোর আপডেট করতে ব্যর্থ হয়েছে।');
     }
     setProcessingShopId(null);
+  };
+
+  const handleToggleMainSite = async (shop) => {
+    const newVal = !shop.showOnMainSite;
+    setTogglingShopId(shop.id);
+    try {
+      await toggleShopMainSiteVisibility(shop.id, newVal);
+      setShops(prev => prev.map(s => s.id === shop.id ? { ...s, showOnMainSite: newVal } : s));
+      toast.success(newVal ? `"${shop.shopName}" এখন মেইন সাইটে দেখাবে ✅` : `"${shop.shopName}" মেইন সাইট থেকে সরানো হয়েছে`);
+    } catch (err) {
+      toast.error('ভিজিবিলিটি আপডেট ব্যর্থ হয়েছে');
+    }
+    setTogglingShopId(null);
   };
 
   const handleDeleteRequest = async (req) => {
@@ -335,6 +358,36 @@ export default function SuperAdminPage() {
       <div>
         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Access Control</h1>
         <p className="text-sm text-slate-500 font-medium">Manage retailers, review requests, and monitor the platform.</p>
+      </div>
+
+      {/* Superadmin's Own Store Card */}
+      <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <Store size={22} className="text-white" />
+          </div>
+          <div>
+            <p className="font-black text-slate-900 text-base">আপনার নিজের স্টোর: Webmaa Store</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">এই স্টোরে আপনার নিজের পণ্য যোগ করুন — গ্রাহকরা মেইন সাইট থেকে কিনতে পারবে</p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <a
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-black shadow-lg shadow-purple-500/20 hover:bg-purple-700 transition-all"
+          >
+            <Store size={15} /> ড্যাশবোর্ড খুলুন
+          </a>
+          {superadminShop?.subdomainSlug && (
+            <a
+              href={`/shop/${superadminShop.subdomainSlug}`}
+              target="_blank"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-purple-700 border border-purple-200 text-sm font-black hover:bg-purple-50 transition-all"
+            >
+              <ExternalLink size={15} /> লাইভ স্টোর
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -623,6 +676,7 @@ export default function SuperAdminPage() {
                       <th className="pb-2 px-4 border-b border-slate-100">Performance (Sales/Money)</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
+                      <th className="pb-2 px-4 border-b border-slate-100 text-center">Main Site</th>
                       <th className="pb-2 px-4 border-b border-slate-100 text-right">Status</th>
                       <th className="pb-2 px-4 border-b border-slate-100 text-right">Action</th>
                     </tr>
@@ -695,6 +749,20 @@ export default function SuperAdminPage() {
                               </div>
                               <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
                             </div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <button
+                              onClick={() => handleToggleMainSite(shop)}
+                              disabled={togglingShopId === shop.id}
+                              title={shop.showOnMainSite ? 'মেইন সাইট থেকে সরান' : 'মেইন সাইটে দেখান'}
+                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                                shop.showOnMainSite ? 'bg-emerald-500' : 'bg-slate-300'
+                              }`}
+                            >
+                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                                shop.showOnMainSite ? 'translate-x-6' : 'translate-x-1'
+                              }`} />
+                            </button>
                           </td>
                           <td className="p-4 text-right">
                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>

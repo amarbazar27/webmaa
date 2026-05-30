@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
-  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate
+  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate, Crown
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -129,6 +129,30 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
             </Link>
           );
         })}
+
+        {/* Superadmin Panel Link */}
+        {userData?.role === 'superadmin' && (
+          <>
+            <div className="my-3 border-t border-slate-100" />
+            <p className="px-4 text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">Admin Zone</p>
+            <Link
+              href="/superadmin"
+              onClick={onClose}
+              className={clsx(
+                'group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200',
+                pathname.startsWith('/superadmin')
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Crown size={18} className="text-amber-500" />
+                Superadmin Panel
+              </div>
+              {pathname.startsWith('/superadmin') && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
+            </Link>
+          </>
+        )}
       </nav>
 
       {!isStaff && <AiCompanion shop={shop} />}

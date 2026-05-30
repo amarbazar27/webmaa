@@ -95,7 +95,7 @@ const getCityWards = (district) => {
 
 export default function SettingsPage() {
   const { user, userData, activeShopId } = useAuth();
-  const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', subdomainSlug: '', banners: [] });
+  const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', bannerDescription: '', subdomainSlug: '', banners: [] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   // ── Settings Tab (must be at top, before any conditional returns) ──
@@ -490,6 +490,7 @@ export default function SettingsPage() {
         slogan: shop.slogan,
         notices: shop.notices,
         welcomeMessage: shop.welcomeMessage,
+        bannerDescription: shop.bannerDescription || '',
         bannerInterval: shop.bannerInterval || 4,
         howToOrderVideo: shop.howToOrderVideo || '',
         logoUrl,
@@ -979,6 +980,13 @@ export default function SettingsPage() {
                   value={shop.slogan || ''}
                   onChange={e => setShop({ ...shop, slogan: e.target.value })}
                   placeholder="Your catchy brand slogan"
+                />
+                <Input
+                  label="Banner Description (ব্যানারের নিচে বিবরণ)"
+                  value={shop.bannerDescription || ''}
+                  onChange={e => setShop({ ...shop, bannerDescription: e.target.value })}
+                  placeholder="স্টোরের সংক্ষিপ্ত বিবরণ যা ব্যানারের নিচে সুন্দর একটি বক্সে দেখাবে..."
+                  rows={3}
                 />
                 <Input
                   label="Store Notice (Marquee)"

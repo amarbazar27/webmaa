@@ -557,3 +557,67 @@ export const getImpersonationLogs = async (limit_count = 50) => {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (err) { return []; }
 };
+
+// ── MARKETPLACE ────────────────────────────────────
+
+export const getAllVisibleShops = async () => {
+  try {
+    const q = query(collection(db, 'shops'), where('showOnMainSite', '==', true));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) { return []; }
+};
+
+export const getShopProducts = async (shopId) => {
+  try {
+    const snap = await getDocs(collection(db, 'shops', shopId, 'products'));
+    return snap.docs.map(d => ({ id: d.id, shopId, ...d.data() }));
+  } catch (err) { return []; }
+};
+
+export const getAllMarketplaceProducts = async () => {
+  try {
+    const shops = await getAllVisibleShops();
+    const productArrays = await Promise.all(
+      shops.map(async (shop) => {
+        const prods = await getShopProducts(shop.id);
+        return prods.map(p => ({
+          ...p,
+          shopId: shop.id,
+          shopName: shop.shopName || '',
+          shopSlug: shop.subdomainSlug || shop.shopSlug || '',
+          shopLogoUrl: shop.logoUrl || '',
+          deliveryConfig: shop.deliveryConfig || {},
+        }));
+      })
+    );
+    return productArrays.flat();
+  } catch (err) { return []; }
+};
+
+export const toggleShopMainSiteVisibility = async (shopId, visible) => {
+  return updateDoc(doc(db, 'shops', shopId), {
+    showOnMainSite: visible,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const createSuperadminShop = async (uid, email, name) => {
+  const ref = doc(db, 'shops', uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      shopName: name || 'Webmaa Store',
+      ownerEmail: email,
+      ownerUid: uid,
+      subdomainSlug: 'webmaa-store',
+      shopSlug: 'webmaa-store',
+      showOnMainSite: true,
+      isActive: true,
+      createdAt: serverTimestamp(),
+    });
+  }
+  const newSnap = await getDoc(ref);
+  return { id: uid, ...newSnap.data() };
+};
+
