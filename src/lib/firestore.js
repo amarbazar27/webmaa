@@ -562,9 +562,9 @@ export const getImpersonationLogs = async (limit_count = 50) => {
 
 export const getAllVisibleShops = async () => {
   try {
-    const q = query(collection(db, 'shops'), where('showOnMainSite', '==', true));
+    const q = query(collection(db, 'shops'));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => s.isActive !== false);
   } catch (err) { return []; }
 };
 
@@ -607,11 +607,11 @@ export const createSuperadminShop = async (uid, email, name) => {
   const snap = await getDoc(ref);
   if (!snap.exists()) {
     await setDoc(ref, {
-      shopName: name || 'Webmaa Store',
+      shopName: name || 'Daripallah Store',
       ownerEmail: email,
       ownerUid: uid,
-      subdomainSlug: 'webmaa-store',
-      shopSlug: 'webmaa-store',
+      subdomainSlug: 'daripallah-store',
+      shopSlug: 'daripallah-store',
       showOnMainSite: true,
       isActive: true,
       createdAt: serverTimestamp(),

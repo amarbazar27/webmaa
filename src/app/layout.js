@@ -6,19 +6,19 @@ import { Toaster } from 'react-hot-toast';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' });
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://daripallah.com';
 
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Webmaa — আপনার ব্যবসার ডিজিটাল পার্টনার',
-    template: '%s | Webmaa',
+    default: 'Daripallah — আপনার ব্যবসার ডিজিটাল পার্টনার',
+    template: '%s | Daripallah',
   },
-  description: 'Webmaa — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
-  keywords: ['webmaa', 'ecommerce', 'saas', 'online store', 'bangladesh ecommerce', 'retailer platform'],
-  authors: [{ name: 'Webmaa', url: BASE_URL }],
-  creator: 'Webmaa',
-  publisher: 'Webmaa',
+  description: 'Daripallah — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
+  keywords: ['daripallah', 'ecommerce', 'saas', 'online store', 'bangladesh ecommerce', 'retailer platform'],
+  authors: [{ name: 'Daripallah', url: BASE_URL }],
+  creator: 'Daripallah',
+  publisher: 'Daripallah',
   manifest: '/manifest.json',
   icons: {
     icon: '/logo.png',
@@ -28,14 +28,14 @@ export const metadata = {
     type: 'website',
     locale: 'bn_BD',
     url: BASE_URL,
-    siteName: 'Webmaa',
-    title: 'Webmaa — আপনার ব্যবসার ডিজিটাল পার্টনার',
+    siteName: 'Daripallah',
+    title: 'Daripallah — আপনার ব্যবসার ডিজিটাল পার্টনার',
     description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম।',
-    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'MesserBazar Logo' }],
+    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'Daripallah Logo' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Webmaa — ই-কমার্স প্ল্যাটফর্ম',
+    title: 'Daripallah — ই-কমার্স প্ল্যাটফর্ম',
     description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
     images: [`${BASE_URL}/logo.png`],
   },
@@ -55,8 +55,8 @@ function JsonLd() {
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Webmaa",
-      "alternateName": ["Webmaa SaaS", "webmaa.app"],
+      "name": "Daripallah",
+      "alternateName": ["Daripallah SaaS", "daripallah.com"],
       "url": BASE_URL,
       "logo": `${BASE_URL}/logo.png`,
       "image": `${BASE_URL}/logo.png`,
@@ -72,8 +72,8 @@ function JsonLd() {
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "Webmaa",
-      "alternateName": "Webmaa eCommerce",
+      "name": "Daripallah",
+      "alternateName": "Daripallah eCommerce",
       "url": BASE_URL
     }
   ];

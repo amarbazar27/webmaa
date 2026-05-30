@@ -60,7 +60,7 @@ export default function InvoicePage({ params }) {
                    )}
                    <div>
                      <h1 className="text-xl font-black tracking-tight leading-none mb-1">{shop.shopName}</h1>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{shopSlug}.webmaa.cloud</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{shopSlug}.daripallah.com</p>
                    </div>
                 </div>
                 <div className="text-right">

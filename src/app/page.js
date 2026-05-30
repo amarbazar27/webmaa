@@ -3,28 +3,22 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  ShoppingBag, LayoutDashboard, ArrowRight, Store, LogOut,
-  Globe, Zap, ShieldCheck, Rocket, Sparkles, TrendingUp,
-  Smartphone, BarChart3, Users, CheckCircle, Star, ChevronRight,
-  Package, CreditCard, Headphones, Mail, MessageSquare, Phone, ArrowUpRight,
-  MessageCircle, ShoppingCart, Plus, Minus, Trash2, Filter, Search, X
+  ShoppingBag, Search, Star, ArrowRight, Phone, Store,
+  X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
+  ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
+  MessageCircle, Mail
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
-import { addRetailerRequest, subscribeGlobalConfig, getAllMarketplaceProducts } from '@/lib/firestore';
+import { subscribeGlobalConfig, getAllMarketplaceProducts } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
-import Image from 'next/image';
 
 export default function Home() {
   const { user, userData } = useAuth();
   const router = useRouter();
-  const [hoveredFeature, setHoveredFeature] = useState(null);
   const [loggingIn, setLoggingIn] = useState(false);
-  const [showRequestModal, setShowRequestModal] = useState(false);
-  const [requestPhone, setRequestPhone] = useState('');
-  const [requesting, setRequesting] = useState(false);
   const [globalConfig, setGlobalConfig] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
  
@@ -37,7 +31,7 @@ export default function Home() {
   const [activeShopFilter, setActiveShopFilter] = useState('All');
   const [productSearch, setProductSearch] = useState('');
 
-  // Load products & cart on mount
+  // Load products & global config & cart on mount
   useEffect(() => {
     getAllMarketplaceProducts().then(data => {
       setProducts(data);
@@ -47,7 +41,7 @@ export default function Home() {
       setProductsLoading(false);
     });
 
-    const localCart = localStorage.getItem('cart_webmaa-store');
+    const localCart = localStorage.getItem('cart_daripallah-store');
     if (localCart) {
       try {
         setCart(JSON.parse(localCart));
@@ -55,7 +49,43 @@ export default function Home() {
         setCart([]);
       }
     }
+
+    return subscribeGlobalConfig(setGlobalConfig);
   }, []);
+
+  // Update mouse position for glowing cursor effect
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const getDashboardHref = () => {
+    if (userData?.role === 'superadmin') return '/superadmin';
+    if (userData?.role === 'retailer') return '/dashboard';
+    if (userData?.role === 'staff') return '/dashboard';
+    return null;
+  };
+
+  const handleSmartLogin = async () => {
+    setLoggingIn(true);
+    try {
+      const result = await loginWithGoogle();
+      if (!result) return;
+      
+      const role = result?.userData?.role;
+      if (role === 'superadmin') router.push('/superadmin');
+      else if (role === 'retailer' || role === 'staff') router.push('/dashboard');
+      else toast.success(`স্বাগতম, ${result.user.displayName}!`);
+    } catch (err) {
+      console.error("[SmartLogin] Error:", err);
+      toast.error(err.message || 'লগইন করতে সমস্যা হয়েছে।');
+    } finally {
+      setLoggingIn(false);
+    }
+  };
 
   const handleAddToCart = (product) => {
     let updatedCart = [...cart];
@@ -74,13 +104,13 @@ export default function Home() {
         shopId: product.shopId,
         shopName: product.shopName,
         shopSlug: product.shopSlug,
-        isThirdParty: product.shopSlug !== 'webmaa-store'
+        isThirdParty: product.shopSlug !== 'daripallah-store'
       });
     }
     setCart(updatedCart);
-    localStorage.setItem('cart_webmaa-store', JSON.stringify(updatedCart));
+    localStorage.setItem('cart_daripallah-store', JSON.stringify(updatedCart));
 
-    // Sync to individual store cart
+    // Sync to individual store cart in localStorage
     const storeCartKey = `cart_${product.shopId}`;
     try {
       const storeCart = JSON.parse(localStorage.getItem(storeCartKey) || '[]');
@@ -120,7 +150,7 @@ export default function Home() {
     }).filter(Boolean);
 
     setCart(updatedCart);
-    localStorage.setItem('cart_webmaa-store', JSON.stringify(updatedCart));
+    localStorage.setItem('cart_daripallah-store', JSON.stringify(updatedCart));
 
     const item = cart.find(i => i.productId === productId);
     if (item) {
@@ -145,7 +175,7 @@ export default function Home() {
     const item = cart.find(i => i.productId === productId);
     const updatedCart = cart.filter(i => i.productId !== productId);
     setCart(updatedCart);
-    localStorage.setItem('cart_webmaa-store', JSON.stringify(updatedCart));
+    localStorage.setItem('cart_daripallah-store', JSON.stringify(updatedCart));
 
     if (item) {
       const storeCartKey = `cart_${item.shopId}`;
@@ -165,7 +195,7 @@ export default function Home() {
       localStorage.removeItem(`cart_${item.shopId}`);
     });
     setCart([]);
-    localStorage.removeItem('cart_webmaa-store');
+    localStorage.removeItem('cart_daripallah-store');
     toast.success('কার্ট খালি করা হয়েছে');
   };
 
@@ -179,7 +209,8 @@ export default function Home() {
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
     const matchesShop = activeShopFilter === 'All' || p.shopName === activeShopFilter;
     const matchesSearch = p.name?.toLowerCase().includes(productSearch.toLowerCase()) || 
-                          p.shopName?.toLowerCase().includes(productSearch.toLowerCase());
+                          p.shopName?.toLowerCase().includes(productSearch.toLowerCase()) ||
+                          p.category?.toLowerCase().includes(productSearch.toLowerCase());
     return matchesCategory && matchesShop && matchesSearch;
   });
 
@@ -202,166 +233,47 @@ export default function Home() {
 
   const handleCheckoutWebmaa = () => {
     const superadminItem = cart.find(i => !i.isThirdParty);
-    const slug = superadminItem ? superadminItem.shopSlug : 'webmaa-store';
+    const slug = superadminItem ? superadminItem.shopSlug : 'daripallah-store';
     router.push(`/shop/${slug}`);
     setIsCartOpen(false);
   };
- 
-  useEffect(() => {
-    return subscribeGlobalConfig(setGlobalConfig);
-  }, []);
 
-  // Update mouse position for glowing cursor effect
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
-  const getDashboardHref = () => {
-    if (userData?.role === 'superadmin') return '/superadmin';
-    if (userData?.role === 'retailer') return '/dashboard';
-    if (userData?.role === 'staff') return '/dashboard';
-    return null;
+  // WhatsApp Link Normalization to resolve wa.me connection issues
+  const getFormattedContactUrl = (url, type) => {
+    if (!url) return '#';
+    const cleanNum = url.replace(/[^0-9]/g, '');
+    if (type === 'whatsapp' || url.includes('wa.me') || cleanNum.length >= 10) {
+      const withCountry = cleanNum.startsWith('88') ? cleanNum : `88${cleanNum}`;
+      return `https://wa.me/${withCountry}`;
+    }
+    return url;
   };
 
-  const handleSmartLogin = async () => {
-    setLoggingIn(true);
-    try {
-      const result = await loginWithGoogle();
-      if (!result) return;
-      
-      const role = result?.userData?.role;
-      if (role === 'superadmin') router.push('/superadmin');
-      else if (role === 'retailer' || role === 'staff') router.push('/dashboard');
-      else toast.success(`স্বাগতম, ${result.user.displayName}!`);
-    } catch (err) {
-      console.error("[SmartLogin] Error:", err);
-      toast.error(err.message || 'লগইন করতে সমস্যা হয়েছে।');
-    } finally {
-      setLoggingIn(false);
-    }
-  };
-
-  const handleRequestClick = async () => {
-    let currentUser = user;
-    if (!currentUser) {
-      try {
-        const result = await loginWithGoogle();
-        currentUser = result.user;
-      } catch (err) {
-        toast.error('লগইন ব্যর্থ হয়েছে। দয়া করে আবার চেষ্টা করুন।');
-        return;
-      }
-    }
-    setShowRequestModal(true);
-  };
-
-  const handleSubmitRequest = async () => {
-    let currentUser = user;
-    if (!currentUser) return;
-    setRequesting(true);
-    try {
-      await addRetailerRequest(currentUser, requestPhone.trim());
-      toast.success('আপনার অনুরোধ সফলভাবে জমা হয়েছে! অ্যাডমিন শীঘ্রই যাচাই করবেন। 🙏');
-      setShowRequestModal(false);
-      setRequestPhone('');
-    } catch (err) {
-      toast.error(err.message || 'আবেদন জমা দিতে সমস্যা হয়েছে।');
-      if (err.message.includes('অনুমোদিত')) setShowRequestModal(false);
-    } finally {
-      setRequesting(false);
-    }
-  };
-
-  const features = [
-    {
-      icon: Rocket,
-      title: "1-Click Launch",
-      desc: "Transform your physical business into a scalable online empire without writing a single line of code.",
-      color: "from-rose-500 to-orange-500",
-      shadow: "shadow-rose-500/20"
-    },
-    {
-      icon: Smartphone,
-      title: "Native PWA Experience",
-      desc: "Instant app installation directly from the browser. Lightning fast, offline-ready, and push-notification capable.",
-      color: "from-blue-500 to-cyan-500",
-      shadow: "shadow-blue-500/20"
-    },
-    {
-      icon: TrendingUp,
-      title: "Precision Analytics",
-      desc: "Google Analytics 4 & MS Clarity built-in. Watch your customers behave in real-time with heatmap recording.",
-      color: "from-emerald-500 to-teal-500",
-      shadow: "shadow-emerald-500/20"
-    },
-    {
-      icon: Users,
-      title: "Role-Based Staff",
-      desc: "Delegate efficiently. Specific dashboards for your staff to manage orders securely without admin access.",
-      color: "from-amber-500 to-yellow-500",
-      shadow: "shadow-amber-500/20"
-    },
-    {
-      icon: Sparkles,
-      title: "GPT-4 AI Assistant",
-      desc: "Train an active AI with your inventory. It replies to your customers 24/7 with custom pricing knowledge.",
-      color: "from-purple-500 to-pink-500",
-      shadow: "shadow-purple-500/20"
-    },
-    {
-      icon: ShieldCheck,
-      title: "Ironclad Security",
-      desc: "Cryptographically secure requests, PIN-locked order status modification, and fully sandboxed environments.",
-      color: "from-slate-500 to-slate-700",
-      shadow: "shadow-slate-500/20"
-    }
-  ];
-
-
+  // Amazon Category Cards grouping logic:
+  // Take top 4 categories and map up to 4 items in a 2x2 grid inside a premium Amazon-like card
+  const topCategories = uniqueCategories.filter(c => c !== 'All').slice(0, 4);
 
   return (
-    <div className="min-h-screen relative bg-[#030014] text-white selection:bg-purple-900 selection:text-white font-sans overflow-x-hidden">
+    <div className="min-h-screen relative bg-[#06060f] text-slate-100 selection:bg-purple-900 selection:text-white font-sans overflow-x-hidden">
       
       {/* ── Keyframe Injector ── */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes blob {
           0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
+          33% { transform: translate(30px, -50px) scale(1.05); }
+          66% { transform: translate(-20px, 20px) scale(0.95); }
           100% { transform: translate(0px, 0px) scale(1); }
         }
-        .animate-blob { animation: blob 7s infinite; }
-        .animation-delay-2000 { animation-delay: 2s; }
-        .animation-delay-4000 { animation-delay: 4s; }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes gradient-text {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-gradient-text {
-          background-size: 200% auto;
-          animation: gradient-text 4s linear infinite;
-        }
+        .animate-blob { animation: blob 10s infinite; }
+        .animation-delay-2000 { animation-delay: 2.5s; }
+        .animation-delay-4000 { animation-delay: 5s; }
         .glass-panel {
           background: rgba(255, 255, 255, 0.02);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.05);
         }
         .hero-gradient {
-          background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
-        }
-        .magazine-heading {
-          line-height: 0.9;
-          letter-spacing: -0.04em;
+          background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
         }
       `}} />
 
@@ -369,28 +281,28 @@ export default function Home() {
       <div 
         className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
         style={{
-          background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(139, 92, 246, 0.05), transparent 40%)`
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(139, 92, 246, 0.04), transparent 40%)`
         }}
       />
 
       {/* ── Background Blobs ── */}
-      <div className="fixed inset-0 -z-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay" />
-      <div className="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-blob" />
-      <div className="fixed top-[-10%] right-[-10%] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[120px] animate-blob animation-delay-2000" />
-      <div className="fixed bottom-[-20%] left-[20%] w-[500px] h-[500px] bg-pink-600/20 rounded-full blur-[120px] animate-blob animation-delay-4000" />
+      <div className="fixed inset-0 -z-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.08] mix-blend-overlay" />
+      <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px] animate-blob" />
+      <div className="fixed top-[-15%] right-[-5%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] animate-blob animation-delay-2000" />
+      <div className="fixed bottom-[-15%] left-[10%] w-[600px] h-[600px] bg-pink-600/800 opacity-[0.05] rounded-full blur-[140px] animate-blob animation-delay-4000" />
 
       {/* ── Navigation ── */}
       <nav className="fixed top-0 inset-x-0 z-[100] px-6 py-6 transition-all duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center glass-panel rounded-full px-8 py-4 shadow-2xl">
           <div className="flex items-center gap-3">
-            <Logo href="/" className="text-white scale-110" />
+            <Logo href="/" className="text-white scale-110" text="daripallah.com" />
           </div>
 
-          <div className="hidden md:flex items-center gap-10">
-            <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all">Home</a>
-            <a href="#features" className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all">Architecture</a>
-            <a href="/showcase" className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all">Showcase</a>
-            <a href="#contact" className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all">Contact</a>
+          <div className="flex items-center gap-6">
+            <a href="#marketplace" className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:block">Marketplace</a>
+            <Link href="/showcase" className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all">Showcase</Link>
+            
+            <div className="w-[1px] h-4 bg-white/10" />
             
             {/* Cart Button */}
             <button
@@ -406,15 +318,15 @@ export default function Home() {
               )}
             </button>
 
-            <div className="w-[1px] h-4 bg-white/10 mx-2" />
+            <div className="w-[1px] h-4 bg-white/10 mx-1" />
 
             {user && getDashboardHref() ? (
-              <Link href={getDashboardHref()} className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-full text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                <LayoutDashboard size={14} /> Workspace
+              <Link href={getDashboardHref()} className="flex items-center gap-2 px-6 py-2 bg-white text-black rounded-full text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                Workspace
               </Link>
             ) : !user ? (
-              <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white rounded-full text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)]">
-                {loggingIn ? "Connecting..." : "Portal Login"} <ArrowRight size={14} />
+              <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-full text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)]">
+                {loggingIn ? "Connecting..." : "Portal Login"}
               </button>
             ) : (
               <button onClick={logoutUser} className="text-[11px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.2em] transition-all">Sign Out</button>
@@ -424,172 +336,115 @@ export default function Home() {
       </nav>
 
       {/* ── Hero Section ── */}
-      <section className="relative z-20 pt-52 pb-32 px-6 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-          <div className="text-left animate-slide-in">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black tracking-[0.3em] uppercase text-white/60">The Future of Digital Commerce</span>
+      <section className="relative z-20 pt-48 pb-12 px-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl" style={{ minHeight: '340px' }}>
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-900/60 to-blue-900/40 z-10" />
+          <img 
+            src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80" 
+            alt="Daripallah Banner" 
+            className="absolute inset-0 w-full h-full object-cover scale-105 blur-sm opacity-50"
+          />
+          <div className="relative z-20 px-8 py-20 md:p-24 flex flex-col justify-center items-start h-full max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-bold text-emerald-400 uppercase tracking-widest mb-6">
+              <Sparkles size={12} /> verified multi-store network
             </div>
-
-            <h1 className="text-7xl md:text-[110px] font-black tracking-tighter magazine-heading mb-10">
-              CRAFT YOUR<br />
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent animate-gradient-text">DIGITAL EMPIRE.</span>
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-6">
+              Shop Directly From<br />
+              <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Verified Local Stores.</span>
             </h1>
-
-            <p className="text-xl md:text-2xl text-white/40 max-w-xl font-medium leading-relaxed mb-14">
-              Deploy a high-performance, AI-driven storefront in seconds. Designed for merchants who demand absolute aesthetic and technical perfection.
+            <p className="text-white/60 text-base md:text-lg max-w-xl mb-8 font-medium">
+              Browse through our comprehensive retailer network. Products are fetched in real-time from store databases with secure checkout.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-6">
-              <Link
-                href="/demo"
-                className="group relative px-10 py-5 rounded-2xl text-sm font-black flex items-center justify-center gap-3 bg-white text-black hover:scale-105 active:scale-95 transition-all shadow-[0_0_50px_rgba(255,255,255,0.2)] overflow-hidden"
-              >
-                <span className="relative z-10 flex items-center gap-2">Launch Alpha Experience <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></span>
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-200 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-
-              <button
-                onClick={handleRequestClick}
-                disabled={requesting}
-                className="group px-10 py-5 rounded-2xl text-sm font-black flex items-center justify-center gap-3 border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all backdrop-blur-xl disabled:opacity-50"
-              >
-                <Store size={18} className="text-cyan-400" /> Get Early Access
-              </button>
-            </div>
-            
-            <div className="mt-16 flex items-center gap-6 opacity-40">
-              <div className="flex -space-x-3">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full border-2 border-[#030014] bg-slate-800" />
-                ))}
-              </div>
-              <p className="text-sm font-bold tracking-tight">Trusted by 500+ premium retailers worldwide</p>
-            </div>
+            <a href="#marketplace" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black text-sm rounded-2xl shadow-xl hover:scale-105 transition-all">
+              Start Shopping <ArrowRight size={16} />
+            </a>
           </div>
+        </div>
+      </section>
 
-          <div className="relative lg:block hidden">
-            <div className="absolute -inset-4 bg-gradient-to-tr from-purple-500/20 to-cyan-500/20 blur-[100px] -z-10 animate-float" />
-            <div className="glass-panel rounded-[3rem] p-4 p-b-0 overflow-hidden shadow-2xl border-white/10 rotate-2 hover:rotate-0 transition-transform duration-700">
-               <div className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden">
-                  <Image 
-                    src="/webmaa_hero_v3_1777693927857.png" 
-                    alt="Webmaa UI" 
-                    fill 
-                    className="object-cover opacity-90"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#030014] via-transparent to-transparent" />
-                  
-                  <div className="absolute bottom-8 left-8 right-8 p-6 glass-panel rounded-3xl border-white/10 animate-float">
-                    <div className="flex justify-between items-center mb-4">
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50">System Status</span>
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          All Nodes Active
-                       </span>
-                    </div>
-                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                       <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 w-[85%] rounded-full" />
+      {/* ── Amazon-Style Category Grids ── */}
+      {topCategories.length > 0 && (
+        <section className="relative z-20 max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {topCategories.map(cat => {
+              // Get first 4 products in this category to construct a 2x2 grid
+              const catProducts = products.filter(p => p.category === cat).slice(0, 4);
+              if (catProducts.length === 0) return null;
+              
+              return (
+                <div key={cat} className="bg-white rounded-[2rem] p-6 text-slate-900 shadow-xl border border-slate-100 flex flex-col justify-between" style={{ minHeight: '420px' }}>
+                  <div>
+                    <h3 className="text-xl font-black tracking-tight text-slate-800 mb-4">{cat}</h3>
+                    
+                    {/* 2x2 Grid of Products */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {catProducts.map(p => (
+                        <div 
+                          key={p.id} 
+                          onClick={() => {
+                            setActiveCategory(cat);
+                            const el = document.getElementById('marketplace');
+                            el?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="group cursor-pointer space-y-1.5"
+                        >
+                          <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200/60 relative">
+                            <img 
+                              src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80'} 
+                              alt={p.name} 
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            {/* Price label inside category grid */}
+                            <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow">
+                              ৳{Number(p.price).toFixed(0)}
+                            </span>
+                          </div>
+                          <p className="text-[10px] font-black text-slate-700 truncate px-0.5 leading-none">{p.name}</p>
+                        </div>
+                      ))}
+                      {/* Fill empty items if category has less than 4 items */}
+                      {catProducts.length < 4 && [...Array(4 - catProducts.length)].map((_, idx) => (
+                        <div key={`empty-${idx}`} className="aspect-square rounded-xl bg-slate-50 border border-dashed border-slate-200" />
+                      ))}
                     </div>
                   </div>
-               </div>
-            </div>
-            
-            {/* Floating Elements */}
-            <div className="absolute -top-10 -right-10 w-32 h-32 glass-panel rounded-3xl border-white/10 flex items-center justify-center animate-float" style={{ animationDelay: '1s' }}>
-              <Zap size={40} className="text-yellow-400 fill-yellow-400/20" />
-            </div>
-            <div className="absolute bottom-20 -left-16 px-6 py-4 glass-panel rounded-2xl border-white/10 animate-float" style={{ animationDelay: '2s' }}>
-              <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <CheckCircle size={16} className="text-white" />
-                 </div>
-                 <p className="text-xs font-black uppercase tracking-widest text-white/80">Order Sync Success</p>
-              </div>
-            </div>
+                  
+                  <button
+                    onClick={() => {
+                      setActiveCategory(cat);
+                      const el = document.getElementById('marketplace');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="text-xs font-black text-purple-600 hover:text-purple-800 transition-colors text-left flex items-center gap-1 mt-2"
+                  >
+                    See all products <ChevronRight size={14} className="mt-0.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      </section>
-
-      {/* ── Stats Section ── */}
-      <section className="relative z-20 max-w-7xl mx-auto px-6 py-20 border-y border-white/5 bg-white/[0.01]">
-         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
-            {[
-              { label: 'Uptime', val: '99.99%', sub: 'Global Availability' },
-              { label: 'Latency', val: '<25ms', sub: 'Instant Edge Rendering' },
-              { label: 'Transactions', val: '$5.4M+', sub: 'Processed Weekly' },
-              { label: 'Merchant Growth', val: '314%', sub: 'Average YOY' },
-            ].map((stat, i) => (
-              <div key={i} className="group">
-                 <p className="text-4xl md:text-5xl font-black mb-2 tracking-tighter group-hover:scale-110 transition-transform">{stat.val}</p>
-                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-1">{stat.label}</p>
-                 <p className="text-[9px] font-bold text-purple-500/60 tracking-widest">{stat.sub}</p>
-              </div>
-            ))}
-         </div>
-      </section>
-
-      {/* ── Architecture/Features Grid ── */}
-      <section id="features" className="relative z-20 max-w-7xl mx-auto px-6 py-40">
-        <div className="flex flex-col md:flex-row justify-between items-end gap-10 mb-32">
-          <div className="max-w-3xl">
-            <h2 className="text-6xl md:text-[120px] font-black tracking-tighter magazine-heading mb-10">
-              BUILT FOR<br />
-              <span className="text-white/10 uppercase italic">Infinite Scale.</span>
-            </h2>
-            <p className="text-2xl text-white/30 font-medium leading-relaxed">
-              Every component is a masterpiece of engineering. From sub-millisecond edge rendering to autonomous AI agents that sell while you sleep.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, i) => (
-            <div
-              key={i}
-              className="group relative glass-panel p-12 rounded-[4rem] hover:-translate-y-4 transition-all duration-700 overflow-hidden border-white/5 hover:border-white/20 hover:shadow-[0_0_80px_rgba(139,92,246,0.1)]"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-[0.08] transition-opacity duration-700`} />
-              
-              <div className={`w-20 h-20 rounded-[2rem] bg-gradient-to-br ${feature.color} flex items-center justify-center text-white mb-12 group-hover:scale-110 group-hover:rotate-[15deg] transition-all duration-700 shadow-2xl ${feature.shadow}`}>
-                <feature.icon size={32} strokeWidth={2.5} />
-              </div>
-              <h3 className="text-3xl font-black mb-6 tracking-tight">{feature.title}</h3>
-              <p className="text-base text-white/30 leading-relaxed font-medium group-hover:text-white/70 transition-colors">{feature.desc}</p>
-              
-              <div className="mt-12 flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-white/10 group-hover:text-white transition-colors">
-                 Deep Dive <ArrowRight size={14} className="group-hover:translate-x-2 transition-transform" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Marketplace Section ── */}
-      <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-6 py-24 border-t border-white/5">
-        <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-16 gap-6">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-6 backdrop-blur-md">
-              <Store size={14} className="text-purple-400" />
-              <span className="text-[10px] font-black tracking-[0.25em] uppercase text-purple-400">Live Marketplace</span>
-            </div>
-            <h2 className="text-5xl md:text-7xl font-black tracking-tight leading-none mb-6">
-              EXPLORE OUR<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">MERCHANT NETWORK.</span>
+      <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-6 py-16 scroll-mt-24">
+        <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
+          <div>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">
+              Explore Our Marketplace
             </h2>
-            <p className="text-lg text-white/40 font-medium leading-relaxed">
-              Explore dynamic inventories live from authorized stores. Select items to checkout directly from individual merchants.
+            <p className="text-sm text-white/40 font-medium">
+              Browse products uploaded live across all registered marchants. Real-time stock, secure shopping.
             </p>
           </div>
 
           {/* Search bar */}
           <div className="relative w-full md:max-w-sm shrink-0">
-            <Search className="absolute left-4 top-3.5 text-white/30" size={18} />
+            <Search className="absolute left-4 top-3 text-white/30" size={16} />
             <input
               type="text"
               placeholder="Search products..."
-              className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 placeholder:text-white/20 transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 placeholder:text-white/20 transition-all"
               value={productSearch}
               onChange={e => setProductSearch(e.target.value)}
             />
@@ -607,7 +462,7 @@ export default function Home() {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-2 rounded-xl text-xs font-black transition-all border shrink-0 ${
                   activeCategory === cat
-                    ? 'bg-white text-slate-900 border-white shadow-lg shadow-white/10 scale-105'
+                    ? 'bg-white text-slate-900 border-white shadow-lg'
                     : 'bg-white/[0.02] border-white/[0.05] text-white/50 hover:bg-white/[0.05] hover:text-white/80'
                 }`}
               >
@@ -625,7 +480,7 @@ export default function Home() {
                 onClick={() => setActiveShopFilter(shop)}
                 className={`px-4 py-2 rounded-xl text-xs font-black transition-all border shrink-0 ${
                   activeShopFilter === shop
-                    ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20 scale-105'
+                    ? 'bg-purple-600 text-white border-purple-500 shadow-lg'
                     : 'bg-white/[0.02] border-white/[0.05] text-white/50 hover:bg-white/[0.05] hover:text-white/80'
                 }`}
               >
@@ -665,9 +520,9 @@ export default function Home() {
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
                   />
-                  {product.shopSlug === 'webmaa-store' && (
+                  {product.shopSlug === 'daripallah-store' && (
                     <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
-                      👑 Webmaa Store
+                      👑 Primary Store
                     </span>
                   )}
                 </div>
@@ -691,7 +546,7 @@ export default function Home() {
 
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 text-white/70"
+                      className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95 text-white/70 animate-fade-in"
                     >
                       <ShoppingCart size={12} /> Add to Cart
                     </button>
@@ -703,38 +558,36 @@ export default function Home() {
         )}
       </section>
 
-      {/* ── Promoted Shops Showcase ── */}
+      {/* ── Promoted Shops Showcase / Registry ── */}
       {(globalConfig?.promotedLinks && globalConfig.promotedLinks.length > 0) && (
-        <section id="showcase" className="relative z-20 py-40 bg-white/[0.01] border-y border-white/5 overflow-hidden">
-          <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-purple-600/5 rounded-full blur-[180px] -z-10" />
-          
+        <section id="showcase" className="relative z-20 py-24 bg-white/[0.01] border-y border-white/5 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row items-center justify-between mb-32 gap-10">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-10">
                <div className="text-left">
-                  <span className="inline-block px-5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-black uppercase tracking-[0.4em] text-purple-400 mb-8">The Registry</span>
-                  <h2 className="text-6xl md:text-9xl font-black tracking-tighter magazine-heading uppercase">Elite<br />Merchants</h2>
+                  <span className="inline-block px-5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-black uppercase tracking-[0.4em] text-purple-400 mb-6">Verified Registry</span>
+                  <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-none uppercase">Elite Merchants</h2>
                </div>
                <div className="md:text-right max-w-sm">
-                  <p className="text-lg text-white/20 font-bold leading-snug">
-                     A curated selection of the world's most innovative brands running on the Webmaa protocol.
+                  <p className="text-sm text-white/40 font-bold leading-relaxed">
+                     A curated registry of elite retail storefronts built and hosted securely on our high-performance cloud network.
                   </p>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {globalConfig.promotedLinks.map((link, idx) => (
-                <a key={idx} href={link.url} target="_blank" rel="noreferrer" className="group relative glass-panel p-10 rounded-[3rem] flex flex-col items-start gap-8 hover:bg-white/5 transition-all hover:-translate-y-2 hover:shadow-[0_0_100px_rgba(255,255,255,0.05)] border-white/5">
-                  <div className="w-20 h-20 bg-gradient-to-br from-slate-800 to-slate-950 rounded-[1.5rem] flex items-center justify-center shadow-2xl border border-white/10 group-hover:border-purple-500/50 transition-all">
-                    <Globe size={32} className="text-white/20 group-hover:text-purple-400 transition-colors" />
+                <a key={idx} href={link.url} target="_blank" rel="noreferrer" className="group relative glass-panel p-8 rounded-[2rem] flex flex-col items-start gap-6 hover:bg-white/5 transition-all hover:-translate-y-1 hover:shadow-xl border-white/5">
+                  <div className="w-14 h-14 bg-gradient-to-br from-slate-800 to-slate-950 rounded-[1.2rem] flex items-center justify-center shadow-2xl border border-white/10 group-hover:border-purple-500/50 transition-all">
+                    <Globe size={24} className="text-white/20 group-hover:text-purple-400 transition-colors" />
                   </div>
                   <div>
-                    <h4 className="text-3xl font-black group-hover:text-white transition-all tracking-tight">{link.title}</h4>
-                    <p className="text-[11px] text-white/20 font-black uppercase tracking-[0.3em] mt-4 flex items-center gap-2 group-hover:text-purple-400 transition-colors">
-                       Secure Endpoint <ArrowUpRight size={12} />
+                    <h4 className="text-xl font-black group-hover:text-white transition-all tracking-tight">{link.title}</h4>
+                    <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] mt-3 flex items-center gap-1.5 group-hover:text-purple-400 transition-colors">
+                       Visit Store <ArrowUpRight size={12} />
                     </p>
                   </div>
-                  <div className="absolute top-10 right-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                  <div className="absolute top-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
                   </div>
                 </a>
               ))}
@@ -743,131 +596,62 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── Waitlist Footer CTA ── */}
-      <section className="relative z-20 py-64 overflow-hidden">
-         <div className="max-w-6xl mx-auto px-6 text-center">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-purple-600/10 rounded-full blur-[250px] -z-10" />
-            <h2 className="text-7xl md:text-[140px] font-black tracking-tighter magazine-heading mb-16 uppercase italic leading-none">
-               Don't Wait.<br />
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/20">Dominate.</span>
-            </h2>
-            <button
-              onClick={handleRequestClick}
-              disabled={requesting}
-              className="group relative px-20 py-8 rounded-[2rem] text-xl font-black bg-white text-black hover:scale-105 transition-all shadow-[0_0_80px_rgba(255,255,255,0.4)] disabled:opacity-50"
-            >
-              INITIALIZE PROTOCOL
-            </button>
-         </div>
-      </section>
-
       {/* ── Footer ── */}
-      <footer id="contact" className="relative z-20 border-t border-white/10 pt-32 pb-16 bg-[#030014]">
+      <footer id="contact" className="relative z-20 border-t border-white/5 pt-20 pb-12 bg-[#04040a]">
         <div className="max-w-7xl mx-auto px-6">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-20 mb-32">
-              <div className="lg:col-span-2">
-                 <Logo href="/" className="text-white scale-[1.5] origin-left mb-12" />
-                 <p className="text-2xl text-white/90 max-w-lg font-medium leading-relaxed mb-12 italic">
-                    &quot;The first e-commerce protocol designed for the high-end retailer. Built for speed, scaled with AI, and secured by default.&quot;
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
+              
+              {/* Brand Description Footer */}
+              <div>
+                 <Logo href="/" className="text-white scale-[1.3] origin-left mb-6" text="daripallah.com" />
+                 <p className="text-sm text-white/50 leading-relaxed max-w-sm mb-6">
+                    Daripallah — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব।
                  </p>
-                 
-                 <div className="flex flex-wrap gap-4">
-                    {globalConfig?.contactLinks?.map((link, idx) => (
-                      <a 
-                        key={idx} 
-                        href={link.url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        className="px-4 py-2 rounded-xl bg-white/20 border border-white/30 flex items-center gap-2 hover:bg-white/30 transition-all text-xs font-bold text-white hover:text-white uppercase tracking-wider"
-                      >
-                         <ArrowUpRight size={14} />
-                         {link.name}
-                      </a>
-                    ))}
-                 </div>
+                 <span className="text-[10px] font-black text-white/30 tracking-[0.4em] uppercase">daripallah global platform © {new Date().getFullYear()}</span>
               </div>
               
+              {/* Elite Showcase */}
               <div>
-                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80 mb-10">Ecosystem</h4>
-                 <ul className="space-y-5">
-                    <li><a href="/showcase" className="text-base font-bold text-white/80 hover:text-white transition-colors">Live Showcase</a></li>
-                    <li><a href="#" className="text-base font-bold text-white/80 hover:text-white transition-colors">Developer Docs</a></li>
-                    <li><a href="#" className="text-base font-bold text-white/80 hover:text-white transition-colors">Retailer Hub</a></li>
-                    <li><a href="#" className="text-base font-bold text-white/80 hover:text-white transition-colors">Merchant Portal</a></li>
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80 mb-6">Navigation</h4>
+                 <ul className="space-y-4 text-sm font-bold text-white/50">
+                    <li><Link href="/showcase" className="hover:text-white transition-colors">Live Showcase Registry</Link></li>
+                    <li><a href="#marketplace" className="hover:text-white transition-colors">All Products Marketplace</a></li>
+                    <li><Link href="/dashboard" className="hover:text-white transition-colors">Store Admin Portal</Link></li>
                  </ul>
               </div>
 
+              {/* Working Contact Links (WhatsApp wa.me normalization built-in) */}
               <div>
-                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80 mb-10">Contact</h4>
-                 <ul className="space-y-6">
-                    {globalConfig?.contactLinks?.map((link, idx) => (
-                      <li key={idx}>
-                         <a href={link.url} target="_blank" rel="noreferrer" className="flex items-center gap-4 text-base font-bold text-white/80 group hover:text-white transition-colors cursor-pointer">
-                           <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-white group-hover:bg-white/30 transition-all">
-                              <ArrowUpRight size={18} />
-                           </div>
-                           <span>{link.name}</span>
-                         </a>
-                      </li>
-                    ))}
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-white/80 mb-6">Contact Us</h4>
+                 <ul className="space-y-4">
+                    {globalConfig?.contactLinks?.map((link, idx) => {
+                      const formattedUrl = getFormattedContactUrl(link.url, link.name?.toLowerCase());
+                      const isWa = link.name?.toLowerCase().includes('whatsapp') || link.url.includes('wa.me');
+                      
+                      return (
+                        <li key={idx}>
+                           <a 
+                             href={formattedUrl} 
+                             target="_blank" 
+                             rel="noreferrer" 
+                             className="flex items-center gap-3 text-sm font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
+                           >
+                             <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shrink-0">
+                                {isWa ? <MessageCircle size={16} /> : <Mail size={16} />}
+                             </div>
+                             <span>{link.name || 'Direct Connection'}</span>
+                           </a>
+                        </li>
+                      );
+                    })}
                     {(!globalConfig?.contactLinks || globalConfig.contactLinks.length === 0) && (
-                       <li className="text-sm font-bold text-white/60 uppercase tracking-widest">No contact info available</li>
+                       <li className="text-xs font-bold text-white/40 uppercase tracking-widest">No contact endpoints registered</li>
                     )}
                   </ul>
               </div>
            </div>
-           
-           <div className="pt-16 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-10">
-              <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center font-black text-sm">W</div>
-                 <span className="text-[11px] font-black text-white/50 tracking-[0.5em] uppercase">Webmaa Global Protocol © {new Date().getFullYear()}</span>
-              </div>
-              <div className="flex gap-12">
-                 <a href="#" className="text-[11px] font-black text-white/50 uppercase tracking-widest hover:text-white transition-colors">Terms</a>
-                 <a href="#" className="text-[11px] font-black text-white/50 uppercase tracking-widest hover:text-white transition-colors">Privacy</a>
-                 <a href="#" className="text-[11px] font-black text-white/50 uppercase tracking-widest hover:text-white transition-colors">Security</a>
-              </div>
-           </div>
         </div>
       </footer>
-
-      {/* ── Request Modal ── */}
-      {showRequestModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/95 backdrop-blur-3xl">
-          <div className="glass-panel border-white/10 rounded-[4rem] p-16 max-w-xl w-full relative animate-slide-in shadow-[0_0_150px_rgba(0,0,0,0.8)]">
-            <button onClick={() => setShowRequestModal(false)} className="absolute top-10 right-10 text-white/20 hover:text-white transition-colors">
-              <X size={32} />
-            </button>
-            
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-[2rem] flex items-center justify-center mb-12 shadow-2xl shadow-purple-500/20">
-               <ShieldCheck size={48} className="text-white" />
-            </div>
-            
-            <h3 className="text-5xl font-black text-white mb-6 tracking-tighter uppercase italic leading-none">Access Required</h3>
-            <p className="text-white/30 text-base font-medium mb-12 leading-relaxed uppercase tracking-[0.1em]">Provisioning a new node on the Webmaa protocol requires a verified mobile endpoint.</p>
-            
-            <div className="space-y-8">
-              <div className="relative">
-                <input 
-                  type="tel" 
-                  maxLength={11}
-                  placeholder="01XXXXXXXXX" 
-                  value={requestPhone}
-                  onChange={(e) => setRequestPhone(e.target.value.replace(/[^0-9]/g, ''))}
-                  className="w-full px-10 py-8 bg-white/5 border border-white/10 rounded-[2rem] font-black text-4xl text-white outline-none focus:border-purple-500/50 focus:bg-white/10 transition-all text-center tracking-[0.4em] placeholder:tracking-normal placeholder:text-white/5"
-                />
-              </div>
-              <button 
-                onClick={handleSubmitRequest}
-                disabled={requesting || requestPhone.length < 11}
-                className="w-full py-8 bg-white text-black rounded-[2rem] font-black text-base uppercase tracking-[0.3em] hover:scale-[1.02] active:scale-95 transition-all shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-              >
-                {requesting ? 'PROVISIONING NODE...' : 'AUTHORIZE DEPLOYMENT'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Cart Drawer Overlay ── */}
       {isCartOpen && (
@@ -900,11 +684,11 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* 1. Webmaa Store Section */}
+                  {/* 1. Primary Daripallah Store Section */}
                   {webmaaStoreItems.length > 0 && (
                     <div className="bg-purple-950/10 border border-purple-500/20 rounded-2xl p-4 space-y-3">
                       <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
-                        👑 Webmaa Store Products
+                        👑 Daripallah Store Products
                       </p>
                       <div className="space-y-3 divide-y divide-purple-500/10">
                         {webmaaStoreItems.map(item => (
@@ -983,7 +767,7 @@ export default function Home() {
                       onClick={handleCheckoutWebmaa}
                       className="w-full py-4 bg-white text-black hover:scale-[1.02] rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl cursor-pointer active:scale-95 transition-all"
                     >
-                      Checkout Webmaa Products (৳ {webmaaStoreTotal.toLocaleString()})
+                      Checkout Daripallah Products (৳ {webmaaStoreTotal.toLocaleString()})
                     </button>
                   )}
                   <button

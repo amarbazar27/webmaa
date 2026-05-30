@@ -24,6 +24,7 @@ function applySecurityHeaders(response: NextResponse, pathname: string): NextRes
 // এই হোস্টগুলো কাস্টম ডোমেইন হিসেবে ধরা হবে না — সরাসরি পার হয়ে যাবে
 const BYPASS_HOSTS = [
   'webmaa.vercel.app',
+  'daripallah.com',
   'localhost',
   '127.0.0.1',
 ];
@@ -112,7 +113,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   try {
     // Internal API call — domain → shop slug রেজোলিউশন
     // Use the primary platform domain to avoid edge routing loopback issues on custom domains
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://webmaa.vercel.app';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://daripallah.com';
     const lookupUrl = new URL('/api/domain-lookup', baseUrl);
     lookupUrl.searchParams.set('host', host);
 
