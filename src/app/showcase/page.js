@@ -19,8 +19,16 @@ export default function ShowcasePage() {
 
   const filtered = shops.filter(s =>
     (s.shopName || '').toLowerCase().includes(search.toLowerCase()) ||
-    (s.shopSlug || '').toLowerCase().includes(search.toLowerCase())
+    (s.shopSlug || '').toLowerCase().includes(search.toLowerCase()) ||
+    (s.subdomainSlug || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  const getStoreLink = (shopSlug, customDomain, domainStatus) => {
+    if (customDomain && domainStatus === 'connected') {
+      return `https://${customDomain}`;
+    }
+    return `/${shopSlug}`;
+  };
 
   const gradients = [
     'from-purple-600 to-indigo-600',
@@ -49,7 +57,7 @@ export default function ShowcasePage() {
       {/* Nav */}
       <nav className="sticky top-0 z-50 px-6 py-5">
         <div className="max-w-7xl mx-auto flex justify-between items-center glass-panel rounded-full px-8 py-4 shadow-2xl">
-          <Logo href="/" className="text-white scale-110" />
+          <Logo href="/" className="text-white scale-110" text="daripallah.com" />
           <div className="flex items-center gap-4">
             <Link href="/" className="text-[11px] font-black text-white/40 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:block">Home</Link>
             <span className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black tracking-[0.3em] uppercase text-purple-400">
@@ -67,7 +75,7 @@ export default function ShowcasePage() {
           <span className="text-white/10">MERCHANTS.</span>
         </h1>
         <p className="text-xl text-white/30 font-medium max-w-xl mb-12">
-          Explore all active storefronts powered by the Webmaa protocol. No login required.
+          Explore all active storefronts powered by the Daripallah protocol. No login required.
         </p>
 
         {/* Search */}
@@ -100,11 +108,14 @@ export default function ShowcasePage() {
             {filtered.map((shop, idx) => {
               const grad = gradients[idx % gradients.length];
               const slug = shop.subdomainSlug || shop.shopSlug;
+              const storeLink = getStoreLink(slug, shop.customDomain, shop.domainStatus);
               return (
-                <Link
+                <a
                   key={shop.id}
-                  href={`/shop/${slug}`}
-                  className="group glass-panel rounded-[2.5rem] p-10 flex flex-col gap-8 hover:bg-white/5 hover:-translate-y-2 transition-all duration-500 border-white/5 hover:border-white/15 hover:shadow-[0_0_80px_rgba(139,92,246,0.08)]"
+                  href={storeLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group glass-panel rounded-[2.5rem] p-10 flex flex-col gap-8 hover:bg-white/5 hover:-translate-y-2 transition-all duration-500 border-white/5 hover:border-white/15 hover:shadow-[0_0_80px_rgba(139,92,246,0.08)] cursor-pointer"
                 >
                   <div className={`w-20 h-20 bg-gradient-to-br ${grad} rounded-[1.5rem] flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:rotate-[10deg] transition-all duration-500`}>
                     <span className="text-3xl font-black text-white">{(shop.shopName || 'S')[0]}</span>
@@ -119,7 +130,7 @@ export default function ShowcasePage() {
                     </span>
                     <div className="ml-auto w-2 h-2 rounded-full bg-emerald-500 opacity-0 group-hover:opacity-100 animate-pulse transition-opacity shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                   </div>
-                </Link>
+                </a>
               );
             })}
           </div>
@@ -128,7 +139,7 @@ export default function ShowcasePage() {
 
       {/* Footer */}
       <footer className="border-t border-white/5 py-12 text-center">
-        <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.4em]">Webmaa Showcase © {new Date().getFullYear()}</p>
+        <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.4em]">Daripallah Showcase © {new Date().getFullYear()}</p>
       </footer>
     </div>
   );

@@ -736,8 +736,8 @@ export default function SuperAdminPage() {
                                 </a>
                               )}
                               {shop.subdomainSlug && (
-                                <a href={`https://webmaa.vercel.app/shop/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
-                                  <Link2 size={11} /> /shop/{shop.subdomainSlug}
+                                <a href={`https://daripallah.com/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
+                                  <Link2 size={11} /> /{shop.subdomainSlug}
                                 </a>
                               )}
                             </div>
@@ -789,7 +789,7 @@ export default function SuperAdminPage() {
 
                               {(shop.subdomainSlug || shop.shopSlug) && (
                                 <a
-                                  href={`${typeof window !== 'undefined' ? window.location.origin : 'https://webmaa.vercel.app'}/shop/${shop.subdomainSlug || shop.shopSlug}`}
+                                  href={`${typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com'}/${shop.subdomainSlug || shop.shopSlug}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"

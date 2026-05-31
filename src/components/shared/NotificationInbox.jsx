@@ -205,7 +205,7 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
                           <div className="flex items-center gap-2 mt-2">
                              <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider flex items-center gap-1">
                                {isSystem ? <Store size={10} /> : <Store size={10} />}
-                               {notif.senderName || (isSystem ? 'Webmaa' : 'Shop')}
+                               {notif.senderName || (isSystem ? 'Daripallah' : 'Shop')}
                              </span>
                              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                              <span className="text-[10px] font-bold opacity-50">

@@ -9,7 +9,7 @@ export default function AiCompanion({ shop, isMobile }) {
   const { activeShopId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, role: 'bot', text: `আসসালামু আলাইকুম! আমি আপনার স্টোর অ্যাসিস্ট্যান্ট ${shop?.aiConfig?.botName || 'Webmaa AI'}। আপনার আজকের সেলস বা ইনভেন্টরি সম্পর্কে কোনো এনালাইসিস লাগবে?` }
+    { id: 1, role: 'bot', text: `আসসালামু আলাইকুম! আমি আপনার স্টোর অ্যাসিস্ট্যান্ট ${shop?.aiConfig?.botName || 'Daripallah AI'}। আপনার আজকের সেলস বা ইনভেন্টরি সম্পর্কে কোনো এনালাইসিস লাগবে?` }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -38,7 +38,7 @@ export default function AiCompanion({ shop, isMobile }) {
   const generateReply = (query) => {
     const q = query.toLowerCase();
     const { orders, products } = analyticsData;
-    const botName = shop?.aiConfig?.botName || 'Webmaa AI';
+    const botName = shop?.aiConfig?.botName || 'Daripallah AI';
 
     if (q.includes('salam') || q.includes('আসসালামু') || q.includes('wa-alaikum')) {
       return `ওয়া আলাইকুম আসসালাম! আমি ${botName}। আমি আপনাকে আপনার দোকানের অর্ডার এবং স্টকের তথ্য দিয়ে সাহায্য করতে পারি। ইনশাআল্লাহ সব ঠিক হয়ে যাবে! 🌙`;
@@ -176,7 +176,7 @@ export default function AiCompanion({ shop, isMobile }) {
                     <Bot size={22} />
                   </div>
                   <div>
-                    <h3 className="font-black text-lg tracking-tight leading-tight">{shop?.aiConfig?.botName || 'Webmaa AI'}</h3>
+                    <h3 className="font-black text-lg tracking-tight leading-tight">{shop?.aiConfig?.botName || 'Daripallah AI'}</h3>
                     <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">Shop Analytics Assistant</p>
                   </div>
                </div>

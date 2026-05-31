@@ -86,11 +86,11 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
               <img src={shop.logoUrl} alt="Store Logo" className="w-10 h-10 rounded-xl object-contain shadow-sm border border-slate-100" />
             ) : (
               <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                <span className="text-white font-black text-xl">{shop?.shopName?.[0] || 'W'}</span>
+                <span className="text-white font-black text-xl">{shop?.shopName?.[0] || 'D'}</span>
               </div>
             )}
             <div className="overflow-hidden">
-              <span className="font-black text-lg tracking-tight text-slate-900 block leading-none truncate">{shop?.shopName || 'Webmaa'}</span>
+              <span className="font-black text-lg tracking-tight text-slate-900 block leading-none truncate">{shop?.shopName || 'Daripallah'}</span>
               <span className="text-[10px] text-purple-600 font-black uppercase tracking-[0.1em] mt-1 block">Dashboard</span>
             </div>
           </div>

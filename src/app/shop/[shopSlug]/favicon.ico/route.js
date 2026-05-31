@@ -7,7 +7,7 @@ export async function GET(request, { params }) {
   try {
     const shop = await getShopBySlug(shopSlug);
     // If shop has no logo, fallback to Webmaa default
-    const logoUrl = shop?.logoUrl || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://webmaa.vercel.app'}/logo.png`;
+    const logoUrl = shop?.logoUrl || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://daripallah.com'}/logo.png`;
     
     // Fetch the logo image
     // Note: We use fetch to get the actual image data because /favicon.ico must return an image response, not a redirect

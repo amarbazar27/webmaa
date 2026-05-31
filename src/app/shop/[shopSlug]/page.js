@@ -6,13 +6,13 @@ import TemplateRenderer from '@/templates/TemplateRenderer';
 
 export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://webmaa.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://daripallah.com';
 
 export async function generateMetadata({ params }) {
   try {
     const { shopSlug } = await params;
     const shop = await getShopServer(shopSlug);
-    if (!shop) return { title: 'Webmaa Store' };
+    if (!shop) return { title: 'Daripallah Store' };
 
     const rawLogo = shop?.logoUrl || '/logo.png';
     const logoUrl = rawLogo.startsWith('http') ? rawLogo : `${BASE_URL}${rawLogo}`;
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }) {
       ? `https://${shop.customDomain}`
       : `${BASE_URL}/shop/${shopSlug}`;
 
-    const shopName = shop?.shopName || 'Webmaa Store';
+    const shopName = shop?.shopName || 'Daripallah Store';
     const slogan = shop?.slogan || '';
 
     // Rich title: "ShopName | ShopName Bengali – slogan"
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }) {
     };
   } catch (err) {
     console.error('[ShopPage] Metadata Error:', err);
-    return { title: 'Webmaa Store' };
+    return { title: 'Daripallah Store' };
   }
 }
 

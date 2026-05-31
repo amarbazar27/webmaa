@@ -205,8 +205,8 @@ export async function POST(req) {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${apiKey}`,
-              'HTTP-Referer': 'https://webmaa.vercel.app',
-              'X-Title': 'Webmaa SaaS'
+              'HTTP-Referer': 'https://daripallah.com',
+              'X-Title': 'Daripallah SaaS'
             },
             body: JSON.stringify(bodyParameters)
           });
