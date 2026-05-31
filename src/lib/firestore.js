@@ -588,6 +588,8 @@ export const getAllMarketplaceProducts = async () => {
           shopSlug: shop.subdomainSlug || shop.shopSlug || '',
           shopLogoUrl: shop.logoUrl || '',
           deliveryConfig: shop.deliveryConfig || {},
+          customDomain: shop.customDomain || '',
+          domainStatus: shop.domainStatus || '',
         }));
       })
     );

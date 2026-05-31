@@ -90,6 +90,23 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // ── বাইপাস: Webmaa নিজের ডোমেইন বা localhost ──────────────────────────
   if (!host || isBypassHost(host)) {
+    const pathParts = pathname.split('/').filter(Boolean);
+    if (pathParts.length >= 1) {
+      const firstSegment = pathParts[0];
+      const reservedKeywords = [
+        'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
+        '_next', 'robots.txt', 'sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
+      ];
+      if (!reservedKeywords.includes(firstSegment)) {
+        // Rewrite /[shopSlug]/... to /shop/[shopSlug]/...
+        const remainingPath = pathParts.slice(1).join('/');
+        const targetPath = `/shop/${firstSegment}${remainingPath ? '/' + remainingPath : ''}`;
+        const rewriteUrl = new URL(targetPath, request.url);
+        rewriteUrl.search = request.nextUrl.search;
+        console.log(`[Proxy] Short path detected. Rewriting ${pathname} to ${targetPath}`);
+        return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+      }
+    }
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
 

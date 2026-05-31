@@ -150,14 +150,27 @@ export default function SettingsPage() {
     if (!activeShopId) return;
     getShop(activeShopId).then(data => {
       if (data) {
+        const rawBanners = data.banners || [];
+        const normalizedBanners = rawBanners.map(b => {
+          if (typeof b === 'string') {
+            return { url: b, title: '', description: '', linkUrl: '', buttonText: '' };
+          }
+          return {
+            url: b?.url || '',
+            title: b?.title || '',
+            description: b?.description || '',
+            linkUrl: b?.linkUrl || '',
+            buttonText: b?.buttonText || ''
+          };
+        });
         setShop({
           shopName: data.shopName || '',
           slogan: data.slogan || '',
           notices: data.notices || '',
           welcomeMessage: data.welcomeMessage || '',
           subdomainSlug: data.subdomainSlug || '',
-          banners: data.banners || [],
-          ...data
+          ...data,
+          banners: normalizedBanners
         });
       }
       setLogoPreview(data?.logoUrl || null);
@@ -421,7 +434,8 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       const url = await uploadImage(file);
-      const newBanners = [...(shop.banners || []), url];
+      const newBannerObj = { url, title: '', description: '', linkUrl: '', buttonText: '' };
+      const newBanners = [...(shop.banners || []), newBannerObj];
       await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
       toast.success('ব্যানার আপলোড সফল হয়েছে! 🖼️');
@@ -444,7 +458,12 @@ export default function SettingsPage() {
     try {
       const url = await uploadImage(file);
       const newBanners = [...(shop.banners || [])];
-      newBanners[index] = url;
+      const existing = newBanners[index];
+      if (typeof existing === 'string') {
+        newBanners[index] = { url, title: '', description: '', linkUrl: '', buttonText: '' };
+      } else {
+        newBanners[index] = { ...existing, url };
+      }
       await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
       toast.success('ব্যানার পরিবর্তন সফল হয়েছে! 🔄');
@@ -507,7 +526,8 @@ export default function SettingsPage() {
         customAreas,
         trackingConfig,
         loadingMedia,
-        faqItems
+        faqItems,
+        banners: shop.banners || []
       });
       toast.success('All settings synchronized! ✨');
     } catch (err) {
@@ -1007,53 +1027,122 @@ export default function SettingsPage() {
                   placeholder="e.g. https://youtube.com/watch?v=..."
                 />
 
-                <div className="space-y-3 pt-4 border-t border-slate-100">
-                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shop Banners (Max 5, 5MB each)</label>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {shop.banners?.map((url, i) => (
-                         <div key={i} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group">
-                            <img src={url} className="w-full h-full object-cover" alt="" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
-                              {/* Replace Banner */}
-                              <label className="bg-white text-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase cursor-pointer hover:bg-purple-100 transition-colors shadow-lg">
-                                🔄 পরিবর্তন
-                                <input type="file" accept="image/*" className="hidden" onChange={(e) => replaceBanner(e, i)} />
-                              </label>
-                              {/* Delete Banner */}
-                              <button 
-                                type="button" 
-                                onClick={() => removeBanner(i)}
-                                className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-colors shadow-lg"
-                              >
-                                ✕ মুছুন
-                              </button>
-                            </div>
-                            <span className="absolute top-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-md">{i+1}/{shop.banners.length}</span>
-                         </div>
-                      ))}
-                      {(shop.banners?.length || 0) < 5 && (
-                         <label className="aspect-video rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition-colors group">
-                            <ImageIcon size={24} className="text-slate-300 group-hover:text-purple-500 transition-colors" />
-                            <span className="text-[10px] font-black text-slate-400 group-hover:text-purple-600">+ নতুন ব্যানার</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
-                         </label>
-                      )}
-                   </div>
-                   {/* Banner Auto-slide Interval */}
-                   <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-xl p-4 mt-3">
-                     <Clock size={18} className="text-purple-500 shrink-0" />
-                     <div className="flex-1">
-                       <p className="text-xs font-black text-slate-900">Auto-slide Interval</p>
-                       <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Seconds per banner (default: 4s)</p>
-                     </div>
-                      <input
-                        type="number" min="1" max="60"
-                        value={shop.bannerInterval || 4}
-                        onChange={e => setShop({ ...shop, bannerInterval: parseInt(e.target.value) || 4 })}
-                        className="w-20 text-center font-black text-lg bg-white border-2 border-slate-200 rounded-xl py-2 outline-none focus:border-purple-600 text-slate-900"
-                      />
+                 <div className="space-y-3 pt-4 border-t border-slate-100">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shop Banners (Max 5, 5MB each)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {shop.banners?.map((banner, i) => {
+                          const bannerUrl = typeof banner === 'string' ? banner : (banner?.url || '');
+                          const bannerTitle = typeof banner === 'string' ? '' : (banner?.title || '');
+                          const bannerDesc = typeof banner === 'string' ? '' : (banner?.description || '');
+                          const bannerLink = typeof banner === 'string' ? '' : (banner?.linkUrl || '');
+                          const bannerBtn = typeof banner === 'string' ? '' : (banner?.buttonText || '');
+                          
+                          return (
+                             <div key={i} className="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-4 shadow-sm hover:shadow-md transition-all">
+                                <div className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group">
+                                   <img src={bannerUrl} className="w-full h-full object-cover" alt="" />
+                                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2">
+                                     {/* Replace Banner */}
+                                     <label className="bg-white text-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase cursor-pointer hover:bg-purple-100 transition-colors shadow-lg">
+                                       🔄 পরিবর্তন
+                                       <input type="file" accept="image/*" className="hidden" onChange={(e) => replaceBanner(e, i)} />
+                                     </label>
+                                     {/* Delete Banner */}
+                                     <button 
+                                       type="button" 
+                                       onClick={() => removeBanner(i)}
+                                       className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-red-700 transition-colors shadow-lg"
+                                     >
+                                       ✕ মুছুন
+                                     </button>
+                                   </div>
+                                   <span className="absolute top-2 left-2 bg-black/60 text-white text-[9px] font-black px-2 py-0.5 rounded-md">{i+1}/{shop.banners.length}</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                   <div className="space-y-1">
+                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Banner Title (টাইটেল)</label>
+                                      <input 
+                                         type="text" 
+                                         placeholder="উদা: ঈদের বিশেষ অফার!" 
+                                         value={bannerTitle}
+                                         onChange={(e) => {
+                                            const updated = [...shop.banners];
+                                            updated[i] = { ...updated[i], title: e.target.value };
+                                            setShop({ ...shop, banners: updated });
+                                         }}
+                                         className="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-purple-600 text-slate-900"
+                                      />
+                                   </div>
+                                   <div className="space-y-1">
+                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Button Text (বাটন টেক্সট)</label>
+                                      <input 
+                                         type="text" 
+                                         placeholder="উদা: কেনাকাটা করুন" 
+                                         value={bannerBtn}
+                                         onChange={(e) => {
+                                            const updated = [...shop.banners];
+                                            updated[i] = { ...updated[i], buttonText: e.target.value };
+                                            setShop({ ...shop, banners: updated });
+                                         }}
+                                         className="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-purple-600 text-slate-900"
+                                      />
+                                   </div>
+                                   <div className="space-y-1 sm:col-span-2">
+                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Redirect Link / Action URL</label>
+                                      <input 
+                                         type="text" 
+                                         placeholder="উদা: https://messerbazar.com/category/সবজি অথবা #marketplace" 
+                                         value={bannerLink}
+                                         onChange={(e) => {
+                                            const updated = [...shop.banners];
+                                            updated[i] = { ...updated[i], linkUrl: e.target.value };
+                                            setShop({ ...shop, banners: updated });
+                                         }}
+                                         className="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-purple-600 text-slate-900"
+                                      />
+                                   </div>
+                                   <div className="space-y-1 sm:col-span-2">
+                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Banner Description (সংক্ষিপ্ত বিবরণ)</label>
+                                      <textarea 
+                                         rows={2}
+                                         placeholder="উদা: সব পণ্যে ২০% পর্যন্ত বিশাল ছাড়!" 
+                                         value={bannerDesc}
+                                         onChange={(e) => {
+                                            const updated = [...shop.banners];
+                                            updated[i] = { ...updated[i], description: e.target.value };
+                                            setShop({ ...shop, banners: updated });
+                                         }}
+                                         className="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-purple-600 text-slate-900 resize-none"
+                                      />
+                                   </div>
+                                </div>
+                             </div>
+                          );
+                       })}
+                       {(shop.banners?.length || 0) < 5 && (
+                          <label className="aspect-video rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition-colors group">
+                             <ImageIcon size={24} className="text-slate-300 group-hover:text-purple-500 transition-colors" />
+                             <span className="text-[10px] font-black text-slate-400 group-hover:text-purple-600">+ নতুন ব্যানার</span>
+                             <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
+                          </label>
+                       )}
                     </div>
-                 </div>
+                    {/* Banner Auto-slide Interval */}
+                    <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-xl p-4 mt-3">
+                      <Clock size={18} className="text-purple-500 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-xs font-black text-slate-900">Auto-slide Interval</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Seconds per banner (default: 4s)</p>
+                      </div>
+                       <input
+                         type="number" min="1" max="60"
+                         value={shop.bannerInterval || 4}
+                         onChange={e => setShop({ ...shop, bannerInterval: parseInt(e.target.value) || 4 })}
+                         className="w-20 text-center font-black text-lg bg-white border-2 border-slate-200 rounded-xl py-2 outline-none focus:border-purple-600 text-slate-900"
+                       />
+                     </div>
+                  </div>
 
                  {/* ── Loading Screen Customization ── */}
                  <div className="border-t border-slate-100 pt-6 mt-2 space-y-4">
