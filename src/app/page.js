@@ -6,7 +6,7 @@ import {
   ShoppingBag, Search, Star, ArrowRight, Phone, Store,
   X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
-  MessageCircle, Mail, ArrowUp, ArrowDown
+  MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 import AiShoppingList from '@/components/shop/AiShoppingList';
+import AiVoicePanel from '@/components/shop/AiVoicePanel';
 
 // Common Phonetic Transliteration Dictionary for English-to-Bengali product searches
 const COMMON_PHONETIC_DICT = {
@@ -44,7 +45,7 @@ const COMMON_PHONETIC_DICT = {
   'nobon': 'লবণ',
   'masala': 'মসলা',
   'moshla': 'মসলা',
-  'morich': 'মরিচ',
+  'morich': 'مরিচ',
   'mors': 'মরিচ',
   'holud': 'হলুদ',
   'jira': 'জিরা',
@@ -62,7 +63,7 @@ const COMMON_PHONETIC_DICT = {
   'torkari': 'তরকারি',
   'gos': 'মাংস',
   'mangsho': 'মাংস',
-  'pani': 'पानी',
+  'pani': 'পানি',
   'jol': 'জল',
   'cha': 'চা',
   'coffee': 'কফি',
@@ -153,6 +154,19 @@ export default function Home() {
   // ── Superadmin own shop dynamic settings ──
   const [mainShopData, setMainShopData] = useState(null);
   const [activeBanner, setActiveBanner] = useState(0);
+
+  // ── Banner Swiper Touch States ──
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // ── AI Companion/Shopping Bot Modal States ──
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const [aiTab, setAiTab] = useState('chat');
+  const [chatMessages, setChatMessages] = useState([
+    { id: 1, role: 'bot', text: 'আসসালামু আলাইকুম! আমি দারিপাল্লা এআই শপিং অ্যাসিস্ট্যান্ট। আমি আপনাকে পুরো মার্কেটপ্লেস থেকে পণ্য খুঁজে পেতে এবং ভয়েস বা ফর্দ এনালাইসিস করে সরাসরি অর্ডার করতে সাহায্য করব। বলুন, আজ কীভাবে সাহায্য করতে পারি? 😊' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isAiTyping, setIsAiTyping] = useState(false);
 
   // Helper to resolve custom domain redirection links
   const getStoreLink = (shopSlug, customDomain, domainStatus) => {
@@ -394,8 +408,17 @@ export default function Home() {
   // Dynamic Contact Formats
   const getFormattedContactUrl = (url, type) => {
     if (!url) return '#';
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('no contact') || lowerUrl.includes('registered') || lowerUrl.includes('endpoint')) {
+      return '#';
+    }
     const cleanNum = url.replace(/[^0-9]/g, '');
-    if (type === 'whatsapp' || url.includes('wa.me') || cleanNum.length >= 10) {
+    const isWhatsapp = type?.includes('whatsapp') || 
+                       lowerUrl.includes('wa.me') || 
+                       (lowerUrl.includes('whatsapp.com') && !lowerUrl.includes('share')) ||
+                       (!url.startsWith('http') && /^\+?[0-9\s\-]+$/.test(url) && cleanNum.length >= 10);
+                       
+    if (isWhatsapp) {
       const withCountry = cleanNum.startsWith('88') ? cleanNum : `88${cleanNum}`;
       return `https://wa.me/${withCountry}`;
     }
@@ -484,6 +507,112 @@ export default function Home() {
     return a.name.localeCompare(b.name, 'bn');
   });
 
+  // ── Swipe banner gestures ──
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd || !mainShopData?.banners) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      setActiveBanner(prev => (prev === mainShopData.banners.length - 1 ? 0 : prev + 1));
+    }
+    if (isRightSwipe) {
+      setActiveBanner(prev => (prev === 0 ? mainShopData.banners.length - 1 : prev - 1));
+    }
+  };
+
+  // ── Chat Bot Integration ──
+  const getSuggestedProductsForMessage = (msg) => {
+    if (!msg || !msg.text || typeof msg.text !== 'string') return [];
+    const match = msg.text.match(/PRODUCTS_JSON:([\s\S]*)$/);
+    if (!match) return [];
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      return parsed.map(item => {
+        const product = products.find(p => p.id === item.id);
+        if (!product) return null;
+        return { product, qty: item.qty || 1 };
+      }).filter(Boolean);
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const addAllSuggestedToCart = (msgText) => {
+    const suggested = getSuggestedProductsForMessage({ text: msgText });
+    if (suggested.length === 0) return;
+    suggested.forEach(({ product, qty }) => {
+      for (let i = 0; i < qty; i++) {
+        handleAddToCart(product);
+      }
+    });
+    toast.success('সবগুলো পণ্য কার্টে যোগ করা হয়েছে! 🛒');
+  };
+
+  const sendChatMessage = async (text) => {
+    if (!text.trim()) return;
+    const userMsg = { id: Date.now(), role: 'user', text };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput('');
+    setIsAiTyping(true);
+
+    try {
+      const productList = products.slice(0, 30).map(p => `${p.id}|${p.name}|${p.price}`).join('\n');
+      
+      const response = await fetch(`/api/ai`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          shopId: 'daripallah-store',
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional retail shopping assistant for the Daripallah platform (daripallah.com) in Bangladesh. 
+              Always greet with "Assalamu Alaikum". Speak in Bengali. Be helpful and friendly.
+              
+              Current Available Products in the Marketplace:
+              ${productList || 'No products listed yet.'}
+              
+              Rule: If a user wants to buy or shows interest in products, list the matched products and write:
+              "PRODUCTS_JSON:[{\"id\":\"product_id\",\"qty\":1}]" at the very end of your response so we can generate product cards for them.`
+            },
+            {
+              role: 'user',
+              content: text
+            }
+          ]
+        })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'AI Error');
+
+      const botText = data.choices?.[0]?.message?.content || 'দুঃখিত, কোনো উত্তর পাওয়া যায়নি।';
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: botText };
+      setChatMessages(prev => [...prev, botMsg]);
+    } catch (err) {
+      console.error(err);
+      setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: 'দুঃখিত, এআই কানেকশন ফেইল করেছে। সাধারণ অফার এবং সাহায্য লাগলে দয়া করে সরাসরি মার্কেটপ্লেস ব্রাউজ করুন।' }]);
+    } finally {
+      setIsAiTyping(false);
+    }
+  };
+
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-[#070e24] via-[#091535] to-[#040a17] text-slate-100 selection:bg-purple-900 selection:text-white font-sans overflow-x-hidden pb-10">
       
@@ -524,7 +653,7 @@ export default function Home() {
 
       {/* ── Navigation ── */}
       <nav className="fixed top-0 inset-x-0 z-[100] px-6 py-6 transition-all duration-300">
-        <div className="max-w-7xl mx-auto flex justify-between items-center glass-panel rounded-full px-8 py-4 shadow-2xl">
+        <div className="max-w-[96%] xl:max-w-[98%] mx-auto flex justify-between items-center glass-panel rounded-full px-8 py-4 shadow-2xl">
           <div className="flex items-center gap-3">
             {mainShopData?.logoUrl ? (
               <img src={mainShopData.logoUrl} className="h-9 object-contain" alt="Logo" />
@@ -570,10 +699,15 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* ── Hero Section (Dynamic Banners Slider) ── */}
-      <section className="relative z-20 pt-32 pb-12 px-6 overflow-hidden">
+      {/* ── Hero Section (Full Width, Swipeable Banners Carousel) ── */}
+      <section className="relative z-20 pt-28 pb-8 w-full overflow-hidden">
         {mainShopData?.banners && mainShopData.banners.length > 0 ? (
-          <div className="max-w-7xl mx-auto relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group/banner" style={{ minHeight: '380px' }}>
+          <div 
+            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner aspect-[16/7] md:aspect-[21/6] lg:aspect-[24/5] xl:aspect-[28/5] 2xl:aspect-[32/5]"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             {mainShopData.banners.map((banner, i) => {
               const isActive = i === activeBanner;
               const bannerUrl = banner.url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80';
@@ -589,29 +723,37 @@ export default function Home() {
                     isActive ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none z-0'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-900/70 via-slate-900/60 to-blue-900/40 z-10" />
+                  {/* Blurred Background Copied Image */}
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-cover bg-center blur-3xl scale-110 opacity-30 select-none pointer-events-none animate-pulse" 
+                    style={{ backgroundImage: `url(${bannerUrl})` }} 
+                  />
+                  {/* Actual centered contained Image to show the ENTIRE banner content */}
                   <img 
                     src={bannerUrl} 
                     alt={bannerTitle} 
-                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                    className="absolute inset-0 w-full h-full object-contain z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
                   />
-                  <div className="relative z-20 px-8 py-20 md:p-24 flex flex-col justify-center items-start h-full max-w-3xl">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full text-[9px] font-black text-purple-400 uppercase tracking-widest mb-6">
-                      <Sparkles size={12} /> VERIFIED MERCHANDISE NETWORK
+                  
+                  {/* Banner content overlay */}
+                  {bannerTitle && (
+                    <div className="absolute inset-x-0 bottom-0 top-0 z-20 px-8 py-10 md:p-16 flex flex-col justify-end bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent">
+                      <div className="max-w-3xl">
+                        <h1 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tight text-white mb-2 leading-tight drop-shadow">
+                          {bannerTitle}
+                        </h1>
+                        <p className="text-white/80 text-[10px] md:text-xs font-bold leading-relaxed line-clamp-2 max-w-xl mb-4 drop-shadow">
+                          {bannerDesc}
+                        </p>
+                        <a 
+                          href={bannerLink} 
+                          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
+                        >
+                          {bannerBtn} <ArrowRight size={12} />
+                        </a>
+                      </div>
                     </div>
-                    <h1 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-white mb-6 leading-tight whitespace-pre-line">
-                      {bannerTitle}
-                    </h1>
-                    <p className="text-white/70 text-sm md:text-base max-w-xl mb-8 font-bold leading-relaxed whitespace-pre-line">
-                      {bannerDesc}
-                    </p>
-                    <a 
-                      href={bannerLink} 
-                      className="inline-flex items-center gap-2 px-8 py-4 bg-white hover:bg-purple-600 text-black hover:text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                    >
-                      {bannerBtn} <ArrowRight size={16} />
-                    </a>
-                  </div>
+                  )}
                 </div>
               );
             })}
@@ -648,7 +790,7 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl animate-fade-in" style={{ minHeight: '340px' }}>
+          <div className="max-w-[96%] xl:max-w-[98%] mx-auto relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl animate-fade-in" style={{ minHeight: '340px' }}>
             <div className="absolute inset-0 bg-gradient-to-r from-purple-900/60 to-blue-900/40 z-10" />
             <img 
               src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80" 
@@ -675,7 +817,7 @@ export default function Home() {
       </section>
 
       {/* ── Marketplace Section ── */}
-      <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-6 py-12 scroll-mt-24">
+      <section id="marketplace" className="relative z-20 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-2 sm:px-6 py-12 scroll-mt-24">
         
         {/* ── AI Shopping List Integration ── */}
         {mainShopData && (
@@ -827,9 +969,9 @@ export default function Home() {
           )}
         </div>
 
-        {/* Product Showcase Grid (Premium 6-column Layout) */}
+        {/* Product Showcase Grid (Premium Wide 10-column Layout - Zero Wasted Spacing) */}
         {productsLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 md:gap-6 animate-pulse">
             {[1, 2, 3, 4, 5, 6].map(n => (
               <div key={n} className="glass-panel border-white/5 rounded-3xl p-4 space-y-4">
                 <div className="aspect-square bg-white/5 rounded-2xl w-full" />
@@ -845,13 +987,13 @@ export default function Home() {
             <p className="text-xs text-white/30 font-bold uppercase tracking-widest mt-1">অনুগ্রহ করে ফিল্টার অথবা সার্চের শব্দ পরিবর্তন করে ট্রাই করুন</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 sm:gap-6">
             {filteredProducts.map(product => {
               const storeLink = getStoreLink(product.shopSlug, product.customDomain, product.domainStatus);
               return (
                 <div
                   key={product.id}
-                  className="group glass-panel border-white/5 rounded-3xl overflow-hidden hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between"
+                  className="group glass-panel border-white/5 rounded-3xl overflow-hidden hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between bg-slate-950/20"
                 >
                   <div className="relative aspect-square overflow-hidden bg-slate-950/40 border-b border-white/5">
                     <img
@@ -906,7 +1048,7 @@ export default function Home() {
       {/* ── Promoted Shops Showcase / Registry ── */}
       {(globalConfig?.promotedLinks && globalConfig.promotedLinks.length > 0) && (
         <section id="showcase" className="relative z-20 py-24 bg-white/[0.01] border-y border-white/5 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-[96%] xl:max-w-[98%] mx-auto px-6">
             <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-10">
                <div className="text-left">
                   <span className="inline-block px-5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-black uppercase tracking-[0.4em] text-purple-400 mb-6">Verified Registry</span>
@@ -941,9 +1083,9 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── Footer (Dynamic contacts matching superadmin details) ── */}
+      {/* ── Footer (Dynamic contacts with platform safety fallbacks) ── */}
       <footer id="contact" className="relative z-20 border-t border-white/5 pt-20 pb-12 bg-[#030612]">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-[96%] xl:max-w-[98%] mx-auto px-6">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
               
               {/* Brand Description Footer */}
@@ -969,12 +1111,12 @@ export default function Home() {
                  </ul>
               </div>
 
-              {/* Working Contact Links */}
+              {/* Working Contact Links with Bulletproof Fallbacks */}
               <div>
-                 <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80 mb-6">Contact Us</h4>
-                 <ul className="space-y-4">
-                    {/* Render from superadmin shop settings directly */}
-                    {mainShopData?.socialLinks?.wa && (
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80 mb-6">Contact Us</h4>
+                  <ul className="space-y-4">
+                    {/* 1. Superadmin Custom WhatsApp or Platform WhatsApp */}
+                    {mainShopData?.socialLinks?.wa && getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp') !== '#' ? (
                       <li>
                         <a 
                           href={getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp')} 
@@ -985,12 +1127,41 @@ export default function Home() {
                           <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shrink-0">
                             <MessageCircle size={14} />
                           </div>
-                          <span>WhatsApp (সরাসরি যোগাযোগ)</span>
+                          <span>WhatsApp (সরাসরি চ্যাট)</span>
+                        </a>
+                      </li>
+                    ) : (globalConfig?.whatsapp && getFormattedContactUrl(globalConfig.whatsapp, 'whatsapp') !== '#') ? (
+                      <li>
+                        <a 
+                          href={getFormattedContactUrl(globalConfig.whatsapp, 'whatsapp')} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex items-center gap-3 text-xs font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shrink-0">
+                            <MessageCircle size={14} />
+                          </div>
+                          <span>WhatsApp (সাপোর্ট)</span>
+                        </a>
+                      </li>
+                    ) : (
+                      <li>
+                        <a 
+                          href="https://wa.me/8801977727027" 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex items-center gap-3 text-xs font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shrink-0">
+                            <MessageCircle size={14} />
+                          </div>
+                          <span>WhatsApp (অফিশিয়াল সাপোর্ট)</span>
                         </a>
                       </li>
                     )}
-                    
-                    {mainShopData?.ownerEmail && (
+
+                    {/* 2. Superadmin Email or Platform Email */}
+                    {mainShopData?.ownerEmail && !mainShopData.ownerEmail.toLowerCase().includes('no contact') && !mainShopData.ownerEmail.toLowerCase().includes('registered') ? (
                       <li>
                         <a 
                           href={`mailto:${mainShopData.ownerEmail}`} 
@@ -1002,11 +1173,41 @@ export default function Home() {
                           <span>{mainShopData.ownerEmail}</span>
                         </a>
                       </li>
+                    ) : (
+                      <li>
+                        <a 
+                          href="mailto:support@daripallah.com" 
+                          className="flex items-center gap-3 text-xs font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
+                        >
+                          <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shrink-0">
+                            <Mail size={14} />
+                          </div>
+                          <span>support@daripallah.com</span>
+                        </a>
+                      </li>
                     )}
 
-                    {(!mainShopData?.socialLinks?.wa && !mainShopData?.ownerEmail) && (
-                       <li className="text-[10px] font-bold text-white/40 uppercase tracking-widest">No contact endpoints registered</li>
-                    )}
+                    {/* 3. Global Dynamic Config Extra Links */}
+                    {globalConfig?.contactLinks?.filter(link => link.url && getFormattedContactUrl(link.url, link.name) !== '#').map((link, idx) => {
+                      const formattedUrl = getFormattedContactUrl(link.url, link.name?.toLowerCase());
+                      const isWa = link.name?.toLowerCase().includes('whatsapp') || link.url.includes('wa.me');
+                      
+                      return (
+                        <li key={`extra-${idx}`}>
+                           <a 
+                             href={formattedUrl} 
+                             target="_blank" 
+                             rel="noreferrer" 
+                             className="flex items-center gap-3 text-xs font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
+                           >
+                             <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shrink-0">
+                                {isWa ? <MessageCircle size={14} /> : <Mail size={14} />}
+                             </div>
+                             <span>{link.name || 'Direct Connection'}</span>
+                           </a>
+                        </li>
+                      );
+                    })}
                   </ul>
               </div>
            </div>
@@ -1162,24 +1363,156 @@ export default function Home() {
         </button>
       </div>
 
-      {/* ── Floating WhatsApp Chat Button (Bottom-Right) ── */}
-      {mainShopData?.socialLinks?.wa && (
-        <a
-          href={getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp')}
-          target="_blank"
-          rel="noreferrer"
-          className="fixed bottom-8 right-28 z-[100] w-14 h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all border border-emerald-400/30 cursor-pointer shadow-emerald-500/20"
-          title="Chat on WhatsApp"
-        >
-          <MessageCircle size={24} />
-        </a>
+      {/* ── AI Modal (Chat + Voice + OCR + Text) ── */}
+      {isAiOpen && (
+        <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAiOpen(false)} />
+          <div className="relative w-full max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] max-h-[700px] border border-slate-200 animate-slide-in text-slate-800">
+            {/* Header */}
+            <div className="bg-slate-900 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-purple-600 rounded-full flex items-center justify-center text-white shrink-0">
+                  <Bot size={18} />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm tracking-tight leading-tight">{mainShopData?.aiConfig?.botName || 'Daripallah Bot'}</h3>
+                  <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">AI Marketplace Assistant</p>
+                </div>
+              </div>
+              <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
+            </div>
+
+            {/* Tab Bar */}
+            <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
+              {[
+                {id:'chat',label:'চ্যাট',icon:'💬'},
+                {id:'voice',label:'ভয়েস',icon:'🎤'},
+                {id:'image',label:'ছবি OCR',icon:'📷'},
+                {id:'text',label:'লিস্ট',icon:'📝'},
+              ].map(tab => (
+                <button key={tab.id} onClick={() => setAiTab(tab.id)}
+                  className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all ${aiTab === tab.id ? 'bg-white text-purple-600 border-b-2 border-purple-600' : 'text-slate-500 hover:text-slate-800'}`}>
+                  {tab.icon} {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Tab */}
+            {aiTab === 'chat' && (
+              <>
+                <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto relative pb-4">
+                  {chatMessages.map(msg => {
+                    const suggestedItems = getSuggestedProductsForMessage(msg);
+                    return (
+                      <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
+                        <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
+                          {msg && msg.text && typeof msg.text === 'string' 
+                            ? msg.text.replace(/PRODUCTS_JSON:.*$/s, '').trim() 
+                            : (msg ? msg.text : '')}
+                        </div>
+                        
+                        {/* AI Suggested Products list */}
+                        {suggestedItems && suggestedItems.length > 0 && (
+                          <div className="mt-1 flex flex-col gap-2 bg-slate-100/90 p-2.5 rounded-2xl border border-slate-200/60 max-w-full">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">AI সাজেস্টেড প্রোডাক্টস:</p>
+                            <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
+                              {suggestedItems.map(({ product, qty }) => {
+                                const inCart = cart?.find(item => item.productId === product.id);
+                                return (
+                                  <div key={product.id} className="bg-white p-2 rounded-xl border border-slate-200/50 flex items-center justify-between gap-3 shadow-xs">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      {product.imageUrl ? (
+                                        <img src={product.imageUrl} alt={product.name} className="w-8 h-8 rounded-lg object-cover bg-slate-50 shrink-0" />
+                                      ) : (
+                                        <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 text-xs font-black flex items-center justify-center shrink-0">🛍</div>
+                                      )}
+                                      <div className="min-w-0">
+                                        <h4 className="text-xs font-bold text-slate-800 truncate">{product.name}</h4>
+                                        <p className="text-[10px] text-slate-500 font-bold">
+                                          ৳{product.price} {qty > 1 && ` (qty: ${qty})`}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        for (let i = 0; i < qty; i++) {
+                                          handleAddToCart(product);
+                                        }
+                                      }}
+                                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shrink-0 ${inCart ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                    >
+                                      {inCart ? 'যুক্ত আছে' : '+ কার্ট'}
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            
+                            <button onClick={() => addAllSuggestedToCart(msg.text)}
+                              className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl shadow-xs transition-colors uppercase tracking-wider">
+                              <ShoppingCart size={12} /> সব কার্টে যোগ করুন
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {isAiTyping && <div className="max-w-[85%] p-3.5 rounded-2xl bg-white border border-slate-200 self-start flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>}
+                </div>
+                <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0">
+                  <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-xs font-black transition-colors" title="Clear">🗑</button>
+                  <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
+                  <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md shrink-0"><MessageCircle size={20} strokeWidth={2.5}/></button>
+                </div>
+              </>
+            )}
+
+            {/* Voice / OCR / Text List tabs */}
+            {aiTab !== 'chat' && (
+              <div className="flex-1 overflow-y-auto bg-slate-50">
+                <AiVoicePanel 
+                  shop={mainShopData || { id: 'daripallah-store' }} 
+                  products={products}
+                  onAddToCart={handleAddToCart}
+                  onDirectOrder={handleAddToCart}
+                  isOpen={true}
+                  onClose={() => setIsAiOpen(false)}
+                  activeTab={aiTab}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Floating Cart Trigger */}
+      {/* ── Circular Glassy AI Companion Trigger (Bottom-Right, shifted for alignment) ── */}
+      <button 
+        onClick={() => {
+          setAiTab('chat');
+          setIsAiOpen(true);
+        }}
+        className="fixed bottom-8 right-40 z-[120] w-14 h-14 bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-115 active:scale-95 transition-all border border-purple-500/20 cursor-pointer shadow-purple-500/20"
+        title="AI Assistant (এআই শপিং অ্যাসিস্ট্যান্ট)"
+      >
+        <Bot size={24} />
+      </button>
+
+      {/* ── Floating WhatsApp Chat Button (Bottom-Right, shifted for alignment) ── */}
+      <a
+        href={mainShopData?.socialLinks?.wa ? getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp') : "https://wa.me/8801977727027"}
+        target="_blank"
+        rel="noreferrer"
+        className="fixed bottom-8 right-24 z-[120] w-14 h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-115 active:scale-95 transition-all border border-emerald-400/30 cursor-pointer shadow-emerald-500/20"
+        title="WhatsApp Support (সরাসরি যোগাযোগ)"
+      >
+        <MessageCircle size={24} />
+      </a>
+
+      {/* Floating Cart Trigger (Bottom-Right) */}
       {cartItemCount > 0 && (
         <button
           onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-8 right-8 z-[100] w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/40 hover:scale-110 active:scale-95 transition-all border border-white/10 cursor-pointer"
+          className="fixed bottom-8 right-8 z-[120] w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/40 hover:scale-115 active:scale-95 transition-all border border-white/10 cursor-pointer"
         >
           <ShoppingCart size={24} />
           <span className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border border-black">

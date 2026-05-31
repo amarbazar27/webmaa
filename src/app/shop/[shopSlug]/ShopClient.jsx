@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import useLocation from '@/lib/useLocation';
 import { useRouter } from 'next/navigation';
@@ -377,6 +377,35 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // ── Swipe banner gestures ──
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd || !shop?.banners) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      setActiveBanner(prev => (prev === shop.banners.length - 1 ? 0 : prev + 1));
+    }
+    if (isRightSwipe) {
+      setActiveBanner(prev => (prev === 0 ? shop.banners.length - 1 : prev - 1));
+    }
+  };
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
   const [pdfProgress, setPdfProgress] = useState(0);
@@ -1349,7 +1378,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {/* ── Header ── */}
       <header className="border-b sticky top-0 z-40 shadow-sm" style={{background:'var(--surface)',borderColor:'var(--border-color)'}}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+        <div className="max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
           {/* Logo/Brand (Left Side) */}
           <div className="flex items-center gap-3">
             <button className="hidden">
@@ -1407,38 +1436,41 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       </header>
 
-      {/* ── Banner/Carousel Section — Full Image, No Crop ── */}
-      <div className="sf-hero relative w-full bg-slate-900 overflow-hidden border-b border-slate-200 group/banner" style={{minHeight:'180px'}}>
+      {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
+      <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner">
         {shop.banners && shop.banners.length > 0 ? (
-          <div className="relative w-full">
+          <div 
+            className="relative w-full overflow-hidden aspect-[16/7] md:aspect-[21/6] lg:aspect-[24/5] xl:aspect-[28/5] 2xl:aspect-[32/5]"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             {shop.banners.map((img, i) => (
-              <div key={i} className={`transition-opacity duration-1000 ease-in-out ${i === activeBanner ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
-                {/* Blurred background for letterboxing */}
-                <div className="absolute inset-0 overflow-hidden">
-                  <img src={img} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-xl opacity-60" />
-                  <div className="absolute inset-0 bg-black/30" />
+              <div key={i} className={`absolute inset-0 w-full h-full transition-all duration-1000 ${i === activeBanner ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none z-0'}`}>
+                {/* Blurred background for cinematic letterboxing depth */}
+                <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
+                  <img src={img} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-3xl opacity-30 animate-pulse" />
                 </div>
-                {/* Actual banner — full image visible, no crop */}
+                {/* Actual banner — full edge-to-edge object-cover to avoid blank spaces */}
                 <img
                   src={img}
                   loading={i === 0 ? "eager" : "lazy"}
                   alt={`Banner ${i+1}`}
-                  className="relative z-10 w-full h-auto max-h-[70vh] object-contain mx-auto block"
-                  style={{display:'block'}}
+                  className="absolute inset-0 w-full h-full object-cover z-10 select-none transition-transform duration-700 hover:scale-102"
                 />
               </div>
             ))}
             {shop.banners.length > 1 && (
               <>
-                <button onClick={() => setActiveBanner(prev => (prev === 0 ? shop.banners.length - 1 : prev - 1))} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all opacity-0 group-hover/banner:opacity-100">
+                <button onClick={() => setActiveBanner(prev => (prev === 0 ? shop.banners.length - 1 : prev - 1))} className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
                   <ChevronLeft size={24} strokeWidth={3} />
                 </button>
-                <button onClick={() => setActiveBanner(prev => (prev === shop.banners.length - 1 ? 0 : prev + 1))} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-white/20 backdrop-blur-md text-white hover:bg-white/40 transition-all opacity-0 group-hover/banner:opacity-100">
+                <button onClick={() => setActiveBanner(prev => (prev === shop.banners.length - 1 ? 0 : prev + 1))} className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
                   <ChevronRight size={24} strokeWidth={3} />
                 </button>
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                   {shop.banners.map((_, i) => (
-                    <button key={i} onClick={() => setActiveBanner(i)} className={`h-2 rounded-full transition-all ${i === activeBanner ? 'bg-white w-6' : 'bg-white/40 w-2 hover:bg-white/60'}`} />
+                    <button key={i} onClick={() => setActiveBanner(i)} className={`h-2.5 rounded-full transition-all ${i === activeBanner ? 'bg-white w-6' : 'bg-white/40 w-2.5 hover:bg-white/60'}`} />
                   ))}
                 </div>
               </>
@@ -1452,7 +1484,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         )}
       </div>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
+      <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
         
         {/* ── Banner Description Box (Retailer Customizable) ── */}
         <div
@@ -1623,7 +1655,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <p className="text-slate-500 text-sm mt-3 font-semibold">অন্য ক্যাটাগরিতে খুঁজে দেখুন।</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 sm:gap-6">
             {filteredProducts.map((product, index) => {
               const cartItem = cart.find(i => i.id === product.id);
               return (
@@ -1718,7 +1750,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-indigo-600/10 rounded-full blur-3xl" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+        <div className="relative z-10 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
             {/* Brand Column */}
             <div className="space-y-4">
@@ -1755,18 +1787,33 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="space-y-4">
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">যোগাযোগ করুন</h3>
               <div className="space-y-3">
-                {shop.deliveryConfig?.contactEmail && (
-                  <a href={`mailto:${shop.deliveryConfig.contactEmail}`} className="flex items-center gap-2 text-slate-400 hover:text-purple-400 group transition-colors">
-                    <Bot size={14} className="group-hover:text-purple-400" />
-                    <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{shop.deliveryConfig.contactEmail}</span>
-                  </a>
-                )}
-                {shop.deliveryConfig?.contactWhatsapp && (
-                  <a href={`https://wa.me/${shop.deliveryConfig.contactWhatsapp.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-slate-400 hover:text-emerald-400 group transition-colors">
-                    <Phone size={14} className="group-hover:text-emerald-400" />
-                    <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{shop.deliveryConfig.contactWhatsapp}</span>
-                  </a>
-                )}
+                {(() => {
+                  const rawEmail = shop.deliveryConfig?.contactEmail || shop.ownerEmail || '';
+                  const hasEmailPlaceholder = rawEmail.toLowerCase().includes('no contact') || rawEmail.toLowerCase().includes('registered') || rawEmail.toLowerCase().includes('endpoint');
+                  const finalEmail = hasEmailPlaceholder ? 'support@daripallah.com' : rawEmail || 'support@daripallah.com';
+
+                  const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
+                  const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
+                  const finalWa = hasWaPlaceholder ? '8801977727027' : rawWa || '8801977727027';
+
+                  const cleanWa = finalWa.replace(/[^0-9]/g, '');
+                  const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
+
+                  return (
+                    <>
+                      <a href={`mailto:${finalEmail}`} className="flex items-center gap-2 text-slate-400 hover:text-purple-400 group transition-colors">
+                        <Bot size={14} className="group-hover:text-purple-400" />
+                        <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{finalEmail}</span>
+                      </a>
+                      <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-slate-400 hover:text-emerald-400 group transition-colors">
+                        <Phone size={14} className="group-hover:text-emerald-400" />
+                        <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">
+                          {finalWa.startsWith('+') || finalWa.startsWith('88') ? finalWa : `+88${finalWa.replace(/^0+/, '')}`}
+                        </span>
+                      </a>
+                    </>
+                  );
+                })()}
               </div>
               <div className="flex gap-3 flex-wrap pt-2">
                 {shop.socialLinks?.fb && (

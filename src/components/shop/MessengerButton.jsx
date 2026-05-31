@@ -6,13 +6,31 @@ import { MessageCircle } from 'lucide-react';
  * Props: link (string) — full Messenger/WhatsApp URL
  */
 export default function MessengerButton({ shop }) {
-  let link = shop?.socialLinks?.messenger || shop?.socialLinks?.wa || shop?.socialLinks?.whatsapp || '';
-  if (!link) return null;
+  // 1. Resolve raw link from multiple fields
+  let rawLink = shop?.socialLinks?.wa || 
+                shop?.socialLinks?.whatsapp || 
+                shop?.deliveryConfig?.contactWhatsapp || 
+                shop?.socialLinks?.messenger || 
+                '';
 
-  // If link is a raw phone number, format it as a secure WhatsApp link
-  if (!link.startsWith('http') && /^\+?[0-9\s\-]+$/.test(link)) {
-    const cleaned = link.replace(/[^0-9]/g, '');
-    link = `https://wa.me/${cleaned}`;
+  // 2. Clear out database placeholders
+  if (rawLink.toLowerCase().includes('no contact') || rawLink.toLowerCase().includes('registered') || rawLink.toLowerCase().includes('endpoint')) {
+    rawLink = '';
+  }
+
+  let link = rawLink;
+
+  // 3. Securely format raw phone numbers or fallback to official platform support
+  if (!link) {
+    link = 'https://wa.me/8801977727027'; // Official Daripallah Support WhatsApp
+  } else {
+    const cleanNum = link.replace(/[^0-9]/g, '');
+    const isPhone = !link.startsWith('http') && /^\+?[0-9\s\-]+$/.test(link) && cleanNum.length >= 10;
+    
+    if (isPhone || link.includes('wa.me')) {
+      const withCountry = cleanNum.startsWith('88') ? cleanNum : `88${cleanNum}`;
+      link = `https://wa.me/${withCountry}`;
+    }
   }
 
   return (
