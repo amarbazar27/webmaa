@@ -228,20 +228,20 @@ export async function POST(request) {
       const emailPromises = emails.map(async (email) => {
         try {
           await transporter.sendMail({
-            from: `"Webmaa" <${process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
+            from: `"Daripallah" <${process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
             to: email,
             subject: subject,
             html: `
               <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
                 <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:30px;border-radius:12px 12px 0 0;text-align:center">
-                  <h1 style="color:white;margin:0;font-size:24px">Webmaa</h1>
+                  <h1 style="color:white;margin:0;font-size:24px">Daripallah</h1>
                   <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px">Platform Announcement</p>
                 </div>
                 <div style="background:#fff;padding:30px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
                   <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${subject}</h2>
                   <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${message}</div>
                   <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0" />
-                  <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Webmaa Platform</p>
+                  <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Daripallah Platform</p>
                 </div>
               </div>
             `,

@@ -56,11 +56,11 @@ function JsonLd() {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Daripallah",
-      "alternateName": ["Daripallah SaaS", "daripallah.com"],
+      "alternateName": ["Daripallah SaaS", "daripallah.com", "দাঁড়িপাল্লা"],
       "url": BASE_URL,
       "logo": `${BASE_URL}/logo.png`,
       "image": `${BASE_URL}/logo.png`,
-      "description": "বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম",
+      "description": "বাংলাদেশের সবচেয়ে আধুনিক এআই-পাওয়ার্ড মাল্টি-ভেন্ডর মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
       "sameAs": [],
       "contactPoint": {
         "@type": "ContactPoint",
@@ -68,13 +68,30 @@ function JsonLd() {
         "availableLanguage": ["Bengali", "English"]
       }
     },
-    // WebSite — Google search box
+    // WebSite — Google search box & SearchAction
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "Daripallah",
       "alternateName": "Daripallah eCommerce",
-      "url": BASE_URL
+      "url": BASE_URL,
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": `${BASE_URL}/?q={search_term_string}`
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    // WebPage — Entity signals for search optimization
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `${BASE_URL}/#webpage`,
+      "url": BASE_URL,
+      "name": "Daripallah — দাঁড়িপাল্লা",
+      "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস।"
     }
   ];
 

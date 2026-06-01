@@ -9,7 +9,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'পেজ পাওয়া যায়নি | Webmaa',
+  title: 'পেজ পাওয়া যায়নি | Daripallah',
   description: 'আপনি যে পেজটি খুঁজছেন তা পাওয়া যায়নি।',
 };
 

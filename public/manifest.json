@@ -1,7 +1,7 @@
 {
-  "name": "MesserBazar — মেস বাজার",
-  "short_name": "MesserBazar",
-  "description": "বাংলাদেশের প্রথম মেস বাজার প্ল্যাটফর্ম। ঘরে বসে মেসের বাজার অর্ডার করুন।",
+  "name": "Daripallah — দাঁড়িপাল্লা",
+  "short_name": "Daripallah",
+  "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

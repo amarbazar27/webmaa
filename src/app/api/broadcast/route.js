@@ -84,7 +84,7 @@ export async function POST(request) {
                     <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${subject}</h2>
                     <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${message}</div>
                     <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0" />
-                    <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Webmaa</p>
+                    <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Daripallah</p>
                   </div>
                 </div>
               `,
@@ -154,7 +154,7 @@ export async function POST(request) {
         if (tokens.length > 0) {
           const payload = {
             notification: {
-              title: senderName || 'Webmaa',
+              title: senderName || 'Daripallah',
               body: notifMessage.trim(),
               icon: '/logo.png',
             },
@@ -165,11 +165,11 @@ export async function POST(request) {
             },
             webpush: {
               notification: {
-                title: senderName || 'Webmaa',
+                title: senderName || 'Daripallah',
                 body: notifMessage.trim(),
                 icon: '/logo.png',
                 badge: '/logo.png',
-                tag: 'webmaa-msg',
+                tag: 'daripallah-msg',
                 requireInteraction: true,
                 vibrate: [200, 100, 200]
               },
@@ -220,14 +220,14 @@ export async function POST(request) {
           for (let i = 0; i < allTokens.length; i += batchSize) {
             const batch = allTokens.slice(i, i + batchSize);
             await admin.messaging().sendEachForMulticast({
-              notification: { title: 'Webmaa', body: notifMessage.trim(), icon: '/logo.png' },
+              notification: { title: 'Daripallah', body: notifMessage.trim(), icon: '/logo.png' },
               webpush: {
                 notification: {
-                  title: 'Webmaa',
+                  title: 'Daripallah',
                   body: notifMessage.trim(),
                   icon: '/logo.png',
                   badge: '/logo.png',
-                  tag: 'webmaa-msg',
+                  tag: 'daripallah-msg',
                   requireInteraction: true,
                 },
                 headers: { Urgency: 'high' }

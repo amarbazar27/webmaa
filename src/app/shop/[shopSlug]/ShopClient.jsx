@@ -1684,6 +1684,23 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         {/* ── FAQ Section ── */}
         {shop.faqItems && shop.faqItems.length > 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "FAQPage",
+                  "mainEntity": shop.faqItems.map(faq => ({
+                    "@type": "Question",
+                    "name": faq.q,
+                    "acceptedAnswer": {
+                      "@type": "Answer",
+                      "text": faq.a
+                    }
+                  }))
+                })
+              }}
+            />
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <span className="text-lg">❓</span>
               <h3 className="font-black text-slate-900 text-base">সাধারণ প্রশ্নোত্তর (FAQ)</h3>

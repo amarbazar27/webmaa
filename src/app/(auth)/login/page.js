@@ -124,7 +124,7 @@ export default function LoginPage() {
           <div className="mt-12 pt-8 border-t border-slate-50 flex flex-col gap-4">
              <Link href="/register" className="text-xs font-black text-purple-600 uppercase tracking-widest hover:text-purple-700 transition-colors">Create Retailer Account</Link>
              <p className="text-[10px] text-slate-300 uppercase tracking-[0.2em] font-black">
-                Webmaa Identity Services &bull; 2026
+                Daripallah Identity Services &bull; 2026
              </p>
           </div>
         </div>

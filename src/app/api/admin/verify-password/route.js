@@ -73,16 +73,16 @@ export async function POST(request) {
       // Send email via Gmail SMTP
       const transporter = createTransporter();
       await transporter.sendMail({
-        from: `"Webmaa System" <${process.env.SMTP_USER}>`,
+        from: `"Daripallah Security" <${process.env.SMTP_USER}>`,
         to: adminEmail,
-        subject: '🔐 Webmaa Admin — Password Reset OTP',
+        subject: '🔐 Daripallah Admin — Password Reset OTP',
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #0f0f0f; border-radius: 16px; border: 1px solid #1f1f1f;">
             <div style="text-align: center; margin-bottom: 24px;">
               <div style="display: inline-block; width: 56px; height: 56px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 14px; line-height: 56px; font-size: 28px;">🛡️</div>
             </div>
             <h1 style="color: #fff; font-size: 22px; font-weight: 900; text-align: center; margin: 0 0 8px;">Password Reset Request</h1>
-            <p style="color: #666; font-size: 14px; text-align: center; margin: 0 0 32px;">Someone requested a Superadmin deletion password reset on Webmaa.</p>
+            <p style="color: #666; font-size: 14px; text-align: center; margin: 0 0 32px;">Someone requested a Superadmin deletion password reset on Daripallah.</p>
             <div style="background: #1a1a1a; border: 2px dashed #333; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
               <p style="color: #888; font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 12px;">Your One-Time Password</p>
               <div style="font-size: 40px; font-weight: 900; letter-spacing: 12px; color: #fff; font-family: 'Courier New', monospace;">${generatedOtp}</div>
@@ -90,7 +90,7 @@ export async function POST(request) {
             </div>
             <p style="color: #555; font-size: 12px; text-align: center; margin: 0;">If you did not request this, ignore this email. Your account remains secure.</p>
             <hr style="border: none; border-top: 1px solid #1f1f1f; margin: 24px 0;">
-            <p style="color: #333; font-size: 11px; text-align: center; margin: 0;">Webmaa System — Automated Security Alert</p>
+            <p style="color: #333; font-size: 11px; text-align: center; margin: 0;">Daripallah Security — Automated Security Alert</p>
           </div>
         `,
       });

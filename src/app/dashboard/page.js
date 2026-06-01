@@ -165,7 +165,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-4 space-y-6">
            <Card title="Connectivity" subtitle="Shop Live Status" icon={ShieldCheck} className="bg-gradient-to-br from-green-50/50 to-white shadow-sm">
               <p className="text-[11px] text-slate-500 font-medium leading-relaxed mb-6">
-                Your storefront is verified and active on the high-speed Webmaa cloud network.
+                Your storefront is verified and active on the high-speed Daripallah cloud network.
               </p>
               <div className="space-y-3">
                  <Link href="/dashboard/products/new" className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-purple-200 transition-all group">

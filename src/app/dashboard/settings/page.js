@@ -562,7 +562,7 @@ export default function SettingsPage() {
     );
   }
 
-  const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://webmaa.cloud'}/shop/${shop?.subdomainSlug}`;
+  const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com'}/shop/${shop?.subdomainSlug}`;
 
   // ── Tabs config (plain object, NOT state — safe to define here) ──
   const SETTINGS_TABS = [

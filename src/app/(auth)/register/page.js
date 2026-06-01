@@ -52,7 +52,7 @@ export default function RegisterPage() {
              </h1>
              
              <p className="text-xl text-slate-500 max-w-md mx-auto lg:mx-0 font-medium leading-relaxed">
-                Join the Webmaa merchant network and drive your business with world-class cloud tools.
+                Join the Daripallah merchant network and drive your business with world-class cloud tools.
              </p>
 
              <div className="grid grid-cols-1 gap-6 max-w-sm mx-auto lg:mx-0 text-left">

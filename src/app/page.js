@@ -248,7 +248,7 @@ export default function Home() {
     getAllMarketplaceProducts().then(data => {
       // 🚨 Admin Shop Mapping & Overwrites
       const mapped = data.map(p => {
-        if (p.shopSlug === 'daripallah-store' || p.shopName?.toLowerCase() === 'webmaa store' || p.shopName?.toLowerCase() === 'daripallah store') {
+        if (p.shopSlug === 'daripallah-store' || p.shopSlug === 'webmaa-store' || p.shopName?.toLowerCase() === 'webmaa store' || p.shopName?.toLowerCase() === 'daripallah store') {
           return { ...p, shopName: 'ADMIN' };
         }
         return p;
@@ -271,10 +271,14 @@ export default function Home() {
       setProductsLoading(false);
     });
 
-    getShopBySlug('daripallah-store').then(shopData => {
-      if (shopData) {
+    getShopBySlug('daripallah-store').then(async (shopData) => {
+      let finalShopData = shopData;
+      if (!finalShopData) {
+        finalShopData = await getShopBySlug('webmaa-store');
+      }
+      if (finalShopData) {
         // Normalize banners array if elements are raw image strings
-        const normalized = (shopData.banners || []).map(b => {
+        const normalized = (finalShopData.banners || []).map(b => {
           if (typeof b === 'string') {
             return { url: b, title: '', description: '', linkUrl: '', buttonText: '' };
           }
@@ -286,7 +290,7 @@ export default function Home() {
             buttonText: b?.buttonText || ''
           };
         });
-        setMainShopData({ ...shopData, banners: normalized });
+        setMainShopData({ ...finalShopData, banners: normalized });
       }
     }).catch(err => console.error("Error loading superadmin settings:", err));
 
@@ -370,7 +374,7 @@ export default function Home() {
         shopSlug: product.shopSlug,
         customDomain: product.customDomain || '',
         domainStatus: product.domainStatus || '',
-        isThirdParty: product.shopSlug !== 'daripallah-store',
+        isThirdParty: product.shopSlug !== 'daripallah-store' && product.shopSlug !== 'webmaa-store',
         customNote: customNote,
         isCustomized: !!customNote
       });
@@ -1266,7 +1270,7 @@ export default function Home() {
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
                       />
-                      {product.shopSlug === 'daripallah-store' && (
+                      {(product.shopSlug === 'daripallah-store' || product.shopSlug === 'webmaa-store') && (
                         <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
                           👑 Primary Store
                         </span>
@@ -1960,7 +1964,7 @@ function LandingProductDetailInner({ shop, product, onClose, cart, setCart }) {
         shopSlug: safeProduct.shopSlug,
         customDomain: safeProduct.customDomain || '',
         domainStatus: safeProduct.domainStatus || '',
-        isThirdParty: safeProduct.shopSlug !== 'daripallah-store',
+        isThirdParty: safeProduct.shopSlug !== 'daripallah-store' && safeProduct.shopSlug !== 'webmaa-store',
         customNote: logic.customerNote || logic.customInput || '',
         isCustomized: safeAiPrice !== null || !!logic.customerNote || !!logic.customInput
       };

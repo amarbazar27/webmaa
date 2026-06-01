@@ -6,9 +6,9 @@ export async function GET(request) {
   const shopSlug = searchParams.get('shop');
 
   const defaultManifest = {
-    name: "Webmaa Dashboard",
-    short_name: "Webmaa",
-    description: "Premium Retail Management Platform",
+    name: "Daripallah Dashboard",
+    short_name: "Daripallah",
+    description: "Premium AI-Powered Multi-Vendor Marketplace",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#ffffff",
@@ -38,7 +38,7 @@ export async function GET(request) {
     const shop = snap.docs[0].data();
     
     return NextResponse.json({
-      name: shop.shopName || "Webmaa Store",
+      name: shop.shopName || "Daripallah Store",
       short_name: shop.shopName ? shop.shopName.substring(0, 12) : "Store",
       description: shop.slogan || "Online Store",
       start_url: `/shop/${shopSlug}`,
