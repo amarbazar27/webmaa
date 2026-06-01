@@ -1,7 +1,35 @@
 'use client';
-import { Tag, CheckCircle, Package } from 'lucide-react';
+import { Tag, CheckCircle, Package, Share2, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ProductInfo({ product, currentPrice }) {
+  const handleShareProduct = async () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `দারিপাল্লা মার্কেটপ্লেসে '${product.name}' দেখুন! 🛒`,
+          url: shareUrl
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleCopyLink = () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success("শেয়ারিং লিংক কপি হয়েছে! 🔗");
+    }).catch(err => {
+      console.error(err);
+      toast.error("লিংক কপি করা যায়নি");
+    });
+  };
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
       <div>
@@ -19,6 +47,26 @@ export default function ProductInfo({ product, currentPrice }) {
         </div>
         
         <StockIndicator stock={product.stock} />
+      </div>
+
+      {/* Premium Share Section */}
+      <div className="border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
+        <span className="text-xs text-slate-400 font-bold">পণ্যটি শেয়ার করুন:</span>
+        <div className="flex gap-2">
+          <button
+            onClick={handleShareProduct}
+            className="flex items-center gap-1.5 px-4 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-xl text-xs font-black text-purple-700 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+          >
+            <Share2 size={14} /> সোশ্যাল মিডিয়া (Share)
+          </button>
+          <button
+            onClick={handleCopyLink}
+            className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-600 hover:text-slate-900 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="লিংক কপি করুন"
+          >
+            <Copy size={14} />
+          </button>
+        </div>
       </div>
     </div>
   );

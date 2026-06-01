@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getShop, updateShop, saveUserData } from '@/lib/firestore';
+import { getShop, updateShop, saveUserData, getShopProducts } from '@/lib/firestore';
 import { uploadShopLogo, uploadImage } from '@/lib/storage';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
@@ -133,11 +133,14 @@ export default function SettingsPage() {
   const [isStrictLocation, setIsStrictLocation] = useState(false);
   const [requireLocationForOrder, setRequireLocationForOrder] = useState(true);
   const [showLocationSelector, setShowLocationSelector] = useState(true);
+  const [disableServiceBanner, setDisableServiceBanner] = useState(false);
   const [customAreas, setCustomAreas] = useState([]);
   const [newCustomArea, setNewCustomArea] = useState('');
   const [trackingConfig, setTrackingConfig] = useState({ ga4Id: '', clarityId: '' });
-  const [loadingMedia, setLoadingMedia] = useState({ type: 'default', imageUrl: '', texts: [] });
+  const [loadingMedia, setLoadingMedia] = useState({ type: 'default', imageUrl: '', posters: [], texts: [] });
   const [newLoadingText, setNewLoadingText] = useState('');
+  const [shopProducts, setShopProducts] = useState([]);
+  const [featuredProductIds, setFeaturedProductIds] = useState([]);
   const [faqItems, setFaqItems] = useState([]);
   const [newFaqQ, setNewFaqQ] = useState('');
   const [newFaqA, setNewFaqA] = useState('');
@@ -222,6 +225,7 @@ export default function SettingsPage() {
       setIsStrictLocation(data?.isStrictLocation || false);
       setRequireLocationForOrder(data?.requireLocationForOrder !== false);
       setShowLocationSelector(data?.showLocationSelector !== false);
+      setDisableServiceBanner(data?.disableServiceBanner || false);
       setCustomAreas(data?.customAreas || []);
       setTrackingConfig({
         ga4Id: data?.trackingConfig?.ga4Id || '',
@@ -230,8 +234,16 @@ export default function SettingsPage() {
       setLoadingMedia({
         type: data?.loadingMedia?.type || 'default',
         imageUrl: data?.loadingMedia?.imageUrl || '',
+        posters: data?.loadingMedia?.posters || (data?.loadingMedia?.imageUrl ? [data.loadingMedia.imageUrl] : []),
         texts: data?.loadingMedia?.texts || []
       });
+      setFeaturedProductIds(data?.featuredProductIds || []);
+      
+      // Load products for featured selection
+      getShopProducts(activeShopId).then(prods => {
+        setShopProducts(prods || []);
+      }).catch(err => console.error("Error loading products for settings:", err));
+
       setFaqItems(data?.faqItems || []);
       setDomainStatus(data?.domainStatus || '');
       
@@ -524,9 +536,11 @@ export default function SettingsPage() {
         isStrictLocation,
         requireLocationForOrder,
         showLocationSelector,
+        disableServiceBanner,
         customAreas,
         trackingConfig,
         loadingMedia,
+        featuredProductIds,
         faqItems,
         banners: shop.banners || []
       });
@@ -1177,16 +1191,21 @@ export default function SettingsPage() {
                          </label>
                        ))}
                     </div>
-                    {loadingMedia.type === 'image' && (
-                       <div className="space-y-3">
-                         <p className="text-[10px] font-black text-slate-500 uppercase">লোডিং স্ক্রিনের জন্য ছবির URL দিন (বা আপলোড করুন):</p>
+                     {loadingMedia.type === 'image' && (
+                       <div className="space-y-4">
+                         <p className="text-[10px] font-black text-slate-500 uppercase">লোডিং স্ক্রিনের জন্য কাস্টম পোস্টার/ছবি যোগ করুন (সর্বোচ্চ ৫টি):</p>
                          <div className="flex gap-2">
                            <input
                              type="text"
-                             placeholder="https://... বা ছবি আপলোড করুন"
-                             value={loadingMedia.imageUrl}
-                             onChange={e => setLoadingMedia({...loadingMedia, imageUrl: e.target.value})}
+                             id="newPosterUrl"
+                             placeholder="ছবির URL দিন বা ডান পাশের আপলোড বাটনে ক্লিক করুন"
                              className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-purple-600 text-slate-900"
+                             onKeyDown={e => {
+                               if (e.key === 'Enter' && e.target.value.trim() && (loadingMedia.posters?.length || 0) < 5) {
+                                 setLoadingMedia(prev => ({...prev, posters: [...(prev.posters || []), e.target.value.trim()]}));
+                                 e.target.value = '';
+                               }
+                             }}
                            />
                            <label className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-black cursor-pointer hover:bg-purple-700 transition-all whitespace-nowrap flex items-center gap-1">
                              📷 আপলোড
@@ -1196,16 +1215,21 @@ export default function SettingsPage() {
                                const { uploadImage } = await import('@/lib/storage');
                                try {
                                  const url = await uploadImage(file);
-                                 setLoadingMedia(prev => ({...prev, imageUrl: url}));
-                                 toast.success('ছবি আপলোড হয়েছে!');
+                                 setLoadingMedia(prev => ({...prev, posters: [...(prev.posters || []), url]}));
+                                 toast.success('পোস্টার আপলোড হয়েছে!');
                                } catch { toast.error('আপলোড ব্যর্থ'); }
                              }} />
                            </label>
                          </div>
-                         {loadingMedia.imageUrl && (
-                           <div className="relative w-40 h-24 rounded-xl overflow-hidden border-2 border-purple-200">
-                             <img src={loadingMedia.imageUrl} alt="Loading preview" className="w-full h-full object-cover" />
-                             <button type="button" onClick={() => setLoadingMedia({...loadingMedia, imageUrl: ''})} className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✕</button>
+                         {(loadingMedia.posters?.length || 0) > 0 && (
+                           <div className="grid grid-cols-5 gap-3 mt-2">
+                             {loadingMedia.posters.map((url, i) => (
+                               <div key={i} className="relative aspect-[9/16] rounded-2xl overflow-hidden border-2 border-purple-200 shadow-lg group">
+                                 <img src={url} alt={`Poster ${i + 1}`} className="w-full h-full object-cover" />
+                                 <button type="button" onClick={() => setLoadingMedia(prev => ({...prev, posters: prev.posters.filter((_, j) => j !== i)}))} className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cursor-pointer shadow-md">✕</button>
+                                 <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[8px] font-black text-center py-1">পোস্টার {i + 1}</div>
+                               </div>
+                             ))}
                            </div>
                          )}
                        </div>
@@ -1240,12 +1264,51 @@ export default function SettingsPage() {
                                <div key={i} className="flex items-center gap-1 bg-purple-50 border border-purple-200 text-purple-800 px-3 py-1.5 rounded-xl text-xs font-black">
                                  {t}
                                  <button type="button" onClick={() => setLoadingMedia(prev => ({...prev, texts: prev.texts.filter((_, j) => j !== i)}))} className="text-purple-400 hover:text-red-500 ml-1"><X size={10} /></button>
-                               </div>
-                             ))}
-                           </div>
-                         )}
-                       </div>
-                    )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                     )}
+
+                     {/* ── Featured Products Highlight Selection ── */}
+                     <div className="border-t border-slate-100 pt-6 space-y-4">
+                        <div>
+                           <p className="text-xs font-black text-slate-900 flex items-center gap-2"><Sparkles size={14} /> লোডিং স্ক্রিন হাইলাইট পণ্য</p>
+                           <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">লোডিং পেজে কোন পণ্যগুলো হাইলাইট হিসেবে ঘুরবে তা সিলেক্ট করুন (সর্বোচ্চ ৫টি)</p>
+                        </div>
+                        {shopProducts.length === 0 ? (
+                          <p className="text-xs text-slate-400 font-bold bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">আপনার শপে কোনো পণ্য নেই। প্রথমে পণ্য যোগ করুন।</p>
+                        ) : (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-1 border border-slate-100 rounded-2xl">
+                            {shopProducts.map(p => {
+                              const isChecked = featuredProductIds.includes(p.id);
+                              return (
+                                <label key={p.id} className="relative flex items-center gap-2.5 p-2 bg-slate-50 border border-slate-100 rounded-xl hover:border-purple-300 transition-all cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => {
+                                      if (isChecked) {
+                                        setFeaturedProductIds(featuredProductIds.filter(id => id !== p.id));
+                                      } else {
+                                        if (featuredProductIds.length >= 5) {
+                                          toast.error('সর্বোচ্চ ৫টি পণ্য সিলেক্ট করতে পারবেন');
+                                          return;
+                                        }
+                                        setFeaturedProductIds([...featuredProductIds, p.id]);
+                                      }
+                                    }}
+                                    className="accent-purple-600 rounded"
+                                  />
+                                  {p.imageUrl && <img src={p.imageUrl} className="w-8 h-8 rounded-lg object-cover bg-white shrink-0 border border-slate-200" />}
+                                  <span className="text-[10px] font-black text-slate-700 truncate">{p.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                     </div>
                  </div>
 
                 <div className="md:col-span-2 border-t border-purple-100 pt-6 mt-2">
@@ -1319,6 +1382,19 @@ export default function SettingsPage() {
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={showLocationSelector} onChange={e => setShowLocationSelector(e.target.checked)} />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between bg-red-50 p-4 rounded-xl border border-red-100">
+                  <div>
+                    <h4 className="text-sm font-black text-red-900 flex items-center gap-2">
+                       <MapPin size={16} className="text-red-600" /> সার্ভিস এরিয়া ব্যানার অফ করুন (Disable Service Banner)
+                    </h4>
+                    <p className="text-[10px] font-bold text-red-600 uppercase mt-1">অফ করলে স্টোরে লাল/সবুজ লোকেশন ব্যানারটি দেখাবে না</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={disableServiceBanner} onChange={e => setDisableServiceBanner(e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
                   </label>
                 </div>
 

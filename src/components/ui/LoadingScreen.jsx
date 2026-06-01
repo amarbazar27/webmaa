@@ -5,7 +5,8 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
   const [show, setShow] = useState(true);
   const [textIdx, setTextIdx] = useState(0);
   const [productIdx, setProductIdx] = useState(0);
-  
+  const [activePosterIdx, setActivePosterIdx] = useState(0);
+
   // Determine loading content based on shop.loadingMedia setting
   const loadingMedia = shop?.loadingMedia || { type: 'default' };
   const defaultText = ['সুবহানআল্লাহ', 'আলহামদুলিল্লাহ', 'আল্লাহু আকবার', 'বিসমিল্লাহ'];
@@ -15,10 +16,56 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
     ? loadingMedia.texts
     : (shop?.loadingTexts?.length ? shop.loadingTexts : defaultText);
   
-  // Custom image: show if type === 'image' and imageUrl set
-  const customImageUrl = loadingMedia.type === 'image' && loadingMedia.imageUrl ? loadingMedia.imageUrl : null;
-  
-  const highlightProducts = products.filter(p => p.imageUrl).slice(0, 5);
+  // Custom posters: show if type === 'image' and posters/imageUrl exist
+  const posters = loadingMedia.type === 'image'
+    ? (loadingMedia.posters?.length > 0 ? loadingMedia.posters : (loadingMedia.imageUrl ? [loadingMedia.imageUrl] : []))
+    : [];
+
+  // 🚨 Highlight Products selector: Filter by shop.featuredProductIds if configured
+  const highlightProducts = (shop?.featuredProductIds?.length > 0)
+    ? products.filter(p => shop.featuredProductIds.includes(p.id) && p.imageUrl)
+    : products.filter(p => p.imageUrl).slice(0, 5);
+
+  // Swipe gesture tracking states
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const handleNextSlide = () => {
+    if (loadingMedia.type === 'image' && posters.length > 1) {
+      setActivePosterIdx(prev => (prev + 1) % posters.length);
+    } else if (loadingTexts.length > 1) {
+      setTextIdx(prev => (prev + 1) % loadingTexts.length);
+    }
+  };
+
+  const handlePrevSlide = () => {
+    if (loadingMedia.type === 'image' && posters.length > 1) {
+      setActivePosterIdx(prev => (prev - 1 + posters.length) % posters.length);
+    } else if (loadingTexts.length > 1) {
+      setTextIdx(prev => (prev - 1 + loadingTexts.length) % loadingTexts.length);
+    }
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const diff = touchStart - touchEnd;
+    const swipeThreshold = 50;
+    if (diff > swipeThreshold) {
+      handleNextSlide();
+    } else if (diff < -swipeThreshold) {
+      handlePrevSlide();
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   useEffect(() => {
     let timer;
@@ -30,14 +77,30 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
     return () => clearTimeout(timer);
   }, [visible, minDuration]);
 
+  // Auto-advance rotating text slideshow
   useEffect(() => {
-    const iv = setInterval(() => setTextIdx(i => (i + 1) % loadingTexts.length), 1800);
+    if (loadingTexts.length <= 1) return;
+    const iv = setInterval(() => {
+      setTextIdx(i => (i + 1) % loadingTexts.length);
+    }, 2200);
     return () => clearInterval(iv);
   }, [loadingTexts.length]);
 
+  // Auto-advance custom posters carousel
   useEffect(() => {
-    if (highlightProducts.length === 0) return;
-    const iv = setInterval(() => setProductIdx(i => (i + 1) % highlightProducts.length), 2500);
+    if (posters.length <= 1) return;
+    const iv = setInterval(() => {
+      setActivePosterIdx(i => (i + 1) % posters.length);
+    }, 4500);
+    return () => clearInterval(iv);
+  }, [posters.length]);
+
+  // Auto-advance featured products showcase
+  useEffect(() => {
+    if (highlightProducts.length <= 1) return;
+    const iv = setInterval(() => {
+      setProductIdx(i => (i + 1) % highlightProducts.length);
+    }, 3000);
     return () => clearInterval(iv);
   }, [highlightProducts.length]);
 
@@ -47,8 +110,11 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden touch-pan-y"
       style={{ background: 'linear-gradient(135deg, #050510 0%, #0a0a20 50%, #050510 100%)' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* ── Islamic Geometric Pattern Overlay ── */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
@@ -57,18 +123,37 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
       }} />
 
       {/* ── Ambient glow blobs ── */}
-      <div className="absolute w-[500px] h-[500px] rounded-full blur-[120px] animate-pulse bg-purple-600/10 -top-48 -left-48" />
-      <div className="absolute w-[400px] h-[400px] rounded-full blur-[100px] animate-pulse bg-indigo-600/10 -bottom-32 -right-32" />
+      <div className="absolute w-[500px] h-[500px] rounded-full blur-[120px] animate-pulse bg-purple-600/10 -top-48 -left-48 pointer-events-none" />
+      <div className="absolute w-[400px] h-[400px] rounded-full blur-[100px] animate-pulse bg-indigo-600/10 -bottom-32 -right-32 pointer-events-none" />
 
-      {/* ── Custom Image (full cover bg) OR Central Logo ── */}
-      {customImageUrl ? (
-        <div className="absolute inset-0">
-          <img src={customImageUrl} alt="Loading" className="w-full h-full object-cover opacity-70" />
-          <div className="absolute inset-0 bg-black/40" />
+      {/* ── Swipable Posters Background Carousel ── */}
+      {posters.length > 0 ? (
+        <div className="absolute inset-0 w-full h-full transition-all duration-700 ease-in-out">
+          <img 
+            src={posters[activePosterIdx]} 
+            alt={`Poster ${activePosterIdx + 1}`} 
+            className="w-full h-full object-cover opacity-60 scale-100 transition-all duration-1000 ease-in-out" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/80" />
+          
+          {/* Swipable Carousel Dots Indicator */}
+          {posters.length > 1 && (
+            <div className="absolute bottom-44 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {posters.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActivePosterIdx(i)}
+                  className={`h-2 rounded-full transition-all duration-500 cursor-pointer ${
+                    i === activePosterIdx ? 'w-8 bg-purple-500' : 'w-2 bg-white/30 hover:bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         /* ── Central logo with animated rings ── */
-        <div className="relative flex items-center justify-center mb-10" style={{ width: 140, height: 140 }}>
+        <div className="relative flex items-center justify-center mb-10 pointer-events-none" style={{ width: 140, height: 140 }}>
           <div className="absolute inset-0 rounded-full border border-purple-500/20 animate-[spin_8s_linear_infinite]" />
           <div className="absolute inset-2 rounded-full border border-indigo-500/10 animate-[spin_12s_linear_infinite_reverse]" />
           
@@ -103,57 +188,67 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
         </div>
       )}
 
-      {/* ── Rotating text ── */}
-      <div className={`relative flex flex-col items-center gap-3 mb-10 z-10`}>
-        <div className="relative h-10 flex items-center justify-center" style={{ width: 300 }}>
+      {/* ── Rotating swipable text ── */}
+      <div className="relative flex flex-col items-center gap-3 mb-10 z-10 select-none">
+        <div className="relative h-10 flex items-center justify-center" style={{ width: 320 }}>
           <p
             key={textIdx}
-            className="absolute text-center font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-white to-indigo-300 text-2xl animate-in fade-in slide-in-from-bottom-2 duration-500"
+            className="absolute text-center font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-white to-indigo-200 text-xl tracking-wide leading-normal animate-in fade-in slide-in-from-bottom-2 duration-500"
           >
             {loadingTexts[textIdx]}
           </p>
         </div>
-        <div className="flex gap-1.5 mt-2">
-          {loadingTexts.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${
-                i === textIdx ? 'w-8 bg-purple-500' : 'w-1.5 bg-white/10'
-              }`}
-            />
-          ))}
-        </div>
+        
+        {/* Swipe instructions (only if there are multiple slides) */}
+        {(posters.length > 1 || loadingTexts.length > 1) && (
+          <span className="text-[8px] text-white/25 uppercase tracking-widest font-black animate-pulse">◀ সোয়াইপ করুন / Swipe ▶</span>
+        )}
+
+        {posters.length === 0 && loadingTexts.length > 1 && (
+          <div className="flex gap-1.5 mt-2">
+            {loadingTexts.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setTextIdx(i)}
+                className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                  i === textIdx ? 'w-8 bg-purple-500' : 'w-1.5 bg-white/10'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Featured Product Highlight Card ── */}
       {featuredProduct && (
         <div
           key={productIdx}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-3 rounded-2xl border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700 z-10"
-          style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(16px)', minWidth: 240, maxWidth: 300 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 px-5 py-4 rounded-[2rem] border border-white/10 animate-in fade-in slide-in-from-bottom-4 duration-700 z-20 shadow-2xl hover:scale-105 transition-transform"
+          style={{ background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)', minWidth: 300, maxWidth: 360 }}
         >
-          {/* Product Image */}
-          <div className="w-14 h-14 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-white/5">
+          {/* Product Image - Larger and glowing */}
+          <div className="w-20 h-20 rounded-2xl overflow-hidden border border-white/15 shrink-0 bg-white/5 shadow-lg relative group">
             <img
               src={featuredProduct.imageUrl}
               alt={featuredProduct.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               onError={e => { e.target.style.display = 'none'; }}
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
           </div>
           {/* Product Info */}
-          <div className="overflow-hidden">
-            <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-0.5">হাইলাইট</p>
+          <div className="overflow-hidden flex-1 text-left">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 uppercase tracking-widest mb-1.5 animate-pulse">⭐ হাইলাইট</span>
             <p className="text-sm font-black text-white leading-tight line-clamp-1">{featuredProduct.name}</p>
-            <p className="text-sm font-black text-emerald-400 mt-0.5">৳{featuredProduct.price}</p>
+            <p className="text-sm font-black text-emerald-400 mt-1">৳{featuredProduct.price}</p>
           </div>
           {/* Dot indicator */}
           {highlightProducts.length > 1 && (
-            <div className="flex gap-1 ml-auto shrink-0">
+            <div className="flex flex-col gap-1 ml-2 shrink-0 justify-center h-full">
               {highlightProducts.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 rounded-full transition-all duration-500 ${i === productIdx ? 'w-4 bg-purple-500' : 'w-1 bg-white/20'}`}
+                  className={`w-1.5 rounded-full transition-all duration-500 ${i === productIdx ? 'h-4 bg-purple-500' : 'h-1.5 bg-white/20'}`}
                 />
               ))}
             </div>

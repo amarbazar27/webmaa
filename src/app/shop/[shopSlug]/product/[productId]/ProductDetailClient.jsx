@@ -85,16 +85,6 @@ function ProductDetailInner({ shop, product }) {
       <Header router={logic.router} product={safeProduct} shop={safeShop} />
       
       <div className="max-w-2xl mx-auto space-y-6">
-        <ServiceBanner 
-          shop={safeShop} 
-          status={logic.locationStatus} 
-          setStatus={logic.setLocationStatus} 
-          manualInput={logic.locationManualInput}
-          setManualInput={logic.setLocationManualInput}
-          detectedLocation={logic.detectedLocation}
-          setDetectedLocation={logic.setDetectedLocation}
-        />
-        
         <div className="px-4 pb-12 space-y-6">
           <Suspense fallback={<div className="h-72 bg-slate-200 animate-pulse rounded-3xl w-full"></div>}>
             <ProductImage product={safeProduct} currentPrice={safeBasePrice} />

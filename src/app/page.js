@@ -18,6 +18,22 @@ import Logo from '@/components/ui/Logo';
 import AiShoppingList from '@/components/shop/AiShoppingList';
 import AiVoicePanel from '@/components/shop/AiVoicePanel';
 
+// Imports for unified product details modal
+import ProductImage from '@/features/product/components/ProductImage';
+import ProductInfo from '@/features/product/components/ProductInfo';
+import ProductVariants from '@/features/product/components/ProductVariants';
+import LegacySizes from '@/features/product/components/LegacySizes';
+import ProductQuantity from '@/features/product/components/ProductQuantity';
+import AiCustomization from '@/features/product/components/AiCustomization';
+import SmartCalculator from '@/features/product/components/SmartCalculator';
+import ProductActions from '@/features/product/components/ProductActions';
+import ReviewSection from '@/components/shop/ReviewSection';
+
+import { sanitizeProductData } from '@/features/product/utils/safeObjects';
+import { calculateBasePrice } from '@/features/product/utils/price';
+import { handleAiCalculate } from '@/features/product/actions/aiActions';
+import { useProductLogic } from '@/features/product/hooks/useProductLogic';
+
 // Common Phonetic Transliteration Dictionary for English-to-Bengali product searches
 const COMMON_PHONETIC_DICT = {
   'alu': 'আলু',
@@ -1289,6 +1305,18 @@ export default function Home() {
                         >
                           <ShoppingCart size={11} /> Add to Cart
                         </button>
+
+                        {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
+                          <button
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setCustomizationNote('');
+                            }}
+                            className="w-full py-2 rounded-2xl font-black text-[9px] border border-purple-500/20 hover:border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Sparkles size={11} /> কাস্টমাইজ (Customize)
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1813,106 +1841,212 @@ export default function Home() {
         </button>
       )}
 
-      {/* ── Product Details Modal ── */}
+      {/* ── Unified Product Details Modal ── */}
       {selectedProduct && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-2xl bg-[#090d1f]/90 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl p-6 sm:p-8 flex flex-col md:flex-row gap-6 animate-scale-in">
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedProduct(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all cursor-pointer z-10"
-            >
-              <X size={20} />
-            </button>
-
-            {/* Left Col: Image & Share */}
-            <div className="w-full md:w-1/2 space-y-4">
-              <div className="relative aspect-square rounded-[2rem] overflow-hidden border border-white/15 bg-slate-950/40 shadow-inner">
-                <img
-                  src={selectedProduct.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80'}
-                  alt={selectedProduct.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Dynamic Share Buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleShareProduct(selectedProduct)}
-                  className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-2xl text-[10px] font-black uppercase tracking-wider text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-purple-500/20 active:scale-95"
-                >
-                  <Share2 size={13} /> সোশ্যাল মিডিয়া শেয়ার (Share)
-                </button>
-                
-                <button
-                  onClick={() => handleCopyLink(selectedProduct)}
-                  className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-wider text-white/70 hover:text-white transition-all flex items-center justify-center cursor-pointer active:scale-95"
-                  title="লিংক কপি করুন"
-                >
-                  <Copy size={13} />
-                </button>
-              </div>
-            </div>
-
-            {/* Right Col: Details */}
-            <div className="w-full md:w-1/2 flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center gap-2">
-                  <span className="text-[10px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full uppercase tracking-widest">{selectedProduct.category || 'General'}</span>
-                  <a
-                    href={getStoreLink(selectedProduct.shopSlug, selectedProduct.customDomain, selectedProduct.domainStatus)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[10px] font-black text-white/50 hover:text-purple-400 transition-colors flex items-center gap-1"
-                  >
-                    🏪 {selectedProduct.shopName} <ArrowUpRight size={10} />
-                  </a>
-                </div>
-
-                <h2 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">{selectedProduct.name}</h2>
-                <p className="text-white/40 font-bold text-[10px] uppercase tracking-wider flex justify-between border-b border-white/5 pb-2">
-                  <span>দাম (Price)</span>
-                  <span className="text-white text-base font-black">৳ {Number(selectedProduct.price).toLocaleString()} / {selectedProduct.unit || 'piece'}</span>
-                </p>
-
-                {selectedProduct.description && (
-                  <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin">
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-wider">পণ্যের বিবরণ (Description)</p>
-                    <p className="text-xs text-white/60 font-semibold leading-relaxed">{selectedProduct.description}</p>
-                  </div>
-                )}
-
-                {/* Customization Form */}
-                {selectedProduct.allowCustomize && (
-                  <div className="space-y-2 border-t border-white/5 pt-4">
-                    <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">পছন্দমতো কাস্টমাইজেশন নোট লিখুন</label>
-                    <textarea
-                      placeholder="যেমন: সাইজ, কালার বা রান্নার নির্দেশনা..."
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-semibold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 placeholder:text-white/20 transition-all h-16 resize-none shadow-inner text-white"
-                      value={customizationNote}
-                      onChange={e => setCustomizationNote(e.target.value)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Add to Cart Actions */}
-              <div className="space-y-2 pt-6">
-                <button
-                  onClick={() => {
-                    handleAddToCart(selectedProduct, customizationNote);
-                    setSelectedProduct(null);
-                  }}
-                  className="w-full py-3.5 bg-white text-black hover:bg-white/95 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xl active:scale-95 font-black"
-                >
-                  <ShoppingCart size={13} /> {selectedProduct.allowCustomize ? 'কাস্টমাইজ করে কার্টে যোগ করুন' : 'কার্টে যোগ করুন (Add to Cart)'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <LandingProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          cart={cart}
+          setCart={setCart}
+        />
       )}
 
+    </div>
+  );
+}
+
+// ── Unified Product Details Modal Component ──
+function LandingProductDetailModal({ product, onClose, cart, setCart }) {
+  const [shop, setShop] = useState(null);
+  const [loadingShop, setLoadingShop] = useState(true);
+
+  useEffect(() => {
+    if (product) {
+      setLoadingShop(true);
+      getShopBySlug(product.shopSlug)
+        .then(data => {
+          setShop(data);
+          setLoadingShop(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setShop({ id: product.shopId, shopName: product.shopName, shopSlug: product.shopSlug });
+          setLoadingShop(false);
+        });
+    }
+  }, [product]);
+
+  if (!product) return null;
+
+  return (
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fade-in">
+      <div className="relative w-full max-w-2xl bg-slate-50 border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-2xl p-6 sm:p-8 flex flex-col gap-6 animate-scale-in my-8 max-h-[90vh] overflow-y-auto scrollbar-thin text-slate-900">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all cursor-pointer z-10"
+        >
+          <X size={20} />
+        </button>
+
+        {loadingShop ? (
+          <div className="py-20 flex items-center justify-center">
+            <Loader2 className="animate-spin text-purple-600" size={40} />
+          </div>
+        ) : (
+          <LandingProductDetailInner 
+            shop={shop} 
+            product={product} 
+            onClose={onClose}
+            cart={cart}
+            setCart={setCart}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LandingProductDetailInner({ shop, product, onClose, cart, setCart }) {
+  const { product: safeProduct, shop: safeShop } = sanitizeProductData(product, shop);
+  const logic = useProductLogic(safeShop, safeProduct);
+  
+  let basePrice = 0;
+  try {
+    basePrice = calculateBasePrice(safeProduct, logic.isLegacySizes, logic.selectedSize, logic.selectedVariants);
+  } catch (err) {
+    console.error('[ProductDetail] Price calculation error:', err);
+  }
+  
+  const safeBasePrice = Number(basePrice) || 0;
+  const safeQty = Number(logic.qty) || 1;
+  const totalPrice = logic.aiPrice !== null ? Number(logic.aiPrice) || 0 : (safeBasePrice * safeQty).toFixed(0);
+
+  const handleLandingAddToCart = () => {
+    try {
+      if (Number(safeProduct.stock) === 0) return toast.error('স্টক নেই');
+
+      const safeQty = Number(logic.qty) || 1;
+      const safeAiPrice = logic.aiPrice !== null ? Number(logic.aiPrice) : null;
+      const unitPrice = safeAiPrice !== null ? safeAiPrice / safeQty : safeBasePrice;
+      const finalPrice = safeAiPrice !== null ? safeAiPrice : safeBasePrice * safeQty;
+
+      if (finalPrice <= 0 || isNaN(finalPrice)) return toast.error('মূল্য সঠিক নয়');
+
+      let variantString = logic.isLegacySizes ? (logic.selectedSize?.label || '') : 
+        Object.entries(logic.selectedVariants || {}).filter(([n, o]) => n && o).map(([n, o]) => `${n}: ${o.label}`).join(', ');
+
+      const displayName = safeProduct.name + (variantString ? ` (${variantString})` : '');
+
+      const globalCartItem = {
+        id: `${safeProduct.id}_${Date.now()}`,
+        productId: safeProduct.id,
+        name: displayName,
+        price: unitPrice,
+        quantity: safeQty,
+        imageUrl: safeProduct.imageUrl || '',
+        shopId: safeProduct.shopId,
+        shopName: safeProduct.shopName === 'ADMIN' ? 'Webmaa Store' : safeProduct.shopName,
+        shopSlug: safeProduct.shopSlug,
+        customDomain: safeProduct.customDomain || '',
+        domainStatus: safeProduct.domainStatus || '',
+        isThirdParty: safeProduct.shopSlug !== 'daripallah-store',
+        customNote: logic.customerNote || logic.customInput || '',
+        isCustomized: safeAiPrice !== null || !!logic.customerNote || !!logic.customInput
+      };
+
+      // Add to global landing page cart
+      let updatedCart = [...cart];
+      const existingIndex = updatedCart.findIndex(item => 
+        item.productId === safeProduct.id && 
+        item.name === displayName && 
+        (item.customNote || '') === (globalCartItem.customNote || '')
+      );
+
+      if (existingIndex > -1) {
+        updatedCart[existingIndex].quantity += safeQty;
+      } else {
+        updatedCart.push(globalCartItem);
+      }
+      setCart(updatedCart);
+      localStorage.setItem('cart_daripallah-store', JSON.stringify(updatedCart));
+
+      // Sync to individual store cart in localStorage
+      const storeCartKey = `cart_${safeProduct.shopId}`;
+      try {
+        const storeCart = JSON.parse(localStorage.getItem(storeCartKey) || '[]');
+        const storeExistingIdx = storeCart.findIndex(item => 
+          item.productId === safeProduct.id && 
+          item.name === displayName && 
+          (item.note || '') === (globalCartItem.customNote || '')
+        );
+
+        if (storeExistingIdx > -1) {
+          storeCart[storeExistingIdx].quantity += safeQty;
+        } else {
+          storeCart.push({
+            id: `${safeProduct.id}_${Date.now()}`,
+            productId: safeProduct.id,
+            name: displayName,
+            price: unitPrice,
+            clientPrice: unitPrice,
+            quantity: safeQty,
+            imageUrl: safeProduct.imageUrl || '',
+            note: globalCartItem.customNote,
+            isCustomized: globalCartItem.isCustomized,
+            customizedText: logic.customInput || '',
+            variantsText: variantString || ''
+          });
+        }
+        localStorage.setItem(storeCartKey, JSON.stringify(storeCart));
+      } catch (err) {
+        console.error('Failed to sync individual shop cart:', err);
+      }
+
+      toast.success(`${safeProduct.name} কার্টে যোগ হয়েছে! 🛒`);
+      onClose();
+    } catch (err) {
+      console.error('[LandingAddToCart] Error:', err);
+      toast.error('কার্টে যোগ করতে সমস্যা হয়েছে');
+    }
+  };
+
+  return (
+    <div className="space-y-6 text-slate-900 pr-1 scrollbar-thin">
+      <div className="flex justify-between items-center border-b pb-4">
+        <div>
+          <h1 className="font-black text-xl text-slate-900 truncate">{safeProduct.name}</h1>
+          <p className="text-xs text-slate-500 font-bold">🏪 {safeShop.shopName}</p>
+        </div>
+      </div>
+      
+      <div className="space-y-6 pb-6 text-left">
+        <Suspense fallback={<div className="h-72 bg-slate-200 animate-pulse rounded-3xl w-full"></div>}>
+          <ProductImage product={safeProduct} currentPrice={safeBasePrice} />
+        </Suspense>
+        
+        <ProductInfo product={safeProduct} currentPrice={safeBasePrice} />
+        
+        <ProductVariants variants={logic.variants} selectedVariants={logic.selectedVariants} setSelectedVariants={logic.setSelectedVariants} onResetAi={() => logic.setAiPrice(null)} />
+        <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
+        
+        <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
+        
+        {safeShop?.aiConfig?.smartCalcEnabled ? (
+          <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
+        ) : safeProduct?.allowCustomize ? (
+          <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
+        ) : null}
+        
+        <ProductActions 
+          product={safeProduct} 
+          customerNote={logic.customerNote} 
+          setCustomerNote={logic.setCustomerNote} 
+          totalPrice={totalPrice} 
+          onAddToCart={handleLandingAddToCart} 
+        />
+        <ReviewSection shopId={safeShop?.id} />
+      </div>
     </div>
   );
 }

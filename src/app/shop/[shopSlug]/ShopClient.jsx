@@ -1034,6 +1034,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
     if (cart.filter(i => Number(i.quantity) > 0).length === 0 && !orderImage) return toast.error('কার্ট খালি!');
     
+    if (!orderForm.name || orderForm.name.trim().length < 3) {
+      toast.error('⚠️ অনুগ্রহ করে আপনার সঠিক নাম লিখুন (কমপক্ষে ৩ অক্ষর)');
+      return;
+    }
+    if (!orderForm.address || orderForm.address.trim().length < 3) {
+      toast.error('⚠️ অনুগ্রহ করে আপনার সঠিক ডেলিভারি ঠিকানা লিখুন (কমপক্ষে ৩ অক্ষর)');
+      return;
+    }
+    
     // 🚨 Payment Screenshot Check
     if (isAdvanceRequired && shop.deliveryConfig?.requirePaymentScreenshot && !paymentScreenshot) {
       toast.error('⚠️ পেমেন্ট যাচাইয়ের জন্য প্রমাণ স্বরূপ স্ক্রিনশট আপলোড করা আবশ্যক।');
@@ -1400,15 +1409,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Service Area Banner ── */}
-      <ServiceBanner 
-         shop={shop} 
-         status={locationStatus} 
-         setStatus={setLocationStatus}
-         manualInput={locationManualInput}
-         setManualInput={setLocationManualInput}
-         detectedLocation={detectedLocation}
-         setDetectedLocation={setDetectedLocation}
-      />
+      {!shop.disableServiceBanner && (
+        <ServiceBanner 
+           shop={shop} 
+           status={locationStatus} 
+           setStatus={setLocationStatus}
+           manualInput={locationManualInput}
+           setManualInput={setLocationManualInput}
+           detectedLocation={detectedLocation}
+           setDetectedLocation={setDetectedLocation}
+        />
+      )}
 
 
 
