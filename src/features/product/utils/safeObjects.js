@@ -10,7 +10,8 @@ export const SAFE_PRODUCT = {
   sizes: [],
   allowCustomize: false,
   allowNote: false,
-  category: ''
+  category: '',
+  shopSlug: ''
 };
 
 export const SAFE_SHOP = {
@@ -29,6 +30,7 @@ export const sanitizeProductData = (rawProduct, rawShop) => {
   sanitizedProduct.name = String(sanitizedProduct.name || 'Unknown Product');
   sanitizedProduct.imageUrl = String(sanitizedProduct.imageUrl || '');
   sanitizedProduct.category = String(sanitizedProduct.category || '');
+  sanitizedProduct.shopSlug = String(product.shopSlug || shop.subdomainSlug || shop.shopSlug || '');
   sanitizedProduct.images = Array.isArray(sanitizedProduct.images) ? sanitizedProduct.images : [];
   sanitizedProduct.variants = Array.isArray(sanitizedProduct.variants) ? sanitizedProduct.variants.filter(v => v && typeof v === 'object' && v.name && Array.isArray(v.options)) : [];
   sanitizedProduct.sizes = Array.isArray(sanitizedProduct.sizes) ? sanitizedProduct.sizes : [];

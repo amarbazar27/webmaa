@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import {
   ShoppingBag, Search, Star, ArrowRight, Phone, Store,
@@ -347,6 +347,10 @@ export default function Home() {
   };
 
   const handleAddToCart = (product, customNote = '') => {
+    if (Number(product.stock) === 0) {
+      toast.error('দুঃখিত, এই পণ্যটি স্টকে নেই');
+      return;
+    }
     let updatedCart = [...cart];
     // If customized, treat it as a separate cart item so they can add multiple customized products!
     const existingIndex = updatedCart.findIndex(item => item.productId === product.id && (item.customNote || '') === customNote);
@@ -1299,12 +1303,18 @@ export default function Home() {
                           <span className="text-white font-black text-xs">৳ {Number(product.price).toLocaleString()}</span>
                         </div>
 
-                        <button
-                          onClick={() => handleAddToCart(product)}
-                          className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
-                        >
-                          <ShoppingCart size={11} /> Add to Cart
-                        </button>
+                        {product.stock === 0 ? (
+                          <div className="w-full py-2.5 rounded-2xl font-black text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center gap-1.5 cursor-not-allowed">
+                            🚫 স্টক শেষ (Stock Out)
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleAddToCart(product)}
+                            className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
+                          >
+                            <ShoppingCart size={11} /> Add to Cart
+                          </button>
+                        )}
 
                         {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
                           <button
@@ -1829,17 +1839,17 @@ export default function Home() {
       </a>
 
       {/* Floating Cart Trigger (Bottom-Right) */}
-      {cartItemCount > 0 && (
-        <button
-          onClick={() => setIsCartOpen(true)}
-          className="fixed bottom-8 right-8 z-[120] w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/40 hover:scale-115 active:scale-95 transition-all border border-white/10 cursor-pointer"
-        >
-          <ShoppingCart size={24} />
+      <button
+        onClick={() => setIsCartOpen(true)}
+        className="fixed bottom-8 right-8 z-[120] w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/40 hover:scale-115 active:scale-95 transition-all border border-white/10 cursor-pointer"
+      >
+        <ShoppingCart size={24} />
+        {cartItemCount > 0 && (
           <span className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border border-black">
             {cartItemCount}
           </span>
-        </button>
-      )}
+        )}
+      </button>
 
       {/* ── Unified Product Details Modal ── */}
       {selectedProduct && (

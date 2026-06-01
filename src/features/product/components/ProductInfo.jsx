@@ -3,8 +3,17 @@ import { Tag, CheckCircle, Package, Share2, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ProductInfo({ product, currentPrice }) {
+  const getShareUrl = () => {
+    if (typeof window === 'undefined') return '';
+    if (product.shopSlug && product.id) {
+      const origin = window.location.origin;
+      return `${origin}/shop/${product.shopSlug}/product/${product.id}`;
+    }
+    return window.location.href;
+  };
+
   const handleShareProduct = async () => {
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareUrl = getShareUrl();
     if (navigator.share) {
       try {
         await navigator.share({
@@ -21,7 +30,7 @@ export default function ProductInfo({ product, currentPrice }) {
   };
 
   const handleCopyLink = () => {
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareUrl = getShareUrl();
     navigator.clipboard.writeText(shareUrl).then(() => {
       toast.success("শেয়ারিং লিংক কপি হয়েছে! 🔗");
     }).catch(err => {
