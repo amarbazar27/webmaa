@@ -417,6 +417,22 @@ export default function OrdersPage() {
                                     <div><p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Advance Txn ID</p><p className="text-xs font-black text-emerald-900 tracking-wider bg-emerald-100 px-2 rounded mt-1 inline-block border border-emerald-200">{order.transactionId}</p></div>
                                  </div>
                                )}
+                               {order.paymentScreenshot && (
+                                 <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
+                                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest flex items-center gap-1">📸 Payment Screenshot</p>
+                                    <div className="relative group max-w-[120px] rounded-lg overflow-hidden border border-slate-200 shadow-sm cursor-zoom-in">
+                                      <img 
+                                        src={order.paymentScreenshot} 
+                                        alt="Payment Proof" 
+                                        onClick={() => {
+                                          const w = window.open();
+                                          w.document.write(`<img src="${order.paymentScreenshot}" style="max-width:100%;height:auto;display:block;margin:auto;" />`);
+                                        }}
+                                        className="w-full h-16 object-cover hover:scale-105 transition-transform duration-300" 
+                                      />
+                                    </div>
+                                 </div>
+                               )}
                             </div>
                          </div>
 

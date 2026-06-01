@@ -6,7 +6,8 @@ import {
   ShoppingBag, Search, Star, ArrowRight, Phone, Store,
   X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
-  MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic
+  MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
+  Share2, Copy
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -151,6 +152,18 @@ export default function Home() {
   const [productSearch, setProductSearch] = useState('');
   const [sortOption, setSortOption] = useState('name_asc');
 
+  // ── Product Details Modal & Customization States ──
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [customizationNote, setCustomizationNote] = useState('');
+
+  // ── Stepped Filters & AI Product Clustering States ──
+  const [filterMode, setFilterMode] = useState('merchant'); // 'merchant' or 'type'
+  const [activeTypeFilter, setActiveTypeFilter] = useState('All');
+
+  // ── 5-Row Pagination States ──
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+
   // ── Superadmin own shop dynamic settings ──
   const [mainShopData, setMainShopData] = useState(null);
   const [activeBanner, setActiveBanner] = useState(0);
@@ -168,6 +181,27 @@ export default function Home() {
   const [chatInput, setChatInput] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
 
+  // ── AI Product Clustering Helper ──
+  const getProductType = (product) => {
+    if (product.superadminType) return product.superadminType;
+    const name = (product.name || '').toLowerCase();
+    const cat = (product.category || '').toLowerCase();
+    
+    if (name.includes('মুরগি') || name.includes('murgi') || name.includes('chicken') || name.includes('মাংস') || name.includes('meat') || name.includes('গোরু') || name.includes('beef') || name.includes('ডিম') || name.includes('egg') || cat.includes('meat') || cat.includes('মাংস')) {
+      return 'মাংস ও ডিম (Poultry & Eggs)';
+    }
+    if (name.includes('আলু') || name.includes('পটল') || name.includes('পেঁয়াজ') || name.includes('রসুন') || name.includes('আদা') || name.includes('গাজর') || name.includes('বেগুন') || name.includes('টমেটো') || name.includes('সবজি') || name.includes('শাক') || name.includes('লেবু') || name.includes('ফল') || name.includes('tomato') || name.includes('shosa') || name.includes('sosa') || name.includes('cabbage') || cat.includes('সবজি') || cat.includes('vegetable')) {
+      return 'সবজি ও ফল (Vegetables & Fruits)';
+    }
+    if (name.includes('চাল') || name.includes('ডাল') || name.includes('তেল') || name.includes('লবণ') || name.includes('চিনি') || name.includes('আটা') || name.includes('ময়দা') || name.includes('মসলা') || name.includes('morich') || name.includes('holud') || name.includes('oil') || name.includes('dal') || name.includes('chal') || cat.includes('grocer') || cat.includes('মুদি')) {
+      return 'মুদি ও নিত্যপ্রয়োজনীয় (Groceries)';
+    }
+    if (name.includes('দুধ') || name.includes('চা') || name.includes('কফি') || name.includes('পানি') || name.includes('juice') || name.includes('dudh') || name.includes('tea') || name.includes('coffee') || name.includes('water') || cat.includes('drink') || cat.includes('পানীয়')) {
+      return 'পানীয় ও দুগ্ধজাত (Drinks & Dairy)';
+    }
+    return 'অন্যান্য পণ্য (Others)';
+  };
+
   // Helper to resolve custom domain redirection links
   const getStoreLink = (shopSlug, customDomain, domainStatus) => {
     if (customDomain && domainStatus === 'connected') {
@@ -176,11 +210,46 @@ export default function Home() {
     return `/${shopSlug}`;
   };
 
+  // Responsive itemsPerPage calculator (exactly 5 rows)
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      if (w >= 1800) setItemsPerPage(50); // 10 cols
+      else if (w >= 1536) setItemsPerPage(40); // 8 cols
+      else if (w >= 1280) setItemsPerPage(30); // 6 cols
+      else if (w >= 1024) setItemsPerPage(25); // 5 cols
+      else if (w >= 768) setItemsPerPage(20); // 4 cols
+      else if (w >= 640) setItemsPerPage(15); // 3 cols
+      else setItemsPerPage(10); // 2 cols
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Load products, global config, superadmin shop & cart on mount
   useEffect(() => {
     getAllMarketplaceProducts().then(data => {
-      setProducts(data);
+      // 🚨 Admin Shop Mapping & Overwrites
+      const mapped = data.map(p => {
+        if (p.shopSlug === 'daripallah-store' || p.shopName?.toLowerCase() === 'webmaa store' || p.shopName?.toLowerCase() === 'daripallah store') {
+          return { ...p, shopName: 'ADMIN' };
+        }
+        return p;
+      });
+      setProducts(mapped);
       setProductsLoading(false);
+
+      // ── Stepped category query parameters parser ──
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const shopParam = params.get('shop');
+        const catParam = params.get('category');
+        const subcatParam = params.get('subcategory');
+        if (shopParam) setActiveShopFilter(shopParam);
+        if (catParam) setActiveCategory(catParam);
+        if (subcatParam) setActiveSubcategory(subcatParam);
+      }
     }).catch(err => {
       console.error(err);
       setProductsLoading(false);
@@ -261,9 +330,10 @@ export default function Home() {
     }
   };
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product, customNote = '') => {
     let updatedCart = [...cart];
-    const existingIndex = updatedCart.findIndex(item => item.productId === product.id);
+    // If customized, treat it as a separate cart item so they can add multiple customized products!
+    const existingIndex = updatedCart.findIndex(item => item.productId === product.id && (item.customNote || '') === customNote);
     
     if (existingIndex > -1) {
       updatedCart[existingIndex].quantity += 1;
@@ -280,7 +350,9 @@ export default function Home() {
         shopSlug: product.shopSlug,
         customDomain: product.customDomain || '',
         domainStatus: product.domainStatus || '',
-        isThirdParty: product.shopSlug !== 'daripallah-store'
+        isThirdParty: product.shopSlug !== 'daripallah-store',
+        customNote: customNote,
+        isCustomized: !!customNote
       });
     }
     setCart(updatedCart);
@@ -290,7 +362,7 @@ export default function Home() {
     const storeCartKey = `cart_${product.shopId}`;
     try {
       const storeCart = JSON.parse(localStorage.getItem(storeCartKey) || '[]');
-      const storeExistingIdx = storeCart.findIndex(item => item.productId === product.id);
+      const storeExistingIdx = storeCart.findIndex(item => item.productId === product.id && (item.customizedText || '') === customNote);
       if (storeExistingIdx > -1) {
         storeCart[storeExistingIdx].quantity += 1;
       } else {
@@ -302,9 +374,9 @@ export default function Home() {
           clientPrice: Number(product.price) || 0,
           quantity: 1,
           imageUrl: product.imageUrl || '',
-          note: '',
-          isCustomized: false,
-          customizedText: '',
+          note: customNote,
+          isCustomized: !!customNote,
+          customizedText: customNote,
           variantsText: ''
         });
       }
@@ -428,33 +500,109 @@ export default function Home() {
   // ── Merchant-Category Filter Double Flow ──
   const uniqueShops = ['All', ...Array.from(new Set(products.map(p => p.shopName).filter(Boolean)))];
 
+  const uniqueTypes = ['All', 'মাংস ও ডিম (Poultry & Eggs)', 'সবজি ও ফল (Vegetables & Fruits)', 'মুদি ও নিত্যপ্রয়োজনীয় (Groceries)', 'পানীয় ও দুগ্ধজাত (Drinks & Dairy)', 'অন্যান্য পণ্য (Others)'];
+
   const availableCategories = ['All', ...Array.from(new Set(
     products
-      .filter(p => activeShopFilter === 'All' || p.shopName === activeShopFilter)
+      .filter(p => {
+        if (filterMode === 'merchant') {
+          return activeShopFilter === 'All' || p.shopName === activeShopFilter;
+        } else {
+          return activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter;
+        }
+      })
       .map(p => p.category)
       .filter(Boolean)
   ))];
 
   const availableSubcategories = Array.from(new Set(
     products
-      .filter(p => (activeShopFilter === 'All' || p.shopName === activeShopFilter) &&
-                   (activeCategory === 'All' || p.category === activeCategory))
+      .filter(p => {
+        if (filterMode === 'merchant') {
+          return (activeShopFilter === 'All' || p.shopName === activeShopFilter) &&
+                 (activeCategory === 'All' || p.category === activeCategory);
+        } else {
+          return (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter) &&
+                 (activeCategory === 'All' || p.category === activeCategory);
+        }
+      })
       .map(p => p.subcategory)
       .filter(Boolean)
   ));
 
-  // Reset category filters if shop filter makes them invalid
+  // Reset category filters if active filter makes them invalid
   useEffect(() => {
     if (!availableCategories.includes(activeCategory)) {
       setActiveCategory('All');
     }
-  }, [activeShopFilter, products]);
+  }, [activeShopFilter, activeTypeFilter, filterMode, products]);
 
   useEffect(() => {
     if (!availableSubcategories.includes(activeSubcategory)) {
       setActiveSubcategory('');
     }
-  }, [activeCategory, activeShopFilter, products]);
+  }, [activeCategory, activeShopFilter, activeTypeFilter, filterMode, products]);
+
+  // Reset all filters when filterMode changes
+  useEffect(() => {
+    setActiveShopFilter('All');
+    setActiveTypeFilter('All');
+    setActiveCategory('All');
+    setActiveSubcategory('');
+    setCurrentPage(1);
+  }, [filterMode]);
+
+  // Reset page when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeShopFilter, activeTypeFilter, activeCategory, activeSubcategory, productSearch]);
+
+  const handleShareProduct = async (product) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com';
+    const shareUrl = `${origin}/?product=${product.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `দারিপাল্লা মার্কেটপ্লেসে '${product.name}' দেখুন! 🛒`,
+          url: shareUrl
+        });
+      } catch (err) {
+        console.error("Error sharing:", err);
+      }
+    } else {
+      handleCopyLink(product);
+    }
+  };
+
+  const handleCopyLink = (product) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com';
+    const shareUrl = `${origin}/?product=${product.id}`;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success("পণ্য শেয়ারিং লিংক কপি হয়েছে! 🔗");
+    }).catch(err => {
+      toast.error("লিংক কপি করতে সমস্যা হয়েছে");
+    });
+  };
+
+  const handleShareFilter = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com';
+    const params = new URLSearchParams();
+    if (activeShopFilter !== 'All') params.set('shop', activeShopFilter);
+    if (activeTypeFilter !== 'All') params.set('type', activeTypeFilter);
+    if (activeCategory !== 'All') params.set('category', activeCategory);
+    if (activeSubcategory) params.set('subcategory', activeSubcategory);
+    
+    const shareUrl = `${origin}/?${params.toString()}`;
+    
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success("ফিল্টার শেয়ারিং লিংক কপি হয়েছে! 🔗");
+    }).catch(err => {
+      toast.error("লিংক কপি করতে সমস্যা হয়েছে");
+    });
+  };
 
   // Phonetic transliteration match engine
   const matchPhoneticSearch = (product, queryText) => {
@@ -491,11 +639,29 @@ export default function Home() {
 
   // Compile active products list based on hierarchy & search options
   let filteredProducts = products.filter(p => {
-    const matchesShop = activeShopFilter === 'All' || p.shopName === activeShopFilter;
+    // 1. Curation Whitelist Filters
+    if (globalConfig?.showcaseCuration?.enabled) {
+      const allowedShops = globalConfig.showcaseCuration.allowedShops || [];
+      const allowedCategories = globalConfig.showcaseCuration.allowedCategories || [];
+      const allowedSubcategories = globalConfig.showcaseCuration.allowedSubcategories || [];
+      
+      if (allowedShops.length > 0 && !allowedShops.includes(p.shopId)) return false;
+      if (allowedCategories.length > 0 && !allowedCategories.includes(p.category)) return false;
+      if (allowedSubcategories.length > 0 && p.subcategory && !allowedSubcategories.includes(p.subcategory)) return false;
+    }
+
+    // 2. Interactive Selection Filters
+    const matchesShop = filterMode === 'merchant'
+      ? (activeShopFilter === 'All' || p.shopName === activeShopFilter)
+      : true;
+    const matchesType = filterMode === 'type'
+      ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
+      : true;
     const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
     const matchesSubcategory = !activeSubcategory || p.subcategory === activeSubcategory;
     const matchesSearch = !productSearch || matchPhoneticSearch(p, productSearch);
-    return matchesShop && matchesCategory && matchesSubcategory && matchesSearch;
+    
+    return matchesShop && matchesType && matchesCategory && matchesSubcategory && matchesSearch;
   });
 
   // Sort products
@@ -569,7 +735,7 @@ export default function Home() {
     setIsAiTyping(true);
 
     try {
-      const productList = products.slice(0, 30).map(p => `${p.id}|${p.name}|${p.price}`).join('\n');
+      const productList = products.slice(0, 150).map(p => `${p.id}|${p.name}|৳${p.price}|${p.unit || 'piece'}|${p.description || ''}`).join('\n');
       
       const response = await fetch(`/api/ai`, {
         method: 'POST',
@@ -585,11 +751,13 @@ export default function Home() {
               content: `You are a professional retail shopping assistant for the Daripallah platform (daripallah.com) in Bangladesh. 
               Always greet with "Assalamu Alaikum". Speak in Bengali. Be helpful and friendly.
               
-              Current Available Products in the Marketplace:
+              Current Available Products in the Marketplace (ID|Name|Price|Unit|Description):
               ${productList || 'No products listed yet.'}
               
               Rule: If a user wants to buy or shows interest in products, list the matched products and write:
-              "PRODUCTS_JSON:[{\"id\":\"product_id\",\"qty\":1}]" at the very end of your response so we can generate product cards for them.`
+              "PRODUCTS_JSON:[{\"id\":\"product_id\",\"qty\":1}]" at the very end of your response so we can generate product cards for them.
+
+              🔴 বিশেষ নির্দেশ (একই পণ্যের বিভিন্ন রূপ): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে (যেমন: 'পিস হিসেবেও আছে এবং কেজি হিসেবেও আছে') এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।`
             },
             {
               role: 'user',
@@ -652,48 +820,48 @@ export default function Home() {
       <div className="fixed bottom-[-15%] left-[10%] w-[600px] h-[600px] bg-pink-600/800 opacity-[0.05] rounded-full blur-[140px] animate-blob animation-delay-4000" />
 
       {/* ── Navigation ── */}
-      <nav className="fixed top-0 inset-x-0 z-[100] px-6 py-6 transition-all duration-300">
-        <div className="max-w-[96%] xl:max-w-[98%] mx-auto flex justify-between items-center glass-panel rounded-full px-8 py-4 shadow-2xl">
-          <div className="flex items-center gap-3">
+      <nav className="fixed top-0 inset-x-0 z-[100] px-2 py-3 sm:px-6 sm:py-6 transition-all duration-300">
+        <div className="max-w-[98%] xl:max-w-[98%] mx-auto flex justify-between items-center glass-panel rounded-full px-3 py-2.5 sm:px-8 sm:py-4 shadow-2xl">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {mainShopData?.logoUrl ? (
-              <img src={mainShopData.logoUrl} className="h-9 object-contain" alt="Logo" />
+              <img src={mainShopData.logoUrl} className="h-7 sm:h-9 object-contain" alt="Logo" />
             ) : (
-              <Logo href="/" className="text-white scale-110" text="daripallah.com" />
+              <Logo href="/" className="text-white scale-90 sm:scale-110 origin-left" text="daripallah.com" />
             )}
           </div>
 
-          <div className="flex items-center gap-6">
-            <a href="#marketplace" className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:block">Marketplace</a>
-            <Link href="/showcase" className="text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all">Showcase</Link>
+          <div className="flex items-center gap-2 sm:gap-6">
+            <a href="#marketplace" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:block">Marketplace</a>
+            <Link href="/showcase" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden xs:block">Showcase</Link>
             
-            <div className="w-[1px] h-4 bg-white/10" />
+            <div className="w-[1px] h-4 bg-white/10 hidden xs:block" />
             
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white transition-all hover:scale-105 flex items-center justify-center cursor-pointer"
+              className="relative p-2 sm:p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white transition-all hover:scale-105 flex items-center justify-center cursor-pointer shrink-0"
               title="Shopping Cart"
             >
-              <ShoppingCart size={16} />
+              <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-purple-600 text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-purple-600 text-white text-[8px] sm:text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
                   {cartItemCount}
                 </span>
               )}
             </button>
 
-            <div className="w-[1px] h-4 bg-white/10 mx-1" />
+            <div className="w-[1px] h-4 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
 
             {user && getDashboardHref() ? (
-              <Link href={getDashboardHref()} className="flex items-center gap-2 px-6 py-2 bg-white text-black rounded-full text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+              <Link href={getDashboardHref()} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-white text-black rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
                 Workspace
               </Link>
             ) : !user ? (
-              <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-full text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)]">
+              <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-full text-[9px] sm:text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)] shrink-0">
                 {loggingIn ? "Connecting..." : "Portal Login"}
               </button>
             ) : (
-              <button onClick={logoutUser} className="text-[11px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.2em] transition-all">Sign Out</button>
+              <button onClick={logoutUser} className="text-[9px] sm:text-[11px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.2em] transition-all shrink-0">Sign Out</button>
             )}
           </div>
         </div>
@@ -884,59 +1052,116 @@ export default function Home() {
         </div>
 
         {/* ── Restructured Double Flow Filter Pills (Merchant FIRST, then Category) ── */}
-        <div className="flex flex-col gap-6 mb-12 bg-white/[0.01] border border-white/5 rounded-3xl p-6 shadow-2xl">
+        <div className="flex flex-col gap-6 mb-12 bg-white/[0.01] border border-white/5 rounded-3xl p-6 shadow-2xl animate-fade-in">
           
-          {/* 1. Merchants Filter (Top Flow) */}
-          <div className="flex flex-col gap-2.5">
-            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1">১. বিক্রেতা বা মার্চেন্ট (Merchant)</span>
-            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-              {uniqueShops.map(shop => {
-                const isSelected = activeShopFilter === shop;
-                return (
-                  <button
-                    key={shop}
-                    onClick={() => setActiveShopFilter(shop)}
-                    className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 flex items-center gap-2 cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-600 text-white border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:bg-purple-500'
-                        : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
-                    }`}
-                  >
-                    <Store size={12} />
-                    {shop === 'All' ? 'সব স্টোর (All Stores)' : shop}
-                  </button>
-                );
-              })}
+          {/* Smart Curation Mode Selector Switch */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5">
+            <div>
+              <span className="text-[10px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full uppercase tracking-widest block w-max">স্মার্ট ফিল্টারিং মোড (Smart Filters)</span>
+              <p className="text-xs text-white/50 font-bold mt-1.5">মার্চেন্ট বা ক্যাটাগরি অনুযায়ী ফিল্টার করে পণ্য খুঁজুন</p>
+            </div>
+            <div className="flex gap-2 p-1 bg-slate-950/40 rounded-2xl border border-white/10 w-max shrink-0 shadow-inner">
+              <button
+                onClick={() => setFilterMode('merchant')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  filterMode === 'merchant'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'text-white/50 hover:text-white/80'
+                }`}
+              >
+                🏪 মার্চেন্ট ফিল্টার (By Merchant)
+              </button>
+              <button
+                onClick={() => setFilterMode('type')}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                  filterMode === 'type'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'text-white/50 hover:text-white/80'
+                }`}
+              >
+                🪄 ম্যাজিক প্রোডাক্ট টাইপ (AI Product Type)
+              </button>
             </div>
           </div>
 
-          {/* 2. Category Filter (Second Flow - Dynamically filtered to only show active merchant's categories) */}
-          <div className="flex flex-col gap-2.5 border-t border-white/5 pt-5">
-            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1">২. ক্যাটাগরি বা শ্রেণী (Category)</span>
-            <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-              {availableCategories.map(cat => {
-                const isSelected = activeCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
-                      isSelected
-                        ? 'bg-white text-slate-900 border-white shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-white/90'
-                        : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
-                    }`}
-                  >
-                    {cat === 'All' ? 'সব ক্যাটাগরি (All Categories)' : cat}
-                  </button>
-                );
-              })}
+          {/* 1. First Row (Merchant OR AI Type based on filterMode) */}
+          {filterMode === 'merchant' ? (
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Store size={11} /> ১. বিক্রেতা বা মার্চেন্ট (Merchant)</span>
+              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
+                {uniqueShops.map(shop => {
+                  const isSelected = activeShopFilter === shop;
+                  return (
+                    <button
+                      key={shop}
+                      onClick={() => setActiveShopFilter(shop)}
+                      className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 flex items-center gap-2 cursor-pointer ${
+                        isSelected
+                          ? 'bg-purple-600 text-white border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:bg-purple-500'
+                          : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
+                      }`}
+                    >
+                      <Store size={12} />
+                      {shop === 'All' ? 'সব স্টোর (All Stores)' : shop}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Sparkles size={11} /> ১. প্রোডাক্ট ক্যাটাগরি ক্লাস্টার (AI Type)</span>
+              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
+                {uniqueTypes.map(type => {
+                  const isSelected = activeTypeFilter === type;
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setActiveTypeFilter(type)}
+                      className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 flex items-center gap-2 cursor-pointer ${
+                        isSelected
+                          ? 'bg-purple-600 text-white border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:bg-purple-500'
+                          : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
+                      }`}
+                    >
+                      <Sparkles size={12} />
+                      {type === 'All' ? 'সব ধরণের প্রোডাক্ট (All Types)' : type}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-          {/* 3. Subcategories Filter (Third Flow - show only if active merchant/category has subcategories) */}
-          {availableSubcategories.length > 0 && (
-            <div className="flex flex-col gap-2.5 border-t border-white/5 pt-5 animate-fade-in">
-              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1">৩. সাব-ক্যাটাগরি (Subcategory)</span>
+          {/* 2. Category Filter (Row 2 - Progressive stepped display, hidden until merchant/type selected) */}
+          {((filterMode === 'merchant' && activeShopFilter !== 'All') || (filterMode === 'type' && activeTypeFilter !== 'All')) && (
+            <div className="flex flex-col gap-2.5 border-t border-white/5 pt-5 animate-slide-in">
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Filter size={11} /> ২. ক্যাটাগরি বা শ্রেণী (Category)</span>
+              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
+                {availableCategories.map(cat => {
+                  const isSelected = activeCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
+                        isSelected
+                          ? 'bg-white text-slate-900 border-white shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-white/90'
+                          : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
+                      }`}
+                    >
+                      {cat === 'All' ? 'সব ক্যাটাগরি (All Categories)' : cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Subcategories Filter (Row 3 - progressive displaying when activeCategory is not 'All') */}
+          {activeCategory !== 'All' && availableSubcategories.length > 0 && (
+            <div className="flex flex-col gap-2.5 border-t border-white/5 pt-5 animate-slide-in">
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><ChevronRight size={11} /> ৩. সাব-ক্যাটাগরি (Subcategory)</span>
               <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
                 <button
                   onClick={() => setActiveSubcategory('')}
@@ -967,6 +1192,19 @@ export default function Home() {
               </div>
             </div>
           )}
+
+          {/* Share Filter Link Button (Premium Action) */}
+          {(activeShopFilter !== 'All' || activeTypeFilter !== 'All' || activeCategory !== 'All') && (
+            <div className="flex justify-end pt-4 border-t border-white/5 animate-fade-in">
+              <button
+                type="button"
+                onClick={handleShareFilter}
+                className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-wider text-purple-400 hover:text-purple-300 transition-all cursor-pointer active:scale-95 shadow-md"
+              >
+                <Share2 size={11} /> শেয়ার ফিল্টার লিংক (Share Filter)
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Product Showcase Grid (Premium Wide 10-column Layout - Zero Wasted Spacing) */}
@@ -987,61 +1225,115 @@ export default function Home() {
             <p className="text-xs text-white/30 font-bold uppercase tracking-widest mt-1">অনুগ্রহ করে ফিল্টার অথবা সার্চের শব্দ পরিবর্তন করে ট্রাই করুন</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 sm:gap-6">
-            {filteredProducts.map(product => {
-              const storeLink = getStoreLink(product.shopSlug, product.customDomain, product.domainStatus);
-              return (
-                <div
-                  key={product.id}
-                  className="group glass-panel border-white/5 rounded-3xl overflow-hidden hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between bg-slate-950/20"
-                >
-                  <div className="relative aspect-square overflow-hidden bg-slate-950/40 border-b border-white/5">
-                    <img
-                      src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
-                    />
-                    {product.shopSlug === 'daripallah-store' && (
-                      <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
-                        👑 Primary Store
-                      </span>
-                    )}
-                  </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 sm:gap-6">
+              {filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(product => {
+                const storeLink = getStoreLink(product.shopSlug, product.customDomain, product.domainStatus);
+                return (
+                  <div
+                    key={product.id}
+                    className="group glass-panel border-white/5 rounded-3xl overflow-hidden hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between bg-slate-950/20"
+                  >
+                    <div 
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setCustomizationNote('');
+                      }}
+                      className="relative aspect-square overflow-hidden bg-slate-950/40 border-b border-white/5 cursor-pointer"
+                    >
+                      <img
+                        src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                      />
+                      {product.shopSlug === 'daripallah-store' && (
+                        <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
+                          👑 Primary Store
+                        </span>
+                      )}
+                    </div>
 
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div className="space-y-1 mb-4">
-                      <div className="flex justify-between items-center gap-2">
-                        <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
-                        <a 
-                          href={storeLink} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="text-[9px] font-black text-white/40 hover:text-purple-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div className="space-y-1 mb-4">
+                        <div className="flex justify-between items-center gap-2">
+                          <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
+                          <a 
+                            href={storeLink} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="text-[9px] font-black text-white/40 hover:text-purple-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                          >
+                            🏪 {product.shopName} <ArrowUpRight size={8} />
+                          </a>
+                        </div>
+                        <h3 
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setCustomizationNote('');
+                          }}
+                          className="font-extrabold text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2rem] cursor-pointer hover:text-purple-400 transition-colors"
                         >
-                          🏪 {product.shopName} <ArrowUpRight size={8} />
-                        </a>
-                      </div>
-                      <h3 className="font-extrabold text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2rem]">{product.name}</h3>
-                    </div>
-
-                    <div className="space-y-3 pt-3 border-t border-white/5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/40 text-[9px] font-bold">দাম (Price)</span>
-                        <span className="text-white font-black text-xs">৳ {Number(product.price).toLocaleString()}</span>
+                          {product.name}
+                        </h3>
                       </div>
 
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
-                      >
-                        <ShoppingCart size={11} /> Add to Cart
-                      </button>
+                      <div className="space-y-3 pt-3 border-t border-white/5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/40 text-[9px] font-bold">দাম (Price)</span>
+                          <span className="text-white font-black text-xs">৳ {Number(product.price).toLocaleString()}</span>
+                        </div>
+
+                        <button
+                          onClick={() => handleAddToCart(product)}
+                          className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
+                        >
+                          <ShoppingCart size={11} /> Add to Cart
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {/* Glassmorphic Numbered Pagination Controls */}
+            {Math.ceil(filteredProducts.length / itemsPerPage) > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-12 bg-white/[0.02] border border-white/5 rounded-3xl p-3 w-max mx-auto shadow-2xl animate-fade-in">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-white/50 hover:text-white bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-white/5"
+                >
+                  Prev
+                </button>
+                
+                {Array.from({ length: Math.ceil(filteredProducts.length / itemsPerPage) }, (_, i) => i + 1).map(page => {
+                  const isActive = currentPage === page;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-xl text-xs font-black transition-all flex items-center justify-center cursor-pointer border ${
+                        isActive
+                          ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]'
+                          : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredProducts.length / itemsPerPage), prev + 1))}
+                  disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
+                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-white/50 hover:text-white bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-white/5"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -1147,7 +1439,7 @@ export default function Home() {
                     ) : (
                       <li>
                         <a 
-                          href="https://wa.me/8801977727027" 
+                          href="https://wa.me/8801734763306" 
                           target="_blank" 
                           rel="noreferrer" 
                           className="flex items-center gap-3 text-xs font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
@@ -1499,7 +1791,7 @@ export default function Home() {
 
       {/* ── Floating WhatsApp Chat Button (Bottom-Right, shifted for alignment) ── */}
       <a
-        href={mainShopData?.socialLinks?.wa ? getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp') : "https://wa.me/8801977727027"}
+        href={mainShopData?.socialLinks?.wa ? getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp') : "https://wa.me/8801734763306"}
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-8 right-24 z-[120] w-14 h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-115 active:scale-95 transition-all border border-emerald-400/30 cursor-pointer shadow-emerald-500/20"
@@ -1519,6 +1811,106 @@ export default function Home() {
             {cartItemCount}
           </span>
         </button>
+      )}
+
+      {/* ── Product Details Modal ── */}
+      {selectedProduct && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-2xl bg-[#090d1f]/90 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-2xl p-6 sm:p-8 flex flex-col md:flex-row gap-6 animate-scale-in">
+            {/* Close button */}
+            <button
+              onClick={() => setSelectedProduct(null)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/70 hover:text-white transition-all cursor-pointer z-10"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Left Col: Image & Share */}
+            <div className="w-full md:w-1/2 space-y-4">
+              <div className="relative aspect-square rounded-[2rem] overflow-hidden border border-white/15 bg-slate-950/40 shadow-inner">
+                <img
+                  src={selectedProduct.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80'}
+                  alt={selectedProduct.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Dynamic Share Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleShareProduct(selectedProduct)}
+                  className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-2xl text-[10px] font-black uppercase tracking-wider text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-purple-500/20 active:scale-95"
+                >
+                  <Share2 size={13} /> সোশ্যাল মিডিয়া শেয়ার (Share)
+                </button>
+                
+                <button
+                  onClick={() => handleCopyLink(selectedProduct)}
+                  className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-wider text-white/70 hover:text-white transition-all flex items-center justify-center cursor-pointer active:scale-95"
+                  title="লিংক কপি করুন"
+                >
+                  <Copy size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* Right Col: Details */}
+            <div className="w-full md:w-1/2 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center gap-2">
+                  <span className="text-[10px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full uppercase tracking-widest">{selectedProduct.category || 'General'}</span>
+                  <a
+                    href={getStoreLink(selectedProduct.shopSlug, selectedProduct.customDomain, selectedProduct.domainStatus)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] font-black text-white/50 hover:text-purple-400 transition-colors flex items-center gap-1"
+                  >
+                    🏪 {selectedProduct.shopName} <ArrowUpRight size={10} />
+                  </a>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">{selectedProduct.name}</h2>
+                <p className="text-white/40 font-bold text-[10px] uppercase tracking-wider flex justify-between border-b border-white/5 pb-2">
+                  <span>দাম (Price)</span>
+                  <span className="text-white text-base font-black">৳ {Number(selectedProduct.price).toLocaleString()} / {selectedProduct.unit || 'piece'}</span>
+                </p>
+
+                {selectedProduct.description && (
+                  <div className="space-y-1 max-h-[120px] overflow-y-auto pr-2 scrollbar-thin">
+                    <p className="text-[10px] font-black text-white/30 uppercase tracking-wider">পণ্যের বিবরণ (Description)</p>
+                    <p className="text-xs text-white/60 font-semibold leading-relaxed">{selectedProduct.description}</p>
+                  </div>
+                )}
+
+                {/* Customization Form */}
+                {selectedProduct.allowCustomize && (
+                  <div className="space-y-2 border-t border-white/5 pt-4">
+                    <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">পছন্দমতো কাস্টমাইজেশন নোট লিখুন</label>
+                    <textarea
+                      placeholder="যেমন: সাইজ, কালার বা রান্নার নির্দেশনা..."
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-semibold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 placeholder:text-white/20 transition-all h-16 resize-none shadow-inner text-white"
+                      value={customizationNote}
+                      onChange={e => setCustomizationNote(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Add to Cart Actions */}
+              <div className="space-y-2 pt-6">
+                <button
+                  onClick={() => {
+                    handleAddToCart(selectedProduct, customizationNote);
+                    setSelectedProduct(null);
+                  }}
+                  className="w-full py-3.5 bg-white text-black hover:bg-white/95 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xl active:scale-95 font-black"
+                >
+                  <ShoppingCart size={13} /> {selectedProduct.allowCustomize ? 'কাস্টমাইজ করে কার্টে যোগ করুন' : 'কার্টে যোগ করুন (Add to Cart)'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

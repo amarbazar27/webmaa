@@ -9,7 +9,7 @@ import {
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
   ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
-  Truck, ShieldCheck, Clock, PlayCircle
+  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus
 } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -408,6 +408,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   };
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
+  const [paymentScreenshot, setPaymentScreenshot] = useState('');
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [orderImage, setOrderImage] = useState(null);
@@ -675,7 +676,8 @@ ${isGroceryShop ? `১. যদি ইউজার নির্দিষ্ট �
 FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","customizedText":"৪০০ গ্রাম"}]
 
 ৭. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।
-৮. পণ্য তালিকার বাইরে থাকা কোনো পণ্য বা সেবার অর্ডার নিবে না বা সাজেস্ট করবে না। শুধুমাত্র প্রদত্ত পণ্য তালিকার পণ্যই রেকমেন্ড করবে।` },
+৮. পণ্য তালিকার বাইরে থাকা কোনো পণ্য বা সেবার অর্ডার নিবে না বা সাজেস্ট করবে না। শুধুমাত্র প্রদত্ত পণ্য তালিকার পণ্যই রেকমেন্ড করবে।
+৯. একই পণ্যের বিভিন্ন রূপ (পিস বনাম কেজি): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
@@ -982,9 +984,44 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     toast.error('কার্ট থেকে সরানো হয়েছে');
   };
 
+  const compressImage = (file, maxWidth = 800, quality = 0.6) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('Image load failed'));
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('File read failed'));
+      reader.readAsDataURL(file);
+    });
+  };
 
+  const handleScreenshotUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('স্ক্রিনশট ২MB এর কম হতে হবে');
+      return;
+    }
+    try {
+      const compressed = await compressImage(file);
+      setPaymentScreenshot(compressed);
+      toast.success('পেমেন্ট স্ক্রিনশট আপলোড হয়েছে! 📸');
+    } catch (err) {
+      toast.error('স্ক্রিনশট প্রসেস করতে সমস্যা হয়েছে');
+    }
+  };
 
-    const handlePlaceOrder = async (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
     const requiresLocation = shop.requireLocationForOrder === true;
     if (requiresLocation && !orderForm.coordinates) {
@@ -996,6 +1033,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       return;
     }
     if (cart.filter(i => Number(i.quantity) > 0).length === 0 && !orderImage) return toast.error('কার্ট খালি!');
+    
+    // 🚨 Payment Screenshot Check
+    if (isAdvanceRequired && shop.deliveryConfig?.requirePaymentScreenshot && !paymentScreenshot) {
+      toast.error('⚠️ পেমেন্ট যাচাইয়ের জন্য প্রমাণ স্বরূপ স্ক্রিনশট আপলোড করা আবশ্যক।');
+      return;
+    }
+
     trackStoreEvent('begin_checkout', { value: cart.filter(i => Number(i.quantity) > 0).length === 0 && orderImage ? 1 : cartTotal, currency: 'BDT', items: cart.map(i => i.name) });
     const requireLogin = shop.authSettings?.requireLoginBeforeOrder ?? true;
     if (requireLogin && !user) {
@@ -1031,6 +1075,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       customerNote: orderForm.note,
       transactionId: orderForm.txnId,
       paymentNumber: orderForm.paymentNumber,
+      paymentScreenshot: paymentScreenshot || undefined,
       items: cart.filter(i => Number(i.quantity) > 0).map(i => ({ 
         id: i.productId || i.id, 
         quantity: Number(i.quantity) || 1, 
@@ -1051,6 +1096,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       localStorage.removeItem(CART_KEY);
       toast.success('অর্ডার প্লেস করা হয়েছে! 🎉');
       setOrderImage(null);
+      setPaymentScreenshot('');
       setIsOrderOpen(false);
       setPlacing(false);
       if (user?.email) {
@@ -1794,7 +1840,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                   const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
                   const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
-                  const finalWa = hasWaPlaceholder ? '8801977727027' : rawWa || '8801977727027';
+                  const finalWa = hasWaPlaceholder ? '8801734763306' : rawWa || '8801734763306';
 
                   const cleanWa = finalWa.replace(/[^0-9]/g, '');
                   const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
@@ -2364,6 +2410,46 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ট্রানজেকশন আইডি (TxnID) *</label>
                           <input required type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
                         </div>
+                        {shop.deliveryConfig?.requirePaymentScreenshot && (
+                          <div className="space-y-1.5 pt-2">
+                            <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1 font-extrabold text-slate-800">পেমেন্ট প্রুফ স্ক্রিনশট আপলোড *</label>
+                            <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white hover:bg-purple-50/30 transition-colors relative cursor-pointer min-h-[110px]">
+                              <input 
+                                required 
+                                type="file" 
+                                accept="image/*" 
+                                className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                                onChange={handleScreenshotUpload}
+                              />
+                              {paymentScreenshot ? (
+                                <div className="flex items-center gap-3 w-full z-10">
+                                  <img src={paymentScreenshot} className="w-12 h-12 object-cover rounded-lg border border-purple-200" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-slate-700 truncate">স্ক্রিনশট আপলোড হয়েছে</p>
+                                    <p className="text-[10px] text-slate-400 font-bold">ক্লিক করে পরিবর্তন করতে পারেন</p>
+                                  </div>
+                                  <button 
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setPaymentScreenshot('');
+                                    }}
+                                    className="p-1 hover:bg-slate-100 rounded text-red-500 z-30 cursor-pointer"
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <ImagePlus size={24} className="text-purple-400 mb-1" />
+                                  <p className="text-xs font-bold text-slate-600 text-center">এখানে ক্লিক করে স্ক্রিনশট আপলোড করুন</p>
+                                  <p className="text-[9px] text-slate-400 text-center">সর্বোচ্চ ২MB, JPG/PNG</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}

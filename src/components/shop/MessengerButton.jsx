@@ -22,7 +22,7 @@ export default function MessengerButton({ shop }) {
 
   // 3. Securely format raw phone numbers or fallback to official platform support
   if (!link) {
-    link = 'https://wa.me/8801977727027'; // Official Daripallah Support WhatsApp
+    link = 'https://wa.me/8801734763306'; // Official Daripallah Support WhatsApp
   } else {
     const cleanNum = link.replace(/[^0-9]/g, '');
     const isPhone = !link.startsWith('http') && /^\+?[0-9\s\-]+$/.test(link) && cleanNum.length >= 10;

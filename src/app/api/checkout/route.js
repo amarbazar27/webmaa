@@ -17,6 +17,7 @@ const CheckoutSchema = z.object({
   customerNote: z.string().max(300).optional(),
   transactionId: z.string().max(50).optional(),
   paymentNumber: z.string().max(15).optional(),
+  paymentScreenshot: z.string().optional().nullable(),
   honeypot: z.string().max(0).optional(),
   localId: z.string().max(100).optional(), // Idempotency key from client
   items: z.array(z.object({
@@ -90,6 +91,7 @@ export async function POST(req) {
       customerNote,
       transactionId,
       paymentNumber,
+      paymentScreenshot,
       honeypot,
       localId,
       items,
@@ -364,6 +366,7 @@ export async function POST(req) {
       customerNote: customerNote || '',
       transactionId: transactionId || '',
       paymentNumber: paymentNumber || '',
+      paymentScreenshot: paymentScreenshot || null,
       orderIdVisual,
       items: verifiedItems,
       total: finalTotal,

@@ -126,7 +126,7 @@ export default function SettingsPage() {
   const [socialLinks, setSocialLinks] = useState({ fb: '', insta: '', yt: '', wa: '', linkedin: '', tiktok: '' });
   const [authSettings, setAuthSettings] = useState({ emailAuth: false, actionPin: '', requireLoginBeforeOrder: true });
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
-  const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '' });
+  const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '', requirePaymentScreenshot: false });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true, smartCalcEnabled: true });
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
@@ -207,7 +207,8 @@ export default function SettingsPage() {
         minOrderAmount: data?.deliveryConfig?.minOrderAmount || '',
         deliveryDays: data?.deliveryConfig?.deliveryDays ?? '',
         deliveryHours: data?.deliveryConfig?.deliveryHours ?? '',
-        deliveryMinutes: data?.deliveryConfig?.deliveryMinutes ?? ''
+        deliveryMinutes: data?.deliveryConfig?.deliveryMinutes ?? '',
+        requirePaymentScreenshot: data?.deliveryConfig?.requirePaymentScreenshot ?? false
       });
       setAiConfig({
         apiKey: data?.aiConfig?.apiKey || '',
@@ -888,6 +889,17 @@ export default function SettingsPage() {
                  </div>
                  <label className="relative inline-flex items-center cursor-pointer">
                    <input type="checkbox" className="sr-only peer" checked={deliveryConfig.isCOD} onChange={e => setDeliveryConfig({...deliveryConfig, isCOD: e.target.checked})} />
+                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                 </label>
+              </div>
+
+              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                 <div>
+                    <p className="text-xs font-black text-slate-900">পেমেন্ট স্ক্রিনশট আপলোড আবশ্যক (Require Screenshot)</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকদের পেমেন্ট প্রমাণ হিসেবে স্ক্রিনশট আপলোড করতে হবে</p>
+                 </div>
+                 <label className="relative inline-flex items-center cursor-pointer">
+                   <input type="checkbox" className="sr-only peer" checked={deliveryConfig.requirePaymentScreenshot || false} onChange={e => setDeliveryConfig({...deliveryConfig, requirePaymentScreenshot: e.target.checked})} />
                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                  </label>
               </div>

@@ -35,6 +35,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [detectedItems, setDetectedItems] = useState([]);
   const [imageError, setImageError] = useState(null);
+  const [showMicHelp, setShowMicHelp] = useState(false);
   const fileInputRef = useRef(null);
 
   const {
@@ -124,7 +125,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           shopId: shop.id,
           messages: [{
             role: 'user',
-            content: `এই বাজারের লিস্ট থেকে পণ্য বের করো:\n"${textInput}"\n\nউপলব্ধ পণ্য (ID|নাম|দাম):\n${productList}\n\nধন্যবাদ! শুধু JSON রিটার্ন করো এই ফরম্যাটে:\n{"items":[{"productId":"ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস", "customizedText":"৪০০ গ্রাম", "note":"ভাল দেখে দিয়েন"}]}\n\n🔴 বিশেষ নির্দেশ:\n১. যদি ইউজার নির্দিষ্ট কোনো পরিমাণ বলে (যেমন: ৪০০ গ্রাম বা ২০ পিস), তবে quantity তে বেস ইউনিটের ভিত্তিতে সংখ্যা বা ১ দিবে এবং customizedText এ "৪০০ গ্রাম" বা "২০ পিস" লিখে দিবে।\n২. যদি ইউজার কোনো পণ্যের সাথে অতিরিক্ত নির্দেশনা বা অনুরোধ লেখে (যেমন: "ভাল দেখে দিয়েন", "পাকা লাল দেখে"), তবে তা "note" ফিল্ডে স্পষ্টভাবে লিখে দিবে।\n৩. যদি কোনো পণ্য না মিলে, {"items":[]} রিটার্ন করো।`
+            content: `এই বাজারের লিস্ট থেকে পণ্য বের করো:\n"${textInput}"\n\nউপলব্ধ পণ্য (ID|নাম|দাম):\n${productList}\n\nধন্যবাদ! শুধু JSON রিটার্ন করো এই ফরম্যাটে:\n{"items":[{"productId":"ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস", "customizedText":"৪০০ গ্রাম", "note":"ভাল দেখে দিয়েন"}]}\n\n🔴 বিশেষ নির্দেশ:\n১. যদি ইউজার নির্দিষ্ট কোনো পরিমাণ বলে (যেমন: ৪০০ গ্রাম বা ২০ পিস), তবে quantity তে বেস ইউনিটের ভিত্তিতে সংখ্যা বা ১ দিবে এবং customizedText এ "৪০০ গ্রাম" বা "২০ পিস" লিখে দিবে।\n২. যদি ইউজার কোনো পণ্যের সাথে অতিরিক্ত নির্দেশনা বা অনুরোধ লেখে (যেমন: "ভাল দেখে দিয়েন", "পাকা লাল দেখে"), তবে তা "note" ফিল্ডে স্পষ্টভাবে লিখে দিবে।\n৩. যদি কোনো পণ্য না মিলে, {"items":[]} রিটার্ন করো。\n৪. একই পণ্যের বিভিন্ন রূপ (পিস বনাম কেজি): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজার যে পরিমাণটি চাইছে তার ইউনিট বা কথার ধরন দেখে সঠিক আইডি সিলেক্ট করবে। যেমন 'পিস' উল্লেখ থাকলে পিস ভেরিয়েশন এবং 'কেজি', 'গ্রাম' বা শুধু 'মুরগি' বা কোনো ইউনিট উল্লেখ না থাকলে কেজি ভেরিয়েশনটি বেছে নিবে।`
           }]
         })
       });
@@ -244,12 +245,21 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             <div className="w-full space-y-3">
               <p className="text-xs font-bold text-red-600 text-center bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{voiceError}</p>
               {voiceError.includes('অনুমতি') && (
-                <button
-                  onClick={requestMicPermission}
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
-                >
-                  🎤 মাইক্রোফোন অনুমতি দিন
-                </button>
+                <>
+                  <button
+                    onClick={requestMicPermission}
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+                  >
+                    🎤 মাইক্রোফোন অনুমতি দিন
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowMicHelp(true)}
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    ❓ কেন অন হচ্ছে না? (হেল্প গাইড)
+                  </button>
+                </>
               )}
             </div>
           )}
@@ -392,6 +402,40 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Mic Help Modal (Placed globally at the root level) ── */}
+      {showMicHelp && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowMicHelp(false)} />
+          <div className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 text-slate-800 animate-slide-in space-y-5">
+            <div className="flex justify-between items-start">
+              <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">🎤 মাইক্রোফোন হেল্প গাইড</h4>
+              <button type="button" onClick={() => setShowMicHelp(false)} className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600"><X size={18} /></button>
+            </div>
+
+            <div className="space-y-4 text-xs leading-relaxed font-bold text-slate-600">
+              <div className="space-y-1">
+                <p className="text-slate-900 font-extrabold flex items-center gap-1">১. ব্রাউজার পারমিশন নিশ্চিত করুন:</p>
+                <p className="pl-4">আপনার ব্রাউজারের অ্যাড্রেস বারের বাম পাশে (লক আইকন 🔒 অথবা সেটিংস আইকন) ক্লিক করুন। সেখানে **Microphone / মাইক্রোফোন** অপশনটি **Allow / অন** করা আছে কিনা চেক করুন। অফ থাকলে অন করে পেজটি রিফ্রেশ দিন।</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-slate-900 font-extrabold flex items-center gap-1">২. ডিভাইসের (Windows OS) পারমিশন দিন:</p>
+                <p className="pl-4">যদি উইন্ডোজ ব্যবহার করেন, তবে **Start Menu &gt; Settings &gt; Privacy & Security &gt; Microphone** এ যান। সেখানে **"Microphone access"** এবং **"Let apps access your microphone"** অপশন দুটি চালু (ON) আছে কিনা নিশ্চিত করুন।</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-slate-900 font-extrabold flex items-center gap-1">৩. ব্যাকগ্রাউন্ড অ্যাপস চেক করুন:</p>
+                <p className="pl-4">অন্য কোনো ব্যাকগ্রাউন্ড অ্যাপ (যেমন Zoom, MS Teams, Skype) মাইক্রোফোন ডিভাইসটি লক করে রেখেছে কিনা চেক করুন। প্রয়োজনে অন্য অ্যাপগুলো বন্ধ করে পুনরায় চেষ্টা করুন।</p>
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setShowMicHelp(false)} className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-md transition-colors uppercase tracking-wider cursor-pointer">
+              ঠিক আছে, বুঝতে পেরেছি
+            </button>
+          </div>
         </div>
       )}
     </div>

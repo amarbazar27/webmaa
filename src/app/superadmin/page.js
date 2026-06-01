@@ -6,7 +6,8 @@ import {
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
-  getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop
+  getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop,
+  getAllMarketplaceProducts, updateProduct
 } from '@/lib/firestore';
 import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
 import {
@@ -35,6 +36,11 @@ export default function SuperAdminPage() {
   const [impersonatingId, setImpersonatingId] = useState(null);
   const [togglingShopId, setTogglingShopId] = useState(null);
   const [superadminShop, setSuperadminShop] = useState(null);
+
+  // ── Smart Curation & Product Overrides ──
+  const [allProducts, setAllProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
 
   const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactLinks: [], promotedLinks: [], defaultLayout: 'modern' });
   const [savingConfig, setSavingConfig] = useState(false);
@@ -139,11 +145,102 @@ export default function SuperAdminPage() {
         geminiApiKey: configData?.geminiApiKey || '',
         contactLinks: configData?.contactLinks || [],
         promotedLinks: configData?.promotedLinks || [],
-        defaultLayout: configData?.defaultLayout || 'modern'
+        defaultLayout: configData?.defaultLayout || 'modern',
+        showcaseCuration: configData?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] }
       });
     });
     return () => unsubscribe();
   }, []);
+
+  // Load products in the ecosystem
+  useEffect(() => {
+    setProductsLoading(true);
+    getAllMarketplaceProducts().then(prods => {
+      // Overwrite superadmin shop name in curation view too
+      const mapped = prods.map(p => {
+        if (p.shopSlug === 'daripallah-store' || p.shopName?.toLowerCase() === 'webmaa store' || p.shopName?.toLowerCase() === 'daripallah store') {
+          return { ...p, shopName: 'ADMIN' };
+        }
+        return p;
+      });
+      setAllProducts(mapped);
+      setProductsLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setProductsLoading(false);
+    });
+  }, []);
+
+  const showcaseCuration = globalConfig?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] };
+
+  const handleToggleCuration = async () => {
+    const updated = {
+      ...globalConfig,
+      showcaseCuration: {
+        ...showcaseCuration,
+        enabled: !showcaseCuration.enabled
+      }
+    };
+    setGlobalConfig(updated);
+    try {
+      await updateGlobalConfig(updated);
+      toast.success(updated.showcaseCuration.enabled ? 'Curation whitelisting active!' : 'Curation whitelisting disabled!');
+    } catch (err) {
+      toast.error('Failed to update curation settings');
+    }
+  };
+
+  const handleToggleWhitelistItem = async (type, item) => {
+    const currentList = showcaseCuration[type] || [];
+    const newList = currentList.includes(item)
+      ? currentList.filter(x => x !== item)
+      : [...currentList, item];
+      
+    const updated = {
+      ...globalConfig,
+      showcaseCuration: {
+        ...showcaseCuration,
+        [type]: newList
+      }
+    };
+    setGlobalConfig(updated);
+    try {
+      await updateGlobalConfig(updated);
+      toast.success('Curation whitelist updated!');
+    } catch (err) {
+      toast.error('Failed to update whitelist');
+    }
+  };
+
+  const getProductType = (product) => {
+    if (product.superadminType) return product.superadminType;
+    const name = (product.name || '').toLowerCase();
+    const cat = (product.category || '').toLowerCase();
+    
+    if (name.includes('মুরগি') || name.includes('murgi') || name.includes('chicken') || name.includes('মাংস') || name.includes('meat') || name.includes('গোরু') || name.includes('beef') || name.includes('ডিম') || name.includes('egg') || cat.includes('meat') || cat.includes('মাংস')) {
+      return 'মাংস ও ডিম (Poultry & Eggs)';
+    }
+    if (name.includes('আলু') || name.includes('পটল') || name.includes('পেঁয়াজ') || name.includes('রসুন') || name.includes('আদা') || name.includes('গাজর') || name.includes('বেগুন') || name.includes('টমেটো') || name.includes('সবজি') || name.includes('শাক') || name.includes('লেবু') || name.includes('ফল') || name.includes('tomato') || name.includes('shosa') || name.includes('sosa') || name.includes('cabbage') || cat.includes('সবজি') || cat.includes('vegetable')) {
+      return 'সবজি ও ফল (Vegetables & Fruits)';
+    }
+    if (name.includes('চাল') || name.includes('ডাল') || name.includes('তেল') || name.includes('লবণ') || name.includes('চিনি') || name.includes('আটা') || name.includes('ময়দা') || name.includes('মসলা') || name.includes('morich') || name.includes('holud') || name.includes('oil') || name.includes('dal') || name.includes('chal') || cat.includes('grocer') || cat.includes('মুদি')) {
+      return 'মুদি ও নিত্যপ্রয়োজনীয় (Groceries)';
+    }
+    if (name.includes('দুধ') || name.includes('চা') || name.includes('কফি') || name.includes('পানি') || name.includes('juice') || name.includes('dudh') || name.includes('tea') || name.includes('coffee') || name.includes('water') || cat.includes('drink') || cat.includes('পানীয়')) {
+      return 'পানীয় ও দুগ্ধজাত (Drinks & Dairy)';
+    }
+    return 'অন্যান্য পণ্য (Others)';
+  };
+
+  const filteredCurationProducts = allProducts.filter(product => {
+    if (!productSearchQuery) return true;
+    const q = productSearchQuery.toLowerCase();
+    return (
+      (product.name || '').toLowerCase().includes(q) ||
+      (product.shopName || '').toLowerCase().includes(q) ||
+      (product.category || '').toLowerCase().includes(q)
+    );
+  });
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -824,6 +921,219 @@ export default function SuperAdminPage() {
                                 <Trash2 size={11} /> Delete
                               </button>
                             </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Showcase Curation & Whitelisting Card */}
+        <div className="lg:col-span-12 animate-fade-in">
+          <Card
+            title="Smart Showcase Curation Whitelist"
+            subtitle="সুপারঅ্যাডমিন বেছে নিতে পারবে কোন কোন শপ, ক্যাটাগরি এবং সাবক্যাটাগরি মেইন ওয়েবসাইটে দেখাবে"
+            icon={ShieldCheck}
+            className="border-2 border-purple-100 bg-purple-50/10"
+          >
+            <div className="flex items-center justify-between p-5 rounded-2xl border mb-6" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+              <div>
+                <p className="text-sm font-black text-slate-800">শোকেস কিউরেটেশন এনাবল করুন (Showcase Curation Whitelist)</p>
+                <p className="text-xs text-slate-400 font-semibold mt-1">অ্যাক্টিভ থাকলে শুধুমাত্র অনুমোদিত আইটেমগুলোই daripallah.com এ প্রদর্শিত হবে।</p>
+              </div>
+              <button
+                onClick={handleToggleCuration}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
+                  showcaseCuration.enabled ? 'bg-purple-600' : 'bg-slate-300'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                  showcaseCuration.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+
+            {showcaseCuration.enabled && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
+                {/* 1. Shops Column */}
+                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm">
+                  <p className="text-xs font-black text-slate-800 border-b border-slate-100 pb-2 mb-3 uppercase tracking-wider flex items-center gap-1.5"><Store size={13}/> ১. অনুমোদিত শপ ({showcaseCuration.allowedShops?.length || 0})</p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+                    {shops.map(shop => {
+                      const isAllowed = (showcaseCuration.allowedShops || []).includes(shop.id);
+                      return (
+                        <label key={shop.id} className="flex items-center gap-3 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition-all border border-slate-100">
+                          <input
+                            type="checkbox"
+                            checked={isAllowed}
+                            onChange={() => handleToggleWhitelistItem('allowedShops', shop.id)}
+                            className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                          />
+                          <div className="overflow-hidden">
+                            <p className="text-xs font-bold text-slate-700 truncate">{shop.shopName}</p>
+                            <p className="text-[9px] text-slate-400 font-bold font-mono truncate">{shop.ownerEmail}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Categories Column */}
+                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm">
+                  <p className="text-xs font-black text-slate-800 border-b border-slate-100 pb-2 mb-3 uppercase tracking-wider flex items-center gap-1.5"><Filter size={13}/> ২. অনুমোদিত ক্যাটাগরি ({showcaseCuration.allowedCategories?.length || 0})</p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+                    {Array.from(new Set(allProducts.map(p => p.category).filter(Boolean))).map(cat => {
+                      const isAllowed = (showcaseCuration.allowedCategories || []).includes(cat);
+                      return (
+                        <label key={cat} className="flex items-center gap-3 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition-all border border-slate-100">
+                          <input
+                            type="checkbox"
+                            checked={isAllowed}
+                            onChange={() => handleToggleWhitelistItem('allowedCategories', cat)}
+                            className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-xs font-bold text-slate-700">{cat}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Subcategories Column */}
+                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm">
+                  <p className="text-xs font-black text-slate-800 border-b border-slate-100 pb-2 mb-3 uppercase tracking-wider flex items-center gap-1.5"><ChevronRight size={13}/> ৩. অনুমোদিত সাবক্যাটাগরি ({showcaseCuration.allowedSubcategories?.length || 0})</p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
+                    {Array.from(new Set(allProducts.map(p => p.subcategory).filter(Boolean))).map(sub => {
+                      const isAllowed = (showcaseCuration.allowedSubcategories || []).includes(sub);
+                      return (
+                        <label key={sub} className="flex items-center gap-3 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition-all border border-slate-100">
+                          <input
+                            type="checkbox"
+                            checked={isAllowed}
+                            onChange={() => handleToggleWhitelistItem('allowedSubcategories', sub)}
+                            className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-xs font-bold text-slate-700">{sub}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Product Overrides & Categorization Panel */}
+        <div className="lg:col-span-12 animate-fade-in">
+          <Card
+            title="Smart Inventory Product Category & AI Type Overrides"
+            subtitle="সুপারঅ্যাডমিন যেকোনো মার্চেন্টের প্রোডাক্টের ক্যাটাগরি এবং এআই প্রোডাক্ট টাইপ ওভাররাইড করতে পারবে"
+            icon={Sparkles}
+            className="border-2 border-emerald-100 bg-emerald-50/10"
+          >
+            {/* Search filter for products */}
+            <div className="relative mb-6">
+              <Search className="absolute left-4 top-3.5 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="প্রোডাক্ট বা মার্চেন্টের নাম লিখে খুঁজুন..."
+                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all shadow-sm"
+                value={productSearchQuery}
+                onChange={e => setProductSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {productsLoading ? (
+              <div className="py-10 text-center animate-pulse">
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Scanning all marketplace products...</p>
+              </div>
+            ) : filteredCurationProducts.length === 0 ? (
+              <div className="py-10 text-center bg-slate-50 border border-dashed border-slate-200 rounded-3xl">
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">কোনো প্রোডাক্ট পাওয়া যায়নি</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto max-h-[500px] overflow-y-auto scrollbar-thin border border-slate-100 rounded-2xl bg-white p-4">
+                <table className="w-full text-left border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <th className="pb-2 px-4 border-b border-slate-100">প্রোডাক্ট</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">মার্চেন্ট বা শপ</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">ক্যাটাগরি ওভাররাইড</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">এআই টাইপ ওভাররাইড</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCurationProducts.map(product => {
+                      return (
+                        <tr key={product.id} className="bg-white hover:bg-slate-50 transition-colors border-b border-slate-50">
+                          <td className="p-3 first:rounded-l-2xl">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&q=80'}
+                                className="w-9 h-9 rounded-lg object-cover border border-slate-100 shrink-0"
+                                alt=""
+                              />
+                              <div>
+                                <p className="font-bold text-slate-900 text-xs">{product.name}</p>
+                                <p className="text-[9px] text-slate-400 font-semibold font-mono">ID: {product.id.substring(0,8)} | ৳{product.price}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <span className="text-[10px] font-black text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
+                              {product.shopName}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <input
+                              type="text"
+                              value={product.category || ''}
+                              onChange={async (e) => {
+                                const newCat = e.target.value;
+                                // Update local state
+                                setAllProducts(prev => prev.map(p => p.id === product.id ? { ...p, category: newCat } : p));
+                                // Save to Firestore
+                                try {
+                                  await updateProduct(product.shopId, product.id, { category: newCat });
+                                  toast.success('Category updated inline!');
+                                } catch (err) {
+                                  toast.error('Failed to update category');
+                                }
+                              }}
+                              className="px-2 py-1 rounded-lg border border-slate-200 text-xs font-bold w-40 bg-white text-slate-800"
+                              placeholder="ক্যাটাগরি লিখুন"
+                            />
+                          </td>
+                          <td className="p-3 last:rounded-r-2xl">
+                            <select
+                              value={product.superadminType || ''}
+                              onChange={async (e) => {
+                                const newType = e.target.value;
+                                // Update local state
+                                setAllProducts(prev => prev.map(p => p.id === product.id ? { ...p, superadminType: newType } : p));
+                                // Save to Firestore
+                                try {
+                                  await updateProduct(product.shopId, product.id, { superadminType: newType });
+                                  toast.success('AI Product Type overridden!');
+                                } catch (err) {
+                                  toast.error('Failed to override AI Type');
+                                }
+                              }}
+                              className="px-2 py-1 rounded-lg border border-slate-200 text-xs font-black bg-white text-slate-800 outline-none cursor-pointer"
+                            >
+                              <option value="">(এআই অটো ডিটেক্ট)</option>
+                              <option value="মাংস ও ডিম (Poultry & Eggs)">মাংস ও ডিম (Poultry & Eggs)</option>
+                              <option value="সবজি ও ফল (Vegetables & Fruits)">সবজি ও ফল (Vegetables & Fruits)</option>
+                              <option value="মুদি ও নিত্যপ্রয়োজনীয় (Groceries)">মুদি ও নিত্যপ্রয়োজনীয় (Groceries)</option>
+                              <option value="পানীয় ও দুগ্ধজাত (Drinks & Dairy)">পানীয় ও দুগ্ধজাত (Drinks & Dairy)</option>
+                              <option value="অন্যান্য পণ্য (Others)">অন্যান্য পণ্য (Others)</option>
+                            </select>
                           </td>
                         </tr>
                       );

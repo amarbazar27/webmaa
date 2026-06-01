@@ -58,12 +58,20 @@ export function createRecognition({ lang = 'bn-BD', onResult, onEnd, onError } =
 export function startListening(rec) {
   try { 
     if (rec) {
-      rec.abort(); // Ensure clean state before starting
-      setTimeout(() => {
-        try { rec.start(); } catch(e) { console.warn('Speech start error:', e); }
-      }, 50); // slight delay to allow abort to process
+      rec.start();
     }
-  } catch (e) { console.warn('Speech start wrapper error:', e); }
+  } catch (e) { 
+    console.warn('Speech start wrapper error:', e); 
+    // Fallback: try aborting and starting again if already running
+    try {
+      rec.abort();
+      setTimeout(() => {
+        try { rec.start(); } catch(err) { console.warn('Fallback speech start failed:', err); }
+      }, 100);
+    } catch(err) {
+      console.error('Graceful recovery failed:', err);
+    }
+  }
 }
 
 export function stopListening(rec) {
