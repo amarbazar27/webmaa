@@ -1,10 +1,7 @@
 import './globals.css';
-import { Outfit } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
-
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-sans' });
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://daripallah.com';
 
@@ -117,7 +114,7 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/logo.png" />
         <JsonLd />
       </head>
-      <body className={`${outfit.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <ThemeProvider>
           <AuthProvider>
             <div className="bg-blob blob-1"></div>

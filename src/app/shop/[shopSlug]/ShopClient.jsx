@@ -1495,45 +1495,77 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
       <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner">
-        {shop.banners && shop.banners.length > 0 ? (
-          <div 
-            className="relative w-full overflow-hidden aspect-[16/7] md:aspect-[21/6] lg:aspect-[24/5] xl:aspect-[28/5] 2xl:aspect-[32/5]"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            {shop.banners.map((img, i) => (
-              <div key={i} className={`absolute inset-0 w-full h-full transition-all duration-1000 ${i === activeBanner ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none z-0'}`}>
-                {/* Blurred background for cinematic letterboxing depth */}
-                <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
-                  <img src={img} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-3xl opacity-30 animate-pulse" />
+        {shop.banners && shop.banners.length > 0 ? (() => {
+          const normalizedBanners = shop.banners.map(b => {
+            if (typeof b === 'string') {
+              return { url: b, title: '', description: '', linkUrl: '', buttonText: '' };
+            }
+            return {
+              url: b?.url || '',
+              title: b?.title || '',
+              description: b?.description || '',
+              linkUrl: b?.linkUrl || '',
+              buttonText: b?.buttonText || ''
+            };
+          }).filter(b => b.url);
+
+          return (
+            <div 
+              className="relative w-full overflow-hidden aspect-[16/7] md:aspect-[21/6] lg:aspect-[24/5] xl:aspect-[28/5] 2xl:aspect-[32/5]"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              {normalizedBanners.map((banner, i) => (
+                <div key={i} className={`absolute inset-0 w-full h-full transition-all duration-1000 ${i === activeBanner ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none z-0'}`}>
+                  {/* Blurred background for cinematic letterboxing depth */}
+                  <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
+                    <img src={banner.url} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-3xl opacity-30 animate-pulse" />
+                  </div>
+                  {/* Actual banner — full edge-to-edge object-cover to avoid blank spaces */}
+                  <img
+                    src={banner.url}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    alt={banner.title || `Banner ${i+1}`}
+                    className="absolute inset-0 w-full h-full object-cover z-10 select-none transition-transform duration-700 hover:scale-102"
+                  />
+                  {/* Premium Text Overlay if defined */}
+                  {(banner.title || banner.description) && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent z-15 flex flex-col justify-end p-6 md:p-12 pb-8 md:pb-16 text-white">
+                      <div className="max-w-2xl">
+                        {banner.title && <h3 className="text-lg md:text-3xl font-extrabold mb-1.5 md:mb-3 drop-shadow-md text-white tracking-tight">{banner.title}</h3>}
+                        {banner.description && <p className="text-xs md:text-base text-gray-200 mb-3.5 drop-shadow-sm max-w-lg leading-relaxed line-clamp-2">{banner.description}</p>}
+                        {banner.linkUrl && (
+                          <a 
+                            href={banner.linkUrl} 
+                            className="inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-lg shadow-purple-500/20 active:scale-95 cursor-pointer"
+                          >
+                            {banner.buttonText || 'এখনই কিনুন'}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {/* Actual banner — full edge-to-edge object-cover to avoid blank spaces */}
-                <img
-                  src={img}
-                  loading={i === 0 ? "eager" : "lazy"}
-                  alt={`Banner ${i+1}`}
-                  className="absolute inset-0 w-full h-full object-cover z-10 select-none transition-transform duration-700 hover:scale-102"
-                />
-              </div>
-            ))}
-            {shop.banners.length > 1 && (
-              <>
-                <button onClick={() => setActiveBanner(prev => (prev === 0 ? shop.banners.length - 1 : prev - 1))} className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
-                  <ChevronLeft size={24} strokeWidth={3} />
-                </button>
-                <button onClick={() => setActiveBanner(prev => (prev === shop.banners.length - 1 ? 0 : prev + 1))} className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
-                  <ChevronRight size={24} strokeWidth={3} />
-                </button>
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-                  {shop.banners.map((_, i) => (
-                    <button key={i} onClick={() => setActiveBanner(i)} className={`h-2.5 rounded-full transition-all ${i === activeBanner ? 'bg-white w-6' : 'bg-white/40 w-2.5 hover:bg-white/60'}`} />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        ) : (
+              ))}
+              {normalizedBanners.length > 1 && (
+                <>
+                  <button onClick={() => setActiveBanner(prev => (prev === 0 ? normalizedBanners.length - 1 : prev - 1))} className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
+                    <ChevronLeft size={24} strokeWidth={3} />
+                  </button>
+                  <button onClick={() => setActiveBanner(prev => (prev === normalizedBanners.length - 1 ? 0 : prev + 1))} className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
+                    <ChevronRight size={24} strokeWidth={3} />
+                  </button>
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                    {normalizedBanners.map((_, i) => (
+                      <button key={i} onClick={() => setActiveBanner(i)} className={`h-2.5 rounded-full transition-all ${i === activeBanner ? 'bg-white w-6' : 'bg-white/40 w-2.5 hover:bg-white/60'}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })() : (
           <div className="w-full h-full bg-gradient-to-r from-purple-800 via-purple-600 to-blue-700 flex items-center justify-center p-6 text-center shadow-inner relative">
             {shop.coverImg && <img loading="eager" src={shop.coverImg} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
             <h2 className="relative z-10 text-3xl md:text-5xl font-black text-white drop-shadow-xl tracking-tight">{shop.welcomeMessage || 'স্বাগতম আমাদের স্টোরে!'}</h2>

@@ -7,11 +7,11 @@ import {
   X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
-  Share2, Copy
+  Share2, Copy, PlayCircle, Download
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
-import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug } from '@/lib/firestore';
+import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug, getAllShops } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
@@ -196,6 +196,9 @@ export default function Home() {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
+  const [allShops, setAllShops] = useState([]);
+  const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   // ── AI Product Clustering Helper ──
   const getProductType = (product) => {
@@ -305,6 +308,61 @@ export default function Home() {
 
     return subscribeGlobalConfig(setGlobalConfig);
   }, []);
+
+  // Load active shops and PWA logic
+  useEffect(() => {
+    getAllShops().then(shopsData => {
+      setAllShops(shopsData || []);
+    }).catch(err => console.error("Error loading shops:", err));
+
+    if (typeof window === 'undefined') return;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone) {
+      setPwaInstalled(true);
+      return;
+    }
+
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setPwaInstalled(false);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+
+    const installed = localStorage.getItem('pwa_installed');
+    if (installed) setPwaInstalled(true);
+
+    const onInstall = () => {
+      setPwaInstalled(true);
+      localStorage.setItem('pwa_installed', 'true');
+    };
+    window.addEventListener('appinstalled', onInstall);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', onInstall);
+    };
+  }, []);
+
+  const handleAppDownload = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setPwaInstalled(true);
+        localStorage.setItem('pwa_installed', 'true');
+        toast.success('অ্যাপ ইন্সটল হয়েছে! 🎉');
+      }
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        toast('আইফোনে ইন্সটল করতে নিচে "Share" আইকনে ক্লিক করে "Add to Home Screen" নির্বাচন করুন।', { duration: 6000 });
+      } else {
+        toast('আমাদের ওয়েব অ্যাপটি সরাসরি ব্রাউজার মেনু থেকে "Install" বা "Add to Home Screen" করতে পারেন।');
+      }
+    }
+  };
 
   // Custom banner slider interval timer
   useEffect(() => {
@@ -436,6 +494,52 @@ export default function Home() {
           }
           return si;
         }).filter(Boolean);
+        localStorage.setItem(storeCartKey, JSON.stringify(storeCart));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const setCartQtyDirect = (productId, newQtyVal) => {
+    if (newQtyVal === '') {
+      let updatedCart = cart.map(item => {
+        if (item.productId === productId) {
+          return { ...item, quantity: '' };
+        }
+        return item;
+      });
+      setCart(updatedCart);
+      return;
+    }
+    const qty = parseInt(newQtyVal);
+    if (isNaN(qty)) return;
+    if (qty <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    
+    let updatedCart = cart.map(item => {
+      if (item.productId === productId) {
+        return { ...item, quantity: qty };
+      }
+      return item;
+    });
+
+    setCart(updatedCart);
+    localStorage.setItem('cart_daripallah-store', JSON.stringify(updatedCart));
+
+    const item = cart.find(i => i.productId === productId);
+    if (item) {
+      const storeCartKey = `cart_${item.shopId}`;
+      try {
+        let storeCart = JSON.parse(localStorage.getItem(storeCartKey) || '[]');
+        storeCart = storeCart.map(si => {
+          if (si.productId === productId) {
+            return { ...si, quantity: qty };
+          }
+          return si;
+        });
         localStorage.setItem(storeCartKey, JSON.stringify(storeCart));
       } catch (e) {
         console.error(e);
@@ -759,6 +863,12 @@ export default function Home() {
     setIsAiTyping(true);
 
     try {
+      const shopsInfo = allShops.map(s => {
+        const delFee = s.deliveryConfig?.advanceFee || '60';
+        const freeDelMin = s.deliveryConfig?.freeDeliveryMinOrder ? `৳${s.deliveryConfig.freeDeliveryMinOrder}` : 'নেই';
+        return `স্টোর: ${s.shopName} (slug: ${s.shopSlug}), ক্যাটাগরি: ${s.businessType || 'সাধারণ'}, ডেলিভারি চার্জ: ৳${delFee}, ফ্রি ডেলিভারি মিনিমাম অর্ডার: ${freeDelMin}, বিবরণ: ${s.description || 'নেই'}।`;
+      }).join('\n');
+
       const productList = products.slice(0, 150).map(p => `${p.id}|${p.name}|৳${p.price}|${p.unit || 'piece'}|${p.description || ''}`).join('\n');
       
       const response = await fetch(`/api/ai`, {
@@ -775,11 +885,17 @@ export default function Home() {
               content: `You are a professional retail shopping assistant for the Daripallah platform (daripallah.com) in Bangladesh. 
               Always greet with "Assalamu Alaikum". Speak in Bengali. Be helpful and friendly.
               
+              প্লাটফর্মের সকল স্টোরের তথ্য (স্টোরের নাম, ডেলিভারি চার্জ, এবং অন্যান্য তথ্য):
+              ${shopsInfo || 'Daripallah Store - Delivery Charge: ৳60'}
+              
               Current Available Products in the Marketplace (ID|Name|Price|Unit|Description):
               ${productList || 'No products listed yet.'}
               
               Rule: If a user wants to buy or shows interest in products, list the matched products and write:
               "PRODUCTS_JSON:[{\"id\":\"product_id\",\"qty\":1}]" at the very end of your response so we can generate product cards for them.
+
+              Rule: If a user wants to view their cart, check out, or place their order, write:
+              "ACTION:OPEN_CART" at the very end of your response, and tell them you are opening their cart/checkout panel for them.
 
               🔴 বিশেষ নির্দেশ (একই পণ্যের বিভিন্ন রূপ): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে (যেমন: 'পিস হিসেবেও আছে এবং কেজি হিসেবেও আছে') এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।`
             },
@@ -797,6 +913,13 @@ export default function Home() {
       const botText = data.choices?.[0]?.message?.content || 'দুঃখিত, কোনো উত্তর পাওয়া যায়নি।';
       const botMsg = { id: Date.now() + 1, role: 'bot', text: botText };
       setChatMessages(prev => [...prev, botMsg]);
+
+      // Auto open cart if action detected
+      if (botText.includes("ACTION:OPEN_CART")) {
+        setTimeout(() => {
+          setIsCartOpen(true);
+        }, 1200);
+      }
     } catch (err) {
       console.error(err);
       setChatMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: 'দুঃখিত, এআই কানেকশন ফেইল করেছে। সাধারণ অফার এবং সাহায্য লাগলে দয়া করে সরাসরি মার্কেটপ্লেস ব্রাউজ করুন।' }]);
@@ -846,18 +969,49 @@ export default function Home() {
       {/* ── Navigation ── */}
       <nav className="fixed top-0 inset-x-0 z-[100] px-2 py-3 sm:px-6 sm:py-6 transition-all duration-300">
         <div className="max-w-[98%] xl:max-w-[98%] mx-auto flex justify-between items-center glass-panel rounded-full px-3 py-2.5 sm:px-8 sm:py-4 shadow-2xl">
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div 
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+            className="flex items-center gap-2 group cursor-pointer select-none"
+          >
             {mainShopData?.logoUrl ? (
-              <img src={mainShopData.logoUrl} className="h-7 sm:h-9 object-contain" alt="Logo" />
+              <img src={mainShopData.logoUrl} className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
             ) : (
-              <Logo href="/" className="text-white scale-90 sm:scale-110 origin-left" text="daripallah.com" />
+              <img src="/logo.png" className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
             )}
+            <span className="text-base sm:text-xl font-black text-white tracking-tight whitespace-nowrap group-hover:text-purple-400 transition-colors">
+              Daripallah
+            </span>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-6">
             <a href="#marketplace" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:block">Marketplace</a>
             <Link href="/showcase" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden xs:block">Showcase</Link>
             
+            {/* How to Order Video */}
+            {mainShopData?.howToOrderVideo && (
+              <a 
+                href={mainShopData.howToOrderVideo} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full text-[9px] sm:text-[10px] font-black transition-all hover:scale-105 shadow-md whitespace-nowrap"
+              >
+                <PlayCircle size={12} className="shrink-0" />
+                <span className="hidden sm:inline">কিভাবে অর্ডার করবেন?</span>
+                <span className="sm:hidden">ভিডিও</span>
+              </a>
+            )}
+
+            {/* PWA App Download */}
+            {!pwaInstalled && (
+              <button 
+                onClick={handleAppDownload} 
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-[9px] sm:text-[10px] font-black transition-all hover:scale-105 shadow-md whitespace-nowrap cursor-pointer shrink-0"
+              >
+                <Download size={12} className="shrink-0" />
+                <span>অ্যাপ</span>
+              </button>
+            )}
+
             <div className="w-[1px] h-4 bg-white/10 hidden xs:block" />
             
             {/* Cart Button */}
@@ -1593,7 +1747,13 @@ export default function Home() {
                               
                               <div className="flex items-center gap-2 mt-2">
                                 <button onClick={() => updateCartQty(item.productId, -1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Minus size={10} /></button>
-                                <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
+                                <input 
+                                  type="number" 
+                                  min="1" 
+                                  value={item.quantity} 
+                                  onChange={(e) => setCartQtyDirect(item.productId, e.target.value)} 
+                                  className="w-12 bg-white/5 border border-white/10 rounded px-1 text-center text-xs font-black focus:outline-none focus:border-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-white shrink-0" 
+                                />
                                 <button onClick={() => updateCartQty(item.productId, 1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Plus size={10} /></button>
                                 <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"><Trash2 size={10} /> remove</button>
                               </div>
@@ -1622,7 +1782,13 @@ export default function Home() {
                                 
                                 <div className="flex items-center gap-2 mt-2">
                                   <button onClick={() => updateCartQty(item.productId, -1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Minus size={10} /></button>
-                                  <span className="text-xs font-black w-4 text-center">{item.quantity}</span>
+                                  <input 
+                                    type="number" 
+                                    min="1" 
+                                    value={item.quantity} 
+                                    onChange={(e) => setCartQtyDirect(item.productId, e.target.value)} 
+                                    className="w-12 bg-white/5 border border-white/10 rounded px-1 text-center text-xs font-black focus:outline-none focus:border-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-white shrink-0" 
+                                  />
                                   <button onClick={() => updateCartQty(item.productId, 1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Plus size={10} /></button>
                                   <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"><Trash2 size={10} /> remove</button>
                                 </div>
@@ -1705,8 +1871,8 @@ export default function Home() {
             {/* Header */}
             <div className="bg-slate-900 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-purple-600 rounded-full flex items-center justify-center text-white shrink-0">
-                  <Bot size={18} />
+                <div className="w-9 h-9 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-lg shadow-md shrink-0 animate-bounce">
+                  😊
                 </div>
                 <div>
                   <h3 className="font-black text-sm tracking-tight leading-tight">{mainShopData?.aiConfig?.botName || 'Daripallah Bot'}</h3>
@@ -1825,10 +1991,12 @@ export default function Home() {
           setAiTab('chat');
           setIsAiOpen(true);
         }}
-        className="fixed bottom-8 right-40 z-[120] w-14 h-14 bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-115 active:scale-95 transition-all border border-purple-500/20 cursor-pointer shadow-purple-500/20"
+        className="fixed bottom-8 right-40 z-[120] w-15 h-15 bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all border border-white/10 cursor-pointer shadow-purple-500/30 group animate-bounce animation-delay-1000"
         title="AI Assistant (এআই শপিং অ্যাসিস্ট্যান্ট)"
       >
-        <Bot size={24} />
+        <span className="text-2xl group-hover:scale-120 transition-transform duration-300 animate-pulse select-none">😊</span>
+        {/* Cute breathing ring */}
+        <span className="absolute inset-0 rounded-full bg-purple-500/40 -z-10 animate-ping opacity-75" />
       </button>
 
       {/* ── Floating WhatsApp Chat Button (Bottom-Right, shifted for alignment) ── */}
@@ -1892,8 +2060,17 @@ function LandingProductDetailModal({ product, onClose, cart, setCart }) {
 
   if (!product) return null;
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fade-in">
+    <div 
+      onClick={handleBackdropClick} 
+      className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fade-in"
+    >
       <div className="relative w-full max-w-2xl bg-slate-50 border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-2xl p-6 sm:p-8 flex flex-col gap-6 animate-scale-in my-8 max-h-[90vh] overflow-y-auto scrollbar-thin text-slate-900">
         {/* Close button */}
         <button
