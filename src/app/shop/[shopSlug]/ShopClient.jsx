@@ -961,7 +961,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: '' } : item));
       return;
     }
-    const v = parseInt(qty);
+    const v = parseFloat(qty);
     if (isNaN(v)) return;
     if (v <= 0) {
       setCart(prev => prev.filter(item => item.id !== id));
@@ -1511,7 +1511,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
           return (
             <div 
-              className="relative w-full overflow-hidden aspect-[16/7] md:aspect-[21/6] lg:aspect-[24/5] xl:aspect-[28/5] 2xl:aspect-[32/5]"
+              className="relative w-full h-[var(--sf-hero-height,40vh)] min-h-[300px] md:min-h-[var(--sf-hero-height,40vh)] overflow-hidden"
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
@@ -1964,12 +1964,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
           {/* Bottom bar */}
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-600 text-xs font-black uppercase tracking-[0.25em]">
-              © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
+            <p className="text-slate-600 text-xs font-black uppercase tracking-[0.25em] flex flex-col gap-1 md:text-left text-center">
+              <span>© {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।</span>
+              <span className="text-[10px] text-purple-400 normal-case font-extrabold tracking-normal">
+                Created by <a href="https://daripallah.com" target="_blank" rel="noreferrer" className="hover:underline">daripallah.com</a>. Want to create like this website? <a href="https://daripallah.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-300">Click here</a> | <a href="https://daripallah.com/reviews" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-300">Platform Reviews</a>
+              </span>
             </p>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-bold text-slate-600">Powered by Webmaa</span>
+              <span className="text-xs font-bold text-slate-600">Powered by daripallah.com</span>
             </div>
           </div>
         </div>

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
-import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug, getAllShops } from '@/lib/firestore';
+import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug, getAllShops, getUserOrders } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
@@ -198,6 +198,9 @@ export default function Home() {
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [allShops, setAllShops] = useState([]);
   const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userOrders, setUserOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   // ── AI Product Clustering Helper ──
@@ -364,6 +367,44 @@ export default function Home() {
     }
   };
 
+  const loadAllUserOrders = async (email) => {
+    if (!email || !allShops || allShops.length === 0) return;
+    setLoadingOrders(true);
+    try {
+      const promises = allShops.map(shop => 
+        getUserOrders(shop.id, email).then(orders => 
+          orders.map(o => ({ 
+            ...o, 
+            shopName: shop.shopName, 
+            shopSlug: shop.shopSlug, 
+            shopId: shop.id,
+            customDomain: shop.customDomain || '',
+            domainStatus: shop.domainStatus || ''
+          }))
+        )
+      );
+      const results = await Promise.all(promises);
+      const merged = results.flat().sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+        return dateB - dateA;
+      });
+      setUserOrders(merged);
+    } catch (err) {
+      console.error("Error loading user orders across shops:", err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && allShops.length > 0) {
+      loadAllUserOrders(user.email);
+    } else {
+      setUserOrders([]);
+    }
+  }, [user, allShops]);
+
   // Custom banner slider interval timer
   useEffect(() => {
     if (!mainShopData?.banners || mainShopData.banners.length <= 1) return;
@@ -512,7 +553,7 @@ export default function Home() {
       setCart(updatedCart);
       return;
     }
-    const qty = parseInt(newQtyVal);
+    const qty = parseFloat(newQtyVal);
     if (isNaN(qty)) return;
     if (qty <= 0) {
       removeFromCart(productId);
@@ -928,6 +969,45 @@ export default function Home() {
     }
   };
 
+  // Calculate Amazon style groups if enabled
+  const shopGroups = {};
+  if (globalConfig?.showAmazonBoxes) {
+    products.forEach(p => {
+      // 1. Curation Whitelist Filters
+      if (globalConfig?.showcaseCuration?.enabled) {
+        const allowedShops = globalConfig.showcaseCuration.allowedShops || [];
+        const allowedCategories = globalConfig.showcaseCuration.allowedCategories || [];
+        const allowedSubcategories = globalConfig.showcaseCuration.allowedSubcategories || [];
+        
+        if (allowedShops.length > 0 && !allowedShops.includes(p.shopId)) return;
+        if (allowedCategories.length > 0 && !allowedCategories.includes(p.category)) return;
+        if (allowedSubcategories.length > 0 && p.subcategory && !allowedSubcategories.includes(p.subcategory)) return;
+      }
+
+      // 2. Search & Filters
+      const matchesSearch = !productSearch || matchPhoneticSearch(p, productSearch);
+      const matchesType = filterMode === 'type'
+        ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
+        : true;
+      const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+      const matchesSubcategory = !activeSubcategory || p.subcategory === activeSubcategory;
+
+      if (matchesSearch && matchesType && matchesCategory && matchesSubcategory) {
+        const key = p.shopName || 'Other Store';
+        if (!shopGroups[key]) {
+          shopGroups[key] = {
+            shopName: p.shopName,
+            shopSlug: p.shopSlug,
+            customDomain: p.customDomain,
+            domainStatus: p.domainStatus,
+            products: []
+          };
+        }
+        shopGroups[key].products.push(p);
+      }
+    });
+  }
+
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-[#070e24] via-[#091535] to-[#040a17] text-slate-100 selection:bg-purple-900 selection:text-white font-sans overflow-x-hidden pb-10">
       
@@ -1030,16 +1110,32 @@ export default function Home() {
 
             <div className="w-[1px] h-4 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
 
-            {user && getDashboardHref() ? (
-              <Link href={getDashboardHref()} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-white text-black rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
-                Workspace
-              </Link>
-            ) : !user ? (
-              <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-full text-[9px] sm:text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)] shrink-0">
+            {user ? (
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                {/* Profile Button / Avatar */}
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/20 text-purple-300 rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-all cursor-pointer shrink-0"
+                >
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full overflow-hidden border border-purple-500/30 flex items-center justify-center bg-purple-700 font-bold text-white text-[8px] sm:text-[10px] shrink-0">
+                    {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || 'U'}
+                  </div>
+                  <span className="hidden xs:inline">আমার অর্ডার (Orders)</span>
+                  <span className="xs:hidden">অর্ডার</span>
+                </button>
+
+                {getDashboardHref() && (
+                  <Link href={getDashboardHref()} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-white text-black rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
+                    Workspace
+                  </Link>
+                )}
+                
+                <button onClick={logoutUser} className="text-[9px] sm:text-[10px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.15em] transition-all shrink-0 cursor-pointer">Sign Out</button>
+              </div>
+            ) : (
+              <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-full text-[9px] sm:text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)] shrink-0 cursor-pointer">
                 {loggingIn ? "Connecting..." : "Portal Login"}
               </button>
-            ) : (
-              <button onClick={logoutUser} className="text-[9px] sm:text-[11px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.2em] transition-all shrink-0">Sign Out</button>
             )}
           </div>
         </div>
@@ -1078,7 +1174,7 @@ export default function Home() {
                   <img 
                     src={bannerUrl} 
                     alt={bannerTitle} 
-                    className="absolute inset-0 w-full h-full object-contain z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
+                    className="absolute inset-0 w-full h-full object-cover z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
                   />
                   
                   {/* Banner content overlay */}
@@ -1385,9 +1481,79 @@ export default function Home() {
           )}
         </div>
 
+        {/* Amazon-style Box View Layout */}
+        {globalConfig?.showAmazonBoxes && activeShopFilter === 'All' && (
+          <div className="mb-12 animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Object.values(shopGroups).map(group => {
+                const matchingShop = allShops.find(s => s.shopSlug === group.shopSlug);
+                const shopLogo = matchingShop?.logoUrl || '/logo.png';
+                const displayProducts = group.products.slice(0, 4);
+                
+                return (
+                  <div 
+                    key={group.shopSlug}
+                    className="group glass-panel border-white/5 rounded-3xl p-5 hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.1)] transition-all duration-500 flex flex-col justify-between bg-slate-950/45 cursor-pointer"
+                    onClick={() => {
+                      setFilterMode('merchant');
+                      setActiveShopFilter(group.shopName);
+                    }}
+                  >
+                    {/* Header */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                        <div className="flex items-center gap-2.5 max-w-[80%]">
+                          <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
+                            <img src={shopLogo} alt={group.shopName} className="w-full h-full object-cover" />
+                          </div>
+                          <h3 className="font-extrabold text-white text-sm tracking-tight truncate">{group.shopName}</h3>
+                        </div>
+                        <ArrowUpRight size={14} className="text-white/40 group-hover:text-purple-400 transition-colors" />
+                      </div>
+
+                      {/* 2x2 Grid */}
+                      <div className="grid grid-cols-2 gap-3.5">
+                        {displayProducts.map(p => (
+                          <div 
+                            key={p.id}
+                            className="relative aspect-square rounded-2xl overflow-hidden bg-slate-900/60 border border-white/[0.03] group/item hover:border-purple-500/30 transition-all flex flex-col justify-between"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProduct(p);
+                              setCustomizationNote('');
+                            }}
+                          >
+                            <img src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover/item:opacity-100 group-hover/item:scale-105 transition-transform duration-500" />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-[10px] text-white">
+                              <p className="font-bold truncate">{p.name}</p>
+                              <p className="font-black text-purple-400 mt-0.5">৳ {Number(p.price).toLocaleString()}</p>
+                            </div>
+                          </div>
+                        ))}
+                        {Array.from({ length: Math.max(0, 4 - displayProducts.length) }).map((_, idx) => (
+                          <div key={idx} className="aspect-square rounded-2xl bg-white/[0.02] border border-dashed border-white/5 flex items-center justify-center text-white/10 text-[10px] font-bold">
+                            Empty Slot
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Footer view link */}
+                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-black text-purple-400 group-hover:text-purple-300 transition-colors">
+                      <span>সবগুলো দেখুন (Explore Shop)</span>
+                      <span className="text-[10px] text-white/30 font-bold bg-white/5 group-hover:bg-purple-600/20 group-hover:text-white px-2 py-0.5 rounded-lg transition-all">{group.products.length} Items</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Product Showcase Grid (Premium Wide 10-column Layout - Zero Wasted Spacing) */}
-        {productsLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 md:gap-6 animate-pulse">
+        {(!globalConfig?.showAmazonBoxes || globalConfig?.showAllProductsDirectly || activeShopFilter !== 'All') && (
+          productsLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 md:gap-6 animate-pulse">
             {[1, 2, 3, 4, 5, 6].map(n => (
               <div key={n} className="glass-panel border-white/5 rounded-3xl p-4 space-y-4">
                 <div className="aspect-square bg-white/5 rounded-2xl w-full" />
@@ -1407,6 +1573,7 @@ export default function Home() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 sm:gap-6">
               {filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(product => {
                 const storeLink = getStoreLink(product.shopSlug, product.customDomain, product.domainStatus);
+                const cartItem = cart.find(item => item.productId === product.id && !item.isCustomized);
                 return (
                   <div
                     key={product.id}
@@ -1466,12 +1633,31 @@ export default function Home() {
                             🚫 স্টক শেষ (Stock Out)
                           </div>
                         ) : (
-                          <button
-                            onClick={() => handleAddToCart(product)}
-                            className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
-                          >
-                            <ShoppingCart size={11} /> Add to Cart
-                          </button>
+                          cartItem ? (
+                            <div className="flex items-center justify-between bg-purple-900/40 rounded-2xl p-1 border border-purple-500/30">
+                              <button onClick={() => updateCartQty(product.id, -1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                <Minus size={12} strokeWidth={2.5} />
+                              </button>
+                              <input
+                                type="number"
+                                min="0.01"
+                                step="any"
+                                value={cartItem.quantity}
+                                onChange={e => setCartQtyDirect(product.id, e.target.value)}
+                                className="font-black text-white text-xs w-full text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <button onClick={() => updateCartQty(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                <Plus size={12} strokeWidth={2.5} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleAddToCart(product)}
+                              className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
+                            >
+                              <ShoppingCart size={11} /> Add to Cart
+                            </button>
+                          )
                         )}
 
                         {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
@@ -1530,7 +1716,7 @@ export default function Home() {
               </div>
             )}
           </>
-        )}
+        ))}
       </section>
 
       {/* ── Promoted Shops Showcase / Registry ── */}
@@ -1596,6 +1782,8 @@ export default function Home() {
                     <li><Link href="/showcase" className="hover:text-white transition-colors">Live Showcase Registry</Link></li>
                     <li><a href="#marketplace" className="hover:text-white transition-colors">All Products Marketplace</a></li>
                     <li><Link href="/dashboard" className="hover:text-white transition-colors">Store Admin Portal</Link></li>
+                    <li><Link href="/become-retailer" className="text-purple-400 hover:text-purple-300 font-black uppercase tracking-wider transition-colors flex items-center gap-1">🤝 Become Retailer</Link></li>
+                    <li><Link href="/reviews" className="text-purple-400 hover:text-purple-300 font-black uppercase tracking-wider transition-colors flex items-center gap-1">⭐ Platform Reviews</Link></li>
                  </ul>
               </div>
 
@@ -1841,6 +2029,81 @@ export default function Home() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Platform-Wide Purchases Profile Drawer ── */}
+      {isProfileOpen && (
+        <div className="fixed inset-0 z-[150] flex justify-end">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsProfileOpen(false)} />
+          <div className="relative w-full max-w-md bg-[#09090f] border-l border-white/10 h-full flex flex-col justify-between shadow-2xl animate-slide-in text-white z-10">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10 bg-[#05050a] flex flex-col relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-3xl" />
+              <div className="flex justify-between items-start mb-4 relative z-10">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-purple-500/20 bg-purple-700/20 flex items-center justify-center font-black text-2xl">
+                  {user?.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user?.displayName?.[0] || 'U'}
+                </div>
+                <button onClick={() => setIsProfileOpen(false)} className="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/10 transition-colors cursor-pointer shrink-0"><X size={16} /></button>
+              </div>
+              <h3 className="text-xl font-black relative z-10 text-white">{user?.displayName || 'সম্মানিত কাস্টমার'}</h3>
+              <p className="text-xs text-white/40 font-bold relative z-10 mt-0.5">{user?.email}</p>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 p-6 space-y-6 overflow-y-auto min-h-0">
+              <div className="border-b border-white/5 pb-2 flex items-center justify-between">
+                <h4 className="text-xs font-black uppercase tracking-widest text-purple-400">আমার সকল অর্ডার ইতিহাস</h4>
+                <span className="text-[10px] text-white/30 font-bold bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{userOrders.length} Orders</span>
+              </div>
+              
+              <div className="space-y-4">
+                {loadingOrders ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/40">
+                    <Loader2 className="animate-spin text-purple-500" size={24} />
+                    <p className="text-[10px] font-black uppercase tracking-widest">অর্ডার লোড হচ্ছে...</p>
+                  </div>
+                ) : userOrders.length === 0 ? (
+                  <div className="text-center py-16 bg-white/[0.01] rounded-3xl border border-dashed border-white/5">
+                    <ShoppingBag size={32} className="mx-auto text-white/10 mb-2" />
+                    <p className="text-xs font-bold text-white/40">কোনো অর্ডার ইতিহাস পাওয়া যায়নি</p>
+                  </div>
+                ) : userOrders.map(order => {
+                  const viewLink = order.customDomain && order.domainStatus === 'connected'
+                    ? `https://${order.customDomain}/order/${order.id}`
+                    : `/shop/${order.shopSlug}/order/${order.id}`;
+                    
+                  return (
+                    <div key={order.id} className="bg-white/[0.01] border border-white/5 rounded-3xl overflow-hidden hover:border-purple-500/20 transition-colors group">
+                      <div className="p-4 bg-white/[0.01]">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">#${order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${order.status === 'completed' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : order.status === 'cancelled' ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>${order.status || 'Pending'}</span>
+                        </div>
+                        <p className="text-xs text-white/40 font-bold truncate">শপ: <span className="text-white font-extrabold">${order.shopName}</span></p>
+                        <p className="font-extrabold text-white text-sm mt-1">${order.items?.length || 0} Items <span className="text-purple-400">(৳${order.total?.toLocaleString()})</span></p>
+                      </div>
+                      <div className="border-t border-white/5 bg-white/[0.005]">
+                        <a 
+                          href={viewLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full py-2.5 text-[10px] font-black text-white/60 hover:text-white hover:bg-purple-600/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Package size={11} /> মেমো দেখুন (View Invoice)
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-white/10 text-center bg-[#05050a]">
+              <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-black">Daripallah Customer Profile &bull; 2026</p>
+            </div>
           </div>
         </div>
       )}

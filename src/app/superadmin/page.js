@@ -146,7 +146,9 @@ export default function SuperAdminPage() {
         contactLinks: configData?.contactLinks || [],
         promotedLinks: configData?.promotedLinks || [],
         defaultLayout: configData?.defaultLayout || 'modern',
-        showcaseCuration: configData?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] }
+        showcaseCuration: configData?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] },
+        showAmazonBoxes: configData?.showAmazonBoxes ?? false,
+        showAllProductsDirectly: configData?.showAllProductsDirectly ?? true
       });
     });
     return () => unsubscribe();
@@ -544,6 +546,47 @@ export default function SuperAdminPage() {
             </select>
           </div>
         </div>
+
+        {/* Amazon-style Box View Toggle */}
+        <div className="mt-4 flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+          <div>
+            <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Show Amazon-style Box View</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Group products by shop into 2x2 cards on the homepage</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <input 
+              type="checkbox" 
+              checked={!!globalConfig.showAmazonBoxes} 
+              onChange={e => {
+                const updated = {...globalConfig, showAmazonBoxes: e.target.checked};
+                setGlobalConfig(updated);
+                updateGlobalConfig(updated).catch(() => {});
+              }}
+              className="w-5 h-5 accent-purple-600 cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Show All Products Toggle */}
+        <div className="mt-4 flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+          <div>
+            <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Show All Products Directly</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Display the full product feed below banners on initial load</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <input 
+              type="checkbox" 
+              checked={!!globalConfig.showAllProductsDirectly} 
+              onChange={e => {
+                const updated = {...globalConfig, showAllProductsDirectly: e.target.checked};
+                setGlobalConfig(updated);
+                updateGlobalConfig(updated).catch(() => {});
+              }}
+              className="w-5 h-5 accent-purple-600 cursor-pointer"
+            />
+          </div>
+        </div>
+
         <p className="text-[10px] font-bold text-slate-400 mt-3 px-1">💡 Retailers can override this for their shop. Customers can further override for themselves.</p>
       </Card>
 

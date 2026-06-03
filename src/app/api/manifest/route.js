@@ -15,8 +15,8 @@ export async function GET(request) {
     theme_color: "#9333ea",
     orientation: "portrait-primary",
     icons: [
-      { src: "/logo.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-      { src: "/logo.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
+      { src: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+      { src: "/android-chrome-512x512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" }
     ]
   };
 
