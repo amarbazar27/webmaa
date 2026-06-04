@@ -38,10 +38,19 @@ export function detectProductUnit(product) {
 export default function SmartCalculator({ product, setCustomInput, setAiPrice }) {
   if (!product) return null;
 
-  // Use product's existing price & unit — no smartCalc field needed
-  const basePrice = Number(product.price) || 0;
-  const baseUnit = detectProductUnit(product);
-  const baseQuantity = product.baseQuantity || 1;
+  // Use product-level calculator configuration if enabled
+  const isCustomCalc = product.smartCalc?.enabled === true;
+  const basePrice = isCustomCalc && product.smartCalc?.basePrice !== undefined 
+    ? Number(product.smartCalc.basePrice) 
+    : (Number(product.price) || 0);
+
+  const baseUnit = isCustomCalc && product.smartCalc?.baseUnit 
+    ? product.smartCalc.baseUnit.trim() 
+    : detectProductUnit(product);
+
+  const baseQuantity = isCustomCalc && product.smartCalc?.baseQuantity !== undefined 
+    ? Number(product.smartCalc.baseQuantity) 
+    : (product.baseQuantity || 1);
   
   if (basePrice <= 0) return null;
 

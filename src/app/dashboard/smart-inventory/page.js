@@ -133,13 +133,42 @@ export default function SmartInventoryPage() {
 
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase">এককের নাম (Unit)</label>
-                  <input 
-                    type="text" 
-                    placeholder="যেমন: কেজি, গ্রাম, হালি"
-                    value={product.smartCalc.baseUnit} 
-                    onChange={e => handleSmartCalcChange(idx, 'baseUnit', e.target.value)}
-                    className="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-500"
-                  />
+                  {(() => {
+                    const standardUnits = ['কেজি', 'লিটার', 'গ্রাম', 'সাইজ', 'পিস', 'হালি', 'ডজন'];
+                    const currentUnit = product.smartCalc.baseUnit || '';
+                    const isStandard = standardUnits.includes(currentUnit);
+                    const selectValue = currentUnit === '' ? 'পিস' : (isStandard ? currentUnit : 'অন্যান্য');
+                    return (
+                      <div className="space-y-1.5">
+                        <select
+                          value={selectValue}
+                          onChange={e => {
+                            const val = e.target.value;
+                            handleSmartCalcChange(idx, 'baseUnit', val === 'অন্যান্য' ? '' : val);
+                          }}
+                          className="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-500"
+                        >
+                          <option value="কেজি">কেজি (kg)</option>
+                          <option value="লিটার">লিটার (liter)</option>
+                          <option value="গ্রাম">গ্রাম (gram)</option>
+                          <option value="সাইজ">সাইজ (size)</option>
+                          <option value="পিস">পিস (piece)</option>
+                          <option value="হালি">হালি (hali)</option>
+                          <option value="ডজন">ডজন (dozen)</option>
+                          <option value="অন্যান্য">অন্যান্য (Custom)</option>
+                        </select>
+                        {selectValue === 'অন্যান্য' && (
+                          <input 
+                            type="text" 
+                            placeholder="যেমন: গজ, প্যাকেট, বক্স"
+                            value={currentUnit} 
+                            onChange={e => handleSmartCalcChange(idx, 'baseUnit', e.target.value)}
+                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-500"
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div>

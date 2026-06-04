@@ -276,6 +276,41 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [showSplash, setShowSplash] = useState(true);
   useEffect(() => { const t = setTimeout(() => setShowSplash(false), 1500); return () => clearTimeout(t); }, []);
 
+  useEffect(() => {
+    if (shop) {
+      // 1. Real-time update of Document Title (Link Name)
+      document.title = shop.slogan ? `${shop.shopName} – ${shop.slogan}` : shop.shopName;
+
+      // 2. Real-time update of Favicon
+      const firstLetter = shop.shopName ? shop.shopName.charAt(0).toUpperCase() : 'S';
+      // Generate consistent color based on shop name
+      let hash = 0;
+      const name = shop.shopName || 'Shop';
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const hue = Math.abs(hash % 360);
+      const color = `hsl(${hue}, 70%, 50%)`;
+
+      const svgFavicon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}" rx="8"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-size="18" font-family="system-ui, sans-serif" font-weight="900">${firstLetter}</text></svg>`;
+
+      const faviconUrl = shop.logoUrl || svgFavicon;
+
+      const linkTypes = ["link[rel*='icon']", "link[rel='apple-touch-icon']", "link[rel='shortcut icon']"];
+      linkTypes.forEach(selector => {
+        let link = document.querySelector(selector);
+        if (!link) {
+          link = document.createElement('link');
+          if (selector.includes('apple')) link.rel = 'apple-touch-icon';
+          else if (selector.includes('shortcut')) link.rel = 'shortcut icon';
+          else link.rel = 'icon';
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+        link.href = faviconUrl;
+      });
+    }
+  }, [shop]);
+
   const prevOnlineRef = useRef(null);
   useEffect(() => {
     if (isOnline && prevOnlineRef.current === false) {
@@ -2923,7 +2958,7 @@ function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCa
         
         <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
         
-        {safeShop?.aiConfig?.smartCalcEnabled ? (
+        {(safeShop?.aiConfig?.smartCalcEnabled || safeProduct?.smartCalc?.enabled) ? (
           <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
         ) : safeProduct?.allowCustomize ? (
           <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
