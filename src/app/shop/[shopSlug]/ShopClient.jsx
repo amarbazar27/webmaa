@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import useLocation from '@/lib/useLocation';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
@@ -30,6 +30,7 @@ import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import NotificationInbox from '@/components/shared/NotificationInbox';
+import ReviewSection from '@/components/shop/ReviewSection';
 
 // Product detail modal component imports
 import ProductImage from '@/features/product/components/ProductImage';
