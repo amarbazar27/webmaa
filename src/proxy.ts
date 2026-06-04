@@ -95,6 +95,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       const firstSegment = pathParts[0];
       const reservedKeywords = [
         'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
+        'reviews', 'become-retailer',
         '_next', 'robots.txt', 'sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
       ];
       if (!reservedKeywords.includes(firstSegment)) {

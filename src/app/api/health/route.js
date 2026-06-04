@@ -9,7 +9,7 @@ export async function GET() {
     { 
       status: 'healthy', 
       timestamp: new Date().toISOString(),
-      service: 'webmaa-production'
+      service: 'daripallah-production'
     },
     { status: 200 }
   );

@@ -636,14 +636,44 @@ export default function Home() {
     return acc;
   }, {});
 
-  const webmaaStoreItems = cart.filter(item => !item.isThirdParty);
-  const webmaaStoreTotal = webmaaStoreItems.reduce((t, i) => t + i.price * i.quantity, 0);
+  const daripallahStoreItems = cart.filter(item => !item.isThirdParty);
+  const daripallahStoreTotal = daripallahStoreItems.reduce((t, i) => t + i.price * i.quantity, 0);
 
-  const handleCheckoutWebmaa = () => {
+  const handleCheckoutDaripallah = () => {
     const superadminItem = cart.find(i => !i.isThirdParty);
     const slug = superadminItem ? superadminItem.shopSlug : 'daripallah-store';
     router.push(`/shop/${slug}`);
     setIsCartOpen(false);
+  };
+
+  const handleCheckoutThirdParty = async (shopData, shopCheckoutUrl) => {
+    if (!user) {
+      toast.error('চেকআউট করতে প্রথমে লগইন সম্পন্ন করুন।');
+      try {
+        await handleSmartLogin();
+      } catch (err) {
+        console.error(err);
+      }
+      return;
+    }
+
+    const serialized = shopData.items.map(i => ({
+      productId: i.productId || i.id,
+      name: i.name,
+      price: i.price,
+      quantity: i.quantity,
+      imageUrl: i.imageUrl || '',
+      note: i.customNote || '',
+      isCustomized: i.isCustomized || false,
+      customizedText: i.customizedText || '',
+      variantsText: i.variantsText || ''
+    }));
+
+    const importCartParam = encodeURIComponent(JSON.stringify(serialized));
+    const separator = shopCheckoutUrl.includes('?') ? '&' : '?';
+    const redirectUrl = `${shopCheckoutUrl}${separator}importCart=${importCartParam}`;
+
+    window.open(redirectUrl, '_blank');
   };
 
   // Dynamic Contact Formats
@@ -993,17 +1023,36 @@ export default function Home() {
       const matchesSubcategory = !activeSubcategory || p.subcategory === activeSubcategory;
 
       if (matchesSearch && matchesType && matchesCategory && matchesSubcategory) {
-        const key = p.shopName || 'Other Store';
-        if (!shopGroups[key]) {
-          shopGroups[key] = {
-            shopName: p.shopName,
-            shopSlug: p.shopSlug,
-            customDomain: p.customDomain,
-            domainStatus: p.domainStatus,
-            products: []
-          };
+        const groupType = globalConfig?.amazonBoxType || 'shop_recent';
+        
+        if (groupType === 'shop_featured' && !p.isFeatured && !p.featured) {
+          return; // skip non-featured products
         }
-        shopGroups[key].products.push(p);
+
+        if (groupType === 'product_type') {
+          const key = p.category || 'Other Category';
+          if (!shopGroups[key]) {
+            shopGroups[key] = {
+              isCategory: true,
+              categoryName: key,
+              products: []
+            };
+          }
+          shopGroups[key].products.push(p);
+        } else {
+          const key = p.shopName || 'Other Store';
+          if (!shopGroups[key]) {
+            shopGroups[key] = {
+              isCategory: false,
+              shopName: p.shopName,
+              shopSlug: p.shopSlug,
+              customDomain: p.customDomain,
+              domainStatus: p.domainStatus,
+              products: []
+            };
+          }
+          shopGroups[key].products.push(p);
+        }
       }
     });
   }
@@ -1486,17 +1535,30 @@ export default function Home() {
           <div className="mb-12 animate-fade-in">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Object.values(shopGroups).map(group => {
-                const matchingShop = allShops.find(s => s.shopSlug === group.shopSlug);
-                const shopLogo = matchingShop?.logoUrl || '/logo.png';
+                const isCat = !!group.isCategory;
                 const displayProducts = group.products.slice(0, 4);
+                
+                // If it is category, we show a generic icon and category details
+                const matchingShop = !isCat ? allShops.find(s => s.shopSlug === group.shopSlug) : null;
+                const shopLogo = !isCat ? (matchingShop?.logoUrl || '/logo.png') : null;
+                const headerTitle = isCat ? group.categoryName : group.shopName;
+                const uniqueKey = isCat ? `cat_${group.categoryName}` : `shop_${group.shopSlug}`;
                 
                 return (
                   <div 
-                    key={group.shopSlug}
+                    key={uniqueKey}
                     className="group glass-panel border-white/5 rounded-3xl p-5 hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.1)] transition-all duration-500 flex flex-col justify-between bg-slate-950/45 cursor-pointer"
                     onClick={() => {
-                      setFilterMode('merchant');
-                      setActiveShopFilter(group.shopName);
+                      if (isCat) {
+                        setActiveCategory(group.categoryName);
+                        const gridEl = document.getElementById('products-grid-section');
+                        if (gridEl) {
+                          gridEl.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      } else {
+                        setFilterMode('merchant');
+                        setActiveShopFilter(group.shopName);
+                      }
                     }}
                   >
                     {/* Header */}
@@ -1504,9 +1566,13 @@ export default function Home() {
                       <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
                         <div className="flex items-center gap-2.5 max-w-[80%]">
                           <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
-                            <img src={shopLogo} alt={group.shopName} className="w-full h-full object-cover" />
+                            {isCat ? (
+                              <div className="w-full h-full flex items-center justify-center font-black text-purple-400 text-xs">📁</div>
+                            ) : (
+                              <img src={shopLogo} alt={group.shopName} className="w-full h-full object-cover" />
+                            )}
                           </div>
-                          <h3 className="font-extrabold text-white text-sm tracking-tight truncate">{group.shopName}</h3>
+                          <h3 className="font-extrabold text-white text-sm tracking-tight truncate">{headerTitle}</h3>
                         </div>
                         <ArrowUpRight size={14} className="text-white/40 group-hover:text-purple-400 transition-colors" />
                       </div>
@@ -1540,7 +1606,7 @@ export default function Home() {
 
                     {/* Footer view link */}
                     <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-black text-purple-400 group-hover:text-purple-300 transition-colors">
-                      <span>সবগুলো দেখুন (Explore Shop)</span>
+                      <span>{isCat ? 'ক্যাটাগরি দেখুন (Explore Category)' : 'সবগুলো দেখুন (Explore Shop)'}</span>
                       <span className="text-[10px] text-white/30 font-bold bg-white/5 group-hover:bg-purple-600/20 group-hover:text-white px-2 py-0.5 rounded-lg transition-all">{group.products.length} Items</span>
                     </div>
                   </div>
@@ -1551,6 +1617,7 @@ export default function Home() {
         )}
 
         {/* Product Showcase Grid (Premium Wide 10-column Layout - Zero Wasted Spacing) */}
+        <div id="products-grid-section">
         {(!globalConfig?.showAmazonBoxes || globalConfig?.showAllProductsDirectly || activeShopFilter !== 'All') && (
           productsLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 md:gap-6 animate-pulse">
@@ -1717,6 +1784,7 @@ export default function Home() {
             )}
           </>
         ))}
+        </div>
       </section>
 
       {/* ── Promoted Shops Showcase / Registry ── */}
@@ -1920,13 +1988,13 @@ export default function Home() {
               ) : (
                 <div className="space-y-6">
                   {/* 1. Primary Daripallah Store Section */}
-                  {webmaaStoreItems.length > 0 && (
+                  {daripallahStoreItems.length > 0 && (
                     <div className="bg-purple-950/10 border border-purple-500/20 rounded-2xl p-4 space-y-3">
                       <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
                         👑 Daripallah Store Products
                       </p>
                       <div className="space-y-3 divide-y divide-purple-500/10">
-                        {webmaaStoreItems.map(item => (
+                        {daripallahStoreItems.map(item => (
                           <div key={item.id} className="flex gap-4 pt-3 first:pt-0">
                             <img src={item.imageUrl} className="w-12 h-12 object-contain bg-slate-900 rounded-lg border border-white/10 shrink-0" />
                             <div className="flex-1 min-w-0">
@@ -1986,14 +2054,12 @@ export default function Home() {
                         </div>
                         
                         <div className="pt-2">
-                          <a
-                            href={shopCheckoutUrl}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            onClick={() => handleCheckoutThirdParty(shopData, shopCheckoutUrl)}
                             className="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg shadow-purple-500/20 active:scale-95 transition-all text-center cursor-pointer"
                           >
                             Checkout at {shopData.shopName} (৳ {shopData.items.reduce((t, i) => t + i.price * i.quantity, 0).toLocaleString()})
-                          </a>
+                          </button>
                           <p className="text-[8px] text-center text-white/40 mt-1">অন্যান্য স্টোরের চেকআউট ঐ স্টোরে গিয়ে করতে হবে</p>
                         </div>
                       </div>
@@ -2012,12 +2078,12 @@ export default function Home() {
                 </div>
 
                 <div className="space-y-2">
-                  {webmaaStoreItems.length > 0 && (
+                  {daripallahStoreItems.length > 0 && (
                     <button
-                      onClick={handleCheckoutWebmaa}
+                      onClick={handleCheckoutDaripallah}
                       className="w-full py-4 bg-white text-black hover:scale-[1.02] rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl cursor-pointer active:scale-95 transition-all"
                     >
-                      Checkout Daripallah Products (৳ {webmaaStoreTotal.toLocaleString()})
+                      Checkout Daripallah Products (৳ {daripallahStoreTotal.toLocaleString()})
                     </button>
                   )}
                   <button
@@ -2400,7 +2466,7 @@ function LandingProductDetailInner({ shop, product, onClose, cart, setCart }) {
         quantity: safeQty,
         imageUrl: safeProduct.imageUrl || '',
         shopId: safeProduct.shopId,
-        shopName: safeProduct.shopName === 'ADMIN' ? 'Webmaa Store' : safeProduct.shopName,
+        shopName: safeProduct.shopName === 'ADMIN' ? 'Daripallah Store' : safeProduct.shopName,
         shopSlug: safeProduct.shopSlug,
         customDomain: safeProduct.customDomain || '',
         domainStatus: safeProduct.domainStatus || '',

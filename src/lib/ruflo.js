@@ -1,11 +1,11 @@
 /**
- * 🔔 RUFLO — Webmaa Automation Engine
+ * 🔔 RUFLO — Daripallah Automation Engine
  * Non-blocking, async email system using Nodemailer + Gmail SMTP
  *
  * .env.local এ এই variables দরকার:
  *   RUFLO_EMAIL=your.gmail@gmail.com
  *   RUFLO_APP_PASSWORD=xxxx xxxx xxxx xxxx  (Gmail App Password)
- *   RUFLO_FROM_NAME=Webmaa Notification
+ *   RUFLO_FROM_NAME=Daripallah Notification
  */
 
 // nodemailer শুধু server-side কাজ করে, তাই lazy import
@@ -81,7 +81,7 @@ function buildOrderEmail({ shopName, customerName, orderId, items, total, status
         <tr>
           <td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 32px 24px;text-align:center;">
             <h1 style="margin:0;color:white;font-size:24px;font-weight:900;letter-spacing:-0.5px;">${shopName}</h1>
-            <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Powered by Webmaa</p>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Powered by Daripallah</p>
           </td>
         </tr>
         <!-- Status Badge -->
@@ -126,7 +126,7 @@ function buildOrderEmail({ shopName, customerName, orderId, items, total, status
         <tr>
           <td style="padding:20px 32px 32px;text-align:center;border-top:1px solid #f1f5f9;">
             <p style="margin:0;color:#94a3b8;font-size:12px;">এই ইমেইলটি স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে। উত্তর দেবেন না।</p>
-            <p style="margin:8px 0 0;color:#cbd5e1;font-size:11px;">Powered by <strong>Webmaa</strong> × Ruflo Automation</p>
+            <p style="margin:8px 0 0;color:#cbd5e1;font-size:11px;">Powered by <strong>Daripallah</strong> × Ruflo Automation</p>
           </td>
         </tr>
       </table>
@@ -232,7 +232,7 @@ export async function sendRetailerNotificationEmail({ to, shopId, shopName, orde
   const activeShopName = await getRealtimeShopName(shopId, shopName);
 
   return sendWithRetry({
-    from: `"Webmaa Ruflo" <${process.env.RUFLO_EMAIL}>`,
+    from: `"Daripallah Ruflo" <${process.env.RUFLO_EMAIL}>`,
     to,
     subject: `📦 নতুন অর্ডার #${orderId} — ${activeShopName}`,
     html: buildRetailerEmail({ shopName: activeShopName, orderId, customerName, customerPhone, items, total }),
@@ -246,7 +246,7 @@ export async function sendOTPEmail({ to, name, otp, purpose = 'লগইন' }) 
   if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
 
   return sendWithRetry({
-    from: `"Webmaa Security" <${process.env.RUFLO_EMAIL}>`,
+    from: `"Daripallah Security" <${process.env.RUFLO_EMAIL}>`,
     to,
     subject: `🔐 আপনার ${purpose} কোড: ${otp}`,
     html: buildOTPEmail({ name, otp, purpose }),

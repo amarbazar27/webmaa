@@ -6,9 +6,9 @@
  * Renders the correct storefront style based on shop's templateId setting.
  */
 
-import { Suspense, memo, useEffect, useRef } from 'react';
+import { Suspense, memo, useRef } from 'react';
 import { getTemplateById } from './index';
-import { buildStyleEngineOutput, applyDataAttrsToElement } from '@/lib/styleEngine';
+import { buildStyleEngineOutput } from '@/lib/styleEngine';
 
 // ── Loading skeleton ───────────────────────────────────────────────────────
 function TemplateSkeleton({ isDark = false }) {
@@ -91,13 +91,6 @@ function TemplateRenderer({
   // Build style engine output (CSS vars + data attrs)
   const { style, dataAttrs, isDark } = buildStyleEngineOutput(template, mergedTheme);
 
-  // Apply data-* attributes after mount (avoids SSR hydration mismatch)
-  useEffect(() => {
-    if (wrapperRef.current) {
-      applyDataAttrsToElement(wrapperRef.current, dataAttrs);
-    }
-  }, [resolvedId, JSON.stringify(dataAttrs)]);
-
   if (!ShopClientComponent) {
     return <TemplateSkeleton isDark={isDark} />;
   }
@@ -107,6 +100,7 @@ function TemplateRenderer({
       ref={wrapperRef}
       id="sf-root"
       style={style}
+      {...dataAttrs}
       suppressHydrationWarning
     >
       <Suspense fallback={<TemplateSkeleton isDark={isDark} />}>

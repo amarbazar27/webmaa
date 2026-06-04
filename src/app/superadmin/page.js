@@ -133,7 +133,7 @@ export default function SuperAdminPage() {
   // Auto-create superadmin's own shop on first load
   useEffect(() => {
     if (!user) return;
-    createSuperadminShop(user.uid, user.email, 'Webmaa Store').then(shop => {
+    createSuperadminShop(user.uid, user.email, 'Daripallah Store').then(shop => {
       setSuperadminShop(shop);
     }).catch(() => {});
   }, [user]);
@@ -148,6 +148,7 @@ export default function SuperAdminPage() {
         defaultLayout: configData?.defaultLayout || 'modern',
         showcaseCuration: configData?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] },
         showAmazonBoxes: configData?.showAmazonBoxes ?? false,
+        amazonBoxType: configData?.amazonBoxType || 'shop_recent',
         showAllProductsDirectly: configData?.showAllProductsDirectly ?? true
       });
     });
@@ -466,7 +467,7 @@ export default function SuperAdminPage() {
             <Store size={22} className="text-white" />
           </div>
           <div>
-            <p className="font-black text-slate-900 text-base">আপনার নিজের স্টোর: Webmaa Store</p>
+            <p className="font-black text-slate-900 text-base">আপনার নিজের স্টোর: Daripallah Store</p>
             <p className="text-xs text-slate-500 font-medium mt-0.5">এই স্টোরে আপনার নিজের পণ্য যোগ করুন — গ্রাহকরা মেইন সাইট থেকে কিনতে পারবে</p>
           </div>
         </div>
@@ -548,23 +549,45 @@ export default function SuperAdminPage() {
         </div>
 
         {/* Amazon-style Box View Toggle */}
-        <div className="mt-4 flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
-          <div>
-            <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Show Amazon-style Box View</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Group products by shop into 2x2 cards on the homepage</p>
+        <div className="mt-4 flex flex-col gap-3 p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Show Amazon-style Box View</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Group products into cards on the homepage</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input 
+                type="checkbox" 
+                checked={!!globalConfig.showAmazonBoxes} 
+                onChange={e => {
+                  const updated = {...globalConfig, showAmazonBoxes: e.target.checked};
+                  setGlobalConfig(updated);
+                  updateGlobalConfig(updated).catch(() => {});
+                }}
+                className="w-5 h-5 accent-purple-600 cursor-pointer"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <input 
-              type="checkbox" 
-              checked={!!globalConfig.showAmazonBoxes} 
-              onChange={e => {
-                const updated = {...globalConfig, showAmazonBoxes: e.target.checked};
-                setGlobalConfig(updated);
-                updateGlobalConfig(updated).catch(() => {});
-              }}
-              className="w-5 h-5 accent-purple-600 cursor-pointer"
-            />
-          </div>
+          
+          {globalConfig.showAmazonBoxes && (
+            <div className="flex flex-col gap-1.5 border-t pt-3" style={{borderColor:'var(--border-color)'}}>
+              <label className="text-xs font-black tracking-widest uppercase" style={{color:'var(--text-3)'}}>Amazon Box Grouping Type</label>
+              <select
+                value={globalConfig.amazonBoxType || 'shop_recent'}
+                onChange={e => {
+                  const updated = {...globalConfig, amazonBoxType: e.target.value};
+                  setGlobalConfig(updated);
+                  updateGlobalConfig(updated).catch(() => {});
+                }}
+                className="p-3.5 rounded-xl border text-xs font-bold outline-none cursor-pointer focus:border-purple-500 transition-all select-none"
+                style={{borderColor:'var(--border-color)',background:'var(--input-bg)',color:'var(--text-color)'}}
+              >
+                <option value="shop_recent">Shop-wise (Recent Products)</option>
+                <option value="shop_featured">Shop-wise (Highlighted/Featured Products)</option>
+                <option value="product_type">Category-wise (Group by Product Category)</option>
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Show All Products Toggle */}
@@ -622,7 +645,7 @@ export default function SuperAdminPage() {
            <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">
              <div>
                <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Phone size={14}/> Platform Global Contact Links</p>
-               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Displayed on the Webmaa Landing Page for support</p>
+               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">Displayed on the Daripallah Landing Page for support</p>
              </div>
              
              {globalConfig.contactLinks?.map((link, idx) => (

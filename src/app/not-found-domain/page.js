@@ -26,7 +26,7 @@ export default function DomainNotFound() {
         // 5. Logging (keep)
         console.log("HOST SENT:", hostname);
 
-        if (!hostname || hostname.includes('localhost') || hostname.includes('webmaa.vercel.app')) {
+        if (!hostname || hostname.includes('localhost') || hostname.includes('webmaa.vercel.app') || hostname.includes('daripallah.vercel.app')) {
           setIsChecking(false);
           return;
         }

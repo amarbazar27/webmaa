@@ -12,16 +12,16 @@ export async function generateMetadata({ params }) {
     const decodedDomain = decodeURIComponent(customDomain);
     const shop = await getShopByDomain(decodedDomain);
 
-    if (!shop) return { title: 'Webmaa Store' };
+    if (!shop) return { title: 'Daripallah Store' };
 
-    const shopName = shop?.shopName || 'Webmaa Store';
+    const shopName = shop?.shopName || 'Daripallah Store';
     return {
       title: { absolute: shopName },
       description: shop?.slogan || 'Welcome to our premium store',
       manifest: shop?.subdomainSlug ? `/api/manifest?shop=${shop.subdomainSlug}` : null
     };
   } catch (err) {
-    return { title: 'Webmaa Store' };
+    return { title: 'Daripallah Store' };
   }
 }
 

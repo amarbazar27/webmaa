@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Star, Send, Loader2, Pin, Trash2, CheckCircle } from 'lucide-react';
+import { Star, Send, Loader2, Pin, Trash2, CheckCircle, Edit2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/auth';
 import toast from 'react-hot-toast';
@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
  * Props: shopId (string), isRetailer (bool) — retailer sees pin/delete controls
  */
 export default function ReviewSection({ shopId, isRetailer = false }) {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(0);
@@ -18,6 +18,15 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  // Edit states
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editText, setEditText] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const isSuperAdmin = userData?.role === 'superadmin';
+
   const fetchReviews = async () => {
     try {
       const res = await fetch(`/api/review?shopId=${shopId}`);
@@ -69,6 +78,33 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
       toast.success(action === 'delete' ? 'রিভিউ মুছে ফেলা হয়েছে' : 'রিভিউ আপডেট হয়েছে');
       fetchReviews();
     } catch { toast.error('অ্যাকশন ব্যর্থ হয়েছে'); }
+  };
+
+  const startEditing = (review) => {
+    setEditingReviewId(review.id);
+    setEditRating(review.rating);
+    setEditText(review.text || '');
+  };
+
+  const handleSaveEdit = async (reviewId) => {
+    setEditSubmitting(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch('/api/review', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ shopId, reviewId, action: 'edit', rating: editRating, text: editText }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      toast.success('রিভিউ আপডেট করা হয়েছে! ✨');
+      setEditingReviewId(null);
+      fetchReviews();
+    } catch (err) {
+      toast.error(err.message || 'আপডেট করতে সমস্যা হয়েছে');
+    } finally {
+      setEditSubmitting(false);
+    }
   };
 
   const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0';
@@ -180,15 +216,26 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
                   </div>
                 </div>
 
-                {isRetailer && (
+                {(isRetailer || isSuperAdmin || (user && user.uid === review.uid)) && (
                   <div className="flex gap-1.5 shrink-0">
-                    <button
-                      onClick={() => handleAction(review.id, review.pinned ? 'unpin' : 'pin')}
-                      className="p-2 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors"
-                      title={review.pinned ? 'Unpin' : 'Pin'}
-                    >
-                      <Pin size={14} />
-                    </button>
+                    {isRetailer && (
+                      <button
+                        onClick={() => handleAction(review.id, review.pinned ? 'unpin' : 'pin')}
+                        className="p-2 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors"
+                        title={review.pinned ? 'Unpin' : 'Pin'}
+                      >
+                        <Pin size={14} />
+                      </button>
+                    )}
+                    {(isSuperAdmin || (user && user.uid === review.uid)) && (
+                      <button
+                        onClick={() => startEditing(review)}
+                        className="p-2 rounded-lg hover:bg-purple-50 text-slate-400 hover:text-purple-600 transition-colors"
+                        title="Edit Review"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleAction(review.id, 'delete')}
                       className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
@@ -199,8 +246,50 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
                   </div>
                 )}
               </div>
-              {review.text && <p className="mt-3 text-sm font-medium text-slate-600 leading-relaxed">{review.text}</p>}
-              {review.trackingId && <p className="mt-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Order #{review.trackingId}</p>}
+
+              {editingReviewId === review.id ? (
+                <div className="mt-4 bg-slate-50 rounded-xl p-4 border border-purple-100 space-y-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-black text-slate-500 mr-2">নতুন রেটিং:</span>
+                    {[1,2,3,4,5].map(i => (
+                      <button
+                        key={i}
+                        onClick={() => setEditRating(i)}
+                        className="p-0.5 transition-transform hover:scale-110"
+                      >
+                        <Star size={20} className={i <= editRating ? 'text-amber-500 fill-amber-500' : 'text-slate-200'} />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    rows={2}
+                    maxLength={500}
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    className="w-full text-xs font-bold text-slate-950 p-3 rounded-lg bg-white border border-slate-200 focus:border-purple-500 transition-colors resize-none outline-none"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => setEditingReviewId(null)}
+                      className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-lg text-[10px] font-black hover:bg-slate-300 transition-colors"
+                    >
+                      বাতিল
+                    </button>
+                    <button
+                      onClick={() => handleSaveEdit(review.id)}
+                      disabled={editSubmitting || editRating === 0}
+                      className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-[10px] font-black hover:bg-purple-700 transition-colors flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {editSubmitting ? <Loader2 size={10} className="animate-spin animate-duration-500" /> : 'সংরক্ষণ'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {review.text && <p className="mt-3 text-sm font-medium text-slate-600 leading-relaxed">{review.text}</p>}
+                  {review.trackingId && <p className="mt-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Order #{review.trackingId}</p>}
+                </>
+              )}
             </div>
           ))}
         </div>

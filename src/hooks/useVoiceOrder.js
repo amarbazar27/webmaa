@@ -4,8 +4,8 @@ import { createRecognition, startListening, stopListening, isSupported } from '@
 import { speak } from '@/lib/tts';
 
 /**
- * useVoiceOrder — Voice-based cart addition hook
- * Flow: Mic → STT → Gemini AI extract → structured JSON → cart
+ * useVoiceOrder — Conversational Voice Agent hook
+ * Flow: Mic → STT → Gemini AI conversational flow → auto-speak response → auto-restart mic
  */
 export default function useVoiceOrder({ products, shopId, onAddToCart }) {
   const [isListening, setIsListening] = useState(false);
@@ -15,7 +15,10 @@ export default function useVoiceOrder({ products, shopId, onAddToCart }) {
   const [voiceResult, setVoiceResult] = useState(null);
   const [error, setError] = useState(null);
   const [lang, setLang] = useState('bn-BD');
+  const [conversationHistory, setConversationHistory] = useState([]);
+  
   const recRef = useRef(null);
+  const isVoiceActiveRef = useRef(false);
 
   const processWithAI = useCallback(async (text) => {
     if (!text?.trim()) return;
@@ -33,98 +36,108 @@ export default function useVoiceOrder({ products, shopId, onAddToCart }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shopId,
-          messages: [{
-            role: 'user',
-            content: `তুমি একটি বাজার সহকারী। ব্যবহারকারী বলেছে: "${text}"
-
-এই পণ্যগুলো থেকে ম্যাচ করো (ID|নাম|দাম):
+          messages: [
+            {
+              role: 'system',
+              content: `তুমি একটি ভার্চুয়াল ভয়েস শপিং অ্যাসিস্ট্যান্ট (বাজার সহকারী)। ব্যবহারকারীর সাথে সরাসরি কথা বলছ। তাই উত্তর সবসময় খুব সংক্ষিপ্ত এবং বন্ধুত্বপূর্ণ রাখবে (সর্বোচ্চ ৩-৪ বাক্য)। বাংলায় উত্তর দিবে।
+              
+পণ্য তালিকা (ID|নাম|দাম):
 ${productList}
 
-ধন্যবাদ! শুধু JSON রিটার্ন করো এই ফরম্যাটে:
-{"items":[{"id":"PRODUCT_ID","name":"পণ্যের নাম","quantity":1,"unit":"কেজি/লিটার/পিস", "customizedText":"৪০০ গ্রাম", "note":"ভাল দেখে দিয়েন"}]}
-
 🔴 বিশেষ নির্দেশ:
-১. যদি ইউজার কোনো নির্দিষ্ট পরিমাণ (যেমন: ৪০০ গ্রাম) বলে এবং বেস ইউনিট কেজি হয়, তবে quantity এর জায়গায় ১ দিবে এবং customizedText এ "৪০০ গ্রাম" লিখে দিবে।
-২. যদি ইউজার পণ্যের সাথে কোনো অতিরিক্ত কথা, অনুরোধ বা বিশেষ নির্দেশনা বলে (যেমন: "ভাল দেখে দিয়েন", "পিস করে দিন", "কম ঝাল", "পাকা দেখে দিয়েন"), তবে তা "note" ফিল্ডে স্পষ্টভাবে লিখে দিবে।
-৩. যদি কোনো পণ্য না মিলে, {"items":[]} রিটার্ন করো।
-৪. একই পণ্যের বিভিন্ন রূপ (পিস বনাম কেজি): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজার যে পরিমাণটি চাইছে তার ইউনিট বা কথার ধরন দেখে সঠিক আইডি সিলেক্ট করবে। যেমন 'পিস' উল্লেখ থাকলে পিস ভেরিয়েশন এবং 'কেজি', 'গ্রাম' বা 'মুরগি' বললে বা কোনো ইউনিট উল্লেখ না থাকলে কেজি ভেরিয়েশনটি বেছে নিবে।`
-          }]
+১. যদি ইউজার কোনো প্রোডাক্ট এড করতে চায়, অথবা কোনো ওজনের কথা বলে, তবে সেই অনুযায়ী ম্যাচ করে উত্তরের একদম শেষে PRODUCTS_JSON:[...] ফরম্যাটে ডাটা দিবে।
+২. ফরমেট: PRODUCTS_JSON:[{"id":"PRODUCT_ID","qty":1,"customizedText":"৪০০ গ্রাম","note":"পিস করে দিন"}]
+৩. ইউজারকে JSON বা PRODUCTS_JSON কোড নিয়ে কোনো কিছু মুখে বলবে না বা উল্লেখ করবে না। ইউজারকে শুধুমাত্র মুখে বলার টেক্সট উত্তরটিই দিবে, যেমন: 'আমি ৫ কেজি আলু এবং ৫০০ গ্রাম পেঁয়াজ আপনার কার্টে যোগ করে দিয়েছি। আর কিছু লাগবে?'
+৪. যদি ইউজার জাস্ট প্রশ্ন করে (যেমন: আলুর দাম কত?), তবে শুধু উত্তর দাও, কোনো PRODUCTS_JSON দেওয়ার প্রয়োজন নেই।`
+            },
+            ...conversationHistory,
+            { role: 'user', content: text }
+          ]
         })
       });
 
       const data = await res.json();
-      const content = data.choices?.[0]?.message?.content || '{"items":[]}';
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('Invalid AI response');
+      const content = data.choices?.[0]?.message?.content || 'কোনো পণ্য পাওয়া যায়নি।';
+      
+      // Update local history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', content: text },
+        { role: 'assistant', content: content }
+      ].slice(-8));
 
-      const parsed = JSON.parse(jsonMatch[0]);
-      const matched = (parsed.items || []).map(item => {
-        // Try finding by exact doc ID first
-        let product = products.find(p => p.id === item.id && p.stock !== 0);
+      // Extract PRODUCTS_JSON
+      const jsonMatch = content.match(/PRODUCTS_JSON:(\[.*?\])/s);
+      let matched = [];
+      if (jsonMatch) {
+        try {
+          const items = JSON.parse(jsonMatch[1]);
+          matched = items.map(item => {
+            let product = products.find(p => p.id === item.id && p.stock !== 0);
+            if (!product && item.name) {
+              product = products.find(p => p.name.toLowerCase() === item.name.toLowerCase() && p.stock !== 0);
+            }
+            if (!product && item.name) {
+              const itemWords = item.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
+              product = products.find(p => {
+                if (p.stock === 0) return false;
+                const pWords = p.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
+                const overlap = pWords.filter(w => itemWords.includes(w)).length;
+                return overlap >= Math.ceil(pWords.length * 0.7);
+              });
+            }
 
-        // If not found, try matching by exact name
-        if (!product && item.name) {
-          product = products.find(p => p.name.toLowerCase() === item.name.toLowerCase() && p.stock !== 0);
+            if (!product) return null;
+            return {
+              product,
+              quantity: Math.max(1, parseInt(item.quantity) || 1),
+              customizedText: item.customizedText || '',
+              note: item.note || ''
+            };
+          }).filter(Boolean);
+        } catch (e) {
+          console.warn('Failed to parse voice items JSON', e);
         }
-
-        // If still not found, try a fuzzy word match on name
-        if (!product && item.name) {
-          const itemWords = item.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
-          product = products.find(p => {
-            if (p.stock === 0) return false;
-            const pWords = p.name.toLowerCase().split(/[\s,()]+/).filter(w => w.length >= 2);
-            // Check if there is high overlap (at least 70%)
-            const overlap = pWords.filter(w => itemWords.includes(w)).length;
-            return overlap >= Math.ceil(pWords.length * 0.7);
-          });
-        }
-
-        if (!product) return null;
-
-        return { 
-          product, 
-          quantity: Math.max(1, parseInt(item.quantity) || 1), 
-          unit: item.unit || '', 
-          customizedText: item.customizedText || '',
-          note: item.note || '' 
-        };
-      }).filter(Boolean);
+      }
 
       setVoiceResult(matched);
 
+      // Perform actions based on extracted items
       if (matched.length > 0) {
-        // Automatically add matched products to the cart immediately
         matched.forEach(({ product, quantity, customizedText, note }) => {
           onAddToCart({ ...product, quantity, note: note || 'Voice Order', customizedText });
         });
-        speak(`${matched.length}টি পণ্য কার্টে যোগ করা হয়েছে।`);
+        
         try {
           const toast = (await import('react-hot-toast')).default;
           toast.success(`${matched.length}টি পণ্য কার্টে যোগ হয়েছে! 🎉`);
-        } catch (e) {
-          console.warn('Toast display failed:', e);
-        }
-      } else {
-        speak('কোনো পণ্য মিলে যায়নি। আবার বলুন।');
-        setError('পণ্য মিলে যায়নি। আরেকবার বলুন।');
+        } catch (e) {}
       }
+
+      // Voice back the response (stripping the JSON part)
+      const voiceText = content.replace(/PRODUCTS_JSON:[\s\S]*$/, '').trim();
+      speak(voiceText, lang, () => {
+        // Auto-restart microphone once bot finishes speaking
+        if (isVoiceActiveRef.current) {
+          restartListeningLoop();
+        }
+      });
+
     } catch (e) {
       setError(`AI সমস্যা: ${e.message}`);
-      speak('AI প্রসেস করতে সমস্যা হয়েছে।');
+      speak('দুঃখিত, এআই কানেকশন ফেইল করেছে। আবার বলুন।', lang, () => {
+        if (isVoiceActiveRef.current) restartListeningLoop();
+      });
     } finally {
       setIsProcessing(false);
     }
-  }, [products, shopId]);
+  }, [products, shopId, conversationHistory, lang, onAddToCart]);
 
-  const startVoice = useCallback(async () => {
-    if (!isSupported()) {
-      setError('আপনার ব্রাউজার ভয়েস সাপোর্ট করে না। Chrome ব্যবহার করুন।');
-      return;
-    }
-    setError(null);
+  const restartListeningLoop = useCallback(() => {
+    if (!isVoiceActiveRef.current) return;
     setTranscript('');
     setInterimTranscript('');
-    setVoiceResult(null);
+    setError(null);
 
     const rec = createRecognition({
       lang,
@@ -136,16 +149,25 @@ ${productList}
         setIsListening(false);
         setInterimTranscript('');
         const finalText = recRef.current?._finalText || '';
-        if (finalText) processWithAI(finalText);
+        if (finalText) {
+          processWithAI(finalText);
+        } else if (isVoiceActiveRef.current) {
+          // If ended with no text, restart listening to keep loop alive
+          restartListeningLoop();
+        }
       },
       onError: (msg) => {
         setIsListening(false);
-        setError(msg);
+        // Avoid looping on repeated error notifications
+        if (msg !== 'no-speech') {
+          setError(msg);
+        } else if (isVoiceActiveRef.current) {
+          restartListeningLoop();
+        }
       }
     });
 
     if (rec) {
-      // Track final text in ref
       rec.onresult = (event) => {
         let final = '';
         let interim = '';
@@ -162,33 +184,34 @@ ${productList}
       };
       recRef.current = rec;
       recRef.current._finalText = '';
-      
       setIsListening(true);
-      
-      // Start listening immediately
       startListening(rec);
     }
   }, [lang, processWithAI]);
 
+  const startVoice = useCallback(() => {
+    if (!isSupported()) {
+      setError('আপনার ব্রাউজার ভয়েস সাপোর্ট করে না। Chrome ব্যবহার করুন।');
+      return;
+    }
+    isVoiceActiveRef.current = true;
+    setConversationHistory([]);
+    restartListeningLoop();
+  }, [restartListeningLoop]);
+
   const stopVoice = useCallback(() => {
+    isVoiceActiveRef.current = false;
     stopListening(recRef.current);
     setIsListening(false);
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
   }, []);
-
-  const addVoiceResultToCart = useCallback(() => {
-    if (!voiceResult || voiceResult.length === 0) return;
-    voiceResult.forEach(({ product, quantity, customizedText, note }) => {
-      onAddToCart({ ...product, quantity, note: note || 'Voice Order', customizedText });
-    });
-    speak(`${voiceResult.length}টি পণ্য কার্টে যোগ হয়েছে!`);
-    setVoiceResult(null);
-    setTranscript('');
-  }, [voiceResult, onAddToCart]);
 
   return {
     isListening, transcript, interimTranscript, isProcessing,
     voiceResult, error, lang, setLang,
-    startVoice, stopVoice, addVoiceResultToCart,
+    startVoice, stopVoice,
     isVoiceSupported: isSupported()
   };
 }

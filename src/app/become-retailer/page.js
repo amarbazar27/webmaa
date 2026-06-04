@@ -56,11 +56,7 @@ export default function BecomeRetailerPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      toast.error('আবেদন করতে প্রথমে আপনার গুগল অ্যাকাউন্ট দিয়ে লগইন করুন।');
-      return;
-    }
-
+    
     const cleanPhone = phone.trim();
     if (!cleanPhone) {
       toast.error('দয়া করে আপনার সচল মোবাইল নম্বরটি লিখুন।');
@@ -72,14 +68,41 @@ export default function BecomeRetailerPage() {
       return;
     }
 
+    let activeUser = user;
+    let activeUserData = userData;
+
+    if (!activeUser) {
+      setLoginLoading(true);
+      const toastId = toast.loading('আবেদন করার জন্য প্রথমে লগইন সম্পন্ন করুন...');
+      try {
+        const loginResult = await loginWithGoogle();
+        if (loginResult?.user) {
+          activeUser = loginResult.user;
+          activeUserData = loginResult.userData;
+          forceUpdateAuth(loginResult.user, loginResult.userData);
+          toast.success('লগইন সফল হয়েছে! আবেদন জমা দেওয়া হচ্ছে...', { id: toastId });
+        } else {
+          toast.error('লগইন ব্যর্থ হয়েছে বা বাতিল করা হয়েছে।', { id: toastId });
+          setLoginLoading(false);
+          return;
+        }
+      } catch (err) {
+        toast.error('লগইন ব্যর্থ হয়েছে।', { id: toastId });
+        setLoginLoading(false);
+        return;
+      } finally {
+        setLoginLoading(false);
+      }
+    }
+
     setSubmitting(true);
     try {
       // Pass user auth info and phone to Firestore helper
       const reqUser = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || userData?.name || 'ব্যবহারকারী',
-        photoURL: user.photoURL || userData?.photoURL || ''
+        uid: activeUser.uid,
+        email: activeUser.email,
+        displayName: activeUser.displayName || activeUserData?.name || 'ব্যবহারকারী',
+        photoURL: activeUser.photoURL || activeUserData?.photoURL || ''
       };
       await addRetailerRequest(reqUser, cleanPhone);
       setSubmitted(true);
@@ -178,11 +201,11 @@ export default function BecomeRetailerPage() {
                 </p>
               </div>
 
-              {!user ? (
-                <div className="space-y-6">
+              <div className="space-y-6">
+                {!user ? (
                   <div className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl text-center space-y-4">
                     <p className="text-xs text-white/60 font-bold leading-relaxed">
-                      আবেদন জমা দিতে প্রথমে আপনার সঠিক গুগল অ্যাকাউন্ট দিয়ে লগইন সম্পন্ন করুন।
+                      আবেদন জমা দিতে প্রথমে আপনার গুগল অ্যাকাউন্ট দিয়ে লগইন সম্পন্ন করুন।
                     </p>
                     <button
                       type="button"
@@ -200,23 +223,7 @@ export default function BecomeRetailerPage() {
                       )}
                     </button>
                   </div>
-                  
-                  {/* Disabled Mobile Input Mockup to give visual feedback */}
-                  <div className="space-y-2 opacity-40 pointer-events-none">
-                    <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                      <Phone size={12} /> মোবাইল নম্বর দিন
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="01XXXXXXXXX" 
-                      disabled
-                      className="w-full px-5 py-3.5 rounded-2xl border border-white/10 bg-white/5 text-white placeholder-white/20 text-sm font-bold" 
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Logged in User Badge */}
+                ) : (
                   <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center gap-3 animate-fade-in">
                     <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center">
                       {user.photoURL ? (
@@ -230,40 +237,40 @@ export default function BecomeRetailerPage() {
                       <p className="text-[10px] font-bold text-white/30 truncate max-w-[200px]">{user.email}</p>
                     </div>
                   </div>
+                )}
 
-                  {/* Active Phone Number Box */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                      <Phone size={12} /> মোবাইল নম্বর দিন
-                    </label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
-                      placeholder="01XXXXXXXXX"
-                      required
-                      className="w-full px-5 py-3.5 rounded-2xl border border-white/10 focus:border-purple-500 bg-white/5 text-white placeholder-white/20 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
-                    />
-                    <p className="text-[10px] text-white/30 font-bold uppercase tracking-wider px-1">
-                      * এই নম্বরে অ্যাডমিন প্যানেল থেকে আপনার সাথে যোগাযোগ করা হবে।
-                    </p>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submitting || checkingExisting}
-                    className="w-full py-4.5 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-98 disabled:opacity-50"
-                  >
-                    {submitting ? (
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                    ) : (
-                      <>
-                        <Sparkles size={14} /> আবেদন সাবমিট করুন (Submit Request)
-                      </>
-                    )}
-                  </button>
+                {/* Always show active phone number box and submission button */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                    <Phone size={12} /> মোবাইল নম্বর দিন
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
+                    placeholder="01XXXXXXXXX"
+                    required
+                    className="w-full px-5 py-3.5 rounded-2xl border border-white/10 focus:border-purple-500 bg-white/5 text-white placeholder-white/20 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
+                  />
+                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-wider px-1">
+                    * এই নম্বরে দাঁড়িপাল্লা এডমিন প্যানেল থেকে আপনার সাথে যোগাযোগ করা হবে।
+                  </p>
                 </div>
-              )}
+
+                <button
+                  type="submit"
+                  disabled={submitting || checkingExisting}
+                  className="w-full py-4.5 bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-98 disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <Sparkles size={14} /> আবেদন সাবমিট করুন (Submit Request)
+                    </>
+                  )}
+                </button>
+              </div>
 
               {/* Security Badge */}
               <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-4">

@@ -5,11 +5,11 @@ import { useAuth } from '@/context/AuthContext';
 import { loginWithGoogle } from '@/lib/auth';
 import { uploadImage } from '@/lib/storage';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Star, Camera, Loader2, User, CheckCircle2, MessageSquare, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Star, Camera, Loader2, User, CheckCircle2, MessageSquare, ShoppingBag, Edit2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ReviewsPage() {
-  const { user, forceUpdateAuth } = useAuth();
+  const { user, userData, forceUpdateAuth } = useAuth();
   
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -22,6 +22,14 @@ export default function ReviewsPage() {
   
   const [myOrderCount, setMyOrderCount] = useState(0);
   const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Edit states
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editText, setEditText] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const isSuperAdmin = userData?.role === 'superadmin';
   
   // Load reviews on mount
   const fetchReviews = async () => {
@@ -149,6 +157,61 @@ export default function ReviewsPage() {
       toast.error(err.message || 'রিভিউ জমা দিতে ব্যর্থ হয়েছে।', { id: toastId });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const startEditing = (review) => {
+    setEditingReviewId(review.id);
+    setEditRating(review.rating);
+    setEditText(review.text || '');
+  };
+
+  const handleSaveEdit = async (reviewId) => {
+    setEditSubmitting(true);
+    const toastId = toast.loading('আপডেট করা হচ্ছে...');
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch('/api/platform-review', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          reviewId,
+          rating: editRating,
+          text: editText.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      toast.success('রিভিউ আপডেট সফল হয়েছে! 🎉', { id: toastId });
+      setEditingReviewId(null);
+      fetchReviews();
+    } catch (err) {
+      toast.error(err.message || 'আপডেট ব্যর্থ হয়েছে।', { id: toastId });
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!confirm('রিভিউটি ডিলিট করতে চান?')) return;
+    const toastId = toast.loading('মুছে ফেলা হচ্ছে...');
+    try {
+      const idToken = await user.getIdToken();
+      const res = await fetch(`/api/platform-review?reviewId=${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      toast.success('রিভিউটি সফলভাবে মুছে ফেলা হয়েছে!', { id: toastId });
+      fetchReviews();
+    } catch (err) {
+      toast.error(err.message || 'মুছে ফেলতে সমস্যা হয়েছে।', { id: toastId });
     }
   };
 
@@ -358,26 +421,89 @@ export default function ReviewsPage() {
                       </div>
                     </div>
                     
-                    {/* Stars Display */}
-                    <div className="flex gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star 
-                          key={i} 
-                          size={12} 
-                          className={`${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-white/10'}`} 
-                        />
-                      ))}
+                    {/* Stars & Admin Controls */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star 
+                            key={i} 
+                            size={12} 
+                            className={`${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-white/10'}`} 
+                          />
+                        ))}
+                      </div>
+                      {isSuperAdmin && (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => startEditing(review)}
+                            className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-purple-400 transition-colors cursor-pointer"
+                            title="Edit Review"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="p-1 hover:bg-white/10 rounded text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                            title="Delete Review"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <p className="text-xs text-white/80 leading-relaxed font-bold">{review.text}</p>
-
-                  {review.screenshotUrl && (
-                    <div className="relative max-w-sm rounded-2xl overflow-hidden border border-white/5 aspect-[4/3] bg-black/40">
-                      <a href={review.screenshotUrl} target="_blank" rel="noreferrer" className="block w-full h-full">
-                        <img src={review.screenshotUrl} alt="Review attachment" className="w-full h-full object-cover hover:scale-102 transition-transform duration-500" />
-                      </a>
+                  {editingReviewId === review.id ? (
+                    <div className="bg-white/5 border border-purple-500/20 rounded-2xl p-4 mt-3 space-y-3">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-black text-white/50 mr-2">নতুন রেটিং:</span>
+                        {[1,2,3,4,5].map(i => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setEditRating(i)}
+                            className="p-0.5 transition-transform hover:scale-110 cursor-pointer"
+                          >
+                            <Star size={18} className={i <= editRating ? 'fill-amber-400 text-amber-400' : 'text-white/10'} />
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        rows={2}
+                        maxLength={1000}
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                        className="w-full text-xs font-bold text-white p-3 rounded-lg bg-black/40 border border-white/10 focus:border-purple-500 transition-colors resize-none outline-none"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setEditingReviewId(null)}
+                          className="px-3 py-1.5 bg-white/10 text-white rounded-lg text-[10px] font-black hover:bg-white/20 transition-colors cursor-pointer"
+                        >
+                          বাতিল
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveEdit(review.id)}
+                          disabled={editSubmitting || editRating === 0}
+                          className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-[10px] font-black hover:bg-purple-700 transition-colors flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                        >
+                          {editSubmitting ? <Loader2 size={10} className="animate-spin" /> : 'সংরক্ষণ'}
+                        </button>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      <p className="text-xs text-white/80 leading-relaxed font-bold">{review.text}</p>
+                      {review.screenshotUrl && (
+                        <div className="relative max-w-sm rounded-2xl overflow-hidden border border-white/5 aspect-[4/3] bg-black/40">
+                          <a href={review.screenshotUrl} target="_blank" rel="noreferrer" className="block w-full h-full">
+                            <img src={review.screenshotUrl} alt="Review attachment" className="w-full h-full object-cover hover:scale-102 transition-transform duration-500" />
+                          </a>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))

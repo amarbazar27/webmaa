@@ -14,8 +14,8 @@ import { useState, useEffect } from 'react';
 import { Bell, BellOff, X, Sparkles } from 'lucide-react';
 import { isPushSupported, getPermissionStatus, requestPermission, getFCMToken } from '@/lib/fcm';
 
-const STORAGE_KEY = 'webmaa_notif_permission_asked';
-const ALLOWED_KEY = 'webmaa_notif_allowed';
+const STORAGE_KEY = 'daripallah_notif_permission_asked';
+const ALLOWED_KEY = 'daripallah_notif_allowed';
 // কতদিন পর আবার জিজ্ঞেস করবে (deny করলে)
 const ASK_AGAIN_DAYS = 3;
 

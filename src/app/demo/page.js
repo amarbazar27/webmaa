@@ -74,10 +74,10 @@ export default function DemoPage() {
       <header className="sticky top-0 z-40 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-purple-500/30 border border-white/10">W</div>
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg shadow-purple-500/30 border border-white/10">D</div>
             <div>
               <h1 className="text-lg font-black tracking-tight text-white">TechVault Store</h1>
-              <p className="text-[9px] font-bold text-purple-400 uppercase tracking-[0.2em]">Powered by Webmaa</p>
+              <p className="text-[9px] font-bold text-purple-400 uppercase tracking-[0.2em]">Powered by Daripallah</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -89,7 +89,7 @@ export default function DemoPage() {
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
             <Link href="/" className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-colors">
-              Back to Webmaa
+              Back to Daripallah
             </Link>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function DemoPage() {
               <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">at Your Fingertips.</span>
             </h2>
             <p className="text-white/40 text-lg font-medium max-w-xl mb-8">
-              This is a fully functional demo store showcasing Webmaa&apos;s capabilities.
+              This is a fully functional demo store showcasing Daripallah&apos;s capabilities.
               Create your own store like this in under 2 minutes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -201,7 +201,7 @@ export default function DemoPage() {
         </div>
       </div>
 
-      {/* Why Webmaa Section */}
+      {/* Why Daripallah Section */}
       <div className="border-t border-white/[0.06] py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
@@ -249,8 +249,8 @@ export default function DemoPage() {
       <footer className="border-t border-white/[0.06] py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center text-white font-black text-sm">W</div>
-            <span className="text-sm font-bold text-white/40">TechVault Demo by Webmaa</span>
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center text-white font-black text-sm">D</div>
+            <span className="text-sm font-bold text-white/40">TechVault Demo by Daripallah</span>
           </div>
           <div className="flex items-center gap-6 text-[10px] font-bold text-white/20 uppercase tracking-widest">
             <span className="flex items-center gap-1"><Shield size={12} /> Secure</span>
@@ -258,7 +258,7 @@ export default function DemoPage() {
             <span className="flex items-center gap-1"><Headphones size={12} /> 24/7 Support</span>
           </div>
           <p className="text-[10px] font-bold text-white/15 uppercase tracking-widest">
-            &copy; {new Date().getFullYear()} Webmaa Platform
+            &copy; {new Date().getFullYear()} Daripallah Platform
           </p>
         </div>
       </footer>

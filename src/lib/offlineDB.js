@@ -3,7 +3,7 @@
  * Stores pending orders locally so they survive network loss, tab close, and reload.
  */
 
-const DB_NAME = 'webmaa_offline_db';
+const DB_NAME = 'daripallah_offline_db';
 const DB_VERSION = 1;
 const PENDING_STORE = 'pending_orders';
 const CART_STORE = 'offline_cart';

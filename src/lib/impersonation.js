@@ -8,7 +8,7 @@
  * Audit: Firestore impersonation_logs collection
  */
 
-const IMPERSONATION_KEY = 'webmaa_impersonation';
+const IMPERSONATION_KEY = 'daripallah_impersonation';
 
 /**
  * ইম্পার্সোনেশন শুরু করুন

@@ -192,18 +192,47 @@ export async function PATCH(req) {
       .collection('shops').doc(shopId)
       .collection('reviews').doc(reviewId);
 
+    const reviewSnap = await reviewRef.get();
+    if (!reviewSnap.exists) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+    const reviewData = reviewSnap.data();
+    const isOwnReview = reviewData.uid === decoded.uid;
+
+    if (!isOwnReview && !isOwner && !isSuperAdmin && !isStaff) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    }
+
     if (action === 'delete') {
       await reviewRef.delete();
       return NextResponse.json({ success: true, deleted: true });
     }
 
-    if (action === 'pin') {
-      await reviewRef.update({ pinned: true });
-    } else if (action === 'unpin') {
-      await reviewRef.update({ pinned: false });
+    if (action === 'edit') {
+      const { rating, text } = body;
+      if (!rating || rating < 1 || rating > 5) {
+        return NextResponse.json({ error: 'rating (1-5) required' }, { status: 400 });
+      }
+      if (text && text.length > 500) {
+        return NextResponse.json({ error: 'Review text too long (max 500)' }, { status: 400 });
+      }
+      await reviewRef.update({
+        rating: Math.round(rating),
+        text: (text || '').trim().slice(0, 500),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return NextResponse.json({ success: true, edited: true });
     }
 
-    return NextResponse.json({ success: true });
+    if (action === 'pin' || action === 'unpin') {
+      if (!isOwner && !isSuperAdmin && !isStaff) {
+        return NextResponse.json({ error: 'Not authorized to pin reviews' }, { status: 403 });
+      }
+      await reviewRef.update({ pinned: action === 'pin' });
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (err) {
     console.error('[Review PATCH]', err);
     return NextResponse.json({ error: 'Failed to update review' }, { status: 500 });

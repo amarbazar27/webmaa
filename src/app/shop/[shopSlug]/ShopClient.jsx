@@ -31,6 +31,22 @@ import NotificationBanner from '@/components/shop/NotificationBanner';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import NotificationInbox from '@/components/shared/NotificationInbox';
 
+// Product detail modal component imports
+import ProductImage from '@/features/product/components/ProductImage';
+import ProductInfo from '@/features/product/components/ProductInfo';
+import ProductVariants from '@/features/product/components/ProductVariants';
+import LegacySizes from '@/features/product/components/LegacySizes';
+import ProductQuantity from '@/features/product/components/ProductQuantity';
+import AiCustomization from '@/features/product/components/AiCustomization';
+import SmartCalculator from '@/features/product/components/SmartCalculator';
+import ProductActions from '@/features/product/components/ProductActions';
+
+import { sanitizeProductData } from '@/features/product/utils/safeObjects';
+import { calculateBasePrice } from '@/features/product/utils/price';
+import { handleAiCalculate } from '@/features/product/actions/aiActions';
+import { useProductLogic } from '@/features/product/hooks/useProductLogic';
+
+
 
 // ══════════════════════════════════════════════════════════════════
 // 🎨 SHOP THEME ENGINE — WCAG AA contrast-safe presets
@@ -288,12 +304,57 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   const CART_KEY = `cart_${initialShop.id}`;
   const [cart, setCart] = useState([]);
+  const [selectedProductForModal, setSelectedProductForModal] = useState(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      let initialCart = [];
       const local = localStorage.getItem(CART_KEY);
       if (local) {
-        setCart(JSON.parse(local));
+        initialCart = JSON.parse(local);
+      }
+      
+      // Check for importCart in URL query string
+      const searchParams = new URLSearchParams(window.location.search);
+      const importCartParam = searchParams.get('importCart');
+      if (importCartParam) {
+        try {
+          const importedItems = JSON.parse(importCartParam);
+          if (Array.isArray(importedItems)) {
+            importedItems.forEach(item => {
+              const uniqueId = item.id || `${item.productId}_${Date.now()}`;
+              const existingIdx = initialCart.findIndex(i => 
+                i.productId === item.productId && 
+                (i.customizedText || '') === (item.customizedText || '')
+              );
+              if (existingIdx > -1) {
+                initialCart[existingIdx].quantity += (Number(item.quantity) || 1);
+              } else {
+                initialCart.push({
+                  id: uniqueId,
+                  productId: item.productId,
+                  name: item.name,
+                  price: item.price,
+                  quantity: Number(item.quantity) || 1,
+                  imageUrl: item.imageUrl || '',
+                  note: item.note || '',
+                  customizedText: item.customizedText || ''
+                });
+              }
+            });
+            // Update URL query parameters cleanly
+            const url = new URL(window.location.href);
+            url.searchParams.delete('importCart');
+            window.history.replaceState({}, '', url.toString());
+            toast.success('কার্ট সফলভাবে সিঙ্ক হয়েছে! 🎉');
+          }
+        } catch (e) {
+          console.error('Failed to import cart:', e);
+        }
+      }
+      
+      if (initialCart.length > 0) {
+        setCart(initialCart);
       } else {
         loadCartIDB(initialShop.id).then(items => {
           if (items && items.length > 0) setCart(items);
@@ -628,7 +689,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   // ── AI Chat ────────────────────────────────────
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, role: 'bot', text: `আসসালামু আলাইকুম! আমি ${shop.aiConfig?.botName || 'Webmaa AI'}। ${shop.shopName}-এ আপনাকে স্বাগতম। কোনো প্রশ্ন থাকলে করুন!` }
+    { id: 1, role: 'bot', text: `আসসালামু আলাইকুম! আমি ${shop.aiConfig?.botName || 'Daripallah AI'}। ${shop.shopName}-এ আপনাকে স্বাগতম। কোনো প্রশ্ন থাকলে করুন!` }
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isAiTyping, setIsAiTyping] = useState(false);
@@ -1229,7 +1290,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       </div>
       <div style="margin-top:20px;text-align:center;border-top:1px dashed #ccc;padding-top:10px">
         <p style="font-size:10px;font-weight:bold;margin:0">ধন্যবাদ, আবার আসবেন!</p>
-        <p style="font-size:8px;color:#888;margin:2px 0 0">Powered by Webmaa AI</p>
+        <p style="font-size:8px;color:#888;margin:2px 0 0">Powered by Daripallah AI</p>
       </div>
     `;
     document.body.appendChild(el);
@@ -1771,7 +1832,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     className="relative h-44 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
                     onClick={() => {
                       trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
-                      router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}`);
+                      setSelectedProductForModal(product);
                     }}
                   >
                     {product.imageUrl ? (
@@ -1800,7 +1861,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                   {/* Info + Actions */}
                   <div className="p-3.5 sm:p-4 flex flex-col flex-1 bg-white">
-                    <h3 className="font-extrabold text-slate-900 text-[14px] leading-tight group-hover:text-purple-700 transition-colors line-clamp-2 mb-3">{product.name}</h3>
+                    <h3 
+                      onClick={() => {
+                        trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
+                        setSelectedProductForModal(product);
+                      }}
+                      className="font-extrabold text-slate-900 text-[14px] leading-tight group-hover:text-purple-700 transition-colors line-clamp-2 mb-3 cursor-pointer"
+                    >
+                      {product.name}
+                    </h3>
 
                     {/* Cart Controls */}
                     <div className="mt-auto space-y-2">
@@ -1833,7 +1902,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       )}
                       {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
                         <button
-                          onClick={() => router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${product.id}?customize=true`)}
+                          onClick={() => setSelectedProductForModal(product)}
                           className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"
                         >
                           <Sparkles size={13} /> কাস্টমাইজ
@@ -1871,9 +1940,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               {shop.slogan && (
                 <p className="text-slate-400 text-sm font-medium leading-relaxed italic">"{shop.slogan}"</p>
               )}
-              <div className="flex gap-1">
-                {[1,2,3,4,5].map(i => <Star key={i} size={14} className="text-amber-400 fill-amber-400" />)}
-                <span className="text-xs text-slate-500 font-bold ml-1">বিশ্বস্ত সেবা</span>
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1">
+                  {[1,2,3,4,5].map(i => <Star key={i} size={14} className="text-amber-400 fill-amber-400" />)}
+                  <span className="text-xs text-slate-500 font-bold ml-1">বিশ্বস্ত সেবা</span>
+                </div>
+                <a href="https://daripallah.com/reviews" target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:text-purple-300 font-black underline flex items-center gap-1">
+                  Platform Reviews <ExternalLink size={10} />
+                </a>
               </div>
             </div>
 
@@ -1966,8 +2040,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-slate-600 text-xs font-black uppercase tracking-[0.25em] flex flex-col gap-1 md:text-left text-center">
               <span>© {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।</span>
-              <span className="text-[10px] text-purple-400 normal-case font-extrabold tracking-normal">
-                Created by <a href="https://daripallah.com" target="_blank" rel="noreferrer" className="hover:underline">daripallah.com</a>. Want to create like this website? <a href="https://daripallah.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-300">Click here</a> | <a href="https://daripallah.com/reviews" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-300">Platform Reviews</a>
+              <span className="text-xs text-purple-300 font-bold normal-case tracking-normal block mt-2">
+                🚀 Want to launch your own professional online store in minutes just like this? <a href="https://daripallah.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
               </span>
             </p>
             <div className="flex items-center gap-2">
@@ -2330,7 +2404,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
-                      <button onClick={() => { trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/product/${item.productId || item.id}`); setIsCartOpen(false); }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>
+                      <button onClick={() => { 
+                        trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); 
+                        const originalProduct = products.find(p => p.id === (item.productId || item.id));
+                        if (originalProduct) {
+                          setSelectedProductForModal(originalProduct);
+                        } else {
+                          setSelectedProductForModal(item);
+                        }
+                        setIsCartOpen(false); 
+                      }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>
                       <button onClick={() => removeFromCart(item.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-lg" title="Remove"><X size={16} strokeWidth={2.5} /></button>
                     </div>
                 </div>
@@ -2693,6 +2776,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       )}
 
+      {selectedProductForModal && (
+        <ShopProductDetailModal
+          product={selectedProductForModal}
+          shop={shop}
+          onClose={() => setSelectedProductForModal(null)}
+          cart={cart}
+          setCart={setCart}
+          addToCart={addToCart}
+        />
+      )}
+
       <style dangerouslySetInnerHTML={{ __html: `
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
@@ -2700,6 +2794,149 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         @keyframes slide-in { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
         .animate-slide-in { animation: slide-in 0.3s ease-out; }
       ` }} />
+    </div>
+  );
+}
+
+// ── Shop Product Details Modal Component ──
+function ShopProductDetailModal({ product, shop, onClose, cart, setCart, addToCart }) {
+  if (!product) return null;
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  return (
+    <div 
+      onClick={handleBackdropClick} 
+      className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fade-in"
+    >
+      <div className="relative w-full md:w-3/4 max-w-5xl md:h-[75vh] bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden shadow-2xl p-6 sm:p-8 flex flex-col gap-6 animate-scale-in my-8 max-h-[90vh] overflow-y-auto scrollbar-thin text-slate-900">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all cursor-pointer z-10 animate-fade-in"
+        >
+          <X size={20} />
+        </button>
+
+        <ShopProductDetailInner 
+          shop={shop} 
+          product={product} 
+          onClose={onClose}
+          cart={cart}
+          setCart={setCart}
+          addToCart={addToCart}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCart }) {
+  const { product: safeProduct, shop: safeShop } = sanitizeProductData(product, shop);
+  const logic = useProductLogic(safeShop, safeProduct);
+  
+  let basePrice = 0;
+  try {
+    basePrice = calculateBasePrice(safeProduct, logic.isLegacySizes, logic.selectedSize, logic.selectedVariants);
+  } catch (err) {
+    console.error('[ProductDetail] Price calculation error:', err);
+  }
+  
+  const safeBasePrice = Number(basePrice) || 0;
+  const safeQty = Number(logic.qty) || 1;
+  const totalPrice = logic.aiPrice !== null ? Number(logic.aiPrice) || 0 : (safeBasePrice * safeQty).toFixed(0);
+
+  const handleModalAddToCart = () => {
+    try {
+      if (Number(safeProduct.stock) === 0) return toast.error('স্টক নেই');
+
+      const safeQty = Number(logic.qty) || 1;
+      const safeAiPrice = logic.aiPrice !== null ? Number(logic.aiPrice) : null;
+      const unitPrice = safeAiPrice !== null ? safeAiPrice / safeQty : safeBasePrice;
+      const finalPrice = safeAiPrice !== null ? safeAiPrice : safeBasePrice * safeQty;
+
+      if (finalPrice <= 0 || isNaN(finalPrice)) return toast.error('মূল্য সঠিক নয়');
+
+      let variantString = logic.isLegacySizes ? (logic.selectedSize?.label || '') : 
+        Object.entries(logic.selectedVariants || {}).filter(([n, o]) => n && o).map(([n, o]) => `${n}: ${o.label}`).join(', ');
+
+      const displayName = safeProduct.name + (variantString ? ` (${variantString})` : '');
+
+      const cartItem = {
+        id: `${safeProduct.id}_${Date.now()}`,
+        productId: safeProduct.id,
+        name: displayName,
+        price: unitPrice,
+        clientPrice: unitPrice,
+        quantity: safeQty,
+        imageUrl: safeProduct.imageUrl || '',
+        note: logic.customerNote || '',
+        isCustomized: safeAiPrice !== null || !!logic.customerNote || !!logic.customInput,
+        customizedText: logic.customInput || '',
+        variantsText: variantString || ''
+      };
+
+      // Add to store cart
+      let updatedCart = [...cart];
+      const existingIndex = updatedCart.findIndex(item => 
+        item.productId === safeProduct.id && 
+        (item.customizedText || '') === (cartItem.customizedText || '')
+      );
+
+      if (existingIndex > -1) {
+        updatedCart[existingIndex].quantity += safeQty;
+      } else {
+        updatedCart.push(cartItem);
+      }
+      setCart(updatedCart);
+      toast.success(`${safeProduct.name} কার্টে যোগ হয়েছে! 🛒`);
+      onClose();
+    } catch (err) {
+      console.error('[ModalAddToCart] Error:', err);
+      toast.error('কার্টে যোগ করতে সমস্যা হয়েছে');
+    }
+  };
+
+  return (
+    <div className="space-y-6 text-slate-900 pr-1 scrollbar-thin overflow-y-auto flex-1">
+      <div className="flex justify-between items-center border-b pb-4">
+        <div>
+          <h1 className="font-black text-xl text-slate-900 truncate">{safeProduct.name}</h1>
+          <p className="text-xs text-slate-500 font-bold">🏪 {safeShop.shopName}</p>
+        </div>
+      </div>
+      
+      <div className="space-y-6 pb-6 text-left">
+        <Suspense fallback={<div className="h-72 bg-slate-200 animate-pulse rounded-3xl w-full"></div>}>
+          <ProductImage product={safeProduct} currentPrice={safeBasePrice} />
+        </Suspense>
+        
+        <ProductInfo product={safeProduct} currentPrice={safeBasePrice} />
+        
+        <ProductVariants variants={logic.variants} selectedVariants={logic.selectedVariants} setSelectedVariants={logic.setSelectedVariants} onResetAi={() => logic.setAiPrice(null)} />
+        <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
+        
+        <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
+        
+        {safeShop?.aiConfig?.smartCalcEnabled ? (
+          <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
+        ) : safeProduct?.allowCustomize ? (
+          <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
+        ) : null}
+        
+        <ProductActions 
+          product={safeProduct} 
+          customerNote={logic.customerNote} 
+          setCustomerNote={logic.setCustomerNote} 
+          totalPrice={totalPrice} 
+          onAddToCart={handleModalAddToCart} 
+        />
+        <ReviewSection shopId={safeShop?.id} />
+      </div>
     </div>
   );
 }

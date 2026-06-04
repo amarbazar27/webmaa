@@ -1,7 +1,7 @@
 /**
  * FCM (Firebase Cloud Messaging) Utility — Client Side
  * Handles: token generation, permission request, token refresh, retry logic
- * Works on: webmaa.app/shop/* AND custom domains like messerbazar.com
+ * Works on: daripallah.com/shop/* AND custom domains like messerbazar.com
  * SSR-safe: all browser APIs guarded with typeof window checks
  */
 
@@ -275,7 +275,7 @@ function setupForegroundHandler(messaging) {
     onMessage(messaging, (payload) => {
       log('📩 Foreground message received:', payload);
 
-      const { title = 'Webmaa', body = '' } = payload.notification || {};
+      const { title = 'Daripallah', body = '' } = payload.notification || {};
 
       // Show browser Notification if app is in background tab
       if (document.visibilityState === 'hidden' || !document.hasFocus()) {
@@ -284,7 +284,7 @@ function setupForegroundHandler(messaging) {
             body,
             icon: '/logo.png',
             badge: '/logo.png',
-            tag: 'webmaa-foreground',
+            tag: 'daripallah-foreground',
           });
         }
         return;

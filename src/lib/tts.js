@@ -7,7 +7,7 @@
 
 let currentUtterance = null;
 
-export function speak(text, lang = 'bn-BD') {
+export function speak(text, lang = 'bn-BD', onEnd = null) {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
@@ -15,6 +15,11 @@ export function speak(text, lang = 'bn-BD') {
   utter.rate = 0.95;
   utter.pitch = 1;
   utter.volume = 1;
+
+  if (onEnd) {
+    utter.onend = onEnd;
+    utter.onerror = onEnd;
+  }
 
   // Try to find a Bengali voice
   const voices = window.speechSynthesis.getVoices();

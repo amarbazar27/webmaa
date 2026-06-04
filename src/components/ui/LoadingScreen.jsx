@@ -168,19 +168,26 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
               boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
             }}
           >
-            {shop?.logoUrl ? (
-              <img src={shop.logoUrl} alt={shop.shopName || 'Store'} className="w-full h-full object-contain p-2" />
+            {shop?.logoUrl || '/logo.png' ? (
+              <img 
+                src={shop?.logoUrl || '/logo.png'} 
+                alt={shop?.shopName || 'Daripallah'} 
+                className="w-full h-full object-contain p-2" 
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
             ) : (
               <div className="text-white font-black">
                 <svg width="54" height="54" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
-                    <linearGradient id="wm-grad-L" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id="dp-grad-L" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#A5B4FC" />
                       <stop offset="100%" stopColor="#F472B6" />
                     </linearGradient>
                   </defs>
-                  <circle cx="50" cy="50" r="45" fill="url(#wm-grad-L)" opacity="0.1" />
-                  <text x="50" y="65" textAnchor="middle" fill="url(#wm-grad-L)" fontSize="50" fontWeight="900">{shop?.shopName ? shop.shopName.charAt(0).toUpperCase() : 'W'}</text>
+                  <circle cx="50" cy="50" r="45" fill="url(#dp-grad-L)" opacity="0.1" />
+                  <text x="50" y="65" textAnchor="middle" fill="url(#dp-grad-L)" fontSize="50" fontWeight="900">{shop?.shopName ? shop.shopName.charAt(0).toUpperCase() : 'D'}</text>
                 </svg>
               </div>
             )}

@@ -113,3 +113,83 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 });
   }
 }
+
+// DELETE: Delete a platform review (superadmin only)
+export async function DELETE(req) {
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let decoded;
+    try {
+      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Verify caller is superadmin
+    const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+    const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'superadmin';
+
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const reviewId = searchParams.get('reviewId');
+
+    if (!reviewId) {
+      return NextResponse.json({ error: 'reviewId is required' }, { status: 400 });
+    }
+
+    await adminDb.collection('platform_reviews').doc(reviewId).delete();
+    return NextResponse.json({ success: true, deleted: true });
+  } catch (err) {
+    console.error('[Platform Review DELETE]', err);
+    return NextResponse.json({ error: 'Failed to delete review' }, { status: 500 });
+  }
+}
+
+// PATCH: Edit/Update a platform review (superadmin only)
+export async function PATCH(req) {
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let decoded;
+    try {
+      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Verify caller is superadmin
+    const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+    const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'superadmin';
+
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { reviewId, rating, text } = body;
+
+    if (!reviewId || !rating || rating < 1 || rating > 5) {
+      return NextResponse.json({ error: 'reviewId and rating (1-5) required' }, { status: 400 });
+    }
+
+    await adminDb.collection('platform_reviews').doc(reviewId).update({
+      rating: Math.round(rating),
+      text: (text || '').trim().slice(0, 1000)
+    });
+
+    return NextResponse.json({ success: true, edited: true });
+  } catch (err) {
+    console.error('[Platform Review PATCH]', err);
+    return NextResponse.json({ error: 'Failed to update review' }, { status: 500 });
+  }
+}
