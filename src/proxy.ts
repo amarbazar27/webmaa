@@ -29,6 +29,12 @@ const BYPASS_HOSTS = [
   '127.0.0.1',
 ];
 
+const RESERVED_KEYWORDS = [
+  'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
+  'reviews', 'become-retailer',
+  '_next', 'robots.txt', 'sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
+];
+
 /**
  * hostname normalize করে:
  *  - www. সরায়
@@ -48,8 +54,36 @@ function normalizeHost(host: string): string {
  */
 function isBypassHost(host: string): boolean {
   return BYPASS_HOSTS.some(
-    (bypass) => host === bypass || host.endsWith('.' + bypass)
+    (bypass) => host === bypass || host === 'www.' + bypass
   );
+}
+
+/**
+ * হোস্টনেম থেকে টেন্যান্ট স্লাগ এক্সট্র্যাক্ট করে (যেমন: messerbazar.daripallah.com -> messerbazar)
+ */
+function getTenantSlug(host: string): string | null {
+  const parts = host.split('.');
+  
+  if (host.endsWith('.localhost')) {
+    if (parts.length >= 2 && parts[0] !== 'www') {
+      return parts[0];
+    }
+    return null;
+  }
+  
+  const isPlatformDomain = host.endsWith('.daripallah.com') || host.endsWith('.webmaa.vercel.app');
+  
+  if (isPlatformDomain) {
+    if (parts.length === 3) {
+      return parts[0] === 'www' ? null : parts[0];
+    }
+    if (parts.length > 3) {
+      const nonWwwParts = parts.filter(p => p !== 'www');
+      return nonWwwParts[0] || null;
+    }
+  }
+  
+  return null;
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
@@ -88,17 +122,29 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
-  // ── বাইপাস: Webmaa নিজের ডোমেইন বা localhost ──────────────────────────
+  // ── Common static bypass paths for all hosts ──────────────────────────
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/robots') ||
+    pathname.startsWith('/sitemap') ||
+    pathname.startsWith('/sw.') ||
+    pathname.startsWith('/manifest') ||
+    pathname.startsWith('/not-found-domain') ||
+    pathname.startsWith('/icons/') ||
+    pathname.startsWith('/__/') ||
+    pathname.startsWith('/logo.png') ||
+    pathname.startsWith('/favicon.ico')
+  ) {
+    return applySecurityHeaders(NextResponse.next(), pathname);
+  }
+
+  const pathParts = pathname.split('/').filter(Boolean);
+  const firstSegment = pathParts[0] || '';
+
+  // ── কেস ১: বাইপাস হোস্ট (যেমন main site `daripallah.com` বা `localhost`) ──────────────────────────
   if (!host || isBypassHost(host)) {
-    const pathParts = pathname.split('/').filter(Boolean);
     if (pathParts.length >= 1) {
-      const firstSegment = pathParts[0];
-      const reservedKeywords = [
-        'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
-        'reviews', 'become-retailer',
-        '_next', 'robots.txt', 'sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
-      ];
-      if (!reservedKeywords.includes(firstSegment)) {
+      if (!RESERVED_KEYWORDS.includes(firstSegment)) {
         // Rewrite /[shopSlug]/... to /shop/[shopSlug]/...
         const remainingPath = pathParts.slice(1).join('/');
         const targetPath = `/shop/${firstSegment}${remainingPath ? '/' + remainingPath : ''}`;
@@ -111,26 +157,31 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
-  // ── এই পাথগুলো সরাসরি পার হবে — domain lookup লাগবে না ──────────────
-  if (
-    pathname.startsWith('/shop/') ||
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/robots') ||
-    pathname.startsWith('/sitemap') ||
-    pathname.startsWith('/sw.') ||
-    pathname.startsWith('/manifest') ||
-    pathname.startsWith('/not-found-domain') ||
-    pathname.startsWith('/icons/') ||
-    pathname.startsWith('/__/') ||
-    pathname.startsWith('/logo.png')
-  ) {
+  // ── কেস ২: টেন্যান্ট সাবডোমেন (যেমন `messerbazar.daripallah.com`) ──────────────────────────
+  const tenantSlug = getTenantSlug(rawHost); // Use rawHost to split subdomains correctly
+  if (tenantSlug) {
+    if (RESERVED_KEYWORDS.includes(firstSegment)) {
+      return applySecurityHeaders(NextResponse.next(), pathname);
+    }
+    // Rewrite /[path] to /shop/[tenantSlug]/[path]
+    const targetPath = `/shop/${tenantSlug}${pathname === '/' ? '' : pathname}`;
+    const rewriteUrl = new URL(targetPath, request.url);
+    rewriteUrl.search = request.nextUrl.search;
+    console.log(`[Proxy] Subdomain tenant rewrite: ${rawHost}${pathname} to ${targetPath}`);
+    return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+  }
+
+  // ── কেস ৩: কাস্টম ডোমেইন (যেমন `messerbazar.com`) ──────────────────────────
+  if (pathname.startsWith('/shop/')) {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
-  // ── কাস্টম ডোমেইন: Firestore থেকে slug খোঁজা ──────────────────────────
+  if (RESERVED_KEYWORDS.includes(firstSegment)) {
+    return applySecurityHeaders(NextResponse.next(), pathname);
+  }
+
   try {
     // Internal API call — domain → shop slug রেজোলিউশন
-    // Use the primary platform domain to avoid edge routing loopback issues on custom domains
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://daripallah.com';
     const lookupUrl = new URL('/api/domain-lookup', baseUrl);
     lookupUrl.searchParams.set('host', host);
@@ -140,10 +191,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const lookupResponse = await fetch(lookupUrl.toString(), {
       method: 'GET',
       headers: {
-        // Internal security token
         'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '',
       },
-      cache: 'no-store', // Disable aggressive caching for domain resolution to prevent "not found" loop
+      cache: 'no-store',
     });
 
     console.log(`[Proxy] domain-lookup status=${lookupResponse.status}`);
@@ -160,7 +210,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         );
         rewriteUrl.search = request.nextUrl.search;
 
-        console.log(`[Proxy] Rewriting to ${rewriteUrl.toString()}`);
+        console.log(`[Proxy] Rewriting custom domain path to ${rewriteUrl.toString()}`);
         return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
       }
     }

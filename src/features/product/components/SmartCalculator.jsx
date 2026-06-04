@@ -2,12 +2,45 @@
 import { useState } from 'react';
 import { Calculator } from 'lucide-react';
 
+export function detectProductUnit(product) {
+  if (!product) return 'কেজি';
+  if (product.unit && product.unit.trim()) {
+    return product.unit.trim();
+  }
+  if (product.baseUnit && product.baseUnit.trim()) {
+    return product.baseUnit.trim();
+  }
+  
+  const text = `${product.name || ''} ${product.description || ''}`.toLowerCase();
+  
+  if (text.includes('কেজি') || text.includes('কে.জি') || text.includes('kg') || text.includes('kilogram') || text.includes('কিলোগ্রাম')) {
+    return 'কেজি';
+  }
+  if (text.includes('লিটার') || text.includes('লিতার') || text.includes('liter') || text.includes('litre') || text.includes('ltr')) {
+    return 'লিটার';
+  }
+  if (text.includes('গ্রাম') || text.includes('gram') || text.includes('gm') || /\b(g)\b/.test(text)) {
+    return 'গ্রাম';
+  }
+  if (text.includes('পিস') || text.includes('piece') || text.includes('pc') || text.includes('pcs') || text.includes('টি ') || text.includes('টা ')) {
+    return 'পিস';
+  }
+  if (text.includes('মিটার') || text.includes('meter') || text.includes('mtr') || text.includes('গজ') || text.includes('yard')) {
+    return 'মিটার';
+  }
+  if (text.includes('প্যাকেট') || text.includes('packet') || text.includes('pkt') || text.includes('বক্স') || text.includes('box')) {
+    return 'প্যাকেট';
+  }
+  
+  return 'কেজি'; // Fallback
+}
+
 export default function SmartCalculator({ product, setCustomInput, setAiPrice }) {
   if (!product) return null;
 
   // Use product's existing price & unit — no smartCalc field needed
   const basePrice = Number(product.price) || 0;
-  const baseUnit = product.unit || product.baseUnit || 'কেজি';
+  const baseUnit = detectProductUnit(product);
   const baseQuantity = product.baseQuantity || 1;
   
   if (basePrice <= 0) return null;

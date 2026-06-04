@@ -36,7 +36,18 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
   const [detectedItems, setDetectedItems] = useState([]);
   const [imageError, setImageError] = useState(null);
   const [showMicHelp, setShowMicHelp] = useState(false);
+  const [isInsecureContext, setIsInsecureContext] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isHttp = window.location.protocol === 'http:';
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isHttp && !isLocal) {
+        setIsInsecureContext(true);
+      }
+    }
+  }, []);
 
   const {
     isListening, transcript, interimTranscript, isProcessing: isVoiceProcessing,
@@ -179,106 +190,131 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
       {/* ── Voice Tab ────────────────────────────────────────────────── */}
       {activeTab === 'voice' && (
         <div className="flex-1 flex flex-col items-center justify-center p-6 gap-5">
-          <div className="text-center">
-            <p className="text-sm font-bold text-slate-600 mb-1">ভয়েসে বলুন: "২ কেজি আলু, ১ লিটার তেল"</p>
-            <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 font-bold">
-              <option value="bn-BD">বাংলা</option>
-              <option value="en-US">English</option>
-            </select>
-          </div>
-
-          {/* Mic button with both hold-to-talk and click-to-toggle modes */}
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                handleMicClick();
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                if (!isVoiceSupported || isVoiceProcessing) return;
-                startVoice();
-              }}
-              onMouseUp={(e) => {
-                e.preventDefault();
-                if (isListening) stopVoice();
-              }}
-              onMouseLeave={() => {
-                if (isListening) stopVoice();
-              }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                if (!isVoiceSupported || isVoiceProcessing) return;
-                startVoice();
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                if (isListening) stopVoice();
-              }}
-              disabled={!isVoiceSupported || isVoiceProcessing}
-              className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all select-none cursor-pointer
-                ${isListening ? 'bg-red-500 animate-pulse scale-110 active:scale-105' : isVoiceProcessing ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700 active:scale-95'}
-                text-white disabled:opacity-50`}
-              title="কথা বলতে ক্লিক করুন অথবা চেপে রাখুন"
-            >
-              {isVoiceProcessing ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
-            </button>
-          </div>
-
-          <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center leading-relaxed">
-            {isListening ? '🔴 শুনছি... কথা শেষ হলে আবার বোতামে ক্লিক করুন বা ছেড়ে দিন' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'কথা বলতে বোতামে ক্লিক করুন অথবা চেপে রাখুন'}
-          </p>
-
-          {!isVoiceSupported && (
-            <p className="text-xs font-bold text-amber-600 text-center bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-              ভয়েসের জন্য Chrome বা Edge ব্রাউজার প্রয়োজন।
-            </p>
-          )}
-
-          {(transcript || interimTranscript) && (
-            <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
-              <p className="text-sm font-bold text-slate-800">{transcript}<span className="text-slate-400 italic">{interimTranscript}</span></p>
-            </div>
-          )}
-
-          {voiceError && (
-            <div className="w-full space-y-3">
-              <p className="text-xs font-bold text-red-600 text-center bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{voiceError}</p>
-              {voiceError.includes('অনুমতি') && (
-                <>
-                  <button
-                    onClick={requestMicPermission}
-                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
-                  >
-                    🎤 মাইক্রোফোন অনুমতি দিন
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowMicHelp(true)}
-                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    ❓ কেন অন হচ্ছে না? (হেল্প গাইড)
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
-          {voiceResult && voiceResult.length > 0 && (
-            <div className="w-full space-y-2">
-              <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center">সনাক্তকৃত পণ্য:</p>
-              {voiceResult.map((item, i) => (
-                <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
-                  <p className="text-sm font-bold text-slate-900">{item.product.name}</p>
-                  <span className="text-xs font-black text-purple-600">×{item.quantity}</span>
-                </div>
-              ))}
-              <button onClick={addVoiceResultToCart} className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors">
-                <ShoppingCart size={16} /> কার্টে যোগ করুন
+          {isInsecureContext ? (
+            <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-5 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto text-red-600 font-extrabold text-xl">
+                🔒
+              </div>
+              <p className="text-sm font-extrabold text-red-800">
+                নিরাপদ সংযোগ (HTTPS) প্রয়োজন
+              </p>
+              <p className="text-xs font-bold text-slate-600 leading-relaxed">
+                ব্রাউজারের নিরাপত্তা পলিসির কারণে শুধুমাত্র নিরাপদ সংযোগে (HTTPS) ভয়েস বা মাইক্রোফোন ব্যবহারের অনুমতি দেওয়া হয়। আপনি বর্তমানে অনিরাপদ সংযোগে (HTTP) আছেন।
+              </p>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = `https://${window.location.host}${window.location.pathname}${window.location.search}`;
+                  }
+                }}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                🔒 নিরাপদ HTTPS সংযোগে যান
               </button>
             </div>
-          )}
+          ) : (
+            <>
+              <div className="text-center">
+                <p className="text-sm font-bold text-slate-600 mb-1">ভয়েসে বলুন: "২ কেজি আলু, ১ লিটার তেল"</p>
+                <select value={lang} onChange={e => setLang(e.target.value)} className="text-xs bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 font-bold">
+                  <option value="bn-BD">বাংলা</option>
+                  <option value="en-US">English</option>
+                </select>
+              </div>
 
+              {/* Mic button with both hold-to-talk and click-to-toggle modes */}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleMicClick();
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    if (!isVoiceSupported || isVoiceProcessing) return;
+                    startVoice();
+                  }}
+                  onMouseUp={(e) => {
+                    e.preventDefault();
+                    if (isListening) stopVoice();
+                  }}
+                  onMouseLeave={() => {
+                    if (isListening) stopVoice();
+                  }}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    if (!isVoiceSupported || isVoiceProcessing) return;
+                    startVoice();
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    if (isListening) stopVoice();
+                  }}
+                  disabled={!isVoiceSupported || isVoiceProcessing}
+                  className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all select-none cursor-pointer
+                    ${isListening ? 'bg-red-500 animate-pulse scale-110 active:scale-105' : isVoiceProcessing ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700 active:scale-95'}
+                    text-white disabled:opacity-50`}
+                  title="কথা বলতে ক্লিক করুন অথবা চেপে রাখুন"
+                >
+                  {isVoiceProcessing ? <Loader2 size={36} className="animate-spin" /> : isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}
+                </button>
+              </div>
+
+              <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center leading-relaxed">
+                {isListening ? '🔴 শুনছি... কথা শেষ হলে আবার বোতামে ক্লিক করুন বা ছেড়ে দিন' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'কথা বলতে বোতামে ক্লিক করুন অথবা চেপে রাখুন'}
+              </p>
+
+              {!isVoiceSupported && (
+                <p className="text-xs font-bold text-amber-600 text-center bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                  ভয়েসের জন্য Chrome বা Edge ব্রাউজার প্রয়োজন।
+                </p>
+              )}
+
+              {(transcript || interimTranscript) && (
+                <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center">
+                  <p className="text-sm font-bold text-slate-800">{transcript}<span className="text-slate-400 italic">{interimTranscript}</span></p>
+                </div>
+              )}
+
+              {voiceError && (
+                <div className="w-full space-y-3">
+                  <p className="text-xs font-bold text-red-600 text-center bg-red-50 border border-red-200 px-3 py-2 rounded-xl">{voiceError}</p>
+                  {voiceError.includes('অনুমতি') && (
+                    <>
+                      <button
+                        onClick={requestMicPermission}
+                        className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+                      >
+                        🎤 মাইক্রোফোন অনুমতি দিন
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowMicHelp(true)}
+                        className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        ❓ কেন অন হচ্ছে না? (হেল্প গাইড)
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {voiceResult && voiceResult.length > 0 && (
+                <div className="w-full space-y-2">
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center">সনাক্তকৃত পণ্য:</p>
+                  {voiceResult.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
+                      <p className="text-sm font-bold text-slate-900">{item.product.name}</p>
+                      <span className="text-xs font-black text-purple-600">×{item.quantity}</span>
+                    </div>
+                  ))}
+                  <button onClick={addVoiceResultToCart} className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors">
+                    <ShoppingCart size={16} /> কার্টে যোগ করুন
+                  </button>
+                </div>
+              )}
+            </>
+          )}
           <button 
             onClick={onClose} 
             className="mt-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-black rounded-xl transition-all uppercase tracking-wider"
@@ -429,6 +465,11 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
               <div className="space-y-1">
                 <p className="text-slate-900 font-extrabold flex items-center gap-1">৩. ব্যাকগ্রাউন্ড অ্যাপস চেক করুন:</p>
                 <p className="pl-4">অন্য কোনো ব্যাকগ্রাউন্ড অ্যাপ (যেমন Zoom, MS Teams, Skype) মাইক্রোফোন ডিভাইসটি লক করে রেখেছে কিনা চেক করুন। প্রয়োজনে অন্য অ্যাপগুলো বন্ধ করে পুনরায় চেষ্টা করুন।</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-slate-900 font-extrabold flex items-center gap-1">৪. নিরাপদ সংযোগ (HTTPS) নিশ্চিত করুন:</p>
+                <p className="pl-4">ব্রাউজারে নিরাপত্তা পলিসির কারণে অনিরাপদ লিংকে (HTTP) মাইক্রোফোন ব্লক থাকে। যদি ব্রাউজার পারমিশন না চায়, তবে অনুগ্রহ করে পেজটির ইউআরএল এর শুরুতে <strong>https://</strong> (যেমন: https://messerbazar.com) দিয়ে ভিজিট করুন।</p>
               </div>
             </div>
 

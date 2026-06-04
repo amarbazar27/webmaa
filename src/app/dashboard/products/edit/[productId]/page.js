@@ -28,6 +28,7 @@ export default function EditProductPage({ params }) {
     subcategory: '',
     price: '',
     stock: '',
+    unit: '',
     description: '',
     allowCustomize: false,
     allowNote: false,
@@ -51,6 +52,7 @@ export default function EditProductPage({ params }) {
             subcategory: product.subcategory || '',
             price: product.price?.toString() || '',
             stock: product.stock?.toString() || '',
+            unit: product.unit || '',
             description: product.description || '',
             allowCustomize: product.allowCustomize || false,
             allowNote: product.allowNote || false,
@@ -310,6 +312,17 @@ export default function EditProductPage({ params }) {
                 className="input-field w-full px-4 py-3.5 rounded-xl text-slate-900 font-medium"
                 value={form.stock}
                 onChange={(e) => setForm({...form, stock: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Product Unit / পরিমাপের একক (যেমন: কেজি, লিটার, পিস)</label>
+              <input 
+                type="text" 
+                placeholder="যেমন: কেজি, লিটার, গ্রাম, পিস"
+                className="input-field w-full px-4 py-3.5 rounded-xl text-slate-900 font-medium"
+                value={form.unit}
+                onChange={(e) => setForm({...form, unit: e.target.value})}
               />
             </div>
 
