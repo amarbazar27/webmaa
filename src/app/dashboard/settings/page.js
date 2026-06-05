@@ -980,6 +980,39 @@ export default function SettingsPage() {
               </p>
             </Card>
 
+            <Card title="Coupon & Bulk Order Settings (কুপন ও বাল্ক অর্ডার সেটিং)" subtitle="Discount coupon and Common Order Sheet" icon={Gift} className="border-l-4 border-l-emerald-500">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Input
+                    label="Promo Coupon Code (কুপন কোড)"
+                    value={shop.couponCode || ''}
+                    onChange={e => setShop({ ...shop, couponCode: e.target.value.toUpperCase() })}
+                    placeholder="e.g. EID2026"
+                  />
+                  <Input
+                    label="Discount Percentage (ডিসকাউন্ট %)"
+                    type="number"
+                    value={shop.couponDiscount || 0}
+                    onChange={e => setShop({ ...shop, couponDiscount: Number(e.target.value) })}
+                    placeholder="e.g. 10"
+                    min={0}
+                    max={100}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
+                   <div>
+                      <p className="text-xs font-black text-slate-900">Enable Common Order Sheet (কমন অর্ডার শিট চালু করুন)</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">If enabled, user site will show a clickable bulk spreadsheet order button</p>
+                   </div>
+                   <label className="relative inline-flex items-center cursor-pointer">
+                     <input type="checkbox" className="sr-only peer" checked={shop.enableCommonOrder || false} onChange={e => setShop({...shop, enableCommonOrder: e.target.checked})} />
+                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                   </label>
+                </div>
+              </div>
+            </Card>
+
             <Card title="Store AI Companion" subtitle="Smart Assistant" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/10">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="relative">

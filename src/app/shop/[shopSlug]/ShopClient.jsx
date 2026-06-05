@@ -264,8 +264,8 @@ function LiveCountdown({ deliveryETA }) {
 export default function ShopClient({ initialShop, initialProducts, initialCategories }) {
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
-  const [shop] = useState(initialShop);
-  const [products] = useState(initialProducts || []);
+  const [shop, setShop] = useState(initialShop);
+  const [products, setProducts] = useState(initialProducts || []);
   const [categories] = useState(initialCategories || []);
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeSubcategory, setActiveSubcategory] = useState('');
@@ -275,6 +275,32 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
   useEffect(() => { const t = setTimeout(() => setShowSplash(false), 1500); return () => clearTimeout(t); }, []);
+
+  useEffect(() => {
+    // Sync fresh shop and products configurations from Firestore to bypass Next.js ISR cache latency
+    import('@/lib/firestore').then(async (lib) => {
+      try {
+        const freshShop = await lib.getShop(initialShop.id);
+        if (freshShop) {
+          setShop(prev => ({
+            ...prev,
+            enableCommonOrder: freshShop.enableCommonOrder ?? prev.enableCommonOrder,
+            couponCode: freshShop.couponCode ?? prev.couponCode,
+            couponDiscount: freshShop.couponDiscount ?? prev.couponDiscount,
+            shopName: freshShop.shopName ?? prev.shopName,
+            logoUrl: freshShop.logoUrl ?? prev.logoUrl,
+            slogan: freshShop.slogan ?? prev.slogan,
+          }));
+        }
+        const freshProducts = await lib.getShopProducts(initialShop.id);
+        if (freshProducts && freshProducts.length > 0) {
+          setProducts(freshProducts);
+        }
+      } catch (err) {
+        console.error('Failed to sync real-time configurations:', err);
+      }
+    });
+  }, [initialShop.id]);
 
   useEffect(() => {
     if (shop) {
@@ -2210,9 +2236,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
           {/* Bottom bar */}
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-600 text-xs font-black flex flex-col gap-1 md:text-left text-center">
+            <p className="text-slate-600 text-xs font-black flex flex-col gap-1.5 md:text-left text-center">
               <span className="uppercase tracking-[0.25em]">© {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।</span>
-              <span className="text-xs text-purple-300 font-bold mt-2">
+              <span className="text-xs text-purple-300 font-bold normal-case tracking-normal block mt-1">
+                🚀 Want to launch your own professional online store in minutes just like this? <a href="https://daripallah.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
+              </span>
+              <span className="text-xs text-purple-300 font-bold mt-1">
                 এই ওয়েবসাইটটি দাঁড়িয়েপাল্লা (<a href="https://daripallah.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">daripallah.com</a>) দ্বারা তৈরি।
               </span>
             </p>
@@ -2707,44 +2736,42 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               </div>
 
               {/* Coupon Code Input */}
-              {shop.couponCode && (
-                <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3">
-                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ডিসকাউন্ট কুপন (Coupon Code)</label>
-                  {appliedCouponCode ? (
-                    <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
-                      <div>
-                        <p className="text-xs font-black text-emerald-800">✅ কুপন {appliedCouponCode} সক্রিয়!</p>
-                        <p className="text-[10px] text-emerald-600 font-bold">{couponDiscountPercent}% ডিসকাউন্ট পাওয়া গেছে।</p>
-                      </div>
-                      <button 
-                        type="button" 
-                        onClick={handleRemoveCoupon} 
-                        className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-black rounded-lg text-xs transition-colors"
-                      >
-                        মুছুন
-                      </button>
+              <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3">
+                <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ডিসকাউন্ট কুপন (Coupon Code)</label>
+                {appliedCouponCode ? (
+                  <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                    <div>
+                      <p className="text-xs font-black text-emerald-800">✅ কুপন {appliedCouponCode} সক্রিয়!</p>
+                      <p className="text-[10px] text-emerald-600 font-bold">{couponDiscountPercent}% ডিসকাউন্ট পাওয়া গেছে।</p>
                     </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="কুপন কোড..." 
-                        className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-600 text-sm font-black uppercase text-slate-900"
-                        value={couponCodeInput}
-                        onChange={e => { setCouponCodeInput(e.target.value); setCouponError(''); }}
-                      />
-                      <button 
-                        type="button" 
-                        onClick={handleApplyCoupon} 
-                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors"
-                      >
-                        প্রয়োগ
-                      </button>
-                    </div>
-                  )}
-                  {couponError && <p className="text-[11px] text-red-600 font-bold pl-1">{couponError}</p>}
-                </div>
-              )}
+                    <button 
+                      type="button" 
+                      onClick={handleRemoveCoupon} 
+                      className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-black rounded-lg text-xs transition-colors"
+                    >
+                      মুছুন
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="কুপন কোড..." 
+                      className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-600 text-sm font-black uppercase text-slate-900"
+                      value={couponCodeInput}
+                      onChange={e => { setCouponCodeInput(e.target.value); setCouponError(''); }}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleApplyCoupon} 
+                      className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors"
+                    >
+                      প্রয়োগ
+                    </button>
+                  </div>
+                )}
+                {couponError && <p className="text-[11px] text-red-600 font-bold pl-1">{couponError}</p>}
+              </div>
 
               {isAdvanceRequired && (
                 <div className="bg-purple-50 p-5 rounded-2xl border-2 border-purple-200 space-y-4">
