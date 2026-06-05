@@ -95,7 +95,18 @@ const getCityWards = (district) => {
 
 export default function SettingsPage() {
   const { user, userData, activeShopId } = useAuth();
-  const [shop, setShop] = useState({ shopName: '', slogan: '', notices: '', welcomeMessage: '', bannerDescription: '', subdomainSlug: '', banners: [] });
+  const [shop, setShop] = useState({ 
+    shopName: '', 
+    slogan: '', 
+    notices: '', 
+    welcomeMessage: '', 
+    bannerDescription: '', 
+    subdomainSlug: '', 
+    banners: [],
+    couponCode: '',
+    couponDiscount: 0,
+    enableCommonOrder: false
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   // ── Settings Tab (must be at top, before any conditional returns) ──
@@ -172,6 +183,9 @@ export default function SettingsPage() {
           notices: data.notices || '',
           welcomeMessage: data.welcomeMessage || '',
           subdomainSlug: data.subdomainSlug || '',
+          couponCode: data.couponCode || '',
+          couponDiscount: data.couponDiscount || 0,
+          enableCommonOrder: data.enableCommonOrder || false,
           ...data,
           banners: normalizedBanners
         });
@@ -519,6 +533,9 @@ export default function SettingsPage() {
       
       await updateShop(activeShopId, { 
         shopName: shop.shopName,
+        couponCode: shop.couponCode || '',
+        couponDiscount: Number(shop.couponDiscount) || 0,
+        enableCommonOrder: shop.enableCommonOrder || false,
         slogan: shop.slogan,
         notices: shop.notices,
         welcomeMessage: shop.welcomeMessage,

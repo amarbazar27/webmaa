@@ -454,6 +454,16 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
+  // Coupon System states
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [appliedCouponCode, setAppliedCouponCode] = useState('');
+  const [couponDiscountPercent, setCouponDiscountPercent] = useState(0);
+  const [couponError, setCouponError] = useState('');
+
+  // Common Order states
+  const [isCommonOrderOpen, setIsCommonOrderOpen] = useState(false);
+  const [commonOrderRows, setCommonOrderRows] = useState({}); // mapping productId -> { qty: '', price: '', piece: '', finalPrice: 0 }
+
   const [locationStatus, setLocationStatus] = useState('idle');
   const [detectedLocation, setDetectedLocation] = useState('');
   const [locationManualInput, setLocationManualInput] = useState('');
@@ -1007,7 +1017,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
   }, [products, cart.length]); // Check when products load or cart size changes
 
-  const addToCart = (product, customQty = null, customizedText = null, customNote = null) => {
+  const addToCart = (product, customQty = null, customizedText = null, customNote = null, customPrice = null) => {
     if (product.stock === 0) {
       toast.error('দুঃখিত, এই মুহূর্তে স্টকে নেই');
       return;
@@ -1021,7 +1031,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     // Scoped variants matching: match by id AND customizedText!
     const existingIndex = cart.findIndex(item => 
       item.id === product.id && 
-      (item.customizedText || '') === (resolvedCustomizedText || '')
+      (item.customizedText || '') === (resolvedCustomizedText || '') &&
+      (customPrice === null || parseFloat(item.price) === parseFloat(customPrice))
     );
 
     if (existingIndex > -1) {
@@ -1034,12 +1045,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     } else {
       const newCart = [...cart, { 
         ...product, 
+        price: customPrice !== null ? customPrice : product.price,
+        clientPrice: customPrice !== null ? customPrice : product.price,
         quantity: qtyToAdd, 
         note: resolvedNote, 
         customizedText: resolvedCustomizedText 
       }];
       setCart(newCart);
-      trackStoreEvent('add_to_cart', { id: product.id, name: product.name, price: product.price });
+      trackStoreEvent('add_to_cart', { id: product.id, name: product.name, price: customPrice !== null ? customPrice : product.price });
       toast.success(`${product.name} ঝুড়িতে যোগ হয়েছে!`);
     }
   };
@@ -1118,6 +1131,118 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
   };
 
+  const handleApplyCoupon = () => {
+    setCouponError('');
+    if (!couponCodeInput.trim()) {
+      setCouponError('কুপন কোড লিখুন।');
+      return;
+    }
+    const cleanInput = couponCodeInput.trim().toUpperCase();
+    const shopCoupon = (shop.couponCode || '').trim().toUpperCase();
+    if (shopCoupon && cleanInput === shopCoupon) {
+      setAppliedCouponCode(cleanInput);
+      setCouponDiscountPercent(Number(shop.couponDiscount) || 0);
+      toast.success('কুপন কোডটি সফলভাবে প্রয়োগ করা হয়েছে! 🎉');
+    } else {
+      setCouponError('ভুল কুপন কোড! দয়া করে সঠিক কোড দিন।');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCouponCode('');
+    setCouponDiscountPercent(0);
+    setCouponCodeInput('');
+    setCouponError('');
+    toast.success('কুপন কোড সরানো হয়েছে');
+  };
+
+  const handleCommonOrderChange = (product, field, value) => {
+    const R = (product.smartCalc?.enabled && product.smartCalc?.basePrice && product.smartCalc?.baseQuantity) 
+      ? (product.smartCalc.basePrice / product.smartCalc.baseQuantity) 
+      : (parseFloat(product.price) || 0);
+
+    setCommonOrderRows(prev => {
+      const currentRow = prev[product.id] || { qty: '', price: '', piece: '', finalPrice: 0 };
+      const updatedRow = { ...currentRow };
+
+      if (field === 'qty') {
+        updatedRow.qty = value;
+        const numQty = parseFloat(value) || 0;
+        if (numQty > 0 && R > 0) {
+          updatedRow.price = Math.round(numQty * R).toString();
+          updatedRow.finalPrice = Math.round(numQty * R);
+        } else {
+          updatedRow.price = '';
+          updatedRow.finalPrice = 0;
+        }
+      } else if (field === 'price') {
+        updatedRow.price = value;
+        const numPrice = parseFloat(value) || 0;
+        if (numPrice > 0 && R > 0) {
+          updatedRow.qty = (numPrice / R).toFixed(3).replace(/\.?0+$/, '');
+          updatedRow.finalPrice = numPrice;
+        } else {
+          updatedRow.qty = '';
+          updatedRow.finalPrice = 0;
+        }
+      } else if (field === 'piece') {
+        updatedRow.piece = value;
+      }
+
+      return {
+        ...prev,
+        [product.id]: updatedRow
+      };
+    });
+  };
+
+  const addCommonOrderRowToCart = (product) => {
+    const row = commonOrderRows[product.id];
+    if (!row || !parseFloat(row.qty) || !parseFloat(row.price)) {
+      toast.error('অনুগ্রহ করে পরিমাণ অথবা মূল্য সঠিকভাবে লিখুন।');
+      return;
+    }
+    const qty = 1;
+    const pieceNote = row.piece ? row.piece.trim() : '';
+    const baseUnit = product.smartCalc?.enabled ? product.smartCalc.baseUnit : 'পিস';
+    const customizedText = `${row.qty} ${baseUnit} (৳${row.price})`;
+    const priceOverride = parseFloat(row.price);
+
+    addToCart(product, qty, customizedText, pieceNote, priceOverride);
+    
+    setCommonOrderRows(prev => ({
+      ...prev,
+      [product.id]: { qty: '', price: '', piece: '', finalPrice: 0 }
+    }));
+  };
+
+  const addAllCommonOrderToCart = () => {
+    let addedCount = 0;
+    const activeProducts = products.filter(p => p.showInCommonOrder);
+    
+    activeProducts.forEach(product => {
+      const row = commonOrderRows[product.id];
+      if (row && parseFloat(row.qty) > 0 && parseFloat(row.price) > 0) {
+        const qty = 1;
+        const pieceNote = row.piece ? row.piece.trim() : '';
+        const baseUnit = product.smartCalc?.enabled ? product.smartCalc.baseUnit : 'পিস';
+        const customizedText = `${row.qty} ${baseUnit} (৳${row.price})`;
+        const priceOverride = parseFloat(row.price);
+        
+        addToCart(product, qty, customizedText, pieceNote, priceOverride);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      toast.success(`${addedCount}টি প্রোডাক্ট সফলভাবে কার্টে যোগ হয়েছে! 🛒`);
+      setIsCommonOrderOpen(false);
+      setCommonOrderRows({});
+    } else {
+      toast.error('কমপক্ষে ১টি প্রোডাক্টের পরিমাণ ও মূল্য সঠিকভাবে লিখুন।');
+    }
+  };
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     const requiresLocation = shop.requireLocationForOrder === true;
@@ -1182,6 +1307,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       transactionId: orderForm.txnId,
       paymentNumber: orderForm.paymentNumber,
       paymentScreenshot: paymentScreenshot || undefined,
+      couponCode: appliedCouponCode || undefined,
       items: cart.filter(i => Number(i.quantity) > 0).map(i => ({ 
         id: i.productId || i.id, 
         quantity: Number(i.quantity) || 1, 
@@ -1727,6 +1853,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           />
         )}
 
+        {/* ── Common Order Sheet Button ── */}
+        {shop.enableCommonOrder && (
+          <button
+            onClick={() => setIsCommonOrderOpen(true)}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-sm uppercase tracking-wider cursor-pointer"
+          >
+            📋 কমন অর্ডার শিট (Common Order Sheet)
+          </button>
+        )}
+
         {/* ── Search & Sort ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3">
           <div className="relative flex-1 min-w-0">
@@ -2074,15 +2210,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
           {/* Bottom bar */}
           <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-600 text-xs font-black uppercase tracking-[0.25em] flex flex-col gap-1 md:text-left text-center">
-              <span>© {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।</span>
-              <span className="text-xs text-purple-300 font-bold normal-case tracking-normal block mt-2">
-                🚀 Want to launch your own professional online store in minutes just like this? <a href="https://daripallah.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
+            <p className="text-slate-600 text-xs font-black flex flex-col gap-1 md:text-left text-center">
+              <span className="uppercase tracking-[0.25em]">© {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।</span>
+              <span className="text-xs text-purple-300 font-bold mt-2">
+                এই ওয়েবসাইটটি দাঁড়িয়েপাল্লা (<a href="https://daripallah.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">daripallah.com</a>) দ্বারা তৈরি।
               </span>
             </p>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-bold text-slate-600">Powered by daripallah.com</span>
+              <span className="text-xs font-bold text-slate-600">
+                বানানো হয়েছে <a href="https://daripallah.com" target="_blank" rel="noreferrer" className="underline hover:text-white font-black text-slate-500">daripallah.com</a> দিয়ে
+              </span>
             </div>
           </div>
         </div>
@@ -2568,12 +2706,52 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
               </div>
 
+              {/* Coupon Code Input */}
+              {shop.couponCode && (
+                <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3">
+                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ডিসকাউন্ট কুপন (Coupon Code)</label>
+                  {appliedCouponCode ? (
+                    <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                      <div>
+                        <p className="text-xs font-black text-emerald-800">✅ কুপন {appliedCouponCode} সক্রিয়!</p>
+                        <p className="text-[10px] text-emerald-600 font-bold">{couponDiscountPercent}% ডিসকাউন্ট পাওয়া গেছে।</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={handleRemoveCoupon} 
+                        className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-black rounded-lg text-xs transition-colors"
+                      >
+                        মুছুন
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="কুপন কোড..." 
+                        className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-600 text-sm font-black uppercase text-slate-900"
+                        value={couponCodeInput}
+                        onChange={e => { setCouponCodeInput(e.target.value); setCouponError(''); }}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={handleApplyCoupon} 
+                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors"
+                      >
+                        প্রয়োগ
+                      </button>
+                    </div>
+                  )}
+                  {couponError && <p className="text-[11px] text-red-600 font-bold pl-1">{couponError}</p>}
+                </div>
+              )}
+
               {isAdvanceRequired && (
                 <div className="bg-purple-50 p-5 rounded-2xl border-2 border-purple-200 space-y-4">
                   <div className="flex items-start gap-3">
                     <AlertCircle size={20} className="text-purple-700 mt-0.5 shrink-0" strokeWidth={2.5} />
                     <p className="text-sm font-bold text-purple-900 leading-snug">
-                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{cartTotal + effectiveDelivery}</span> পেমেন্ট করুন।</>}
+                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100) : 0)) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
                     </p>
                   </div>
                   {effectiveDelivery > 0 && (
@@ -2640,14 +2818,20 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               {/* Order Summary */}
               <div className="bg-slate-100 border-2 border-slate-200 rounded-2xl p-5 space-y-3">
-                <div className="flex justify-between text-sm text-slate-600 font-bold"><span>প্রোডাক্টস (×{cartCount || (orderImage ? 'ছবি থেকে' : 0)})</span><span className="text-slate-900 font-black">৳{cart.length === 0 && orderImage ? 1 : cartTotal}</span></div>
+                <div className="flex justify-between text-sm text-slate-600 font-bold"><span>প্রোডাক্টস (×{cartCount || (orderImage ? 'ছবি থেকে' : 0)})</span><span className="text-slate-900 font-black">৳{(cart.length === 0 && orderImage ? 1 : cartTotal)}</span></div>
+                {appliedCouponCode && (
+                  <div className="flex justify-between text-sm text-emerald-600 font-bold">
+                    <span>কুপন ডিসকাউন্ট ({couponDiscountPercent}%)</span>
+                    <span>- ৳{Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-slate-600 font-bold">
                   <span>ডেলিভারি চার্জ</span>
                   <span className={`font-black ${effectiveDelivery === 0 ? 'text-emerald-600' : 'text-slate-900'}`}>{effectiveDelivery === 0 ? 'FREE 🎁' : `৳${effectiveDelivery}`}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t-2 border-slate-200 font-black text-slate-900 text-xl">
                   <span>সর্বমোট</span>
-                  <span className="text-purple-700 text-2xl">৳{(cart.length === 0 && orderImage ? 1 : cartTotal) + effectiveDelivery}</span>
+                  <span className="text-purple-700 text-2xl">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100) : 0)) + effectiveDelivery}</span>
                 </div>
               </div>
 
@@ -2655,6 +2839,148 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 {placing ? <><Loader2 className="animate-spin" size={20} /> প্রসেস হচ্ছে...</> : <><CheckCircle size={20} strokeWidth={2.5}/> অর্ডার প্লেস করুন</>}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Common Order Sheet Modal ── */}
+      {isCommonOrderOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsCommonOrderOpen(false)} />
+          <div className="relative w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl h-[90vh] flex flex-col border border-slate-200 animate-slide-in">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center pb-4 border-b-2 border-slate-100 shrink-0">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  📋 কমন অর্ডার শিট
+                </h2>
+                <p className="text-xs text-slate-500 font-bold mt-1">সব পণ্য একসাথে এক পেজ থেকে দ্রুত অর্ডার করুন।</p>
+              </div>
+              <button 
+                onClick={() => setIsCommonOrderOpen(false)} 
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-slate-700"
+              >
+                <X size={20} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Content (Table & Rows) */}
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+              <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+                <div className="col-span-4">পণ্য</div>
+                <div className="col-span-2 text-center">পরিমাণ / ওজন (Weight)</div>
+                <div className="col-span-2 text-center">মোট মূল্য ৳ (Price)</div>
+                <div className="col-span-2 text-center">কাটিং সাইজ / পিস (Piece)</div>
+                <div className="col-span-1 text-center">হিসাবকৃত দাম</div>
+                <div className="col-span-1 text-right">অ্যাকশন</div>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {products.filter(p => p.showInCommonOrder).map(product => {
+                  const row = commonOrderRows[product.id] || { qty: '', price: '', piece: '', finalPrice: 0 };
+                  const baseUnit = product.smartCalc?.enabled ? product.smartCalc.baseUnit : 'পিস';
+                  const basePrice = product.smartCalc?.enabled ? product.smartCalc.basePrice : product.price;
+                  const baseQty = product.smartCalc?.enabled ? product.smartCalc.baseQuantity : 1;
+                  const unitRateText = `৳${basePrice} / ${baseQty} ${baseUnit}`;
+
+                  return (
+                    <div key={product.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-2 hover:bg-slate-50/50 rounded-2xl transition-all">
+                      {/* Product details */}
+                      <div className="col-span-1 md:col-span-4 flex items-center gap-3">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} className="w-12 h-12 rounded-xl object-cover border border-slate-200" alt="" />
+                        ) : (
+                          <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-lg">📦</div>
+                        )}
+                        <div>
+                          <h4 className="font-black text-slate-900 text-sm">{product.name}</h4>
+                          <p className="text-[10px] text-slate-400 font-black uppercase mt-0.5">{unitRateText}</p>
+                        </div>
+                      </div>
+
+                      {/* Weight/Qty Input (Column A) */}
+                      <div className="col-span-1 md:col-span-2">
+                        <div className="relative">
+                          <input 
+                            type="number" 
+                            step="any"
+                            placeholder="পরিমাণ" 
+                            className="w-full pl-3 pr-12 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                            value={row.qty}
+                            onChange={e => handleCommonOrderChange(product, 'qty', e.target.value)}
+                          />
+                          <span className="absolute right-3.5 top-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">{baseUnit}</span>
+                        </div>
+                      </div>
+
+                      {/* Price Input (Column B) */}
+                      <div className="col-span-1 md:col-span-2">
+                        <div className="relative">
+                          <input 
+                            type="number" 
+                            placeholder="৳ দাম" 
+                            className="w-full pl-6 pr-3 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                            value={row.price}
+                            onChange={e => handleCommonOrderChange(product, 'price', e.target.value)}
+                          />
+                          <span className="absolute left-2.5 top-2.5 text-xs font-black text-slate-400">৳</span>
+                        </div>
+                      </div>
+
+                      {/* Piece/Cut Input (Column C) */}
+                      <div className="col-span-1 md:col-span-2">
+                        <input 
+                          type="text" 
+                          placeholder="উদা: ১০ পিস করুন" 
+                          className="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                          value={row.piece}
+                          onChange={e => handleCommonOrderChange(product, 'piece', e.target.value)}
+                        />
+                      </div>
+
+                      {/* Final Price Readonly (Column D) */}
+                      <div className="col-span-1 md:col-span-1 text-center font-black text-slate-800 text-sm">
+                        ৳{row.finalPrice || 0}
+                      </div>
+
+                      {/* Add button */}
+                      <div className="col-span-1 md:col-span-1 text-right">
+                        <button 
+                          onClick={() => addCommonOrderRowToCart(product)}
+                          className="w-full md:w-auto px-3 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black hover:bg-purple-600 transition-colors uppercase tracking-widest active:scale-95"
+                        >
+                          যোগ করুন
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {products.filter(p => p.showInCommonOrder).length === 0 && (
+                  <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-100">
+                    <p className="text-slate-400 font-bold text-sm">কমন অর্ডারের জন্য কোনো প্রোডাক্ট উপলব্ধ নেই।</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom actions */}
+            <div className="pt-4 border-t-2 border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
+              <button 
+                onClick={() => setIsCommonOrderOpen(false)}
+                className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-colors"
+              >
+                বন্ধ করুন
+              </button>
+              <button 
+                onClick={addAllCommonOrderToCart}
+                className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 active:scale-95"
+              >
+                <ShoppingCart size={14} strokeWidth={2.5} /> সব একসাথে কার্টে যোগ করুন
+              </button>
+            </div>
+
           </div>
         </div>
       )}

@@ -31,6 +31,7 @@ const CheckoutSchema = z.object({
   })).min(0),
   customerId: z.string().min(1),
   customImage: z.string().max(2000000).optional().nullable(),
+  couponCode: z.string().max(50).optional().nullable(),
   coordinates: z.object({
     lat: z.number(),
     lng: z.number(),
@@ -96,7 +97,8 @@ export async function POST(req) {
       localId,
       items,
       customerId,
-      coordinates
+      coordinates,
+      couponCode
     } = parsed.data;
 
     // Extract customImage separately (not in strict destructure to avoid schema clash)
@@ -242,8 +244,8 @@ export async function POST(req) {
         }
       }
 
-      // If product allows AI customization, trust the clientPrice (beta feature)
-      if (product.allowCustomize && item.clientPrice && item.clientPrice > 0) {
+      // If product allows AI customization, smart calculator, or is shown in common order sheet, trust the clientPrice
+      if ((product.allowCustomize || product.smartCalc?.enabled || product.showInCommonOrder) && item.clientPrice && item.clientPrice > 0) {
          price = item.clientPrice;
       }
 
@@ -275,6 +277,17 @@ export async function POST(req) {
     const minOrder = parseInt(deliveryConfig.minOrderAmount) || 0;
     if (minOrder > 0 && total < minOrder && items.length > 0) {
       return NextResponse.json({ error: `Minimum order amount is ৳${minOrder}` }, { status: 400 });
+    }
+
+    // ── Coupon Validation ──────────────────────────────
+    let couponDiscountPercent = 0;
+    let couponDiscountAmount = 0;
+    if (couponCode && shopData.couponCode && couponCode.trim().toUpperCase() === shopData.couponCode.trim().toUpperCase()) {
+      couponDiscountPercent = Number(shopData.couponDiscount) || 0;
+      if (couponDiscountPercent > 0) {
+        couponDiscountAmount = Math.round((total * couponDiscountPercent) / 100);
+        total = Math.max(0, total - couponDiscountAmount);
+      }
     }
 
     // ── Delivery logic ─────────────────────────────────
@@ -374,6 +387,9 @@ export async function POST(req) {
       shopId,
       shopName: shopData.shopName,
       freeDelivery,
+      couponCode: couponDiscountPercent > 0 ? couponCode.trim().toUpperCase() : null,
+      couponDiscountPercent,
+      couponDiscountAmount,
       status: 'pending',
       localId: localId || null,
       customerId: customerId,
