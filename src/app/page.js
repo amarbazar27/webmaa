@@ -934,7 +934,7 @@ export default function Home() {
     setIsAiTyping(true);
 
     try {
-      const shopsInfo = allShops.map(s => {
+      const shopsInfo = allShops.filter(s => s.isActive !== false && s.showOnMainSite !== false).map(s => {
         const delFee = s.deliveryConfig?.advanceFee || '60';
         const freeDelMin = s.deliveryConfig?.freeDeliveryMinOrder ? `৳${s.deliveryConfig.freeDeliveryMinOrder}` : 'নেই';
         return `স্টোর: ${s.shopName} (slug: ${s.shopSlug}), ক্যাটাগরি: ${s.businessType || 'সাধারণ'}, ডেলিভারি চার্জ: ৳${delFee}, ফ্রি ডেলিভারি মিনিমাম অর্ডার: ${freeDelMin}, বিবরণ: ${s.description || 'নেই'}।`;
@@ -2144,11 +2144,11 @@ export default function Home() {
                     <div key={order.id} className="bg-white/[0.01] border border-white/5 rounded-3xl overflow-hidden hover:border-purple-500/20 transition-colors group">
                       <div className="p-4 bg-white/[0.01]">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">#${order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
-                          <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${order.status === 'completed' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : order.status === 'cancelled' ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>${order.status || 'Pending'}</span>
+                          <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${order.status === 'completed' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : order.status === 'cancelled' ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{order.status || 'Pending'}</span>
                         </div>
-                        <p className="text-xs text-white/40 font-bold truncate">শপ: <span className="text-white font-extrabold">${order.shopName}</span></p>
-                        <p className="font-extrabold text-white text-sm mt-1">${order.items?.length || 0} Items <span className="text-purple-400">(৳${order.total?.toLocaleString()})</span></p>
+                        <p className="text-xs text-white/40 font-bold truncate">শপ: <span className="text-white font-extrabold">{order.shopName}</span></p>
+                        <p className="font-extrabold text-white text-sm mt-1">{order.items?.length || 0} Items <span className="text-purple-400">(৳{order.total?.toLocaleString()})</span></p>
                       </div>
                       <div className="border-t border-white/5 bg-white/[0.005]">
                         <a 

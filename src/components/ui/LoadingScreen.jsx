@@ -106,6 +106,9 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
 
   if (!show) return null;
 
+  const isMainSite = typeof window !== 'undefined' && (window.location.pathname === '/' || window.location.pathname === '' || window.location.pathname.startsWith('/?'));
+  const displayLogo = shop?.logoUrl || (isMainSite ? '/logo.png' : '');
+
   const featuredProduct = highlightProducts[productIdx];
 
   return (
@@ -168,16 +171,16 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
               boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
             }}
           >
-            {shop?.logoUrl || '/logo.png' ? (
+            {displayLogo ? (
               <img 
-                src={shop?.logoUrl || '/logo.png'} 
+                src={displayLogo} 
                 alt={shop?.shopName || 'Daripallah'} 
                 className="w-full h-full object-contain p-2" 
                 onError={(e) => {
                   e.target.style.display = 'none';
                 }}
               />
-            ) : (
+            ) : shop?.shopName ? (
               <div className="text-white font-black">
                 <svg width="54" height="54" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
@@ -187,7 +190,14 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
                     </linearGradient>
                   </defs>
                   <circle cx="50" cy="50" r="45" fill="url(#dp-grad-L)" opacity="0.1" />
-                  <text x="50" y="65" textAnchor="middle" fill="url(#dp-grad-L)" fontSize="50" fontWeight="900">{shop?.shopName ? shop.shopName.charAt(0).toUpperCase() : 'D'}</text>
+                  <text x="50" y="65" textAnchor="middle" fill="url(#dp-grad-L)" fontSize="50" fontWeight="900">{shop.shopName.charAt(0).toUpperCase()}</text>
+                </svg>
+              </div>
+            ) : (
+              <div className="text-white font-black animate-pulse flex items-center justify-center">
+                <svg className="animate-spin h-7 w-7 text-white/30" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
             )}

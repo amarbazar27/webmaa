@@ -47,6 +47,152 @@ import { calculateBasePrice } from '@/features/product/utils/price';
 import { handleAiCalculate } from '@/features/product/actions/aiActions';
 import { useProductLogic } from '@/features/product/hooks/useProductLogic';
 
+// Common Phonetic Transliteration Dictionary for English-to-Bengali product searches
+const COMMON_PHONETIC_DICT = {
+  'alu': 'আলু',
+  'potol': 'পটল',
+  'peyaj': 'পেঁয়াজ',
+  'peyaz': 'পেঁয়াজ',
+  'piyaj': 'পেঁয়াজ',
+  'piyaz': 'পেঁয়াজ',
+  'ada': 'আদা',
+  'roshun': 'রসুন',
+  'rosun': 'রসুন',
+  'gajor': 'গাজর',
+  'gajur': 'গাজর',
+  'chal': 'চাল',
+  'dal': 'ডাল',
+  'tel': 'তেল',
+  'dim': 'ডিম',
+  'dudh': 'দুধ',
+  'murgi': 'মুরগি',
+  'goru': 'গরু',
+  'khashi': 'খাসি',
+  'khasi': 'খাসি',
+  'mach': 'মাছ',
+  'lobon': 'লবণ',
+  'nobon': 'লবণ',
+  'masala': 'মসলা',
+  'moshla': 'মসলা',
+  'morich': 'মরিচ',
+  'mors': 'মরিচ',
+  'holud': 'হলুদ',
+  'jira': 'জিরা',
+  'lebu': 'লেবু',
+  'kola': 'কলা',
+  'am': 'আম',
+  'kathal': 'কাঁঠাল',
+  'pepe': 'পেঁপে',
+  'tomato': 'টমেটো',
+  'ghee': 'ঘি',
+  'modhu': 'মধু',
+  'chini': 'চিনি',
+  'sobji': 'সবজি',
+  'shobji': 'সবজি',
+  'torkari': 'তরকারি',
+  'gos': 'মাংস',
+  'mangsho': 'মাংস',
+  'pani': 'পানি',
+  'jol': 'জল',
+  'cha': 'চা',
+  'coffee': 'কফি',
+  'kopi': 'কপি',
+  'cabbage': 'বাঁধাকপি',
+  'bandhakopi': 'বাঁধাকপি',
+  'fulkopi': 'ফুলকপি',
+  'cauliflower': 'ফুলকপি',
+  'lau': 'লাউ',
+  'kumra': 'কুমড়া',
+  'kumro': 'কুমড়া',
+  'begun': 'বেগুন',
+  'khero': 'ক্ষীরা',
+  'shosa': 'শসা',
+  'sosa': 'শসা',
+  'krola': 'করলা',
+  'korola': 'করলা',
+  'bhendi': 'ঢেঁড়স',
+  'dherosh': 'ঢেঁড়স',
+  'dheros': 'ঢেঁড়স'
+};
+
+function normalizePhonetic(text) {
+  if (!text) return '';
+  let t = text.toLowerCase().trim();
+  
+  const banglaToEnglishMap = {
+    'অ': 'a', 'আ': 'a', 'ই': 'i', 'ঈ': 'i', 'উ': 'u', 'ঊ': 'u', 'ঋ': 'r',
+    'এ': 'e', 'ঐ': 'oi', 'ও': 'o', 'ঔ': 'ou',
+    'ক': 'k', 'খ': 'kh', 'গ': 'g', 'ঘ': 'gh', 'ঙ': 'g',
+    'চ': 'ch', 'ছ': 'ch', 'জ': 'j', 'ঝ': 'jh', 'ঞ': 'n',
+    'ট': 't', 'ঠ': 'th', 'ড': 'd', 'ঢ': 'dh', 'ণ': 'n',
+    'ত': 't', 'থ': 'th', 'দ': 'd', 'ধ': 'dh', 'ন': 'n',
+    'প': 'p', 'ফ': 'f', 'ব': 'b', 'ভ': 'bh', 'ম': 'm',
+    'য': 'j', 'র': 'r', 'ল': 'l', 'শ': 'sh', 'ষ': 'sh', 'স': 's', 'হ': 'h',
+    'ড়': 'r', 'ঢ়': 'r', 'য়': 'y', 'ৎ': 't', 'ং': 'ng', 'ঃ': 'h', 'ঁ': 'n',
+    'া': 'a', 'ি': 'i', 'ী': 'i', 'ু': 'u', 'ূ': 'u', 'ৃ': 'r', 'ে': 'e',
+    'ৈ': 'oi', 'ো': 'o', 'ৌ': 'ou', '্য': 'y', '্র': 'r', 'র্': 'r', '্ব': 'b'
+  };
+  
+  let mappedStr = '';
+  for (let i = 0; i < t.length; i++) {
+    const char = t[i];
+    mappedStr += banglaToEnglishMap[char] || char;
+  }
+  
+  mappedStr = mappedStr
+    .replace(/sh/g, 's')
+    .replace(/ph/g, 'f')
+    .replace(/kh/g, 'k')
+    .replace(/bh/g, 'b')
+    .replace(/dh/g, 'd')
+    .replace(/th/g, 't')
+    .replace(/ch/g, 'c')
+    .replace(/gh/g, 'g')
+    .replace(/z/g, 'j')
+    .replace(/c/g, 'k');
+    
+  let vowelLess = '';
+  for (let i = 0; i < mappedStr.length; i++) {
+    const char = mappedStr[i];
+    if (!['a', 'e', 'i', 'o', 'u', 'y', 'w', 'h'].includes(char)) {
+      vowelLess += char;
+    }
+  }
+  return vowelLess;
+}
+
+const matchPhoneticSearch = (product, queryText) => {
+  if (!queryText) return true;
+  const q = queryText.toLowerCase().trim();
+  
+  const prodName = (product.name || '').toLowerCase().trim();
+  const prodCategory = (product.category || '').toLowerCase().trim();
+  const prodDesc = (product.description || '').toLowerCase().trim();
+  
+  if (prodName.includes(q) || prodCategory.includes(q) || prodDesc.includes(q)) {
+    return true;
+  }
+  
+  // Check phonetic dict matches
+  for (const [eng, bng] of Object.entries(COMMON_PHONETIC_DICT)) {
+    if (q.includes(eng) && prodName.includes(bng)) {
+      return true;
+    }
+  }
+  
+  // Vowel-insensitive character transliteration
+  const qNorm = normalizePhonetic(q);
+  if (qNorm.length >= 2) {
+    const nameNorm = normalizePhonetic(prodName);
+    const catNorm = normalizePhonetic(prodCategory);
+    if (nameNorm.includes(qNorm) || catNorm.includes(qNorm)) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
 
 
 // ══════════════════════════════════════════════════════════════════
@@ -334,6 +480,15 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         }
         link.href = faviconUrl;
       });
+
+      // 3. Cache shop logo and name for instant loading page display
+      if (shop.shopSlug || shop.subdomainSlug) {
+        const slug = shop.shopSlug || shop.subdomainSlug;
+        localStorage.setItem(`cached_shop_logo_${slug}`, JSON.stringify({
+          logoUrl: shop.logoUrl || '',
+          shopName: shop.shopName || ''
+        }));
+      }
     }
   }, [shop]);
 
@@ -938,8 +1093,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     const subMatch = !activeSubcategory || p.subcategory === activeSubcategory;
     // If subcategory is selected, also enforce category match (no 'All' bypass)
     const strictCatMatch = !activeSubcategory ? catMatch : p.category === activeCategory;
-    const searchMatch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchMatch = matchPhoneticSearch(p, searchTerm);
     return strictCatMatch && subMatch && searchMatch;
   });
   filteredProducts = filteredProducts.sort((a, b) => {
@@ -1245,22 +1399,47 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   const addAllCommonOrderToCart = () => {
     let addedCount = 0;
     const activeProducts = products.filter(p => p.showInCommonOrder);
+    let updatedCart = [...cart];
     
     activeProducts.forEach(product => {
       const row = commonOrderRows[product.id];
       if (row && parseFloat(row.qty) > 0 && parseFloat(row.price) > 0) {
-        const qty = 1;
+        const qtyToAdd = 1;
         const pieceNote = row.piece ? row.piece.trim() : '';
         const baseUnit = product.smartCalc?.enabled ? product.smartCalc.baseUnit : 'পিস';
         const customizedText = `${row.qty} ${baseUnit} (৳${row.price})`;
         const priceOverride = parseFloat(row.price);
         
-        addToCart(product, qty, customizedText, pieceNote, priceOverride);
+        // Match existing cart variants by id, customizedText and priceOverride
+        const existingIndex = updatedCart.findIndex(item => 
+          item.id === product.id && 
+          (item.customizedText || '') === (customizedText || '') &&
+          (parseFloat(item.price) === priceOverride)
+        );
+
+        if (existingIndex > -1) {
+          updatedCart = updatedCart.map((item, idx) => 
+            idx === existingIndex 
+              ? { ...item, quantity: item.quantity + qtyToAdd, note: pieceNote || item.note } 
+              : item
+          );
+        } else {
+          updatedCart.push({ 
+            ...product, 
+            price: priceOverride,
+            clientPrice: priceOverride,
+            quantity: qtyToAdd, 
+            note: pieceNote, 
+            customizedText: customizedText 
+          });
+        }
         addedCount++;
       }
     });
 
     if (addedCount > 0) {
+      setCart(updatedCart);
+      localStorage.setItem(CART_KEY, JSON.stringify(updatedCart));
       toast.success(`${addedCount}টি প্রোডাক্ট সফলভাবে কার্টে যোগ হয়েছে! 🛒`);
       setIsCommonOrderOpen(false);
       setCommonOrderRows({});
@@ -2914,71 +3093,80 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   return (
                     <div key={product.id} className="py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center px-2 hover:bg-slate-50/50 rounded-2xl transition-all">
                       {/* Product details */}
-                      <div className="col-span-1 md:col-span-4 flex items-center gap-3">
+                      <div className="col-span-1 md:col-span-4 flex items-center gap-3 w-full">
                         {product.imageUrl ? (
-                          <img src={product.imageUrl} className="w-12 h-12 rounded-xl object-cover border border-slate-200" alt="" />
+                          <img src={product.imageUrl} className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" alt="" />
                         ) : (
-                          <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-lg">📦</div>
+                          <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-lg shrink-0">📦</div>
                         )}
-                        <div>
-                          <h4 className="font-black text-slate-900 text-sm">{product.name}</h4>
-                          <p className="text-[10px] text-slate-400 font-black uppercase mt-0.5">{unitRateText}</p>
+                        <div className="flex-1 flex justify-between items-center pr-2">
+                          <div>
+                            <h4 className="font-black text-slate-900 text-sm">{product.name}</h4>
+                            <p className="text-[10px] text-slate-400 font-black uppercase mt-0.5">{unitRateText}</p>
+                          </div>
+                          {/* Show final price on the right side of the product name on mobile */}
+                          <div className="text-right shrink-0 md:hidden">
+                            <span className="font-black text-slate-800 text-sm">৳{row.finalPrice || 0}</span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Weight/Qty Input (Column A) */}
-                      <div className="col-span-1 md:col-span-2">
-                        <div className="relative">
+                      {/* Inputs & Add button Row on mobile, columns on desktop */}
+                      <div className="col-span-1 md:col-span-8 grid grid-cols-4 md:grid-cols-8 gap-2 items-center w-full">
+                        {/* Weight/Qty Input (Column A) */}
+                        <div className="col-span-1 md:col-span-2">
+                          <div className="relative">
+                            <input 
+                              type="number" 
+                              step="any"
+                              placeholder="পরিমাণ" 
+                              className="w-full pl-2 pr-7 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                              value={row.qty}
+                              onChange={e => handleCommonOrderChange(product, 'qty', e.target.value)}
+                            />
+                            <span className="absolute right-2 top-2.5 text-[8px] font-black text-slate-400 uppercase tracking-widest">{baseUnit}</span>
+                          </div>
+                        </div>
+
+                        {/* Price Input (Column B) */}
+                        <div className="col-span-1 md:col-span-2">
+                          <div className="relative">
+                            <input 
+                              type="number" 
+                              placeholder="৳ দাম" 
+                              className="w-full pl-5 pr-1 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                              value={row.price}
+                              onChange={e => handleCommonOrderChange(product, 'price', e.target.value)}
+                            />
+                            <span className="absolute left-2 top-2.5 text-xs font-black text-slate-400">৳</span>
+                          </div>
+                        </div>
+
+                        {/* Piece/Cut Input (Column C) */}
+                        <div className="col-span-1 md:col-span-2">
                           <input 
-                            type="number" 
-                            step="any"
-                            placeholder="পরিমাণ" 
-                            className="w-full pl-3 pr-12 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
-                            value={row.qty}
-                            onChange={e => handleCommonOrderChange(product, 'qty', e.target.value)}
+                            type="text" 
+                            placeholder="উদা: ১০ পিস" 
+                            className="w-full px-2 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                            value={row.piece}
+                            onChange={e => handleCommonOrderChange(product, 'piece', e.target.value)}
                           />
-                          <span className="absolute right-3.5 top-2.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">{baseUnit}</span>
                         </div>
-                      </div>
 
-                      {/* Price Input (Column B) */}
-                      <div className="col-span-1 md:col-span-2">
-                        <div className="relative">
-                          <input 
-                            type="number" 
-                            placeholder="৳ দাম" 
-                            className="w-full pl-6 pr-3 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
-                            value={row.price}
-                            onChange={e => handleCommonOrderChange(product, 'price', e.target.value)}
-                          />
-                          <span className="absolute left-2.5 top-2.5 text-xs font-black text-slate-400">৳</span>
+                        {/* Final Price Readonly (Column D) - hidden on mobile, visible on desktop */}
+                        <div className="hidden md:block md:col-span-1 text-center font-black text-slate-800 text-sm">
+                          ৳{row.finalPrice || 0}
                         </div>
-                      </div>
 
-                      {/* Piece/Cut Input (Column C) */}
-                      <div className="col-span-1 md:col-span-2">
-                        <input 
-                          type="text" 
-                          placeholder="উদা: ১০ পিস করুন" 
-                          className="w-full px-3 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
-                          value={row.piece}
-                          onChange={e => handleCommonOrderChange(product, 'piece', e.target.value)}
-                        />
-                      </div>
-
-                      {/* Final Price Readonly (Column D) */}
-                      <div className="col-span-1 md:col-span-1 text-center font-black text-slate-800 text-sm">
-                        ৳{row.finalPrice || 0}
-                      </div>
-
-                      {/* Add button */}
-                      <div className="col-span-1 md:col-span-1 text-right">
-                        <button 
-                          onClick={() => addCommonOrderRowToCart(product)}
-                          className="w-full md:w-auto px-3 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black hover:bg-purple-600 transition-colors uppercase tracking-widest active:scale-95"
-                        >
-                          যোগ করুন
-                        </button>
+                        {/* Add button */}
+                        <div className="col-span-1 md:col-span-1 text-right">
+                          <button 
+                            onClick={() => addCommonOrderRowToCart(product)}
+                            className="w-full px-1 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black hover:bg-purple-600 transition-colors uppercase tracking-tight active:scale-95 text-center"
+                          >
+                            যোগ
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -3000,6 +3188,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               >
                 বন্ধ করুন
               </button>
+              {(() => {
+                const commonOrderTotal = Object.values(commonOrderRows).reduce((sum, row) => sum + (parseFloat(row.finalPrice) || 0), 0);
+                return commonOrderTotal > 0 ? (
+                  <div className="text-slate-900 font-extrabold text-sm flex items-center gap-1">
+                    মোট হিসাবকৃত দাম: <span className="text-purple-600 text-base font-black">৳{commonOrderTotal}</span>
+                  </div>
+                ) : null;
+              })()}
               <button 
                 onClick={addAllCommonOrderToCart}
                 className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 active:scale-95"
