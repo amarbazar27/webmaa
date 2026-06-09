@@ -1,12 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import { use, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, ShieldCheck, XCircle, CheckCircle2, ArrowLeft, Smartphone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function PaymentSandboxPage({ params }) {
-  const { shopSlug } = use(params);
+// ── Inner component that uses useSearchParams ──────────────────────────────
+function PaymentSandboxContent({ shopSlug }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -18,14 +19,13 @@ export default function PaymentSandboxPage({ params }) {
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [gateway, setGateway] = useState('bkash'); // bkash, nagad, rocket
+  const [gateway, setGateway] = useState('bkash');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [error, setError] = useState('');
 
-  // Fetch shop and order details
   useEffect(() => {
     if (!shopSlug || !orderId) {
-      setError('অর্ডার বা শপ আইডি পাওয়া যায়নি।');
+      setError('অর্ডার বা শপ আইডি পাওয়া যায়নি।');
       setLoading(false);
       return;
     }
@@ -33,15 +33,13 @@ export default function PaymentSandboxPage({ params }) {
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/order?shopSlug=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`);
-        if (!res.ok) {
-          throw new Error('অর্ডারের তথ্য লোড করতে ব্যর্থ হয়েছে।');
-        }
+        if (!res.ok) throw new Error('অর্ডারের তথ্য লোড করতে ব্যর্থ হয়েছে।');
         const data = await res.json();
         setOrder(data.order);
         setShop(data.shop);
       } catch (err) {
         console.error(err);
-        setError('অর্ডারের বিবরণ লোড করা যায়নি।');
+        setError('অর্ডারের বিবরণ লোড করা যায়নি।');
       } finally {
         setLoading(false);
       }
@@ -75,24 +73,20 @@ export default function PaymentSandboxPage({ params }) {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || 'পেমেন্ট ভেরিফিকেশন ব্যর্থ হয়েছে।');
-      }
+      if (!res.ok) throw new Error(data.error || 'পেমেন্ট ভেরিফিকেশন ব্যর্থ হয়েছে।');
 
-      toast.success('পেমেন্ট সফলভাবে সম্পন্ন হয়েছে! 🥳', { id: toastId });
-      
-      // Redirect to callback page with success status
+      toast.success('পেমেন্ট সফলভাবে সম্পন্ন হয়েছে! 🥳', { id: toastId });
       router.push(`/shop/${shopSlug}/payment-callback?orderId=${orderId}&shopId=${shopId || shop?.id}&status=success&txnId=${data.txnId}`);
 
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'পেমেন্ট ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', { id: toastId });
+      toast.error(err.message || 'পেমেন্ট ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', { id: toastId });
       setProcessing(false);
     }
   };
 
   const handleCancel = () => {
-    toast.error('পেমেন্ট বাতিল করা হয়েছে।');
+    toast.error('পেমেন্ট বাতিল করা হয়েছে।');
     router.push(`/shop/${shopSlug}/payment-callback?orderId=${orderId}&shopId=${shopId || shop?.id}&status=cancelled`);
   };
 
@@ -113,10 +107,13 @@ export default function PaymentSandboxPage({ params }) {
             <XCircle size={28} className="text-red-600" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-slate-900">ত্রুটি দেখা দিয়েছে</h2>
+            <h2 className="text-lg font-black text-slate-900">ত্রুটি দেখা দিয়েছে</h2>
             <p className="text-sm text-slate-500 font-bold mt-2">{error || 'অর্ডারের বিবরণ পাওয়া যায়নি।'}</p>
           </div>
-          <button onClick={() => router.back()} className="w-full py-3 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-purple-600 transition-colors flex items-center justify-center gap-2">
+          <button
+            onClick={() => router.back()}
+            className="w-full py-3 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+          >
             <ArrowLeft size={16} /> ফিরে যান
           </button>
         </div>
@@ -127,29 +124,10 @@ export default function PaymentSandboxPage({ params }) {
   const amount = amountParam || order.total || 0;
   const orderNum = order.orderIdVisual || order.id?.slice(-6).toUpperCase();
 
-  // Color schemes for gateways
   const colors = {
-    bkash: {
-      bg: 'bg-[#e2136e]',
-      hover: 'hover:bg-[#be0f5b]',
-      border: 'border-[#e2136e]',
-      text: 'text-[#e2136e]',
-      light: 'bg-[#e2136e]/10'
-    },
-    nagad: {
-      bg: 'bg-[#f7941d]',
-      hover: 'hover:bg-[#d57a12]',
-      border: 'border-[#f7941d]',
-      text: 'text-[#f7941d]',
-      light: 'bg-[#f7941d]/10'
-    },
-    rocket: {
-      bg: 'bg-[#8c3c95]',
-      hover: 'hover:bg-[#722e7a]',
-      border: 'border-[#8c3c95]',
-      text: 'text-[#8c3c95]',
-      light: 'bg-[#8c3c95]/10'
-    }
+    bkash:  { bg: 'bg-[#e2136e]',  hover: 'hover:bg-[#be0f5b]', border: 'border-[#e2136e]', text: 'text-[#e2136e]',  light: 'bg-[#e2136e]/10'  },
+    nagad:  { bg: 'bg-[#f7941d]',  hover: 'hover:bg-[#d57a12]', border: 'border-[#f7941d]', text: 'text-[#f7941d]',  light: 'bg-[#f7941d]/10'  },
+    rocket: { bg: 'bg-[#8c3c95]',  hover: 'hover:bg-[#722e7a]', border: 'border-[#8c3c95]', text: 'text-[#8c3c95]',  light: 'bg-[#8c3c95]/10'  }
   };
 
   const activeColor = colors[gateway];
@@ -185,67 +163,46 @@ export default function PaymentSandboxPage({ params }) {
             <div className="space-y-4">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest block">পেমেন্ট মেথড সিলেক্ট করুন</label>
               <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setGateway('bkash')}
-                  className={`py-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
-                    gateway === 'bkash' 
-                      ? 'border-[#e2136e] bg-[#e2136e]/5 shadow-sm' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <span className="font-black text-xs text-[#e2136e]">bKash</span>
-                  <span className="text-[10px] text-slate-400 font-bold">বিকাশ</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setGateway('nagad')}
-                  className={`py-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
-                    gateway === 'nagad' 
-                      ? 'border-[#f7941d] bg-[#f7941d]/5 shadow-sm' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <span className="font-black text-xs text-[#f7941d]">Nagad</span>
-                  <span className="text-[10px] text-slate-400 font-bold">নগদ</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setGateway('rocket')}
-                  className={`py-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
-                    gateway === 'rocket' 
-                      ? 'border-[#8c3c95] bg-[#8c3c95]/5 shadow-sm' 
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <span className="font-black text-xs text-[#8c3c95]">Rocket</span>
-                  <span className="text-[10px] text-slate-400 font-bold">রকেট</span>
-                </button>
+                {[
+                  { id: 'bkash',  label: 'bKash',  sub: 'বিকাশ'  },
+                  { id: 'nagad',  label: 'Nagad',  sub: 'নগদ'    },
+                  { id: 'rocket', label: 'Rocket', sub: 'রকেট'   }
+                ].map((gw) => (
+                  <button
+                    key={gw.id}
+                    type="button"
+                    onClick={() => setGateway(gw.id)}
+                    className={`py-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+                      gateway === gw.id
+                        ? `${colors[gw.id].border} ${colors[gw.id].light} shadow-sm`
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className={`font-black text-xs ${colors[gw.id].text}`}>{gw.label}</span>
+                    <span className="text-[10px] text-slate-400 font-bold">{gw.sub}</span>
+                  </button>
+                ))}
               </div>
 
-              {/* Form inputs */}
+              {/* Form */}
               <form onSubmit={handlePay} className="space-y-4 pt-2">
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">
                     <Smartphone size={14} className={activeColor.text} />
-                    মোবাইল ওয়ালেট নম্বর
+                    মোবাইল ওয়ালেট নম্বর
                   </label>
-                  <div className="relative">
-                    <input
-                      required
-                      type="tel"
-                      maxLength={11}
-                      disabled={processing}
-                      placeholder="01XXXXXXXXX"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                      className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 text-base font-black text-slate-900 outline-none focus:border-slate-900 transition-colors shadow-inner"
-                    />
-                  </div>
+                  <input
+                    required
+                    type="tel"
+                    maxLength={11}
+                    disabled={processing}
+                    placeholder="01XXXXXXXXX"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                    className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 text-base font-black text-slate-900 outline-none focus:border-slate-900 transition-colors shadow-inner"
+                  />
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                    স্যান্ডবক্স মোডে টেস্ট করার জন্য যেকোনো ১১ ডিজিটের মোবাইল নম্বর দিন।
+                    স্যান্ডবক্স মোডে যেকোনো ১১ ডিজিটের নম্বর দিন।
                   </p>
                 </div>
 
@@ -255,11 +212,7 @@ export default function PaymentSandboxPage({ params }) {
                     disabled={processing}
                     className={`w-full py-4 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-md ${activeColor.bg} ${activeColor.hover} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    {processing ? (
-                      <Loader2 className="animate-spin" size={18} />
-                    ) : (
-                      <>৳ {parseFloat(amount).toLocaleString()} পেমেন্ট করুন</>
-                    )}
+                    {processing ? <Loader2 className="animate-spin" size={18} /> : <>৳ {parseFloat(amount).toLocaleString()} পেমেন্ট করুন</>}
                   </button>
 
                   <button
@@ -274,7 +227,6 @@ export default function PaymentSandboxPage({ params }) {
               </form>
             </div>
 
-            {/* Footer details */}
             <div className="border-t border-slate-100 pt-4 text-center">
               <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <ShieldCheck size={12} className="text-emerald-500" /> Secure Sandbox Node
@@ -284,5 +236,23 @@ export default function PaymentSandboxPage({ params }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Page wrapper with Suspense (required by Next.js for useSearchParams) ────
+export default function PaymentSandboxPage({ params }) {
+  const { shopSlug } = use(params);
+
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+          <Loader2 className="animate-spin text-purple-600 mb-2" size={32} />
+          <p className="text-sm font-bold text-slate-500">পেমেন্ট গেটওয়ে লোড হচ্ছে...</p>
+        </div>
+      }
+    >
+      <PaymentSandboxContent shopSlug={shopSlug} />
+    </Suspense>
   );
 }

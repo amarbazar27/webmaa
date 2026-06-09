@@ -1582,7 +1582,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           const res = await fetch('/api/payment/create-charge', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, shopId: shop.id })
+            body: JSON.stringify({ orderId, shopId: shop.id, shopSlug: shop.shopSlug || shop.subdomainSlug })
           });
           const data = await res.json();
           if (res.ok && data.paymentUrl) {

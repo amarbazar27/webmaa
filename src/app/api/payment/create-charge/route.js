@@ -5,7 +5,7 @@ import { adminDb } from '@/lib/firebase-admin';
 
 export async function POST(req) {
   try {
-    const { orderId, shopId } = await req.json();
+    const { orderId, shopId, shopSlug } = await req.json();
 
     if (!orderId || !shopId) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
@@ -32,7 +32,11 @@ export async function POST(req) {
     // If PipraPay is not fully configured, return a mock checkout sandbox page URL
     if (!apiKey) {
       console.warn('[PipraPay] API key missing. Falling back to sandbox checkout simulation.');
-      const sandboxUrl = `${req.nextUrl.origin}/shop/${orderData.shopSlug || shopId}/payment-sandbox?orderId=${orderId}&shopId=${shopId}&amount=${amount}`;
+      const slug = shopSlug || orderData.shopSlug;
+      if (!slug) {
+        return NextResponse.json({ error: 'Shop slug not found. Cannot build payment URL.' }, { status: 400 });
+      }
+      const sandboxUrl = `${req.nextUrl.origin}/shop/${slug}/payment-sandbox?orderId=${orderId}&shopId=${shopId}&amount=${amount}`;
       return NextResponse.json({ success: true, paymentUrl: sandboxUrl, sandbox: true });
     }
 
@@ -50,7 +54,7 @@ export async function POST(req) {
         customer_name: orderData.customerName || 'Customer',
         customer_phone: orderData.customerPhone || '',
         customer_email: orderData.customerEmail || '',
-        callback_url: `${req.nextUrl.origin}/shop/${orderData.shopSlug || shopId}/payment-callback?orderId=${orderId}&shopId=${shopId}`,
+        callback_url: `${req.nextUrl.origin}/shop/${shopSlug || orderData.shopSlug}/payment-callback?orderId=${orderId}&shopId=${shopId}`,
         webhook_url: `${req.nextUrl.origin}/api/payment/webhook`
       })
     });
