@@ -3,6 +3,7 @@ import {
   query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { auth } from './auth';
 
 // ── SHOP ──────────────────────────────────────────
 export const getShop = async (shopId) => {
@@ -163,76 +164,22 @@ export const saveUserData = async (uid, data) => {
 };
 
 export const updateOrderStatus = async (shopId, orderId, status, deliveryConfig = null, updaterInfo = null) => {
-  const orderRef = doc(db, 'shops', shopId, 'orders', orderId);
-  const orderSnap = await getDoc(orderRef);
+  const token = await auth.currentUser?.getIdToken();
+  const res = await fetch('/api/order/status', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ shopId, orderId, status, deliveryConfig, updaterInfo })
+  });
 
-  if (orderSnap.exists()) {
-     const orderData = orderSnap.data();
-     const updates = { status };
-     
-     if (status === 'confirmed' && deliveryConfig) {
-       // Support old string format or new object format
-       if (typeof deliveryConfig === 'string') {
-         updates.deliveryTime = deliveryConfig;
-       } else {
-         const d = parseInt(deliveryConfig.deliveryDays) || 0;
-         const h = parseInt(deliveryConfig.deliveryHours) || 0;
-         const m = parseInt(deliveryConfig.deliveryMinutes) || 0;
-         
-         if (d > 0 || h > 0 || m > 0) {
-           const now = new Date();
-           const etaMillis = now.getTime() + (d * 86400000) + (h * 3600000) + (m * 60000);
-           updates.deliveryETA = serverTimestamp(); // We use local logic in frontend, but need real TS.
-           // Actually, firestore doesn't let us add millis to serverTimestamp easily, so we use JS date
-           updates.deliveryETA = new Date(etaMillis); 
-           
-           let fmt = '';
-           if (d) fmt += `${d} দিন `;
-           if (h) fmt += `${h} ঘণ্টা `;
-           if (m) fmt += `${m} মিনিট`;
-           updates.deliveryCountdownFormatted = fmt.trim();
-         }
-       }
-       updates.confirmedAt = serverTimestamp();
-     }
-
-     // Track who performed each specific action
-     if (updaterInfo) {
-       updates.updatedBy = updaterInfo;
-       if (status === 'confirmed') {
-         updates.confirmedBy = updaterInfo;
-       } else if (status === 'completed') {
-         updates.deliveredBy = updaterInfo;
-         updates.deliveredAt = serverTimestamp();
-       } else if (status === 'cancelled') {
-         updates.rejectedBy = updaterInfo;
-         updates.rejectedAt = serverTimestamp();
-       }
-     }
-
-     await updateDoc(orderRef, updates);
-
-     // Loyalty Point Logic Isolation
-     if (status === 'completed' && orderData.status !== 'completed' && orderData.customerId) {
-        try {
-           const userRef = doc(db, 'users', orderData.customerId);
-           const userSnap = await getDoc(userRef);
-           if (userSnap.exists()) {
-              const userData = userSnap.data();
-              const todayStr = new Date().toISOString().split('T')[0];
-              
-              if (userData.lastLoyaltyDate !== todayStr) {
-                 await updateDoc(userRef, {
-                    loyaltyPoints: (userData.loyaltyPoints || 0) + 1,
-                    lastLoyaltyDate: todayStr
-                 });
-              }
-           }
-        } catch (e) {
-           console.warn("Could not update loyalty points (possibly guest or permission denied):", e);
-        }
-     }
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Failed to update order status');
   }
+
+  return res.json();
 };
 
 export const subscribeOrders = (shopId, callback) => {
@@ -622,4 +569,70 @@ export const createSuperadminShop = async (uid, email, name) => {
   const newSnap = await getDoc(ref);
   return { id: uid, ...newSnap.data() };
 };
+
+// ── WALLET HELPERS ────────────────────────────────
+export const subscribeWallet = (shopId, callback) => {
+  return onSnapshot(doc(db, 'shops', shopId, 'wallets', 'main'), (snap) => {
+    if (snap.exists()) {
+      callback({ id: snap.id, ...snap.data() });
+    } else {
+      callback({ walletBalance: 0, pendingBalance: 0, withdrawableBalance: 0, totalEarned: 0 });
+    }
+  });
+};
+
+export const subscribeWalletTransactions = (shopId, callback) => {
+  const q = query(
+    collection(db, 'shops', shopId, 'wallet_transactions'),
+    orderBy('createdAt', 'desc'),
+    limit(100)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+};
+
+export const createWithdrawalRequest = async (shopId, shopName, amount, paymentMethod, paymentDetails) => {
+  const token = await auth.currentUser?.getIdToken();
+  const res = await fetch('/api/wallet/withdraw', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ shopId, shopName, amount, paymentMethod, paymentDetails })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Failed to submit withdrawal request');
+  }
+
+  return res.json();
+};
+
+export const subscribeWithdrawalRequests = (shopId, callback) => {
+  const q = query(
+    collection(db, 'withdrawal_requests'),
+    where('shopId', '==', shopId),
+    orderBy('createdAt', 'desc'),
+    limit(50)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+};
+
+export const subscribeAllWithdrawalRequests = (callback) => {
+  const q = query(
+    collection(db, 'withdrawal_requests'),
+    orderBy('createdAt', 'desc'),
+    limit(100)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+};
+
+
 

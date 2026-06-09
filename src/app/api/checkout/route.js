@@ -280,18 +280,105 @@ export async function POST(req) {
     }
 
     // ── Coupon Validation ──────────────────────────────
-    let couponDiscountPercent = 0;
+    let appliedCoupon = null;
     let couponDiscountAmount = 0;
-    if (couponCode && shopData.couponCode && couponCode.trim().toUpperCase() === shopData.couponCode.trim().toUpperCase()) {
-      couponDiscountPercent = Number(shopData.couponDiscount) || 0;
-      if (couponDiscountPercent > 0) {
-        couponDiscountAmount = Math.round((total * couponDiscountPercent) / 100);
+    let freeShippingCoupon = false;
+
+    if (couponCode && couponCode.trim()) {
+      const cleanCoupon = couponCode.trim().toUpperCase();
+      let couponDoc = null;
+      let isGlobal = false;
+      let couponRef = null;
+
+      // 1. Check shop specific coupon
+      const shopCouponRef = adminDb.collection('shops').doc(shopId).collection('coupons').doc(cleanCoupon);
+      const shopCouponSnap = await shopCouponRef.get();
+
+      if (shopCouponSnap.exists) {
+        couponDoc = shopCouponSnap.data();
+        couponRef = shopCouponRef;
+      } else {
+        // 2. Check global coupon
+        const globalCouponRef = adminDb.collection('global_coupons').doc(cleanCoupon);
+        const globalCouponSnap = await globalCouponRef.get();
+        if (globalCouponSnap.exists) {
+          couponDoc = globalCouponSnap.data();
+          couponRef = globalCouponRef;
+          isGlobal = true;
+        }
+      }
+
+      if (couponDoc && couponDoc.isActive !== false) {
+        let isValid = true;
+        
+        // Expiry check
+        if (couponDoc.expiryDate) {
+          const expiry = couponDoc.expiryDate.toDate ? couponDoc.expiryDate.toDate() : new Date(couponDoc.expiryDate);
+          if (expiry < new Date()) isValid = false;
+        }
+
+        // Usage count check
+        const usageCount = parseInt(couponDoc.usageCount) || 0;
+        const usageLimit = parseInt(couponDoc.usageLimit) || 0;
+        if (usageLimit > 0 && usageCount >= usageLimit) isValid = false;
+
+        // Min order check
+        const minOrder = parseFloat(couponDoc.minOrderAmount) || 0;
+        if (total < minOrder) isValid = false;
+
+        // First order only check
+        if (isValid && couponDoc.firstOrderOnly === true) {
+          let ordersQuery = null;
+          if (customerId) {
+            ordersQuery = await adminDb.collection('shops').doc(shopId).collection('orders')
+              .where('customerId', '==', customerId)
+              .where('status', 'in', ['confirmed', 'shipped', 'completed'])
+              .limit(1)
+              .get();
+          }
+          if ((!ordersQuery || ordersQuery.empty) && customerPhone) {
+            ordersQuery = await adminDb.collection('shops').doc(shopId).collection('orders')
+              .where('customerPhone', '==', customerPhone)
+              .where('status', 'in', ['confirmed', 'shipped', 'completed'])
+              .limit(1)
+              .get();
+          }
+          if (ordersQuery && !ordersQuery.empty) {
+            isValid = false;
+          }
+        }
+
+        if (isValid) {
+          appliedCoupon = couponDoc;
+          const val = parseFloat(couponDoc.value) || 0;
+          
+          if (couponDoc.type === 'percentage') {
+            couponDiscountAmount = Math.round((total * val) / 100);
+            const maxDiscount = parseFloat(couponDoc.maxDiscountAmount) || 0;
+            if (maxDiscount > 0 && couponDiscountAmount > maxDiscount) {
+              couponDiscountAmount = maxDiscount;
+            }
+          } else if (couponDoc.type === 'fixed') {
+            couponDiscountAmount = Math.min(total, val);
+          } else if (couponDoc.type === 'free_shipping') {
+            freeShippingCoupon = true;
+          }
+
+          if (couponRef) {
+            await couponRef.update({
+              usageCount: admin.firestore.FieldValue.increment(1)
+            });
+          }
+        }
+      }
+
+      if (couponDiscountAmount > 0) {
         total = Math.max(0, total - couponDiscountAmount);
       }
     }
 
     // ── Delivery logic ─────────────────────────────────
-    let freeDelivery = false;
+    let freeDelivery = freeShippingCoupon;
 
     if (customerPhone) {
       const ordersSnap = await adminDb
@@ -308,11 +395,29 @@ export async function POST(req) {
 
     const finalTotal = total + (freeDelivery ? 0 : deliveryFee);
 
+    // ── Commission and Wallet settings ──
+    let commissionRate = 1;
+    try {
+      const globalConfigSnap = await adminDb.collection('config').doc('global').get();
+      if (globalConfigSnap.exists) {
+        const globalConfig = globalConfigSnap.data();
+        commissionRate = parseFloat(shopData.commissionRate ?? globalConfig.defaultCommissionRate ?? 1) || 0;
+      }
+    } catch (e) {
+      console.error('Error fetching global config for commission:', e);
+    }
+
+    const commissionableAmount = total;
+    const commissionAmount = isCOD ? 0 : Math.round((commissionableAmount * commissionRate) / 100);
+    const retailerAmount = isCOD ? finalTotal : Math.max(0, finalTotal - commissionAmount);
+
     // ── Order counter & Atomic Stock Reduction ──────────
     const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Asia/Dhaka' }).replace(/\//g, '');
     const counterRef = adminDb.collection('shops').doc(shopId).collection('counters').doc(`orders_${today}`);
+    const newOrderRef = adminDb.collection('shops').doc(shopId).collection('orders').doc();
 
     let newCount = 0;
+    let orderIdVisual = '';
 
     try {
       await adminDb.runTransaction(async (tx) => {
@@ -331,6 +436,10 @@ export async function POST(req) {
         const currentCount = counterSnap.exists ? (counterSnap.data().count || 0) : 0;
         newCount = currentCount + 1;
 
+        // Read wallet doc inside transaction
+        const walletRef = adminDb.collection('shops').doc(shopId).collection('wallets').doc('main');
+        const walletSnap = await tx.get(walletRef);
+
         // ═══ STEP 2: VALIDATE ═══
         for (const item of verifiedItems) {
           const pData = productSnaps[item.id].data();
@@ -340,6 +449,9 @@ export async function POST(req) {
             }
           }
         }
+
+        const serial = newCount.toString().padStart(2, '0');
+        orderIdVisual = `${serial}#${today}`;
 
         // ═══ STEP 3: ALL WRITES AFTER ALL READS ═══
         // Update stock
@@ -353,50 +465,79 @@ export async function POST(req) {
 
         // Update counter
         tx.set(counterRef, { count: newCount }, { merge: true });
+
+        // Save order inside transaction
+        tx.set(newOrderRef, {
+          customerName,
+          customerPhone,
+          customerEmail: customerEmail || '',
+          customerAddress,
+          customerNote: customerNote || '',
+          transactionId: transactionId || '',
+          paymentNumber: paymentNumber || '',
+          paymentScreenshot: paymentScreenshot || null,
+          orderIdVisual,
+          items: verifiedItems,
+          total: finalTotal,
+          isCOD,
+          shopId,
+          shopName: shopData.shopName,
+          freeDelivery,
+          couponCode: appliedCoupon ? couponCode.trim().toUpperCase() : null,
+          couponDiscountPercent: (appliedCoupon && appliedCoupon.type === 'percentage') ? parseFloat(appliedCoupon.value) : 0,
+          couponDiscountAmount,
+          status: 'pending',
+          localId: localId || null,
+          customerId: customerId,
+          customImage: customImage || null,
+          coordinates: coordinates || null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          commissionRate,
+          commissionAmount,
+          retailerAmount
+        });
+
+        // Wallet & Commission Logic for Non-COD (Online Payments)
+        if (!isCOD) {
+          const currentWallet = walletSnap.exists ? walletSnap.data() : { walletBalance: 0, pendingBalance: 0, withdrawableBalance: 0, totalEarned: 0 };
+          tx.set(walletRef, {
+            pendingBalance: (currentWallet.pendingBalance || 0) + retailerAmount,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          // Log transaction in wallet_transactions
+          const txRef = adminDb.collection('shops').doc(shopId).collection('wallet_transactions').doc();
+          tx.set(txRef, {
+            transactionId: newOrderRef.id,
+            type: 'credit',
+            amount: retailerAmount,
+            orderId: orderIdVisual,
+            status: 'pending',
+            description: `Online payment pending verification: ${orderIdVisual}`,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Log Daripallah global commission earnings
+          if (commissionAmount > 0) {
+            const systemEarningRef = adminDb.collection('system_earnings').doc();
+            tx.set(systemEarningRef, {
+              orderId: orderIdVisual,
+              shopId,
+              shopName: shopData.shopName,
+              orderTotal: finalTotal,
+              commissionRate,
+              commissionAmount,
+              createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        }
       });
     } catch (txError) {
-      if (txError.message.startsWith('Out of stock') || txError.message.startsWith('Product not found')) {
+      if (txError.message.startsWith('স্টক নেই') || txError.message.startsWith('Product not found')) {
         return NextResponse.json({ error: txError.message }, { status: 400 });
       }
       throw txError;
     }
-
-    const serial = newCount.toString().padStart(2, '0');
-    const orderIdVisual = `${serial}#${today}`;
-
-    // ── Save order ─────────────────────────────────────
-    const newOrderRef = adminDb
-      .collection('shops')
-      .doc(shopId)
-      .collection('orders')
-      .doc();
-
-    await newOrderRef.set({
-      customerName,
-      customerPhone,
-      customerEmail: customerEmail || '',
-      customerAddress,
-      customerNote: customerNote || '',
-      transactionId: transactionId || '',
-      paymentNumber: paymentNumber || '',
-      paymentScreenshot: paymentScreenshot || null,
-      orderIdVisual,
-      items: verifiedItems,
-      total: finalTotal,
-      isCOD,
-      shopId,
-      shopName: shopData.shopName,
-      freeDelivery,
-      couponCode: couponDiscountPercent > 0 ? couponCode.trim().toUpperCase() : null,
-      couponDiscountPercent,
-      couponDiscountAmount,
-      status: 'pending',
-      localId: localId || null,
-      customerId: customerId,
-      customImage: customImage || null,
-      coordinates: coordinates || null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
 
     // 🔔 RUFLO: Fire-and-forget emails (non-blocking — never slows checkout)
     const rufloPayload = { shopId, shopName: shopData.shopName, orderId: orderIdVisual, items: verifiedItems, total: finalTotal };

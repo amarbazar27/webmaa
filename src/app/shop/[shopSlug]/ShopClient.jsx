@@ -636,10 +636,13 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   // Coupon System states
-  const [couponCodeInput, setCouponCodeInput] = useState('');
-  const [appliedCouponCode, setAppliedCouponCode] = useState('');
   const [couponDiscountPercent, setCouponDiscountPercent] = useState(0);
+  const [couponDiscountAmount, setCouponDiscountAmount] = useState(0);
+  const [freeShippingCoupon, setFreeShippingCoupon] = useState(false);
   const [couponError, setCouponError] = useState('');
+  
+  // Payment Type state
+  const [paymentType, setPaymentType] = useState('online');
 
   // Common Order states
   const [isCommonOrderOpen, setIsCommonOrderOpen] = useState(false);
@@ -1267,7 +1270,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   const isAdvanceRequired = !isCOD || (shop.deliveryConfig?.advanceFee && shop.deliveryConfig.advanceFee !== '0');
 
   const { hasFreeDelivery } = getUserStreak(userOrders);
-  const effectiveDelivery = hasFreeDelivery ? 0 : deliveryAdvanceFee;
+  const effectiveDelivery = (hasFreeDelivery || freeShippingCoupon) ? 0 : deliveryAdvanceFee;
 
   const removeFromCart = (id) => {
     setCart(prev => prev.filter(item => item.id !== id));
@@ -1311,26 +1314,49 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
   };
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     setCouponError('');
     if (!couponCodeInput.trim()) {
       setCouponError('কুপন কোড লিখুন।');
       return;
     }
     const cleanInput = couponCodeInput.trim().toUpperCase();
-    const shopCoupon = (shop.couponCode || '').trim().toUpperCase();
-    if (shopCoupon && cleanInput === shopCoupon) {
-      setAppliedCouponCode(cleanInput);
-      setCouponDiscountPercent(Number(shop.couponDiscount) || 0);
+    const orderSubtotal = cart.length === 0 && orderImage ? 1 : cartTotal;
+    
+    try {
+      const res = await fetch('/api/coupon/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: cleanInput,
+          shopId: shop.id,
+          customerId: user?.uid || '',
+          customerPhone: orderForm.phone || '',
+          orderSubtotal
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        setCouponError(data.error || 'ভুল কুপন কোড! দয়া করে সঠিক কোড দিন।');
+        return;
+      }
+      
+      setAppliedCouponCode(data.code);
+      setCouponDiscountPercent(data.type === 'percentage' ? data.value : 0);
+      setCouponDiscountAmount(data.discountAmount || 0);
+      setFreeShippingCoupon(!!data.freeShipping);
       toast.success('কুপন কোডটি সফলভাবে প্রয়োগ করা হয়েছে! 🎉');
-    } else {
-      setCouponError('ভুল কুপন কোড! দয়া করে সঠিক কোড দিন।');
+    } catch (err) {
+      setCouponError('কুপন যাচাই করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
     }
   };
 
   const handleRemoveCoupon = () => {
     setAppliedCouponCode('');
     setCouponDiscountPercent(0);
+    setCouponDiscountAmount(0);
+    setFreeShippingCoupon(false);
     setCouponCodeInput('');
     setCouponError('');
     toast.success('কুপন কোড সরানো হয়েছে');
@@ -1471,7 +1497,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
     
     // 🚨 Payment Screenshot Check
-    if (isAdvanceRequired && shop.deliveryConfig?.requirePaymentScreenshot && !paymentScreenshot) {
+    if (paymentType === 'manual' && isAdvanceRequired && shop.deliveryConfig?.requirePaymentScreenshot && !paymentScreenshot) {
       toast.error('⚠️ পেমেন্ট যাচাইয়ের জন্য প্রমাণ স্বরূপ স্ক্রিনশট আপলোড করা আবশ্যক।');
       return;
     }
@@ -1509,9 +1535,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       customerEmail: user?.email || '',
       customerAddress: orderForm.address,
       customerNote: orderForm.note,
-      transactionId: orderForm.txnId,
-      paymentNumber: orderForm.paymentNumber,
-      paymentScreenshot: paymentScreenshot || undefined,
+      transactionId: paymentType === 'manual' ? orderForm.txnId : '',
+      paymentNumber: paymentType === 'manual' ? orderForm.paymentNumber : '',
+      paymentScreenshot: paymentType === 'manual' ? (paymentScreenshot || undefined) : undefined,
       couponCode: appliedCouponCode || undefined,
       items: cart.filter(i => Number(i.quantity) > 0).map(i => ({ 
         id: i.productId || i.id, 
@@ -1548,6 +1574,30 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           }
         });
       }
+
+      // If paymentType is 'online', trigger create-charge and redirect
+      if (paymentType === 'online' && isAdvanceRequired) {
+        const toastId = toast.loading('পেমেন্ট গেটওয়ে লোড হচ্ছে...');
+        try {
+          const res = await fetch('/api/payment/create-charge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, shopId: shop.id })
+          });
+          const data = await res.json();
+          if (res.ok && data.paymentUrl) {
+            toast.dismiss(toastId);
+            window.location.href = data.paymentUrl;
+            return;
+          } else {
+            toast.error('অনলাইন পেমেন্ট গেটওয়ে কাজ করছে না। রিটেইলারের সাথে যোগাযোগ করুন।');
+          }
+        } catch (e) {
+          toast.error('পেমেন্ট গেটওয়ে লোড করতে সমস্যা হয়েছে।');
+        }
+        toast.dismiss(toastId);
+      }
+      
       router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${orderId}`);
     };
 
@@ -2921,7 +2971,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
                     <div>
                       <p className="text-xs font-black text-emerald-800">✅ কুপন {appliedCouponCode} সক্রিয়!</p>
-                      <p className="text-[10px] text-emerald-600 font-bold">{couponDiscountPercent}% ডিসকাউন্ট পাওয়া গেছে।</p>
+                      <p className="text-[10px] text-emerald-600 font-bold">
+                        {freeShippingCoupon 
+                          ? 'ফ্রি ডেলিভারি ডিসকাউন্ট পাওয়া গেছে।' 
+                          : `${couponDiscountPercent > 0 ? couponDiscountPercent + '% ' : ''}৳${couponDiscountAmount} ডিসকাউন্ট পাওয়া গেছে।`}
+                      </p>
                     </div>
                     <button 
                       type="button" 
@@ -2957,67 +3011,101 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <div className="flex items-start gap-3">
                     <AlertCircle size={20} className="text-purple-700 mt-0.5 shrink-0" strokeWidth={2.5} />
                     <p className="text-sm font-bold text-purple-900 leading-snug">
-                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100) : 0)) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
+                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? couponDiscountAmount : 0)) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
                     </p>
                   </div>
-                  {effectiveDelivery > 0 && (
-                    <>
-                      <div className="bg-white px-3 py-2 rounded-xl border border-purple-100 shadow-sm">
-                        <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-1">পেমেন্ট নাম্বার</p>
-                        <p className="text-sm font-black text-purple-700">{shop.deliveryConfig?.methods}</p>
-                      </div>
-                      
-                      <div className="space-y-4 pt-2">
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">পেমেন্ট নাম্বার (যে নাম্বার থেকে টাকা পাঠিয়েছেন) *</label>
-                          <input required type="tel" maxLength={11} placeholder="01XXXXXXXXX" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 shadow-sm" value={orderForm.paymentNumber} onChange={e => setOrderForm(f => ({ ...f, paymentNumber: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
+
+                  {/* Payment Type Tabs */}
+                  <div className="grid grid-cols-2 gap-2 bg-purple-100/50 p-1 rounded-xl border border-purple-200">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentType('online')}
+                      className={`py-2 rounded-lg text-xs font-black transition-all ${
+                        paymentType === 'online'
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'text-purple-700 hover:bg-purple-100/50'
+                      }`}
+                    >
+                      Instant Online (ইনস্ট্যান্ট)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentType('manual')}
+                      className={`py-2 rounded-lg text-xs font-black transition-all ${
+                        paymentType === 'manual'
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'text-purple-700 hover:bg-purple-100/50'
+                      }`}
+                    >
+                      Bkash/Nagad (ম্যানুয়াল)
+                    </button>
+                  </div>
+
+                  {paymentType === 'manual' ? (
+                    effectiveDelivery > 0 && (
+                      <>
+                        <div className="bg-white px-3 py-2 rounded-xl border border-purple-100 shadow-sm">
+                          <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-1">পেমেন্ট নাম্বার</p>
+                          <p className="text-sm font-black text-purple-700">{shop.deliveryConfig?.methods}</p>
                         </div>
-                        <div className="space-y-1.5">
-                          <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ট্রানজেকশন আইডি (TxnID) *</label>
-                          <input required type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
-                        </div>
-                        {shop.deliveryConfig?.requirePaymentScreenshot && (
-                          <div className="space-y-1.5 pt-2">
-                            <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1 font-extrabold text-slate-800">পেমেন্ট প্রুফ স্ক্রিনশট আপলোড *</label>
-                            <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white hover:bg-purple-50/30 transition-colors relative cursor-pointer min-h-[110px]">
-                              <input 
-                                required 
-                                type="file" 
-                                accept="image/*" 
-                                className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                                onChange={handleScreenshotUpload}
-                              />
-                              {paymentScreenshot ? (
-                                <div className="flex items-center gap-3 w-full z-10">
-                                  <img src={paymentScreenshot} className="w-12 h-12 object-cover rounded-lg border border-purple-200" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-slate-700 truncate">স্ক্রিনশট আপলোড হয়েছে</p>
-                                    <p className="text-[10px] text-slate-400 font-bold">ক্লিক করে পরিবর্তন করতে পারেন</p>
-                                  </div>
-                                  <button 
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setPaymentScreenshot('');
-                                    }}
-                                    className="p-1 hover:bg-slate-100 rounded text-red-500 z-30 cursor-pointer"
-                                  >
-                                    <X size={16} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <>
-                                  <ImagePlus size={24} className="text-purple-400 mb-1" />
-                                  <p className="text-xs font-bold text-slate-600 text-center">এখানে ক্লিক করে স্ক্রিনশট আপলোড করুন</p>
-                                  <p className="text-[9px] text-slate-400 text-center">সর্বোচ্চ ২MB, JPG/PNG</p>
-                                </>
-                              )}
-                            </div>
+                        
+                        <div className="space-y-4 pt-2">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">পেমেন্ট নাম্বার (যে নাম্বার থেকে টাকা পাঠিয়েছেন) *</label>
+                            <input required={paymentType === 'manual'} type="tel" maxLength={11} placeholder="01XXXXXXXXX" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 shadow-sm" value={orderForm.paymentNumber} onChange={e => setOrderForm(f => ({ ...f, paymentNumber: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
                           </div>
-                        )}
-                      </div>
-                    </>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ট্রানজেকশন আইডি (TxnID) *</label>
+                            <input required={paymentType === 'manual'} type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
+                          </div>
+                          {shop.deliveryConfig?.requirePaymentScreenshot && (
+                            <div className="space-y-1.5 pt-2">
+                              <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1 font-extrabold text-slate-800">পেমেন্ট প্রুফ স্ক্রিনশট আপলোড *</label>
+                              <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white hover:bg-purple-50/30 transition-colors relative cursor-pointer min-h-[110px]">
+                                <input 
+                                  required={paymentType === 'manual' && shop.deliveryConfig?.requirePaymentScreenshot} 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                                  onChange={handleScreenshotUpload}
+                                />
+                                {paymentScreenshot ? (
+                                  <div className="flex items-center gap-3 w-full z-10">
+                                    <img src={paymentScreenshot} className="w-12 h-12 object-cover rounded-lg border border-purple-200" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-bold text-slate-700 truncate">স্ক্রিনশট আপলোড হয়েছে</p>
+                                      <p className="text-[10px] text-slate-400 font-bold">ক্লিক করে পরিবর্তন করতে পারেন</p>
+                                    </div>
+                                    <button 
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setPaymentScreenshot('');
+                                      }}
+                                      className="p-1 hover:bg-slate-100 rounded text-red-500 z-30 cursor-pointer"
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <ImagePlus size={24} className="text-purple-400 mb-1" />
+                                    <p className="text-xs font-bold text-slate-600 text-center">এখানে ক্লিক করে স্ক্রিনশট আপলোড করুন</p>
+                                    <p className="text-[9px] text-slate-400 text-center">সর্বোচ্চ ২MB, JPG/PNG</p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )
+                  ) : (
+                    <div className="bg-purple-100/50 p-4 rounded-xl border border-purple-200 text-center">
+                      <p className="text-xs font-black text-purple-900">অটোমেটিক বিকাশ/নগদ গেটওয়ে সক্রিয় আছে।</p>
+                      <p className="text-[10px] text-purple-700 font-bold mt-1">অর্ডার প্লেস করার পর পেমেন্ট করতে আপনাকে বিকাশ/নগদ পেমেন্ট গেটওয়েতে রিডাইরেক্ট করা হবে।</p>
+                    </div>
                   )}
                 </div>
               )}
@@ -3027,8 +3115,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="flex justify-between text-sm text-slate-600 font-bold"><span>প্রোডাক্টস (×{cartCount || (orderImage ? 'ছবি থেকে' : 0)})</span><span className="text-slate-900 font-black">৳{(cart.length === 0 && orderImage ? 1 : cartTotal)}</span></div>
                 {appliedCouponCode && (
                   <div className="flex justify-between text-sm text-emerald-600 font-bold">
-                    <span>কুপন ডিসকাউন্ট ({couponDiscountPercent}%)</span>
-                    <span>- ৳{Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100)}</span>
+                    <span>কুপন ডিসকাউন্ট {couponDiscountPercent > 0 ? `(${couponDiscountPercent}%)` : ''}</span>
+                    <span>- ৳{couponDiscountAmount}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-slate-600 font-bold">
@@ -3037,7 +3125,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t-2 border-slate-200 font-black text-slate-900 text-xl">
                   <span>সর্বমোট</span>
-                  <span className="text-purple-700 text-2xl">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100) : 0)) + effectiveDelivery}</span>
+                  <span className="text-purple-700 text-2xl">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? couponDiscountAmount : 0)) + effectiveDelivery}</span>
                 </div>
               </div>
 

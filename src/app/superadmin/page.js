@@ -7,7 +7,7 @@ import {
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
   getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop,
-  getAllMarketplaceProducts, updateProduct
+  getAllMarketplaceProducts, updateProduct, subscribeAllWithdrawalRequests
 } from '@/lib/firestore';
 import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
 import {
@@ -42,8 +42,12 @@ export default function SuperAdminPage() {
   const [productsLoading, setProductsLoading] = useState(true);
   const [productSearchQuery, setProductSearchQuery] = useState('');
 
-  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactLinks: [], promotedLinks: [], defaultLayout: 'modern' });
+  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactLinks: [], promotedLinks: [], defaultLayout: 'modern', defaultCommissionRate: 1 });
   const [savingConfig, setSavingConfig] = useState(false);
+
+  // Withdrawal requests states
+  const [withdrawalRequests, setWithdrawalRequests] = useState([]);
+  const [processingWithdrawalId, setProcessingWithdrawalId] = useState(null);
   
   const router = useRouter();
   const [showKey, setShowKey] = useState(false);
@@ -149,10 +153,19 @@ export default function SuperAdminPage() {
         showcaseCuration: configData?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] },
         showAmazonBoxes: configData?.showAmazonBoxes ?? false,
         amazonBoxType: configData?.amazonBoxType || 'shop_recent',
-        showAllProductsDirectly: configData?.showAllProductsDirectly ?? true
+        showAllProductsDirectly: configData?.showAllProductsDirectly ?? true,
+        defaultCommissionRate: configData?.defaultCommissionRate ?? 1
       });
     });
-    return () => unsubscribe();
+
+    const unsubWithdrawals = subscribeAllWithdrawalRequests((data) => {
+      setWithdrawalRequests(data);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubWithdrawals();
+    };
   }, []);
 
   // Load products in the ecosystem
@@ -437,6 +450,38 @@ export default function SuperAdminPage() {
     }
   };
 
+  const handleProcessWithdrawal = async (requestId, action) => {
+    let reason = '';
+    if (action === 'reject') {
+      reason = prompt('উত্তোলনের আবেদনটি বাতিল করার কারণ লিখুন:');
+      if (reason === null) return; // cancelled prompt
+    }
+
+    setProcessingWithdrawalId(requestId);
+    try {
+      const token = await user?.getIdToken();
+      const res = await fetch('/api/wallet/withdraw/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ requestId, action, rejectionReason: reason })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to process request');
+      }
+
+      toast.success(action === 'approve' ? 'উত্তোলন সফলভাবে অনুমোদিত হয়েছে!' : 'উত্তোলন বাতিল করা হয়েছে!');
+    } catch (err) {
+      toast.error('উত্তোলন প্রসেস ব্যর্থ: ' + err.message);
+    } finally {
+      setProcessingWithdrawalId(null);
+    }
+  };
+
   const handleUpdateConfig = async (e) => {
     e.preventDefault();
     setSavingConfig(true);
@@ -611,6 +656,54 @@ export default function SuperAdminPage() {
         </div>
 
         <p className="text-[10px] font-bold text-slate-400 mt-3 px-1">💡 Retailers can override this for their shop. Customers can further override for themselves.</p>
+      </Card>
+
+      {/* 💳 Marketplace Commission Settings */}
+      <Card title="Marketplace & Commission Settings" subtitle="ম্যানেজ করুন গ্লোবাল কমিশন রেট এবং মার্চেন্ট ফি" icon={Crown} className="border-2 border-emerald-100 bg-emerald-50/10">
+        <div className="flex flex-col gap-4 p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+          <div>
+            <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Default Commission Rate (%)</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>দারিপাল্লা প্ল্যাটফর্মের ডিফল্ট কমিশন পার্সেন্টেজ (যেমন: ১%)</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={[1, 2, 3, 5, 10].includes(globalConfig.defaultCommissionRate ?? 1) ? (globalConfig.defaultCommissionRate ?? 1) : 'custom'}
+              onChange={e => {
+                const val = e.target.value;
+                if (val !== 'custom') {
+                  const updated = {...globalConfig, defaultCommissionRate: parseFloat(val) || 1};
+                  setGlobalConfig(updated);
+                  updateGlobalConfig(updated).catch(() => {});
+                }
+              }}
+              className="px-4 py-2 rounded-xl text-sm font-black border outline-none cursor-pointer bg-white text-slate-900 border-slate-200 hover:border-purple-400 transition-all focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="1">1% (Default)</option>
+              <option value="2">2%</option>
+              <option value="3">3%</option>
+              <option value="5">5%</option>
+              <option value="10">10%</option>
+              <option value="custom">Custom Percentage</option>
+            </select>
+            
+            {(![1, 2, 3, 5, 10].includes(globalConfig.defaultCommissionRate ?? 1) || true) && (
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                placeholder="Custom %"
+                className="px-4 py-2 rounded-xl text-sm font-bold border outline-none bg-white text-slate-900 border-slate-200 w-28 focus:border-purple-500"
+                value={globalConfig.defaultCommissionRate ?? 1}
+                onChange={e => {
+                  const updated = {...globalConfig, defaultCommissionRate: parseFloat(e.target.value) || 0};
+                  setGlobalConfig(updated);
+                  updateGlobalConfig(updated).catch(() => {});
+                }}
+              />
+            )}
+          </div>
+        </div>
       </Card>
 
       {/* 🚀 Platform AI Intelligence (Global Settings) */}
@@ -812,6 +905,109 @@ export default function SuperAdminPage() {
             )}
           </Card>
         </div>
+
+        {/* 💸 Withdrawal Requests Section */}
+        <div className="lg:col-span-12">
+          <Card
+            title="Merchant Withdrawal Requests (উত্তোলন আবেদনসমূহ)"
+            subtitle="রিটেইলারদের টাকা উত্তোলনের পেন্ডিং ও পূর্ববর্তী আবেদনসমূহ প্রসেস করুন"
+            icon={Crown}
+            className="border-2 border-indigo-100 bg-indigo-50/10"
+          >
+            {withdrawalRequests.length === 0 ? (
+              <div className="py-16 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                <CheckCircle size={40} className="mx-auto mb-4 text-emerald-400" />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">কোনো উইথড্র রিকোয়েস্ট নেই</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {withdrawalRequests.filter(w => w.status === 'pending').map((w) => (
+                  <div key={w.id} className="bg-white border-2 border-indigo-100 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-indigo-200 hover:shadow-lg transition-all animate-slide-in">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-lg">
+                        ৳
+                      </div>
+                      <div>
+                        <p className="font-black text-slate-900 text-base">{w.shopName} (<span className="text-xs text-purple-600">{w.shopId.slice(0,6)}...</span>)</p>
+                        <p className="text-xs text-slate-500 font-bold mt-0.5">আবেদনের তারিখ: {w.createdAt?.toDate ? w.createdAt.toDate().toLocaleString('en-GB') : 'সদ্য তৈরি'}</p>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className="text-xs font-black text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded border border-purple-100">মেথড: {w.paymentMethod}</span>
+                          <span className="text-xs font-bold text-slate-600 bg-slate-50 px-2.5 py-0.5 rounded border border-slate-200 truncate max-w-[200px]" title={w.paymentDetails}>হিসাব: {w.paymentDetails}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-2xl font-black text-slate-900">৳{w.amount}</p>
+                        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">অপেক্ষমাণ (Pending)</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleProcessWithdrawal(w.id, 'approve')}
+                          disabled={processingWithdrawalId === w.id}
+                          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all shadow-sm disabled:opacity-50 animate-pulse"
+                        >
+                          {processingWithdrawalId === w.id ? <Loader2 className="animate-spin" size={13} /> : <CheckCircle size={13} />} Approve
+                        </button>
+                        <button
+                          onClick={() => handleProcessWithdrawal(w.id, 'reject')}
+                          disabled={processingWithdrawalId === w.id}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-black transition-all border border-red-100 disabled:opacity-50"
+                        >
+                          <XCircle size={13} /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Processed History */}
+                {withdrawalRequests.filter(w => w.status !== 'pending').length > 0 && (
+                  <div className="mt-8 pt-6 border-t border-slate-100">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Processed Withdrawal History (আগের লেনদেনসমূহ)</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-separate border-spacing-y-2">
+                        <thead>
+                          <tr className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                            <th className="pb-1 px-3">তারিখ</th>
+                            <th className="pb-1 px-3">স্টোর</th>
+                            <th className="pb-1 px-3">মেথড</th>
+                            <th className="pb-1 px-3">হিসাব</th>
+                            <th className="pb-1 px-3 text-right">টাকা (৳)</th>
+                            <th className="pb-1 px-3 text-right">অবস্থা</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {withdrawalRequests.filter(w => w.status !== 'pending').map((w) => (
+                            <tr key={w.id} className="bg-slate-50 border border-slate-100 hover:bg-slate-100/50 transition-colors">
+                              <td className="py-3 px-3 rounded-l-xl text-xs font-bold text-slate-500">
+                                {w.createdAt?.toDate ? w.createdAt.toDate().toLocaleDateString('en-GB') : 'N/A'}
+                              </td>
+                              <td className="py-3 px-3 text-xs font-black text-slate-800">{w.shopName}</td>
+                              <td className="py-3 px-3 text-xs font-bold text-purple-700">{w.paymentMethod}</td>
+                              <td className="py-3 px-3 text-xs font-medium text-slate-600 truncate max-w-[150px]" title={w.paymentDetails}>
+                                {w.paymentDetails}
+                              </td>
+                              <td className="py-3 px-3 text-xs font-black text-slate-900 text-right">৳{w.amount}</td>
+                              <td className="py-3 px-3 rounded-r-xl text-right">
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                                  w.status === 'completed' ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-red-700 bg-red-50 border border-red-200'
+                                }`}>
+                                  {w.status === 'completed' ? 'Paid' : `Rejected${w.rejectionReason ? `: ${w.rejectionReason}` : ''}`}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        </div>
+
         {/* Live Shops Oversight Section */}
         <div className="lg:col-span-12">
           <Card

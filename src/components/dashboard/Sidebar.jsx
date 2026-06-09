@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
-  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate, Crown
+  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate, Crown,
+  Wallet
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/dashboard/customers', icon: Users, label: 'Customers', staffAllowed: false },
   { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates', staffAllowed: false },
   { href: '/dashboard/broadcast', icon: Store, label: 'Broadcast', staffAllowed: false },
+  { href: '/dashboard/wallet', icon: Wallet, label: 'Wallet', staffAllowed: false },
   { href: '/dashboard/settings', icon: Settings, label: 'Preferences', staffAllowed: false },
 ];
 

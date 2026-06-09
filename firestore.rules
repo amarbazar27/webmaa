@@ -146,8 +146,45 @@ service cloud.firestore {
         allow create: if false; // Server-only via Admin SDK
         allow update, delete: if false;
       }
+
+      // Wallets: read by shop admin, no client write
+      match /wallets/{walletId} {
+        allow read: if isShopAdmin(shopId);
+        allow write: if false; // Server-only via Admin SDK
+      }
+
+      // Wallet Transactions: read by shop admin, no client write
+      match /wallet_transactions/{txId} {
+        allow read: if isShopAdmin(shopId);
+        allow write: if false; // Server-only via Admin SDK
+      }
+
+      // Shop Coupons: read by public (for validation), write by shop admin
+      match /coupons/{couponId} {
+        allow read: if true;
+        allow write: if isShopAdmin(shopId);
+      }
     }
     
+    // ── Global Coupons ────────────────────────────────────────────
+    match /global_coupons/{couponId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // ── Withdrawal Requests ───────────────────────────────────────
+    match /withdrawal_requests/{requestId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && resource.data.shopId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.shopId == request.auth.uid && request.resource.data.status == 'pending';
+      allow update: if isSuperAdmin();
+      allow delete: if false;
+    }
+
+    // ── System Earnings ───────────────────────────────────────────
+    match /system_earnings/{earningId} {
+      allow read, write: if isSuperAdmin();
+    }
+
     // ── System Logs & Broadcasts ──────────────────────────────────
     match /impersonation_logs/{logId} {
       allow create: if isSuperAdmin();
