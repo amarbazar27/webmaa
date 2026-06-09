@@ -1,3 +1,4 @@
+// Trigger redeployment: 2026-06-09T11:59
 import SandboxUI from './SandboxUI';
 
 // Server Component — safely awaits params and searchParams
