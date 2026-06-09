@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 
@@ -10,49 +9,56 @@ export async function POST(req) {
   let orderId = 'unknown';
   try {
     const rawBody = await req.text();
-    const signature = req.headers.get('x-piprapay-signature') || req.headers.get('x-signature');
-    const secret = process.env.PIPRAPAY_WEBHOOK_SECRET;
+
+    // ── PipraPay Webhook Verification ──────────────────────────────
+    // PipraPay sends the API key as a header called 'mh-piprapay-api-key'
+    // We verify this matches our stored PIPRAPAY_API_KEY to confirm the
+    // request is genuinely from our PipraPay server instance.
+    const incomingApiKey = req.headers.get('mh-piprapay-api-key');
+    const ourApiKey = process.env.PIPRAPAY_API_KEY;
 
     if (!adminDb) {
       return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
     }
 
-    // ── Signature Verification ──────────────────────────
-    if (secret) {
-      if (!signature) {
-        return NextResponse.json({ error: 'Unauthorized: Missing signature header' }, { status: 401 });
-      }
-      const computedSignature = crypto
-        .createHmac('sha256', secret)
-        .update(rawBody)
-        .digest('hex');
-
-      if (computedSignature !== signature) {
-        // Log security warning
+    // If ourApiKey is configured (production mode), verify the header
+    if (ourApiKey) {
+      if (!incomingApiKey) {
         await adminDb.collection('system_logs').add({
           type: 'webhook_security_failure',
-          description: 'Invalid signature received on PipraPay webhook',
-          signature: signature,
+          description: 'PipraPay webhook received with no mh-piprapay-api-key header',
           createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
-        return NextResponse.json({ error: 'Unauthorized: Invalid signature' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized: Missing API key header' }, { status: 401 });
+      }
+
+      if (incomingApiKey !== ourApiKey) {
+        await adminDb.collection('system_logs').add({
+          type: 'webhook_security_failure',
+          description: 'PipraPay webhook received with invalid API key',
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        return NextResponse.json({ error: 'Unauthorized: Invalid API key' }, { status: 401 });
       }
     }
 
-    // ── Parse Payload ──────────────────────────────────
+    // ── Parse Payload ──────────────────────────────────────────────
     const payload = JSON.parse(rawBody);
+
+    // Support both combined format (shopId_orderId) and direct pp_id
     const rawOrderId = payload.order_id; // Format: `${shopId}_${orderId}`
 
     if (!rawOrderId || !rawOrderId.includes('_')) {
       return NextResponse.json({ error: 'Invalid order_id format in payload' }, { status: 400 });
     }
 
-    const parts = rawOrderId.split('_');
-    shopId = parts[0];
-    orderId = parts[1];
+    // Split on the FIRST underscore only (in case orderId itself has underscores)
+    const firstUnderscore = rawOrderId.indexOf('_');
+    shopId = rawOrderId.substring(0, firstUnderscore);
+    orderId = rawOrderId.substring(firstUnderscore + 1);
 
-    const txnId = payload.transaction_id || '';
-    const paymentNumber = payload.sender_number || '';
+    const txnId = payload.transaction_id || payload.pp_id || '';
+    const paymentNumber = payload.sender_number || payload.customer_number || '';
     const amountPaid = parseFloat(payload.amount) || 0;
     const status = payload.status; // 'success' or 'completed'
 
@@ -60,7 +66,7 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Ignored: Payment status is not success' }, { status: 200 });
     }
 
-    // ── Execute Wallet & Order updates atomically ──────
+    // ── Execute Wallet & Order updates atomically ──────────────────
     const orderRef = adminDb.collection('shops').doc(shopId).collection('orders').doc(orderId);
     const walletRef = adminDb.collection('shops').doc(shopId).collection('wallets').doc('main');
 
@@ -72,13 +78,15 @@ export async function POST(req) {
 
       const orderData = orderSnap.data();
 
-      // Idempotency: if order already paid, ignore
-      if (orderData.paymentStatus === 'paid' || orderData.status !== 'pending_payment') {
+      // Idempotency: if order already paid, ignore duplicate webhooks
+      if (orderData.paymentStatus === 'paid' || orderData.status === 'completed') {
         return { alreadyProcessed: true };
       }
 
       const walletSnap = await tx.get(walletRef);
-      const currentWallet = walletSnap.exists ? walletSnap.data() : { walletBalance: 0, pendingBalance: 0, withdrawableBalance: 0, totalEarned: 0 };
+      const currentWallet = walletSnap.exists
+        ? walletSnap.data()
+        : { walletBalance: 0, pendingBalance: 0, withdrawableBalance: 0, totalEarned: 0 };
 
       const retailerAmount = parseFloat(orderData.retailerAmount ?? orderData.total ?? 0) || 0;
       const commissionAmount = parseFloat(orderData.commissionAmount ?? 0) || 0;
@@ -86,7 +94,7 @@ export async function POST(req) {
 
       // 1. Update Order Document
       tx.update(orderRef, {
-        status: 'pending', // Set to pending for retailer confirmation/delivery
+        status: 'pending', // moves to retailer queue for delivery
         paymentStatus: 'paid',
         paymentMethod: 'PipraPay',
         transactionId: txnId,
@@ -101,10 +109,10 @@ export async function POST(req) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
-      // 3. Log transaction ledger entry
+      // 3. Log wallet transaction ledger entry
       const txRef = adminDb.collection('shops').doc(shopId).collection('wallet_transactions').doc();
       tx.set(txRef, {
-        transactionId: orderId,
+        transactionId: txnId,
         type: 'credit',
         amount: retailerAmount,
         orderId: orderData.orderIdVisual || orderId,
@@ -113,7 +121,7 @@ export async function POST(req) {
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      // 4. Log Daripallah global commission earnings (if not written during checkout)
+      // 4. Log platform commission
       if (commissionAmount > 0) {
         const systemEarningRef = adminDb.collection('system_earnings').doc();
         tx.set(systemEarningRef, {
@@ -130,23 +138,25 @@ export async function POST(req) {
       return { success: true };
     });
 
-    // Write success audit logs
+    // Write success audit log
     await adminDb.collection('system_logs').add({
       type: 'webhook_success',
       shopId,
       orderId,
       transactionId: txnId,
       amount: amountPaid,
-      description: `Payment confirmed successfully via PipraPay Webhook`,
+      description: `Payment confirmed via PipraPay Webhook`,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    return NextResponse.json({ success: true, message: result.alreadyProcessed ? 'Already processed' : 'Processed' });
+    return NextResponse.json({
+      success: true,
+      message: result.alreadyProcessed ? 'Already processed' : 'Processed'
+    });
 
   } catch (error) {
     console.error('PipraPay webhook error:', error);
 
-    // Write error audit logs
     try {
       if (adminDb) {
         await adminDb.collection('system_logs').add({
@@ -158,7 +168,7 @@ export async function POST(req) {
         });
       }
     } catch (e) {
-      console.error('Failed to log webhook error in Firestore:', e);
+      console.error('Failed to log webhook error:', e);
     }
 
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
