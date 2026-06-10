@@ -3,21 +3,9 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
-import { execSync } from 'child_process';
-import path from 'path';
 
-// Helper to extract GitHub owner and repo name from Git remote origin URL
+// Get GitHub owner and repo from env vars only (no git shell commands — not available in Vercel)
 function getGitRepoDetails() {
-  try {
-    const remoteUrl = execSync('git config --get remote.origin.url', { encoding: 'utf8' }).trim();
-    // Handles git@github.com:owner/repo.git or https://github.com/owner/repo.git
-    const match = remoteUrl.match(/github\.com[:/]([^/]+)\/([^.]+)(?:\.git)?/);
-    if (match) {
-      return { owner: match[1], repo: match[2] };
-    }
-  } catch (e) {
-    console.warn('[Build App] Failed to parse git remote origin URL:', e.message);
-  }
   return {
     owner: process.env.GITHUB_OWNER || 'amarbazar27',
     repo: process.env.GITHUB_REPO || 'webmaa'

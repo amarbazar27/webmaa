@@ -3,7 +3,7 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { 
-  Smartphone, Download, Cpu, RefreshCw, CheckCircle2, AlertCircle, 
+  Smartphone, Download, Cpu, RefreshCw, CheckCircle2, AlertCircle, Clock,
   ExternalLink, FileText, Clipboard, Copy, Check, Eye, HelpCircle, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
