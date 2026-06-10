@@ -367,26 +367,48 @@ class MainActivity: FlutterActivity() {
   if (bucket) {
     try {
       console.log(`📤 Uploading APK to Firebase Storage...`);
-      const apkBlob = await bucket.upload(apkDest, {
-        destination: `builds/${shopSlug}/app-release.apk`,
-        public: true,
+      const apkDestination = `builds/${shopSlug}/app-release.apk`;
+      const [apkBlob] = await bucket.upload(apkDest, {
+        destination: apkDestination,
         metadata: { 
           contentType: 'application/vnd.android.package-archive',
           contentDisposition: 'attachment; filename="app-release.apk"'
         }
       });
-      apkUrl = apkBlob[0].publicUrl() || `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(`builds/${shopSlug}/app-release.apk`)}?alt=media`;
+      
+      try {
+        console.log(`🔑 Generating signed download URL for APK...`);
+        const [signedApkUrl] = await apkBlob.getSignedUrl({
+          action: 'read',
+          expires: Date.now() + 10 * 365 * 24 * 60 * 60 * 1000 // 10 years
+        });
+        apkUrl = signedApkUrl;
+      } catch (signErr) {
+        console.warn('⚠️ Signed URL generation failed for APK, falling back to public URL:', signErr.message);
+        apkUrl = apkBlob.publicUrl() || `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(apkDestination)}?alt=media`;
+      }
       
       console.log(`📤 Uploading AAB to Firebase Storage...`);
-      const aabBlob = await bucket.upload(aabDest, {
-        destination: `builds/${shopSlug}/app-release.aab`,
-        public: true,
+      const aabDestination = `builds/${shopSlug}/app-release.aab`;
+      const [aabBlob] = await bucket.upload(aabDest, {
+        destination: aabDestination,
         metadata: { 
           contentType: 'application/octet-stream',
           contentDisposition: 'attachment; filename="app-release.aab"'
         }
       });
-      aabUrl = aabBlob[0].publicUrl() || `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(`builds/${shopSlug}/app-release.aab`)}?alt=media`;
+
+      try {
+        console.log(`🔑 Generating signed download URL for AAB...`);
+        const [signedAabUrl] = await aabBlob.getSignedUrl({
+          action: 'read',
+          expires: Date.now() + 10 * 365 * 24 * 60 * 60 * 1000 // 10 years
+        });
+        aabUrl = signedAabUrl;
+      } catch (signErr) {
+        console.warn('⚠️ Signed URL generation failed for AAB, falling back to public URL:', signErr.message);
+        aabUrl = aabBlob.publicUrl() || `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(aabDestination)}?alt=media`;
+      }
 
       console.log(`✅ Uploaded to cloud storage! \n- APK: ${apkUrl}\n- AAB: ${aabUrl}`);
     } catch (err) {
