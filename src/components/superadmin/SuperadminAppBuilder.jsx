@@ -8,6 +8,15 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const reservedKeywords = new Set([
+  'abstract', 'as', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const', 'continue',
+  'default', 'do', 'double', 'else', 'enum', 'extends', 'false', 'final', 'finally', 'float', 'for', 'fun', 'goto',
+  'if', 'implements', 'import', 'in', 'instanceof', 'int', 'interface', 'is', 'long', 'native', 'new', 'null',
+  'object', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'strictfp', 'super', 'switch',
+  'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'typealias', 'typeof', 'val', 'var',
+  'void', 'volatile', 'when', 'while'
+]);
+
 export default function SuperadminAppBuilder() {
   const { user } = useAuth();
   const [shops, setShops] = useState([]);
@@ -160,7 +169,9 @@ export default function SuperadminAppBuilder() {
               {filteredShops.map((shop) => {
                 const slug = shop.subdomainSlug || shop.shopSlug;
                 const status = shop.appBuildStatus || 'not_generated'; // not_generated, building, completed, failed
-                const packageId = shop.appBuildPackageName || `com.daripallah.${(slug || '').toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                const rawSlug = (slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const packageSlug = reservedKeywords.has(rawSlug) ? `${rawSlug}app` : rawSlug;
+                const packageId = shop.appBuildPackageName || `com.daripallah.${packageSlug}`;
                 const primaryColor = shop.designOverrides?.primaryColor || '#9333ea';
                 
                 return (

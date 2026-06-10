@@ -46,7 +46,18 @@ if (!shopSlug) {
 
 // Helper to sanitize shopSlug to make it a valid Android package identifier (alphanumeric only)
 const sanitizedSlug = shopSlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-const packageName = `com.daripallah.${sanitizedSlug}`;
+
+const reservedKeywords = new Set([
+  'abstract', 'as', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const', 'continue',
+  'default', 'do', 'double', 'else', 'enum', 'extends', 'false', 'final', 'finally', 'float', 'for', 'fun', 'goto',
+  'if', 'implements', 'import', 'in', 'instanceof', 'int', 'interface', 'is', 'long', 'native', 'new', 'null',
+  'object', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'strictfp', 'super', 'switch',
+  'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'typealias', 'typeof', 'val', 'var',
+  'void', 'volatile', 'when', 'while'
+]);
+
+const packageNameSlug = reservedKeywords.has(sanitizedSlug) ? `${sanitizedSlug}app` : sanitizedSlug;
+const packageName = `com.daripallah.${packageNameSlug}`;
 
 console.log(`🚀 Starting App Build Runner for [${shopSlug}]`);
 console.log(`📦 Package Name: ${packageName}`);
@@ -229,12 +240,12 @@ async function build() {
   // E. Dynamic Kotlin Folder Structure & MainActivity package rename
   console.log('  └─ Restructuring MainActivity.kt package...');
   const oldKotlinPath = path.join(appWorkspace, 'android/app/src/main/kotlin/com/daripallah/MainActivity.kt');
-  const newKotlinDir = path.join(appWorkspace, `android/app/src/main/kotlin/com/daripallah/${sanitizedSlug}`);
+  const newKotlinDir = path.join(appWorkspace, `android/app/src/main/kotlin/com/daripallah/${packageNameSlug}`);
   
   fs.mkdirSync(newKotlinDir, { recursive: true });
   const newKotlinPath = path.join(newKotlinDir, 'MainActivity.kt');
   
-  const mainActivityContent = `package com.daripallah.${sanitizedSlug}
+  const mainActivityContent = `package com.daripallah.${packageNameSlug}
 
 import io.flutter.embedding.android.FlutterActivity
 
