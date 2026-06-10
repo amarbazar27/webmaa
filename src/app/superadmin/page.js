@@ -10,6 +10,8 @@ import {
   getAllMarketplaceProducts, updateProduct
 } from '@/lib/firestore';
 import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
+import dynamic from 'next/dynamic';
+const SuperadminAppBuilder = dynamic(() => import('@/components/superadmin/SuperadminAppBuilder'), { ssr: false });
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
@@ -1264,6 +1266,11 @@ export default function SuperAdminPage() {
         {/* 🔔 Broadcast Center */}
         <div className="lg:col-span-12">
           <SuperadminBroadcastPanel shops={shops} />
+        </div>
+
+        {/* 📱 Mobile App Builder Center */}
+        <div className="lg:col-span-12">
+          <SuperadminAppBuilder />
         </div>
 
         {/* Invitation Area */}

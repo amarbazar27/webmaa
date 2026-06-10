@@ -7,7 +7,8 @@ import { uploadShopLogo, uploadImage } from '@/lib/storage';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
-  MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette
+  MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette,
+  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
@@ -159,6 +160,7 @@ export default function SettingsPage() {
   const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [], unionsType: 'unions' });
   const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', upazilaName: '', union: '' });
   const [geoLoading, setGeoLoading] = useState(false);
+  const [showAppInstructions, setShowAppInstructions] = useState(false);
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -646,7 +648,7 @@ export default function SettingsPage() {
       )}
 
       {/* ── General Settings Tab ── */}
-      {settingsTab === 'general' && (
+      {settingsTab === 'general' && (<>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Visual Identity & Left Col */}
         <div className="lg:col-span-4 space-y-8">
@@ -764,6 +766,88 @@ export default function SettingsPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </Card>
+
+          {/* 📱 Android App Integration Card */}
+          <Card title="Android App Integration" subtitle="অ্যান্ড্রয়েড মোবাইল অ্যাপ" icon={Smartphone} className="border-2 border-purple-100 bg-purple-50/5">
+            <div className="space-y-4 text-xs font-medium text-slate-700">
+              <p className="leading-relaxed">
+                আপনার ই-কমার্স স্টোরের জন্য গুগল প্লে স্টোর রেডি অ্যান্ড্রয়েড অ্যাপ্লিকেশন (APK & AAB ফাইল)।
+              </p>
+
+              {shop?.appBuildStatus === 'completed' ? (
+                <div className="space-y-3">
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <p className="font-bold text-emerald-800 flex items-center gap-1.5 mb-1">
+                      <CheckCircle2 size={13} /> অ্যাপ ফাইল প্রস্তুত!
+                    </p>
+                    <p className="text-[10px] text-emerald-600 leading-relaxed">
+                      সুপার এডমিন আপনার স্টোরের জন্য অ্যান্ড্রয়েড অ্যাপ জেনারেট করেছেন।
+                    </p>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 font-mono text-[10px] space-y-1">
+                    <p className="font-sans text-[10px] font-black text-slate-400 uppercase">Package Name</p>
+                    <p className="font-bold text-slate-700 truncate">{shop.appBuildPackageName}</p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {shop.appBuildApkUrl && (
+                      <a 
+                        href={shop.appBuildApkUrl} 
+                        download
+                        className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-black text-center flex items-center justify-center gap-2 hover:bg-black transition-all"
+                      >
+                        <Download size={14} /> Download APK (Direct Install)
+                      </a>
+                    )}
+                    {shop.appBuildAabUrl && (
+                      <a 
+                        href={shop.appBuildAabUrl} 
+                        download
+                        className="w-full py-2.5 bg-purple-600 text-white rounded-xl font-black text-center flex items-center justify-center gap-2 hover:bg-purple-700 shadow-md shadow-purple-500/10 transition-all"
+                      >
+                        <Smartphone size={14} /> Download AAB (Play Store Bundle)
+                      </a>
+                    )}
+                  </div>
+
+                  <button 
+                    type="button"
+                    onClick={() => setShowAppInstructions(true)}
+                    className="w-full py-2 bg-white text-purple-700 border border-purple-200 rounded-xl font-bold text-center flex items-center justify-center gap-1.5 hover:bg-purple-50 transition-all"
+                  >
+                    <FileText size={13} /> Play Store Upload Checklist
+                  </button>
+                </div>
+              ) : shop?.appBuildStatus === 'building' ? (
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-xl flex items-center gap-3">
+                  <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin shrink-0"></div>
+                  <div>
+                    <p className="font-bold text-purple-900">অ্যাপ ফাইল জেনারেট হচ্ছে...</p>
+                    <p className="text-[10px] text-purple-700 mt-0.5">সুপার এডমিন আপনার অ্যাপ প্রসেস করছেন। এটি শেষ হলে ডাউনলোড বাটন সক্রিয় হবে।</p>
+                  </div>
+                </div>
+              ) : shop?.appBuildStatus === 'failed' ? (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                  <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={16} />
+                  <div>
+                    <p className="font-bold text-red-900">অ্যাপ জেনারেশন ব্যর্থ হয়েছে</p>
+                    <p className="text-[10px] text-red-700 mt-0.5 leading-relaxed">
+                      বিল্ড করতে সমস্যা হয়েছে। দয়া করে সুপার এডমিনের সাথে যোগাযোগ করুন।
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                  <HelpCircle className="text-slate-400 mx-auto mb-2" size={24} />
+                  <p className="font-bold text-slate-800">অ্যাপ জেনারেট করা হয়নি</p>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
+                    আপনার স্টোরের মোবাইল অ্যাপ সংস্করণটি তৈরি করার জন্য অনুগ্রহ করে সুপার এডমিনের সাথে যোগাযোগ করুন।
+                  </p>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -1674,7 +1758,116 @@ export default function SettingsPage() {
           </form>
         </div>
       </div>
-      )} {/* end general tab */}
+
+      {/* Play Store Submission Instructions Modal */}
+      {showAppInstructions && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] border-2 border-slate-100 shadow-2xl p-6 md:p-8 max-w-xl w-full relative animate-slide-in max-h-[80vh] overflow-y-auto scrollbar-thin">
+            
+            {/* Close */}
+            <button 
+              type="button"
+              onClick={() => setShowAppInstructions(false)} 
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 p-2.5 rounded-full transition-colors z-10"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Title */}
+            <div className="flex items-center gap-3 border-b pb-5 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                <FileText size={22} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900">Google Play Store Upload Checklist</h3>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{shop?.shopName || 'App Details'}</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-6 text-slate-800 text-xs font-medium">
+              
+              {/* keystore */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <p className="text-xs font-black text-slate-900 mb-2 flex justify-between items-center">
+                  <span>১. Keystore Command (অ্যান্ড্রয়েড সাইনিং)</span>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`keytool -genkey -v -keystore ${(shop?.subdomainSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-upload-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ${(shop?.subdomainSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-key`);
+                      toast.success('কমান্ড কপি হয়েছে!');
+                    }} 
+                    className="text-purple-600 font-bold hover:underline"
+                  >
+                    কপি
+                  </button>
+                </p>
+                <pre className="bg-slate-900 text-slate-100 font-mono text-[9px] p-3 rounded-xl overflow-x-auto whitespace-pre-wrap select-all leading-relaxed">
+                  keytool -genkey -v -keystore {(shop?.subdomainSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-upload-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias {(shop?.subdomainSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-key
+                </pre>
+              </div>
+
+              {/* listing */}
+              <div className="space-y-3">
+                <p className="text-xs font-black text-slate-900">২. স্টোর লিস্টিং মেটাডাটা (Listing Info)</p>
+                
+                <div className="border border-slate-200 rounded-xl p-3 flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-slate-400 block mb-0.5">App Name (Max 30 chars)</span>
+                    <span className="text-xs font-bold text-slate-800">{shop?.shopName || 'Daripallah Store'}</span>
+                  </div>
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(shop?.shopName || ''); toast.success('কপি হয়েছে!'); }} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl p-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Short Description (Max 80 chars)</span>
+                    <button type="button" onClick={() => { navigator.clipboard.writeText(`Official Android App for ${shop?.shopName}. Shop online with fast delivery, reviews, and secure checkout.`); toast.success('কপি হয়েছে!'); }} className="text-purple-600 font-bold hover:underline">কপি</button>
+                  </div>
+                  <p className="text-xs font-bold text-slate-800">
+                    Official Android App for {shop?.shopName}. Shop online with fast delivery, reviews, and secure checkout.
+                  </p>
+                </div>
+
+                <div className="border border-slate-200 rounded-xl p-3 flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-slate-400 block mb-0.5">Privacy Policy URL</span>
+                    <span className="text-xs font-bold text-slate-800">
+                      https://{(shop?.subdomainSlug || 'shop')}.daripallah.com/privacy-policy
+                    </span>
+                  </div>
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(`https://${(shop?.subdomainSlug || 'shop')}.daripallah.com/privacy-policy`); toast.success('কপি হয়েছে!'); }} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
+                </div>
+              </div>
+
+              {/* Data safety */}
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <p className="text-xs font-black text-amber-950 mb-2">৩. Data Safety ডিক্লেয়ারেশন (প্লে কনসোল)</p>
+                <ul className="list-disc pl-4 space-y-1.5 text-[10px] text-amber-900 leading-relaxed font-bold">
+                  <li><strong>Location</strong>: Collected - ডেলিভারি ট্র্যাকিং ও অ্যাড্রেসের জন্য।</li>
+                  <li><strong>Personal Info</strong>: Name, Email, Phone, Address collected - অ্যাকাউন্ট রেজিস্ট্রেশনের জন্য।</li>
+                  <li><strong>Financial Info</strong>: Secure payment gateway integration. No credit card records stored in-app.</li>
+                  <li><strong>Security</strong>: Data encrypted in transit via HTTPS. User request account deletion supported.</li>
+                </ul>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="mt-8 border-t pt-5 flex justify-end">
+              <button 
+                type="button"
+                onClick={() => setShowAppInstructions(false)}
+                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+      </>)} {/* end general tab */}
     </div>
   );
 }
