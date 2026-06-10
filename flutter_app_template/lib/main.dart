@@ -252,9 +252,9 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
                   onReceivedError: (controller, request, error) {
                     pullToRefreshController?.endRefreshing();
                     // Detect if it is a connectivity failure
-                    if (error.type == WebResourceErrorType.HOST_LOOKUP ||
-                        error.type == WebResourceErrorType.CONNECT ||
-                        error.type == WebResourceErrorType.TIMEOUT) {
+                    if (error.type == WebResourceErrorType.hostLookup ||
+                        error.type == WebResourceErrorType.timeout ||
+                        error.type == WebResourceErrorType.internetDisconnected) {
                       setState(() {
                         isOffline = true;
                         isLoading = false;
@@ -273,9 +273,9 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
                     // Automatically request and grant HTML5 permissions
                     List<Permission> systemPermissions = [];
                     for (var resource in permissionRequest.resources) {
-                      if (resource == PermissionRequestResponseResources.CAMERA) {
+                      if (resource == PermissionResourceType.CAMERA) {
                         systemPermissions.add(Permission.camera);
-                      } else if (resource == PermissionRequestResponseResources.MICROPHONE) {
+                      } else if (resource == PermissionResourceType.MICROPHONE) {
                         systemPermissions.add(Permission.microphone);
                       }
                     }
@@ -285,15 +285,15 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
                       bool allGranted = statuses.values.every((status) => status.isGranted);
                       
                       if (allGranted) {
-                        return PermissionRequestResponse(
+                        return PermissionResponse(
                           resources: permissionRequest.resources,
-                          action: PermissionRequestResponseAction.GRANT,
+                          action: PermissionResponseAction.GRANT,
                         );
                       }
                     }
-                    return PermissionRequestResponse(
+                    return PermissionResponse(
                       resources: permissionRequest.resources,
-                      action: PermissionRequestResponseAction.DENY,
+                      action: PermissionResponseAction.DENY,
                     );
                   },
                   shouldOverrideUrlLoading: (controller, navigationAction) async {
