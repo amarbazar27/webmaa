@@ -4,7 +4,7 @@ import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Smartphone, Download, Cpu, RefreshCw, CheckCircle2, AlertCircle, Clock,
-  ExternalLink, FileText, Clipboard, Copy, Check, Eye, HelpCircle, X
+  ExternalLink, FileText, Clipboard, Copy, Check, Eye, HelpCircle, X, RotateCcw, Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -70,6 +70,20 @@ export default function SuperadminAppBuilder() {
       toast.error(error.message, { id: loadingToast });
     } finally {
       setBuildingId(null);
+    }
+  };
+
+  // 3. Reset a stuck 'building' status directly in Firestore
+  const handleResetBuild = async (shopId, shopName) => {
+    if (!confirm(`"${shopName}"-এর আটকে যাওয়া বিল্ড স্ট্যাটাস রিসেট করবেন?`)) return;
+    try {
+      await updateDoc(doc(db, 'shops', shopId), {
+        appBuildStatus: 'not_generated',
+        appBuildError: null,
+      });
+      toast.success(`"${shopName}"-এর বিল্ড স্ট্যাটাস রিসেট হয়েছে! এখন নতুন করে Generate App দিন।`);
+    } catch (err) {
+      toast.error('রিসেট করতে সমস্যা: ' + err.message);
     }
   };
 
@@ -194,9 +208,18 @@ export default function SuperadminAppBuilder() {
                         </span>
                       )}
                       {status === 'building' && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-200 animate-pulse">
-                          <RefreshCw className="animate-spin" size={11} /> Building...
-                        </span>
+                        <div className="flex flex-col gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-200 animate-pulse">
+                            <RefreshCw className="animate-spin" size={11} /> Building...
+                          </span>
+                          <button
+                            onClick={() => handleResetBuild(shop.id, shop.shopName)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[9px] font-black bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100 transition-all w-max"
+                            title="৩০+ মিনিট ধরে আটকে থাকলে রিসেট করুন"
+                          >
+                            <RotateCcw size={9} /> আটকে গেছে? রিসেট করুন
+                          </button>
+                        </div>
                       )}
                       {status === 'completed' && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
