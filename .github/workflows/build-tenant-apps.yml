@@ -32,7 +32,7 @@ jobs:
         cp temp_gradle_project/android/gradlew flutter_app_template/android/
         cp temp_gradle_project/android/gradlew.bat flutter_app_template/android/
         rm -rf temp_gradle_project
-        sed -i -E 's/gradle-[0-9.]+(-all|-bin)\.zip/gradle-8.3-all.zip/g' flutter_app_template/android/gradle/wrapper/gradle-wrapper.properties
+        sed -i -E 's/gradle-[0-9.]+(-all|-bin)\.zip/gradle-8.7-all.zip/g' flutter_app_template/android/gradle/wrapper/gradle-wrapper.properties
 
     - name: Flutter Doctor (Debug Info)
       run: flutter doctor -v
