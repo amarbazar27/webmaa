@@ -255,20 +255,31 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
                   },
                   onLoadStop: (controller, url) async {
                     pullToRefreshController?.endRefreshing();
+                    // Page loaded successfully — always cancel offline screen
                     setState(() {
                       isLoading = false;
+                      isOffline = false;
                     });
                   },
                   onReceivedError: (controller, request, error) {
                     pullToRefreshController?.endRefreshing();
-                    // Detect if it is a connectivity failure
-                    if (error.type == WebResourceErrorType.HOST_LOOKUP ||
-                        error.type == WebResourceErrorType.TIMEOUT) {
-                      setState(() {
-                        isOffline = true;
-                        isLoading = false;
-                      });
+                    // CRITICAL: Only show offline screen if the MAIN page fails.
+                    // Sub-resources (fonts, analytics, CDN images) also trigger this
+                    // callback — we must ignore them, otherwise the app falsely
+                    // shows "no internet" even when the main page loaded fine.
+                    if (request.isForMainFrame == true) {
+                      if (error.type == WebResourceErrorType.HOST_LOOKUP ||
+                          error.type == WebResourceErrorType.TIMEOUT ||
+                          error.type == WebResourceErrorType.CONNECT ||
+                          error.type == WebResourceErrorType.FAILED_SSL_HANDSHAKE ||
+                          error.type == WebResourceErrorType.NAME_NOT_RESOLVED) {
+                        setState(() {
+                          isOffline = true;
+                          isLoading = false;
+                        });
+                      }
                     }
+                    // Sub-resource errors are silently ignored
                   },
                   onProgressChanged: (controller, progressVal) {
                     if (progressVal == 100) {
