@@ -205,6 +205,15 @@ async function build() {
   fs.writeFileSync(buildGradlePath, buildGradleContent);
   console.log('  └─ android/app/build.gradle configured.');
 
+  // C2. android/app/google-services.json (replace package_name)
+  const googleServicesPath = path.join(appWorkspace, 'android/app/google-services.json');
+  if (fs.existsSync(googleServicesPath)) {
+    let gsContent = fs.readFileSync(googleServicesPath, 'utf8');
+    gsContent = gsContent.replace(/"package_name":\s*"com\.daripallah\.template"/g, `"package_name": "${packageName}"`);
+    fs.writeFileSync(googleServicesPath, gsContent);
+    console.log('  └─ android/app/google-services.json configured.');
+  }
+
   // D. android/app/src/main/AndroidManifest.xml (replace app name and deep link domain)
   const manifestPath = path.join(appWorkspace, 'android/app/src/main/AndroidManifest.xml');
   let manifestContent = fs.readFileSync(manifestPath, 'utf8');

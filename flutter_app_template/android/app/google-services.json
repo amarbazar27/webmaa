@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "156216219253",
+    "project_id": "webmaa-app",
+    "storage_bucket": "webmaa-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:156216219253:android:8fec080019c45244d0ca3c",
+        "android_client_info": {
+          "package_name": "com.daripallah.template"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMMzATvPWghOT8islcllFz9hXlCJ6HdFk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "3"
+}
