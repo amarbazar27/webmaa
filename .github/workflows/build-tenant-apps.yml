@@ -25,6 +25,14 @@ jobs:
         channel: 'stable'
         cache: true
 
+    - name: Generate Gradle Wrapper for Template
+      run: |
+        flutter create --platforms=android temp_gradle_project
+        cp -r temp_gradle_project/android/gradle flutter_app_template/android/
+        cp temp_gradle_project/android/gradlew flutter_app_template/android/
+        cp temp_gradle_project/android/gradlew.bat flutter_app_template/android/
+        rm -rf temp_gradle_project
+
     - name: Flutter Doctor (Debug Info)
       run: flutter doctor -v
 
