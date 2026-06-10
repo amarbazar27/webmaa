@@ -15,11 +15,17 @@ import 'config.dart';
 // Local Notifications Plugin setup for background messages
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+bool _firebaseInitialized = false;
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Handles background notifications
-  await Firebase.initializeApp();
-  _showNotification(message);
+  // Handles background notifications - safe no-op if Firebase not ready
+  try {
+    await Firebase.initializeApp();
+    _showNotification(message);
+  } catch (e) {
+    // Silently ignore if Firebase not configured
+  }
 }
 
 void _showNotification(RemoteMessage message) async {
@@ -47,9 +53,10 @@ void _showNotification(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Try to initialize Firebase dynamically
+  // Try to initialize Firebase — fully optional, app works without it
   try {
     await Firebase.initializeApp();
+    _firebaseInitialized = true;
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     
     // Set up Android notification channel
@@ -61,8 +68,10 @@ void main() async {
           description: 'Notifications for Daripallah stores',
           importance: Importance.max,
         ));
+    debugPrint("Firebase initialized successfully.");
   } catch (e) {
-    debugPrint("Firebase init failed: $e. Notifications will be offline.");
+    _firebaseInitialized = false;
+    debugPrint("Firebase init failed (non-critical): $e. App will work without push notifications.");
   }
 
   // Set system UI layout styling
@@ -121,6 +130,7 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
   }
 
   void initFirebaseListeners() {
+    if (!_firebaseInitialized) return; // Skip if Firebase not ready
     try {
       FirebaseMessaging.instance.requestPermission(
         alert: true,

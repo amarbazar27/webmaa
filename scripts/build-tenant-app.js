@@ -302,21 +302,38 @@ async function build() {
   fs.writeFileSync(pubspecPath, pubspecContent);
   console.log('  └─ pubspec.yaml configured.');
 
-  // C. android/app/build.gradle (replace applicationId)
+  // C. android/app/build.gradle (replace namespace AND applicationId)
   const buildGradlePath = path.join(appWorkspace, 'android/app/build.gradle');
   let buildGradleContent = fs.readFileSync(buildGradlePath, 'utf8');
+  buildGradleContent = buildGradleContent.replace('namespace "com.daripallah.template"', `namespace "${packageName}"`);
   buildGradleContent = buildGradleContent.replace('applicationId "com.daripallah.template"', `applicationId "${packageName}"`);
   fs.writeFileSync(buildGradlePath, buildGradleContent);
   console.log('  └─ android/app/build.gradle configured.');
 
-  // C2. android/app/google-services.json (replace package_name)
+  // C2. android/app/google-services.json — write complete valid JSON
+  // Ensures Firebase SDK doesn't crash due to package_name/mobilesdk_app_id mismatch
   const googleServicesPath = path.join(appWorkspace, 'android/app/google-services.json');
-  if (fs.existsSync(googleServicesPath)) {
-    let gsContent = fs.readFileSync(googleServicesPath, 'utf8');
-    gsContent = gsContent.replace(/"package_name":\s*"com\.daripallah\.template"/g, `"package_name": "${packageName}"`);
-    fs.writeFileSync(googleServicesPath, gsContent);
-    console.log('  └─ android/app/google-services.json configured.');
-  }
+  const googleServicesContent = JSON.stringify({
+    project_info: {
+      project_number: '156216219253',
+      project_id: 'webmaa-app',
+      storage_bucket: 'webmaa-app.firebasestorage.app'
+    },
+    client: [
+      {
+        client_info: {
+          mobilesdk_app_id: '1:156216219253:android:8fec080019c45244d0ca3c',
+          android_client_info: { package_name: packageName }
+        },
+        oauth_client: [],
+        api_key: [{ current_key: 'AIzaSyAMMzATvPWghOT8islcllFz9hXlCJ6HdFk' }],
+        services: { appinvite_service: { other_platform_oauth_client: [] } }
+      }
+    ],
+    configuration_version: '3'
+  }, null, 2);
+  fs.writeFileSync(googleServicesPath, googleServicesContent);
+  console.log('  └─ android/app/google-services.json configured.');
 
   // D. android/app/src/main/AndroidManifest.xml (replace app name and deep link domain)
   const manifestPath = path.join(appWorkspace, 'android/app/src/main/AndroidManifest.xml');
