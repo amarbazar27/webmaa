@@ -292,7 +292,7 @@ export default function SuperadminAppBuilder() {
                           ) : (
                             <Cpu size={13} />
                           )}
-                          {status === 'completed' ? 'Rebuild App' : 'Generate App'}
+                          {status === 'completed' ? 'Rebuild App' : status === 'failed' ? 'Retry Build' : 'Generate App'}
                         </button>
                       </div>
                     </td>
