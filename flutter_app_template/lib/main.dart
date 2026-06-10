@@ -269,10 +269,7 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
                     // shows "no internet" even when the main page loaded fine.
                     if (request.isForMainFrame == true) {
                       if (error.type == WebResourceErrorType.HOST_LOOKUP ||
-                          error.type == WebResourceErrorType.TIMEOUT ||
-                          error.type == WebResourceErrorType.CONNECT ||
-                          error.type == WebResourceErrorType.FAILED_SSL_HANDSHAKE ||
-                          error.type == WebResourceErrorType.NAME_NOT_RESOLVED) {
+                          error.type == WebResourceErrorType.TIMEOUT) {
                         setState(() {
                           isOffline = true;
                           isLoading = false;
