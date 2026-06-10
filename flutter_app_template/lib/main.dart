@@ -252,9 +252,8 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
                   onReceivedError: (controller, request, error) {
                     pullToRefreshController?.endRefreshing();
                     // Detect if it is a connectivity failure
-                    if (error.type == WebResourceErrorType.hostLookup ||
-                        error.type == WebResourceErrorType.timeout ||
-                        error.type == WebResourceErrorType.internetDisconnected) {
+                    if (error.type == WebResourceErrorType.HOST_LOOKUP ||
+                        error.type == WebResourceErrorType.TIMEOUT) {
                       setState(() {
                         isOffline = true;
                         isLoading = false;
