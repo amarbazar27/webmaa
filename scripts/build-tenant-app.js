@@ -64,10 +64,9 @@ console.log(`📦 Package Name: ${packageName}`);
 console.log(`🔧 Dry Run: ${isDryRun ? 'YES' : 'NO'}`);
 console.log(`🌐 GitHub Actions Context: ${isGitHubActions ? 'YES' : 'NO'}`);
 
-// Initialize Firebase Admin (Only if NOT in dry-run or if credentials exist)
+// Initialize Firebase Admin (Only Firestore — no Storage needed)
 let admin;
 let db;
-let bucket;
 
 if (!isDryRun) {
   try {
@@ -76,7 +75,6 @@ if (!isDryRun) {
       const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
       const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-      const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${projectId}.appspot.com`;
 
       if (projectId && clientEmail && privateKey) {
         admin.initializeApp({
@@ -85,18 +83,113 @@ if (!isDryRun) {
             clientEmail,
             privateKey,
           }),
-          storageBucket,
         });
-        console.log('✅ Firebase Admin initialized successfully.');
+        console.log('✅ Firebase Admin (Firestore) initialized successfully.');
       } else {
         console.warn('⚠️ Firebase credentials missing. Running in mock database mode.');
       }
     }
     db = admin.apps.length ? admin.firestore() : null;
-    bucket = admin.apps.length ? admin.storage().bucket() : null;
   } catch (err) {
     console.error('❌ Failed to load firebase-admin:', err.message);
   }
+}
+
+// GitHub Release Upload Helper (free, no billing required)
+async function uploadToGitHubRelease(filePath, fileName, contentType) {
+  const githubToken = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
+  const githubOwner = process.env.GITHUB_OWNER || 'amarbazar27';
+  const githubRepo = process.env.GITHUB_REPO || 'webmaa';
+
+  if (!githubToken) {
+    throw new Error('GITHUB_TOKEN or GITHUB_PAT environment variable is required for file upload.');
+  }
+
+  const releaseTag = `app-${shopSlug}-${Date.now()}`;
+  const releaseName = `${shopSlug} App Build ${new Date().toISOString().slice(0, 10)}`;
+
+  // 1. Create a new GitHub Release
+  console.log(`  📦 Creating GitHub Release tag: ${releaseTag}...`);
+  const createReleaseBody = JSON.stringify({
+    tag_name: releaseTag,
+    name: releaseName,
+    body: `Auto-generated white-label Android app build for shop: **${shopSlug}**\n\nPackage: \`${packageName}\``,
+    draft: false,
+    prerelease: false,
+  });
+
+  const releaseResponse = await new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: `/repos/${githubOwner}/${githubRepo}/releases`,
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'DaripallahAppBuilder',
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(createReleaseBody),
+      },
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+        catch(e) { reject(new Error(`Failed to parse release response: ${data}`)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(createReleaseBody);
+    req.end();
+  });
+
+  if (releaseResponse.status !== 201) {
+    throw new Error(`GitHub Release creation failed (${releaseResponse.status}): ${JSON.stringify(releaseResponse.body)}`);
+  }
+
+  const uploadUrl = releaseResponse.body.upload_url.replace('{?name,label}', '');
+  const releasePageUrl = releaseResponse.body.html_url;
+  console.log(`  ✅ Release created: ${releasePageUrl}`);
+
+  // 2. Upload the file as a release asset
+  console.log(`  ⬆️  Uploading ${fileName} to release...`);
+  const fileBuffer = fs.readFileSync(filePath);
+
+  const uploadResponse = await new Promise((resolve, reject) => {
+    const uploadUrlParsed = new URL(`${uploadUrl}?name=${encodeURIComponent(fileName)}`);
+    const options = {
+      hostname: uploadUrlParsed.hostname,
+      path: uploadUrlParsed.pathname + uploadUrlParsed.search,
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'DaripallahAppBuilder',
+        'Content-Type': contentType,
+        'Content-Length': fileBuffer.length,
+      },
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+        catch(e) { reject(new Error(`Failed to parse upload response: ${data}`)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(fileBuffer);
+    req.end();
+  });
+
+  if (uploadResponse.status !== 201) {
+    throw new Error(`Asset upload failed (${uploadResponse.status}): ${JSON.stringify(uploadResponse.body)}`);
+  }
+
+  const downloadUrl = uploadResponse.body.browser_download_url;
+  console.log(`  ✅ Uploaded! Download URL: ${downloadUrl}`);
+  return downloadUrl;
 }
 
 // Download utility
@@ -374,56 +467,26 @@ class MainActivity: FlutterActivity() {
   let apkUrl = `/builds/${shopSlug}/app-release.apk`;
   let aabUrl = `/builds/${shopSlug}/app-release.aab`;
 
-  // 6. Upload Binaries to Firebase Storage (Production Context)
-  if (bucket) {
+  // 6. Upload Binaries to GitHub Releases (Free, no billing required)
+  if (isGitHubActions || process.env.GITHUB_TOKEN || process.env.GITHUB_PAT) {
     try {
-      console.log(`📤 Uploading APK to Firebase Storage...`);
-      const apkDestination = `builds/${shopSlug}/app-release.apk`;
-      const [apkBlob] = await bucket.upload(apkDest, {
-        destination: apkDestination,
-        metadata: { 
-          contentType: 'application/vnd.android.package-archive',
-          contentDisposition: 'attachment; filename="app-release.apk"'
-        }
-      });
-      
-      try {
-        console.log(`🔑 Generating signed download URL for APK...`);
-        const [signedApkUrl] = await apkBlob.getSignedUrl({
-          action: 'read',
-          expires: Date.now() + 10 * 365 * 24 * 60 * 60 * 1000 // 10 years
-        });
-        apkUrl = signedApkUrl;
-      } catch (signErr) {
-        console.warn('⚠️ Signed URL generation failed for APK, falling back to public URL:', signErr.message);
-        apkUrl = apkBlob.publicUrl() || `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(apkDestination)}?alt=media`;
-      }
-      
-      console.log(`📤 Uploading AAB to Firebase Storage...`);
-      const aabDestination = `builds/${shopSlug}/app-release.aab`;
-      const [aabBlob] = await bucket.upload(aabDest, {
-        destination: aabDestination,
-        metadata: { 
-          contentType: 'application/octet-stream',
-          contentDisposition: 'attachment; filename="app-release.aab"'
-        }
-      });
+      console.log(`📤 Uploading APK to GitHub Releases (free hosting)...`);
+      apkUrl = await uploadToGitHubRelease(
+        apkDest,
+        `${shopSlug}-app-release.apk`,
+        'application/vnd.android.package-archive'
+      );
 
-      try {
-        console.log(`🔑 Generating signed download URL for AAB...`);
-        const [signedAabUrl] = await aabBlob.getSignedUrl({
-          action: 'read',
-          expires: Date.now() + 10 * 365 * 24 * 60 * 60 * 1000 // 10 years
-        });
-        aabUrl = signedAabUrl;
-      } catch (signErr) {
-        console.warn('⚠️ Signed URL generation failed for AAB, falling back to public URL:', signErr.message);
-        aabUrl = aabBlob.publicUrl() || `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(aabDestination)}?alt=media`;
-      }
+      console.log(`📤 Uploading AAB to GitHub Releases (free hosting)...`);
+      aabUrl = await uploadToGitHubRelease(
+        aabDest,
+        `${shopSlug}-app-release.aab`,
+        'application/octet-stream'
+      );
 
-      console.log(`✅ Uploaded to cloud storage! \n- APK: ${apkUrl}\n- AAB: ${aabUrl}`);
+      console.log(`✅ Uploaded to GitHub Releases!\n- APK: ${apkUrl}\n- AAB: ${aabUrl}`);
     } catch (err) {
-      console.error(`❌ Firebase Storage upload failed: ${err.message}. Relying on local server hosting URLs.`);
+      console.error(`❌ GitHub Releases upload failed: ${err.message}. Using local fallback URLs.`);
     }
   }
 
