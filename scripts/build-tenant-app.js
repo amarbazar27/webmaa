@@ -219,7 +219,7 @@ async function build() {
 
   // 1. Fetch Tenant Configuration
   let shopName = "Daripallah Store";
-  let targetUrl = `https://${shopSlug}.daripallah.com`;
+  let targetUrl = `https://daripallah.com/${shopSlug}`;
   let primaryColor = "#9333ea";
   let logoUrl = null;
   let customDomain = null;
@@ -242,7 +242,7 @@ async function build() {
         if (customDomain && shopData.domainStatus === 'active') {
           targetUrl = `https://${customDomain}`;
         } else {
-          targetUrl = `https://${shopSlug}.daripallah.com`;
+          targetUrl = `https://daripallah.com/${shopSlug}`;
         }
         console.log(`✅ Loaded shop metadata: ${shopName} | Color: ${primaryColor} | Domain: ${targetUrl}`);
       } else {

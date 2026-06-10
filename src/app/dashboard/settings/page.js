@@ -1833,10 +1833,10 @@ export default function SettingsPage() {
                   <div>
                     <span className="text-[10px] font-black uppercase text-slate-400 block mb-0.5">Privacy Policy URL</span>
                     <span className="text-xs font-bold text-slate-800">
-                      https://{(shop?.subdomainSlug || 'shop')}.daripallah.com/privacy-policy
+                      https://daripallah.com/{(shop?.subdomainSlug || 'shop')}/privacy-policy
                     </span>
                   </div>
-                  <button type="button" onClick={() => { navigator.clipboard.writeText(`https://${(shop?.subdomainSlug || 'shop')}.daripallah.com/privacy-policy`); toast.success('কপি হয়েছে!'); }} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(`https://daripallah.com/${(shop?.subdomainSlug || 'shop')}/privacy-policy`); toast.success('কপি হয়েছে!'); }} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
                 </div>
               </div>
 

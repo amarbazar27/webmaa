@@ -398,10 +398,10 @@ export default function SuperadminAppBuilder() {
                   <div>
                     <span className="text-[10px] font-black uppercase text-slate-400 block mb-0.5">Privacy Policy URL</span>
                     <span className="text-xs font-bold text-slate-800">
-                      https://{(selectedShop.subdomainSlug || selectedShop.shopSlug)}.daripallah.com/privacy-policy
+                      https://daripallah.com/{(selectedShop.subdomainSlug || selectedShop.shopSlug)}/privacy-policy
                     </span>
                   </div>
-                  <button onClick={() => handleCopy(`https://${(selectedShop.subdomainSlug || selectedShop.shopSlug)}.daripallah.com/privacy-policy`, 'privacy')} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
+                  <button onClick={() => handleCopy(`https://daripallah.com/${(selectedShop.subdomainSlug || selectedShop.shopSlug)}/privacy-policy`, 'privacy')} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
                 </div>
               </div>
 
