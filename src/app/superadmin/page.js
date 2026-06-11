@@ -44,11 +44,20 @@ export default function SuperAdminPage() {
   const [productsLoading, setProductsLoading] = useState(true);
   const [productSearchQuery, setProductSearchQuery] = useState('');
 
-  const [globalConfig, setGlobalConfig] = useState({ geminiApiKey: '', contactLinks: [], promotedLinks: [], defaultLayout: 'modern' });
+  const [globalConfig, setGlobalConfig] = useState({
+    geminiApiKey: '',
+    contactLinks: [],
+    promotedLinks: [],
+    defaultLayout: 'modern',
+    piprapayUrl: '',
+    piprapayApiKey: '',
+    piprapayCommissionPercent: 0
+  });
   const [savingConfig, setSavingConfig] = useState(false);
   
   const router = useRouter();
   const [showKey, setShowKey] = useState(false);
+  const [showPpKey, setShowPpKey] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
   const { theme, setSystemDefault, systemDefault } = useTheme();
   const { loginAsRetailer, user } = useAuth();
@@ -151,7 +160,10 @@ export default function SuperAdminPage() {
         showcaseCuration: configData?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] },
         showAmazonBoxes: configData?.showAmazonBoxes ?? false,
         amazonBoxType: configData?.amazonBoxType || 'shop_recent',
-        showAllProductsDirectly: configData?.showAllProductsDirectly ?? true
+        showAllProductsDirectly: configData?.showAllProductsDirectly ?? true,
+        piprapayUrl: configData?.piprapayUrl || '',
+        piprapayApiKey: configData?.piprapayApiKey || '',
+        piprapayCommissionPercent: configData?.piprapayCommissionPercent || 0
       });
     });
     return () => unsubscribe();
@@ -642,6 +654,51 @@ export default function SuperAdminPage() {
               <p className="text-[10px] text-slate-400 font-bold mt-3 px-1 uppercase tracking-wider">
                 This key is used as a fallback if a retailer does not provide their own Groq API key.
               </p>
+           </div>
+
+           {/* ⚡ PipraPay Centered Configuration */}
+           <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">
+             <div>
+               <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Globe size={14}/> PipraPay Automated Payment (পিপরাপেই অটোমেটেড পেমেন্ট সেটিংস)</p>
+               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">গ্লোবাল পেমেন্ট গেটওয়ে সার্ভার ও কমিশন কনফিগারেশন</p>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Input
+                  label="PipraPay Server Base URL (সার্ভার ইউআরএল)"
+                  value={globalConfig.piprapayUrl || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, piprapayUrl: e.target.value})}
+                  placeholder="e.g. https://piprapay-server.onrender.com"
+                />
+                <div className="relative">
+                  <Input
+                    label="PipraPay API Key (এপিআই কী)"
+                    type={showPpKey ? "text" : "password"}
+                    value={globalConfig.piprapayApiKey || ''}
+                    onChange={e => setGlobalConfig({...globalConfig, piprapayApiKey: e.target.value})}
+                    placeholder="mh-piprapay-api-key..."
+                  />
+                  <button 
+                    type="button" 
+                    className="absolute right-4 top-10 text-slate-400 hover:text-purple-600 transition-colors"
+                    onClick={() => setShowPpKey(!showPpKey)}
+                  >
+                    {showPpKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <Input
+                  label="Platform Commission (কমিশন %)"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={globalConfig.piprapayCommissionPercent || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, piprapayCommissionPercent: parseFloat(e.target.value) || 0})}
+                  placeholder="e.g. 5.0"
+                />
+             </div>
+             <p className="text-[10px] text-slate-400 font-bold px-1 uppercase tracking-wider">
+               এখানে PipraPay প্যানেলের URL এবং API Key দিন। অর্ডারের পেমেন্ট সফল হলে স্বয়ংক্রিয়ভাবে কমিশন কেটে রিটেইলারের অর্ডারে সেট করা হবে।
+             </p>
            </div>
            
            <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">

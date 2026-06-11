@@ -20,25 +20,28 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Database not initialized' }, { status: 500 });
     }
 
-    // Fetch the shop's private PipraPay configurations
-    const privateSnap = await adminDb
-      .collection('shops')
-      .doc(shopId)
-      .collection('private_configs')
-      .doc('piprapay')
-      .get();
+    // Fetch global configuration
+    const globalSnap = await adminDb.collection('config').doc('global').get();
+    if (!globalSnap.exists) {
+      return NextResponse.json({ error: 'Global configuration not found' }, { status: 500 });
+    }
+    const globalData = globalSnap.data();
+    const ppUrl = globalData.piprapayUrl?.trim().replace(/\/$/, '');
+    const ppApiKey = globalData.piprapayApiKey?.trim();
 
-    if (!privateSnap.exists) {
-      return NextResponse.json({ error: 'Shop payment configuration not found' }, { status: 404 });
+    if (!ppUrl || !ppApiKey) {
+      return NextResponse.json({ error: 'Global PipraPay configuration is missing' }, { status: 400 });
     }
 
-    const privateData = privateSnap.data();
-    if (!privateData.piprapayEnabled || !privateData.piprapayUrl || !privateData.piprapayApiKey) {
-      return NextResponse.json({ error: 'PipraPay is disabled or misconfigured for this shop' }, { status: 400 });
+    // Fetch the shop document to check if PipraPay is enabled
+    const shopSnap = await adminDb.collection('shops').doc(shopId).get();
+    if (!shopSnap.exists) {
+      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
     }
-
-    const ppUrl = privateData.piprapayUrl.replace(/\/$/, '');
-    const ppApiKey = privateData.piprapayApiKey;
+    const shopData = shopSnap.data();
+    if (!shopData.piprapayEnabled) {
+      return NextResponse.json({ error: 'PipraPay is disabled for this shop' }, { status: 400 });
+    }
 
     // Optional: Validate webhook header key if provided
     const reqApiKey = req.headers.get('mh-piprapay-api-key');
@@ -83,11 +86,19 @@ export async function POST(req) {
 
     const orderData = orderSnap.data();
     if (orderData.paymentStatus !== 'paid') {
+      const commissionPercent = Number(globalData.piprapayCommissionPercent) || 0;
+      const orderTotal = Number(orderData.total) || 0;
+      const commissionAmount = parseFloat((orderTotal * (commissionPercent / 100)).toFixed(2));
+      const netEarning = parseFloat((orderTotal - commissionAmount).toFixed(2));
+
       await orderRef.update({
         paymentStatus: 'paid',
         status: 'confirmed',
         transactionId: pp_id,
-        confirmedAt: admin.firestore.FieldValue.serverTimestamp()
+        confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+        paymentCommission: commissionAmount,
+        paymentNetEarning: netEarning,
+        paymentCommissionPercent: commissionPercent
       });
 
       // Send email alerts in the background

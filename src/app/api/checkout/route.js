@@ -379,65 +379,57 @@ export async function POST(req) {
 
     if (paymentMethod === 'piprapay') {
       try {
-        const privateSnap = await adminDb
-          .collection('shops')
-          .doc(shopId)
-          .collection('private_configs')
-          .doc('piprapay')
-          .get();
+        const globalSnap = await adminDb.collection('config').doc('global').get();
+        const globalData = globalSnap.exists ? globalSnap.data() : {};
+        const ppUrl = globalData.piprapayUrl?.trim().replace(/\/$/, '');
+        const ppApiKey = globalData.piprapayApiKey?.trim();
 
-        if (privateSnap.exists) {
-          const privateData = privateSnap.data();
-          if (privateData.piprapayEnabled && privateData.piprapayUrl && privateData.piprapayApiKey) {
-            const ppUrl = privateData.piprapayUrl.replace(/\/$/, '');
-            const ppApiKey = privateData.piprapayApiKey;
+        if (shopData.piprapayEnabled && ppUrl && ppApiKey) {
+          // Compute amount to charge. 
+          // If COD is true, charge delivery fee (advanceFee). If COD is false, charge full amount (finalTotal).
+          const amountToCharge = isCOD 
+            ? (freeDelivery ? 0 : deliveryFee) 
+            : finalTotal;
 
-            // Compute amount to charge. 
-            // If COD is true, charge delivery fee (advanceFee). If COD is false, charge full amount (finalTotal).
-            const amountToCharge = isCOD 
-              ? (freeDelivery ? 0 : deliveryFee) 
-              : finalTotal;
+          if (amountToCharge > 0) {
+            const protocol = req.headers.get('x-forwarded-proto') || 'https';
+            const host = req.headers.get('host') || 'webmaa.daripallah.com';
+            const domainUrl = `${protocol}://${host}`;
 
-            if (amountToCharge > 0) {
-              const protocol = req.headers.get('x-forwarded-proto') || 'https';
-              const host = req.headers.get('host') || 'webmaa.daripallah.com';
-              const domainUrl = `${protocol}://${host}`;
-
-              const res = await fetch(`${ppUrl}/api/create-charge`, {
-                method: 'POST',
-                headers: {
-                  'accept': 'application/json',
-                  'content-type': 'application/json',
-                  'mh-piprapay-api-key': ppApiKey
+            const res = await fetch(`${ppUrl}/api/create-charge`, {
+              method: 'POST',
+              headers: {
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'mh-piprapay-api-key': ppApiKey
+              },
+              body: JSON.stringify({
+                full_name: customerName,
+                email_mobile: customerEmail || customerPhone,
+                amount: amountToCharge.toString(),
+                metadata: {
+                  orderId: orderIdVisual,
+                  shopId: shopId,
+                  dbOrderId: newOrderRef.id
                 },
-                body: JSON.stringify({
-                  full_name: customerName,
-                  email_mobile: customerEmail || customerPhone,
-                  amount: amountToCharge.toString(),
-                  metadata: {
-                    orderId: orderIdVisual,
-                    shopId: shopId,
-                    dbOrderId: newOrderRef.id
-                  },
-                  redirect_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}/order/${newOrderRef.id}`,
-                  return_type: 'POST',
-                  cancel_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}`,
-                  webhook_url: `${domainUrl}/api/payments/piprapay-webhook`,
-                  currency: 'BDT'
-                })
-              });
+                redirect_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}/order/${newOrderRef.id}`,
+                return_type: 'POST',
+                cancel_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}`,
+                webhook_url: `${domainUrl}/api/payments/piprapay-webhook`,
+                currency: 'BDT'
+              })
+            });
 
-              if (res.ok) {
-                const ppData = await res.json();
-                if (ppData.success && ppData.payment_url) {
-                  checkoutUrl = ppData.payment_url;
-                  piprapayPpId = ppData.pp_id || null;
-                } else {
-                  console.error("PipraPay error response:", ppData);
-                }
+            if (res.ok) {
+              const ppData = await res.json();
+              if (ppData.success && ppData.payment_url) {
+                checkoutUrl = ppData.payment_url;
+                piprapayPpId = ppData.pp_id || null;
               } else {
-                console.error("PipraPay status error:", res.status);
+                console.error("PipraPay error response:", ppData);
               }
+            } else {
+              console.error("PipraPay status error:", res.status);
             }
           }
         }

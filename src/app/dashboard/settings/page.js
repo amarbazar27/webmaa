@@ -143,8 +143,6 @@ export default function SettingsPage() {
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '', requirePaymentScreenshot: false });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true, smartCalcEnabled: true });
   const [piprapayEnabled, setPiprapayEnabled] = useState(false);
-  const [piprapayUrl, setPiprapayUrl] = useState('');
-  const [piprapayApiKey, setPiprapayApiKey] = useState('');
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
   const [isStrictLocation, setIsStrictLocation] = useState(false);
@@ -268,20 +266,8 @@ export default function SettingsPage() {
       setFaqItems(data?.faqItems || []);
       setDomainStatus(data?.domainStatus || '');
       
-      // Fetch PipraPay private configuration
-      const privateDocRef = doc(db, 'shops', activeShopId, 'private_configs', 'piprapay');
-      getDoc(privateDocRef).then(pSnap => {
-        if (pSnap.exists()) {
-          const pData = pSnap.data();
-          setPiprapayEnabled(pData.piprapayEnabled || false);
-          setPiprapayUrl(pData.piprapayUrl || '');
-          setPiprapayApiKey(pData.piprapayApiKey || '');
-        }
-      }).catch(err => {
-        console.error("Error loading PipraPay settings:", err);
-      }).finally(() => {
-        setLoading(false);
-      });
+      setPiprapayEnabled(data?.piprapayEnabled || false);
+      setLoading(false);
     });
   }, [user, activeShopId]);
 
@@ -555,8 +541,6 @@ export default function SettingsPage() {
       const privateDocRef = doc(db, 'shops', activeShopId, 'private_configs', 'piprapay');
       await setDoc(privateDocRef, {
         piprapayEnabled,
-        piprapayUrl: piprapayUrl.trim(),
-        piprapayApiKey: piprapayApiKey.trim(),
       }, { merge: true });
 
       await updateShop(activeShopId, { 
@@ -1110,25 +1094,8 @@ export default function SettingsPage() {
                  </label>
               </div>
 
-              {piprapayEnabled && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 pt-6">
-                   <Input
-                     label="PipraPay Server Base URL (সার্ভার ইউআরএল)"
-                     value={piprapayUrl}
-                     onChange={e => setPiprapayUrl(e.target.value)}
-                     placeholder="e.g. http://129.150.x.x:8000"
-                   />
-                   <Input
-                     label="PipraPay API Key (এপিআই কী)"
-                     type="password"
-                     value={piprapayApiKey}
-                     onChange={e => setPiprapayApiKey(e.target.value)}
-                     placeholder="mh-piprapay-api-key..."
-                   />
-                </div>
-              )}
               <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
-                 ওরাল ক্লাউডে ডিপ্লয় করা PipraPay সার্ভারের URL এবং API key এখানে সাবধানে পেস্ট করুন। এটি গ্রাহকদের পেমেন্ট স্বয়ংক্রিয়ভাবে ভেরিফাই করার জন্য ব্যবহৃত হবে।
+                 প্ল্যাটফর্মের সেন্ট্রাল পেমেন্ট গেটওয়ের মাধ্যমে আপনার কাস্টমারদের জন্য স্বয়ংক্রিয় পেমেন্ট ভেরিফিকেশন সিস্টেম চালু করুন। এই পেমেন্টগুলো প্ল্যাটফর্ম অ্যাডমিনের মাধ্যমে প্রসেস হবে।
               </p>
             </Card>
 
