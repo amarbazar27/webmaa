@@ -1731,6 +1731,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         .rounded-2xl { border-radius: var(--sp-radius) !important; }
         .rounded-xl { border-radius: calc(var(--sp-radius) * 0.75) !important; }
         body { font-family: var(--sp-font), sans-serif !important; }
+        .sf-hero {
+          min-height: 0 !important;
+          height: auto !important;
+        }
       `}} />
 
       {/* ── Splash Loading Screen (1.5s, with shop branding) ── */}
@@ -1863,51 +1867,51 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {/* ── Header ── */}
       <header className="border-b sticky top-0 z-40 shadow-sm" style={{background:'var(--surface)',borderColor:'var(--border-color)'}}>
-        <div className="max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
+        <div className="max-w-[98%] mx-auto px-2 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-2">
           {/* Logo/Brand (Left Side) */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button className="hidden">
               <Menu size={20} strokeWidth={2.5} />
             </button>
             {/* Static logo - no href to prevent 'No store found' navigation */}
-            <div className="flex items-center gap-2 select-none cursor-default">
+            <div className="flex items-center gap-1.5 select-none cursor-default">
               {shop.logoUrl ? (
-                <img loading="lazy" src={shop.logoUrl} className="w-9 h-9 rounded-xl object-contain border border-slate-100" alt={shop.shopName} />
+                <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain border border-slate-100" alt={shop.shopName} />
               ) : (
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-md">
                   {shop.shopName?.[0] || 'S'}
                 </div>
               )}
-              <span className="font-black text-slate-900 text-[17px] leading-tight">{shop.shopName || 'Shop'}</span>
+              <span className="font-black text-slate-900 text-sm sm:text-[17px] leading-tight truncate max-w-[70px] sm:max-w-none">{shop.shopName || 'Shop'}</span>
             </div>
           </div>
 
           {/* Actions (Left side of the brand) */}
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 flex-wrap justify-end">
             <NotificationInbox shopId={shop.id} isDashboard={false} />
 
             {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
-              <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-lg">
-                <Settings size={15} /> <span>প্যানেলে যান</span>
+              <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-all shadow-lg">
+                <Settings size={14} /> <span className="hidden sm:inline">প্যানেলে যান</span>
               </button>
             )}
 
             {/* How to Order Video */}
             {shop.howToOrderVideo && (
-              <a href={shop.howToOrderVideo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black transition-colors shadow-sm whitespace-nowrap">
-                <PlayCircle size={15} /> <span>কিভাবে অর্ডার করবেন?</span>
+              <a href={shop.howToOrderVideo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm whitespace-nowrap">
+                <PlayCircle size={14} /> <span>কিভাবে অর্ডার করবেন?</span>
               </a>
             )}
 
             {/* App Download */}
             {!pwaInstalled && (
-              <button onClick={handleAppDownload} className="flex items-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition-colors shadow-sm">
-                <Download size={15} /> <span>অ্যাপ</span>
+              <button onClick={handleAppDownload} className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm">
+                <Download size={14} /> <span className="hidden sm:inline">অ্যাপ</span>
               </button>
             )}
 
             {/* Profile */}
-            <button onClick={() => setIsProfileOpen(true)} className="w-10 h-10 md:w-11 md:h-11 aspect-square bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl transition-colors shadow-sm border border-purple-200 overflow-hidden flex items-center justify-center">
+            <button onClick={() => setIsProfileOpen(true)} className="w-8 h-8 sm:w-10 sm:h-10 aspect-square bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl transition-colors shadow-sm border border-purple-200 overflow-hidden flex items-center justify-center">
               {user?.photoURL ? (
                 <img src={user.photoURL} className="w-full h-full object-cover aspect-square" alt="Profile" />
               ) : (
