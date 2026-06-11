@@ -19,6 +19,7 @@ const CheckoutSchema = z.object({
   paymentNumber: z.string().max(15).optional(),
   paymentScreenshot: z.string().optional().nullable(),
   honeypot: z.string().max(0).optional(),
+  paymentMethod: z.string().optional(),
   localId: z.string().max(100).optional(), // Idempotency key from client
   items: z.array(z.object({
     id: z.string().min(1),
@@ -90,6 +91,7 @@ export async function POST(req) {
       customerEmail,
       customerAddress,
       customerNote,
+      paymentMethod,
       transactionId,
       paymentNumber,
       paymentScreenshot,
@@ -371,6 +373,79 @@ export async function POST(req) {
       .collection('orders')
       .doc();
 
+    // ── PipraPay Automated Payment Charge Creation ─────────────────────
+    let checkoutUrl = null;
+    let piprapayPpId = null;
+
+    if (paymentMethod === 'piprapay') {
+      try {
+        const privateSnap = await adminDb
+          .collection('shops')
+          .doc(shopId)
+          .collection('private_configs')
+          .doc('piprapay')
+          .get();
+
+        if (privateSnap.exists) {
+          const privateData = privateSnap.data();
+          if (privateData.piprapayEnabled && privateData.piprapayUrl && privateData.piprapayApiKey) {
+            const ppUrl = privateData.piprapayUrl.replace(/\/$/, '');
+            const ppApiKey = privateData.piprapayApiKey;
+
+            // Compute amount to charge. 
+            // If COD is true, charge delivery fee (advanceFee). If COD is false, charge full amount (finalTotal).
+            const amountToCharge = isCOD 
+              ? (freeDelivery ? 0 : deliveryFee) 
+              : finalTotal;
+
+            if (amountToCharge > 0) {
+              const protocol = req.headers.get('x-forwarded-proto') || 'https';
+              const host = req.headers.get('host') || 'webmaa.daripallah.com';
+              const domainUrl = `${protocol}://${host}`;
+
+              const res = await fetch(`${ppUrl}/api/create-charge`, {
+                method: 'POST',
+                headers: {
+                  'accept': 'application/json',
+                  'content-type': 'application/json',
+                  'mh-piprapay-api-key': ppApiKey
+                },
+                body: JSON.stringify({
+                  full_name: customerName,
+                  email_mobile: customerEmail || customerPhone,
+                  amount: amountToCharge.toString(),
+                  metadata: {
+                    orderId: orderIdVisual,
+                    shopId: shopId,
+                    dbOrderId: newOrderRef.id
+                  },
+                  redirect_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}/order/${newOrderRef.id}`,
+                  return_type: 'POST',
+                  cancel_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}`,
+                  webhook_url: `${domainUrl}/api/payments/piprapay-webhook`,
+                  currency: 'BDT'
+                })
+              });
+
+              if (res.ok) {
+                const ppData = await res.json();
+                if (ppData.success && ppData.payment_url) {
+                  checkoutUrl = ppData.payment_url;
+                  piprapayPpId = ppData.pp_id || null;
+                } else {
+                  console.error("PipraPay error response:", ppData);
+                }
+              } else {
+                console.error("PipraPay status error:", res.status);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to initiate PipraPay charge:", err);
+      }
+    }
+
     await newOrderRef.set({
       customerName,
       customerPhone,
@@ -380,6 +455,10 @@ export async function POST(req) {
       transactionId: transactionId || '',
       paymentNumber: paymentNumber || '',
       paymentScreenshot: paymentScreenshot || null,
+      paymentMethod: paymentMethod || 'manual',
+      paymentStatus: paymentMethod === 'piprapay' ? 'pending' : 'paid',
+      piprapayPpId: piprapayPpId || null,
+      piprapayCheckoutUrl: checkoutUrl || null,
       orderIdVisual,
       items: verifiedItems,
       total: finalTotal,
@@ -444,7 +523,8 @@ export async function POST(req) {
       success: true,
       orderId: newOrderRef.id,
       total: finalTotal,
-      orderIdVisual
+      orderIdVisual,
+      checkoutUrl: checkoutUrl || undefined
     });
 
 

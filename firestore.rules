@@ -146,6 +146,11 @@ service cloud.firestore {
         allow create: if false; // Server-only via Admin SDK
         allow update, delete: if false;
       }
+
+      // Private Configs: only accessible by the shop owner (retailer)
+      match /private_configs/{configId} {
+        allow read, write: if isShopOwner(shopId);
+      }
     }
     
     // ── System Logs & Broadcasts ──────────────────────────────────

@@ -710,6 +710,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
   const [paymentScreenshot, setPaymentScreenshot] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState(shop?.piprapayEnabled ? 'automated' : 'manual');
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [orderImage, setOrderImage] = useState(null);
@@ -1484,7 +1485,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
     
     // 🚨 Payment Screenshot Check
-    if (isAdvanceRequired && shop.deliveryConfig?.requirePaymentScreenshot && !paymentScreenshot) {
+    if (paymentMethod === 'manual' && isAdvanceRequired && shop.deliveryConfig?.requirePaymentScreenshot && !paymentScreenshot) {
       toast.error('⚠️ পেমেন্ট যাচাইয়ের জন্য প্রমাণ স্বরূপ স্ক্রিনশট আপলোড করা আবশ্যক।');
       return;
     }
@@ -1522,9 +1523,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       customerEmail: user?.email || '',
       customerAddress: orderForm.address,
       customerNote: orderForm.note,
-      transactionId: orderForm.txnId,
-      paymentNumber: orderForm.paymentNumber,
-      paymentScreenshot: paymentScreenshot || undefined,
+      paymentMethod: shop.piprapayEnabled ? paymentMethod : 'manual',
+      transactionId: paymentMethod === 'manual' ? orderForm.txnId : '',
+      paymentNumber: paymentMethod === 'manual' ? orderForm.paymentNumber : '',
+      paymentScreenshot: paymentMethod === 'manual' ? (paymentScreenshot || undefined) : undefined,
       couponCode: appliedCouponCode || undefined,
       items: cart.filter(i => Number(i.quantity) > 0).map(i => ({ 
         id: i.productId || i.id, 
@@ -1561,7 +1563,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           }
         });
       }
-      router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${orderId}`);
+      if (payloadResp.checkoutUrl) {
+        window.location.href = payloadResp.checkoutUrl;
+      } else {
+        router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${orderId}`);
+      }
     };
 
     const sendOrder = async (payload) => {
@@ -2967,7 +2973,37 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100) : 0)) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
                     </p>
                   </div>
-                  {effectiveDelivery > 0 && (
+                  
+                  {shop?.piprapayEnabled && (
+                    <div className="grid grid-cols-2 gap-3 mb-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('automated')}
+                        className={`p-3.5 rounded-xl border-2 text-[11px] font-black transition-all flex flex-col items-center justify-center gap-1.5 ${
+                          paymentMethod === 'automated'
+                            ? 'border-purple-600 bg-purple-100 text-purple-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-sm">⚡</span>
+                        <span>অটো পেমেন্ট (বিকাশ/নগদ)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('manual')}
+                        className={`p-3.5 rounded-xl border-2 text-[11px] font-black transition-all flex flex-col items-center justify-center gap-1.5 ${
+                          paymentMethod === 'manual'
+                            ? 'border-purple-600 bg-purple-100 text-purple-700 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-sm">📝</span>
+                        <span>ম্যানুয়াল পেমেন্ট</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {effectiveDelivery > 0 && paymentMethod === 'manual' && (
                     <>
                       <div className="bg-white px-3 py-2 rounded-xl border border-purple-100 shadow-sm">
                         <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-1">পেমেন্ট নাম্বার</p>
@@ -2977,11 +3013,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
                           <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">পেমেন্ট নাম্বার (যে নাম্বার থেকে টাকা পাঠিয়েছেন) *</label>
-                          <input required type="tel" maxLength={11} placeholder="01XXXXXXXXX" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 shadow-sm" value={orderForm.paymentNumber} onChange={e => setOrderForm(f => ({ ...f, paymentNumber: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
+                          <input required={paymentMethod === 'manual'} type="tel" maxLength={11} placeholder="01XXXXXXXXX" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 shadow-sm" value={orderForm.paymentNumber} onChange={e => setOrderForm(f => ({ ...f, paymentNumber: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ট্রানজেকশন আইডি (TxnID) *</label>
-                          <input required type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
+                          <input required={paymentMethod === 'manual'} type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
                         </div>
                         {shop.deliveryConfig?.requirePaymentScreenshot && (
                           <div className="space-y-1.5 pt-2">

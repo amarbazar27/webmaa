@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getShop, updateShop, saveUserData, getShopProducts } from '@/lib/firestore';
 import { uploadShopLogo, uploadImage } from '@/lib/storage';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
@@ -140,6 +142,9 @@ export default function SettingsPage() {
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '', requirePaymentScreenshot: false });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true, smartCalcEnabled: true });
+  const [piprapayEnabled, setPiprapayEnabled] = useState(false);
+  const [piprapayUrl, setPiprapayUrl] = useState('');
+  const [piprapayApiKey, setPiprapayApiKey] = useState('');
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
   const [isStrictLocation, setIsStrictLocation] = useState(false);
@@ -263,9 +268,22 @@ export default function SettingsPage() {
       setFaqItems(data?.faqItems || []);
       setDomainStatus(data?.domainStatus || '');
       
-      setLoading(false);
+      // Fetch PipraPay private configuration
+      const privateDocRef = doc(db, 'shops', activeShopId, 'private_configs', 'piprapay');
+      getDoc(privateDocRef).then(pSnap => {
+        if (pSnap.exists()) {
+          const pData = pSnap.data();
+          setPiprapayEnabled(pData.piprapayEnabled || false);
+          setPiprapayUrl(pData.piprapayUrl || '');
+          setPiprapayApiKey(pData.piprapayApiKey || '');
+        }
+      }).catch(err => {
+        console.error("Error loading PipraPay settings:", err);
+      }).finally(() => {
+        setLoading(false);
+      });
     });
-  }, [user]);
+  }, [user, activeShopId]);
 
   // ── Geo: load divisions once ────────────────────────────────────────────
   useEffect(() => {
@@ -533,11 +551,20 @@ export default function SettingsPage() {
         toast.success('Profile photo updated!');
       }
       
+      // Save PipraPay private config securely in the subcollection
+      const privateDocRef = doc(db, 'shops', activeShopId, 'private_configs', 'piprapay');
+      await setDoc(privateDocRef, {
+        piprapayEnabled,
+        piprapayUrl: piprapayUrl.trim(),
+        piprapayApiKey: piprapayApiKey.trim(),
+      }, { merge: true });
+
       await updateShop(activeShopId, { 
         shopName: shop.shopName,
         couponCode: shop.couponCode || '',
         couponDiscount: Number(shop.couponDiscount) || 0,
         enableCommonOrder: shop.enableCommonOrder || false,
+        piprapayEnabled, // Save public flag for UI checks
         slogan: shop.slogan,
         notices: shop.notices,
         welcomeMessage: shop.welcomeMessage,
@@ -1068,6 +1095,40 @@ export default function SettingsPage() {
                    ? "If advance fee is set, customers must provide a Transaction ID to clear the advance fee before ordering. The rest will be Cash on Delivery."
                    : "Cash on delivery is disabled. Customers must pay the Total Value + Delivery Fee entirely before placing the order."
                  }
+              </p>
+            </Card>
+
+            <Card title="PipraPay Automated Payment (পিপরাপেই অটো পেমেন্ট)" subtitle="bKash/Nagad/Rocket API Integration" icon={Smartphone} className="border-l-4 border-l-purple-500">
+              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                 <div>
+                    <p className="text-xs font-black text-slate-900">অটোমেটেড পেমেন্ট গেটওয়ে চালু করুন (Enable PipraPay)</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকরা সরাসরি বিকাশ, নগদ, রকেটে অটো পেমেন্ট করতে পারবে</p>
+                 </div>
+                 <label className="relative inline-flex items-center cursor-pointer">
+                   <input type="checkbox" className="sr-only peer" checked={piprapayEnabled} onChange={e => setPiprapayEnabled(e.target.checked)} />
+                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                 </label>
+              </div>
+
+              {piprapayEnabled && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 pt-6">
+                   <Input
+                     label="PipraPay Server Base URL (সার্ভার ইউআরএল)"
+                     value={piprapayUrl}
+                     onChange={e => setPiprapayUrl(e.target.value)}
+                     placeholder="e.g. http://129.150.x.x:8000"
+                   />
+                   <Input
+                     label="PipraPay API Key (এপিআই কী)"
+                     type="password"
+                     value={piprapayApiKey}
+                     onChange={e => setPiprapayApiKey(e.target.value)}
+                     placeholder="mh-piprapay-api-key..."
+                   />
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
+                 ওরাল ক্লাউডে ডিপ্লয় করা PipraPay সার্ভারের URL এবং API key এখানে সাবধানে পেস্ট করুন। এটি গ্রাহকদের পেমেন্ট স্বয়ংক্রিয়ভাবে ভেরিফাই করার জন্য ব্যবহৃত হবে।
               </p>
             </Card>
 
