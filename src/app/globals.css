@@ -485,3 +485,25 @@
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   SCROLLING PERFORMANCE & MOBILE SMOOTHNESS
+   ════════════════════════════════════════════════════════════════ */
+html {
+  scroll-behavior: smooth !important;
+}
+
+body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Force hardware GPU acceleration on heavy blur backgrounds & animating blobs */
+.blur-3xl, 
+.blur-2xl, 
+.bg-blob, 
+.animate-pulse {
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}

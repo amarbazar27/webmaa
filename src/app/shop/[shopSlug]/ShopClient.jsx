@@ -1895,7 +1895,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             {/* How to Order Video */}
             {shop.howToOrderVideo && (
               <a href={shop.howToOrderVideo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black transition-colors shadow-sm whitespace-nowrap">
-                <PlayCircle size={15} /> <span className="hidden md:inline">কিভাবে অর্ডার করবেন?</span><span className="md:hidden">ভিডিও</span>
+                <PlayCircle size={15} /> <span>কিভাবে অর্ডার করবেন?</span>
               </a>
             )}
 
@@ -1905,9 +1905,6 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <Download size={15} /> <span>অ্যাপ</span>
               </button>
             )}
-
-            {/* Theme Toggle */}
-            <ThemeToggleButton size="sm" />
 
             {/* Profile */}
             <button onClick={() => setIsProfileOpen(true)} className="w-10 h-10 md:w-11 md:h-11 aspect-square bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl transition-colors shadow-sm border border-purple-200 overflow-hidden flex items-center justify-center">
@@ -1939,7 +1936,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
           return (
             <div 
-              className="relative w-full h-[var(--sf-hero-height,40vh)] min-h-[300px] md:min-h-[var(--sf-hero-height,40vh)] overflow-hidden"
+              className="relative w-full h-auto aspect-[2.1/1] sm:aspect-[2.5/1] md:h-[var(--sf-hero-height,40vh)] md:min-h-[300px] overflow-hidden"
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}
@@ -1948,7 +1945,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div key={i} className={`absolute inset-0 w-full h-full transition-all duration-1000 ${i === activeBanner ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none z-0'}`}>
                   {/* Blurred background for cinematic letterboxing depth */}
                   <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
-                    <img src={banner.url} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-3xl opacity-30 animate-pulse" />
+                    <img src={banner.url} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-2xl opacity-20" />
                   </div>
                   {/* Actual banner — full edge-to-edge object-cover to avoid blank spaces */}
                   <img

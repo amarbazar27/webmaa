@@ -51,7 +51,10 @@ export default function OrdersPage() {
   }, [activeShopId]);
 
   const handleStatusAttempt = (orderId, newStatus) => {
-    if (shop?.authSettings?.actionPin) {
+    const isVerified = sessionStorage.getItem('pinVerified') === 'true';
+    if (isVerified) {
+       proceedStatusUpdate(orderId, newStatus);
+    } else if (shop?.authSettings?.actionPin) {
        setAuthModal({ open: true, orderId, newStatus, pin: '', actionType: 'status' });
     } else {
        toast.error('অনুগ্রহ করে সেটিংস থেকে 4-Digit Security PIN সেট করুন!');
@@ -59,7 +62,10 @@ export default function OrdersPage() {
   };
 
   const handleDeleteAttempt = (orderId) => {
-    if (shop?.authSettings?.actionPin) {
+    const isVerified = sessionStorage.getItem('pinVerified') === 'true';
+    if (isVerified) {
+       proceedOrderDeletion(orderId);
+    } else if (shop?.authSettings?.actionPin) {
        setAuthModal({ open: true, orderId, newStatus: 'DELETE', pin: '', actionType: 'delete' });
     } else {
        toast.error('অর্ডার ডিলিট করতে সেটিংস থেকে PIN সেট করা থাকতে হবে!');
@@ -97,6 +103,7 @@ export default function OrdersPage() {
   const handlePinSubmit = (e) => {
      e.preventDefault();
      if (authModal.pin === shop?.authSettings?.actionPin) {
+        sessionStorage.setItem('pinVerified', 'true');
         if (authModal.actionType === 'delete') {
            proceedOrderDeletion(authModal.orderId);
         } else {
@@ -243,19 +250,45 @@ export default function OrdersPage() {
   // ── Helpers for item checklist ──────────────────────────────────
   const allItemsChecked = (orderId, items) => {
     if (!items || items.length === 0) return true;
-    return items.every((_, idx) => checkedItems[`${orderId}_${idx}`]);
+    const order = orders.find(o => o.id === orderId);
+    const packed = order?.packedItems || [];
+    return items.every((_, idx) => packed.includes(idx));
   };
 
-  const toggleItemCheck = (orderId, idx) => {
-    const key = `${orderId}_${idx}`;
-    setCheckedItems(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleItemCheck = async (orderId, idx) => {
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      const packed = [...(order.packedItems || [])];
+      const foundIdx = packed.indexOf(idx);
+      if (foundIdx > -1) {
+        packed.splice(foundIdx, 1);
+      } else {
+        packed.push(idx);
+      }
+      const orderRef = doc(db, 'shops', activeShopId, 'orders', orderId);
+      await updateDoc(orderRef, { packedItems: packed });
+    } catch (err) {
+      console.error("Checklist toggle error:", err);
+      toast.error('চেকলিস্ট সেভ করতে সমস্যা হয়েছে');
+    }
   };
 
-  const checkAllItems = (orderId, items) => {
-    const allChecked = allItemsChecked(orderId, items);
-    const updates = {};
-    (items || []).forEach((_, idx) => { updates[`${orderId}_${idx}`] = !allChecked; });
-    setCheckedItems(prev => ({ ...prev, ...updates }));
+  const checkAllItems = async (orderId, items) => {
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      const allChecked = allItemsChecked(orderId, items);
+      let packed = [];
+      if (!allChecked) {
+        packed = (items || []).map((_, idx) => idx);
+      }
+      const orderRef = doc(db, 'shops', activeShopId, 'orders', orderId);
+      await updateDoc(orderRef, { packedItems: packed });
+    } catch (err) {
+      console.error("Checklist check all error:", err);
+      toast.error('চেকলিস্ট সেভ করতে সমস্যা হয়েছে');
+    }
   };
 
   // Grouping by Phone/Email algorithm
@@ -489,7 +522,7 @@ export default function OrdersPage() {
                                         {allItemsChecked(order.id, order.items) ? '✓ Delivered' : '🔒 Delivered'}
                                       </button>
                                   </div>
-                                  {order.status === 'completed' && (
+                                  {(order.status === 'completed' || order.status === 'cancelled') && (
                                     <button onClick={() => handleDeleteAttempt(order.id)} className="w-full mt-2 px-3 py-2 rounded-lg text-xs font-black text-red-600 bg-white hover:bg-red-50 transition-colors border border-red-100 flex items-center justify-center gap-2 shadow-sm">
                                        <Trash2 size={14} /> Delete Order
                                     </button>
@@ -549,7 +582,7 @@ export default function OrdersPage() {
                             </div>
                             <div className="flex items-center gap-3">
                               <span className="text-[10px] font-black text-amber-700">
-                                {(order.items || []).filter((_, idx) => checkedItems[`${order.id}_${idx}`]).length} / {order.items?.length || 0} চেক করা হয়েছে
+                                {(order.items || []).filter((_, idx) => (order.packedItems || []).includes(idx)).length} / {order.items?.length || 0} চেক করা হয়েছে
                               </span>
                               <button
                                 onClick={() => checkAllItems(order.id, order.items)}
@@ -561,7 +594,7 @@ export default function OrdersPage() {
                           </div>
                           <div className="divide-y divide-amber-100">
                             {(order.items || []).map((item, idx) => {
-                              const isChecked = !!checkedItems[`${order.id}_${idx}`];
+                              const isChecked = (order.packedItems || []).includes(idx);
                               return (
                                 <div
                                   key={idx}

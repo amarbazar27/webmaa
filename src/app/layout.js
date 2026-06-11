@@ -55,6 +55,14 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
+  minimumScale: 1.0,
+  maximumScale: 5.0,
+  userScalable: true,
+};
+
 // JSON-LD Structured Data for Google Search Branding
 function JsonLd() {
   const structuredData = [

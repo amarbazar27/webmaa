@@ -101,7 +101,7 @@ const SHADOW_OPTIONS = [
 ];
 
 // ── Main Customization Panel ──────────────────────────────────
-export default function StoreCustomizationPanel({ shopId, templateId, currentOverrides = {}, onSave }) {
+export default function StoreCustomizationPanel({ shopId, shopSlug, shopDomain, templateId, currentOverrides = {}, onSave }) {
   const template = getTemplateById(templateId);
   const defaultTheme = template?.defaultTheme || {};
 
@@ -138,6 +138,9 @@ export default function StoreCustomizationPanel({ shopId, templateId, currentOve
         sectionConfig: sections,
         customizationUpdatedAt: new Date().toISOString(),
       });
+      if (shopSlug) {
+        fetch(`/api/revalidate?slug=${shopSlug}&domain=${shopDomain || ''}`).catch(e => console.error(e));
+      }
       setHasChanges(false);
       onSave?.({ theme, sections });
       toast.success('কাস্টমাইজেশন সেভ হয়েছে! ✨');

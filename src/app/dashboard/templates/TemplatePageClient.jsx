@@ -104,6 +104,8 @@ export default function TemplatePageClient() {
           {activeTab === 'templates' && (
             <TemplateMarketplace
               shopId={activeShopId}
+              shopSlug={shop?.subdomainSlug}
+              shopDomain={shop?.customDomain}
               activeTemplateId={shop?.templateId || 'modern-commerce'}
               onTemplateApplied={(tid) => {
                 setShop(prev => ({ ...prev, templateId: tid }));
@@ -117,6 +119,8 @@ export default function TemplatePageClient() {
             <div className="max-w-2xl">
               <StoreCustomizationPanel
                 shopId={activeShopId}
+                shopSlug={shop?.subdomainSlug}
+                shopDomain={shop?.customDomain}
                 templateId={shop?.templateId || 'modern-commerce'}
                 currentOverrides={shop?.themeOverrides || {}}
                 onSave={({ theme }) => setShop(prev => ({ ...prev, themeOverrides: theme }))}

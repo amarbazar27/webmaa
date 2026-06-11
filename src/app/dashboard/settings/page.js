@@ -563,6 +563,9 @@ export default function SettingsPage() {
         faqItems,
         banners: shop.banners || []
       });
+      if (shop.subdomainSlug) {
+        fetch(`/api/revalidate?slug=${shop.subdomainSlug}&domain=${shop.customDomain || ''}`).catch(e => console.error(e));
+      }
       toast.success('All settings synchronized! ✨');
     } catch (err) {
       console.error(err);
@@ -621,6 +624,8 @@ export default function SettingsPage() {
       {settingsTab === 'templates' && (
         <TemplateMarketplace
           shopId={activeShopId}
+          shopSlug={shop?.subdomainSlug}
+          shopDomain={shop?.customDomain}
           activeTemplateId={shop?.templateId || 'modern-commerce'}
           onTemplateApplied={(tid) => setShop(s => ({ ...s, templateId: tid }))}
         />
@@ -631,6 +636,8 @@ export default function SettingsPage() {
         <div className="max-w-2xl">
           <StoreCustomizationPanel
             shopId={activeShopId}
+            shopSlug={shop?.subdomainSlug}
+            shopDomain={shop?.customDomain}
             templateId={shop?.templateId || 'modern-commerce'}
             currentOverrides={shop?.themeOverrides || {}}
             onSave={({ theme }) => setShop(s => ({ ...s, themeOverrides: theme }))}
@@ -1519,16 +1526,16 @@ export default function SettingsPage() {
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between bg-red-50 p-4 rounded-xl border border-red-100">
+                <div className="flex items-center justify-between bg-emerald-50 p-4 rounded-xl border border-emerald-100">
                   <div>
-                    <h4 className="text-sm font-black text-red-900 flex items-center gap-2">
-                       <MapPin size={16} className="text-red-600" /> সার্ভিস এরিয়া ব্যানার অফ করুন (Disable Service Banner)
+                    <h4 className="text-sm font-black text-emerald-900 flex items-center gap-2">
+                       <MapPin size={16} className="text-emerald-600" /> সার্ভিস এরিয়া ব্যানার দেখান (Enable Service Banner)
                     </h4>
-                    <p className="text-[10px] font-bold text-red-600 uppercase mt-1">অফ করলে স্টোরে লাল/সবুজ লোকেশন ব্যানারটি দেখাবে না</p>
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase mt-1">অন করলে স্টোরে লাল/সবুজ লোকেশন ব্যানারটি দেখাবে</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked={disableServiceBanner} onChange={e => setDisableServiceBanner(e.target.checked)} />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    <input type="checkbox" className="sr-only peer" checked={!disableServiceBanner} onChange={e => setDisableServiceBanner(!e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                   </label>
                 </div>
 

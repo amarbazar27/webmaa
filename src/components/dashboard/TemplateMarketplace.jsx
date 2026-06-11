@@ -322,7 +322,7 @@ function PreviewModal({ template, onClose, onApply, isApplying }) {
 }
 
 // ── Main Template Marketplace Component ───────────────────────
-export default function TemplateMarketplace({ shopId, activeTemplateId, onTemplateApplied }) {
+export default function TemplateMarketplace({ shopId, shopSlug, shopDomain, activeTemplateId, onTemplateApplied }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [applying, setApplying] = useState(null);
@@ -357,6 +357,10 @@ export default function TemplateMarketplace({ shopId, activeTemplateId, onTempla
         // Store default theme as base (retailer can override later)
         themeOverrides: template?.defaultTheme || {},
       });
+
+      if (shopSlug) {
+        fetch(`/api/revalidate?slug=${shopSlug}&domain=${shopDomain || ''}`).catch(e => console.error(e));
+      }
 
       setCurrentActive(templateId);
       onTemplateApplied?.(templateId);
