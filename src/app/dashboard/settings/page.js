@@ -545,16 +545,6 @@ export default function SettingsPage() {
         toast.success('Profile photo updated!');
       }
       
-      // Save PipraPay private config securely in the subcollection
-      const privateDocRef = doc(db, 'shops', activeShopId, 'private_configs', 'piprapay');
-      await setDoc(privateDocRef, {
-        piprapayEnabled,
-        piprapayBkash,
-        piprapayNagad,
-        piprapayRocket,
-        manualPaymentEnabled,
-      }, { merge: true });
-
       await updateShop(activeShopId, { 
         shopName: shop.shopName,
         couponCode: shop.couponCode || '',
@@ -1149,7 +1139,7 @@ export default function SettingsPage() {
                        📱 PipraPay Companion App Setup Guide
                      </h3>
                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                       স্বয়ংক্রিয় পেমেন্ট ভেরিফিকেশনের জন্য আপনার ফোনে <strong>PipraPay Companion</strong> অ্যাপটি ইনস্টল করে সার্ভারের সাথে সংযুক্ত করতে হবে:
+                       স্বয়ংক্রিয় পেমেন্ট ভেরিফিকেশনের জন্য আপনার ফোনে <strong>Enterprise Companion (PipraPay)</strong> অ্যাপটি ইনস্টল করে সার্ভারের সাথে সংযুক্ত করতে হবে:
                      </p>
                      
                      <div className="space-y-3 pl-1 text-[11px] text-slate-600 font-medium">
@@ -1162,7 +1152,7 @@ export default function SettingsPage() {
                        <div className="flex gap-2">
                          <span className="text-purple-600 font-bold">২.</span>
                          <p>
-                           Google Play Store থেকে অথবা সরাসরি এই লিংকের মাধ্যমে <a href="https://play.google.com/store/apps/details?id=com.piprapay.companion" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">PipraPay Companion App ডাউনলোড করুন</a>।
+                           Google Play Store-এ <strong>"Enterprise Companion"</strong> (by PipraPay) লিখে সার্চ করুন অথবা সরাসরি এই লিংকের মাধ্যমে <a href="https://play.google.com/store/apps/details?id=com.piprapay.companion" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">Enterprise Companion App ডাউনলোড করুন</a>।
                          </p>
                        </div>
                        <div className="flex gap-2">
