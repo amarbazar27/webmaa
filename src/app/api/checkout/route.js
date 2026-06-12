@@ -23,7 +23,7 @@ const CheckoutSchema = z.object({
   localId: z.string().max(100).optional(), // Idempotency key from client
   items: z.array(z.object({
     id: z.string().min(1),
-    quantity: z.number().int().positive().max(50),
+    quantity: z.number().positive().max(50),
     note: z.string().max(200).optional(),
     variantsText: z.string().max(200).optional(),
     customizedText: z.string().max(200).optional(),
@@ -396,7 +396,7 @@ export async function POST(req) {
             const host = req.headers.get('host') || 'webmaa.daripallah.com';
             const domainUrl = `${protocol}://${host}`;
 
-            const res = await fetch(`${ppUrl}/api/create-charge`, {
+            const res = await fetch(`${ppUrl}/api/?name=create-charge`, {
               method: 'POST',
               headers: {
                 'accept': 'application/json',
@@ -425,8 +425,10 @@ export async function POST(req) {
 
             if (res.ok) {
               const ppData = await res.json();
-              if (ppData.success && ppData.payment_url) {
-                checkoutUrl = ppData.payment_url;
+              const isSuccess = ppData.success === true || ppData.status === true || ppData.status === 'true';
+              const payUrl = ppData.payment_url || ppData.pp_url;
+              if (isSuccess && payUrl) {
+                checkoutUrl = payUrl;
                 piprapayPpId = ppData.pp_id || null;
               } else {
                 console.error("PipraPay error response:", ppData);

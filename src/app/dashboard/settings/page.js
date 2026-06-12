@@ -1152,19 +1152,23 @@ export default function SettingsPage() {
                        <div className="flex gap-2">
                          <span className="text-purple-600 font-bold">২.</span>
                          <p>
-                           Google Play Store-এ <strong>"Enterprise Companion"</strong> (by PipraPay) লিখে সার্চ করুন অথবা সরাসরি এই লিংকের মাধ্যমে <a href="https://play.google.com/store/apps/details?id=com.piprapay.companion" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">Enterprise Companion App ডাউনলোড করুন</a>।
+                           Google Play Store-এ <strong>"Enterprise Companion"</strong> লিখে সার্চ করুন অথবা সরাসরি এই লিংকের মাধ্যমে <a href="https://play.google.com/store/apps/details?id=com.qubeplug.billpax_tools&pcampaignid=web_share" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">Enterprise Companion App ডাউনলোড করুন</a>।
                          </p>
                        </div>
                        <div className="flex gap-2">
                          <span className="text-purple-600 font-bold">৩.</span>
                          <p>
-                           অ্যাপটি ওপেন করে <strong>Server URL</strong> এ দিন: <code className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-mono select-all">https://piprapay-server-1.onrender.com</code>
+                           অ্যাপটি ওপেন করে <strong>Payment Panel URL</strong> এর ঘরে দিন: <code className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-mono select-all">https://piprapay-server-1.onrender.com</code>
                          </p>
                        </div>
                        <div className="flex gap-2">
                          <span className="text-purple-600 font-bold">৪.</span>
                          <p>
-                           ডিভাইস টোকেন বা এপিআই কী-এর জন্য প্ল্যাটফর্ম সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।
+                           <strong>One Time Password (OTP)</strong> এর ঘরে আপনার PipraPay প্যানেলের Webhook Key দিন।
+                            <br />
+                            <span className="text-[10px] text-slate-400 block mt-1">
+                              (Webhook Key পেতে: PipraPay সার্ভার এডমিন প্যানেলে লগইন করুন &rarr; ডানপাশের <strong>Connect Android App</strong> এ ক্লিক করুন &rarr; <strong>Webhook URL</strong> এর শেষের <code className="bg-slate-100 px-1 text-slate-700 rounded font-mono font-normal">?webhook=</code> এর পরের অংশটুকু কপি করুন)
+                            </span>
                          </p>
                        </div>
                        <div className="flex gap-2">
