@@ -143,6 +143,10 @@ export default function SettingsPage() {
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '', requirePaymentScreenshot: false });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true, smartCalcEnabled: true });
   const [piprapayEnabled, setPiprapayEnabled] = useState(false);
+  const [piprapayBkash, setPiprapayBkash] = useState('');
+  const [piprapayNagad, setPiprapayNagad] = useState('');
+  const [piprapayRocket, setPiprapayRocket] = useState('');
+  const [manualPaymentEnabled, setManualPaymentEnabled] = useState(true);
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
   const [isStrictLocation, setIsStrictLocation] = useState(false);
@@ -267,6 +271,10 @@ export default function SettingsPage() {
       setDomainStatus(data?.domainStatus || '');
       
       setPiprapayEnabled(data?.piprapayEnabled || false);
+      setPiprapayBkash(data?.piprapayBkash || '');
+      setPiprapayNagad(data?.piprapayNagad || '');
+      setPiprapayRocket(data?.piprapayRocket || '');
+      setManualPaymentEnabled(data?.manualPaymentEnabled !== false);
       setLoading(false);
     });
   }, [user, activeShopId]);
@@ -541,6 +549,10 @@ export default function SettingsPage() {
       const privateDocRef = doc(db, 'shops', activeShopId, 'private_configs', 'piprapay');
       await setDoc(privateDocRef, {
         piprapayEnabled,
+        piprapayBkash,
+        piprapayNagad,
+        piprapayRocket,
+        manualPaymentEnabled,
       }, { merge: true });
 
       await updateShop(activeShopId, { 
@@ -549,6 +561,10 @@ export default function SettingsPage() {
         couponDiscount: Number(shop.couponDiscount) || 0,
         enableCommonOrder: shop.enableCommonOrder || false,
         piprapayEnabled, // Save public flag for UI checks
+        piprapayBkash,
+        piprapayNagad,
+        piprapayRocket,
+        manualPaymentEnabled,
         slogan: shop.slogan,
         notices: shop.notices,
         welcomeMessage: shop.welcomeMessage,
@@ -1028,6 +1044,17 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
                  <div>
+                    <p className="text-xs font-black text-slate-900">ম্যানুয়াল পেমেন্ট পদ্ধতি চালু রাখুন (Enable Manual Payment)</p>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">কাস্টমাররা ট্রানজেকশন আইডি এবং স্ক্রিনশট দিয়ে ম্যানুয়ালি অর্ডার করতে পারবে</p>
+                 </div>
+                 <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={manualPaymentEnabled} onChange={e => setManualPaymentEnabled(e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                 </label>
+              </div>
+
+              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                 <div>
                     <p className="text-xs font-black text-slate-900">পেমেন্ট স্ক্রিনশট আপলোড আবশ্যক (Require Screenshot)</p>
                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকদের পেমেন্ট প্রমাণ হিসেবে স্ক্রিনশট আপলোড করতে হবে</p>
                  </div>
@@ -1089,14 +1116,77 @@ export default function SettingsPage() {
                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকরা সরাসরি বিকাশ, নগদ, রকেটে অটো পেমেন্ট করতে পারবে</p>
                  </div>
                  <label className="relative inline-flex items-center cursor-pointer">
-                   <input type="checkbox" className="sr-only peer" checked={piprapayEnabled} onChange={e => setPiprapayEnabled(e.target.checked)} />
-                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <input type="checkbox" className="sr-only peer" checked={piprapayEnabled} onChange={e => setPiprapayEnabled(e.target.checked)} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                  </label>
               </div>
 
-              <p className="text-[10px] text-slate-400 mt-4 leading-relaxed">
-                 প্ল্যাটফর্মের সেন্ট্রাল পেমেন্ট গেটওয়ের মাধ্যমে আপনার কাস্টমারদের জন্য স্বয়ংক্রিয় পেমেন্ট ভেরিফিকেশন সিস্টেম চালু করুন। এই পেমেন্টগুলো প্ল্যাটফর্ম অ্যাডমিনের মাধ্যমে প্রসেস হবে।
-              </p>
+              {piprapayEnabled && (
+                <div className="space-y-6 border-t border-slate-100 pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <Input
+                       label="বিকাশ পার্সোনাল নম্বর"
+                       value={piprapayBkash}
+                       onChange={e => setPiprapayBkash(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                       placeholder="017XXXXXXXX"
+                     />
+                     <Input
+                       label="নগদ পার্সোনাল নম্বর"
+                       value={piprapayNagad}
+                       onChange={e => setPiprapayNagad(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                       placeholder="017XXXXXXXX"
+                     />
+                     <Input
+                       label="রকেট পার্সোনাল নম্বর"
+                       value={piprapayRocket}
+                       onChange={e => setPiprapayRocket(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                       placeholder="017XXXXXXXXX"
+                     />
+                  </div>
+
+                  <div className="bg-purple-50/50 rounded-2xl p-5 border border-purple-100 space-y-4">
+                     <h3 className="text-xs font-black text-purple-900 uppercase tracking-wider flex items-center gap-2">
+                       📱 PipraPay Companion App Setup Guide
+                     </h3>
+                     <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                       স্বয়ংক্রিয় পেমেন্ট ভেরিফিকেশনের জন্য আপনার ফোনে <strong>PipraPay Companion</strong> অ্যাপটি ইনস্টল করে সার্ভারের সাথে সংযুক্ত করতে হবে:
+                     </p>
+                     
+                     <div className="space-y-3 pl-1 text-[11px] text-slate-600 font-medium">
+                       <div className="flex gap-2">
+                         <span className="text-purple-600 font-bold">১.</span>
+                         <p>
+                           আপনার ব্যবহৃত অ্যান্ড্রোয়েড ফোনে আপনার বিকাশ/নগদ/রকেট সিম কার্ডটি সচল রাখুন।
+                         </p>
+                       </div>
+                       <div className="flex gap-2">
+                         <span className="text-purple-600 font-bold">২.</span>
+                         <p>
+                           Google Play Store থেকে অথবা সরাসরি এই লিংকের মাধ্যমে <a href="https://play.google.com/store/apps/details?id=com.piprapay.companion" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">PipraPay Companion App ডাউনলোড করুন</a>।
+                         </p>
+                       </div>
+                       <div className="flex gap-2">
+                         <span className="text-purple-600 font-bold">৩.</span>
+                         <p>
+                           অ্যাপটি ওপেন করে <strong>Server URL</strong> এ দিন: <code className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-mono select-all">https://piprapay-server-1.onrender.com</code>
+                         </p>
+                       </div>
+                       <div className="flex gap-2">
+                         <span className="text-purple-600 font-bold">৪.</span>
+                         <p>
+                           ডিভাইস টোকেন বা এপিআই কী-এর জন্য প্ল্যাটফর্ম সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।
+                         </p>
+                       </div>
+                       <div className="flex gap-2">
+                         <span className="text-purple-600 font-bold">৫.</span>
+                         <p>
+                           অ্যাপটিকে <strong>Read SMS & Receive SMS</strong> পারমিশন দিন এবং ফোনের <strong>Battery Optimization</strong> বন্ধ করুন (যাতে ব্যাকগ্রাউন্ডে অ্যাপটি সচল থাকে)।
+                         </p>
+                       </div>
+                     </div>
+                  </div>
+                 </div>
+               )}
             </Card>
 
             <Card title="Coupon & Bulk Order Settings (কুপন ও বাল্ক অর্ডার সেটিং)" subtitle="Discount coupon and Common Order Sheet" icon={Gift} className="border-l-4 border-l-emerald-500">

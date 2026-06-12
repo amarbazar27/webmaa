@@ -377,7 +377,7 @@ export async function POST(req) {
     let checkoutUrl = null;
     let piprapayPpId = null;
 
-    if (paymentMethod === 'piprapay') {
+    if (paymentMethod === 'piprapay' || paymentMethod === 'automated') {
       try {
         const globalSnap = await adminDb.collection('config').doc('global').get();
         const globalData = globalSnap.exists ? globalSnap.data() : {};
@@ -410,7 +410,10 @@ export async function POST(req) {
                 metadata: {
                   orderId: orderIdVisual,
                   shopId: shopId,
-                  dbOrderId: newOrderRef.id
+                  dbOrderId: newOrderRef.id,
+                  bkash_number: shopData.piprapayBkash || '',
+                  nagad_number: shopData.piprapayNagad || '',
+                  rocket_number: shopData.piprapayRocket || ''
                 },
                 redirect_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}/order/${newOrderRef.id}`,
                 return_type: 'POST',
@@ -448,7 +451,7 @@ export async function POST(req) {
       paymentNumber: paymentNumber || '',
       paymentScreenshot: paymentScreenshot || null,
       paymentMethod: paymentMethod || 'manual',
-      paymentStatus: paymentMethod === 'piprapay' ? 'pending' : 'paid',
+      paymentStatus: (paymentMethod === 'piprapay' || paymentMethod === 'automated') ? 'pending' : 'paid',
       piprapayPpId: piprapayPpId || null,
       piprapayCheckoutUrl: checkoutUrl || null,
       orderIdVisual,

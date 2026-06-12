@@ -2974,7 +2974,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </p>
                   </div>
                   
-                  {shop?.piprapayEnabled && (
+                  {shop?.piprapayEnabled && shop?.manualPaymentEnabled !== false && (
                     <div className="grid grid-cols-2 gap-3 mb-2 pt-1">
                       <button
                         type="button"
