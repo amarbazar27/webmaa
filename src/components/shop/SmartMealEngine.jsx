@@ -81,15 +81,17 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
     }
   }, [availableRiceVariants, selectedRiceId]);
 
-  // 2. Helper function to find best product matching keywords
+  // 2. Helper function to find best product matching keywords (prioritizing keywords in order)
   const findProductByKeywords = (keywords, allProducts) => {
     const inStock = allProducts.filter(p => p.stock !== 0);
-    // Exact/Prefix match
-    let match = inStock.find(p => {
-      const name = (p.name || '').toLowerCase();
-      return keywords.some(k => name.includes(k.toLowerCase()));
-    });
-    return match || null;
+    for (const keyword of keywords) {
+      const match = inStock.find(p => {
+        const name = (p.name || '').toLowerCase();
+        return name.includes(keyword.toLowerCase());
+      });
+      if (match) return match;
+    }
+    return null;
   };
 
   // 3. Historical learning: count order frequency in last 7 orders
@@ -158,7 +160,7 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         { key: 'salt', name: 'Salt', keywords: ['লবণ', 'লবন', 'salt'], baseQty: 0.5 / 25, unit: 'packet' },
         { key: 'potato', name: 'Potato', keywords: ['আলু', 'potato'], baseQty: 2.0 / 25, unit: 'kg' },
         { key: 'masala', name: 'Garam Masala', keywords: ['গরম মসলা', 'গরম মশলা', 'garam masala', 'gorom mosla'], baseQty: 0.05 / 25, unit: 'kg' },
-        { key: 'dal', name: 'Musur Dal', keywords: ['মসুর ডাল', 'মুসুর ডাল', 'dal'], baseQty: 0.3 / 25, unit: 'kg' }
+        { key: 'dal', name: 'Musur Dal', keywords: ['মসুর ডাল মোটা', 'মুসুর ডাল মোটা', 'mota musur', 'mota lentil', 'মসুর ডাল', 'মুসুর ডাল', 'dal'], baseQty: 0.3 / 25, unit: 'kg' }
       ];
 
       const resolvedStaples = [];
@@ -229,7 +231,7 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       ];
 
       const dalList = [
-        { key: 'musur', name: 'Musur Dal', keywords: ['মুসুর ডাল', 'মসুর ডাল', 'মুসুর', 'মসুর', 'musur', 'lentil'], baseQty: 0.03, unit: 'kg' },
+        { key: 'musur', name: 'Musur Dal', keywords: ['মসুর ডাল মোটা', 'মুসুর ডাল মোটা', 'mota musur', 'mota lentil', 'মুসুর ডাল', 'মসুর ডাল', 'মুসুর', 'মসুর', 'musur', 'lentil'], baseQty: 0.03, unit: 'kg' },
         { key: 'buter', name: 'Buter Dal', keywords: ['বুটের ডাল', 'বুট ডাল', 'buter', 'chana dal'], baseQty: 0.04, unit: 'kg' }
       ];
 
@@ -469,7 +471,9 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
     if (!resolvedPlan || !resolvedPlan.cartItems) return;
 
     resolvedPlan.cartItems.forEach(item => {
-      onAddToCart(item.product, item.qty, '', item.note);
+      const unit = item.product.unit || (item.product.smartCalc?.enabled ? item.product.smartCalc.baseUnit : 'কেজি');
+      const customizedText = `${item.qty} ${unit}`;
+      onAddToCart(item.product, item.qty, customizedText, item.note, item.product.price);
     });
 
     toast.success('পরিকল্পনার সব পণ্য সফলভাবে কার্টে যোগ হয়েছে! 🎉');
