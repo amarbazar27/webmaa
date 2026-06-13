@@ -104,14 +104,13 @@ ${productList}
 
       // Perform actions based on extracted items
       if (matched.length > 0) {
-        matched.forEach(({ product, quantity, customizedText, note }) => {
-          onAddToCart({ ...product, quantity, note: note || 'Voice Order', customizedText });
-        });
-        
-        try {
-          const toast = (await import('react-hot-toast')).default;
-          toast.success(`${matched.length}টি পণ্য কার্টে যোগ হয়েছে! 🎉`);
-        } catch (e) {}
+        const itemsToPayload = matched.map(({ product, quantity, customizedText, note }) => ({
+          ...product,
+          quantity,
+          note: note || 'Voice Order',
+          customizedText
+        }));
+        onAddToCart(itemsToPayload);
       }
 
       // Voice back the response (stripping the JSON part)

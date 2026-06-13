@@ -470,13 +470,20 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
   const handleAddAllToCart = () => {
     if (!resolvedPlan || !resolvedPlan.cartItems) return;
 
-    resolvedPlan.cartItems.forEach(item => {
+    const itemsToAdd = resolvedPlan.cartItems.map(item => {
       const unit = item.product.unit || (item.product.smartCalc?.enabled ? item.product.smartCalc.baseUnit : 'কেজি');
       const customizedText = `${item.qty} ${unit}`;
-      onAddToCart(item.product, item.qty, customizedText, item.note, item.product.price);
+      return {
+        product: item.product,
+        qty: item.qty,
+        customizedText,
+        note: item.note,
+        price: item.product.price
+      };
     });
 
-    toast.success('পরিকল্পনার সব পণ্য সফলভাবে কার্টে যোগ হয়েছে! 🎉');
+    onAddToCart(itemsToAdd);
+
     if (onClose) onClose();
   };
 

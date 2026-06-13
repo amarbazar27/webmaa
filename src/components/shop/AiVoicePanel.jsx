@@ -174,8 +174,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
       };
     }).filter(Boolean);
     if (items.length === 0) { toast.error('কোনো পণ্য পাওয়া যায়নি'); return; }
-    items.forEach(item => onAddToCart(item));
-    toast.success(`${items.length}টি পণ্য কার্টে যোগ হয়েছে!`);
+    onAddToCart(items);
     setDetectedItems([]);
     setImagePreview(null);
     setImageFile(null);

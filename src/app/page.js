@@ -450,6 +450,86 @@ export default function Home() {
   };
 
   const handleAddToCart = (product, customNote = '') => {
+    if (Array.isArray(product)) {
+      let updatedCart = [...cart];
+      let addedCount = 0;
+      let shopId = '';
+
+      product.forEach(item => {
+        let actualProduct = item.product || item;
+        let qty = Number(item.quantity) || 1;
+        let note = item.customNote || item.note || '';
+        if (Number(actualProduct.stock) === 0) return;
+
+        const existingIndex = updatedCart.findIndex(cartItem => cartItem.productId === actualProduct.id && (cartItem.customNote || '') === note);
+        if (existingIndex > -1) {
+          updatedCart[existingIndex].quantity += qty;
+        } else {
+          updatedCart.push({
+            id: `${actualProduct.id}_${Date.now()}_${Math.random()}`,
+            productId: actualProduct.id,
+            name: actualProduct.name,
+            price: Number(actualProduct.price) || 0,
+            quantity: qty,
+            imageUrl: actualProduct.imageUrl || '',
+            shopId: actualProduct.shopId,
+            shopName: actualProduct.shopName,
+            shopSlug: actualProduct.shopSlug,
+            customDomain: actualProduct.customDomain || '',
+            domainStatus: actualProduct.domainStatus || '',
+            isThirdParty: actualProduct.shopSlug !== 'daripallah-store' && actualProduct.shopSlug !== 'webmaa-store',
+            customNote: note,
+            isCustomized: !!note
+          });
+        }
+        shopId = actualProduct.shopId;
+        addedCount++;
+      });
+
+      if (addedCount > 0) {
+        setCart(updatedCart);
+        localStorage.setItem('cart_daripallah-store', JSON.stringify(updatedCart));
+
+        if (shopId) {
+          const storeCartKey = `cart_${shopId}`;
+          try {
+            const storeCart = JSON.parse(localStorage.getItem(storeCartKey) || '[]');
+            product.forEach(item => {
+              let actualProduct = item.product || item;
+              let qty = Number(item.quantity) || 1;
+              let note = item.customNote || item.note || '';
+              if (Number(actualProduct.stock) === 0) return;
+
+              const storeExistingIdx = storeCart.findIndex(cartItem => cartItem.productId === actualProduct.id && (cartItem.customizedText || '') === note);
+              if (storeExistingIdx > -1) {
+                storeCart[storeExistingIdx].quantity += qty;
+              } else {
+                storeCart.push({
+                  id: `${actualProduct.id}_${Date.now()}_${Math.random()}`,
+                  productId: actualProduct.id,
+                  name: actualProduct.name,
+                  price: Number(actualProduct.price) || 0,
+                  clientPrice: Number(actualProduct.price) || 0,
+                  quantity: qty,
+                  imageUrl: actualProduct.imageUrl || '',
+                  note: note,
+                  isCustomized: !!note,
+                  customizedText: note,
+                  variantsText: ''
+                });
+              }
+            });
+            localStorage.setItem(storeCartKey, JSON.stringify(storeCart));
+          } catch (err) {
+            console.error('Failed to sync individual shop cart:', err);
+          }
+        }
+
+        toast.success(`সফলভাবে ${addedCount}টি পণ্য ঝুড়িতে যোগ হয়েছে! 🎉`);
+      }
+      return;
+    }
+
     if (Number(product.stock) === 0) {
       toast.error('দুঃখিত, এই পণ্যটি স্টকে নেই');
       return;

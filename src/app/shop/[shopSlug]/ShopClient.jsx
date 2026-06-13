@@ -1214,7 +1214,76 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
   }, [products, cart.length]); // Check when products load or cart size changes
 
+  const addMultipleToCart = (items) => {
+    if (!items || items.length === 0) return;
+
+    setCart(prev => {
+      let newCart = [...prev];
+      let addedNames = [];
+
+      items.forEach(item => {
+        let product, qty, customizedText, note, price;
+
+        if (item.product && item.product.id) {
+          product = item.product;
+          qty = item.qty;
+          customizedText = item.customizedText;
+          note = item.note;
+          price = item.price;
+        } else {
+          product = item;
+          qty = item.quantity;
+          customizedText = item.customizedText;
+          note = item.note;
+          price = item.price;
+        }
+
+        if (!product || !product.id) return;
+        if (product.stock === 0) return;
+
+        const qtyToAdd = qty !== undefined && qty !== null ? Number(qty) || 1 : (product.quantity !== undefined ? Number(product.quantity) || 1 : 1);
+        const resolvedCustomizedText = customizedText !== undefined && customizedText !== null ? customizedText : (product.customizedText || '');
+        const resolvedNote = note !== undefined && note !== null ? note : (product.note || '');
+        const resolvedPrice = price !== undefined && price !== null ? price : product.price;
+
+        const existingIndex = newCart.findIndex(cartItem => 
+          cartItem.id === product.id && 
+          (cartItem.customizedText || '') === (resolvedCustomizedText || '') &&
+          (resolvedPrice === null || parseFloat(cartItem.price) === parseFloat(resolvedPrice))
+        );
+
+        if (existingIndex > -1) {
+          newCart[existingIndex] = {
+            ...newCart[existingIndex],
+            quantity: newCart[existingIndex].quantity + qtyToAdd,
+            note: resolvedNote || newCart[existingIndex].note
+          };
+        } else {
+          newCart.push({
+            ...product,
+            price: resolvedPrice,
+            clientPrice: resolvedPrice,
+            quantity: qtyToAdd,
+            note: resolvedNote,
+            customizedText: resolvedCustomizedText
+          });
+        }
+        addedNames.push(product.name);
+      });
+
+      if (addedNames.length > 0) {
+        toast.success(`সফলভাবে ${addedNames.length}টি পণ্য ঝুড়িতে যোগ হয়েছে! 🎉`);
+      }
+      return newCart;
+    });
+  };
+
   const addToCart = (product, customQty = null, customizedText = null, customNote = null, customPrice = null) => {
+    if (Array.isArray(product)) {
+      addMultipleToCart(product);
+      return;
+    }
+
     if (product.stock === 0) {
       toast.error('দুঃখিত, এই মুহূর্তে স্টকে নেই');
       return;
