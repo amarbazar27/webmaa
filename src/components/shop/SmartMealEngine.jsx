@@ -13,10 +13,11 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
   const [budget, setBudget] = useState(1300);
   
   // Rice States
+  const [riceEnabled, setRiceEnabled] = useState(true);
   const [selectedRiceId, setSelectedRiceId] = useState('');
-  const [riceMorning, setRiceMorning] = useState(150);
-  const [riceLunch, setRiceLunch] = useState(250);
-  const [riceDinner, setRiceDinner] = useState(200);
+  const [riceMorning, setRiceMorning] = useState(3.5);
+  const [riceLunch, setRiceLunch] = useState(6.0);
+  const [riceDinner, setRiceDinner] = useState(5.0);
 
   // Engine status states
   const [step, setStep] = useState(1); // 1: Inputs, 2: Suggestion
@@ -129,22 +130,71 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
 
     try {
       // Step A: Calculate Rice Cost
-      const selectedRice = products.find(p => p.id === selectedRiceId);
-      if (!selectedRice) {
-        throw new Error('দয়া করে একটি চাল ভ্যারিয়েন্ট সিলেক্ট করুন।');
+      let selectedRice = null;
+      let totalRiceKg = 0;
+      let riceCost = 0;
+
+      if (riceEnabled) {
+        selectedRice = products.find(p => p.id === selectedRiceId);
+        if (!selectedRice) {
+          throw new Error('দয়া করে একটি চাল ভ্যারিয়েন্ট সিলেক্ট করুন অথবা চাল অপশনটি বন্ধ করুন।');
+        }
+        totalRiceKg = Math.max(0, Number(riceMorning) + Number(riceLunch) + Number(riceDinner));
+        riceCost = Math.round(totalRiceKg * selectedRice.price);
+        if (riceCost >= budget) {
+          throw new Error(`চালের খরচ (৳${riceCost}) আপনার মোট বাজেটকে (৳${budget}) ছাড়িয়ে গেছে! বাজেট বাড়িয়ে দিন বা চাল অপশন বন্ধ করুন।`);
+        }
       }
 
-      const totalRiceGramsPerPerson = Number(riceMorning) + Number(riceLunch) + Number(riceDinner);
-      const totalRiceKg = Math.max(0.5, Math.round(((totalRiceGramsPerPerson * members) / 1000) * 2) / 2); // rounded to nearest 0.5kg
-      const riceCost = Math.round(totalRiceKg * selectedRice.price);
+      // Step B: Define Spices & Staples Package (Essential Package)
+      // members / 25 multiplier based on the demo invoices
+      const staplesList = [
+        { key: 'oil', name: 'Soyabean Oil', keywords: ['সয়াবিন', 'সয়াবিন', 'soyabean', 'oil', 'তেল'], baseQty: 0.5 / 25, unit: 'Litre' },
+        { key: 'onion', name: 'Onion', keywords: ['পেঁয়াজ', 'পেয়াজ', 'পিয়াজ', 'onion'], baseQty: 0.5 / 25, unit: 'kg' },
+        { key: 'chili', name: 'Green Chili', keywords: ['কাঁচামরিচ', 'কাঁচা মরিচ', 'green chili'], baseQty: 0.25 / 25, unit: 'kg' },
+        { key: 'garlic', name: 'Garlic', keywords: ['রসুন', 'garlic'], baseQty: 0.08 / 25, unit: 'kg' },
+        { key: 'ginger', name: 'Ginger', keywords: ['আদা', 'ginger'], baseQty: 0.05 / 25, unit: 'kg' },
+        { key: 'turmeric', name: 'Turmeric Powder', keywords: ['হলুদ', 'turmeric'], baseQty: 0.03 / 25, unit: 'kg' },
+        { key: 'salt', name: 'Salt', keywords: ['লবণ', 'লবন', 'salt'], baseQty: 0.5 / 25, unit: 'packet' },
+        { key: 'potato', name: 'Potato', keywords: ['আলু', 'potato'], baseQty: 2.0 / 25, unit: 'kg' },
+        { key: 'masala', name: 'Garam Masala', keywords: ['গরম মসলা', 'গরম মশলা', 'garam masala', 'gorom mosla'], baseQty: 0.05 / 25, unit: 'kg' },
+        { key: 'dal', name: 'Musur Dal', keywords: ['মসুর ডাল', 'মুসুর ডাল', 'dal'], baseQty: 0.3 / 25, unit: 'kg' }
+      ];
 
-      if (riceCost >= budget) {
-        throw new Error(`চালের খরচ (৳${riceCost}) আপনার মোট বাজেটকে (৳${budget}) ছাড়িয়ে গেছে! বাজেট বাড়িয়ে দিন।`);
+      const resolvedStaples = [];
+      let staplesCost = 0;
+
+      staplesList.forEach(item => {
+        const prod = findProductByKeywords(item.keywords, products);
+        if (prod) {
+          let qty = item.baseQty * members;
+          if (item.unit === 'packet' || item.unit === 'piece') {
+            qty = Math.max(1, Math.round(qty));
+          } else {
+            if (qty < 0.2) {
+              qty = Math.max(0.05, Math.round(qty * 20) / 20); // nearest 50g
+            } else {
+              qty = Math.max(0.25, Math.round(qty * 4) / 4); // nearest 250g
+            }
+          }
+          const cost = Math.round(qty * prod.price);
+          resolvedStaples.push({
+            product: prod,
+            qty,
+            cost,
+            meta: item
+          });
+          staplesCost += cost;
+        }
+      });
+
+      if (riceCost + staplesCost >= budget) {
+        throw new Error(`চাল ও মসলাপাতির মোট খরচ (৳${riceCost + staplesCost}) আপনার মোট বাজেটকে (৳${budget}) ছাড়িয়ে গেছে! বাজেট বাড়িয়ে দিন।`);
       }
 
-      const remainingBudget = budget - riceCost;
+      const remainingBudget = budget - riceCost - staplesCost;
 
-      // Step B: Define Priorities & Fallbacks
+      // Step C: Define Priorities & Fallbacks
       // Protein priorities with historical adjustments
       let proteinList = [
         { key: 'boiler', name: 'Boiler Chicken', keywords: ['বয়লার', 'boiler', 'মুরগি', 'মুরগী'], baseQty: 0.15, unit: 'kg' },
@@ -249,7 +299,7 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       const maxPasses = 10;
       
       const calculateTotalCost = (m, lp, lv, dp, de) => {
-        return riceCost + m.cost + lp.cost + lv.cost + dp.cost + de.cost;
+        return riceCost + staplesCost + m.cost + lp.cost + lv.cost + dp.cost + de.cost;
       };
 
       while (calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra) > budget && optimizationPass < maxPasses) {
@@ -321,7 +371,8 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
 
       // Format payload for Cart
       const cartItemsPayload = [
-        { product: selectedRice, qty: totalRiceKg, note: 'মেসের চাল' },
+        ...resolvedStaples.map(s => ({ product: s.product, qty: s.qty, note: 'মেসের মসলা ও নিত্যপ্রয়োজনীয়' })),
+        ...(riceEnabled && selectedRice ? [{ product: selectedRice, qty: totalRiceKg, note: 'মেসের চাল' }] : []),
         { product: morningItem.product, qty: morningItem.qty, note: 'সকালের বাজার' },
         { product: lunchProtein.product, qty: lunchProtein.qty, note: 'দুপুরের আমিষ' },
         { product: lunchVeg.product, qty: lunchVeg.qty, note: 'দুপুরের সবজি/ডাল' },
@@ -335,17 +386,21 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         const existing = mergedCartItems.find(ex => ex.product.id === item.product.id);
         if (existing) {
           existing.qty += item.qty;
-          existing.note = `${existing.note} + ${item.note}`;
+          existing.note = `${existing.note} + & ${item.note}`;
         } else {
           mergedCartItems.push({ ...item });
         }
       });
 
       const planSummary = {
-        rice: {
+        rice: riceEnabled && selectedRice ? {
           product: selectedRice,
           qty: totalRiceKg,
           cost: riceCost
+        } : null,
+        staples: {
+          items: resolvedStaples,
+          cost: staplesCost
         },
         morning: {
           items: [morningItem]
@@ -367,11 +422,12 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       // Now call AI in the background to render a premium greeting narrative in Bengali
       try {
         const aiPromptText = `আমাদের মেসের সদস্য সংখ্যা ${members} জন। বাজারের মোট বাজেট ${budget} টাকা।
-নিয়মমাফিক আমরা একটি ১ দিনের অপ্টিমাইজড বাজার তালিকা তৈরি করেছি:
-১. চাল: ${selectedRice.name} - ${totalRiceKg} কেজি (খরচ: ৳${riceCost})
-২. সকালের খাবার: ${morningItem.product.name} (পরিমাণ: ${morningItem.qty} ${morningItem.product.unit || 'কেজি'}, খরচ: ৳${morningItem.cost})
-৩. দুপুরের খাবার: ${lunchProtein.product.name} (${lunchProtein.qty} ${lunchProtein.product.unit || 'কেজি'}) ও ${lunchVeg.product.name} (${lunchVeg.qty} ${lunchVeg.product.unit || 'কেজি'}) (মোট খরচ: ৳${lunchProtein.cost + lunchVeg.cost})
-৪. রাতের খাবার: ${dinnerProtein.product.name} (${dinnerProtein.qty} ${dinnerProtein.product.unit || 'কেজি'}) ও ${dinnerExtra.product.name} (${dinnerExtra.qty} ${dinnerExtra.product.unit || 'কেজি'}) (মোট খরচ: ৳${dinnerProtein.cost + dinnerExtra.cost})
+নিয়মাফিক আমরা একটি ১ দিনের অপ্টিমাইজড বাজার তালিকা তৈরি করেছি:
+${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalRiceKg} কেজি (খরচ: ৳${riceCost})` : '১. চাল: আমাদের নিজেদের চাল ব্যবহার করছি (মেনুতে কোনো চাল যোগ করা হয়নি)'}
+২. মসলা ও নিত্যপ্রয়োজনীয় (সয়াবিন তেল, পেঁয়াজ, আলু, ডাল, লবণ ইত্যাদি): পরিমাণ মেম্বার অনুযায়ী আনুপাতিক হারে অ্যাড করা হয়েছে (মোট খরচ: ৳${staplesCost})
+৩. সকালের খাবার: ${morningItem.product.name} (পরিমাণ: ${morningItem.qty} ${morningItem.product.unit || 'কেজি'}, খরচ: ৳${morningItem.cost})
+৪. দুপুরের খাবার: ${lunchProtein.product.name} (${lunchProtein.qty} ${lunchProtein.product.unit || 'কেজি'}) ও ${lunchVeg.product.name} (${lunchVeg.qty} ${lunchVeg.product.unit || 'কেজি'}) (মোট খরচ: ৳${lunchProtein.cost + lunchVeg.cost})
+৫. রাতের খাবার: ${dinnerProtein.product.name} (${dinnerProtein.qty} ${dinnerProtein.product.unit || 'কেজি'}) ও ${dinnerExtra.product.name} (${dinnerExtra.qty} ${dinnerExtra.product.unit || 'কেজি'}) (মোট খরচ: ৳${dinnerProtein.cost + dinnerExtra.cost})
 
 মোট খরচ হয়েছে: ৳${finalTotalCost} টাকা।
 বাকি বাজেট: ৳${finalRemaining} টাকা।
@@ -466,84 +522,108 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
               </div>
             </div>
 
+            {/* Rice Enable/Disable Toggle */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+              <div>
+                <h4 className="font-black text-xs text-slate-800">🍚 চালের হিসাব যুক্ত করুন (Add Rice)</h4>
+                <p className="text-[10px] text-slate-400 font-bold mt-0.5">অফ করলে শুধু মেসের তরকারি/বাজার হিসাব করা হবে</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer select-none">
+                <input 
+                  type="checkbox" 
+                  checked={riceEnabled} 
+                  onChange={e => setRiceEnabled(e.target.checked)} 
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+
             {/* Rice Selector from Shop Database */}
-            <div>
-              <label className="block text-[11px] font-black uppercase text-slate-500 mb-1">চাল নির্বাচন করুন (শুধু Available)</label>
-              {availableRiceVariants.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {availableRiceVariants.map(rice => (
-                    <button
-                      key={rice.id}
-                      type="button"
-                      onClick={() => setSelectedRiceId(rice.id)}
-                      className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
-                        selectedRiceId === rice.id
-                          ? 'border-purple-600 bg-purple-50/50 shadow-sm'
-                          : 'border-slate-200 hover:border-slate-300 bg-slate-50'
-                      }`}
-                    >
-                      <span className="text-xs font-black text-slate-800 truncate w-full">{rice.name}</span>
-                      <span className="text-[10px] font-black text-purple-600 mt-1">৳{rice.price}/কেজি</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-                  ⚠️ স্টোরে কোনো চাল পাওয়া যায়নি! ড্যাশবোর্ড থেকে চাল ক্যাটাগরির প্রোডাক্ট ইন-স্টক করুন।
-                </div>
-              )}
-            </div>
+            {riceEnabled && (
+              <div className="pt-2">
+                <label className="block text-[11px] font-black uppercase text-slate-500 mb-1">চাল নির্বাচন করুন (শুধু Available)</label>
+                {availableRiceVariants.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableRiceVariants.map(rice => (
+                      <button
+                        key={rice.id}
+                        type="button"
+                        onClick={() => setSelectedRiceId(rice.id)}
+                        className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                          selectedRiceId === rice.id
+                            ? 'border-purple-600 bg-purple-50/50 shadow-sm'
+                            : 'border-slate-200 hover:border-slate-300 bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-xs font-black text-slate-800 truncate w-full">{rice.name}</span>
+                        <span className="text-[10px] font-black text-purple-600 mt-1">৳{rice.price}/কেজি</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs font-bold text-amber-600 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                    ⚠️ স্টোরে কোনো চাল পাওয়া যায়নি! ড্যাশবোর্ড থেকে চাল ক্যাটাগরির প্রোডাক্ট ইন-স্টক করুন।
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Rice gram per meal inputs */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
-            <h4 className="font-black text-xs text-slate-800">প্রতি ব্যক্তি চালের পরিমাণ (গ্রামে)</h4>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 mb-1">সকাল</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                    value={riceMorning}
-                    onChange={e => setRiceMorning(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
-                  <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">g</span>
+          {/* Rice kg per meal inputs */}
+          {riceEnabled && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+              <h4 className="font-black text-xs text-slate-800">মেসের মোট চালের পরিমাণ (কেজি)</h4>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1">সকাল</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                      value={riceMorning}
+                      onChange={e => setRiceMorning(Math.max(0, parseFloat(e.target.value) || 0))}
+                    />
+                    <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">kg</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1">দুপুর</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                      value={riceLunch}
+                      onChange={e => setRiceLunch(Math.max(0, parseFloat(e.target.value) || 0))}
+                    />
+                    <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">kg</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 mb-1">রাত</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                      value={riceDinner}
+                      onChange={e => setRiceDinner(Math.max(0, parseFloat(e.target.value) || 0))}
+                    />
+                    <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">kg</span>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 mb-1">দুপুর</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                    value={riceLunch}
-                    onChange={e => setRiceLunch(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
-                  <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">g</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 mb-1">রাত</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                    value={riceDinner}
-                    onChange={e => setRiceDinner(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
-                  <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">g</span>
-                </div>
+              <div className="mt-2 text-[10px] font-bold text-slate-500 text-center bg-slate-50 py-1.5 rounded-lg border border-slate-100">
+                মোট দৈনন্দিন চাল: <span className="text-purple-600 font-black">{(Number(riceMorning) + Number(riceLunch) + Number(riceDinner)).toFixed(1)} কেজি</span> মেসের সবার জন্য।
               </div>
             </div>
-            <div className="mt-2 text-[10px] font-bold text-slate-500 text-center bg-slate-50 py-1.5 rounded-lg border border-slate-100">
-              মোট দৈনন্দিন চাল: <span className="text-purple-600 font-black">{(Number(riceMorning) + Number(riceLunch) + Number(riceDinner))} গ্রাম</span> প্রতি ব্যক্তি।
-            </div>
-          </div>
-
+          )}
+          
           {/* Action Button */}
           <button
             onClick={generateMealPlan}
@@ -628,16 +708,36 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
           <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             
             {/* Rice row */}
-            <div className="border-b border-slate-100 pb-3">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200">🍚 চাল নির্বাচন</span>
-                <span className="text-xs font-black text-amber-600">৳{resolvedPlan.rice.cost}</span>
+            {resolvedPlan.rice && (
+              <div className="border-b border-slate-100 pb-3">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200">🍚 চাল নির্বাচন</span>
+                  <span className="text-xs font-black text-amber-600">৳{resolvedPlan.rice.cost}</span>
+                </div>
+                <div className="flex justify-between text-xs font-bold text-slate-800">
+                  <span>{resolvedPlan.rice.product.name}</span>
+                  <span>{resolvedPlan.rice.qty} কেজি</span>
+                </div>
               </div>
-              <div className="flex justify-between text-xs font-bold text-slate-800">
-                <span>{resolvedPlan.rice.product.name}</span>
-                <span>{resolvedPlan.rice.qty} কেজি</span>
+            )}
+
+            {/* Staples row */}
+            {resolvedPlan.staples && resolvedPlan.staples.items.length > 0 && (
+              <div className="border-b border-slate-100 pb-3">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-300">🧂 মসলা ও নিত্যপ্রয়োজনীয়</span>
+                  <span className="text-xs font-black text-slate-600">৳{resolvedPlan.staples.cost}</span>
+                </div>
+                <div className="max-h-[140px] overflow-y-auto space-y-1 pr-1">
+                  {resolvedPlan.staples.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between text-[11px] font-bold text-slate-600">
+                      <span>{item.product.name}</span>
+                      <span>{item.qty} {item.meta.unit}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Breakfast row */}
             <div className="border-b border-slate-100 pb-3">
@@ -682,7 +782,6 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
             </div>
 
           </div>
-
           {/* Action buttons */}
           <div className="flex gap-3 pt-2">
             <button

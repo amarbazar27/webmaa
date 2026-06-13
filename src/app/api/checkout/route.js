@@ -381,7 +381,13 @@ export async function POST(req) {
       try {
         const globalSnap = await adminDb.collection('config').doc('global').get();
         const globalData = globalSnap.exists ? globalSnap.data() : {};
-        const ppUrl = globalData.piprapayUrl?.trim().replace(/\/$/, '');
+        let ppUrl = globalData.piprapayUrl?.trim() || '';
+        if (ppUrl) {
+          if (!ppUrl.endsWith('/')) ppUrl += '/';
+          if (!ppUrl.endsWith('/api/')) {
+            ppUrl = ppUrl.replace(/\/$/, '') + '/api/';
+          }
+        }
         const ppApiKey = globalData.piprapayApiKey?.trim();
 
         if (shopData.piprapayEnabled && ppUrl && ppApiKey) {
@@ -396,7 +402,7 @@ export async function POST(req) {
             const host = req.headers.get('host') || 'webmaa.daripallah.com';
             const domainUrl = `${protocol}://${host}`;
 
-            const res = await fetch(`${ppUrl}/api/?name=create-charge`, {
+            const res = await fetch(`${ppUrl}?name=create-charge`, {
               method: 'POST',
               headers: {
                 'accept': 'application/json',
@@ -488,7 +494,15 @@ export async function POST(req) {
     }
 
     // 🔔 RUFLO: Fire-and-forget emails (non-blocking — never slows checkout)
-    const rufloPayload = { shopId, shopName: shopData.shopName, orderId: orderIdVisual, items: verifiedItems, total: finalTotal };
+    const rufloPayload = { 
+      shopId, 
+      shopName: shopData.shopName, 
+      orderId: orderIdVisual, 
+      items: verifiedItems, 
+      total: finalTotal,
+      customerAddress,
+      coordinates: coordinates || null
+    };
 
     if (customerEmail) {
       void sendOrderConfirmationEmail({
@@ -510,23 +524,26 @@ export async function POST(req) {
     }
 
     if (shopData.deliveryConfig?.contactEmail) {
-      void sendRetailerNotificationEmail({
-        to: shopData.deliveryConfig.contactEmail,
-        customerName,
-        customerPhone,
-        ...rufloPayload
-      }).catch(e => {
-        console.warn('[Ruflo] Retailer email error:', e.message);
-        adminDb.collection('system_logs').add({
-          type: 'email_failure',
-          context: 'retailer_order_notification',
-          email: shopData.deliveryConfig.contactEmail,
-          shopId,
-          orderId: orderIdVisual,
-          error: e.message,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
+      const emails = shopData.deliveryConfig.contactEmail.split(',').map(email => email.trim()).filter(email => email);
+      for (const email of emails) {
+        void sendRetailerNotificationEmail({
+          to: email,
+          customerName,
+          customerPhone,
+          ...rufloPayload
+        }).catch(e => {
+          console.warn('[Ruflo] Retailer email error:', e.message);
+          adminDb.collection('system_logs').add({
+            type: 'email_failure',
+            context: 'retailer_order_notification',
+            email: email,
+            shopId,
+            orderId: orderIdVisual,
+            error: e.message,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
         });
-      });
+      }
     }
 
     return NextResponse.json({

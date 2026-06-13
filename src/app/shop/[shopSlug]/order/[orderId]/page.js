@@ -47,6 +47,163 @@ function LiveCountdown({ deliveryETA }) {
   );
 }
 
+function DeliveryTracker({ coordinates, status }) {
+  const [distance, setDistance] = useState(1200); // initial simulated distance
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!coordinates || typeof window === 'undefined') return;
+    let isMounted = true;
+    let map = null;
+    let interval = null;
+
+    const loadLeaflet = () => {
+      return new Promise((resolve) => {
+        if (window.L) {
+          resolve(window.L);
+          return;
+        }
+
+        if (!document.getElementById('leaflet-css-tracker')) {
+          const link = document.createElement('link');
+          link.id = 'leaflet-css-tracker';
+          link.rel = 'stylesheet';
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+          document.head.appendChild(link);
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => {
+          if (isMounted) resolve(window.L);
+        };
+        document.head.appendChild(script);
+      });
+    };
+
+    loadLeaflet().then((L) => {
+      if (!isMounted) return;
+      const parts = coordinates.split(',');
+      if (parts.length !== 2) return;
+      const lat = parseFloat(parts[0]);
+      const lng = parseFloat(parts[1]);
+      if (isNaN(lat) || isNaN(lng)) return;
+
+      // Setup Custom Icons
+      const customerIcon = L.divIcon({
+        className: 'custom-customer-icon',
+        html: `<div style="font-size:24px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">📍</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+      });
+
+      const riderIcon = L.divIcon({
+        className: 'custom-rider-icon animate-bounce',
+        html: `<div style="font-size:28px;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.4));">🚴</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 34]
+      });
+
+      // Initialize map
+      map = L.map('tracking-map', { zoomControl: false }).setView([lat + 0.003, lng + 0.003], 15);
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      // Premium Voyager Tile Layer
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CartoDB'
+      }).addTo(map);
+
+      // Customer Marker
+      L.marker([lat, lng], { icon: customerIcon }).addTo(map).bindPopup('ডেলিভারি ঠিকানা').openPopup();
+
+      // Ride simulation
+      let currentRiderLat = lat + 0.004;
+      let currentRiderLng = lng + 0.004;
+      const riderMarker = L.marker([currentRiderLat, currentRiderLng], { icon: riderIcon }).addTo(map);
+
+      const getDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371e3; // metres
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c; // in metres
+      };
+
+      setDistance(Math.round(getDistance(currentRiderLat, currentRiderLng, lat, lng)));
+
+      // Simulate rider moving 15% closer every 4s
+      interval = setInterval(() => {
+        if (status === 'completed') {
+          riderMarker.setLatLng([lat, lng]);
+          setDistance(0);
+          clearInterval(interval);
+          return;
+        }
+
+        const step = 0.15;
+        currentRiderLat = currentRiderLat + (lat - currentRiderLat) * step;
+        currentRiderLng = currentRiderLng + (lng - currentRiderLng) * step;
+
+        riderMarker.setLatLng([currentRiderLat, currentRiderLng]);
+        const dist = getDistance(currentRiderLat, currentRiderLng, lat, lng);
+        setDistance(Math.round(dist));
+
+        if (dist < 10) {
+          riderMarker.setLatLng([lat, lng]);
+          setDistance(0);
+          clearInterval(interval);
+        }
+      }, 4000);
+
+      setMapLoaded(true);
+    }).catch(err => console.error("Leaflet load error:", err));
+
+    return () => {
+      isMounted = false;
+      if (interval) clearInterval(interval);
+      if (map) map.remove();
+    };
+  }, [coordinates, status]);
+
+  if (!coordinates) return null;
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm space-y-0.5">
+      <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-600"></span>
+          </span>
+          <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">ডেলিভারি ট্র্যাকার (রিয়েল-টাইম)</h3>
+        </div>
+        {distance > 0 ? (
+          <span className="text-[10px] font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200 animate-pulse">
+            রাইডার আপনার থেকে {distance} মিটার দূরে আছে
+          </span>
+        ) : (
+          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+            রাইডার আপনার ঠিকানায় পৌঁছে গেছে! 🎉
+          </span>
+        )}
+      </div>
+      <div className="h-[250px] w-full bg-slate-100 relative" id="tracking-map">
+        {!mapLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-400 bg-slate-50">
+            <Loader2 className="animate-spin text-purple-600 mr-2" size={16} />
+            লাইভ ট্র্যাকিং ম্যাপ লোড হচ্ছে...
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function OrderSummaryPage({ params }) {
   const { shopSlug, orderId } = use(params);
   const router = useRouter();
@@ -248,6 +405,11 @@ export default function OrderSummaryPage({ params }) {
           )}
           {order.deliveryETA && <LiveCountdown deliveryETA={order.deliveryETA} />}
         </div>
+
+        {/* Live Tracking Map */}
+        {order.coordinates && (
+          <DeliveryTracker coordinates={order.coordinates} status={order.status} />
+        )}
 
         {/* PDF Download Button */}
         <button

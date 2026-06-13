@@ -26,7 +26,13 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Global configuration not found' }, { status: 500 });
     }
     const globalData = globalSnap.data();
-    const ppUrl = globalData.piprapayUrl?.trim().replace(/\/$/, '');
+    let ppUrl = globalData.piprapayUrl?.trim() || '';
+    if (ppUrl) {
+      if (!ppUrl.endsWith('/')) ppUrl += '/';
+      if (!ppUrl.endsWith('/api/')) {
+        ppUrl = ppUrl.replace(/\/$/, '') + '/api/';
+      }
+    }
     const ppApiKey = globalData.piprapayApiKey?.trim();
 
     if (!ppUrl || !ppApiKey) {
@@ -50,7 +56,7 @@ export async function POST(req) {
     }
 
     // Verify payment status server-to-server with PipraPay
-    const verifyRes = await fetch(`${ppUrl}/api/verify-payments`, {
+    const verifyRes = await fetch(`${ppUrl}verify-payments`, {
       method: 'POST',
       headers: {
         'accept': 'application/json',
@@ -107,7 +113,9 @@ export async function POST(req) {
         shopName: orderData.shopName, 
         orderId: orderData.orderIdVisual, 
         items: orderData.items, 
-        total: orderData.total 
+        total: orderData.total,
+        customerAddress: orderData.customerAddress || '',
+        coordinates: orderData.coordinates || null
       };
 
       if (orderData.customerEmail) {
@@ -123,12 +131,15 @@ export async function POST(req) {
       if (shopSnap.exists) {
         const shopData = shopSnap.data();
         if (shopData.deliveryConfig?.contactEmail) {
-          void sendRetailerNotificationEmail({
-            to: shopData.deliveryConfig.contactEmail,
-            customerName: orderData.customerName,
-            customerPhone: orderData.customerPhone,
-            ...rufloPayload
-          }).catch(e => console.warn('[Webhook Ruflo] Retailer email error:', e.message));
+          const emails = shopData.deliveryConfig.contactEmail.split(',').map(email => email.trim()).filter(email => email);
+          for (const email of emails) {
+            void sendRetailerNotificationEmail({
+              to: email,
+              customerName: orderData.customerName,
+              customerPhone: orderData.customerPhone,
+              ...rufloPayload
+            }).catch(e => console.warn('[Webhook Ruflo] Retailer email error:', e.message));
+          }
         }
       }
     }

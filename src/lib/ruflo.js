@@ -48,7 +48,7 @@ async function sendWithRetry(mailOptions, maxRetries = 3) {
 }
 
 // ── HTML Email Template ─────────────────────────
-function buildOrderEmail({ shopName, customerName, orderId, items, total, status = 'pending' }) {
+function buildOrderEmail({ shopName, customerName, orderId, customerAddress, coordinates, items, total, status = 'pending' }) {
   const taka = '৳';
   const statusLabels = {
     pending: { label: 'অপেক্ষমান', color: '#f59e0b', bg: '#fef3c7' },
@@ -99,6 +99,12 @@ function buildOrderEmail({ shopName, customerName, orderId, items, total, status
             <p style="margin:0;color:#64748b;font-size:14px;line-height:1.6;">
               আপনার অর্ডার <strong style="color:#4f46e5;">#${orderId}</strong> পাওয়া গেছে। আমরা শীঘ্রই প্রসেস করব।
             </p>
+            ${customerAddress ? `
+              <p style="margin:8px 0 0;color:#1e293b;font-size:13px;line-height:1.5;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">
+                <strong>ডেলিভারি ঠিকানা:</strong> ${customerAddress}
+                ${coordinates ? `<br/><a href="https://maps.google.com/?q=${coordinates}" target="_blank" style="color:#4f46e5;text-decoration:underline;font-weight:bold;display:inline-block;margin-top:6px;">গুগল ম্যাপে লোকেশন দেখুন 📍</a>` : ''}
+              </p>
+            ` : ''}
           </td>
         </tr>
         <!-- Items Table -->
@@ -158,7 +164,7 @@ function buildOTPEmail({ name, otp, purpose = 'লগইন' }) {
 </body></html>`;
 }
 
-function buildRetailerEmail({ shopName, orderId, customerName, customerPhone, items, total }) {
+function buildRetailerEmail({ shopName, orderId, customerName, customerPhone, customerAddress, coordinates, items, total }) {
   const taka = '৳';
   return `<!DOCTYPE html>
 <html lang="bn">
@@ -174,6 +180,8 @@ function buildRetailerEmail({ shopName, orderId, customerName, customerPhone, it
           <tr><td style="font-size:13px;color:#64748b;padding:4px 0;">অর্ডার ID</td><td style="text-align:right;font-weight:900;color:#4f46e5;font-size:15px;">#${orderId}</td></tr>
           <tr><td style="font-size:13px;color:#64748b;padding:4px 0;">গ্রাহক</td><td style="text-align:right;font-weight:700;color:#0f172a;">${customerName}</td></tr>
           <tr><td style="font-size:13px;color:#64748b;padding:4px 0;">ফোন</td><td style="text-align:right;font-weight:700;color:#0f172a;">${customerPhone}</td></tr>
+          ${customerAddress ? `<tr><td style="font-size:13px;color:#64748b;padding:4px 0;vertical-align:top;">ঠিকানা</td><td style="text-align:right;font-weight:700;color:#0f172a;font-size:13px;max-width:220px;">${customerAddress}</td></tr>` : ''}
+          ${coordinates ? `<tr><td style="font-size:13px;color:#64748b;padding:4px 0;">লোকেশন ম্যাপ</td><td style="text-align:right;font-weight:700;"><a href="https://maps.google.com/?q=${coordinates}" target="_blank" style="color:#4f46e5;text-decoration:underline;font-weight:bold;">গুগল ম্যাপে দেখুন 📍</a></td></tr>` : ''}
           <tr><td colspan="2" style="padding-top:12px;border-top:1px solid #e2e8f0;font-size:14px;color:#0f172a;">
             <strong>পণ্য:</strong> ${items.map(i => `${i.name} ×${i.quantity}`).join(' | ')}
           </td></tr>
@@ -210,7 +218,7 @@ async function getRealtimeShopName(shopId, defaultShopName) {
 /**
  * অর্ডার confirmation email পাঠাও (গ্রাহকের কাছে)
  */
-export async function sendOrderConfirmationEmail({ to, shopId, shopName, customerName, orderId, items, total }) {
+export async function sendOrderConfirmationEmail({ to, shopId, shopName, customerName, orderId, customerAddress, coordinates, items, total }) {
   if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
 
   const activeShopName = await getRealtimeShopName(shopId, shopName);
@@ -219,14 +227,14 @@ export async function sendOrderConfirmationEmail({ to, shopId, shopName, custome
     from: `"${activeShopName}" <${process.env.RUFLO_EMAIL}>`,
     to,
     subject: `✅ অর্ডার নিশ্চিত হয়েছে — #${orderId} | ${activeShopName}`,
-    html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, items, total }),
+    html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, customerAddress, coordinates, items, total }),
   });
 }
 
 /**
  * নতুন অর্ডারের notification email (রিটেইলারের কাছে)
  */
-export async function sendRetailerNotificationEmail({ to, shopId, shopName, orderId, customerName, customerPhone, items, total }) {
+export async function sendRetailerNotificationEmail({ to, shopId, shopName, orderId, customerName, customerPhone, customerAddress, coordinates, items, total }) {
   if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
 
   const activeShopName = await getRealtimeShopName(shopId, shopName);
@@ -235,7 +243,7 @@ export async function sendRetailerNotificationEmail({ to, shopId, shopName, orde
     from: `"Daripallah Ruflo" <${process.env.RUFLO_EMAIL}>`,
     to,
     subject: `📦 নতুন অর্ডার #${orderId} — ${activeShopName}`,
-    html: buildRetailerEmail({ shopName: activeShopName, orderId, customerName, customerPhone, items, total }),
+    html: buildRetailerEmail({ shopName: activeShopName, orderId, customerName, customerPhone, customerAddress, coordinates, items, total }),
   });
 }
 
@@ -256,7 +264,7 @@ export async function sendOTPEmail({ to, name, otp, purpose = 'লগইন' }) 
 /**
  * Status update email পাঠাও (গ্রাহকের কাছে)
  */
-export async function sendStatusUpdateEmail({ to, shopId, shopName, customerName, orderId, items, total, status }) {
+export async function sendStatusUpdateEmail({ to, shopId, shopName, customerName, orderId, customerAddress, coordinates, items, total, status }) {
   if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
 
   const activeShopName = await getRealtimeShopName(shopId, shopName);
@@ -272,6 +280,6 @@ export async function sendStatusUpdateEmail({ to, shopId, shopName, customerName
     from: `"${activeShopName}" <${process.env.RUFLO_EMAIL}>`,
     to,
     subject,
-    html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, items, total, status }),
+    html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, customerAddress, coordinates, items, total, status }),
   });
 }

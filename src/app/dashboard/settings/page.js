@@ -1070,10 +1070,10 @@ export default function SettingsPage() {
                  />
                  <Input
                    label="📧 Ruflo Alert Email (New Orders)"
-                   type="email"
+                   type="text"
                    value={deliveryConfig.contactEmail}
                    onChange={e => setDeliveryConfig({...deliveryConfig, contactEmail: e.target.value})}
-                   placeholder="your@gmail.com"
+                   placeholder="your@gmail.com, staff@gmail.com (কমা দিয়ে একাধিক ইমেইল যোগ করতে পারবেন)"
                  />
                  <Input
                    label="Minimum Order Amount (৳)"
@@ -1167,7 +1167,7 @@ export default function SettingsPage() {
                             আপনার PipraPay প্যানেল থেকে সম্পূর্ণ Webhook URL টি কপি করে এই বক্সে পেস্ট করুন।
                              <br />
                              <span className="text-[10px] text-slate-400 block mt-1">
-                               (Webhook URL পেতে: PipraPay এডমিন প্যানেলে লগইন করুন &rarr; ডানপাশের <strong>Connect Android App</strong> এ ক্লিক করুন &rarr; সম্পূর্ণ <strong>Webhook URL</strong> যেমন <code className="bg-slate-100 px-1 text-slate-700 rounded font-mono font-normal">https://piprapay-server-1.onrender.com/?webhook=YOUR_KEY</code> কপি করে অ্যাপের বক্সে পেস্ট করে Save করুন। সরাসরি QR কোড স্ক্যান না করে এই উপায়ে ম্যানুয়ালি পেস্ট করা সবচেয়ে নিরাপদ।)
+                               (Webhook URL পেতে: PipraPay এডমিন প্যানেলে লগইন করুন &rarr; ডানপাশের <strong>Connect Android App</strong> এ ক্লিক করুন &rarr; সম্পূর্ণ <strong>Webhook URL</strong> যেমন <code className="bg-slate-100 px-1 text-slate-700 rounded font-mono font-normal">https://piprapay-server-1.onrender.com/?webhook=YOUR_KEY</code> কপি করে অ্যাপের বক্সে পেস্ট করে Save করুন। সরাসরি QR কোড স্ক্যান না করে এই উপায়ে ম্যানুয়ালি পেস্ট করা সবচেয়ে নিরাপদ। <strong>গুরুত্বপূর্ণ:</strong> অ্যাপের ভেতর URL টি পেস্ট করার সময় অবশ্যই শেষে একটি স্ল্যাশ <code>/</code> দিতে হবে (যেমন: <code>https://piprapay-server-1.onrender.com/api/</code> অথবা <code>https://piprapay-server-1.onrender.com/api/?webhook=...</code>), নাহলে কানেক্ট করার সময় "Network Error" দেখাবে।)
                              </span>
                           </p>
                         </div>

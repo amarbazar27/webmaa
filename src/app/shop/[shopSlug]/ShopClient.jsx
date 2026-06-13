@@ -1945,6 +1945,30 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       </header>
 
+      {/* ── Top Premium Location Bar ── */}
+      <div className="bg-white border-b border-slate-200/60 px-4 py-3 shadow-sm z-30 relative">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 shrink-0 border border-pink-100/50">
+              <MapPin size={18} className="fill-current animate-bounce" style={{ animationDuration: '3s' }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">ডেলিভারি ঠিকানা (Delivery Address)</p>
+              <p className="text-xs font-extrabold text-slate-900 leading-tight mt-1 truncate max-w-[200px] sm:max-w-md">
+                {orderForm.address ? orderForm.address.split('\n')[0] : 'লোকেশন সেট করা নেই'}
+              </p>
+            </div>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setIsMapOpen(true)}
+            className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-[11px] font-black tracking-wider uppercase transition-all shadow-md shadow-pink-500/15 active:scale-95 shrink-0 flex items-center gap-1"
+          >
+            <MapPin size={12} className="fill-current" /> {orderForm.coordinates ? 'লোকেশন পরিবর্তন' : 'ম্যাপ থেকে সেট করুন'}
+          </button>
+        </div>
+      </div>
+
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
       <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner">
         {normalizedBanners.length > 0 ? (

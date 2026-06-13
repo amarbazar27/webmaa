@@ -148,8 +148,8 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
     leafletMapRef.current = map;
 
-    // OSM Tiles
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // CartoDB Voyager Tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19
     }).addTo(map);
 
