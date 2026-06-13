@@ -432,14 +432,17 @@ export async function POST(req) {
                 piprapayPpId = ppData.pp_id || null;
               } else {
                 console.error("PipraPay error response:", ppData);
+                return NextResponse.json({ error: 'Automated payment gateway failed to initialize. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
               }
             } else {
               console.error("PipraPay status error:", res.status);
+              return NextResponse.json({ error: 'Automated payment gateway returned a status error. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
             }
           }
         }
       } catch (err) {
         console.error("Failed to initiate PipraPay charge:", err);
+        return NextResponse.json({ error: 'Failed to connect to automated payment gateway. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
       }
     }
 
@@ -473,6 +476,16 @@ export async function POST(req) {
       coordinates: coordinates || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    // Update shop stats: increment orderCount and totalRevenue
+    try {
+      await adminDb.collection('shops').doc(shopId).update({
+        orderCount: admin.firestore.FieldValue.increment(1),
+        totalRevenue: admin.firestore.FieldValue.increment(finalTotal)
+      });
+    } catch (err) {
+      console.error("Failed to update shop stats:", err);
+    }
 
     // 🔔 RUFLO: Fire-and-forget emails (non-blocking — never slows checkout)
     const rufloPayload = { shopId, shopName: shopData.shopName, orderId: orderIdVisual, items: verifiedItems, total: finalTotal };

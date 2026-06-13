@@ -120,6 +120,18 @@ export const getOrders = async (shopId) => {
   } catch (err) { return []; }
 };
 
+export const getRecentOrders = async (shopId, limitVal = 100) => {
+  const q = query(
+    collection(db, 'shops', shopId, 'orders'),
+    orderBy('createdAt', 'desc'),
+    limit(limitVal)
+  );
+  try {
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) { return []; }
+};
+
 export const getUserOrders = async (shopId, identifier) => {
   if (!identifier) return [];
   
@@ -142,6 +154,16 @@ export const getUserOrders = async (shopId, identifier) => {
 };
 
 export const placeOrder = async (shopId, orderData) => {
+  const amount = parseFloat(orderData.total) || 0;
+  try {
+    const shopRef = doc(db, 'shops', shopId);
+    await updateDoc(shopRef, {
+      orderCount: increment(1),
+      totalRevenue: increment(amount)
+    });
+  } catch (err) {
+    console.error("Failed to increment shop stats on placeOrder:", err);
+  }
   return addDoc(collection(db, 'shops', shopId, 'orders'), {
     ...orderData,
     status: 'pending',
@@ -343,7 +365,22 @@ export const denyRetailerRequest = async (requestId) => {
 };
 
 export const deleteOrder = async (shopId, orderId) => {
-  return deleteDoc(doc(db, 'shops', shopId, 'orders', orderId));
+  const orderRef = doc(db, 'shops', shopId, 'orders', orderId);
+  try {
+    const orderSnap = await getDoc(orderRef);
+    if (orderSnap.exists()) {
+      const orderData = orderSnap.data();
+      const amount = parseFloat(orderData.total) || 0;
+      const shopRef = doc(db, 'shops', shopId);
+      await updateDoc(shopRef, {
+        orderCount: increment(-1),
+        totalRevenue: increment(-amount)
+      });
+    }
+  } catch (err) {
+    console.error("Failed to decrement shop stats on deleteOrder:", err);
+  }
+  return deleteDoc(orderRef);
 };
 
 // ── ORDER SERIAL (Sequential, per-shop, per-day) ────────────────

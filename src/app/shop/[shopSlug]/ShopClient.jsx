@@ -31,6 +31,7 @@ import NotificationBanner from '@/components/shop/NotificationBanner';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import NotificationInbox from '@/components/shared/NotificationInbox';
 import ReviewSection from '@/components/shop/ReviewSection';
+import MapModal from '@/components/shop/MapModal';
 
 // Product detail modal component imports
 import ProductImage from '@/features/product/components/ProductImage';
@@ -711,6 +712,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
   const [paymentScreenshot, setPaymentScreenshot] = useState('');
   const [paymentMethod, setPaymentMethod] = useState(shop?.piprapayEnabled ? 'automated' : 'manual');
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [orderImage, setOrderImage] = useState(null);
@@ -2906,7 +2908,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ঠিকানা *</label>
                     <button 
                       type="button" 
-                      onClick={handleGetLocation} 
+                      onClick={() => setIsMapOpen(true)} 
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 border-2 ${
                         orderForm.coordinates 
                           ? 'bg-emerald-500 border-emerald-200 text-white' 
@@ -2914,7 +2916,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                             ? 'bg-red-500 border-red-200 text-white animate-pulse' 
                             : 'bg-slate-100 border-slate-200 text-slate-400'
                       }`}
-                      title="আমার বর্তমান লোকেশন দিন"
+                      title="মানচিত্রে লোকেশন চিহ্নিত করুন"
                     >
                       <MapPin size={20} strokeWidth={2.5} />
                     </button>
@@ -3003,7 +3005,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   )}
 
-                  {effectiveDelivery > 0 && paymentMethod === 'manual' && (
+                  {paymentMethod === 'manual' && (
                     <>
                       <div className="bg-white px-3 py-2 rounded-xl border border-purple-100 shadow-sm">
                         <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-1">পেমেন্ট নাম্বার</p>
@@ -3091,6 +3093,21 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           </div>
         </div>
       )}
+
+      {/* ── Map Modal ── */}
+      <MapModal 
+        isOpen={isMapOpen} 
+        onClose={() => setIsMapOpen(false)} 
+        onConfirm={(coords, addr) => {
+          setOrderForm(f => ({
+            ...f,
+            address: `${addr}\n[ম্যাপ: https://maps.google.com/?q=${coords.lat},${coords.lng}]`,
+            coordinates: { lat: coords.lat, lng: coords.lng, link: `https://maps.google.com/?q=${coords.lat},${coords.lng}` }
+          }));
+          setIsMapOpen(false);
+        }}
+        initialCoordinates={orderForm.coordinates}
+      />
 
       {/* ── Common Order Sheet Modal ── */}
       {isCommonOrderOpen && (

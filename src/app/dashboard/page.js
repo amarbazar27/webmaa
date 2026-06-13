@@ -22,13 +22,38 @@ export default function DashboardPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [shopData, ordersData, productsData] = await Promise.all([
-          getShop(activeShopId),
-          getOrders(activeShopId),
-          getProducts(activeShopId),
-        ]);
+        const { getRecentOrders, updateShop } = await import('@/lib/firestore');
+        const shopData = await getShop(activeShopId);
+        const productsData = await getProducts(activeShopId);
+
+        let finalOrders = [];
+        let finalRevenue = shopData?.totalRevenue;
+        let finalCount = shopData?.orderCount;
+
+        if (finalRevenue === undefined || finalCount === undefined) {
+          // One-time self-healing migration: load all orders to compute stats and cache them
+          const allOrders = await getOrders(activeShopId);
+          finalRevenue = allOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+          finalCount = allOrders.length;
+          finalOrders = allOrders.slice(0, 100); // Only keep recent 100 in state
+
+          // Cache stats in shop document
+          await updateShop(activeShopId, {
+            totalRevenue: finalRevenue,
+            orderCount: finalCount
+          });
+
+          if (shopData) {
+            shopData.totalRevenue = finalRevenue;
+            shopData.orderCount = finalCount;
+          }
+        } else {
+          // Instant load: load only the last 100 orders for charts and insights
+          finalOrders = await getRecentOrders(activeShopId, 100);
+        }
+
         setShop(shopData);
-        setOrders(ordersData);
+        setOrders(finalOrders);
         setProducts(productsData);
       } catch (err) {
         console.error(err);
@@ -39,11 +64,12 @@ export default function DashboardPage() {
     fetchData();
   }, [activeShopId]);
 
-  const totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+  const totalRevenue = shop?.totalRevenue !== undefined ? shop.totalRevenue : orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+  const totalOrdersCount = shop?.orderCount !== undefined ? shop.orderCount : orders.length;
   const shopUrl = `${window?.location?.origin || ''}/shop/${shop?.shopSlug}`;
   
-  const estimatedVisitors = orders.length > 0 ? (orders.length * 7) + 32 : 14;
-  const activeNow = orders.length > 0 ? Math.min(Math.floor(orders.length / 2) + 1, 8) : 0;
+  const estimatedVisitors = totalOrdersCount > 0 ? (totalOrdersCount * 7) + 32 : 14;
+  const activeNow = totalOrdersCount > 0 ? Math.min(Math.floor(totalOrdersCount / 2) + 1, 8) : 0;
 
   if (loading) {
     return (
@@ -92,7 +118,7 @@ export default function DashboardPage() {
             className="border-l-4 border-l-green-500 shadow-sm" 
          />
          <Card 
-            title={orders.length} 
+            title={totalOrdersCount} 
             subtitle="Total Orders" 
             icon={ShoppingBag} 
             className="border-l-4 border-l-blue-500 shadow-sm" 

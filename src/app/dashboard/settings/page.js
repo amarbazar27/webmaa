@@ -1156,21 +1156,21 @@ export default function SettingsPage() {
                          </p>
                        </div>
                        <div className="flex gap-2">
-                         <span className="text-purple-600 font-bold">৩.</span>
-                         <p>
-                           অ্যাপটি ওপেন করে <strong>Payment Panel URL</strong> এর ঘরে দিন: <code className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded text-[10px] font-mono select-all">https://piprapay-server-1.onrender.com</code>
-                         </p>
-                       </div>
+                          <span className="text-purple-600 font-bold">৩.</span>
+                          <p>
+                            অ্যাপটি ওপেন করে ডানদিকের সেটিংস আইকনে ক্লিক করুন। সেখানে একটি মাত্র কনফিগারেশন ইনপুট ফিল্ড (<strong>"Enter Webhook URL"</strong>) দেখতে পাবেন।
+                          </p>
+                        </div>
                        <div className="flex gap-2">
-                         <span className="text-purple-600 font-bold">৪.</span>
-                         <p>
-                           <strong>One Time Password (OTP)</strong> এর ঘরে আপনার PipraPay প্যানেলের Webhook Key দিন।
-                            <br />
-                            <span className="text-[10px] text-slate-400 block mt-1">
-                              (Webhook Key পেতে: PipraPay সার্ভার এডমিন প্যানেলে লগইন করুন &rarr; ডানপাশের <strong>Connect Android App</strong> এ ক্লিক করুন &rarr; <strong>Webhook URL</strong> এর শেষের <code className="bg-slate-100 px-1 text-slate-700 rounded font-mono font-normal">?webhook=</code> এর পরের অংশটুকু কপি করুন)
-                            </span>
-                         </p>
-                       </div>
+                          <span className="text-purple-600 font-bold">৪.</span>
+                          <p>
+                            আপনার PipraPay প্যানেল থেকে সম্পূর্ণ Webhook URL টি কপি করে এই বক্সে পেস্ট করুন।
+                             <br />
+                             <span className="text-[10px] text-slate-400 block mt-1">
+                               (Webhook URL পেতে: PipraPay এডমিন প্যানেলে লগইন করুন &rarr; ডানপাশের <strong>Connect Android App</strong> এ ক্লিক করুন &rarr; সম্পূর্ণ <strong>Webhook URL</strong> যেমন <code className="bg-slate-100 px-1 text-slate-700 rounded font-mono font-normal">https://piprapay-server-1.onrender.com/?webhook=YOUR_KEY</code> কপি করে অ্যাপের বক্সে পেস্ট করে Save করুন। সরাসরি QR কোড স্ক্যান না করে এই উপায়ে ম্যানুয়ালি পেস্ট করা সবচেয়ে নিরাপদ।)
+                             </span>
+                          </p>
+                        </div>
                        <div className="flex gap-2">
                          <span className="text-purple-600 font-bold">৫.</span>
                          <p>
