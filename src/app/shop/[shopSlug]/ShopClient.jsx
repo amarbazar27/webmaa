@@ -26,6 +26,7 @@ import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytic
 import { TEMPLATES } from '@/templates/index';
 import AiShoppingList from '@/components/shop/AiShoppingList';
 import AiVoicePanel from '@/components/shop/AiVoicePanel';
+import SmartMealEngine from '@/components/shop/SmartMealEngine';
 import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
@@ -2632,6 +2633,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
               {[
                 {id:'chat',label:'চ্যাট',icon:'💬', always: true},
+                {id:'meal',label:'স্মার্ট মিল',icon:'🍱', always: isGroceryShop},
                 {id:'voice',label:'ভয়েস',icon:'🎤', always: true},
                 {id:'image',label:'ছবি OCR',icon:'📷', always: true},
                 {id:'text',label:'লিস্ট',icon:'📝', always: true},
@@ -2709,7 +2711,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0 relative">
                 {isGroceryShop && (
                   <div className="absolute -top-10 right-4 z-10">
-                    <button onClick={() => setShowAiSuggestionModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
+                    <button onClick={() => setAiTab('meal')} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
                       <Sparkles size={12}/> স্মার্ট সাজেশন
                     </button>
                   </div>
@@ -2755,7 +2757,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             </>}
 
             {/* Voice / Image / Text tabs via AiVoicePanel */}
-            {aiTab !== 'chat' && (
+            {aiTab !== 'chat' && aiTab !== 'meal' && (
               <AiVoicePanel
                 shop={shop}
                 products={products}
@@ -2765,6 +2767,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   onClose={() => setIsAiOpen(false)}
                   activeTab={aiTab}
                 />
+            )}
+
+            {/* Smart Meal Engine tab */}
+            {aiTab === 'meal' && (
+              <SmartMealEngine
+                shop={shop}
+                products={products}
+                onAddToCart={addToCart}
+                onClose={() => setIsAiOpen(false)}
+                userOrders={userOrders}
+              />
             )}
           </div>
         </div>
