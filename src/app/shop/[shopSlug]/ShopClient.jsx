@@ -1225,33 +1225,34 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     const resolvedCustomizedText = customizedText !== null ? customizedText : (product.customizedText || '');
     const resolvedNote = customNote !== null ? customNote : (product.note || '');
 
-    // Scoped variants matching: match by id AND customizedText!
-    const existingIndex = cart.findIndex(item => 
-      item.id === product.id && 
-      (item.customizedText || '') === (resolvedCustomizedText || '') &&
-      (customPrice === null || parseFloat(item.price) === parseFloat(customPrice))
-    );
+    setCart(prev => {
+      // Scoped variants matching: match by id AND customizedText!
+      const existingIndex = prev.findIndex(item => 
+        item.id === product.id && 
+        (item.customizedText || '') === (resolvedCustomizedText || '') &&
+        (customPrice === null || parseFloat(item.price) === parseFloat(customPrice))
+      );
 
-    if (existingIndex > -1) {
-      setCart(prev => prev.map((item, idx) => 
-        idx === existingIndex 
-          ? { ...item, quantity: item.quantity + qtyToAdd, note: resolvedNote || item.note } 
-          : item
-      ));
-      toast.success(`${product.name} পরিমাণ বাড়ানো হয়েছে`);
-    } else {
-      const newCart = [...cart, { 
-        ...product, 
-        price: customPrice !== null ? customPrice : product.price,
-        clientPrice: customPrice !== null ? customPrice : product.price,
-        quantity: qtyToAdd, 
-        note: resolvedNote, 
-        customizedText: resolvedCustomizedText 
-      }];
-      setCart(newCart);
-      trackStoreEvent('add_to_cart', { id: product.id, name: product.name, price: customPrice !== null ? customPrice : product.price });
-      toast.success(`${product.name} ঝুড়িতে যোগ হয়েছে!`);
-    }
+      if (existingIndex > -1) {
+        return prev.map((item, idx) => 
+          idx === existingIndex 
+            ? { ...item, quantity: item.quantity + qtyToAdd, note: resolvedNote || item.note } 
+            : item
+        );
+      } else {
+        return [...prev, { 
+          ...product, 
+          price: customPrice !== null ? customPrice : product.price,
+          clientPrice: customPrice !== null ? customPrice : product.price,
+          quantity: qtyToAdd, 
+          note: resolvedNote, 
+          customizedText: resolvedCustomizedText 
+        }];
+      }
+    });
+
+    trackStoreEvent('add_to_cart', { id: product.id, name: product.name, price: customPrice !== null ? customPrice : product.price });
+    toast.success(`${product.name} ঝুড়িতে যোগ হয়েছে!`);
   };
 
   const updateQuantity = (id, delta) => {
