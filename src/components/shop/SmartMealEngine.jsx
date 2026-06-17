@@ -26,6 +26,10 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
   const [resolvedPlan, setResolvedPlan] = useState(null);
   const [aiNarrative, setAiNarrative] = useState('');
 
+  // Derived values for component-level scope
+  const members = Math.max(1, parseInt(membersInput) || 25);
+  const budget = Math.max(1, parseInt(budgetInput) || 1300);
+
   // 1. Identify Available Rice variants in database
   const availableRiceVariants = useMemo(() => {
     if (!products) return [];
@@ -131,8 +135,6 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
     setAiNarrative('');
 
     // Parse values from string inputs
-    const members = Math.max(1, parseInt(membersInput) || 25);
-    const budget = Math.max(1, parseInt(budgetInput) || 1300);
     const riceMorning = Math.max(0, parseFloat(riceMorningInput) || 0);
     const riceLunch = Math.max(0, parseFloat(riceLunchInput) || 0);
     const riceDinner = Math.max(0, parseFloat(riceDinnerInput) || 0);
@@ -205,33 +207,45 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
           let cost = Math.round(qty * prod.price);
 
           // Enforce minimum price constraints for spices:
-          // Garlic (রসুন) min 25, Ginger (আদা) min 15, Turmeric (হলুদ) min 10, Masala (গরম মসলা) min 20
-          if (item.key === 'garlic' && cost < 25) {
+          let garlicMin = 5;
+          let gingerMin = 5;
+          let turmericMin = 10;
+          let garamMin = 15;
+
+          if (budget >= 1000) {
+            const steps = Math.floor((budget - 1000) / 500);
+            garlicMin = 5 + steps * 5;
+            gingerMin = 10 + steps * 5;
+            turmericMin = 15 + steps * 5;
+            garamMin = 20 + steps * 5;
+          }
+
+          if (item.key === 'garlic' && cost < garlicMin) {
             if (isPacketProduct) {
-              qty = Math.ceil(25 / prod.price);
+              qty = Math.ceil(garlicMin / prod.price);
             } else {
-              qty = 0.25; // 250g minimum
+              qty = parseFloat((garlicMin / prod.price).toFixed(3));
             }
             cost = Math.round(qty * prod.price);
-          } else if (item.key === 'ginger' && cost < 15) {
+          } else if (item.key === 'ginger' && cost < gingerMin) {
             if (isPacketProduct) {
-              qty = Math.ceil(15 / prod.price);
+              qty = Math.ceil(gingerMin / prod.price);
             } else {
-              qty = 0.15; // 150g minimum
+              qty = parseFloat((gingerMin / prod.price).toFixed(3));
             }
             cost = Math.round(qty * prod.price);
-          } else if (item.key === 'turmeric' && cost < 10) {
+          } else if (item.key === 'turmeric' && cost < turmericMin) {
             if (isPacketProduct) {
-              qty = Math.ceil(10 / prod.price);
+              qty = Math.ceil(turmericMin / prod.price);
             } else {
-              qty = 0.10; // 100g minimum
+              qty = parseFloat((turmericMin / prod.price).toFixed(3));
             }
             cost = Math.round(qty * prod.price);
-          } else if (item.key === 'masala' && cost < 20) {
+          } else if (item.key === 'masala' && cost < garamMin) {
             if (isPacketProduct) {
-              qty = Math.ceil(20 / prod.price);
+              qty = Math.ceil(garamMin / prod.price);
             } else {
-              qty = 0.10; // 100g minimum
+              qty = parseFloat((garamMin / prod.price).toFixed(3));
             }
             cost = Math.round(qty * prod.price);
           }
