@@ -150,14 +150,25 @@ export default function InvoicePage({ params }) {
           </div>
        </div>
 
-       <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{ __html: `
          @media print {
             body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .print\\:py-0 { padding-top: 0 !important; padding-bottom: 0 !important; }
             .print\\:shadow-none { box-shadow: none !important; }
             .print\\:rounded-none { border-radius: 0 !important; }
-            @page { margin: 10mm; }
-            table { font-size: 10px !important; }
+            @page { margin: 5mm; size: auto; }
+            
+            /* Single-page invoice compaction rules */
+            .max-w-2xl { max-width: 100% !important; padding: 10px !important; margin: 0 !important; }
+            table { font-size: 9px !important; }
+            table th, table td { padding: 4px 6px !important; }
+            h1 { font-size: 14px !important; }
+            p, span, td, div { font-size: 10px !important; }
+            .flex-col { gap: 8px !important; }
+            .grid { gap: 10px !important; padding: 8px !important; }
+            .mt-6 { margin-top: 10px !important; }
+            .pt-4 { padding-top: 8px !important; }
+            .mb-6 { margin-bottom: 8px !important; }
          }
        `}} />
     </div>

@@ -2039,6 +2039,21 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       </div>
 
+      {/* ── Inline Smart Meal AI Planner (Top Storefront) ── */}
+      {shop.enableSmartMeal && (
+        <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
+          <div className="bg-white border-2 border-purple-100 rounded-3xl shadow-xl shadow-purple-500/5 overflow-hidden">
+            <SmartMealEngine
+              shop={shop}
+              products={products}
+              onAddToCart={addToCart}
+              onClose={() => {}}
+              userOrders={userOrders}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
       <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner">
         {normalizedBanners.length > 0 ? (

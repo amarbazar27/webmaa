@@ -369,6 +369,7 @@ export default function OrderSummaryPage({ params }) {
   const deliveryFee = safeInt(shop.deliveryConfig?.advanceFee || order.deliveryFee || 0);
   const orderTotal = safeNum(order.total);
   const subtotal = Math.max(0, orderTotal - deliveryFee);
+  const isUnpaidAutomatedOrder = (order.paymentMethod === 'piprapay' || order.paymentMethod === 'automated') && order.paymentStatus !== 'paid';
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20">
@@ -405,6 +406,31 @@ export default function OrderSummaryPage({ params }) {
           )}
           {order.deliveryETA && <LiveCountdown deliveryETA={order.deliveryETA} />}
         </div>
+
+        {/* Unpaid Automated Order - Retry Payment */}
+        {isUnpaidAutomatedOrder && (
+          <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-3xl border-2 border-red-200 p-6 shadow-md space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <ShieldAlert size={20} strokeWidth={2.5} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-black text-red-900 text-sm">পেমেন্ট সম্পন্ন হয়নি (Payment Unpaid)</h3>
+                <p className="text-xs text-red-600 font-bold mt-0.5">অর্ডারটি কনফার্ম করার জন্য পেমেন্ট সম্পন্ন করা আবশ্যক।</p>
+              </div>
+            </div>
+            {order.piprapayCheckoutUrl && (
+              <a
+                href={order.piprapayCheckoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-500/20 active:scale-95 text-center"
+              >
+                পেমেন্ট সম্পন্ন করুন (Pay Now)
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Live Tracking Map */}
         {order.coordinates && (

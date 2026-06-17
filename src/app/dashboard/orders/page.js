@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeOrders, updateOrderStatus, getShop, deleteOrder } from '@/lib/firestore'; 
-import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download } from 'lucide-react';
+import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -51,6 +51,16 @@ export default function OrdersPage() {
   }, [activeShopId]);
 
   const handleStatusAttempt = (orderId, newStatus) => {
+    const orderObj = orders.find(o => o.id === orderId);
+    const isUnpaidAutomatedOrder = orderObj && 
+      (orderObj.paymentMethod === 'piprapay' || orderObj.paymentMethod === 'automated') && 
+      orderObj.paymentStatus !== 'paid';
+
+    if (isUnpaidAutomatedOrder && (newStatus === 'confirmed' || newStatus === 'completed')) {
+      toast.error('অটো পেমেন্ট পেন্ডিং থাকা অবস্থায় কনফার্ম বা ডেলিভার করা সম্ভব নয়!');
+      return;
+    }
+
     const isVerified = sessionStorage.getItem('pinVerified') === 'true';
     if (isVerified) {
        proceedStatusUpdate(orderId, newStatus);
@@ -396,8 +406,10 @@ export default function OrdersPage() {
                 </div>
 
                 <div className="divide-y divide-slate-100">
-                    {filteredUserOrders.map(order => (
-                       <div key={order.id} className="border-b border-slate-100 last:border-0">
+                    {filteredUserOrders.map(order => {
+                        const isUnpaidAutomatedOrder = (order.paymentMethod === 'piprapay' || order.paymentMethod === 'automated') && order.paymentStatus !== 'paid';
+                        return (
+                          <div key={order.id} className="border-b border-slate-100 last:border-0">
                        <div className="p-6 grid grid-cols-1 xl:grid-cols-12 gap-8 hover:bg-slate-50/50 transition-colors">
                          {/* Order Info & Status */}
                          <div className="xl:col-span-4 space-y-5">
@@ -409,7 +421,13 @@ export default function OrdersPage() {
                                         {STATUS_CONFIG[order.status || 'pending'].label}
                                      </div>
                                   </div>
-                                  <p className="text-xs font-bold text-slate-400">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('en-GB') : 'Just now'}</p>
+                                  {isUnpaidAutomatedOrder && (
+                                     <div className="mt-1 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-black flex items-center gap-1.5 animate-pulse">
+                                        <AlertCircle size={14} />
+                                        <span>Awaiting Payment (অটো পেমেন্ট পেন্ডিং)</span>
+                                     </div>
+                                  )}
+                                  <p className="text-xs font-bold text-slate-400 mt-1">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('en-GB') : 'Just now'}</p>
                                   {/* Who confirmed / delivered this order */}
                                   {(order.confirmedBy || order.deliveredBy || order.updatedBy) && (
                                     <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -506,20 +524,31 @@ export default function OrdersPage() {
                             <div className="w-full">
                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-right mb-2">Change Status <Lock size={10} className="inline mb-0.5"/></p>
                                <div className="flex flex-col gap-2">
-                                  <button onClick={() => handleStatusAttempt(order.id, 'confirmed')} className="w-full px-3 py-2 rounded-lg text-xs font-black text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white transition-colors border border-blue-200 shadow-sm text-center">Confirm Order</button>
+                                  <button 
+                                     onClick={() => handleStatusAttempt(order.id, 'confirmed')} 
+                                     disabled={isUnpaidAutomatedOrder}
+                                     title={isUnpaidAutomatedOrder ? 'পেমেন্ট সম্পন্ন না হওয়া পর্যন্ত কনফার্ম করা যাবে না' : ''}
+                                     className={`w-full px-3 py-2 rounded-lg text-xs font-black transition-colors border shadow-sm text-center ${
+                                       isUnpaidAutomatedOrder
+                                         ? 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed'
+                                         : 'text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border-blue-200'
+                                     }`}
+                                  >
+                                     Confirm Order
+                                  </button>
                                   <div className="grid grid-cols-2 gap-2">
                                      <button onClick={() => handleStatusAttempt(order.id, 'cancelled')} className="px-2 py-2 rounded-lg text-[11px] font-black text-red-700 bg-red-50 hover:bg-red-600 hover:text-white transition-colors border border-red-200 shadow-sm">Reject</button>
                                      <button 
                                         onClick={() => handleStatusAttempt(order.id, 'completed')} 
-                                        disabled={!allItemsChecked(order.id, order.items)}
-                                        title={!allItemsChecked(order.id, order.items) ? 'সব আইটেম চেক করুন তারপর Delivered দিন' : ''}
+                                        disabled={!allItemsChecked(order.id, order.items) || isUnpaidAutomatedOrder}
+                                        title={isUnpaidAutomatedOrder ? 'পেমেন্ট সম্পন্ন না হওয়া পর্যন্ত Delivered করা যাবে না' : (!allItemsChecked(order.id, order.items) ? 'সব আইটেম চেক করুন তারপর Delivered দিন' : '')}
                                         className={`px-2 py-2 rounded-lg text-[11px] font-black transition-colors border shadow-sm ${
-                                          allItemsChecked(order.id, order.items)
+                                          allItemsChecked(order.id, order.items) && !isUnpaidAutomatedOrder
                                             ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border-emerald-200'
                                             : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed'
                                         }`}
                                       >
-                                        {allItemsChecked(order.id, order.items) ? '✓ Delivered' : '🔒 Delivered'}
+                                        {allItemsChecked(order.id, order.items) && !isUnpaidAutomatedOrder ? '✓ Delivered' : '🔒 Delivered'}
                                       </button>
                                   </div>
                                   {(order.status === 'completed' || order.status === 'cancelled') && (
@@ -644,7 +673,8 @@ export default function OrdersPage() {
                         </div>
                       )}
                        </div>
-                   ))}
+                        );
+                    })}
                  </div>
                </div>
             );

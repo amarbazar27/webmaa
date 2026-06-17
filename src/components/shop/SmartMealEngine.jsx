@@ -8,16 +8,16 @@ import toast from 'react-hot-toast';
 // ═══════════════════════════════════════════════════════════════════════
 
 export default function SmartMealEngine({ shop, products, onAddToCart, onClose, userOrders = [] }) {
-  // Input states
-  const [members, setMembers] = useState(25);
-  const [budget, setBudget] = useState(1300);
+  // Input states (managed as strings to allow backspacing/empty text during typing)
+  const [membersInput, setMembersInput] = useState('25');
+  const [budgetInput, setBudgetInput] = useState('1300');
   
   // Rice States
   const [riceEnabled, setRiceEnabled] = useState(true);
   const [selectedRiceId, setSelectedRiceId] = useState('');
-  const [riceMorning, setRiceMorning] = useState(3.5);
-  const [riceLunch, setRiceLunch] = useState(6.0);
-  const [riceDinner, setRiceDinner] = useState(5.0);
+  const [riceMorningInput, setRiceMorningInput] = useState('3.5');
+  const [riceLunchInput, setRiceLunchInput] = useState('6.0');
+  const [riceDinnerInput, setRiceDinnerInput] = useState('5.0');
 
   // Engine status states
   const [step, setStep] = useState(1); // 1: Inputs, 2: Suggestion
@@ -130,6 +130,13 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
     setResolvedPlan(null);
     setAiNarrative('');
 
+    // Parse values from string inputs
+    const members = Math.max(1, parseInt(membersInput) || 25);
+    const budget = Math.max(1, parseInt(budgetInput) || 1300);
+    const riceMorning = Math.max(0, parseFloat(riceMorningInput) || 0);
+    const riceLunch = Math.max(0, parseFloat(riceLunchInput) || 0);
+    const riceDinner = Math.max(0, parseFloat(riceDinnerInput) || 0);
+
     try {
       // Step A: Calculate Rice Cost
       let selectedRice = null;
@@ -170,7 +177,22 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         const prod = findProductByKeywords(item.keywords, products);
         if (prod) {
           let qty = item.baseQty * members;
-          if (item.unit === 'packet' || item.unit === 'piece') {
+          
+          // Detect packet/piece products (low price or unit name contains packet/piece/gram/টি/পিস)
+          const isPacketProduct = prod.unit?.includes('packet') || 
+                                  prod.unit?.includes('piece') || 
+                                  prod.unit?.includes('টি') || 
+                                  prod.unit?.includes('পিস') || 
+                                  prod.unit?.includes('gm') || 
+                                  prod.unit?.includes('gram') || 
+                                  prod.unit?.includes('গ্রাম') || 
+                                  prod.price < 30 ||
+                                  prod.name?.includes('টাকার') ||
+                                  prod.name?.includes('গ্রাম') ||
+                                  item.unit === 'packet' || 
+                                  item.unit === 'piece';
+
+          if (isPacketProduct) {
             qty = Math.max(1, Math.round(qty));
           } else {
             if (qty < 0.2) {
@@ -179,7 +201,41 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
               qty = Math.max(0.25, Math.round(qty * 4) / 4); // nearest 250g
             }
           }
-          const cost = Math.round(qty * prod.price);
+          
+          let cost = Math.round(qty * prod.price);
+
+          // Enforce minimum price constraints for spices:
+          // Garlic (রসুন) min 25, Ginger (আদা) min 15, Turmeric (হলুদ) min 10, Masala (গরম মসলা) min 20
+          if (item.key === 'garlic' && cost < 25) {
+            if (isPacketProduct) {
+              qty = Math.ceil(25 / prod.price);
+            } else {
+              qty = 0.25; // 250g minimum
+            }
+            cost = Math.round(qty * prod.price);
+          } else if (item.key === 'ginger' && cost < 15) {
+            if (isPacketProduct) {
+              qty = Math.ceil(15 / prod.price);
+            } else {
+              qty = 0.15; // 150g minimum
+            }
+            cost = Math.round(qty * prod.price);
+          } else if (item.key === 'turmeric' && cost < 10) {
+            if (isPacketProduct) {
+              qty = Math.ceil(10 / prod.price);
+            } else {
+              qty = 0.10; // 100g minimum
+            }
+            cost = Math.round(qty * prod.price);
+          } else if (item.key === 'masala' && cost < 20) {
+            if (isPacketProduct) {
+              qty = Math.ceil(20 / prod.price);
+            } else {
+              qty = 0.10; // 100g minimum
+            }
+            cost = Math.round(qty * prod.price);
+          }
+
           resolvedStaples.push({
             product: prod,
             qty,
@@ -199,7 +255,7 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       // Step C: Define Priorities & Fallbacks
       // Protein priorities with historical adjustments
       let proteinList = [
-        { key: 'boiler', name: 'Boiler Chicken', keywords: ['বয়লার', 'boiler', 'মুরগি', 'মুরগী'], baseQty: 0.15, unit: 'kg' },
+        { key: 'boiler', name: 'Boiler Chicken', keywords: ['গোটা ব্রয়লার', 'ব্রয়লার', 'বয়লার', 'boiler', 'মুরগি', 'মুরগী'], baseQty: 0.15, unit: 'kg' },
         { key: 'rui', name: 'Rui Fish', keywords: ['রুই', 'rui'], baseQty: 0.15, unit: 'kg' },
         { key: 'silver', name: 'Silver Carp', keywords: ['সিলভার', 'silver'], baseQty: 0.15, unit: 'kg' },
         { key: 'mirka', name: 'Mirka Fish', keywords: ['মিরকা', 'মৃগেল', 'mirka', 'mrigal'], baseQty: 0.15, unit: 'kg' },
@@ -210,6 +266,13 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       proteinList.sort((a, b) => {
         const freqA = pastOrderFrequencies[a.key] || 0;
         const freqB = pastOrderFrequencies[b.key] || 0;
+
+        // Suggest broiler first if user has no past order history
+        if (freqA === 0 && freqB === 0) {
+          if (a.key === 'boiler') return -1;
+          if (b.key === 'boiler') return 1;
+        }
+
         return freqA - freqB; // ascending frequency
       });
 
@@ -371,15 +434,24 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         throw new Error(`বাজেট অনেক কম (৳${budget})। এত কম বাজেটে ২৫ জনের ১ দিনের বাজার সম্ভব নয়। দয়া করে বাজেট অন্তত ৳${finalTotalCost + 100} করুন।`);
       }
 
+      // Helper to generate correct protein note
+      const getNoteForItem = (item, defaultNote) => {
+        const isProtein = item.meta && ['boiler', 'rui', 'silver', 'mirka', 'egg'].includes(item.meta.key);
+        if (isProtein) {
+          return `${members} পিস`;
+        }
+        return defaultNote;
+      };
+
       // Format payload for Cart
       const cartItemsPayload = [
         ...resolvedStaples.map(s => ({ product: s.product, qty: s.qty, note: 'মেসের মসলা ও নিত্যপ্রয়োজনীয়' })),
         ...(riceEnabled && selectedRice ? [{ product: selectedRice, qty: totalRiceKg, note: 'মেসের চাল' }] : []),
-        { product: morningItem.product, qty: morningItem.qty, note: 'সকালের বাজার' },
-        { product: lunchProtein.product, qty: lunchProtein.qty, note: 'দুপুরের আমিষ' },
-        { product: lunchVeg.product, qty: lunchVeg.qty, note: 'দুপুরের সবজি/ডাল' },
-        { product: dinnerProtein.product, qty: dinnerProtein.qty, note: 'রাতের আমিষ/সবজি' },
-        { product: dinnerExtra.product, qty: dinnerExtra.qty, note: 'রাতের ডাল/ভর্তা' }
+        { product: morningItem.product, qty: morningItem.qty, note: getNoteForItem(morningItem, 'সকালের বাজার') },
+        { product: lunchProtein.product, qty: lunchProtein.qty, note: getNoteForItem(lunchProtein, 'দুপুরের আমিষ') },
+        { product: lunchVeg.product, qty: lunchVeg.qty, note: getNoteForItem(lunchVeg, 'দুপুরের সবজি/ডাল') },
+        { product: dinnerProtein.product, qty: dinnerProtein.qty, note: getNoteForItem(dinnerProtein, 'রাতের আমিষ/সবজি') },
+        { product: dinnerExtra.product, qty: dinnerExtra.qty, note: getNoteForItem(dinnerExtra, 'রাতের ডাল/ভর্তা') }
       ];
 
       // Merge duplicates in case same item resolved multiple times (e.g. Alu in morning and night, or eggs)
@@ -510,14 +582,18 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
           <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-black uppercase text-slate-500 mb-1">সদস্য সংখ্যা</label>
+                <label className="block text-[11px] font-black uppercase text-slate-500 mb-1">সদস্য সংখ্যা (খালাসহ)</label>
                 <div className="relative">
                   <input
                     type="number"
                     min="1"
                     className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                    value={members}
-                    onChange={e => setMembers(Math.max(1, parseInt(e.target.value) || 0))}
+                    value={membersInput}
+                    onChange={e => setMembersInput(e.target.value)}
+                    onBlur={() => {
+                      const clean = Math.max(1, parseInt(membersInput) || 25);
+                      setMembersInput(clean.toString());
+                    }}
                   />
                 </div>
               </div>
@@ -527,8 +603,12 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                   type="number"
                   min="1"
                   className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                  value={budget}
-                  onChange={e => setBudget(Math.max(1, parseInt(e.target.value) || 0))}
+                  value={budgetInput}
+                  onChange={e => setBudgetInput(e.target.value)}
+                  onBlur={() => {
+                    const clean = Math.max(1, parseInt(budgetInput) || 1300);
+                    setBudgetInput(clean.toString());
+                  }}
                 />
               </div>
             </div>
@@ -594,8 +674,12 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                       step="0.1"
                       min="0"
                       className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                      value={riceMorning}
-                      onChange={e => setRiceMorning(Math.max(0, parseFloat(e.target.value) || 0))}
+                      value={riceMorningInput}
+                      onChange={e => setRiceMorningInput(e.target.value)}
+                      onBlur={() => {
+                        const clean = Math.max(0, parseFloat(riceMorningInput) || 0);
+                        setRiceMorningInput(clean.toString());
+                      }}
                     />
                     <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">kg</span>
                   </div>
@@ -608,8 +692,12 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                       step="0.1"
                       min="0"
                       className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                      value={riceLunch}
-                      onChange={e => setRiceLunch(Math.max(0, parseFloat(e.target.value) || 0))}
+                      value={riceLunchInput}
+                      onChange={e => setRiceLunchInput(e.target.value)}
+                      onBlur={() => {
+                        const clean = Math.max(0, parseFloat(riceLunchInput) || 0);
+                        setRiceLunchInput(clean.toString());
+                      }}
                     />
                     <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">kg</span>
                   </div>
@@ -622,15 +710,19 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                       step="0.1"
                       min="0"
                       className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
-                      value={riceDinner}
-                      onChange={e => setRiceDinner(Math.max(0, parseFloat(e.target.value) || 0))}
+                      value={riceDinnerInput}
+                      onChange={e => setRiceDinnerInput(e.target.value)}
+                      onBlur={() => {
+                        const clean = Math.max(0, parseFloat(riceDinnerInput) || 0);
+                        setRiceDinnerInput(clean.toString());
+                      }}
                     />
                     <span className="absolute right-1.5 bottom-1 text-[8px] font-bold text-slate-400">kg</span>
                   </div>
                 </div>
               </div>
               <div className="mt-2 text-[10px] font-bold text-slate-500 text-center bg-slate-50 py-1.5 rounded-lg border border-slate-100">
-                মোট দৈনন্দিন চাল: <span className="text-purple-600 font-black">{(Number(riceMorning) + Number(riceLunch) + Number(riceDinner)).toFixed(1)} কেজি</span> মেসের সবার জন্য।
+                মোট দৈনন্দিন চাল: <span className="text-purple-600 font-black">{(Number(riceMorningInput || 0) + Number(riceLunchInput || 0) + Number(riceDinnerInput || 0)).toFixed(1)} কেজি</span> মেসের সবার জন্য।
               </div>
             </div>
           )}

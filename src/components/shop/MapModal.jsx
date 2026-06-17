@@ -258,12 +258,15 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">চিহ্নিত ঠিকানা</span>
+                <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">চিহ্নিত ঠিকানা (আপনি চাইলে এডিট করতে পারেন)</span>
                 {geocoding && <Loader2 className="animate-spin text-slate-400" size={10} />}
               </div>
-              <p className="text-sm font-extrabold text-slate-900 leading-snug mt-1 line-clamp-2">
-                {address}
-              </p>
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className="w-full text-xs sm:text-sm font-extrabold text-slate-900 leading-snug mt-1.5 p-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none resize-none h-16"
+                placeholder="বাসার নম্বর, রোড নম্বর বা হোল্ডিং নম্বর সহ বিস্তারিত ঠিকানা লিখুন..."
+              />
             </div>
           </div>
 

@@ -107,6 +107,16 @@ export async function POST(req) {
         paymentCommissionPercent: commissionPercent
       });
 
+      // Update shop stats: increment orderCount and totalRevenue
+      try {
+        await adminDb.collection('shops').doc(shopId).update({
+          orderCount: admin.firestore.FieldValue.increment(1),
+          totalRevenue: admin.firestore.FieldValue.increment(orderTotal)
+        });
+      } catch (err) {
+        console.error("Failed to update shop stats from webhook:", err);
+      }
+
       // Send email alerts in the background
       const rufloPayload = { 
         shopId, 

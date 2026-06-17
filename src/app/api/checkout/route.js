@@ -484,65 +484,70 @@ export async function POST(req) {
     });
 
     // Update shop stats: increment orderCount and totalRevenue
-    try {
-      await adminDb.collection('shops').doc(shopId).update({
-        orderCount: admin.firestore.FieldValue.increment(1),
-        totalRevenue: admin.firestore.FieldValue.increment(finalTotal)
-      });
-    } catch (err) {
-      console.error("Failed to update shop stats:", err);
+    const isAutomatedPayment = paymentMethod === 'piprapay' || paymentMethod === 'automated';
+    if (!isAutomatedPayment) {
+      try {
+        await adminDb.collection('shops').doc(shopId).update({
+          orderCount: admin.firestore.FieldValue.increment(1),
+          totalRevenue: admin.firestore.FieldValue.increment(finalTotal)
+        });
+      } catch (err) {
+        console.error("Failed to update shop stats:", err);
+      }
     }
 
     // 🔔 RUFLO: Fire-and-forget emails (non-blocking — never slows checkout)
-    const rufloPayload = { 
-      shopId, 
-      shopName: shopData.shopName, 
-      orderId: orderIdVisual, 
-      items: verifiedItems, 
-      total: finalTotal,
-      customerAddress,
-      coordinates: coordinates || null
-    };
+    if (!isAutomatedPayment) {
+      const rufloPayload = { 
+        shopId, 
+        shopName: shopData.shopName, 
+        orderId: orderIdVisual, 
+        items: verifiedItems, 
+        total: finalTotal,
+        customerAddress,
+        coordinates: coordinates || null
+      };
 
-    if (customerEmail) {
-      void sendOrderConfirmationEmail({
-        to: customerEmail,
-        customerName,
-        ...rufloPayload
-      }).catch(e => {
-        console.warn('[Ruflo] Customer email error:', e.message);
-        adminDb.collection('system_logs').add({
-          type: 'email_failure',
-          context: 'customer_order_confirmation',
-          email: customerEmail,
-          shopId,
-          orderId: orderIdVisual,
-          error: e.message,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-      });
-    }
-
-    if (shopData.deliveryConfig?.contactEmail) {
-      const emails = shopData.deliveryConfig.contactEmail.split(',').map(email => email.trim()).filter(email => email);
-      for (const email of emails) {
-        void sendRetailerNotificationEmail({
-          to: email,
+      if (customerEmail) {
+        void sendOrderConfirmationEmail({
+          to: customerEmail,
           customerName,
-          customerPhone,
           ...rufloPayload
         }).catch(e => {
-          console.warn('[Ruflo] Retailer email error:', e.message);
+          console.warn('[Ruflo] Customer email error:', e.message);
           adminDb.collection('system_logs').add({
             type: 'email_failure',
-            context: 'retailer_order_notification',
-            email: email,
+            context: 'customer_order_confirmation',
+            email: customerEmail,
             shopId,
             orderId: orderIdVisual,
             error: e.message,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
           });
         });
+      }
+
+      if (shopData.deliveryConfig?.contactEmail) {
+        const emails = shopData.deliveryConfig.contactEmail.split(',').map(email => email.trim()).filter(email => email);
+        for (const email of emails) {
+          void sendRetailerNotificationEmail({
+            to: email,
+            customerName,
+            customerPhone,
+            ...rufloPayload
+          }).catch(e => {
+            console.warn('[Ruflo] Retailer email error:', e.message);
+            adminDb.collection('system_logs').add({
+              type: 'email_failure',
+              context: 'retailer_order_notification',
+              email: email,
+              shopId,
+              orderId: orderIdVisual,
+              error: e.message,
+              createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+          });
+        }
       }
     }
 

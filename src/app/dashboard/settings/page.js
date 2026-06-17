@@ -108,7 +108,8 @@ export default function SettingsPage() {
     banners: [],
     couponCode: '',
     couponDiscount: 0,
-    enableCommonOrder: false
+    enableCommonOrder: false,
+    enableSmartMeal: false
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -195,6 +196,7 @@ export default function SettingsPage() {
           couponCode: data.couponCode || '',
           couponDiscount: data.couponDiscount || 0,
           enableCommonOrder: data.enableCommonOrder || false,
+          enableSmartMeal: data.enableSmartMeal || false,
           ...data,
           banners: normalizedBanners
         });
@@ -550,6 +552,7 @@ export default function SettingsPage() {
         couponCode: shop.couponCode || '',
         couponDiscount: Number(shop.couponDiscount) || 0,
         enableCommonOrder: shop.enableCommonOrder || false,
+        enableSmartMeal: shop.enableSmartMeal || false,
         piprapayEnabled, // Save public flag for UI checks
         piprapayBkash,
         piprapayNagad,
@@ -1210,6 +1213,17 @@ export default function SettingsPage() {
                    </div>
                    <label className="relative inline-flex items-center cursor-pointer">
                      <input type="checkbox" className="sr-only peer" checked={shop.enableCommonOrder || false} onChange={e => setShop({...shop, enableCommonOrder: e.target.checked})} />
+                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                   </label>
+                </div>
+
+                <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4">
+                   <div>
+                      <p className="text-xs font-black text-slate-900">Enable Smart Meal Planner (স্মার্ট মিল প্ল্যানার চালু করুন)</p>
+                      <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">If enabled, user site will show the AI Smart Meal Planner component at the top</p>
+                   </div>
+                   <label className="relative inline-flex items-center cursor-pointer">
+                     <input type="checkbox" className="sr-only peer" checked={shop.enableSmartMeal || false} onChange={e => setShop({...shop, enableSmartMeal: e.target.checked})} />
                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                    </label>
                 </div>
