@@ -408,9 +408,13 @@ export default function SettingsPage() {
     }
     setSaving(true);
     try {
+      const token = await user.getIdToken();
       const vercelRes = await fetch('/api/domain', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ domain: cleanDomain, shopId: user.uid })
       });
       const vercelData = await vercelRes.json();
