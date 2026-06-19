@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server';
 import { getShopByDomain } from '@/lib/firestore-server';
 import { verifyAuth, AuthError } from '@/lib/verifyAuth';
+import dns from 'dns';
+import { promisify } from 'util';
+
+const resolve4 = promisify(dns.resolve4);
+const resolveCname = promisify(dns.resolveCname);
+
+// DNS Record check helper
+async function checkDnsRecords(domain) {
+  try {
+    const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+    const ips = await resolve4(cleanDomain).catch(() => []);
+    const hasVercelIp = ips.some(ip => ip === '76.76.21.21' || ip === '76.76.19.61');
+    
+    const cnames = await resolveCname('www.' + cleanDomain).catch(() => []);
+    const hasVercelCname = cnames.some(cname => cname.toLowerCase().includes('vercel-dns.com') || cname.toLowerCase().includes('vercel.com'));
+    
+    return hasVercelIp || hasVercelCname;
+  } catch (err) {
+    console.error('[DNS Fallback Check] Error:', err);
+    return false;
+  }
+}
 
 // Validate that a string looks like a real domain (basic but effective)
 function isValidDomain(domain) {
@@ -110,12 +132,46 @@ export async function GET(req) {
       return NextResponse.json({ error: 'domain query param required' }, { status: 400 });
     }
 
+    // Fallback DNS propagation check
+    const dnsOk = await checkDnsRecords(domain);
+
+    // If DNS record is pointing to Vercel, we can automatically mark the shop's domain status as 'connected' in Firestore
+    if (dnsOk) {
+      try {
+        const shop = await getShopByDomain(domain);
+        if (shop && shop.id && shop.domainStatus !== 'connected') {
+          const { adminDb } = await import('@/lib/firebase-admin');
+          if (adminDb) {
+            await adminDb.collection('shops').doc(shop.id).update({
+              domainStatus: 'connected'
+            });
+            console.log(`[Domain API] Automatically updated shop ${shop.id} domainStatus to 'connected'.`);
+          }
+        }
+      } catch (dbErr) {
+        console.error('[Domain API] Error updating shop domainStatus in DB:', dbErr);
+      }
+    }
+
     const VERCEL_API_TOKEN = process.env.VERCEL_API_TOKEN;
     const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
     const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
 
     if (!VERCEL_API_TOKEN || !VERCEL_PROJECT_ID) {
-      return NextResponse.json({ status: 'unknown', message: 'Vercel API not configured.' });
+      if (dnsOk) {
+        return NextResponse.json({
+          status: 'connected',
+          domain: domain,
+          verified: true,
+          message: 'Verified via public DNS check (Vercel API token not configured).'
+        });
+      }
+      return NextResponse.json({
+        status: 'pending_dns',
+        domain: domain,
+        verified: false,
+        message: 'Vercel API token not configured. Waiting for DNS records to propagate.'
+      });
     }
 
     let apiUrl = `https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains/${encodeURIComponent(domain)}`;
@@ -129,11 +185,20 @@ export async function GET(req) {
     const data = await vercelRes.json();
 
     if (!vercelRes.ok) {
+      // If Vercel project lookup fails, but public DNS is pointing to Vercel, consider it connected
+      if (dnsOk) {
+        return NextResponse.json({
+          status: 'connected',
+          domain: domain,
+          verified: true,
+          message: 'Verified via public DNS records.'
+        });
+      }
       return NextResponse.json({ status: 'not_registered' });
     }
 
     // Vercel returns verification[] array when DNS is not yet valid
-    const isVerified = data.verified === true;
+    const isVerified = data.verified === true || dnsOk;
     return NextResponse.json({
       status: isVerified ? 'connected' : 'pending_dns',
       domain: data.name,
