@@ -1347,6 +1347,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: v } : item));
   };
 
+  const updateCartItemPrice = (id, newPrice) => {
+    if (newPrice === '') {
+      setCart(prev => prev.map(item => item.id === id ? { ...item, price: '', clientPrice: '' } : item));
+      return;
+    }
+    const val = parseFloat(newPrice);
+    if (isNaN(val)) return;
+    setCart(prev => prev.map(item => item.id === id ? { ...item, price: val, clientPrice: val } : item));
+  };
+
   const cartTotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (Number(item.quantity) || 0)), 0);
   const deliveryAdvanceFee = shop.deliveryConfig?.advanceFee ? parseInt(shop.deliveryConfig.advanceFee) : 60;
   const isCOD = shop.deliveryConfig?.isCOD !== false;
@@ -2915,11 +2925,36 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <div className="flex-1 min-w-0">
                     <h4 className="font-black text-sm text-slate-900 truncate">{item.name}</h4>
                     {item.note && <p className="text-[10px] font-bold text-purple-600 truncate mt-0.5 italic">নোট: {item.note}</p>}
-                    <p className="font-black text-purple-700 text-sm mt-0.5">৳{(parseFloat(item.price) * item.quantity).toLocaleString()}</p>
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 bg-white border border-slate-200 rounded flex items-center justify-center text-slate-700 hover:bg-slate-100"><Minus size={12} strokeWidth={2.5}/></button>
-                      <input type="number" min="1" value={item.quantity} onChange={e => setQuantityDirect(item.id, e.target.value)} className="w-10 text-center text-sm font-black text-slate-900 bg-slate-50 border border-slate-200 rounded outline-none focus:border-purple-500" />
-                      <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 bg-slate-900 text-white rounded flex items-center justify-center hover:bg-purple-600"><Plus size={12} strokeWidth={2.5}/></button>
+                    
+                    {/* Editable Unit Price Box */}
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="text-xs font-black text-slate-500">৳</span>
+                      <input 
+                        type="number" 
+                        value={item.price} 
+                        onChange={e => updateCartItemPrice(item.id, e.target.value)} 
+                        className="w-16 px-1.5 py-1 text-xs font-black text-purple-700 bg-purple-50 border border-purple-200 rounded-xl outline-none focus:border-purple-500 text-center" 
+                      />
+                      <span className="text-[10px] font-bold text-slate-400">/ পিস</span>
+                      <span className="text-[10px] font-black text-slate-500 ml-1">
+                        (মোট: ৳{(parseFloat(item.price || 0) * (parseFloat(item.quantity) || 0)).toFixed(0)})
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 mt-2.5">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-all"><Minus size={14} strokeWidth={2.5}/></button>
+                      
+                      {/* Enriched & enlarged quantity input box */}
+                      <input 
+                        type="number" 
+                        min="1" 
+                        step="any" 
+                        value={item.quantity} 
+                        onChange={e => setQuantityDirect(item.id, e.target.value)} 
+                        className="w-20 h-9 text-center text-sm sm:text-base font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 px-2 shadow-inner" 
+                      />
+                      
+                      <button onClick={() => updateQuantity(item.id, 1)} className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-purple-600 transition-all"><Plus size={14} strokeWidth={2.5}/></button>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">

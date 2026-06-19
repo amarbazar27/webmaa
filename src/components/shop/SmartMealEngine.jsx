@@ -3,6 +3,45 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Calculator, ShoppingCart, Check, Loader2, AlertCircle, RefreshCw, ChevronRight, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+// Dynamic unit formatter to avoid showing "kg" for eggs or prepackaged spice packets
+const formatQtyAndUnit = (qty, product, metaUnit) => {
+  if (!product) return '';
+  const name = (product.name || '').toLowerCase();
+  const prodUnit = (product.unit || '').toLowerCase();
+  
+  if (name.includes('ডিম') || name.includes('egg')) {
+    return `${qty} টি`;
+  }
+  
+  const isPacketOrPiece = 
+    prodUnit.includes('packet') || 
+    prodUnit.includes('piece') || 
+    prodUnit.includes('টি') || 
+    prodUnit.includes('পিস') || 
+    prodUnit.includes('gm') || 
+    prodUnit.includes('gram') || 
+    prodUnit.includes('গ্রাম') || 
+    prodUnit.includes('litre') || 
+    prodUnit.includes('লিটার') || 
+    product.price < 30 ||
+    name.includes('টাকার') ||
+    name.includes('গ্রাম') ||
+    name.includes('প্যাকেট') ||
+    (metaUnit && (metaUnit === 'packet' || metaUnit === 'piece'));
+
+  if (isPacketOrPiece) {
+    if (name.includes('লবণ') || name.includes('লবন') || name.includes('প্যাকেট') || prodUnit.includes('packet')) {
+      return `* ${qty}`;
+    }
+    if (name.includes('তেল') || name.includes('oil') || prodUnit.includes('litre') || prodUnit.includes('লিটার')) {
+      return `${qty} লিটার`;
+    }
+    return `* ${qty}`;
+  }
+  
+  return `${qty} কেজি`;
+};
+
 // ═══════════════════════════════════════════════════════════════════════
 // MesserBazar Smart Meal Engine — Rule & Resolver Based UI
 // ═══════════════════════════════════════════════════════════════════════
@@ -158,7 +197,6 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       }
 
       // Step B: Define Spices & Staples Package (Essential Package)
-      // members / 25 multiplier based on the demo invoices
       const staplesList = [
         { key: 'oil', name: 'Soyabean Oil', keywords: ['সয়াবিন', 'সয়াবিন', 'soyabean', 'oil', 'তেল'], baseQty: 0.5 / 25, unit: 'Litre' },
         { key: 'onion', name: 'Onion', keywords: ['পেঁয়াজ', 'পেয়াজ', 'পিয়াজ', 'onion'], baseQty: 0.5 / 25, unit: 'kg' },
@@ -267,7 +305,6 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       const remainingBudget = budget - riceCost - staplesCost;
 
       // Step C: Define Priorities & Fallbacks
-      // Protein priorities with historical adjustments
       let proteinList = [
         { key: 'boiler', name: 'Boiler Chicken', keywords: ['গোটা ব্রয়লার', 'ব্রয়লার', 'বয়লার', 'boiler', 'মুরগি', 'মুরগী'], baseQty: 0.15, unit: 'kg' },
         { key: 'rui', name: 'Rui Fish', keywords: ['রুই', 'rui'], baseQty: 0.15, unit: 'kg' },
@@ -276,28 +313,22 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         { key: 'egg', name: 'Egg', keywords: ['ডিম', 'egg'], baseQty: 1, unit: 'piece' }
       ];
 
-      // Sort proteins based on frequency - less frequent first to avoid repetition!
       proteinList.sort((a, b) => {
         const freqA = pastOrderFrequencies[a.key] || 0;
         const freqB = pastOrderFrequencies[b.key] || 0;
 
-        // Suggest broiler first if user has no past order history
         if (freqA === 0 && freqB === 0) {
           if (a.key === 'boiler') return -1;
           if (b.key === 'boiler') return 1;
         }
-
-        return freqA - freqB; // ascending frequency
+        return freqA - freqB;
       });
 
-      // Anti-Repetition constraint checks (strictly forbid if >3 consecutive)
       const consecutiveBoiler = pastOrderFrequencies.boiler >= 3;
       if (consecutiveBoiler) {
-        // move boiler chicken to the very end
         proteinList = proteinList.filter(p => p.key !== 'boiler').concat(proteinList.find(p => p.key === 'boiler'));
       }
 
-      // Vegetable / Dal priorities
       const vegetableList = [
         { key: 'lau', name: 'Lau', keywords: ['লাউ', 'gourd'], baseQty: 0.1, unit: 'kg' },
         { key: 'dherosh', name: 'Dherosh', keywords: ['ঢেঁড়স', 'ঢেঁড়স', 'ladyfinger', 'okra'], baseQty: 0.1, unit: 'kg' },
@@ -318,17 +349,14 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         { key: 'kola', name: 'Kola Bhorta', keywords: ['কাঁচকলা', 'কাচকলা', 'কলা', 'banana'], baseQty: 0.1, unit: 'kg' }
       ];
 
-      // Step C: Run matching resolver to find in-stock products
       const resolveProduct = (item) => {
         const prod = findProductByKeywords(item.keywords, products);
         if (!prod) return null;
         
-        // Compute quantity
         let qty = 0;
         if (item.unit === 'piece') {
           qty = Math.max(1, Math.round(members * item.baseQty));
         } else {
-          // in kg, round to nearest 0.25 kg
           qty = Math.max(0.25, Math.round(members * item.baseQty * 4) / 4);
         }
 
@@ -340,7 +368,6 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         };
       };
 
-      // Helper to match first available
       const getFirstAvailable = (list) => {
         for (const item of list) {
           const res = resolveProduct(item);
@@ -350,19 +377,13 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       };
 
       // Step D: Plan Meal Categories (Initial Plan)
-      // Morning: Pick 1 from Bhorta / Dal / Shak
       let morningItem = getFirstAvailable([...bhortaList, ...dalList, ...vegetableList.slice(-2)]);
-      
-      // Lunch: 1 Protein + 1 Vegetable/Dal
       let lunchProtein = getFirstAvailable(proteinList);
-      // Filter out morning item if vegetable
       const lunchVegOptions = vegetableList.filter(v => !morningItem || v.key !== morningItem.meta.key);
       let lunchVeg = getFirstAvailable([...lunchVegOptions, ...dalList]);
 
-      // Dinner: 1 Protein/Vegetable + 1 Dal/Bhorta
-      // Prefer different protein for dinner than lunch
       const dinnerProteinOptions = proteinList.filter(p => !lunchProtein || p.key !== lunchProtein.meta.key);
-      let dinnerProtein = getFirstAvailable(dinnerProteinOptions) || lunchProtein; // fallback to lunch protein if only one available
+      let dinnerProtein = getFirstAvailable(dinnerProteinOptions) || lunchProtein;
       
       const dinnerExtraOptions = [...bhortaList, ...dalList, ...vegetableList].filter(
         v => (!morningItem || v.key !== morningItem.meta.key) && (!lunchVeg || v.key !== lunchVeg.meta.key)
@@ -373,19 +394,65 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         throw new Error('স্টোরে পর্যাপ্ত গ্রোসারি বা আমিষ পণ্য উপলব্ধ নেই। দয়া করে স্টক চেক করুন।');
       }
 
+      // Check remaining budget initially to see if we can afford extra vegetables
+      let extraLunchVeg = null;
+      let extraDinnerVeg = null;
+
+      const calculateTotalCost = (m, lp, lv, dp, de, elv = null, edv = null) => {
+        return riceCost + staplesCost + m.cost + (lp ? lp.cost : 0) + lv.cost + (dp ? dp.cost : 0) + de.cost + (elv ? elv.cost : 0) + (edv ? edv.cost : 0);
+      };
+
+      let initialRemaining = budget - calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra);
+
+      if (initialRemaining > 150) {
+        // Find unused vegetables for lunch
+        const unusedVegList = vegetableList.filter(
+          v => v.key !== morningItem.meta.key &&
+               v.key !== lunchVeg.meta.key &&
+               v.key !== dinnerExtra.meta.key &&
+               (!dinnerProtein || v.key !== dinnerProtein.meta.key)
+        );
+        extraLunchVeg = getFirstAvailable(unusedVegList);
+        if (extraLunchVeg) {
+          initialRemaining -= extraLunchVeg.cost;
+        }
+      }
+
+      if (initialRemaining > 150) {
+        // Find unused vegetables for dinner
+        const unusedVegList = vegetableList.filter(
+          v => v.key !== morningItem.meta.key &&
+               v.key !== lunchVeg.meta.key &&
+               v.key !== dinnerExtra.meta.key &&
+               (!lunchProtein || v.key !== lunchProtein.meta.key) &&
+               (!dinnerProtein || v.key !== dinnerProtein.meta.key) &&
+               (!extraLunchVeg || v.key !== extraLunchVeg.meta.key)
+        );
+        extraDinnerVeg = getFirstAvailable(unusedVegList);
+        if (extraDinnerVeg) {
+          initialRemaining -= extraDinnerVeg.cost;
+        }
+      }
+
       // Step E: Budget Optimization Loop
       let optimizationPass = 0;
       const maxPasses = 10;
-      
-      const calculateTotalCost = (m, lp, lv, dp, de) => {
-        return riceCost + staplesCost + m.cost + lp.cost + lv.cost + dp.cost + de.cost;
-      };
 
-      while (calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra) > budget && optimizationPass < maxPasses) {
+      while (calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra, extraLunchVeg, extraDinnerVeg) > budget && optimizationPass < maxPasses) {
         optimizationPass++;
 
+        // Pass 0: Discard extra vegetables first to save budget
+        if (extraDinnerVeg) {
+          extraDinnerVeg = null;
+          continue;
+        }
+        if (extraLunchVeg) {
+          extraLunchVeg = null;
+          continue;
+        }
+
         // Pass 1: Try swapping dinner protein to egg if it was expensive meat/fish
-        if (dinnerProtein.meta.key !== 'egg') {
+        if (dinnerProtein && dinnerProtein.meta.key !== 'egg') {
           const eggItem = resolveProduct(proteinList.find(p => p.key === 'egg'));
           if (eggItem) {
             dinnerProtein = eggItem;
@@ -394,7 +461,7 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         }
 
         // Pass 2: Try swapping lunch protein to egg if it was meat/fish
-        if (lunchProtein.meta.key !== 'egg') {
+        if (lunchProtein && lunchProtein.meta.key !== 'egg') {
           const eggItem = resolveProduct(proteinList.find(p => p.key === 'egg'));
           if (eggItem) {
             lunchProtein = eggItem;
@@ -404,14 +471,16 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
 
         // Pass 3: Replace dinner protein with simple vegetable or dal entirely
         const vegItem = getFirstAvailable(vegetableList.filter(v => v.key !== lunchVeg.meta.key));
-        if (vegItem && dinnerProtein.meta.unit === 'kg') {
+        if (vegItem && dinnerProtein && dinnerProtein.meta.unit === 'kg') {
           dinnerProtein = vegItem;
           continue;
         }
 
         // Pass 4: Reduce protein and vegetable quantities by 20% (cost optimization)
-        lunchProtein.qty = Math.max(0.25, Math.round((lunchProtein.qty * 0.8) * 4) / 4);
-        lunchProtein.cost = Math.round(lunchProtein.qty * lunchProtein.product.price);
+        if (lunchProtein) {
+          lunchProtein.qty = Math.max(0.25, Math.round((lunchProtein.qty * 0.8) * 4) / 4);
+          lunchProtein.cost = Math.round(lunchProtein.qty * lunchProtein.product.price);
+        }
         
         if (dinnerProtein) {
           dinnerProtein.qty = Math.max(0.25, Math.round((dinnerProtein.qty * 0.8) * 4) / 4);
@@ -425,7 +494,21 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         dinnerExtra.cost = Math.round(dinnerExtra.qty * dinnerExtra.product.price);
       }
 
-      const totalCost = calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra);
+      // Ensure lunch and dinner proteins are different (never suggest the same protein twice)
+      if (lunchProtein && dinnerProtein && lunchProtein.meta.key === dinnerProtein.meta.key) {
+        if (lunchProtein.meta.key === 'egg') {
+          dinnerProtein = null;
+        } else {
+          const eggItem = resolveProduct(proteinList.find(p => p.key === 'egg'));
+          if (eggItem) {
+            dinnerProtein = eggItem;
+          } else {
+            dinnerProtein = null;
+          }
+        }
+      }
+
+      const totalCost = calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra, extraLunchVeg, extraDinnerVeg);
       if (totalCost > budget) {
         // absolute minimal fallback
         const eggItem = resolveProduct(proteinList.find(p => p.key === 'egg'));
@@ -436,12 +519,14 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
           morningItem = aluItem;
           lunchProtein = eggItem;
           lunchVeg = dalItem;
-          dinnerProtein = eggItem;
+          dinnerProtein = null;
           dinnerExtra = aluItem;
+          extraLunchVeg = null;
+          extraDinnerVeg = null;
         }
       }
 
-      const finalTotalCost = calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra);
+      const finalTotalCost = calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra, extraLunchVeg, extraDinnerVeg);
       const finalRemaining = budget - finalTotalCost;
 
       if (finalTotalCost > budget) {
@@ -450,6 +535,7 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
 
       // Helper to generate correct protein note
       const getNoteForItem = (item, defaultNote) => {
+        if (!item) return defaultNote;
         const isProtein = item.meta && ['boiler', 'rui', 'silver', 'mirka', 'egg'].includes(item.meta.key);
         if (isProtein) {
           return `${members} পিস`;
@@ -462,10 +548,12 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         ...resolvedStaples.map(s => ({ product: s.product, qty: s.qty, note: 'মেসের মসলা ও নিত্যপ্রয়োজনীয়' })),
         ...(riceEnabled && selectedRice ? [{ product: selectedRice, qty: totalRiceKg, note: 'মেসের চাল' }] : []),
         { product: morningItem.product, qty: morningItem.qty, note: getNoteForItem(morningItem, 'সকালের বাজার') },
-        { product: lunchProtein.product, qty: lunchProtein.qty, note: getNoteForItem(lunchProtein, 'দুপুরের আমিষ') },
+        ...(lunchProtein ? [{ product: lunchProtein.product, qty: lunchProtein.qty, note: getNoteForItem(lunchProtein, 'দুপুরের আমিষ') }] : []),
         { product: lunchVeg.product, qty: lunchVeg.qty, note: getNoteForItem(lunchVeg, 'দুপুরের সবজি/ডাল') },
-        { product: dinnerProtein.product, qty: dinnerProtein.qty, note: getNoteForItem(dinnerProtein, 'রাতের আমিষ/সবজি') },
-        { product: dinnerExtra.product, qty: dinnerExtra.qty, note: getNoteForItem(dinnerExtra, 'রাতের ডাল/ভর্তা') }
+        ...(extraLunchVeg ? [{ product: extraLunchVeg.product, qty: extraLunchVeg.qty, note: 'দুপুরের অতিরিক্ত সবজি' }] : []),
+        ...(dinnerProtein ? [{ product: dinnerProtein.product, qty: dinnerProtein.qty, note: getNoteForItem(dinnerProtein, 'রাতের আমিষ/সবজি') }] : []),
+        { product: dinnerExtra.product, qty: dinnerExtra.qty, note: getNoteForItem(dinnerExtra, 'রাতের ডাল/ভর্তা') },
+        ...(extraDinnerVeg ? [{ product: extraDinnerVeg.product, qty: extraDinnerVeg.qty, note: 'রাতের অতিরিক্ত সবজি' }] : [])
       ];
 
       // Merge duplicates in case same item resolved multiple times (e.g. Alu in morning and night, or eggs)
@@ -494,10 +582,14 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
           items: [morningItem]
         },
         lunch: {
-          items: [lunchProtein, lunchVeg]
+          items: lunchProtein 
+            ? (extraLunchVeg ? [lunchProtein, lunchVeg, extraLunchVeg] : [lunchProtein, lunchVeg])
+            : (extraLunchVeg ? [lunchVeg, extraLunchVeg] : [lunchVeg])
         },
         dinner: {
-          items: [dinnerProtein, dinnerExtra]
+          items: dinnerProtein 
+            ? (extraDinnerVeg ? [dinnerProtein, dinnerExtra, extraDinnerVeg] : [dinnerProtein, dinnerExtra]) 
+            : (extraDinnerVeg ? [dinnerExtra, extraDinnerVeg] : [dinnerExtra])
         },
         cartItems: mergedCartItems,
         totalCost: finalTotalCost,
@@ -513,9 +605,9 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
 নিয়মাফিক আমরা একটি ১ দিনের অপ্টিমাইজড বাজার তালিকা তৈরি করেছি:
 ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalRiceKg} কেজি (খরচ: ৳${riceCost})` : '১. চাল: আমাদের নিজেদের চাল ব্যবহার করছি (মেনুতে কোনো চাল যোগ করা হয়নি)'}
 ২. মসলা ও নিত্যপ্রয়োজনীয় (সয়াবিন তেল, পেঁয়াজ, আলু, ডাল, লবণ ইত্যাদি): পরিমাণ মেম্বার অনুযায়ী আনুপাতিক হারে অ্যাড করা হয়েছে (মোট খরচ: ৳${staplesCost})
-৩. সকালের খাবার: ${morningItem.product.name} (পরিমাণ: ${morningItem.qty} ${morningItem.product.unit || 'কেজি'}, খরচ: ৳${morningItem.cost})
-৪. দুপুরের খাবার: ${lunchProtein.product.name} (${lunchProtein.qty} ${lunchProtein.product.unit || 'কেজি'}) ও ${lunchVeg.product.name} (${lunchVeg.qty} ${lunchVeg.product.unit || 'কেজি'}) (মোট খরচ: ৳${lunchProtein.cost + lunchVeg.cost})
-৫. রাতের খাবার: ${dinnerProtein.product.name} (${dinnerProtein.qty} ${dinnerProtein.product.unit || 'কেজি'}) ও ${dinnerExtra.product.name} (${dinnerExtra.qty} ${dinnerExtra.product.unit || 'কেজি'}) (মোট খরচ: ৳${dinnerProtein.cost + dinnerExtra.cost})
+৩. সকালের খাবার: ${morningItem.product.name} (পরিমাণ: ${formatQtyAndUnit(morningItem.qty, morningItem.product, morningItem.meta?.unit)}, খরচ: ৳${morningItem.cost})
+৪. দুপুরের খাবার: ${lunchProtein ? `${lunchProtein.product.name} (${formatQtyAndUnit(lunchProtein.qty, lunchProtein.product, lunchProtein.meta?.unit)}) ও ` : ''}${lunchVeg.product.name} (&nbsp;${formatQtyAndUnit(lunchVeg.qty, lunchVeg.product, lunchVeg.meta?.unit)})${extraLunchVeg ? ` ও &nbsp;${extraLunchVeg.product.name} (${formatQtyAndUnit(extraLunchVeg.qty, extraLunchVeg.product, extraLunchVeg.meta?.unit)})` : ''} (মোট খরচ: ৳${(lunchProtein ? lunchProtein.cost : 0) + lunchVeg.cost + (extraLunchVeg ? extraLunchVeg.cost : 0)})
+৫. রাতের খাবার: ${dinnerProtein ? `${dinnerProtein.product.name} (${formatQtyAndUnit(dinnerProtein.qty, dinnerProtein.product, dinnerProtein.meta?.unit)}) ও ` : ''}&nbsp;${dinnerExtra.product.name} (${formatQtyAndUnit(dinnerExtra.qty, dinnerExtra.product, dinnerExtra.meta?.unit)})${extraDinnerVeg ? ` ও &nbsp;${extraDinnerVeg.product.name} (${formatQtyAndUnit(extraDinnerVeg.qty, extraDinnerVeg.product, extraDinnerVeg.meta?.unit)})` : ''} (মোট খরচ: ৳${(dinnerProtein ? dinnerProtein.cost : 0) + dinnerExtra.cost + (extraDinnerVeg ? extraDinnerVeg.cost : 0)})
 
 মোট খরচ হয়েছে: ৳${finalTotalCost} টাকা।
 বাকি বাজেট: ৳${finalRemaining} টাকা।
@@ -557,8 +649,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
     if (!resolvedPlan || !resolvedPlan.cartItems) return;
 
     const itemsToAdd = resolvedPlan.cartItems.map(item => {
-      const unit = item.product.unit || (item.product.smartCalc?.enabled ? item.product.smartCalc.baseUnit : 'কেজি');
-      const customizedText = `${item.qty} ${unit}`;
+      const customizedText = formatQtyAndUnit(item.qty, item.product, item.note?.includes('মসলা') ? 'packet' : undefined);
       return {
         product: item.product,
         qty: item.qty,
@@ -572,7 +663,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
 
     if (onClose) onClose();
   };
-
+  
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
       {/* Wizard Input Screen */}
@@ -849,7 +940,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                   {resolvedPlan.staples.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between text-[11px] font-bold text-slate-600">
                       <span>{item.product.name}</span>
-                      <span>{item.qty} {item.meta.unit}</span>
+                      <span>{formatQtyAndUnit(item.qty, item.product, item.meta.unit)}</span>
                     </div>
                   ))}
                 </div>
@@ -865,7 +956,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
               {resolvedPlan.morning.items.map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs font-bold text-slate-800">
                   <span>{item.product.name}</span>
-                  <span>{item.qty} {item.product.unit || 'কেজি'}</span>
+                  <span>{formatQtyAndUnit(item.qty, item.product, item.meta?.unit)}</span>
                 </div>
               ))}
             </div>
@@ -879,7 +970,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
               {resolvedPlan.lunch.items.map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs font-bold text-slate-800 mb-1 last:mb-0">
                   <span>{item.product.name}</span>
-                  <span>{item.qty} {item.product.unit || 'কেজি'}</span>
+                  <span>{formatQtyAndUnit(item.qty, item.product, item.meta?.unit)}</span>
                 </div>
               ))}
             </div>
@@ -893,7 +984,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
               {resolvedPlan.dinner.items.map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs font-bold text-slate-800 mb-1 last:mb-0">
                   <span>{item.product.name}</span>
-                  <span>{item.qty} {item.product.unit || 'কেজি'}</span>
+                  <span>{formatQtyAndUnit(item.qty, item.product, item.meta?.unit)}</span>
                 </div>
               ))}
             </div>
