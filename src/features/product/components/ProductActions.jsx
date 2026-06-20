@@ -19,7 +19,7 @@ export default function ProductActions({
            <textarea
              rows={2}
              maxLength={40}
-             placeholder='যেমন: "বেশি ঝাল দিবেন না"...'
+             placeholder='যেকোনো বিশেষ অনুরোধ লিখুন...'
              className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all resize-none"
              value={customerNote}
              onChange={e => setCustomerNote(e.target.value)}
