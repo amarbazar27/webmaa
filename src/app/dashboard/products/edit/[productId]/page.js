@@ -93,27 +93,29 @@ export default function EditProductPage({ params }) {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     const total = savedImages.length + newImageFiles.length;
-    const remaining = 5 - total;
+    const remaining = 10 - total;
     if (remaining <= 0) {
-      toast.error('সর্বোচ্চ ৫টি ছবি যোগ করা যাবে।');
+      toast.error('সর্বোচ্চ ১০টি ছবি যোগ করা যাবে।');
       return;
     }
     const toAdd = files.slice(0, remaining);
-    const oversized = toAdd.filter(f => f.size > 5 * 1024 * 1024);
+    const oversized = toAdd.filter(f => f.size > 3 * 1024 * 1024);
     if (oversized.length) {
-      toast.error('প্রতিটি ছবির সাইজ ৫ মেগাবাইটের বেশি হওয়া যাবে না।');
+      toast.error('প্রতিটি ছবির সাইজ ৩ মেগাবাইটের বেশি হওয়া যাবে না।');
     }
-    const valid = toAdd.filter(f => f.size <= 5 * 1024 * 1024);
+    const valid = toAdd.filter(f => f.size <= 3 * 1024 * 1024);
     const newItems = valid.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
     setNewImageFiles(prev => [...prev, ...newItems]);
     if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   const handleRemoveSaved = (idx) => {
+    if (!window.confirm('আপনি কি এই ছবিটি ডিলিট করতে চান?')) return;
     setSavedImages(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleRemoveNew = (idx) => {
+    if (!window.confirm('আপনি কি এই ছবিটি ডিলিট করতে চান?')) return;
     setNewImageFiles(prev => {
       URL.revokeObjectURL(prev[idx]?.preview);
       return prev.filter((_, i) => i !== idx);
@@ -175,8 +177,8 @@ export default function EditProductPage({ params }) {
           const newUrls = await Promise.all(
             newImageFiles.map(({ file }) => uploadProductImage(activeShopId, file))
           );
-          // Merge saved + newly uploaded, keep max 5
-          const allImages = [...savedImages, ...newUrls].slice(0, 5);
+          // Merge saved + newly uploaded, keep max 10
+          const allImages = [...savedImages, ...newUrls].slice(0, 10);
           updateData.images = allImages;
           updateData.imageUrl = allImages[0] || '';
         } catch (uploadErr) {
@@ -229,9 +231,9 @@ export default function EditProductPage({ params }) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-              পণ্যের ছবি (সর্বোচ্চ ৫টি, প্রতিটি ৫ মেগাবাইট পর্যন্ত)
+              পণ্যের ছবি (সর্বোচ্চ ১০টি, প্রতিটি ৩ মেগাবাইট পর্যন্ত)
             </label>
-            <span className="text-[10px] font-black text-purple-600 uppercase">{savedImages.length + newImageFiles.length}/5</span>
+            <span className="text-[10px] font-black text-purple-600 uppercase">{savedImages.length + newImageFiles.length}/10</span>
           </div>
 
           {/* Image Grid */}
@@ -247,7 +249,7 @@ export default function EditProductPage({ params }) {
                   <button
                     type="button"
                     onClick={() => handleRemoveSaved(idx)}
-                    className="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1.5 opacity-100 shadow hover:bg-red-600 transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -261,14 +263,14 @@ export default function EditProductPage({ params }) {
                   <button
                     type="button"
                     onClick={() => handleRemoveNew(idx)}
-                    className="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1.5 opacity-100 shadow hover:bg-red-600 transition-colors"
                   >
                     <X size={12} />
                   </button>
                 </div>
               ))}
               {/* Add More Button */}
-              {savedImages.length + newImageFiles.length < 5 && (
+              {savedImages.length + newImageFiles.length < 10 && (
                 <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
                   <input type="file" accept="image/*" multiple ref={imageInputRef} onChange={handleImageAdd} className="hidden" />
                   <ImagePlus size={20} className="text-slate-400 mb-1" />
@@ -287,7 +289,7 @@ export default function EditProductPage({ params }) {
               </div>
               <p className="font-bold text-slate-700 text-sm">পণ্যের ছবি আপলোড করুন</p>
               <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">একসাথে একাধিক ছবি বেছে নিন</p>
-              <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">সর্বোচ্চ ৫টি ছবি • প্রতিটি ৫MB পর্যন্ত</p>
+              <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">সর্বোচ্চ ১০টি ছবি • প্রতিটি ৩MB পর্যন্ত</p>
             </label>
           )}
         </div>

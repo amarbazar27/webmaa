@@ -99,13 +99,13 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (productId) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!window.confirm('আপনি কি এই প্রোডাক্টটি ডিলিট করতে চান?')) return;
     try {
       await deleteProduct(activeShopId, productId);
       setProducts(prev => prev.filter(p => p.id !== productId));
-      toast.success('Product removed');
+      toast.success('প্রোডাক্ট ডিলিট করা হয়েছে');
     } catch {
-      toast.error('Operation failed');
+      toast.error('ডিলিট ব্যর্থ হয়েছে');
     }
   };
 
@@ -113,8 +113,8 @@ export default function ProductsPage() {
 
   const handleImageUpdate = async (productId, file) => {
     if (!file) return;
-    if (file.size > 1024 * 1024) {
-      toast.error('ইমেজের সাইজ ১ মেগাবাইটের বেশি হওয়া যাবে না।');
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error('পণ্যের ইমেজের সাইজ ৩ মেগাবাইটের বেশি হওয়া যাবে না।');
       return;
     }
     setUpdatingImageId(productId);
@@ -347,19 +347,20 @@ export default function ProductsPage() {
               </div>
 
               {/* Edit / Delete */}
-              <div className="col-span-1 flex justify-end gap-2">
+              <div className="col-span-1 flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
                 <Link
                   href={`/dashboard/products/edit/${product.id}`}
-                  className="p-3 rounded-xl transition-all hover:bg-purple-100 text-slate-400 hover:text-purple-600 group-hover:opacity-100"
+                  className="p-3 rounded-xl transition-all bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100 flex items-center justify-center"
                   title="Edit Product"
                 >
                   <Pencil size={18} />
                 </Link>
                 <Button
-                  variant="ghost"
+                  variant="danger"
                   icon={Trash2}
                   onClick={() => handleDelete(product.id)}
-                  className="px-3 py-3 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 opacity-40 group-hover:opacity-100 transition-all"
+                  className="px-3 py-3 rounded-xl opacity-100 transition-all"
+                  title="Delete Product"
                 />
               </div>
 

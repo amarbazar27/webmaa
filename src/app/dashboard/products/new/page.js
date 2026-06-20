@@ -12,7 +12,7 @@ export default function NewProductPage() {
   const { user, activeShopId } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  // Multi-image state: up to 5 images, 5MB each
+  // Multi-image state: up to 10 images, 3MB each
   const [imageFiles, setImageFiles] = useState([]); // { file, preview }[]
   const [uploadingImages, setUploadingImages] = useState(false);
   const imageInputRef = useRef(null);
@@ -43,17 +43,17 @@ export default function NewProductPage() {
   const handleImageAdd = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    const remaining = 5 - imageFiles.length;
+    const remaining = 10 - imageFiles.length;
     if (remaining <= 0) {
-      toast.error('সর্বোচ্চ ৫টি ছবি যোগ করা যাবে।');
+      toast.error('সর্বোচ্চ ১০টি ছবি যোগ করা যাবে।');
       return;
     }
     const toAdd = files.slice(0, remaining);
-    const oversized = toAdd.filter(f => f.size > 5 * 1024 * 1024);
+    const oversized = toAdd.filter(f => f.size > 3 * 1024 * 1024);
     if (oversized.length) {
-      toast.error('প্রতিটি ছবির সাইজ ৫ মেগাবাইটের বেশি হওয়া যাবে না।');
+      toast.error('প্রতিটি ছবির সাইজ ৩ মেগাবাইটের বেশি হওয়া যাবে না।');
     }
-    const valid = toAdd.filter(f => f.size <= 5 * 1024 * 1024);
+    const valid = toAdd.filter(f => f.size <= 3 * 1024 * 1024);
     const newItems = valid.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
     setImageFiles(prev => [...prev, ...newItems]);
     // Reset input so same file can be re-selected
@@ -61,6 +61,7 @@ export default function NewProductPage() {
   };
 
   const handleImageRemove = (idx) => {
+    if (!window.confirm('আপনি কি এই ছবিটি ডিলিট করতে চান?')) return;
     setImageFiles(prev => {
       URL.revokeObjectURL(prev[idx]?.preview);
       return prev.filter((_, i) => i !== idx);
@@ -169,9 +170,9 @@ export default function NewProductPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
-              পণ্যের ছবি (সর্বোচ্চ ৫টি, প্রতিটি ৫ মেগাবাইট পর্যন্ত)
+              পণ্যের ছবি (সর্বোচ্চ ১০টি, প্রতিটি ৩ মেগাবাইট পর্যন্ত)
             </label>
-            <span className="text-[10px] font-black text-purple-600 uppercase">{imageFiles.length}/5</span>
+            <span className="text-[10px] font-black text-purple-600 uppercase">{imageFiles.length}/10</span>
           </div>
 
           {/* Preview Grid */}
@@ -186,7 +187,7 @@ export default function NewProductPage() {
                   <button
                     type="button"
                     onClick={() => handleImageRemove(idx)}
-                    className="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1.5 opacity-100 shadow hover:bg-red-600 transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -194,7 +195,7 @@ export default function NewProductPage() {
               ))}
 
               {/* Add More Button */}
-              {imageFiles.length < 5 && (
+              {imageFiles.length < 10 && (
                 <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
                   <input
                     type="file"
@@ -227,7 +228,7 @@ export default function NewProductPage() {
               </div>
               <p className="font-bold text-slate-700 text-sm">পণ্যের ছবি আপলোড করুন</p>
               <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">একসাথে একাধিক ছবি বেছে নিন</p>
-              <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">সর্বোচ্চ ৫টি ছবি • প্রতিটি ৫MB পর্যন্ত</p>
+              <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">সর্বোচ্চ ১০টি ছবি • প্রতিটি ৩MB পর্যন্ত</p>
             </label>
           )}
         </div>

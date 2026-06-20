@@ -48,6 +48,9 @@ export const uploadImage = async (file) => {
  * Product image upload helper (Same implementation as we don't need specific paths in Cloudinary unstructured approach)
  */
 export const uploadProductImage = async (shopId, file) => {
+  if (file && file.size > 3 * 1024 * 1024) {
+    throw new Error('পণ্যের ইমেজের সাইজ ৩ মেগাবাইটের বেশি হওয়া যাবে না।');
+  }
   return uploadImage(file);
 };
 
