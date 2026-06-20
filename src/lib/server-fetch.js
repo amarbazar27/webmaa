@@ -177,6 +177,37 @@ export async function getShopServer(slug) {
   }
 }
 
+export async function getShopByDomainServer(host) {
+  try {
+    if (!host) return null;
+    // Normalize host
+    const normalizedHost = host.toLowerCase().trim().replace(/^www\./i, '');
+    if (adminDb) {
+      const shopsRef = adminDb.collection('shops');
+      let snap = await shopsRef.where('customDomain', '==', normalizedHost).limit(1).get();
+      if (snap.empty) {
+        // Fallback to checking subdomain (e.g. messerbazar.daripallah.com -> messerbazar)
+        const subdomain = normalizedHost.split('.')[0];
+        snap = await shopsRef.where('subdomainSlug', '==', subdomain).limit(1).get();
+      }
+      if (snap.empty) return null;
+      const doc = snap.docs[0];
+      return { id: doc.id, ...toPlainObject(doc.data()) };
+    } else {
+      console.log(`[getShopByDomainServer] Using REST API fallback for host: ${normalizedHost}`);
+      let shop = await firestoreRestQuery('shops', 'customDomain', 'EQUAL', normalizedHost);
+      if (!shop) {
+        const subdomain = normalizedHost.split('.')[0];
+        shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', subdomain);
+      }
+      return shop || null;
+    }
+  } catch (err) {
+    console.error(`[getShopByDomainServer] Error:`, err);
+    return null;
+  }
+}
+
 export async function getProductsServer(shopId) {
   try {
     if (!shopId) return [];

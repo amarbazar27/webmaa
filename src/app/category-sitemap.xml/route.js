@@ -1,6 +1,15 @@
 import { getAllMarketplaceProducts } from '@/lib/firestore';
+import { getShopByDomainServer, getProductsServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
+
+const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'localhost', '127.0.0.1'];
+
+function isMainSiteHost(host) {
+  if (!host) return true;
+  const h = host.toLowerCase().trim().replace(/^www\./i, '').split(':')[0];
+  return BYPASS_HOSTS.includes(h);
+}
 
 function escapeXml(unsafe) {
   if (!unsafe) return '';
@@ -16,12 +25,24 @@ function escapeXml(unsafe) {
   });
 }
 
-export async function GET() {
-  const baseUrl = 'https://daripallah.com';
+export async function GET(request) {
+  const host = request.headers.get('host') || 'daripallah.com';
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+  const baseUrl = `${protocol}://${host}`;
   let xmlItems = '';
 
+  const isRetailer = !isMainSiteHost(host);
+
   try {
-    const products = await getAllMarketplaceProducts();
+    let products = [];
+    if (isRetailer) {
+      const shop = await getShopByDomainServer(host);
+      if (shop) {
+        products = await getProductsServer(shop.id);
+      }
+    } else {
+      products = await getAllMarketplaceProducts();
+    }
 
     // Unique Categories
     const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
@@ -45,7 +66,6 @@ export async function GET() {
 
     uniqueSubcombo.forEach((combo) => {
       const [cat, subcat] = combo.split('|||');
-      // Crucial: escape literal '&' in xml to '&amp;'
       const url = `${baseUrl}/?category=${encodeURIComponent(cat)}&subcategory=${encodeURIComponent(subcat)}`;
       const escapedUrl = escapeXml(url);
       xmlItems += `  <url>

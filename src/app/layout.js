@@ -128,10 +128,6 @@ export default function RootLayout({ children }) {
     <html lang="bn" translate="no" suppressHydrationWarning>
       <head>
         <meta name="google" content="notranslate" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
-        <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <JsonLd />
       </head>
       <body className="font-sans antialiased">

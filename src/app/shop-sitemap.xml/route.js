@@ -1,6 +1,15 @@
 import { getAllShops } from '@/lib/firestore';
+import { getShopByDomainServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
+
+const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'localhost', '127.0.0.1'];
+
+function isMainSiteHost(host) {
+  if (!host) return true;
+  const h = host.toLowerCase().trim().replace(/^www\./i, '').split(':')[0];
+  return BYPASS_HOSTS.includes(h);
+}
 
 function escapeXml(unsafe) {
   if (!unsafe) return '';
@@ -16,34 +25,51 @@ function escapeXml(unsafe) {
   });
 }
 
-export async function GET() {
-  const baseUrl = 'https://daripallah.com';
+export async function GET(request) {
+  const host = request.headers.get('host') || 'daripallah.com';
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+  const baseUrl = `${protocol}://${host}`;
   let xmlItems = '';
 
-  try {
-    const shops = await getAllShops();
-    const activeShops = shops.filter(shop => shop.isActive !== false && shop.showOnMainSite !== false);
+  const isRetailer = !isMainSiteHost(host);
 
-    // Root homepage
-    xmlItems += `  <url>
+  try {
+    if (isRetailer) {
+      const shop = await getShopByDomainServer(host);
+      if (shop && shop.isActive !== false) {
+        // Retailer's own sitemap only contains their home URL
+        xmlItems += `  <url>
+    <loc>${baseUrl}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>\n`;
+      }
+    } else {
+      // Main site sitemap lists main site home and all active shops
+      const shops = await getAllShops();
+      const activeShops = shops.filter(shop => shop.isActive !== false && shop.showOnMainSite !== false);
+
+      xmlItems += `  <url>
     <loc>${baseUrl}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>\n`;
 
-    activeShops.forEach((shop) => {
-      const slug = shop.subdomainSlug || shop.shopSlug;
-      if (!slug) return;
-      const shopUrl = `${baseUrl}/shop/${slug}`;
-      const escapedUrl = escapeXml(shopUrl);
-      xmlItems += `  <url>
+      activeShops.forEach((shop) => {
+        const slug = shop.subdomainSlug || shop.shopSlug;
+        if (!slug) return;
+        const shopUrl = `${baseUrl}/shop/${slug}`;
+        const escapedUrl = escapeXml(shopUrl);
+        xmlItems += `  <url>
     <loc>${escapedUrl}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>\n`;
-    });
+      });
+    }
   } catch (error) {
     console.error("Shop Sitemap Generation Error:", error);
     xmlItems += `  <url>

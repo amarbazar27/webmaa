@@ -9,7 +9,12 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
 
   // Determine loading content based on shop.loadingMedia setting
   const loadingMedia = shop?.loadingMedia || { type: 'default' };
-  const defaultText = ['সুবহানআল্লাহ', 'আলহামদুলিল্লাহ', 'আল্লাহু আকবার', 'বিসমিল্লাহ'];
+  const defaultText = [
+    'লোডিং হচ্ছে... অনুগ্রহ করে অপেক্ষা করুন',
+    '১০০% নিরাপদ লেনদেন ও ফাস্ট ডেলিভারি',
+    'সেরা কোয়ালিটির আসল প্রোডাক্টস',
+    'সহজ অর্ডার এবং চমৎকার শপিং অভিজ্ঞতা'
+  ];
   
   // Text to show: custom texts if 'text' mode, else default
   const loadingTexts = (loadingMedia.type === 'text' && loadingMedia.texts?.length > 0)
@@ -119,10 +124,10 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1000
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* ── Islamic Geometric Pattern Overlay ── */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15zM0 30l15 15-15 15L-15 45zM60 30l15 15-15 15-15-15zM30 60l15 15-15 15-15-15z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
-        backgroundSize: '80px 80px'
+      {/* ── Modern Tech Grid Pattern Overlay ── */}
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='20' height='20' fill='none' stroke='%23ffffff' stroke-width='1'/%3E%3C/svg%3E")`,
+        backgroundSize: '20px 20px'
       }} />
 
       {/* ── Ambient glow blobs ── */}

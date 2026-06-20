@@ -44,6 +44,11 @@ export async function generateMetadata({ params }) {
       title,
       description,
       alternates: { canonical: canonicalUrl },
+      icons: {
+        icon: shop?.logoUrl || '/logo.png',
+        shortcut: shop?.logoUrl || '/logo.png',
+        apple: shop?.logoUrl || '/logo.png',
+      },
       openGraph: {
         title,
         description,

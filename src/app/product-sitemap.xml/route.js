@@ -1,6 +1,15 @@
 import { getAllMarketplaceProducts } from '@/lib/firestore';
+import { getShopByDomainServer, getProductsServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
+
+const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'localhost', '127.0.0.1'];
+
+function isMainSiteHost(host) {
+  if (!host) return true;
+  const h = host.toLowerCase().trim().replace(/^www\./i, '').split(':')[0];
+  return BYPASS_HOSTS.includes(h);
+}
 
 function escapeXml(unsafe) {
   if (!unsafe) return '';
@@ -16,29 +25,59 @@ function escapeXml(unsafe) {
   });
 }
 
-export async function GET() {
-  const baseUrl = 'https://daripallah.com';
+export async function GET(request) {
+  const host = request.headers.get('host') || 'daripallah.com';
+  const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+  const baseUrl = `${protocol}://${host}`;
   let xmlItems = '';
 
+  const isRetailer = !isMainSiteHost(host);
+
   try {
-    const products = await getAllMarketplaceProducts();
-    const activeProducts = products.filter(p => p.stock !== 0);
+    if (isRetailer) {
+      const shop = await getShopByDomainServer(host);
+      if (shop) {
+        // Query products for this retailer shop only
+        const products = await getProductsServer(shop.id);
+        const activeProducts = products.filter(p => p.stock !== 0);
 
-    activeProducts.forEach((prod) => {
-      const shopSlug = prod.shopSlug || 'daripallah-store';
-      const prodId = prod.id;
-      if (!prodId) return;
+        activeProducts.forEach((prod) => {
+          const prodId = prod.id;
+          if (!prodId) return;
 
-      const productUrl = `${baseUrl}/shop/${shopSlug}/product/${prodId}`;
-      const escapedUrl = escapeXml(productUrl);
+          // For custom domains, product link is /product/[productId]
+          const productUrl = `${baseUrl}/product/${prodId}`;
+          const escapedUrl = escapeXml(productUrl);
 
-      xmlItems += `  <url>
+          xmlItems += `  <url>
     <loc>${escapedUrl}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>\n`;
-    });
+        });
+      }
+    } else {
+      // Main site product sitemap lists all products from all shops
+      const products = await getAllMarketplaceProducts();
+      const activeProducts = products.filter(p => p.stock !== 0);
+
+      activeProducts.forEach((prod) => {
+        const shopSlug = prod.shopSlug || 'daripallah-store';
+        const prodId = prod.id;
+        if (!prodId) return;
+
+        const productUrl = `${baseUrl}/shop/${shopSlug}/product/${prodId}`;
+        const escapedUrl = escapeXml(productUrl);
+
+        xmlItems += `  <url>
+    <loc>${escapedUrl}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>\n`;
+      });
+    }
   } catch (error) {
     console.error("Product Sitemap Generation Error:", error);
   }

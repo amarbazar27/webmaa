@@ -68,18 +68,22 @@ export default function ProductDetailClient({ shop, product }) {
 
       const faviconUrl = shop.logoUrl || svgFavicon;
 
-      const linkTypes = ["link[rel*='icon']", "link[rel='apple-touch-icon']", "link[rel='shortcut icon']"];
-      linkTypes.forEach(selector => {
-        let link = document.querySelector(selector);
-        if (!link) {
-          link = document.createElement('link');
-          if (selector.includes('apple')) link.rel = 'apple-touch-icon';
-          else if (selector.includes('shortcut')) link.rel = 'shortcut icon';
-          else link.rel = 'icon';
-          document.getElementsByTagName('head')[0].appendChild(link);
-        }
-        link.href = faviconUrl;
-      });
+      // Remove all existing icon links to prevent any conflict or caching of the main site icon
+      const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");
+      existingIcons.forEach(el => el.remove());
+
+      // Create new clean favicon link
+      const iconLink = document.createElement('link');
+      iconLink.rel = 'icon';
+      iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
+      iconLink.href = faviconUrl;
+      document.head.appendChild(iconLink);
+
+      // Create new clean apple touch icon link
+      const appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      appleLink.href = faviconUrl;
+      document.head.appendChild(appleLink);
     }
   }, [shop, product]);
 
