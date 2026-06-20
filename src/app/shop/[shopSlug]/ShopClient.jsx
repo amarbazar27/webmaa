@@ -2347,9 +2347,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       setSelectedProductForModal(product);
                     }}
                   >
-                    {product.imageUrl ? (
+                    {(product.images?.[0] || product.imageUrl) ? (
                       <Image 
-                        src={product.imageUrl} 
+                        src={product.images?.[0] || product.imageUrl} 
                         alt={product.name} 
                         fill
                         sizes="(max-width: 768px) 50vw, 25vw"
@@ -3675,7 +3675,7 @@ function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCa
         price: unitPrice,
         clientPrice: unitPrice,
         quantity: safeQty,
-        imageUrl: safeProduct.imageUrl || '',
+        imageUrl: safeProduct.images?.[0] || safeProduct.imageUrl || '',
         note: logic.customerNote || '',
         isCustomized: safeAiPrice !== null || !!logic.customerNote || !!logic.customInput,
         customizedText: logic.customInput || '',

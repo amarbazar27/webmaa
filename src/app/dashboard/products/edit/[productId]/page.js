@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getProduct, updateProduct, getCategories } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown, Sparkles, Plus, Trash2, MessageSquare } from 'lucide-react';
+import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown, Sparkles, Plus, Trash2, MessageSquare, X, ImagePlus } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -17,8 +17,11 @@ export default function EditProductPage({ params }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  // Multi-image state: existing saved URLs + newly added files
+  const [savedImages, setSavedImages] = useState([]); // string[] — already-uploaded URLs
+  const [newImageFiles, setNewImageFiles] = useState([]); // { file, preview }[] — newly picked
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const imageInputRef = useRef(null);
   const [categories, setCategories] = useState([]);
   const [showCustomCat, setShowCustomCat] = useState(false);
   
@@ -58,9 +61,11 @@ export default function EditProductPage({ params }) {
             allowNote: product.allowNote || false,
             variants: product.variants || [],
           });
-          if (product.imageUrl) {
-            setImagePreview(product.imageUrl);
-          }
+          // Load saved images: prefer images[] array, fall back to imageUrl
+          const existingImages = Array.isArray(product.images) && product.images.length > 0
+            ? product.images
+            : (product.imageUrl ? [product.imageUrl] : []);
+          setSavedImages(existingImages);
           
           // Check if product category is in existing categories
           if (product.category && cats.length > 0) {
@@ -84,17 +89,35 @@ export default function EditProductPage({ params }) {
     loadData();
   }, [activeShopId, productId, router]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 1024 * 1024) {
-        toast.error('ইমেজের সাইজ ১ মেগাবাইটের বেশি হওয়া যাবে না।');
-        e.target.value = '';
-        return;
-      }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+  const handleImageAdd = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const total = savedImages.length + newImageFiles.length;
+    const remaining = 5 - total;
+    if (remaining <= 0) {
+      toast.error('সর্বোচ্চ ৫টি ছবি যোগ করা যাবে।');
+      return;
     }
+    const toAdd = files.slice(0, remaining);
+    const oversized = toAdd.filter(f => f.size > 5 * 1024 * 1024);
+    if (oversized.length) {
+      toast.error('প্রতিটি ছবির সাইজ ৫ মেগাবাইটের বেশি হওয়া যাবে না।');
+    }
+    const valid = toAdd.filter(f => f.size <= 5 * 1024 * 1024);
+    const newItems = valid.map(f => ({ file: f, preview: URL.createObjectURL(f) }));
+    setNewImageFiles(prev => [...prev, ...newItems]);
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  };
+
+  const handleRemoveSaved = (idx) => {
+    setSavedImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleRemoveNew = (idx) => {
+    setNewImageFiles(prev => {
+      URL.revokeObjectURL(prev[idx]?.preview);
+      return prev.filter((_, i) => i !== idx);
+    });
   };
 
   const handleCategorySelect = (catName) => {
@@ -146,13 +169,26 @@ export default function EditProductPage({ params }) {
         }))
       };
 
-      if (imageFile) {
+      if (newImageFiles.length > 0) {
+        setUploadingImages(true);
         try {
-           updateData.imageUrl = await uploadProductImage(activeShopId, imageFile);
+          const newUrls = await Promise.all(
+            newImageFiles.map(({ file }) => uploadProductImage(activeShopId, file))
+          );
+          // Merge saved + newly uploaded, keep max 5
+          const allImages = [...savedImages, ...newUrls].slice(0, 5);
+          updateData.images = allImages;
+          updateData.imageUrl = allImages[0] || '';
         } catch (uploadErr) {
-           console.error("Image Upload Failed:", uploadErr);
-           toast.error('Image upload failed. Continuing without new image.');
+          console.error('Image Upload Failed:', uploadErr);
+          toast.error('কিছু ছবি আপলোড ব্যর্থ হয়েছে।');
+        } finally {
+          setUploadingImages(false);
         }
+      } else {
+        // No new files — just save the current saved list (user may have removed some)
+        updateData.images = savedImages;
+        updateData.imageUrl = savedImages[0] || '';
       }
 
       await updateProduct(activeShopId, productId, updateData);
@@ -189,30 +225,70 @@ export default function EditProductPage({ params }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Image Upload */}
-        <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl overflow-hidden flex flex-col items-center justify-center aspect-[9/16] w-full max-w-[320px] mx-auto relative group cursor-pointer hover:border-purple-300 transition-colors shadow-sm bg-slate-50/30">
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={handleImageChange}
-            className="absolute inset-0 opacity-0 cursor-pointer z-20"
-          />
-          {imagePreview ? (
-            <div className="w-full h-full absolute inset-0">
-              <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl">
-                 <Camera className="text-white" size={32} />
-              </div>
+        {/* Multi-Image Upload */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              পণ্যের ছবি (সর্বোচ্চ ৫টি, প্রতিটি ৫ মেগাবাইট পর্যন্ত)
+            </label>
+            <span className="text-[10px] font-black text-purple-600 uppercase">{savedImages.length + newImageFiles.length}/5</span>
+          </div>
+
+          {/* Image Grid */}
+          {(savedImages.length > 0 || newImageFiles.length > 0) && (
+            <div className="grid grid-cols-3 gap-2">
+              {/* Saved images */}
+              {savedImages.map((url, idx) => (
+                <div key={`saved-${idx}`} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-purple-200 shadow-sm group">
+                  <img src={url} alt={`saved-${idx}`} className="w-full h-full object-cover" />
+                  {idx === 0 && newImageFiles.length === 0 && (
+                    <span className="absolute top-1 left-1 bg-purple-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">মেইন</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSaved(idx)}
+                    className="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              {/* New images */}
+              {newImageFiles.map((img, idx) => (
+                <div key={`new-${idx}`} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-emerald-300 shadow-sm group">
+                  <img src={img.preview} alt={`new-${idx}`} className="w-full h-full object-cover" />
+                  <span className="absolute top-1 left-1 bg-emerald-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">নতুন</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveNew(idx)}
+                    className="absolute top-1 right-1 bg-red-500/90 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+              {/* Add More Button */}
+              {savedImages.length + newImageFiles.length < 5 && (
+                <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
+                  <input type="file" accept="image/*" multiple ref={imageInputRef} onChange={handleImageAdd} className="hidden" />
+                  <ImagePlus size={20} className="text-slate-400 mb-1" />
+                  <span className="text-[9px] font-black text-slate-400 uppercase">যোগ করুন</span>
+                </label>
+              )}
             </div>
-          ) : (
-            <div className="text-center p-6">
-              <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-600 border border-purple-100 shadow-sm">
+          )}
+
+          {/* Empty State */}
+          {savedImages.length === 0 && newImageFiles.length === 0 && (
+            <label className="bg-white border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center py-12 cursor-pointer hover:border-purple-300 hover:bg-purple-50/30 transition-colors group">
+              <input type="file" accept="image/*" multiple ref={imageInputRef} onChange={handleImageAdd} className="hidden" />
+              <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 text-purple-600 border border-purple-100 shadow-sm group-hover:bg-purple-100 transition-colors">
                 <Camera size={32} />
               </div>
-              <p className="font-bold text-slate-700 text-sm">Upload Product Image</p>
-              <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">Portrait (9:16) Recommended</p>
-              <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">Max 1MB</p>
-            </div>
+              <p className="font-bold text-slate-700 text-sm">পণ্যের ছবি আপলোড করুন</p>
+              <p className="text-[10px] text-slate-400 mt-1 font-bold uppercase tracking-widest">একসাথে একাধিক ছবি বেছে নিন</p>
+              <p className="text-[9px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">সর্বোচ্চ ৫টি ছবি • প্রতিটি ৫MB পর্যন্ত</p>
+            </label>
           )}
         </div>
 
