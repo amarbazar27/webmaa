@@ -22,7 +22,7 @@ export async function GET() {
 
   try {
     const shops = await getAllShops();
-    const activeShops = shops.filter(shop => shop.isActive !== false);
+    const activeShops = shops.filter(shop => shop.isActive !== false && shop.showOnMainSite !== false);
 
     // Root homepage
     xmlItems += `  <url>

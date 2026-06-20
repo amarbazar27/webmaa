@@ -12,7 +12,7 @@ export default function ShowcasePage() {
 
   useEffect(() => {
     getAllShops().then(data => {
-      setShops(data.filter(s => s.isActive !== false));
+      setShops(data.filter(s => s.isActive !== false && s.showOnMainSite !== false));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

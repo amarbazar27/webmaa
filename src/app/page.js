@@ -271,6 +271,15 @@ export default function Home() {
         if (shopParam) setActiveShopFilter(shopParam);
         if (catParam) setActiveCategory(catParam);
         if (subcatParam) setActiveSubcategory(subcatParam);
+
+        if (shopParam || catParam || subcatParam) {
+          setTimeout(() => {
+            const gridEl = document.getElementById('products-grid-section');
+            if (gridEl) {
+              gridEl.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 800); // 800ms delay to ensure page rendering is complete
+        }
       }
     }).catch(err => {
       console.error(err);
@@ -774,6 +783,16 @@ export default function Home() {
       return `https://wa.me/${withCountry}`;
     }
     return url;
+  };
+
+  const handleCopyShopSectorLink = (e, shopName) => {
+    e.stopPropagation();
+    const shareUrl = `${window.location.origin}/?shop=${encodeURIComponent(shopName)}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      toast.success(`"${shopName}" স্টোরের শেয়ার লিংক কপি করা হয়েছে! 🔗`);
+    }).catch(() => {
+      toast.error('লিংক কপি করতে ব্যর্থ হয়েছে।');
+    });
   };
 
   // ── Merchant-Category Filter Double Flow ──
@@ -1495,18 +1514,28 @@ export default function Home() {
                 {uniqueShops.map(shop => {
                   const isSelected = activeShopFilter === shop;
                   return (
-                    <button
-                      key={shop}
-                      onClick={() => setActiveShopFilter(shop)}
-                      className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 flex items-center gap-2 cursor-pointer ${
-                        isSelected
-                          ? 'bg-purple-600 text-white border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:bg-purple-500'
-                          : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
-                      }`}
-                    >
-                      <Store size={12} />
-                      {shop === 'All' ? 'সব স্টোর (All Stores)' : shop}
-                    </button>
+                    <div key={shop} className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => setActiveShopFilter(shop)}
+                        className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border flex items-center gap-2 cursor-pointer ${
+                          isSelected
+                            ? 'bg-purple-600 text-white border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:bg-purple-500'
+                            : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
+                        }`}
+                      >
+                        <Store size={12} />
+                        {shop === 'All' ? 'সব স্টোর (All Stores)' : shop}
+                      </button>
+                      {shop !== 'All' && (
+                        <button
+                          onClick={(e) => handleCopyShopSectorLink(e, shop)}
+                          className="p-2.5 bg-white/5 border border-white/5 hover:bg-purple-600/30 hover:border-purple-500/20 text-white/40 hover:text-purple-400 rounded-2xl transition-all cursor-pointer flex items-center justify-center"
+                          title={`"${shop}" স্টোরের লিংক কপি করুন`}
+                        >
+                          <Share2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -1644,7 +1673,7 @@ export default function Home() {
                     {/* Header */}
                     <div>
                       <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
-                        <div className="flex items-center gap-2.5 max-w-[80%]">
+                        <div className="flex items-center gap-2.5 max-w-[70%]">
                           <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
                             {isCat ? (
                               <div className="w-full h-full flex items-center justify-center font-black text-purple-400 text-xs">📁</div>
@@ -1654,7 +1683,18 @@ export default function Home() {
                           </div>
                           <h3 className="font-extrabold text-white text-sm tracking-tight truncate">{headerTitle}</h3>
                         </div>
-                        <ArrowUpRight size={14} className="text-white/40 group-hover:text-purple-400 transition-colors" />
+                        <div className="flex items-center gap-2.5">
+                          {!isCat && (
+                            <button
+                              onClick={(e) => handleCopyShopSectorLink(e, group.shopName)}
+                              className="p-1.5 bg-white/5 border border-white/5 hover:bg-purple-600/30 hover:border-purple-500/20 text-white/40 hover:text-purple-400 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                              title={`"${group.shopName}" স্টোরের লিংক কপি করুন`}
+                            >
+                              <Share2 size={11} />
+                            </button>
+                          )}
+                          <ArrowUpRight size={14} className="text-white/40 group-hover:text-purple-400 transition-colors" />
+                        </div>
                       </div>
 
                       {/* 2x2 Grid */}
