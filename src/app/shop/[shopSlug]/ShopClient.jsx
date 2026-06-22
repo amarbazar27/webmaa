@@ -2365,9 +2365,6 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-md leading-tight">{product.name}</h3>
                       </div>
                     )}
-                    <div className="absolute top-2.5 right-2.5 bg-white/95 backdrop-blur-md text-slate-900 px-2.5 py-1 rounded-xl text-sm font-black shadow-lg border border-slate-100/50">
-                      ৳{product.price}
-                    </div>
                     {product.allowCustomize && (
                       <div className="absolute top-2.5 left-2.5 bg-purple-600/90 text-white px-2 py-1 rounded-lg text-[10px] font-black backdrop-blur-sm flex items-center gap-1">
                         <Sparkles size={10} /> কাস্টম
@@ -2386,6 +2383,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     >
                       {product.name}
                     </h3>
+
+                    {/* Price and Unit right above Cart Controls */}
+                    <div className="mb-3 flex items-baseline gap-1">
+                      <span className="text-lg font-black text-slate-900">৳{product.price}</span>
+                      {product.unit && (
+                        <span className="text-[11px] font-bold text-slate-400">/ {product.unit}</span>
+                      )}
+                    </div>
 
                     {/* Cart Controls */}
                     <div className="mt-auto space-y-2">
