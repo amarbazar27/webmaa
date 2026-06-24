@@ -2072,10 +2072,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
-      <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner max-h-[140px] sm:max-h-[200px] md:max-h-[260px]">
+      <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner h-[33vh] min-h-[140px] max-h-[380px]">
         {normalizedBanners.length > 0 ? (
           <div 
-            className="relative w-full h-auto overflow-hidden"
+            className="relative w-full h-full overflow-hidden"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -2083,7 +2083,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             {normalizedBanners.map((banner, i) => (
               <div 
                 key={i} 
-                className={`w-full transition-all duration-1000 ${
+                className={`w-full h-full transition-all duration-1000 ${
                   i === activeBanner 
                     ? 'relative z-10 opacity-100 scale-100 block' 
                     : 'absolute inset-0 z-0 opacity-0 scale-95 pointer-events-none'
@@ -2093,13 +2093,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
                   <img src={banner.url} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-2xl opacity-20" />
                 </div>
-                {/* Actual banner — relative in-flow for active banner to size container, absolute for preloaded/inactive banners */}
-                <img
-                  src={banner.url}
-                  loading={i === 0 ? "eager" : "lazy"}
-                  alt={banner.title || `Banner ${i+1}`}
-                  className="relative w-full max-h-[140px] sm:max-h-[200px] md:max-h-[260px] object-cover z-10 select-none transition-transform duration-700 hover:scale-102"
-                />
+                {/* Actual banner — scaled to fit container, no cropping */}
+                <div className="w-full h-full flex items-center justify-center">
+                  <img
+                    src={banner.url}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    alt={banner.title || `Banner ${i+1}`}
+                    className="max-w-full max-h-full object-contain z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
+                  />
+                </div>
                 {/* Premium Text Overlay if defined */}
                 {(banner.title || banner.description) && (
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent z-15 flex flex-col justify-end p-6 md:p-12 pb-8 md:pb-16 text-white">
@@ -2290,44 +2292,25 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           );
         })()}
 
-        {/* ── FAQ Section ── */}
+        {/* ── FAQ Schema Injected silently for SEO/AEO ── */}
         {shop.faqItems && shop.faqItems.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{
-                __html: JSON.stringify({
-                  "@context": "https://schema.org",
-                  "@type": "FAQPage",
-                  "mainEntity": shop.faqItems.map(faq => ({
-                    "@type": "Question",
-                    "name": faq.q,
-                    "acceptedAnswer": {
-                      "@type": "Answer",
-                      "text": faq.a
-                    }
-                  }))
-                })
-              }}
-            />
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <span className="text-lg">❓</span>
-              <h3 className="font-black text-slate-900 text-base">সাধারণ প্রশ্নোত্তর (FAQ)</h3>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {shop.faqItems.map((faq, idx) => (
-                <details key={idx} className="group">
-                  <summary className="flex items-center justify-between px-5 py-4 cursor-pointer list-none hover:bg-slate-50 transition-colors">
-                    <span className="font-bold text-sm text-slate-800 pr-4">{faq.q}</span>
-                    <ChevronRight size={16} className="text-slate-400 shrink-0 group-open:rotate-90 transition-transform" />
-                  </summary>
-                  <div className="px-5 pb-4 pt-1">
-                    <p className="text-sm text-slate-600 font-medium leading-relaxed">{faq.a}</p>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": shop.faqItems.map(faq => ({
+                  "@type": "Question",
+                  "name": faq.q,
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": faq.a
+                  }
+                }))
+              })
+            }}
+          />
         )}
 
         {/* ── Product Grid ── */}
@@ -2690,26 +2673,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             </div>
             
             <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-              <FaqAccordionItem 
-                question="কীভাবে অর্ডার করব?" 
-                answer="পছন্দের প্রোডাক্টের নিচে থাকা 'কার্টে যোগ করুন' বাটনে ক্লিক করে ঝুড়িতে যোগ করুন। এরপর নিচে ডান কোণায় থাকা কার্ট আইকনে ক্লিক করে আপনার নাম, মোবাইল নম্বর এবং ঠিকানা দিয়ে 'অর্ডার প্লেস করুন' বাটনে চাপুন।" 
-              />
-              <FaqAccordionItem 
-                question="অনুরোধকৃত (Requested) প্রোডাক্ট কী?" 
-                answer="যদি কোনো প্রোডাক্টের স্টক শেষ হয়ে যায় কিন্তু শপ মালিকের অনুরোধ অপশন চালু থাকে, তবে আপনি সেটি 'অনুরোধ করুন' বাটনের মাধ্যমে অর্ডার করতে পারবেন। প্রোডাক্টটি পরবর্তীতে এভেইলেবল হলে শপ থেকে আপনার সাথে যোগাযোগ করা হবে।" 
-              />
-              <FaqAccordionItem 
-                question="ডেলিভারি চার্জ কত?" 
-                answer="ডেলিভারি চার্জ শপ ও আপনার লোকেশনের ওপর নির্ভর করে। চেকআউট পেইজে আপনার ঠিকানা ইনপুট দিলে সঠিক ডেলিভারি চার্জ দেখতে পাবেন।" 
-              />
-              <FaqAccordionItem 
-                question="অর্ডার ট্র্যাক করব কীভাবে?" 
-                answer="অর্ডার সফলভাবে সাবমিট হওয়ার পর একটি Order ID পাবেন। আপনি আপনার প্রফাইল সেকশনে গিয়ে পূর্ববর্তী অর্ডারের হিস্টোরি এবং স্ট্যাটাস দেখতে পারবেন।" 
-              />
-              <FaqAccordionItem 
-                question="পেমেন্ট পদ্ধতি কী কী?" 
-                answer="আমরা ক্যাশ অন ডেলিভারি (Cash on Delivery) এবং অনলাইন পেমেন্ট উভয়ই সমর্থন করি। চেকআউট পেইজে আপনার সুবিধাজনক অপশনটি সিলেক্ট করতে পারবেন।" 
-              />
+              {shop.faqItems && shop.faqItems.length > 0 ? (
+                shop.faqItems.map((faq, idx) => (
+                  <FaqAccordionItem key={idx} question={faq.q} answer={faq.a} />
+                ))
+              ) : (
+                <div className="text-center py-12 text-slate-500 font-bold text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  কোনো সাধারণ জিজ্ঞাসা (FAQ) যুক্ত করা নেই।
+                </div>
+              )}
             </div>
           </div>
         </div>

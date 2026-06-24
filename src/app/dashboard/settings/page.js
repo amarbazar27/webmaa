@@ -468,6 +468,58 @@ export default function SettingsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shop?.customDomain, domainStatus]);
 
+  const cropTo169 = (file) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const targetAspectRatio = 16 / 9;
+        const currentAspectRatio = img.width / img.height;
+
+        let sourceX = 0;
+        let sourceY = 0;
+        let sourceWidth = img.width;
+        let sourceHeight = img.height;
+
+        if (currentAspectRatio > targetAspectRatio) {
+          sourceWidth = img.height * targetAspectRatio;
+          sourceX = (img.width - sourceWidth) / 2;
+        } else if (currentAspectRatio < targetAspectRatio) {
+          sourceHeight = img.width / targetAspectRatio;
+          sourceY = (img.height - sourceHeight) / 2;
+        }
+
+        canvas.width = 1600;
+        canvas.height = 900;
+
+        ctx.drawImage(
+          img,
+          sourceX, sourceY, sourceWidth, sourceHeight,
+          0, 0, 1600, 900
+        );
+
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+          const croppedFile = new File([blob], file.name || 'banner.jpg', {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          resolve(croppedFile);
+        }, 'image/jpeg', 0.85);
+      };
+      img.onerror = () => {
+        resolve(file);
+      };
+    });
+  };
+
   const handleBannerUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -480,15 +532,16 @@ export default function SettingsPage() {
       return;
     }
     
-    const { uploadImage } = await import('@/lib/storage');
     setSaving(true);
     try {
-      const url = await uploadImage(file);
+      const croppedFile = await cropTo169(file);
+      const { uploadImage } = await import('@/lib/storage');
+      const url = await uploadImage(croppedFile);
       const newBannerObj = { url, title: '', description: '', linkUrl: '', buttonText: '' };
       const newBanners = [...(shop.banners || []), newBannerObj];
       await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
-      toast.success('ব্যানার আপলোড সফল হয়েছে! 🖼️');
+      toast.success('ব্যানার আপলোড সফল হয়েছে (১৬:৯ মাপে ক্রপ করা হয়েছে)! 🖼️');
     } catch (err) {
       toast.error(err.message || 'ব্যানার আপলোড ব্যর্থ হয়েছে');
     } finally {
@@ -503,10 +556,11 @@ export default function SettingsPage() {
       toast.error('ব্যানার সাইজ ৫ মেগাবাইটের বেশি হওয়া যাবে না।');
       return;
     }
-    const { uploadImage } = await import('@/lib/storage');
     setSaving(true);
     try {
-      const url = await uploadImage(file);
+      const croppedFile = await cropTo169(file);
+      const { uploadImage } = await import('@/lib/storage');
+      const url = await uploadImage(croppedFile);
       const newBanners = [...(shop.banners || [])];
       const existing = newBanners[index];
       if (typeof existing === 'string') {
@@ -516,7 +570,7 @@ export default function SettingsPage() {
       }
       await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
-      toast.success('ব্যানার পরিবর্তন সফল হয়েছে! 🔄');
+      toast.success('ব্যানার পরিবর্তন সফল হয়েছে (১৬:৯ মাপে ক্রপ করা হয়েছে)! 🔄');
     } catch (err) {
       toast.error(err.message || 'ব্যানার পরিবর্তন ব্যর্থ হয়েছে');
     } finally {
@@ -985,16 +1039,24 @@ export default function SettingsPage() {
                   </p>
                   
                   <div className="flex gap-2">
-                     <Input 
-                       placeholder="staff@gmail.com" 
-                       type="email"
-                       value={newStaffEmail}
-                       onChange={e => setNewStaffEmail(e.target.value)}
-                       className="flex-1"
-                     />
+                     <div className="flex-1">
+                        <Input 
+                          placeholder="staff1@gmail.com, staff2@gmail.com" 
+                          type="text"
+                          value={newStaffEmail}
+                          onChange={e => setNewStaffEmail(e.target.value)}
+                          className="w-full"
+                        />
+                        <span className="text-[10px] font-black text-slate-400 mt-1 block">কমা (,) দিয়ে একাধিক ইমেইল একসাথে যোগ করতে পারেন।</span>
+                     </div>
                      <Button type="button" onClick={() => {
-                        if (newStaffEmail && !staffEmails.includes(newStaffEmail.toLowerCase())) {
-                           setStaffEmails([...staffEmails, newStaffEmail.toLowerCase()]);
+                        if (newStaffEmail) {
+                           const parsed = newStaffEmail.split(',').map(e => e.trim().toLowerCase()).filter(e => e && e.includes('@'));
+                           const updated = [...staffEmails];
+                           parsed.forEach(email => {
+                              if (!updated.includes(email)) updated.push(email);
+                           });
+                           setStaffEmails(updated);
                            setNewStaffEmail('');
                         }
                      }} className="h-[52px]">Add Staff</Button>
@@ -1020,16 +1082,24 @@ export default function SettingsPage() {
                   </p>
                   
                   <div className="flex gap-2">
-                     <Input 
-                       placeholder="admin@gmail.com" 
-                       type="email"
-                       value={newAdminEmail}
-                       onChange={e => setNewAdminEmail(e.target.value)}
-                       className="flex-1"
-                     />
+                     <div className="flex-1">
+                        <Input 
+                          placeholder="admin1@gmail.com, admin2@gmail.com" 
+                          type="text"
+                          value={newAdminEmail}
+                          onChange={e => setNewAdminEmail(e.target.value)}
+                          className="w-full"
+                        />
+                        <span className="text-[10px] font-black text-slate-400 mt-1 block">কমা (,) দিয়ে একাধিক ইমেইল একসাথে যোগ করতে পারেন।</span>
+                     </div>
                      <Button type="button" onClick={() => {
-                        if (newAdminEmail && !adminEmails.includes(newAdminEmail.toLowerCase())) {
-                           setAdminEmails([...adminEmails, newAdminEmail.toLowerCase()]);
+                        if (newAdminEmail) {
+                           const parsed = newAdminEmail.split(',').map(e => e.trim().toLowerCase()).filter(e => e && e.includes('@'));
+                           const updated = [...adminEmails];
+                           parsed.forEach(email => {
+                              if (!updated.includes(email)) updated.push(email);
+                           });
+                           setAdminEmails(updated);
                            setNewAdminEmail('');
                         }
                      }} className="h-[52px]">Add Admin</Button>
