@@ -672,6 +672,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [isFaqOpen, setIsFaqOpen] = useState(false);
 
   const normalizedBanners = (shop?.banners || []).map(b => {
     if (typeof b === 'string') {
