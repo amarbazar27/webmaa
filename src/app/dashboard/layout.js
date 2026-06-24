@@ -23,6 +23,7 @@ export default function DashboardLayout({ children }) {
         userData?.role !== 'retailer' &&
         userData?.role !== 'superadmin' &&
         userData?.role !== 'staff' &&
+        userData?.role !== 'admin' &&
         !isImpersonating
       ) {
         router.push('/');
@@ -53,6 +54,7 @@ export default function DashboardLayout({ children }) {
     userData?.role !== 'retailer' &&
     userData?.role !== 'superadmin' &&
     userData?.role !== 'staff' &&
+    userData?.role !== 'admin' &&
     !isImpersonating
   )) return null;
 

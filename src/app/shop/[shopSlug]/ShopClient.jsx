@@ -4,13 +4,11 @@ import useLocation from '@/lib/useLocation';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import LoadingScreen from '@/components/ui/LoadingScreen';
-import { 
-  ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
+import { ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
   ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
-  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus
-} from 'lucide-react';
+  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -1122,6 +1120,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     if (sortOption === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
     if (sortOption === 'name_desc') return b.name.localeCompare(a.name, 'bn');
     if (sortOption === 'newest') return (b.createdAt ? new Date(b.createdAt) : 0) - (a.createdAt ? new Date(a.createdAt) : 0);
+    if (sortOption === 'stock_desc') return (b.stock || 0) - (a.stock || 0);
     // Default: name_asc (A→Z)
     return a.name.localeCompare(b.name, 'bn');
   });
@@ -1289,8 +1288,43 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     }
 
     if (product.stock === 0) {
-      toast.error('দুঃখিত, এই মুহূর্তে স্টকে নেই');
-      return;
+      if (product.allowRequest) {
+        const qtyToAdd = customQty !== null ? customQty : (product.quantity !== undefined ? Number(product.quantity) || 1 : 1);
+        const resolvedCustomizedText = customizedText !== null ? customizedText : (product.customizedText || '');
+        const requestLabel = resolvedCustomizedText ? `${resolvedCustomizedText} [অনুরোধকৃত / Requested]` : '[অনুরোধকৃত / Requested]';
+        const resolvedNote = customNote !== null ? customNote : (product.note || '');
+
+        setCart(prev => {
+          const existingIndex = prev.findIndex(item => 
+            item.id === product.id && 
+            (item.customizedText || '') === (requestLabel || '') &&
+            (customPrice === null || parseFloat(item.price) === parseFloat(customPrice))
+          );
+
+          if (existingIndex > -1) {
+            return prev.map((item, idx) => 
+              idx === existingIndex 
+                ? { ...item, quantity: item.quantity + qtyToAdd, note: resolvedNote || item.note } 
+                : item
+            );
+          } else {
+            return [...prev, { 
+              ...product, 
+              price: customPrice !== null ? customPrice : product.price,
+              clientPrice: customPrice !== null ? customPrice : product.price,
+              quantity: qtyToAdd, 
+              note: resolvedNote, 
+              customizedText: requestLabel 
+            }];
+          }
+        });
+        trackStoreEvent('add_to_cart_request', { id: product.id, name: product.name, price: customPrice !== null ? customPrice : product.price });
+        toast.success(`${product.name} ঝুড়িতে অনুরোধকৃত হিসেবে যোগ হয়েছে!`);
+        return;
+      } else {
+        toast.error('দুঃখিত, এই মুহূর্তে স্টকে নেই');
+        return;
+      }
     }
     
     // Resolve fields: prior parameter defaults first, then properties on the product object, else default values
@@ -1853,10 +1887,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         userId={user?.uid || null}
       />
 
-      {/* ── Category Drawer (Mobile) ── */}
-      <div className={`fixed inset-0 z-[100] md:hidden transition-all duration-300 ${isCategoryMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      {/* ── Category Drawer (All Devices - Left Side) ── */}
+      <div className={`fixed inset-0 z-[100] transition-all duration-300 ${isCategoryMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsCategoryMenuOpen(false)} />
-        <div className={`absolute top-0 right-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isCategoryMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`absolute top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isCategoryMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
             <h2 className="text-lg font-black text-slate-900 flex items-center gap-2"><Tag size={18} className="text-purple-600" /> ক্যাটাগরি সমূহ</h2>
             <button onClick={() => setIsCategoryMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 hover:bg-slate-900 transition-colors">
@@ -1947,18 +1981,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </Script>
       )}
 
-      {/* ── Service Area Banner ── */}
-      {!shop.disableServiceBanner && (
-        <ServiceBanner 
-           shop={shop} 
-           status={locationStatus} 
-           setStatus={setLocationStatus}
-           manualInput={locationManualInput}
-           setManualInput={setLocationManualInput}
-           detectedLocation={detectedLocation}
-           setDetectedLocation={setDetectedLocation}
-        />
-      )}
+      {/* ── Service Area Banner Removed ── */}
 
 
 
@@ -1977,7 +2000,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         <div className="max-w-[98%] mx-auto px-2 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Logo/Brand (Left Side) */}
           <div className="flex items-center gap-2">
-            <button className="hidden">
+            <button 
+              onClick={() => setIsCategoryMenuOpen(true)} 
+              className="flex items-center justify-center p-1.5 rounded-xl hover:bg-slate-100 transition-colors text-slate-700"
+            >
               <Menu size={20} strokeWidth={2.5} />
             </button>
             {/* Static logo - no href to prevent 'No store found' navigation */}
@@ -2010,12 +2036,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               </a>
             )}
 
-            {/* App Download */}
-            {!pwaInstalled && (
-              <button onClick={handleAppDownload} className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm">
-                <Download size={14} /> <span className="hidden sm:inline">অ্যাপ</span>
-              </button>
-            )}
+            {/* FAQ Button */}
+            <button onClick={() => setIsFaqOpen(true)} className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm">
+              <HelpCircle size={14} /> <span>FAQ</span>
+            </button>
 
             {/* Profile */}
             <button onClick={() => setIsProfileOpen(true)} className="w-8 h-8 sm:w-10 sm:h-10 aspect-square bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl transition-colors shadow-sm border border-purple-200 overflow-hidden flex items-center justify-center">
@@ -2029,29 +2053,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       </header>
 
-      {/* ── Top Premium Location Bar ── */}
-      <div className="bg-white border-b border-slate-200/60 px-4 py-3 shadow-sm z-30 relative">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 shrink-0 border border-pink-100/50">
-              <MapPin size={18} className="fill-current animate-bounce" style={{ animationDuration: '3s' }} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">ডেলিভারি ঠিকানা (Delivery Address)</p>
-              <p className="text-xs font-extrabold text-slate-900 leading-tight mt-1 truncate max-w-[200px] sm:max-w-md">
-                {orderForm.address ? orderForm.address.split('\n')[0] : 'লোকেশন সেট করা নেই'}
-              </p>
-            </div>
-          </div>
-          <button 
-            type="button"
-            onClick={() => setIsMapOpen(true)}
-            className="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white rounded-xl text-[11px] font-black tracking-wider uppercase transition-all shadow-md shadow-pink-500/15 active:scale-95 shrink-0 flex items-center gap-1"
-          >
-            <MapPin size={12} className="fill-current" /> {orderForm.coordinates ? 'লোকেশন পরিবর্তন' : 'ম্যাপ থেকে সেট করুন'}
-          </button>
-        </div>
-      </div>
+      {/* ── Top Premium Location Bar Removed ── */}
 
       {/* ── Inline Smart Meal AI Planner (Top Storefront) ── */}
       {shop.enableSmartMeal && (
@@ -2069,7 +2071,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
-      <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner">
+      <div className="sf-hero relative w-full bg-slate-950 overflow-hidden border-b border-slate-800 group/banner max-h-[140px] sm:max-h-[200px] md:max-h-[260px]">
         {normalizedBanners.length > 0 ? (
           <div 
             className="relative w-full h-auto overflow-hidden"
@@ -2095,7 +2097,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   src={banner.url}
                   loading={i === 0 ? "eager" : "lazy"}
                   alt={banner.title || `Banner ${i+1}`}
-                  className="relative w-full h-auto z-10 select-none transition-transform duration-700 hover:scale-102"
+                  className="relative w-full max-h-[140px] sm:max-h-[200px] md:max-h-[260px] object-cover z-10 select-none transition-transform duration-700 hover:scale-102"
                 />
                 {/* Premium Text Overlay if defined */}
                 {(banner.title || banner.description) && (
@@ -2133,7 +2135,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             )}
           </div>
         ) : (
-          <div className="w-full h-full min-h-[180px] sm:min-h-[250px] md:min-h-[350px] bg-gradient-to-r from-purple-800 via-purple-600 to-blue-700 flex items-center justify-center p-6 text-center shadow-inner relative">
+          <div className="w-full h-full min-h-[100px] sm:min-h-[150px] md:min-h-[200px] bg-gradient-to-r from-purple-800 via-purple-600 to-blue-700 flex items-center justify-center p-4 text-center shadow-inner relative">
             {shop.coverImg && <img loading="eager" src={shop.coverImg} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
             <h2 className="relative z-10 text-3xl md:text-5xl font-black text-white drop-shadow-xl tracking-tight">{shop.welcomeMessage || 'স্বাগতম আমাদের স্টোরে!'}</h2>
           </div>
@@ -2142,41 +2144,37 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
         
-        {/* ── Banner Description Box (Retailer Customizable) ── */}
+        {/* ── Banner Description Box (SEO/AEO/GEO Optimized & Narrow) ── */}
         <div
-          className="rounded-2xl shadow-sm border overflow-hidden"
+          className="rounded-xl border overflow-hidden p-3"
           style={{
             borderColor: shop?.descBoxBorderColor || 'var(--sp-border, #e2e8f0)',
             background: shop?.descBoxBg || 'var(--sp-card, #ffffff)',
           }}
+          itemScope
+          itemType="https://schema.org/Store"
         >
-          <div className="h-1.5 w-full bg-gradient-to-r from-purple-600 to-blue-600" />
-          <div className="p-5 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-start gap-5">
-              {shop?.logoUrl && (
-                <div className="shrink-0 hidden md:block">
-                  <img src={shop.logoUrl} alt={shop.shopName} className="w-16 h-16 object-contain rounded-2xl border p-1 border-slate-200" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl md:text-2xl font-black tracking-tight mb-2 text-slate-900">
+          <meta itemprop="url" content={shop?.customDomain ? `https://${shop.customDomain}` : `https://daripallah.com/shop/${shop.shopSlug}`} />
+          {shop?.logoUrl && <meta itemprop="image" content={shop.logoUrl} />}
+          
+          <div className="flex items-center gap-3">
+            {shop?.logoUrl && (
+              <img itemprop="logo" src={shop.logoUrl} alt={shop.shopName} className="w-10 h-10 object-contain rounded-lg border border-slate-200 shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 itemprop="name" className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-none">
                   {shop?.shopName || ''}
                 </h1>
-                <p className="text-sm md:text-base font-medium leading-relaxed whitespace-pre-line text-slate-600">
-                  {shop?.bannerDescription || shop?.description || shop?.slogan || ''}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(shop?.descBoxBadges?.length > 0
-                    ? shop.descBoxBadges
-                    : ['\u2705 \u09a6\u09cd\u09b0\u09c1\u09a4 \u0985\u09b0\u09cd\u09a1\u09be\u09b0', '\ud83d\udd12 \u09a8\u09bf\u09b0\u09be\u09aa\u09a6 \u09aa\u09c7\u09ae\u09c7\u09a8\u09cd\u099f', '\ud83d\udce6 \u09ae\u09be\u09a8\u09b8\u09ae\u09cd\u09aa\u09a8\u09cd\u09a8 \u09aa\u09a3\u09cd\u09af']
-                  ).map((badge, bi) => (
-                    <span key={bi}
-                      className="inline-flex items-center px-3 py-1 text-xs font-black rounded-lg border bg-purple-50 text-purple-700 border-purple-200">
-                      {badge}
-                    </span>
-                  ))}
-                </div>
+                {shop?.slogan && (
+                  <span itemprop="slogan" className="text-[10px] sm:text-xs text-slate-500 font-bold border-l pl-2 border-slate-200 leading-none">
+                    {shop.slogan}
+                  </span>
+                )}
               </div>
+              <p itemprop="description" className="text-xs sm:text-sm font-medium text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                {shop?.bannerDescription || shop?.description || shop?.slogan || ''}
+              </p>
             </div>
           </div>
         </div>
@@ -2227,6 +2225,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <option value="price_desc">বেশি মূল্য প্রথমে</option>
               <option value="name_asc">নাম (A-Z)</option>
               <option value="name_desc">নাম (Z-A)</option>
+              <option value="stock_desc">স্টক উপলব্ধ প্রথমে</option>
             </select>
           </div>
         </div>
@@ -2395,10 +2394,34 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     {/* Cart Controls */}
                     <div className="mt-auto space-y-2">
                       {product.stock === 0 ? (
-                        <div className="w-full py-2.5 rounded-xl font-black text-sm bg-red-50 text-red-500 border border-red-200 flex flex-col items-center justify-center gap-1 cursor-not-allowed">
-                          <div className="flex items-center gap-1.5"><span className="text-base">🚫</span> স্টক আউট</div>
-                          <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Frozen — অর্ডার বন্ধ</span>
-                        </div>
+                        product.allowRequest ? (
+                          cartItem ? (
+                            <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
+                              <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm font-black border border-slate-200 shrink-0">
+                                <Minus size={14} strokeWidth={2.5} />
+                              </button>
+                              <input
+                                type="number"
+                                min="1"
+                                value={cartItem.quantity}
+                                onChange={e => setQuantityDirect(product.id, e.target.value)}
+                                className="font-black text-purple-700 text-sm w-full text-center bg-transparent outline-none border-none"
+                              />
+                              <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0">
+                                <Plus size={14} strokeWidth={2.5} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button onClick={() => addToCart(product)} className="w-full py-2.5 rounded-xl font-black text-xs bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                              📬 অনুরোধ করুন (Request)
+                            </button>
+                          )
+                        ) : (
+                          <div className="w-full py-2.5 rounded-xl font-black text-sm bg-red-50 text-red-500 border border-red-200 flex flex-col items-center justify-center gap-1 cursor-not-allowed">
+                            <div className="flex items-center gap-1.5"><span className="text-base">🚫</span> স্টক আউট</div>
+                            <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Frozen — অর্ডার বন্ধ</span>
+                          </div>
+                        )
                       ) : cartItem ? (
                         <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
                           <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm font-black border border-slate-200 shrink-0">
@@ -2652,6 +2675,45 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <span className="text-[10px] font-black uppercase tracking-wide">প্রফাইল</span>
         </button>
       </div>
+
+      {/* ── FAQ Interactive Modal ── */}
+      {isFaqOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsFaqOpen(false)} />
+          <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[85vh] animate-slide-in">
+            <div className="flex items-center justify-between border-b pb-4 mb-4">
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">❓ সাধারণ জিজ্ঞাসা (FAQ)</h2>
+              <button onClick={() => setIsFaqOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+                <X size={16} strokeWidth={2.5} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+              <FaqAccordionItem 
+                question="কীভাবে অর্ডার করব?" 
+                answer="পছন্দের প্রোডাক্টের নিচে থাকা 'কার্টে যোগ করুন' বাটনে ক্লিক করে ঝুড়িতে যোগ করুন। এরপর নিচে ডান কোণায় থাকা কার্ট আইকনে ক্লিক করে আপনার নাম, মোবাইল নম্বর এবং ঠিকানা দিয়ে 'অর্ডার প্লেস করুন' বাটনে চাপুন।" 
+              />
+              <FaqAccordionItem 
+                question="অনুরোধকৃত (Requested) প্রোডাক্ট কী?" 
+                answer="যদি কোনো প্রোডাক্টের স্টক শেষ হয়ে যায় কিন্তু শপ মালিকের অনুরোধ অপশন চালু থাকে, তবে আপনি সেটি 'অনুরোধ করুন' বাটনের মাধ্যমে অর্ডার করতে পারবেন। প্রোডাক্টটি পরবর্তীতে এভেইলেবল হলে শপ থেকে আপনার সাথে যোগাযোগ করা হবে।" 
+              />
+              <FaqAccordionItem 
+                question="ডেলিভারি চার্জ কত?" 
+                answer="ডেলিভারি চার্জ শপ ও আপনার লোকেশনের ওপর নির্ভর করে। চেকআউট পেইজে আপনার ঠিকানা ইনপুট দিলে সঠিক ডেলিভারি চার্জ দেখতে পাবেন।" 
+              />
+              <FaqAccordionItem 
+                question="অর্ডার ট্র্যাক করব কীভাবে?" 
+                answer="অর্ডার সফলভাবে সাবমিট হওয়ার পর একটি Order ID পাবেন। আপনি আপনার প্রফাইল সেকশনে গিয়ে পূর্ববর্তী অর্ডারের হিস্টোরি এবং স্ট্যাটাস দেখতে পারবেন।" 
+              />
+              <FaqAccordionItem 
+                question="পেমেন্ট পদ্ধতি কী কী?" 
+                answer="আমরা ক্যাশ অন ডেলিভারি (Cash on Delivery) এবং অনলাইন পেমেন্ট উভয়ই সমর্থন করি। চেকআউট পেইজে আপনার সুবিধাজনক অপশনটি সিলেক্ট করতে পারবেন।" 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {orderSuccess && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={() => setOrderSuccess(null)} />
@@ -3663,7 +3725,10 @@ function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCa
 
   const handleModalAddToCart = () => {
     try {
-      if (Number(safeProduct.stock) === 0) return toast.error('স্টক নেই');
+      const isStockOut = Number(safeProduct.stock) === 0;
+      if (isStockOut && !safeProduct.allowRequest) {
+        return toast.error('স্টক নেই');
+      }
 
       const safeQty = Number(logic.qty) || 1;
       const safeAiPrice = logic.aiPrice !== null ? Number(logic.aiPrice) : null;
@@ -3677,6 +3742,11 @@ function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCa
 
       const displayName = safeProduct.name + (variantString ? ` (${variantString})` : '');
 
+      let finalCustomizedText = logic.customInput || '';
+      if (isStockOut && safeProduct.allowRequest) {
+        finalCustomizedText = finalCustomizedText ? `${finalCustomizedText} [অনুরোধকৃত / Requested]` : '[অনুরোধকৃত / Requested]';
+      }
+
       const cartItem = {
         id: `${safeProduct.id}_${Date.now()}`,
         productId: safeProduct.id,
@@ -3686,8 +3756,8 @@ function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCa
         quantity: safeQty,
         imageUrl: safeProduct.images?.[0] || safeProduct.imageUrl || '',
         note: logic.customerNote || '',
-        isCustomized: safeAiPrice !== null || !!logic.customerNote || !!logic.customInput,
-        customizedText: logic.customInput || '',
+        isCustomized: safeAiPrice !== null || !!logic.customerNote || !!logic.customInput || (isStockOut && safeProduct.allowRequest),
+        customizedText: finalCustomizedText,
         variantsText: variantString || ''
       };
 
@@ -3748,6 +3818,28 @@ function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCa
         />
         <ReviewSection shopId={safeShop?.id} />
       </div>
+    </div>
+  );
+}
+
+// ── FAQ Accordion Item Component ──
+function FaqAccordionItem({ question, answer }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="border border-slate-200 rounded-2xl overflow-hidden transition-all bg-slate-50">
+      <button 
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 text-left font-black text-slate-800 text-sm hover:bg-slate-100 transition-colors"
+      >
+        <span>{question}</span>
+        <span className="text-purple-600 text-xs font-black">{isOpen ? '▲' : '▼'}</span>
+      </button>
+      {isOpen && (
+        <div className="p-4 pt-0 text-slate-600 text-xs font-bold leading-relaxed border-t border-slate-100 bg-white">
+          {answer}
+        </div>
+      )}
     </div>
   );
 }

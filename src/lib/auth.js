@@ -26,12 +26,18 @@ const determineRole = async (email) => {
     }
 
     // Parallelize role checks for speed
-    const [inviteSnap, staffSnap] = await Promise.all([
+    const [inviteSnap, staffSnap, adminSnap] = await Promise.all([
       getDocs(query(collection(db, 'retailer_invites'), where('email', '==', currentEmail))),
-      getDocs(query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail)))
+      getDocs(query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail))),
+      getDocs(query(collection(db, 'shops'), where('adminEmails', 'array-contains', currentEmail)))
     ]);
 
     if (!inviteSnap.empty) return { role: 'retailer' };
+
+    if (!adminSnap.empty) {
+      const shopDoc = adminSnap.docs[0];
+      return { role: 'admin', accessShopId: shopDoc.id, shopSlug: shopDoc.data().shopSlug };
+    }
     
     if (!staffSnap.empty) {
       const shopDoc = staffSnap.docs[0];

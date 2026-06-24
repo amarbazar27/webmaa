@@ -1,0 +1,959 @@
+stringIdsSize: 661 off: 112
+typeIdsSize: 159 off: 2756
+methodIdsSize: 324 off: 6172
+classDefsSize: 35 off: 8764
+
+--- ALL METHODS ---
+0: Landroid/animation/AnimatorSet; -> <init>
+1: Landroid/animation/AnimatorSet; -> playTogether
+2: Landroid/animation/AnimatorSet; -> setDuration
+3: Landroid/animation/AnimatorSet; -> start
+4: Landroid/animation/ObjectAnimator; -> cancel
+5: Landroid/animation/ObjectAnimator; -> isRunning
+6: Landroid/animation/ObjectAnimator; -> ofFloat
+7: Landroid/animation/ObjectAnimator; -> setDuration
+8: Landroid/animation/ObjectAnimator; -> setRepeatCount
+9: Landroid/animation/ObjectAnimator; -> start
+10: Landroid/app/Dialog; -> <init>
+11: Landroid/app/Dialog; -> dismiss
+12: Landroid/app/Dialog; -> findViewById
+13: Landroid/app/Dialog; -> getWindow
+14: Landroid/app/Dialog; -> setCancelable
+15: Landroid/app/Dialog; -> setContentView
+16: Landroid/app/Dialog; -> show
+17: Landroid/app/NotificationChannel; -> <init>
+18: Landroid/app/NotificationManager; -> createNotificationChannel
+19: Landroid/app/Service; -> <init>
+20: Landroid/app/Service; -> onCreate
+21: Landroid/app/Service; -> onDestroy
+22: Landroid/content/BroadcastReceiver; -> <init>
+23: Landroid/content/Context; -> getPackageManager
+24: Landroid/content/Context; -> getPackageName
+25: Landroid/content/Context; -> getSharedPreferences
+26: Landroid/content/Context; -> getSystemService
+27: Landroid/content/DialogInterface; -> cancel
+28: Landroid/content/Intent; -> <init>
+29: Landroid/content/Intent; -> <init>
+30: Landroid/content/Intent; -> getExtras
+31: Landroid/content/Intent; -> getIntExtra
+32: Landroid/content/Intent; -> setData
+33: Landroid/content/IntentFilter; -> <init>
+34: Landroid/content/SharedPreferences$Editor; -> apply
+35: Landroid/content/SharedPreferences$Editor; -> putBoolean
+36: Landroid/content/SharedPreferences$Editor; -> putString
+37: Landroid/content/SharedPreferences; -> edit
+38: Landroid/content/SharedPreferences; -> getBoolean
+39: Landroid/content/SharedPreferences; -> getString
+40: Landroid/content/pm/PackageManager; -> getPackageInfo
+41: Landroid/graphics/Color; -> parseColor
+42: Landroid/graphics/Rect; -> <init>
+43: Landroid/media/MediaPlayer; -> create
+44: Landroid/media/MediaPlayer; -> release
+45: Landroid/media/MediaPlayer; -> setOnCompletionListener
+46: Landroid/media/MediaPlayer; -> start
+47: Landroid/net/Uri; -> fromParts
+48: Landroid/net/Uri; -> parse
+49: Landroid/os/BatteryManager; -> getIntProperty
+50: Landroid/os/Bundle; -> get
+51: Landroid/os/Bundle; -> getInt
+52: Landroid/os/Bundle; -> getString
+53: Landroid/os/Handler; -> <init>
+54: Landroid/os/Handler; -> post
+55: Landroid/os/Handler; -> postDelayed
+56: Landroid/os/VibrationEffect; -> createOneShot
+57: Landroid/os/Vibrator; -> vibrate
+58: Landroid/os/Vibrator; -> vibrate
+59: Landroid/telephony/SmsMessage; -> createFromPdu
+60: Landroid/telephony/SmsMessage; -> getDisplayOriginatingAddress
+61: Landroid/telephony/SmsMessage; -> getMessageBody
+62: Landroid/telephony/SubscriptionInfo; -> getDisplayName
+63: Landroid/telephony/SubscriptionInfo; -> getNumber
+64: Landroid/telephony/SubscriptionInfo; -> getSimSlotIndex
+65: Landroid/telephony/SubscriptionManager; -> from
+66: Landroid/telephony/SubscriptionManager; -> getActiveSubscriptionInfo
+67: Landroid/telephony/SubscriptionManager; -> getActiveSubscriptionInfoForSimSlotIndex
+68: Landroid/view/LayoutInflater; -> from
+69: Landroid/view/LayoutInflater; -> inflate
+70: Landroid/view/View; -> clearFocus
+71: Landroid/view/View; -> findViewById
+72: Landroid/view/View; -> getHeight
+73: Landroid/view/View; -> getRootView
+74: Landroid/view/View; -> getViewTreeObserver
+75: Landroid/view/View; -> getWindowToken
+76: Landroid/view/View; -> getWindowVisibleDisplayFrame
+77: Landroid/view/View; -> setVisibility
+78: Landroid/view/ViewGroup; -> getChildAt
+79: Landroid/view/ViewGroup; -> getChildCount
+80: Landroid/view/ViewTreeObserver; -> addOnGlobalLayoutListener
+81: Landroid/view/Window; -> setBackgroundDrawableResource
+82: Landroid/view/Window; -> setLayout
+83: Landroid/view/inputmethod/InputMethodManager; -> hideSoftInputFromWindow
+84: Landroid/widget/CheckBox; -> setChecked
+85: Landroid/widget/CheckBox; -> setOnCheckedChangeListener
+86: Landroid/widget/EditText; -> addTextChangedListener
+87: Landroid/widget/EditText; -> getText
+88: Landroid/widget/EditText; -> setText
+89: Landroid/widget/ImageView; -> setColorFilter
+90: Landroid/widget/ImageView; -> setImageResource
+91: Landroid/widget/ImageView; -> setOnClickListener
+92: Landroid/widget/RelativeLayout; -> setOnClickListener
+93: Landroid/widget/RemoteViews; -> <init>
+94: Landroid/widget/RemoteViews; -> setImageViewResource
+95: Landroid/widget/RemoteViews; -> setTextViewText
+96: Landroid/widget/TextView; -> setText
+97: Landroid/widget/Toast; -> cancel
+98: Landroid/widget/Toast; -> makeText
+99: Landroid/widget/Toast; -> show
+100: Landroidx/appcompat/app/AlertDialog$Builder; -> <init>
+101: Landroidx/appcompat/app/AlertDialog$Builder; -> create
+102: Landroidx/appcompat/app/AlertDialog$Builder; -> setNegativeButton
+103: Landroidx/appcompat/app/AlertDialog$Builder; -> setPositiveButton
+104: Landroidx/appcompat/app/AlertDialog$Builder; -> setView
+105: Landroidx/appcompat/app/AlertDialog; -> show
+106: Landroidx/appcompat/app/AppCompatActivity; -> <init>
+107: Landroidx/appcompat/app/AppCompatActivity; -> onCreate
+108: Landroidx/constraintlayout/widget/ConstraintLayout; -> setOnClickListener
+109: Landroidx/core/app/ActivityCompat; -> checkSelfPermission
+110: Landroidx/core/app/ActivityCompat; -> requestPermissions
+111: Landroidx/core/app/NotificationCompat$Builder; -> <init>
+112: Landroidx/core/app/NotificationCompat$Builder; -> build
+113: Landroidx/core/app/NotificationCompat$Builder; -> setColor
+114: Landroidx/core/app/NotificationCompat$Builder; -> setCustomContentView
+115: Landroidx/core/app/NotificationCompat$Builder; -> setOngoing
+116: Landroidx/core/app/NotificationCompat$Builder; -> setPriority
+117: Landroidx/core/app/NotificationCompat$Builder; -> setSmallIcon
+118: Landroidx/core/content/ContextCompat; -> getColor
+119: Landroidx/work/Constraints$Builder; -> <init>
+120: Landroidx/work/Constraints$Builder; -> build
+121: Landroidx/work/Constraints$Builder; -> setRequiredNetworkType
+122: Landroidx/work/Data$Builder; -> <init>
+123: Landroidx/work/Data$Builder; -> build
+124: Landroidx/work/Data$Builder; -> putString
+125: Landroidx/work/Data; -> getString
+126: Landroidx/work/ListenableWorker$Result; -> success
+127: Landroidx/work/OneTimeWorkRequest$Builder; -> <init>
+128: Landroidx/work/OneTimeWorkRequest$Builder; -> build
+129: Landroidx/work/OneTimeWorkRequest$Builder; -> setConstraints
+130: Landroidx/work/OneTimeWorkRequest$Builder; -> setInputData
+131: Landroidx/work/WorkManager; -> enqueue
+132: Landroidx/work/WorkManager; -> getInstance
+133: Landroidx/work/Worker; -> <init>
+134: Lcom/android/volley/DefaultRetryPolicy; -> <init>
+135: Lcom/android/volley/RequestQueue; -> add
+136: Lcom/android/volley/toolbox/StringRequest; -> <init>
+137: Lcom/android/volley/toolbox/StringRequest; -> setRetryPolicy
+138: Lcom/android/volley/toolbox/Volley; -> newRequestQueue
+139: Lcom/google/android/material/progressindicator/CircularProgressIndicator; -> setMax
+140: Lcom/google/android/material/progressindicator/CircularProgressIndicator; -> setProgress
+141: Lcom/google/android/material/snackbar/Snackbar; -> make
+142: Lcom/google/android/material/snackbar/Snackbar; -> setAction
+143: Lcom/google/android/material/snackbar/Snackbar; -> setActionTextColor
+144: Lcom/google/android/material/snackbar/Snackbar; -> setBackgroundTint
+145: Lcom/google/android/material/snackbar/Snackbar; -> show
+146: Lcom/tools/pipra_pay/Background_Run; -> <init>
+147: Lcom/tools/pipra_pay/Background_Run; -> getColor
+148: Lcom/tools/pipra_pay/Background_Run; -> getPackageName
+149: Lcom/tools/pipra_pay/Background_Run; -> getSystemService
+150: Lcom/tools/pipra_pay/Background_Run; -> onBind
+151: Lcom/tools/pipra_pay/Background_Run; -> onCreate
+152: Lcom/tools/pipra_pay/Background_Run; -> onDestroy
+153: Lcom/tools/pipra_pay/Background_Run; -> onStartCommand
+154: Lcom/tools/pipra_pay/Background_Run; -> startForeground
+155: Lcom/tools/pipra_pay/Background_Run; -> stopForeground
+156: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda0; -> <init>
+157: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda0; -> onClick
+158: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda1; -> <init>
+159: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda1; -> onCompletion
+160: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda2; -> <init>
+161: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda2; -> onGlobalLayout
+162: Lcom/tools/pipra_pay/Class/BaseActivity; -> <init>
+163: Lcom/tools/pipra_pay/Class/BaseActivity; -> clearFocusFromAllEditTexts
+164: Lcom/tools/pipra_pay/Class/BaseActivity; -> findViewById
+165: Lcom/tools/pipra_pay/Class/BaseActivity; -> isRotating
+166: Lcom/tools/pipra_pay/Class/BaseActivity; -> lambda$onCreate$0$com-tools-pipra_pay-Class-BaseActivity
+167: Lcom/tools/pipra_pay/Class/BaseActivity; -> lambda$showGlobalSnackbar$1$com-tools-pipra_pay-Class-BaseActivity
+168: Lcom/tools/pipra_pay/Class/BaseActivity; -> onCreate
+169: Lcom/tools/pipra_pay/Class/BaseActivity; -> onPause
+170: Lcom/tools/pipra_pay/Class/BaseActivity; -> showGlobalAnimated_button
+171: Lcom/tools/pipra_pay/Class/BaseActivity; -> showGlobalSnackbar
+172: Lcom/tools/pipra_pay/Class/BaseActivity; -> startGlobalRotateAnimation
+173: Lcom/tools/pipra_pay/Class/BaseActivity; -> stopGlobalRotateAnimation
+174: Lcom/tools/pipra_pay/Functions; -> <init>
+175: Lcom/tools/pipra_pay/Functions; -> getSlotBySubscription
+176: Lcom/tools/pipra_pay/Functions; -> request_BATTERY
+177: Lcom/tools/pipra_pay/Functions; -> request_ModelInfo
+178: Lcom/tools/pipra_pay/Functions; -> request_from
+179: Lcom/tools/pipra_pay/Functions; -> request_messageText
+180: Lcom/tools/pipra_pay/Functions; -> request_messageType
+181: Lcom/tools/pipra_pay/Functions; -> request_sim
+182: Lcom/tools/pipra_pay/Functions; -> request_simName
+183: Lcom/tools/pipra_pay/Functions; -> request_simNumber
+184: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> <init>
+185: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> onClick
+186: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda10; -> <init>
+187: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda10; -> onClick
+188: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda11; -> <init>
+189: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda11; -> onResponse
+190: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda12; -> <init>
+191: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda12; -> onErrorResponse
+192: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda13; -> <init>
+193: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda13; -> onResponse
+194: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda14; -> <init>
+195: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda14; -> onErrorResponse
+196: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda15; -> <init>
+197: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda15; -> onCheckedChanged
+198: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda16; -> <init>
+199: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda16; -> onClick
+200: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda17; -> <init>
+201: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda17; -> onClick
+202: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda18; -> <init>
+203: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda18; -> onClick
+204: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda1; -> <init>
+205: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda1; -> onClick
+206: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda2; -> <init>
+207: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda2; -> onClick
+208: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda3; -> <init>
+209: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda3; -> onClick
+210: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda4; -> <init>
+211: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda4; -> onClick
+212: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda5; -> <init>
+213: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda5; -> onClick
+214: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda6; -> <init>
+215: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda6; -> onClick
+216: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda7; -> <init>
+217: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda7; -> onClick
+218: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda8; -> <init>
+219: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda8; -> onClick
+220: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda9; -> <init>
+221: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda9; -> onClick
+222: Lcom/tools/pipra_pay/MainActivity$1; -> <init>
+223: Lcom/tools/pipra_pay/MainActivity$1; -> run
+224: Lcom/tools/pipra_pay/MainActivity$2; -> <init>
+225: Lcom/tools/pipra_pay/MainActivity$2; -> run
+226: Lcom/tools/pipra_pay/MainActivity$3; -> <init>
+227: Lcom/tools/pipra_pay/MainActivity$3; -> afterTextChanged
+228: Lcom/tools/pipra_pay/MainActivity$3; -> beforeTextChanged
+229: Lcom/tools/pipra_pay/MainActivity$3; -> onTextChanged
+230: Lcom/tools/pipra_pay/MainActivity$4; -> <init>
+231: Lcom/tools/pipra_pay/MainActivity$4; -> getParams
+232: Lcom/tools/pipra_pay/MainActivity$5; -> <init>
+233: Lcom/tools/pipra_pay/MainActivity$5; -> getHeaders
+234: Lcom/tools/pipra_pay/MainActivity$5; -> getParams
+235: Lcom/tools/pipra_pay/MainActivity$6; -> <init>
+236: Lcom/tools/pipra_pay/MainActivity$6; -> onReceive
+237: Lcom/tools/pipra_pay/MainActivity; -> -$$Nest$fgetbatteryPercentage
+238: Lcom/tools/pipra_pay/MainActivity; -> -$$Nest$fgetbatteryProgressBar
+239: Lcom/tools/pipra_pay/MainActivity; -> -$$Nest$fgethandler
+240: Lcom/tools/pipra_pay/MainActivity; -> -$$Nest$fgetsave_name
+241: Lcom/tools/pipra_pay/MainActivity; -> -$$Nest$fgettitle_battary
+242: Lcom/tools/pipra_pay/MainActivity; -> -$$Nest$mStartservice
+243: Lcom/tools/pipra_pay/MainActivity; -> -$$Nest$mcheckIfActive
+244: Lcom/tools/pipra_pay/MainActivity; -> <init>
+245: Lcom/tools/pipra_pay/MainActivity; -> Startservice
+246: Lcom/tools/pipra_pay/MainActivity; -> Stopservice
+247: Lcom/tools/pipra_pay/MainActivity; -> battary_status
+248: Lcom/tools/pipra_pay/MainActivity; -> checkIfActive
+249: Lcom/tools/pipra_pay/MainActivity; -> findViewById
+250: Lcom/tools/pipra_pay/MainActivity; -> getApplicationContext
+251: Lcom/tools/pipra_pay/MainActivity; -> getCurrentFocus
+252: Lcom/tools/pipra_pay/MainActivity; -> getCurrentUtcTimestamp
+253: Lcom/tools/pipra_pay/MainActivity; -> getGreetingMessage
+254: Lcom/tools/pipra_pay/MainActivity; -> getPackageName
+255: Lcom/tools/pipra_pay/MainActivity; -> getSharedPreferences
+256: Lcom/tools/pipra_pay/MainActivity; -> getSystemService
+257: Lcom/tools/pipra_pay/MainActivity; -> lambda$checkIfActive$13
+258: Lcom/tools/pipra_pay/MainActivity; -> lambda$checkIfActive$14
+259: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$0$com-tools-pipra_pay-MainActivity
+260: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$1$com-tools-pipra_pay-MainActivity
+261: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$10$com-tools-pipra_pay-MainActivity
+262: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$11$com-tools-pipra_pay-MainActivity
+263: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$12$com-tools-pipra_pay-MainActivity
+264: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$2$com-tools-pipra_pay-MainActivity
+265: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$3$com-tools-pipra_pay-MainActivity
+266: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$4$com-tools-pipra_pay-MainActivity
+267: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$5
+268: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$6$com-tools-pipra_pay-MainActivity
+269: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$7$com-tools-pipra_pay-MainActivity
+270: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$8$com-tools-pipra_pay-MainActivity
+271: Lcom/tools/pipra_pay/MainActivity; -> lambda$onCreate$9$com-tools-pipra_pay-MainActivity
+272: Lcom/tools/pipra_pay/MainActivity; -> lambda$onSetterClick$15
+273: Lcom/tools/pipra_pay/MainActivity; -> lambda$onSetterClick$16
+274: Lcom/tools/pipra_pay/MainActivity; -> lambda$send$17
+275: Lcom/tools/pipra_pay/MainActivity; -> lambda$send$18
+276: Lcom/tools/pipra_pay/MainActivity; -> loadSharedPreferencesLogList
+277: Lcom/tools/pipra_pay/MainActivity; -> onCreate
+278: Lcom/tools/pipra_pay/MainActivity; -> onPause
+279: Lcom/tools/pipra_pay/MainActivity; -> onSetterClick
+280: Lcom/tools/pipra_pay/MainActivity; -> openAppSettings
+281: Lcom/tools/pipra_pay/MainActivity; -> registerReceiver
+282: Lcom/tools/pipra_pay/MainActivity; -> saveSharedPreferencesLogList
+283: Lcom/tools/pipra_pay/MainActivity; -> send
+284: Lcom/tools/pipra_pay/MainActivity; -> setContentView
+285: Lcom/tools/pipra_pay/MainActivity; -> showGlobalAnimated_button
+286: Lcom/tools/pipra_pay/MainActivity; -> showGlobalSnackbar
+287: Lcom/tools/pipra_pay/MainActivity; -> showToast
+288: Lcom/tools/pipra_pay/MainActivity; -> startActivity
+289: Lcom/tools/pipra_pay/MainActivity; -> startForegroundService
+290: Lcom/tools/pipra_pay/MainActivity; -> startService
+291: Lcom/tools/pipra_pay/MainActivity; -> stopService
+292: Lcom/tools/pipra_pay/SMSMonitor; -> <init>
+293: Lcom/tools/pipra_pay/SMSMonitor; -> onReceive
+294: Lcom/tools/pipra_pay/SendWorker$$ExternalSyntheticLambda0; -> <init>
+295: Lcom/tools/pipra_pay/SendWorker$$ExternalSyntheticLambda0; -> run
+296: Lcom/tools/pipra_pay/SendWorker; -> <init>
+297: Lcom/tools/pipra_pay/SendWorker; -> doWork
+298: Lcom/tools/pipra_pay/SendWorker; -> getApplicationContext
+299: Lcom/tools/pipra_pay/SendWorker; -> getInputData
+300: Lcom/tools/pipra_pay/SendWorker; -> lambda$doWork$0$com-tools-pipra_pay-SendWorker
+301: Ljava/lang/CharSequence; -> toString
+302: Ljava/lang/Object; -> <init>
+303: Ljava/lang/Object; -> toString
+304: Ljava/lang/String; -> isEmpty
+305: Ljava/lang/String; -> trim
+306: Ljava/lang/String; -> valueOf
+307: Ljava/lang/StringBuilder; -> <init>
+308: Ljava/lang/StringBuilder; -> append
+309: Ljava/lang/StringBuilder; -> append
+310: Ljava/lang/StringBuilder; -> toString
+311: Ljava/lang/Thread; -> <init>
+312: Ljava/lang/Thread; -> start
+313: Ljava/text/SimpleDateFormat; -> <init>
+314: Ljava/text/SimpleDateFormat; -> <init>
+315: Ljava/text/SimpleDateFormat; -> format
+316: Ljava/text/SimpleDateFormat; -> setTimeZone
+317: Ljava/util/Calendar; -> get
+318: Ljava/util/Calendar; -> getInstance
+319: Ljava/util/Date; -> <init>
+320: Ljava/util/HashMap; -> <init>
+321: Ljava/util/Locale; -> getDefault
+322: Ljava/util/Map; -> put
+323: Ljava/util/TimeZone; -> getTimeZone
+
+--- ALL STRINGS ---
+1:  í 
+2:  í 
+3:  í 
+4: #ffffff
+8: ()V
+9: -$$Nest$fgetbatteryPercentage
+10: -$$Nest$fgetbatteryProgressBar
+11: -$$Nest$fgethandler
+12: -$$Nest$fgetsave_name
+13: -$$Nest$fgettitle_battary
+14: -$$Nest$mStartservice
+15: -$$Nest$mcheckIfActive
+16: <init>
+18: APP_PREFERENCES
+19: Allow all permissions manually.
+20: BRAND
+21: Background Work
+22: BackgroundChannel
+23: Background_Run.java
+24: BaseActivity.java
+25: CHANNEL_ID
+26: CONNECTED
+27: Clear data manually.
+28: Community_btn
+29: D8$$SyntheticClass
+30: DialogBuilder
+31: EEE, dd MMM yyyy
+33: Functions.java
+34: Good Afternoon
+35: Good Evening
+36: Good Morning
+37: Good Night
+38: Hide
+42: ILI
+43: ILII
+44: ILL
+48: LIL
+50: LJI
+52: LLI
+53: LLL
+54: LLLI
+55: LLLL
+56: LLZ
+58: Landroid/animation/AnimatorSet;
+59: Landroid/animation/ObjectAnimator;
+60: Landroid/app/Activity;
+61: Landroid/app/Dialog;
+62: Landroid/app/Notification;
+63: Landroid/app/NotificationChannel;
+64: Landroid/app/NotificationManager;
+65: Landroid/app/Service;
+66: Landroid/content/BroadcastReceiver;
+67: Landroid/content/ComponentName;
+68: Landroid/content/Context;
+69: Landroid/content/DialogInterface$OnClickListener;
+70: Landroid/content/DialogInterface;
+71: Landroid/content/Intent;
+72: Landroid/content/IntentFilter;
+73: Landroid/content/SharedPreferences$Editor;
+74: Landroid/content/SharedPreferences;
+75: Landroid/content/pm/PackageInfo;
+76: Landroid/content/pm/PackageManager$NameNotFoundException;
+77: Landroid/content/pm/PackageManager;
+78: Landroid/graphics/Color;
+79: Landroid/graphics/PorterDuff$Mode;
+80: Landroid/graphics/Rect;
+81: Landroid/media/MediaPlayer$OnCompletionListener;
+82: Landroid/media/MediaPlayer;
+83: Landroid/net/Uri;
+84: Landroid/os/BatteryManager;
+85: Landroid/os/Build$VERSION;
+86: Landroid/os/Build;
+87: Landroid/os/Bundle;
+88: Landroid/os/Handler;
+89: Landroid/os/IBinder;
+90: Landroid/os/VibrationEffect;
+91: Landroid/os/Vibrator;
+92: Landroid/telephony/SmsMessage;
+93: Landroid/telephony/SubscriptionInfo;
+94: Landroid/telephony/SubscriptionManager;
+95: Landroid/text/Editable;
+96: Landroid/text/TextWatcher;
+97: Landroid/view/LayoutInflater;
+98: Landroid/view/View$OnClickListener;
+99: Landroid/view/View;
+100: Landroid/view/ViewGroup;
+101: Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;
+102: Landroid/view/ViewTreeObserver;
+103: Landroid/view/Window;
+104: Landroid/view/inputmethod/InputMethodManager;
+105: Landroid/widget/CheckBox;
+106: Landroid/widget/CompoundButton$OnCheckedChangeListener;
+107: Landroid/widget/CompoundButton;
+108: Landroid/widget/EditText;
+109: Landroid/widget/ImageView;
+110: Landroid/widget/RelativeLayout;
+111: Landroid/widget/RemoteViews;
+112: Landroid/widget/TextView;
+113: Landroid/widget/Toast;
+114: Landroidx/appcompat/app/AlertDialog$Builder;
+115: Landroidx/appcompat/app/AlertDialog;
+116: Landroidx/appcompat/app/AppCompatActivity;
+117: Landroidx/constraintlayout/widget/ConstraintLayout;
+118: Landroidx/core/app/ActivityCompat;
+119: Landroidx/core/app/NotificationCompat$Builder;
+120: Landroidx/core/content/ContextCompat;
+121: Landroidx/work/Constraints$Builder;
+122: Landroidx/work/Constraints;
+123: Landroidx/work/Data$Builder;
+124: Landroidx/work/Data;
+125: Landroidx/work/ListenableWorker$Result;
+126: Landroidx/work/NetworkType;
+127: Landroidx/work/OneTimeWorkRequest$Builder;
+128: Landroidx/work/OneTimeWorkRequest;
+129: Landroidx/work/Operation;
+130: Landroidx/work/WorkManager;
+131: Landroidx/work/WorkRequest$Builder;
+132: Landroidx/work/WorkRequest;
+133: Landroidx/work/Worker;
+134: Landroidx/work/WorkerParameters;
+135: Lcom/android/volley/DefaultRetryPolicy;
+136: Lcom/android/volley/Request;
+137: Lcom/android/volley/RequestQueue;
+138: Lcom/android/volley/Response$ErrorListener;
+139: Lcom/android/volley/Response$Listener;
+140: Lcom/android/volley/Response$Listener<Ljava/lang/String;>;
+141: Lcom/android/volley/RetryPolicy;
+142: Lcom/android/volley/VolleyError;
+143: Lcom/android/volley/toolbox/StringRequest;
+144: Lcom/android/volley/toolbox/Volley;
+145: Lcom/google/android/material/progressindicator/CircularProgressIndicator;
+146: Lcom/google/android/material/snackbar/Snackbar;
+147: Lcom/tools/pipra_pay/Background_Run;
+148: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda0;
+149: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda1;
+150: Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda2;
+151: Lcom/tools/pipra_pay/Class/BaseActivity;
+152: Lcom/tools/pipra_pay/Functions;
+153: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0;
+154: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda10;
+155: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda11;
+156: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda12;
+157: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda13;
+158: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda14;
+159: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda15;
+160: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda16;
+161: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda17;
+162: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda18;
+163: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda1;
+164: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda2;
+165: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda3;
+166: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda4;
+167: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda5;
+168: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda6;
+169: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda7;
+170: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda8;
+171: Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda9;
+172: Lcom/tools/pipra_pay/MainActivity$1;
+173: Lcom/tools/pipra_pay/MainActivity$2;
+174: Lcom/tools/pipra_pay/MainActivity$3;
+175: Lcom/tools/pipra_pay/MainActivity$4;
+176: Lcom/tools/pipra_pay/MainActivity$5;
+177: Lcom/tools/pipra_pay/MainActivity$6;
+178: Lcom/tools/pipra_pay/MainActivity;
+179: Lcom/tools/pipra_pay/R$color;
+180: Lcom/tools/pipra_pay/R$drawable;
+181: Lcom/tools/pipra_pay/R$id;
+182: Lcom/tools/pipra_pay/R$layout;
+183: Lcom/tools/pipra_pay/R$raw;
+184: Lcom/tools/pipra_pay/SMSMonitor;
+185: Lcom/tools/pipra_pay/SendWorker$$ExternalSyntheticLambda0;
+186: Lcom/tools/pipra_pay/SendWorker;
+187: Ldalvik/annotation/EnclosingMethod;
+188: Ldalvik/annotation/InnerClass;
+189: Ldalvik/annotation/MethodParameters;
+190: Ldalvik/annotation/Signature;
+191: Ljava/lang/CharSequence;
+192: Ljava/lang/Class;
+193: Ljava/lang/Exception;
+194: Ljava/lang/Object;
+195: Ljava/lang/Runnable;
+196: Ljava/lang/String;
+197: Ljava/lang/StringBuilder;
+198: Ljava/lang/Thread;
+199: Ljava/text/SimpleDateFormat;
+200: Ljava/util/Calendar;
+201: Ljava/util/Date;
+202: Ljava/util/HashMap;
+203: Ljava/util/Locale;
+204: Ljava/util/Map;
+205: Ljava/util/Map<
+206: Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;
+207: Ljava/util/TimeZone;
+208: MODEL
+209: MainActivity.java
+210: ModelInfo
+211: MyMessages
+212: Name saved successfully!
+214: PipraPay Background
+215: RELEASE
+216: Running in background...
+217: SDK
+218: SDK_INT
+219: SMSMonitor.java
+220: SRC_IN
+221: SendWorker.java
+222: Startservice
+223: Stopservice
+224: UTC
+225: User-Agent
+226: User_name
+229: VII
+230: VIIF
+231: VIL
+232: VILLL
+233: VILLLLLL
+236: VLI
+237: VLIII
+238: VLILLL
+239: VLL
+240: VLLI
+241: VLLL
+242: VLLLLLLLL
+243: VLLLLLLLLL
+244: VLLLLLLLLLL
+245: VLLZ
+246: VLZ
+248: Webhook url saved successfully!
+249: Welcome!
+252: ZLI
+253: ZLJ
+254: ZLZ
+258: [Landroid/animation/Animator;
+259: [Landroid/telephony/SmsMessage;
+260: [Landroid/widget/Toast;
+261: [Ljava/lang/Object;
+262: [Ljava/lang/String;
+263: about_us_btn
+264: accessFlags
+265: actionText
+266: activity_main
+267: add
+268: addOnGlobalLayoutListener
+269: addTextChangedListener
+270: add_button
+271: after
+272: afterTextChanged
+273: all_permission_btn
+274: anchorView
+275: android.intent.action.BATTERY_CHANGED
+276: android.intent.action.VIEW
+277: android.permission.READ_PHONE_STATE
+278: android.settings.APPLICATION_DETAILS_SETTINGS
+279: animatorSet
+280: ant_round
+281: apiToken
+282: apiTokenView
+283: api_dialogue
+284: api_token
+285: append
+286: apply
+287: arg0
+288: arg1
+289: arg2
+290: arg3
+291: background_task_enabled
+292: battary_percentag
+293: battary_progressBar
+294: battary_status
+295: batteryPercentage
+296: batteryProgressBar
+297: batterymanager
+298: before
+299: beforeTextChanged
+301: bodyText
+302: bottom
+303: btn_add
+304: build
+305: bundle
+306: buttonView
+307: calendar
+308: cancel
+309: cancel_button
+310: channel
+311: check
+312: checkIfActive
+313: checkSelfPermission
+314: checkbox_background_task
+315: clearFocus
+316: clearFocusFromAllEditTexts
+317: clear_data_btn
+318: constraints
+319: context
+320: count
+321: create
+322: createFromPdu
+323: createNotificationChannel
+324: createOneShot
+325: currentDate
+326: currentSubscription
+327: currentToast
+328: custom_notification
+329: d_api_level
+330: d_brand
+331: d_model
+332: d_version
+333: date_time
+334: dialog
+335: dialog_config_edit_form
+336: dismiss
+337: doWork
+338: edit
+339: editText_name
+340: editor
+341: enqueue
+342: error
+343: f$0
+344: f$1
+345: f$2
+346: f$3
+347: f$4
+348: f$5
+349: f$6
+350: f$7
+351: f$8
+352: fab
+353: findViewById
+354: flags
+355: format
+356: from
+357: fromParts
+358: get
+359: getActiveSubscriptionInfo
+360: getActiveSubscriptionInfoForSimSlotIndex
+361: getApplicationContext
+362: getBoolean
+363: getChildAt
+364: getChildCount
+365: getColor
+366: getCurrentFocus
+367: getCurrentUtcTimestamp
+368: getDefault
+369: getDisplayName
+370: getDisplayOriginatingAddress
+371: getExtras
+372: getGreetingMessage
+373: getHeaders
+374: getHeight
+375: getInputData
+376: getInstance
+377: getInt
+378: getIntExtra
+379: getIntProperty
+380: getMessageBody
+381: getNumber
+382: getPackageInfo
+383: getPackageManager
+384: getPackageName
+385: getParams
+386: getRootView
+387: getSharedPreferences
+388: getSimSlotIndex
+389: getSlotBySubscription
+390: getString
+391: getSystemService
+392: getText
+393: getTimeZone
+394: getViewTreeObserver
+395: getWindow
+396: getWindowToken
+397: getWindowVisibleDisplayFrame
+398: greeting
+399: greetingTextView
+400: handler
+401: headers
+402: hideSoftInputFromWindow
+403: homeImg
+404: hour
+405: https://api.whatsapp.com/send?phone=8801806579249&text=Hello,%20%0A%20I%20have%20a%20question%20about%20https%3A%2F%2Fpiprapay.com%2F
+406: https://community.piprapay.com
+407: https://piprapay.com
+408: https://www.facebook.com/piprapay
+410: i_am_active
+411: ic_event_select_task
+412: ic_event_unselect_task
+413: ic_home_select_task
+414: ic_home_unselect_task
+416: image_icon
+417: imm
+418: inflate
+419: inflater
+420: inputUrl
+421: input_method
+422: input_url
+423: intent
+424: isChecked
+425: isChecked1
+426: isEmpty
+427: isKeyboardShowing
+428: isRotating
+429: isRunning
+430: keypadHeight
+431: lambda$checkIfActive$13
+432: lambda$checkIfActive$14
+433: lambda$doWork$0$com-tools-pipra_pay-SendWorker
+434: lambda$onCreate$0$com-tools-pipra_pay-Class-BaseActivity
+435: lambda$onCreate$0$com-tools-pipra_pay-MainActivity
+436: lambda$onCreate$1$com-tools-pipra_pay-MainActivity
+437: lambda$onCreate$10$com-tools-pipra_pay-MainActivity
+438: lambda$onCreate$11$com-tools-pipra_pay-MainActivity
+439: lambda$onCreate$12$com-tools-pipra_pay-MainActivity
+440: lambda$onCreate$2$com-tools-pipra_pay-MainActivity
+441: lambda$onCreate$3$com-tools-pipra_pay-MainActivity
+442: lambda$onCreate$4$com-tools-pipra_pay-MainActivity
+443: lambda$onCreate$5
+444: lambda$onCreate$6$com-tools-pipra_pay-MainActivity
+445: lambda$onCreate$7$com-tools-pipra_pay-MainActivity
+446: lambda$onCreate$8$com-tools-pipra_pay-MainActivity
+447: lambda$onCreate$9$com-tools-pipra_pay-MainActivity
+448: lambda$onSetterClick$15
+449: lambda$onSetterClick$16
+450: lambda$send$17
+451: lambda$send$18
+452: lambda$showGlobalSnackbar$1$com-tools-pipra_pay-Class-BaseActivity
+453: layout
+454: layout_home
+455: layout_settings
+456: level
+457: live_support
+458: loadSharedPreferencesLogList
+459: mPrefs
+460: main
+461: main_color
+462: main_second_color
+463: make
+464: makeText
+465: manager
+466: mediaPlayer
+467: message
+468: messageText
+469: messageType
+470: message_BATTERY
+471: message_ModelInfo
+472: message_messageText
+473: message_messageType
+474: message_request_from
+475: message_sim
+476: message_simName
+477: message_simNumber
+478: mh-piprapay-api-key
+479: myData
+480: myWorkRequest
+481: my_preferences
+482: name
+483: names
+484: newRequestQueue
+485: notification
+486: ofFloat
+487: onBind
+488: onCheckedChanged
+489: onClick
+490: onCompletion
+491: onCreate
+492: onDestroy
+493: onErrorResponse
+494: onGlobalLayout
+495: onPause
+496: onReceive
+497: onResponse
+498: onSetterClick
+499: onStartCommand
+500: onTextChanged
+501: openAppSettings
+502: package
+503: params
+504: parse
+505: parseColor
+506: pduArray
+507: pdus
+508: percentage
+509: permissions
+510: playTogether
+511: post
+512: postDelayed
+513: power
+514: powerLevel
+515: prefsEditor
+516: put
+517: putBoolean
+518: putString
+520: receivedStamp
+521: registerReceiver
+522: relativeHome
+523: relativeSetting
+524: release
+525: requestPermissions
+526: requestQueue
+527: request_BATTERY
+528: request_ModelInfo
+529: request_from
+530: request_messageText
+531: request_messageType
+532: request_sim
+533: request_simName
+534: request_simNumber
+535: requestedPermissions
+536: response
+537: rootView
+538: rotateAnimator
+539: rotation
+540: run
+542: saveSharedPreferencesLogList
+543: save_defolt
+544: save_name
+545: savedInstanceState
+546: scale
+547: scaleX
+548: scaleY
+549: screenHeight
+550: sdf
+551: send
+552: sentStamp
+553: serviceIntent
+554: setAction
+555: setActionTextColor
+556: setBackgroundDrawableResource
+557: setBackgroundTint
+558: setCancelable
+559: setChecked
+560: setColor
+561: setColorFilter
+562: setConstraints
+563: setContentView
+564: setCustomContentView
+565: setData
+566: setDuration
+567: setImageResource
+568: setImageViewResource
+569: setInputData
+570: setLayout
+571: setMax
+572: setNegativeButton
+573: setOnCheckedChangeListener
+574: setOnClickListener
+575: setOnCompletionListener
+576: setOngoing
+577: setPositiveButton
+578: setPriority
+579: setProgress
+580: setRepeatCount
+581: setRequiredNetworkType
+582: setRetryPolicy
+583: setSmallIcon
+584: setText
+585: setTextViewText
+586: setTimeZone
+587: setView
+588: setVisibility
+589: settingsImg
+590: sharedPreferences
+591: show
+592: showGlobalAnimated_button
+593: showGlobalSnackbar
+594: showToast
+595: sim
+596: simName
+597: simNumber
+598: slot
+599: sms
+600: smsMessage
+601: snackbar
+602: start
+603: startActivity
+604: startForeground
+605: startForegroundService
+606: startGlobalRotateAnimation
+607: startId
+608: startService
+609: status
+610: stopForeground
+611: stopGlobalRotateAnimation
+612: stopIntent
+613: stopService
+614: stringRequest
+615: subscription
+616: success
+617: targetView
+618: task
+619: text
+620: text_content
+621: text_title
+622: this$0
+623: thread
+624: timestamp
+625: title_battary
+627: toString
+628: to_send
+629: tost_sound
+630: trim
+631: txtAdd
+632: txtCancel
+633: undefined
+634: uri
+635: urlCheckRunnable
+636: user_name
+638: val$isChecked
+639: val$message_messageText
+640: val$message_request_from
+641: val$message_sim
+642: value
+643: valueOf
+645: vibrate
+646: vibrator
+647: view
+648: webhook_url_show
+649: whatsapp_support
+650: window
+651: workerParams
+652: yyyy-MM-dd'T'HH:mm:ss'Z'
+653: ~~D8{"backend":"dex","compilation-mode":"debug","has-checksums":true,"min-api":23,"version":"8.11.18"}
+654: ~~~{"Lcom/tools/pipra_pay/Background_Run;":"6042d4d3","Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda0;":"34fd06076","Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda1;":"-1fc380e7a","Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda2;":"-19ad5d832","Lcom/tools/pipra_pay/Class/BaseActivity;":"ff273f54","Lcom/tools/pipra_pay/Functions;":"266fc92f","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0;":"-756ecaf","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda10;":"42c76781b","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda11;":"23b11b6ac","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda12;":"abaa3da2","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda13;":"1c9c0d635","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda14;":"9b7a91fd","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda15;":"7cfd5db16","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda16;":"6d5fe5da","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda17;":"307f7aa40","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda18;":"-20fe990bb","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda1;":"2cbeb9939","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda2;":"57139e8f5","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda3;":"5417b24d8","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda4;":"5c64dae00","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda5;":"3eb7c75a3","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda6;":"-245b158f3","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda7;":"-139510de1","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda8;":"-399fc7792","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda9;":"193adf0a","Lcom/tools/pipra_pay/MainActivity$1;":"3d51a810","Lcom/tools/pipra_pay/MainActivity$2;":"575adb78","Lcom/tools/pipra_pay/MainActivity$3;":"723bf36d","Lcom/tools/pipra_pay/MainActivity$4;":"cfedea86","Lcom/tools/pipra_pay/MainActivity$5;":"3cc8b903","Lcom/tools/pipra_pay/MainActivity$6;":"8fac3d55","Lcom/tools/pipra_pay/MainActivity;":"7c16a664","Lcom/tools/pipra_pay/SMSMonitor;":"64e602b2","Lcom/tools/pipra_pay/SendWorker$$ExternalSyntheticLambda0;":"41d13ff6e","Lcom/tools/pipra_pay/SendWorker;":"4d2189ff"}
+655: â ï¸ Charge Immediat
+656: í ½í± 
+657: í ½í²ª Very 
+658: í ½í´ Battery
+659: í ½í´ Fully Cha
+660: í ½í¹ Me

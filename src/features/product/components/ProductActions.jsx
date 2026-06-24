@@ -29,15 +29,24 @@ export default function ProductActions({
 
       <button
         onClick={onAddToCart}
-        disabled={product.stock === 0}
+        disabled={product.stock === 0 && !product.allowRequest}
         className={`w-full py-5 rounded-3xl font-black text-lg flex items-center justify-center gap-3 transition-all shadow-xl ${
           product.stock === 0
-            ? 'bg-red-500/10 border border-red-500/20 text-red-400 cursor-not-allowed shadow-none'
+            ? product.allowRequest
+              ? 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer'
+              : 'bg-red-500/10 border border-red-500/20 text-red-400 cursor-not-allowed shadow-none'
             : 'bg-slate-900 hover:bg-purple-600 text-white'
         }`}
       >
         {product.stock === 0 ? (
-          <span>🚫 স্টক শেষ (Stock Out)</span>
+          product.allowRequest ? (
+            <>
+              📬 অনুরোধ করুন (Request)
+              <span className="bg-white/20 px-3 py-1 rounded-xl text-sm">৳{totalPrice}</span>
+            </>
+          ) : (
+            <span>🚫 স্টক শেষ (Stock Out)</span>
+          )
         ) : (
           <>
             <ShoppingCart size={22} strokeWidth={2.5} />

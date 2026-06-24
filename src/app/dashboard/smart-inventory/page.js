@@ -157,6 +157,7 @@ export default function SmartInventoryPage() {
   const [savingId, setSavingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('name_asc');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   useEffect(() => {
     if (activeShopId) {
@@ -242,9 +243,14 @@ export default function SmartInventoryPage() {
     );
   }
 
+  // Extract unique categories
+  const uniqueCategories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
+
   // Filter products
   let filteredProducts = products.filter(p => {
-    return !searchTerm || matchPhoneticSearch(p, searchTerm);
+    const matchesSearch = !searchTerm || matchPhoneticSearch(p, searchTerm);
+    const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
   // Sort products
@@ -287,7 +293,21 @@ export default function SmartInventoryPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <span className="text-slate-400 text-xs font-black uppercase tracking-wider shrink-0">ক্যাটাগরি:</span>
+            <select
+              value={selectedCategory}
+              onChange={e => setSelectedCategory(e.target.value)}
+              className="w-full md:w-40 px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-700 outline-none focus:border-purple-500 cursor-pointer"
+            >
+              {uniqueCategories.map(cat => (
+                <option key={cat} value={cat}>{cat === 'All' ? 'সব ক্যাটাগরি' : cat}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 w-full md:w-auto">
           <span className="text-slate-400 text-xs font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
             <ArrowUpDown size={14} /> সর্ট করুন:
           </span>
@@ -305,6 +325,7 @@ export default function SmartInventoryPage() {
           </select>
         </div>
       </div>
+    </div>
 
       <div className="space-y-4">
         {filteredProducts.map((product) => (
@@ -318,7 +339,14 @@ export default function SmartInventoryPage() {
                 )}
                 <div>
                   <h3 className="font-black text-slate-900 text-base">{product.name}</h3>
-                  <p className="text-xs text-slate-500 font-bold">Base Price: ৳{product.price}</p>
+                  <div className="flex gap-2 items-center mt-0.5">
+                    <p className="text-xs text-slate-500 font-bold">Base Price: ৳{product.price}</p>
+                    {product.category && (
+                      <span className="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">
+                        {product.category}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               

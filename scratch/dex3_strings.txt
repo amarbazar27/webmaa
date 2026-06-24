@@ -1,0 +1,903 @@
+dex
+035
+In/
+{W4
+xV4
+#p@
+p0]
+n0_
+n0_
+n0^
+p0o
+n u
+n r
+n s
+n t
+n q
+ @5
+ @-
+n N
+n L
+333333
+o k
+n P
+##3
+?fff?
+?fff?
+q v
+q +
+n -
+q m
+n B
+An 1
+n 5
+n 4
+n 5
+S61
+n 5
+n 5
+n 5
+n 5
+n 5
+n 5
+n 4
+n 5
+q m
+n C
+q m
+n C
+T0"
+T0"
+n@7
+T0%
+T1%
+q v
+n0Y
+r0B
+r0B
+r0B
+r0B
+r0B
+r0B
+r0B
+r0B
+r0B
+r0B
+TB(
+r0B
+TB'
+r0B
+r0B
+r0B
+TC)
+r0B
+3Tt*
+Tt*
+Tt*
+n 4
+n 5
+n `
+Tt*
+n `
+p 9
+n <
+n ;
+n =
+n !
+n "
+n #
+p !
+p0:
+n ;
+T25
+n `
+'p@
+A2n 
+r0#
+TP;
+n M
+TP<
+n M
+TP:
+n Z
+TPA
+n Z
+q08
+n :
+n09
+n  
+n  
+n  
+n  
+n  
+n  
+TP;
+n M
+TP<
+n M
+TP:
+n Z
+TPA
+n Z
+q08
+n :
+n09
+TP6
+r0$
+TR@
+q v
+n0Y
+TSD
+n `
+TSD
+n `
+n0S
+T E
+n `
+TP7
+n Q
+n0R
+n X
+n [
+n [
+n  
+n  
+r0'
+r0'
+[b-
+[b>
+[b?
+[b;
+[b<
+[b:
+[bA
+[b8
+[bB
+[b5
+[bD
+[b6
+[b@
+[b2
+[b1
+[b3
+[b4
+[b.
+[b,
+[b=
+[bF
+[b7
+[bE
+[b/
+[b3
+n0(
+q0n
+r0&
+Tb3
+n T
+Tb3
+n U
+[b9
+[bC
+Tb9
+TcC
+n 6
+n@7
+2Tp
+Tc8
+n `
+Tc-
+Tc-
+TcD
+Td-
+n `
+TcD
+n `
+Tc6
+Td-
+n X
+TcE
+n `
+Tc6
+n V
+Tc>
+n \
+Tc?
+n \
+Tc@
+n [
+Tc7
+n [
+Tc/
+n l
+Tc4
+n l
+Tc.
+n l
+Tc,
+n l
+Tc=
+n l
+TcF
+n l
+n0E
+n G
+n X
+p d
+n h
+n0g
+n0f
+q0b
+q0/
+n  
+n  
+r0$
+n 2
+n 4
+q ;
+g5W
+n 5
+n03
+n0|
+n0|
+n0|
+n0|
+n0|
+n0|
+n0|
+n0|
+n y
+n }
+n }
+n }
+n }
+n }
+n }
+n }
+n }
+p 7
+9xxy
+xKKZx
+KKK<
+iv?
+xiZ<
+xxxxx
+xxx
+xyK
+ZZy
+x<i<i=
+iL=
+Z=-M>
+iyxy
+xjxy
+Z<Z
+<x[
+<Zx
+==KK
+-=x
+yxz
+6ZZ
+Dxi
+#ffffff
+()V
+-$$Nest$fgetbatteryPercentage
+-$$Nest$fgetbatteryProgressBar
+-$$Nest$fgethandler
+-$$Nest$fgetsave_name
+-$$Nest$fgettitle_battary
+-$$Nest$mStartservice
+-$$Nest$mcheckIfActive
+<init>
+APP_PREFERENCES
+Allow all permissions manually.
+BRAND
+Background Work
+BackgroundChannel
+Background_Run.java
+BaseActivity.java
+CHANNEL_ID
+CONNECTED
+Clear data manually.
+Community_btn
+D8$$SyntheticClass
+DialogBuilder
+EEE, dd MMM yyyy
+Functions.java
+Good Afternoon
+Good Evening
+Good Morning
+Good Night
+Hide
+ILI
+ILII
+ILL
+LIL
+LJI
+LLI
+LLL
+LLLI
+LLLL
+LLZ
+Landroid/animation/AnimatorSet;
+"Landroid/animation/ObjectAnimator;
+Landroid/app/Activity;
+Landroid/app/Dialog;
+Landroid/app/Notification;
+!Landroid/app/NotificationChannel;
+!Landroid/app/NotificationManager;
+Landroid/app/Service;
+#Landroid/content/BroadcastReceiver;
+Landroid/content/ComponentName;
+Landroid/content/Context;
+1Landroid/content/DialogInterface$OnClickListener;
+!Landroid/content/DialogInterface;
+Landroid/content/Intent;
+Landroid/content/IntentFilter;
+*Landroid/content/SharedPreferences$Editor;
+#Landroid/content/SharedPreferences;
+ Landroid/content/pm/PackageInfo;
+9Landroid/content/pm/PackageManager$NameNotFoundException;
+#Landroid/content/pm/PackageManager;
+Landroid/graphics/Color;
+"Landroid/graphics/PorterDuff$Mode;
+Landroid/graphics/Rect;
+0Landroid/media/MediaPlayer$OnCompletionListener;
+Landroid/media/MediaPlayer;
+Landroid/net/Uri;
+Landroid/os/BatteryManager;
+Landroid/os/Build$VERSION;
+Landroid/os/Build;
+Landroid/os/Bundle;
+Landroid/os/Handler;
+Landroid/os/IBinder;
+Landroid/os/VibrationEffect;
+Landroid/os/Vibrator;
+Landroid/telephony/SmsMessage;
+$Landroid/telephony/SubscriptionInfo;
+'Landroid/telephony/SubscriptionManager;
+Landroid/text/Editable;
+Landroid/text/TextWatcher;
+Landroid/view/LayoutInflater;
+#Landroid/view/View$OnClickListener;
+Landroid/view/View;
+Landroid/view/ViewGroup;
+6Landroid/view/ViewTreeObserver$OnGlobalLayoutListener;
+Landroid/view/ViewTreeObserver;
+Landroid/view/Window;
+-Landroid/view/inputmethod/InputMethodManager;
+Landroid/widget/CheckBox;
+7Landroid/widget/CompoundButton$OnCheckedChangeListener;
+Landroid/widget/CompoundButton;
+Landroid/widget/EditText;
+Landroid/widget/ImageView;
+Landroid/widget/RelativeLayout;
+Landroid/widget/RemoteViews;
+Landroid/widget/TextView;
+Landroid/widget/Toast;
+,Landroidx/appcompat/app/AlertDialog$Builder;
+$Landroidx/appcompat/app/AlertDialog;
+*Landroidx/appcompat/app/AppCompatActivity;
+3Landroidx/constraintlayout/widget/ConstraintLayout;
+"Landroidx/core/app/ActivityCompat;
+.Landroidx/core/app/NotificationCompat$Builder;
+%Landroidx/core/content/ContextCompat;
+#Landroidx/work/Constraints$Builder;
+Landroidx/work/Constraints;
+Landroidx/work/Data$Builder;
+Landroidx/work/Data;
+'Landroidx/work/ListenableWorker$Result;
+Landroidx/work/NetworkType;
+*Landroidx/work/OneTimeWorkRequest$Builder;
+"Landroidx/work/OneTimeWorkRequest;
+Landroidx/work/Operation;
+Landroidx/work/WorkManager;
+#Landroidx/work/WorkRequest$Builder;
+Landroidx/work/WorkRequest;
+Landroidx/work/Worker;
+ Landroidx/work/WorkerParameters;
+'Lcom/android/volley/DefaultRetryPolicy;
+Lcom/android/volley/Request;
+!Lcom/android/volley/RequestQueue;
++Lcom/android/volley/Response$ErrorListener;
+&Lcom/android/volley/Response$Listener;
+:Lcom/android/volley/Response$Listener<Ljava/lang/String;>;
+ Lcom/android/volley/RetryPolicy;
+ Lcom/android/volley/VolleyError;
+*Lcom/android/volley/toolbox/StringRequest;
+#Lcom/android/volley/toolbox/Volley;
+ILcom/google/android/material/progressindicator/CircularProgressIndicator;
+/Lcom/google/android/material/snackbar/Snackbar;
+$Lcom/tools/pipra_pay/Background_Run;
+BLcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda0;
+BLcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda1;
+BLcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda2;
+(Lcom/tools/pipra_pay/Class/BaseActivity;
+Lcom/tools/pipra_pay/Functions;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda10;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda11;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda12;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda13;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda14;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda15;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda16;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda17;
+=Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda18;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda1;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda2;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda3;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda4;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda5;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda6;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda7;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda8;
+<Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda9;
+$Lcom/tools/pipra_pay/MainActivity$1;
+$Lcom/tools/pipra_pay/MainActivity$2;
+$Lcom/tools/pipra_pay/MainActivity$3;
+$Lcom/tools/pipra_pay/MainActivity$4;
+$Lcom/tools/pipra_pay/MainActivity$5;
+$Lcom/tools/pipra_pay/MainActivity$6;
+"Lcom/tools/pipra_pay/MainActivity;
+Lcom/tools/pipra_pay/R$color;
+ Lcom/tools/pipra_pay/R$drawable;
+Lcom/tools/pipra_pay/R$id;
+Lcom/tools/pipra_pay/R$layout;
+Lcom/tools/pipra_pay/R$raw;
+ Lcom/tools/pipra_pay/SMSMonitor;
+:Lcom/tools/pipra_pay/SendWorker$$ExternalSyntheticLambda0;
+ Lcom/tools/pipra_pay/SendWorker;
+#Ldalvik/annotation/EnclosingMethod;
+Ldalvik/annotation/InnerClass;
+$Ldalvik/annotation/MethodParameters;
+Ldalvik/annotation/Signature;
+Ljava/lang/CharSequence;
+Ljava/lang/Class;
+Ljava/lang/Exception;
+Ljava/lang/Object;
+Ljava/lang/Runnable;
+Ljava/lang/String;
+Ljava/lang/StringBuilder;
+Ljava/lang/Thread;
+Ljava/text/SimpleDateFormat;
+Ljava/util/Calendar;
+Ljava/util/Date;
+Ljava/util/HashMap;
+Ljava/util/Locale;
+Ljava/util/Map;
+Ljava/util/Map<
+5Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;
+Ljava/util/TimeZone;
+MODEL
+MainActivity.java
+ModelInfo
+MyMessages
+Name saved successfully!
+PipraPay Background
+RELEASE
+Running in background...
+SDK
+SDK_INT
+SMSMonitor.java
+SRC_IN
+SendWorker.java
+Startservice
+Stopservice
+UTC
+User-Agent
+User_name
+VII
+VIIF
+VIL
+VILLL
+VILLLLLL
+VLI
+VLIII
+VLILLL
+VLL
+VLLI
+VLLL
+VLLLLLLLL
+VLLLLLLLLL
+VLLLLLLLLLL
+VLLZ
+VLZ
+Webhook url saved successfully!
+Welcome!
+ZLI
+ZLJ
+ZLZ
+[Landroid/animation/Animator;
+[Landroid/telephony/SmsMessage;
+[Landroid/widget/Toast;
+[Ljava/lang/Object;
+[Ljava/lang/String;
+about_us_btn
+accessFlags
+actionText
+activity_main
+add
+addOnGlobalLayoutListener
+addTextChangedListener
+add_button
+after
+afterTextChanged
+all_permission_btn
+anchorView
+%android.intent.action.BATTERY_CHANGED
+android.intent.action.VIEW
+#android.permission.READ_PHONE_STATE
+-android.settings.APPLICATION_DETAILS_SETTINGS
+animatorSet
+ant_round
+apiToken
+apiTokenView
+api_dialogue
+api_token
+append
+apply
+arg0
+arg1
+arg2
+arg3
+background_task_enabled
+battary_percentag
+battary_progressBar
+battary_status
+batteryPercentage
+batteryProgressBar
+batterymanager
+before
+beforeTextChanged
+bodyText
+bottom
+btn_add
+build
+bundle
+buttonView
+calendar
+cancel
+cancel_button
+channel
+check
+checkIfActive
+checkSelfPermission
+checkbox_background_task
+clearFocus
+clearFocusFromAllEditTexts
+clear_data_btn
+constraints
+context
+count
+create
+createFromPdu
+createNotificationChannel
+createOneShot
+currentDate
+currentSubscription
+currentToast
+custom_notification
+d_api_level
+d_brand
+d_model
+d_version
+date_time
+dialog
+dialog_config_edit_form
+dismiss
+doWork
+edit
+editText_name
+editor
+enqueue
+error
+f$0
+f$1
+f$2
+f$3
+f$4
+f$5
+f$6
+f$7
+f$8
+fab
+findViewById
+flags
+format
+from
+fromParts
+get
+getActiveSubscriptionInfo
+(getActiveSubscriptionInfoForSimSlotIndex
+getApplicationContext
+getBoolean
+getChildAt
+getChildCount
+getColor
+getCurrentFocus
+getCurrentUtcTimestamp
+getDefault
+getDisplayName
+getDisplayOriginatingAddress
+getExtras
+getGreetingMessage
+getHeaders
+getHeight
+getInputData
+getInstance
+getInt
+getIntExtra
+getIntProperty
+getMessageBody
+getNumber
+getPackageInfo
+getPackageManager
+getPackageName
+getParams
+getRootView
+getSharedPreferences
+getSimSlotIndex
+getSlotBySubscription
+getString
+getSystemService
+getText
+getTimeZone
+getViewTreeObserver
+getWindow
+getWindowToken
+getWindowVisibleDisplayFrame
+greeting
+greetingTextView
+handler
+headers
+hideSoftInputFromWindow
+homeImg
+hour
+https://api.whatsapp.com/send?phone=8801806579249&text=Hello,%20%0A%20I%20have%20a%20question%20about%20https%3A%2F%2Fpiprapay.com%2F
+https://community.piprapay.com
+https://piprapay.com
+!https://www.facebook.com/piprapay
+i_am_active
+ic_event_select_task
+ic_event_unselect_task
+ic_home_select_task
+ic_home_unselect_task
+image_icon
+imm
+inflate
+inflater
+inputUrl
+input_method
+input_url
+intent
+isChecked
+isChecked1
+isEmpty
+isKeyboardShowing
+isRotating
+isRunning
+keypadHeight
+lambda$checkIfActive$13
+lambda$checkIfActive$14
+.lambda$doWork$0$com-tools-pipra_pay-SendWorker
+8lambda$onCreate$0$com-tools-pipra_pay-Class-BaseActivity
+2lambda$onCreate$0$com-tools-pipra_pay-MainActivity
+2lambda$onCreate$1$com-tools-pipra_pay-MainActivity
+3lambda$onCreate$10$com-tools-pipra_pay-MainActivity
+3lambda$onCreate$11$com-tools-pipra_pay-MainActivity
+3lambda$onCreate$12$com-tools-pipra_pay-MainActivity
+2lambda$onCreate$2$com-tools-pipra_pay-MainActivity
+2lambda$onCreate$3$com-tools-pipra_pay-MainActivity
+2lambda$onCreate$4$com-tools-pipra_pay-MainActivity
+lambda$onCreate$5
+2lambda$onCreate$6$com-tools-pipra_pay-MainActivity
+2lambda$onCreate$7$com-tools-pipra_pay-MainActivity
+2lambda$onCreate$8$com-tools-pipra_pay-MainActivity
+2lambda$onCreate$9$com-tools-pipra_pay-MainActivity
+lambda$onSetterClick$15
+lambda$onSetterClick$16
+lambda$send$17
+lambda$send$18
+Blambda$showGlobalSnackbar$1$com-tools-pipra_pay-Class-BaseActivity
+layout
+layout_home
+layout_settings
+level
+live_support
+loadSharedPreferencesLogList
+mPrefs
+main
+main_color
+main_second_color
+make
+makeText
+manager
+mediaPlayer
+message
+messageText
+messageType
+message_BATTERY
+message_ModelInfo
+message_messageText
+message_messageType
+message_request_from
+message_sim
+message_simName
+message_simNumber
+mh-piprapay-api-key
+myData
+myWorkRequest
+my_preferences
+name
+names
+newRequestQueue
+notification
+ofFloat
+onBind
+onCheckedChanged
+onClick
+onCompletion
+onCreate
+onDestroy
+onErrorResponse
+onGlobalLayout
+onPause
+onReceive
+onResponse
+onSetterClick
+onStartCommand
+onTextChanged
+openAppSettings
+package
+params
+parse
+parseColor
+pduArray
+pdus
+percentage
+permissions
+playTogether
+post
+postDelayed
+power
+powerLevel
+prefsEditor
+put
+putBoolean
+putString
+receivedStamp
+registerReceiver
+relativeHome
+relativeSetting
+release
+requestPermissions
+requestQueue
+request_BATTERY
+request_ModelInfo
+request_from
+request_messageText
+request_messageType
+request_sim
+request_simName
+request_simNumber
+requestedPermissions
+response
+rootView
+rotateAnimator
+rotation
+run
+saveSharedPreferencesLogList
+save_defolt
+save_name
+savedInstanceState
+scale
+scaleX
+scaleY
+screenHeight
+sdf
+send
+sentStamp
+serviceIntent
+setAction
+setActionTextColor
+setBackgroundDrawableResource
+setBackgroundTint
+setCancelable
+setChecked
+setColor
+setColorFilter
+setConstraints
+setContentView
+setCustomContentView
+setData
+setDuration
+setImageResource
+setImageViewResource
+setInputData
+setLayout
+setMax
+setNegativeButton
+setOnCheckedChangeListener
+setOnClickListener
+setOnCompletionListener
+setOngoing
+setPositiveButton
+setPriority
+setProgress
+setRepeatCount
+setRequiredNetworkType
+setRetryPolicy
+setSmallIcon
+setText
+setTextViewText
+setTimeZone
+setView
+setVisibility
+settingsImg
+sharedPreferences
+show
+showGlobalAnimated_button
+showGlobalSnackbar
+showToast
+sim
+simName
+simNumber
+slot
+sms
+smsMessage
+snackbar
+start
+startActivity
+startForeground
+startForegroundService
+startGlobalRotateAnimation
+startId
+startService
+status
+stopForeground
+stopGlobalRotateAnimation
+stopIntent
+stopService
+stringRequest
+subscription
+success
+targetView
+task
+text
+text_content
+text_title
+this$0
+thread
+timestamp
+title_battary
+toString
+to_send
+tost_sound
+trim
+txtAdd
+txtCancel
+undefined
+uri
+urlCheckRunnable
+user_name
+val$isChecked
+val$message_messageText
+val$message_request_from
+val$message_sim
+value
+valueOf
+vibrate
+vibrator
+view
+webhook_url_show
+whatsapp_support
+window
+workerParams
+yyyy-MM-dd'T'HH:mm:ss'Z'
+f~~D8{"backend":"dex","compilation-mode":"debug","has-checksums":true,"min-api":23,"version":"8.11.18"}
+~~~{"Lcom/tools/pipra_pay/Background_Run;":"6042d4d3","Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda0;":"34fd06076","Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda1;":"-1fc380e7a","Lcom/tools/pipra_pay/Class/BaseActivity$$ExternalSyntheticLambda2;":"-19ad5d832","Lcom/tools/pipra_pay/Class/BaseActivity;":"ff273f54","Lcom/tools/pipra_pay/Functions;":"266fc92f","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0;":"-756ecaf","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda10;":"42c76781b","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda11;":"23b11b6ac","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda12;":"abaa3da2","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda13;":"1c9c0d635","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda14;":"9b7a91fd","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda15;":"7cfd5db16","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda16;":"6d5fe5da","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda17;":"307f7aa40","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda18;":"-20fe990bb","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda1;":"2cbeb9939","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda2;":"57139e8f5","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda3;":"5417b24d8","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda4;":"5c64dae00","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda5;":"3eb7c75a3","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda6;":"-245b158f3","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda7;":"-139510de1","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda8;":"-399fc7792","Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda9;":"193adf0a","Lcom/tools/pipra_pay/MainActivity$1;":"3d51a810","Lcom/tools/pipra_pay/MainActivity$2;":"575adb78","Lcom/tools/pipra_pay/MainActivity$3;":"723bf36d","Lcom/tools/pipra_pay/MainActivity$4;":"cfedea86","Lcom/tools/pipra_pay/MainActivity$5;":"3cc8b903","Lcom/tools/pipra_pay/MainActivity$6;":"8fac3d55","Lcom/tools/pipra_pay/MainActivity;":"7c16a664","Lcom/tools/pipra_pay/SMSMonitor;":"64e602b2","Lcom/tools/pipra_pay/SendWorker$$ExternalSyntheticLambda0;":"41d13ff6e","Lcom/tools/pipra_pay/SendWorker;":"4d2189ff"}
+ Charge Immediately!
+ Good
+ Very Good
+ Battery Low
+ Fully Charged
+ Medium

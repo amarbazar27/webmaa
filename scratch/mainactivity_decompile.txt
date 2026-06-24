@@ -1,0 +1,486 @@
+Found Class: Lcom/tools/pipra_pay/MainActivity;
+staticFields: 2, instanceFields: 26, directMethods: 26, virtualMethods: 15
+
+Method: -$$Nest$fgetbatteryPercentage (codeOff: 13876)
+  registers: 1, insnsSize: 3
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> batteryPercentage : Landroid/widget/TextView;
+
+Method: -$$Nest$fgetbatteryProgressBar (codeOff: 13924)
+  registers: 1, insnsSize: 3
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> batteryProgressBar : Lcom/google/android/material/progressindicator/CircularProgressIndicator;
+
+Method: -$$Nest$fgethandler (codeOff: 13828)
+  registers: 1, insnsSize: 3
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> handler : Landroid/os/Handler;
+
+Method: -$$Nest$fgetsave_name (codeOff: 13852)
+  registers: 1, insnsSize: 3
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> save_name : Landroid/widget/ImageView;
+
+Method: -$$Nest$fgettitle_battary (codeOff: 13900)
+  registers: 1, insnsSize: 3
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> title_battary : Landroid/widget/TextView;
+
+Method: -$$Nest$mStartservice (codeOff: 14116)
+  registers: 1, insnsSize: 4
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> Startservice
+
+Method: -$$Nest$mcheckIfActive (codeOff: 14140)
+  registers: 1, insnsSize: 4
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> checkIfActive
+
+Method: <init> (codeOff: 14164)
+  registers: 1, insnsSize: 4
+    [invoke] Lcom/tools/pipra_pay/Class/BaseActivity; -> <init>
+
+Method: Startservice (codeOff: 14188)
+  registers: 4, insnsSize: 21
+    [invoke] Landroid/content/Intent; -> <init>
+    [const-string] "undefined"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> startForegroundService
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> startService
+
+Method: Stopservice (codeOff: 14248)
+  registers: 3, insnsSize: 11
+    [invoke] Landroid/content/Intent; -> <init>
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> stopService
+
+Method: battary_status (codeOff: 14288)
+  registers: 4, insnsSize: 41
+    [invoke] Lcom/tools/pipra_pay/MainActivity$6; -> <init>
+    [const-string] "android.intent.action.BATTERY_CHANGED"
+    [invoke] Landroid/content/IntentFilter; -> <init>
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> registerReceiver
+    [const-string] "EEE, dd MMM yyyy"
+    [invoke] Ljava/util/Locale; -> getDefault
+    [invoke] Ljava/text/SimpleDateFormat; -> <init>
+    [invoke] Ljava/util/Date; -> <init>
+    [invoke] Ljava/text/SimpleDateFormat; -> format
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> date_time : Landroid/widget/TextView;
+    [invoke] Landroid/widget/TextView; -> setText
+
+Method: checkIfActive (codeOff: 14388)
+  registers: 7, insnsSize: 39
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda11; -> <init>
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda12; -> <init>
+    [invoke] Lcom/android/volley/DefaultRetryPolicy; -> <init>
+    [invoke] Lcom/android/volley/toolbox/StringRequest; -> setRetryPolicy
+    [invoke] Lcom/android/volley/toolbox/Volley; -> newRequestQueue
+    [invoke] Lcom/android/volley/RequestQueue; -> add
+
+Method: getCurrentUtcTimestamp (codeOff: 13948)
+  registers: 2, insnsSize: 26
+    [const-string] "yyyy-MM-dd'T'HH:mm:ss'Z'"
+    [invoke] Ljava/text/SimpleDateFormat; -> <init>
+    [const-string] "UTC"
+    [invoke] Ljava/util/TimeZone; -> getTimeZone
+    [invoke] Ljava/text/SimpleDateFormat; -> setTimeZone
+    [invoke] Ljava/util/Date; -> <init>
+    [invoke] Ljava/text/SimpleDateFormat; -> format
+
+Method: getGreetingMessage (codeOff: 14016)
+  registers: 5, insnsSize: 41
+    [invoke] Ljava/util/Calendar; -> getInstance
+    [invoke] Ljava/util/Calendar; -> get
+    [const-string] "Good Morning"
+    [const-string] "Good Afternoon"
+    [const-string] "Good Evening"
+    [const-string] "Good Night"
+
+Method: lambda$checkIfActive$13 (codeOff: 14484)
+  registers: 1, insnsSize: 1
+
+Method: lambda$checkIfActive$14 (codeOff: 14504)
+  registers: 1, insnsSize: 1
+
+Method: lambda$onCreate$5 (codeOff: 15288)
+  registers: 2, insnsSize: 4
+    [invoke] Landroid/app/Dialog; -> dismiss
+
+Method: lambda$onSetterClick$15 (codeOff: 15616)
+  registers: 4, insnsSize: 11
+    [invoke] Landroid/widget/EditText; -> getText
+    [iget] Landroid/graphics/PorterDuff$Mode; -> SRC_IN : Landroid/graphics/PorterDuff$Mode;
+    [invoke] Ljava/lang/Object; -> toString
+
+Method: lambda$onSetterClick$16 (codeOff: 15656)
+  registers: 2, insnsSize: 4
+    [invoke] Landroid/content/DialogInterface; -> cancel
+    [const-string/jumbo] "undefined"
+
+Method: lambda$send$17 (codeOff: 15680)
+  registers: 1, insnsSize: 1
+
+Method: lambda$send$18 (codeOff: 15700)
+  registers: 1, insnsSize: 1
+
+Method: loadSharedPreferencesLogList (codeOff: 15720)
+  registers: 4, insnsSize: 18
+    [const-string] "MyMessages"
+    [invoke] Landroid/content/Context; -> getSharedPreferences
+    [const-string] "apiToken"
+    [const-string] ""
+    [invoke] Landroid/content/SharedPreferences; -> getString
+
+Method: openAppSettings (codeOff: 17020)
+  registers: 6, insnsSize: 33
+    [invoke] Landroid/widget/Toast; -> makeText
+    [iget] Lcom/tools/pipra_pay/Class/BaseActivity; -> currentToast : [Landroid/widget/Toast;
+    [invoke] Landroid/widget/Toast; -> show
+    [const-string] "android.settings.APPLICATION_DETAILS_SETTINGS"
+    [invoke] Landroid/content/Intent; -> <init>
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getPackageName
+    [const-string] "package"
+    [invoke] Landroid/net/Uri; -> fromParts
+    [invoke] Landroid/content/Intent; -> setData
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> startActivity
+
+Method: saveSharedPreferencesLogList (codeOff: 17104)
+  registers: 5, insnsSize: 22
+    [const-string] "MyMessages"
+    [invoke] Landroid/content/Context; -> getSharedPreferences
+    [invoke] Landroid/content/SharedPreferences; -> edit
+    [const-string] "apiToken"
+    [invoke] Landroid/content/SharedPreferences$Editor; -> putString
+    [invoke] Landroid/content/SharedPreferences$Editor; -> apply
+
+Method: send (codeOff: 17164)
+  registers: 18, insnsSize: 30
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda13; -> <init>
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda14; -> <init>
+    [invoke] Lcom/android/volley/toolbox/Volley; -> newRequestQueue
+    [invoke] Lcom/android/volley/RequestQueue; -> add
+
+Method: showToast (codeOff: 17240)
+  registers: 4, insnsSize: 12
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [const-string] "Hide"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> showGlobalSnackbar
+
+Method: lambda$onCreate$0$com-tools-pipra_pay-MainActivity (codeOff: 14524)
+  registers: 6, insnsSize: 22
+    [invoke] Landroid/content/SharedPreferences; -> edit
+    [const-string] "background_task_enabled"
+    [invoke] Landroid/content/SharedPreferences$Editor; -> putBoolean
+    [invoke] Landroid/content/SharedPreferences$Editor; -> apply
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> Startservice
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> Stopservice
+
+Method: lambda$onCreate$1$com-tools-pipra_pay-MainActivity (codeOff: 14584)
+  registers: 7, insnsSize: 56
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> layout_home : Landroid/view/View;
+    [invoke] Landroid/view/View; -> setVisibility
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> layout_settings : Landroid/view/View;
+    [invoke] Landroid/view/View; -> setVisibility
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> homeImg : Landroid/widget/ImageView;
+    [invoke] Landroid/widget/ImageView; -> setImageResource
+    [iput] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> f$0 : Lcom/tools/pipra_pay/MainActivity;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> settingsImg : Landroid/widget/ImageView;
+    [invoke] Landroid/widget/ImageView; -> setImageResource
+    [iput] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> f$0 : Lcom/tools/pipra_pay/MainActivity;
+    [const-string] "vibrator"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getSystemService
+    [const-string] "undefined"
+    [invoke] Landroid/os/VibrationEffect; -> createOneShot
+    [invoke] Landroid/os/Vibrator; -> vibrate
+    [invoke] Landroid/os/Vibrator; -> vibrate
+
+Method: lambda$onCreate$10$com-tools-pipra_pay-MainActivity (codeOff: 14712)
+  registers: 4, insnsSize: 20
+    [const-string] "android.intent.action.VIEW"
+    [invoke] Landroid/content/Intent; -> <init>
+    [const-string] "https://community.piprapay.com"
+    [invoke] Landroid/net/Uri; -> parse
+    [invoke] Landroid/content/Intent; -> setData
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> startActivity
+
+Method: lambda$onCreate$11$com-tools-pipra_pay-MainActivity (codeOff: 14768)
+  registers: 4, insnsSize: 20
+    [const-string] "android.intent.action.VIEW"
+    [invoke] Landroid/content/Intent; -> <init>
+    [const-string] "https://www.facebook.com/piprapay"
+    [invoke] Landroid/net/Uri; -> parse
+    [invoke] Landroid/content/Intent; -> setData
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> startActivity
+
+Method: lambda$onCreate$12$com-tools-pipra_pay-MainActivity (codeOff: 14824)
+  registers: 4, insnsSize: 20
+    [const-string] "android.intent.action.VIEW"
+    [invoke] Landroid/content/Intent; -> <init>
+    [const-string] "https://api.whatsapp.com/send?phone=8801806579249&text=Hello,%20%0A%20I%20have%20a%20question%20about%20https%3A%2F%2Fpiprapay.com%2F"
+    [invoke] Landroid/net/Uri; -> parse
+    [invoke] Landroid/content/Intent; -> setData
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> startActivity
+
+Method: lambda$onCreate$2$com-tools-pipra_pay-MainActivity (codeOff: 14880)
+  registers: 7, insnsSize: 56
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> layout_home : Landroid/view/View;
+    [invoke] Landroid/view/View; -> setVisibility
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> layout_settings : Landroid/view/View;
+    [invoke] Landroid/view/View; -> setVisibility
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> homeImg : Landroid/widget/ImageView;
+    [invoke] Landroid/widget/ImageView; -> setImageResource
+    [iput] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> f$0 : Lcom/tools/pipra_pay/MainActivity;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> settingsImg : Landroid/widget/ImageView;
+    [invoke] Landroid/widget/ImageView; -> setImageResource
+    [iput] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> f$0 : Lcom/tools/pipra_pay/MainActivity;
+    [const-string] "vibrator"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getSystemService
+    [const-string] "undefined"
+    [invoke] Landroid/os/VibrationEffect; -> createOneShot
+    [invoke] Landroid/os/Vibrator; -> vibrate
+    [invoke] Landroid/os/Vibrator; -> vibrate
+
+Method: lambda$onCreate$3$com-tools-pipra_pay-MainActivity (codeOff: 15008)
+  registers: 8, insnsSize: 98
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> editText_name : Landroid/widget/EditText;
+    [invoke] Landroid/widget/EditText; -> getText
+    [iget] Landroid/content/pm/PackageInfo; -> requestedPermissions : [Ljava/lang/String;
+    [invoke] Ljava/lang/Object; -> toString
+    [invoke] Ljava/lang/String; -> trim
+    [invoke] Landroid/content/SharedPreferences; -> edit
+    [const-string] "User_name"
+    [invoke] Landroid/content/SharedPreferences$Editor; -> putString
+    [invoke] Landroid/content/SharedPreferences$Editor; -> apply
+    [const-string] "Name saved successfully!"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> showToast
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> save_name : Landroid/widget/ImageView;
+    [invoke] Landroidx/core/content/ContextCompat; -> getColor
+    [invoke] Landroid/widget/ImageView; -> setColorFilter
+    [const-string] "input_method"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getSystemService
+    [invoke] Ljava/lang/String; -> trim
+    [invoke] Ljava/lang/String; -> isEmpty
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> user_name : Landroid/widget/TextView;
+    [invoke] Landroid/widget/TextView; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> user_name : Landroid/widget/TextView;
+    [const-string] "Welcome!"
+    [invoke] Landroid/widget/TextView; -> setText
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getCurrentFocus
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getCurrentFocus
+    [invoke] Landroid/view/View; -> getWindowToken
+    [invoke] Landroid/view/inputmethod/InputMethodManager; -> hideSoftInputFromWindow
+
+Method: lambda$onCreate$4$com-tools-pipra_pay-MainActivity (codeOff: 15220)
+  registers: 6, insnsSize: 26
+    [invoke] Landroid/widget/EditText; -> getText
+    [iget] Landroid/os/Build$VERSION; -> RELEASE : Ljava/lang/String;
+    [invoke] Ljava/lang/Object; -> toString
+    [invoke] Landroid/app/Dialog; -> dismiss
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> webhook_url_show : Landroid/widget/TextView;
+    [invoke] Landroid/widget/TextView; -> setText
+    [const-string] "Webhook url saved successfully!"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> showToast
+
+Method: lambda$onCreate$6$com-tools-pipra_pay-MainActivity (codeOff: 15312)
+  registers: 7, insnsSize: 87
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> fab : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> showGlobalAnimated_button
+    [invoke] Landroid/app/Dialog; -> <init>
+    [invoke] Landroid/app/Dialog; -> setContentView
+    [invoke] Landroid/app/Dialog; -> getWindow
+    [invoke] Landroid/view/Window; -> setBackgroundDrawableResource
+    [invoke] Landroid/app/Dialog; -> getWindow
+    [invoke] Landroid/view/Window; -> setLayout
+    [invoke] Landroid/app/Dialog; -> setCancelable
+    [invoke] Landroid/app/Dialog; -> findViewById
+    [invoke] Landroid/app/Dialog; -> findViewById
+    [invoke] Landroid/app/Dialog; -> findViewById
+    [invoke] Landroid/widget/EditText; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> settingsImg : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> <init>
+    [invoke] Landroid/widget/ImageView; -> setOnClickListener
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> title_battary : Landroid/widget/TextView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda10; -> <init>
+    [invoke] Landroid/widget/ImageView; -> setOnClickListener
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [invoke] Landroid/app/Dialog; -> show
+
+Method: lambda$onCreate$7$com-tools-pipra_pay-MainActivity (codeOff: 15504)
+  registers: 3, insnsSize: 6
+    [const-string] "Allow all permissions manually."
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> openAppSettings
+
+Method: lambda$onCreate$8$com-tools-pipra_pay-MainActivity (codeOff: 15532)
+  registers: 3, insnsSize: 6
+    [const-string] "Clear data manually."
+    [const-string/jumbo] "undefined"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> openAppSettings
+
+Method: lambda$onCreate$9$com-tools-pipra_pay-MainActivity (codeOff: 15560)
+  registers: 4, insnsSize: 20
+    [const-string] "android.intent.action.VIEW"
+    [invoke] Landroid/content/Intent; -> <init>
+    [const-string] "https://piprapay.com"
+    [invoke] Landroid/net/Uri; -> parse
+    [invoke] Landroid/content/Intent; -> setData
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> startActivity
+
+Method: onCreate (codeOff: 15772)
+  registers: 8, insnsSize: 524
+    [invoke] Lcom/tools/pipra_pay/Class/BaseActivity; -> onCreate
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> setContentView
+    [const-string] "my_preferences"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getSharedPreferences
+    [const-string] "User_name"
+    [invoke] Landroid/content/SharedPreferences; -> getString
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> User_name : Ljava/lang/String;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> relativeHome : Landroid/widget/RelativeLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> relativeSetting : Landroid/widget/RelativeLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> layout_home : Landroid/view/View;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> layout_settings : Landroid/view/View;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> homeImg : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> settingsImg : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> greetingTextView : Landroid/widget/TextView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> title_battary : Landroid/widget/TextView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> date_time : Landroid/widget/TextView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> user_name : Landroid/widget/TextView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> editText_name : Landroid/widget/EditText;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> save_name : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> batteryProgressBar : Lcom/google/android/material/progressindicator/CircularProgressIndicator;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> batteryPercentage : Landroid/widget/TextView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> checkbox_background_task : Landroid/widget/CheckBox;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> clear_data_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> about_us_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> Community_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> live_support : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> whatsapp_support : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> fab : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> webhook_url_show : Landroid/widget/TextView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> all_permission_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> findViewById
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> checkbox_background_task : Landroid/widget/CheckBox;
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> battary_status
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> loadSharedPreferencesLogList
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getApplicationContext
+    [invoke] Landroid/content/Context; -> getPackageManager
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getApplicationContext
+    [invoke] Landroid/content/Context; -> getPackageName
+    [invoke] Landroid/content/pm/PackageManager; -> getPackageInfo
+    [iget] Landroid/content/pm/PackageInfo; -> requestedPermissions : [Ljava/lang/String;
+    [invoke] Landroidx/core/app/ActivityCompat; -> requestPermissions
+    [const-string] "background_task_enabled"
+    [invoke] Landroid/content/SharedPreferences; -> getBoolean
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> checkbox_background_task : Landroid/widget/CheckBox;
+    [invoke] Landroid/widget/CheckBox; -> setChecked
+    [iget] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda0; -> f$2 : Landroid/app/Dialog;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> checkbox_background_task : Landroid/widget/CheckBox;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda15; -> <init>
+    [invoke] Landroid/widget/CheckBox; -> setOnCheckedChangeListener
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> batteryProgressBar : Lcom/google/android/material/progressindicator/CircularProgressIndicator;
+    [const-string] "undefined"
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> Startservice
+    [invoke] Landroid/os/Handler; -> <init>
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> handler : Landroid/os/Handler;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$1; -> <init>
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> handler : Landroid/os/Handler;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [invoke] Landroid/os/Handler; -> post
+    [invoke] Landroid/os/Handler; -> <init>
+    [invoke] Lcom/tools/pipra_pay/MainActivity$2; -> <init>
+    [invoke] Landroid/os/Handler; -> postDelayed
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> getGreetingMessage
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> greetingTextView : Landroid/widget/TextView;
+    [invoke] Landroid/widget/TextView; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> User_name : Ljava/lang/String;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> User_name : Ljava/lang/String;
+    [invoke] Ljava/lang/String; -> trim
+    [invoke] Ljava/lang/String; -> isEmpty
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> user_name : Landroid/widget/TextView;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> User_name : Ljava/lang/String;
+    [invoke] Landroid/widget/TextView; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> user_name : Landroid/widget/TextView;
+    [const-string] "Welcome!"
+    [invoke] Landroid/widget/TextView; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> editText_name : Landroid/widget/EditText;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> User_name : Ljava/lang/String;
+    [invoke] Landroid/widget/EditText; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> webhook_url_show : Landroid/widget/TextView;
+    [invoke] Landroid/widget/TextView; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> editText_name : Landroid/widget/EditText;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$3; -> <init>
+    [invoke] Landroid/widget/EditText; -> addTextChangedListener
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> relativeHome : Landroid/widget/RelativeLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda17; -> <init>
+    [invoke] Landroid/widget/RelativeLayout; -> setOnClickListener
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> relativeSetting : Landroid/widget/RelativeLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda18; -> <init>
+    [invoke] Landroid/widget/RelativeLayout; -> setOnClickListener
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> save_name : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda1; -> <init>
+    [invoke] Landroid/widget/ImageView; -> setOnClickListener
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> fab : Landroid/widget/ImageView;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda2; -> <init>
+    [invoke] Landroid/widget/ImageView; -> setOnClickListener
+    [iput] Lcom/tools/pipra_pay/MainActivity; -> urlCheckRunnable : Ljava/lang/Runnable;
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> all_permission_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda3; -> <init>
+    [invoke] Landroidx/constraintlayout/widget/ConstraintLayout; -> setOnClickListener
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> clear_data_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda4; -> <init>
+    [invoke] Landroidx/constraintlayout/widget/ConstraintLayout; -> setOnClickListener
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> about_us_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda5; -> <init>
+    [invoke] Landroidx/constraintlayout/widget/ConstraintLayout; -> setOnClickListener
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> Community_btn : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda6; -> <init>
+    [invoke] Landroidx/constraintlayout/widget/ConstraintLayout; -> setOnClickListener
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> live_support : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda7; -> <init>
+    [invoke] Landroidx/constraintlayout/widget/ConstraintLayout; -> setOnClickListener
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> whatsapp_support : Landroidx/constraintlayout/widget/ConstraintLayout;
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda16; -> <init>
+    [invoke] Landroidx/constraintlayout/widget/ConstraintLayout; -> setOnClickListener
+
+Method: onPause (codeOff: 16852)
+  registers: 1, insnsSize: 7
+    [invoke] Lcom/tools/pipra_pay/MainActivity; -> saveSharedPreferencesLogList
+    [const-string] ""
+    [invoke] Lcom/tools/pipra_pay/Class/BaseActivity; -> onPause
+
+Method: onSetterClick (codeOff: 16884)
+  registers: 8, insnsSize: 60
+    [invoke] Landroid/view/LayoutInflater; -> from
+    [invoke] Landroid/view/LayoutInflater; -> inflate
+    [invoke] Landroid/view/View; -> findViewById
+    [invoke] Landroid/widget/EditText; -> setText
+    [iget] Lcom/tools/pipra_pay/MainActivity; -> batteryProgressBar : Lcom/google/android/material/progressindicator/CircularProgressIndicator;
+    [invoke] Landroidx/appcompat/app/AlertDialog$Builder; -> <init>
+    [invoke] Landroidx/appcompat/app/AlertDialog$Builder; -> setView
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda8; -> <init>
+    [const-string] "OK"
+    [invoke] Landroidx/appcompat/app/AlertDialog$Builder; -> setPositiveButton
+    [invoke] Lcom/tools/pipra_pay/MainActivity$$ExternalSyntheticLambda9; -> <init>
+    [const-string] "cancel"
+    [invoke] Landroidx/appcompat/app/AlertDialog$Builder; -> setNegativeButton
+    [invoke] Landroidx/appcompat/app/AlertDialog$Builder; -> create
+    [invoke] Landroidx/appcompat/app/AlertDialog; -> show

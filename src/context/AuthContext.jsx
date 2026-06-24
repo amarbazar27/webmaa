@@ -122,19 +122,31 @@ export function AuthProvider({ children }) {
             }
           });
 
-          // Listen to shops to see if they are added/removed as staff
+          // Listen to shops to see if they are added/removed as staff or admin
           const currentEmail = firebaseUser.email?.toLowerCase();
           if (currentEmail) {
-            const q = query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail));
-            unsubStaff = onSnapshot(q, async (snap) => {
-              if (!snap.empty) {
-                const shopDoc = snap.docs[0];
-                const shopData = shopDoc.data();
+            let unsubStaffOnly = null;
+            let unsubAdminOnly = null;
 
-                import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
-                  const userRef = doc(db, 'users', firebaseUser.uid);
-                  const userSnap = await getDoc(userRef);
-                  const data = userSnap.data();
+            const checkAndUpdateRole = async (staffDocs, adminDocs) => {
+              import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
+                const userRef = doc(db, 'users', firebaseUser.uid);
+                const userSnap = await getDoc(userRef);
+                const data = userSnap.data();
+
+                if (adminDocs && adminDocs.length > 0) {
+                  const shopDoc = adminDocs[0];
+                  const shopData = shopDoc.data();
+                  if (data?.role !== 'admin' || data?.accessShopId !== shopDoc.id) {
+                    await updateDoc(userRef, {
+                      role: 'admin',
+                      accessShopId: shopDoc.id,
+                      shopSlug: shopData.shopSlug
+                    });
+                  }
+                } else if (staffDocs && staffDocs.length > 0) {
+                  const shopDoc = staffDocs[0];
+                  const shopData = shopDoc.data();
                   if (data?.role !== 'staff' || data?.accessShopId !== shopDoc.id) {
                     await updateDoc(userRef, {
                       role: 'staff',
@@ -142,22 +154,37 @@ export function AuthProvider({ children }) {
                       shopSlug: shopData.shopSlug
                     });
                   }
-                }).catch(err => console.error('Auto staff update failed:', err));
-              } else {
-                import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
-                  const userRef = doc(db, 'users', firebaseUser.uid);
-                  const userSnap = await getDoc(userRef);
-                  const data = userSnap.data();
-                  if (data?.role === 'staff') {
+                } else {
+                  if (data?.role === 'staff' || data?.role === 'admin') {
                     await updateDoc(userRef, {
                       role: 'user',
                       accessShopId: null,
                       shopSlug: null
                     });
                   }
-                }).catch(err => console.error('Auto staff downgrade failed:', err));
-              }
+                }
+              }).catch(err => console.error('Role update failed:', err));
+            };
+
+            let currentStaffDocs = [];
+            let currentAdminDocs = [];
+
+            const qStaff = query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail));
+            unsubStaffOnly = onSnapshot(qStaff, (snap) => {
+              currentStaffDocs = snap.docs;
+              checkAndUpdateRole(currentStaffDocs, currentAdminDocs);
             });
+
+            const qAdmin = query(collection(db, 'shops'), where('adminEmails', 'array-contains', currentEmail));
+            unsubAdminOnly = onSnapshot(qAdmin, (snap) => {
+              currentAdminDocs = snap.docs;
+              checkAndUpdateRole(currentStaffDocs, currentAdminDocs);
+            });
+
+            unsubStaff = () => {
+              if (unsubStaffOnly) unsubStaffOnly();
+              if (unsubAdminOnly) unsubAdminOnly();
+            };
           }
         } catch (err) {
           console.error('AuthContext fetch error:', err);
@@ -186,7 +213,9 @@ export function AuthProvider({ children }) {
     ? impersonation.shopId
     : (userData?.role === 'retailer' || userData?.role === 'superadmin')
       ? user?.uid
-      : userData?.accessShopId;
+      : (userData?.role === 'admin' || userData?.role === 'staff')
+        ? userData?.accessShopId
+        : null;
 
   return (
     <AuthContext.Provider value={{

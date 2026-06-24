@@ -122,6 +122,40 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
+  // ── Custom favicon.ico and logo.png rewrite for custom domains & subdomains ──
+  const isFaviconOrLogo = pathname === '/favicon.ico' || pathname === '/logo.png';
+  if (isFaviconOrLogo && !isBypassHost(host)) {
+    let slug = getTenantSlug(rawHost);
+    if (slug) {
+      const targetPath = `/shop/${slug}${pathname}`;
+      const rewriteUrl = new URL(targetPath, request.url);
+      console.log(`[Proxy] Subdomain favicon/logo rewrite: ${targetPath}`);
+      return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+    }
+    
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://daripallah.com';
+      const lookupUrl = new URL('/api/domain-lookup', baseUrl);
+      lookupUrl.searchParams.set('host', host);
+      const lookupResponse = await fetch(lookupUrl.toString(), {
+        method: 'GET',
+        headers: { 'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '' },
+        cache: 'no-store',
+      });
+      if (lookupResponse.ok) {
+        const data = await lookupResponse.json();
+        if (data.slug) {
+          const targetPath = `/shop/${data.slug}${pathname}`;
+          const rewriteUrl = new URL(targetPath, request.url);
+          console.log(`[Proxy] Custom domain favicon/logo rewrite: ${targetPath}`);
+          return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+        }
+      }
+    } catch (err) {
+      console.error('[Proxy] Favicon lookup failed:', err);
+    }
+  }
+
   // ── Common static bypass paths for all hosts ──────────────────────────
   if (
     pathname.startsWith('/_next/') ||
@@ -229,6 +263,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 // ── Matcher Config ──────────────────────────────────────────────────────────
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|sitemap\\.xml|icons/).*)',
+    '/((?!_next/static|_next/image|robots\\.txt|sitemap\\.xml|icons/).*)',
   ],
 };

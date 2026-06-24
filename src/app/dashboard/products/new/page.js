@@ -29,6 +29,7 @@ export default function NewProductPage() {
     description: '',
     allowCustomize: false,
     allowNote: false,
+    allowRequest: false,
     variants: [], // Array of { name: 'Size', options: [{ label: 'S', price: 0 }] }
   });
 
@@ -330,6 +331,19 @@ export default function NewProductPage() {
                 value={form.stock}
                 onChange={(e) => setForm({...form, stock: e.target.value})}
               />
+            </div>
+
+            <div className="flex items-center gap-2 pt-1 pb-2">
+              <input 
+                type="checkbox" 
+                id="allowRequest"
+                checked={form.allowRequest || false}
+                onChange={(e) => setForm({...form, allowRequest: e.target.checked})}
+                className="w-4 h-4 text-purple-600 border-slate-350 rounded focus:ring-purple-500 cursor-pointer"
+              />
+              <label htmlFor="allowRequest" className="text-xs font-bold text-slate-700 cursor-pointer select-none">
+                স্টক শেষ হলেও অনুরোধ (Request Product) করার সুযোগ দিন
+              </label>
             </div>
 
             <div className="space-y-2">

@@ -68,7 +68,8 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
   };
 
   const isStaff = userData?.role === 'staff';
-  const visibleNavItems = isStaff 
+  const isAdmin = userData?.role === 'admin';
+  const visibleNavItems = isStaff && !isAdmin 
     ? navItems.filter(item => item.staffAllowed !== false) 
     : navItems;
 
@@ -155,7 +156,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         )}
       </nav>
 
-      {!isStaff && <AiCompanion shop={shop} />}
+      {(!isStaff || isAdmin) && <AiCompanion shop={shop} />}
 
       <div className="p-4 mt-auto">
         {deferredPrompt ? (

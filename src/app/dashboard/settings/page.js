@@ -132,6 +132,8 @@ export default function SettingsPage() {
   
   const [staffEmails, setStaffEmails] = useState([]);
   const [newStaffEmail, setNewStaffEmail] = useState('');
+  const [adminEmails, setAdminEmails] = useState([]);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
   
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [customDomainEditing, setCustomDomainEditing] = useState(false);
@@ -246,6 +248,7 @@ export default function SettingsPage() {
         smartCalcEnabled: data?.aiConfig?.smartCalcEnabled || false
       });
       setStaffEmails(data?.staffEmails || []);
+      setAdminEmails(data?.adminEmails || []);
       setServiceAreas(data?.serviceAreas || []);
       setIsStrictLocation(data?.isStrictLocation || false);
       setRequireLocationForOrder(data?.requireLocationForOrder !== false);
@@ -575,6 +578,7 @@ export default function SettingsPage() {
         deliveryConfig,
         aiConfig,
         staffEmails,
+        adminEmails,
         serviceAreas,
         isStrictLocation,
         requireLocationForOrder,
@@ -1002,6 +1006,41 @@ export default function SettingsPage() {
                            <div key={email} className="flex justify-between items-center p-3 px-4 text-sm font-bold text-slate-800">
                               {email}
                               <button type="button" onClick={() => setStaffEmails(staffEmails.filter(e => e !== email))} className="text-[10px] text-red-500 hover:bg-red-50 px-2 py-1 rounded">Remove</button>
+                           </div>
+                        ))}
+                     </div>
+                  )}
+               </div>
+            </Card>
+            
+            <Card title="Admin Management" subtitle="Full Dashboard Access" icon={Users} className="border-l-4 border-l-purple-500">
+               <div className="space-y-4">
+                  <p className="text-xs text-slate-500 font-bold leading-relaxed">
+                    Add email addresses of users who will be Administrators. Admins will have the exact same dashboard capabilities as the owner.
+                  </p>
+                  
+                  <div className="flex gap-2">
+                     <Input 
+                       placeholder="admin@gmail.com" 
+                       type="email"
+                       value={newAdminEmail}
+                       onChange={e => setNewAdminEmail(e.target.value)}
+                       className="flex-1"
+                     />
+                     <Button type="button" onClick={() => {
+                        if (newAdminEmail && !adminEmails.includes(newAdminEmail.toLowerCase())) {
+                           setAdminEmails([...adminEmails, newAdminEmail.toLowerCase()]);
+                           setNewAdminEmail('');
+                        }
+                     }} className="h-[52px]">Add Admin</Button>
+                  </div>
+                  
+                  {adminEmails.length > 0 && (
+                     <div className="bg-slate-50 border border-slate-200 rounded-xl divide-y divide-slate-100">
+                        {adminEmails.map(email => (
+                           <div key={email} className="flex justify-between items-center p-3 px-4 text-sm font-bold text-slate-800">
+                              {email}
+                              <button type="button" onClick={() => setAdminEmails(adminEmails.filter(e => e !== email))} className="text-[10px] text-red-500 hover:bg-red-50 px-2 py-1 rounded">Remove</button>
                            </div>
                         ))}
                      </div>
