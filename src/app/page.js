@@ -437,6 +437,7 @@ export default function Home() {
     if (userData?.role === 'superadmin') return '/superadmin';
     if (userData?.role === 'retailer') return '/dashboard';
     if (userData?.role === 'staff') return '/dashboard';
+    if (userData?.role === 'admin') return '/dashboard';
     return null;
   };
 
@@ -448,7 +449,7 @@ export default function Home() {
       
       const role = result?.userData?.role;
       if (role === 'superadmin') router.push('/superadmin');
-      else if (role === 'retailer' || role === 'staff') router.push('/dashboard');
+      else if (role === 'retailer' || role === 'staff' || role === 'admin') router.push('/dashboard');
       else toast.success(`স্বাগতম, ${result.user.displayName}!`);
     } catch (err) {
       console.error("[SmartLogin] Error:", err);

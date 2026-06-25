@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getProducts, deleteProduct, updateProduct } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff, Inbox } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -234,10 +234,11 @@ export default function ProductsPage() {
           <div className="hidden lg:grid grid-cols-12 px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
             <div className="col-span-3">Product</div>
             <div className="col-span-2">Category</div>
-            <div className="col-span-2 text-center">Price (৳)</div>
+            <div className="col-span-1 text-center">Price (৳)</div>
             <div className="col-span-1 text-center">Stock</div>
             <div className="col-span-1 text-center">Note</div>
             <div className="col-span-1 text-center">Custom</div>
+            <div className="col-span-1 text-center">Request</div>
             <div className="col-span-1 text-center">Hide</div>
             <div className="col-span-1 text-right">Action</div>
           </div>
@@ -290,19 +291,19 @@ export default function ProductsPage() {
               </div>
 
               {/* Price */}
-              <div className="col-span-2 text-center">
+              <div className="col-span-1 text-center">
                 <EditableCell
                   value={product.price}
                   type="number"
                   prefix="৳"
                   onSave={v => handleUpdate(product.id, 'price', v)}
-                  className="text-slate-900 text-lg font-black justify-center"
+                  className="text-slate-900 text-sm font-black justify-center"
                 />
               </div>
 
               {/* Stock */}
               <div className="col-span-1 text-center">
-                <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-black ${(parseInt(product.stock) || 0) > 10 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-black ${(parseInt(product.stock) || 0) > 10 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
                   <EditableCell
                     value={product.stock || 0}
                     type="number"
@@ -332,6 +333,17 @@ export default function ProductsPage() {
                    title={product.allowCustomize ? "AI Customize is ON" : "AI Customize is OFF"}
                  >
                     <Sparkles size={18} strokeWidth={product.allowCustomize ? 3 : 2} />
+                 </button>
+              </div>
+
+              {/* Request Toggle */}
+              <div className="col-span-1 text-center">
+                 <button 
+                   onClick={() => handleUpdate(product.id, 'allowRequest', !product.allowRequest)}
+                   className={`p-2 rounded-xl transition-all ${product.allowRequest ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-600/20' : 'bg-slate-50 text-slate-300 hover:text-slate-500'}`}
+                   title={product.allowRequest ? "Pre-order/Request is ON" : "Pre-order/Request is OFF"}
+                 >
+                    <Inbox size={18} strokeWidth={product.allowRequest ? 3 : 2} />
                  </button>
               </div>
 

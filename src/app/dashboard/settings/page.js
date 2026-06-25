@@ -1184,13 +1184,16 @@ export default function SettingsPage() {
                    onChange={e => setDeliveryConfig({...deliveryConfig, methods: e.target.value})}
                    placeholder="bKash: 017.., Nagad.."
                  />
-                 <Input
-                   label="📧 Ruflo Alert Email (New Orders)"
-                   type="text"
-                   value={deliveryConfig.contactEmail}
-                   onChange={e => setDeliveryConfig({...deliveryConfig, contactEmail: e.target.value})}
-                   placeholder="your@gmail.com, staff@gmail.com (কমা দিয়ে একাধিক ইমেইল যোগ করতে পারবেন)"
-                 />
+                 <div className="flex flex-col">
+                    <Input
+                      label="📧 Ruflo Alert Email (New Orders)"
+                      type="text"
+                      value={deliveryConfig.contactEmail || ''}
+                      onChange={e => setDeliveryConfig({...deliveryConfig, contactEmail: e.target.value})}
+                      placeholder="your@gmail.com, staff@gmail.com"
+                    />
+                    <span className="text-[10px] font-black text-slate-400 mt-1 block">কমা (,) দিয়ে একাধিক ইমেইল একসাথে যোগ করতে পারেন।</span>
+                 </div>
                  <Input
                    label="Minimum Order Amount (৳)"
                    type="number"

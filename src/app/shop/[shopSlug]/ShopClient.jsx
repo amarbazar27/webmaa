@@ -1205,7 +1205,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     let changed = false;
     const newCart = cart.filter(item => {
       const p = products.find(prod => prod.id === item.id);
-      if (p && p.stock === 0) {
+      if (p && p.stock === 0 && !p.allowRequest) {
         toast.error(`${p.name} স্টকে নেই, কার্ট থেকে সরানো হয়েছে`);
         changed = true;
         return false;
@@ -1243,10 +1243,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         }
 
         if (!product || !product.id) return;
-        if (product.stock === 0) return;
+        if (product.stock === 0 && !product.allowRequest) return;
 
         const qtyToAdd = qty !== undefined && qty !== null ? Number(qty) || 1 : (product.quantity !== undefined ? Number(product.quantity) || 1 : 1);
-        const resolvedCustomizedText = customizedText !== undefined && customizedText !== null ? customizedText : (product.customizedText || '');
+        let resolvedCustomizedText = customizedText !== undefined && customizedText !== null ? customizedText : (product.customizedText || '');
+        if (product.stock === 0 && product.allowRequest) {
+          if (!resolvedCustomizedText.includes('[অনুরোধকৃত / Requested]')) {
+            resolvedCustomizedText = resolvedCustomizedText ? `${resolvedCustomizedText} [অনুরোধকৃত / Requested]` : '[অনুরোধকৃত / Requested]';
+          }
+        }
         const resolvedNote = note !== undefined && note !== null ? note : (product.note || '');
         const resolvedPrice = price !== undefined && price !== null ? price : product.price;
 
@@ -1874,8 +1879,19 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         body { font-family: var(--sp-font), sans-serif !important; }
         [data-sf-style] .sf-hero,
         .sf-hero {
-          min-height: 0 !important;
+          aspect-ratio: 16/9 !important;
+          min-height: 140px !important;
+          max-height: 250px !important;
           height: auto !important;
+          width: 100% !important;
+        }
+        @media (min-width: 1024px) {
+          [data-sf-style] .sf-hero,
+          .sf-hero {
+            aspect-ratio: 21/9 !important;
+            height: 240px !important;
+            max-height: 240px !important;
+          }
         }
       `}} />
 
@@ -2024,7 +2040,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 flex-wrap justify-end">
             <NotificationInbox shopId={shop.id} isDashboard={false} />
 
-            {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
+            {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'admin' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
               <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-all shadow-lg">
                 <Settings size={14} /> <span className="hidden sm:inline">প্যানেলে যান</span>
               </button>
@@ -2145,7 +2161,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         )}
       </div>
 
-      <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6 md:space-y-8">
+      <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 w-full space-y-4 md:space-y-5">
         
         {/* ── Banner Description Box (SEO/AEO/GEO Optimized & Narrow) ── */}
         <div
@@ -2209,7 +2225,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         )}
 
         {/* ── Search & Sort ── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-2.5 flex items-center gap-3">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-1.5 flex items-center gap-2">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3.5 top-3 text-slate-500" size={15} strokeWidth={2.5} />
             <input
@@ -2321,14 +2337,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <p className="text-slate-500 text-sm mt-3 font-semibold">অন্য ক্যাটাগরিতে খুঁজে দেখুন।</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-3 sm:gap-4">
             {filteredProducts.map((product, index) => {
               const cartItem = cart.find(i => i.id === product.id);
               return (
                 <div key={product.id} className="sf-product-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 flex flex-col">
                   {/* Image — clickable to detail page */}
                   <div 
-                    className="relative h-44 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
+                    className="relative h-40 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
                     onClick={() => {
                       trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
                       setSelectedProductForModal(product);

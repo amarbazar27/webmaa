@@ -134,6 +134,10 @@ export function AuthProvider({ children }) {
                 const userSnap = await getDoc(userRef);
                 const data = userSnap.data();
 
+                if (data?.role === 'retailer' || data?.role === 'superadmin') {
+                  return;
+                }
+
                 if (adminDocs && adminDocs.length > 0) {
                   const shopDoc = adminDocs[0];
                   const shopData = shopDoc.data();

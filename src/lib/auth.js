@@ -76,21 +76,28 @@ export const handleUserSession = async (user) => {
       await initializeShop(user);
     }
   } else {
-    // Existing user path - PERFORMANCE OPTIMIZATION
+    // Existing user path - Always verify role to support dynamic role changes (staff/admin/retailer promotions)
     const existingData = userDocSnap.data();
     
-    // Only re-verify role if they are still a basic "user"
-    if (existingData.role === 'user' || !existingData.role) {
+    if (existingData.role === 'retailer' || existingData.role === 'superadmin') {
+      finalUserData = existingData;
+    } else {
       const freshRole = await determineRole(user.email);
-      if (freshRole.role !== 'user') {
-        await updateDoc(userDocRef, { ...freshRole });
-        finalUserData = { ...existingData, ...freshRole };
-        if (freshRole.role === 'retailer') await initializeShop(user);
+      const roleChanged = existingData.role !== freshRole.role ||
+                          existingData.accessShopId !== freshRole.accessShopId ||
+                          existingData.shopSlug !== freshRole.shopSlug;
+
+      if (roleChanged) {
+        const updatePayload = {
+          role: freshRole.role,
+          accessShopId: freshRole.accessShopId || null,
+          shopSlug: freshRole.shopSlug || null
+        };
+        await updateDoc(userDocRef, updatePayload);
+        finalUserData = { ...existingData, ...updatePayload };
       } else {
         finalUserData = existingData;
       }
-    } else {
-      finalUserData = existingData;
     }
 
     // Background update lastLogin to avoid blocking UI

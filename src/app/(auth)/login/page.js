@@ -20,7 +20,7 @@ export default function LoginPage() {
     if (role === 'superadmin') {
       toast.success(`Welcome back Admin! 👑`);
       router.push('/superadmin');
-    } else if (role === 'retailer') {
+    } else if (role === 'retailer' || role === 'staff' || role === 'admin') {
       toast.success(`Dashboard access authorized 🚀`);
       router.push('/dashboard');
     } else {
