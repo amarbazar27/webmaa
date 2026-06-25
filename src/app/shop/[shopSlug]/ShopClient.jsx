@@ -412,7 +412,14 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const { user, userData, loading: authLoading } = useAuth();
   const [shop, setShop] = useState(initialShop);
   const [products, setProducts] = useState(initialProducts || []);
-  const [categories] = useState(initialCategories || []);
+  const [categories] = useState(() => {
+    return (initialCategories || []).map(cat => {
+      const sortedSubs = cat.subcategories ? [...cat.subcategories].sort((a, b) => a.localeCompare(b, 'bn')) : [];
+      return { ...cat, subcategories: sortedSubs };
+    }).sort((a, b) => {
+      return (a.name || '').localeCompare(b.name || '', 'bn');
+    });
+  });
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeSubcategory, setActiveSubcategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -466,7 +473,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
       const svgFavicon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}" rx="8"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-size="18" font-family="system-ui, sans-serif" font-weight="900">${firstLetter}</text></svg>`;
 
-      const faviconUrl = shop.logoUrl || svgFavicon;
+      const faviconUrl = `/favicon.ico?v=${shop.logoUrl ? encodeURIComponent(shop.logoUrl) : 'default'}`;
 
       // Remove all existing icon links to prevent any conflict or caching of the main site icon
       const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");
@@ -475,7 +482,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       // Create new clean favicon link
       const iconLink = document.createElement('link');
       iconLink.rel = 'icon';
-      iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
       iconLink.href = faviconUrl;
       document.head.appendChild(iconLink);
 
@@ -715,7 +721,11 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', address: '', note: '', txnId: '', paymentNumber: '', coordinates: null });
   const [paymentScreenshot, setPaymentScreenshot] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState(shop?.piprapayEnabled ? 'automated' : 'manual');
+  const [paymentMethod, setPaymentMethod] = useState(() => {
+    return shop?.piprapayEnabled 
+      ? 'automated' 
+      : (shop?.manualPaymentEnabled !== false ? 'manual' : 'cod');
+  });
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -1405,7 +1415,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   const deliveryAdvanceFee = shop.deliveryConfig?.advanceFee ? parseInt(shop.deliveryConfig.advanceFee) : 60;
   const isCOD = shop.deliveryConfig?.isCOD !== false;
   const cartCount = cart.reduce((a, c) => a + (Number(c.quantity) || 0), 0);
-  const isAdvanceRequired = !isCOD || (shop.deliveryConfig?.advanceFee && shop.deliveryConfig.advanceFee !== '0');
+  const hasPaymentGateway = shop?.manualPaymentEnabled !== false || shop?.piprapayEnabled === true;
+  const isAdvanceRequired = hasPaymentGateway && (!isCOD || (shop.deliveryConfig?.advanceFee && shop.deliveryConfig.advanceFee !== '0'));
 
   const { hasFreeDelivery } = getUserStreak(userOrders);
   const effectiveDelivery = hasFreeDelivery ? 0 : deliveryAdvanceFee;
@@ -1650,10 +1661,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       customerEmail: user?.email || '',
       customerAddress: orderForm.address,
       customerNote: orderForm.note,
-      paymentMethod: shop.piprapayEnabled ? paymentMethod : 'manual',
-      transactionId: paymentMethod === 'manual' ? orderForm.txnId : '',
-      paymentNumber: paymentMethod === 'manual' ? orderForm.paymentNumber : '',
-      paymentScreenshot: paymentMethod === 'manual' ? (paymentScreenshot || undefined) : undefined,
+      paymentMethod: isAdvanceRequired 
+        ? (shop.piprapayEnabled ? paymentMethod : 'manual') 
+        : 'cod',
+      transactionId: (isAdvanceRequired && paymentMethod === 'manual') ? orderForm.txnId : '',
+      paymentNumber: (isAdvanceRequired && paymentMethod === 'manual') ? orderForm.paymentNumber : '',
+      paymentScreenshot: (isAdvanceRequired && paymentMethod === 'manual') ? (paymentScreenshot || undefined) : undefined,
       couponCode: appliedCouponCode || undefined,
       items: cart.filter(i => Number(i.quantity) > 0).map(i => ({ 
         id: i.productId || i.id, 
@@ -1880,17 +1893,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         [data-sf-style] .sf-hero,
         .sf-hero {
           aspect-ratio: 16/9 !important;
-          min-height: 140px !important;
-          max-height: 250px !important;
-          height: auto !important;
           width: 100% !important;
+          height: auto !important;
+          min-height: 0 !important;
+          max-height: none !important;
         }
         @media (min-width: 1024px) {
           [data-sf-style] .sf-hero,
           .sf-hero {
-            aspect-ratio: 21/9 !important;
-            height: 240px !important;
-            max-height: 240px !important;
+            aspect-ratio: 2.8/1 !important;
+            height: auto !important;
+            max-height: 380px !important;
           }
         }
       `}} />
@@ -2105,17 +2118,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     : 'absolute inset-0 z-0 opacity-0 scale-95 pointer-events-none'
                 }`}
               >
-                {/* Blurred background for cinematic letterboxing depth */}
-                <div className="absolute inset-0 overflow-hidden select-none pointer-events-none">
-                  <img src={banner.url} alt="" aria-hidden="true" className="w-full h-full object-cover scale-110 blur-2xl opacity-20" />
-                </div>
-                {/* Actual banner — scaled to fit container, no cropping */}
-                <div className="w-full h-full flex items-center justify-center">
+                {/* Actual banner — filled to cover container width and height */}
+                <div className="w-full h-full">
                   <img
                     src={banner.url}
                     loading={i === 0 ? "eager" : "lazy"}
                     alt={banner.title || `Banner ${i+1}`}
-                    className="max-w-full max-h-full object-contain z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
+                    className="w-full h-full object-cover z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
                   />
                 </div>
                 {/* Premium Text Overlay if defined */}
@@ -3184,7 +3193,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 {couponError && <p className="text-[11px] text-red-600 font-bold pl-1">{couponError}</p>}
               </div>
 
-              {isAdvanceRequired && (
+              {isAdvanceRequired ? (
                 <div className="bg-purple-50 p-5 rounded-2xl border-2 border-purple-200 space-y-4">
                   <div className="flex items-start gap-3">
                     <AlertCircle size={20} className="text-purple-700 mt-0.5 shrink-0" strokeWidth={2.5} />
@@ -3280,6 +3289,19 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         )}
                       </div>
                     </>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-emerald-600 font-bold text-lg">🤝</span>
+                    <p className="text-xs font-black text-slate-700 uppercase tracking-widest">পেমেন্ট পদ্ধতি: ক্যাশ অন ডেলিভারি (Cash on Delivery)</p>
+                  </div>
+                  {shop.deliveryConfig?.methods && (
+                     <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">যোগাযোগ নাম্বার / পেমেন্ট নাম্বার</p>
+                        <p className="text-sm font-black text-slate-700">{shop.deliveryConfig?.methods}</p>
+                     </div>
                   )}
                 </div>
               )}
