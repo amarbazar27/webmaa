@@ -50,7 +50,11 @@ export async function generateMetadata({ params }) {
       keywords,
       manifest: `/api/manifest?shop=${shopSlug}`,
       alternates: { canonical: canonicalUrl },
-      icons: { icon: rawLogo, shortcut: rawLogo, apple: rawLogo },
+      icons: {
+        icon: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
+        shortcut: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
+        apple: rawLogo,
+      },
       robots: { index: true, follow: true },
       openGraph: {
         title: metaTitle,

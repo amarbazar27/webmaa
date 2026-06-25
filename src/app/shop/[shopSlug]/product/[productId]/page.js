@@ -45,8 +45,8 @@ export async function generateMetadata({ params }) {
       description,
       alternates: { canonical: canonicalUrl },
       icons: {
-        icon: shop?.logoUrl || '/logo.png',
-        shortcut: shop?.logoUrl || '/logo.png',
+        icon: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
+        shortcut: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
         apple: shop?.logoUrl || '/logo.png',
       },
       openGraph: {

@@ -256,8 +256,8 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Invalid product price' }, { status: 400 });
       }
 
-      // 🚨 Stock validation (if exists)
-      if (product.stock && item.quantity > product.stock) {
+      // 🚨 Stock validation (if exists) - Bypass if preorder/allowRequest is enabled
+      if (!product.allowRequest && product.stock && item.quantity > product.stock) {
         return NextResponse.json({ error: 'Out of stock' }, { status: 400 });
       }
 
@@ -336,7 +336,7 @@ export async function POST(req) {
         // ═══ STEP 2: VALIDATE ═══
         for (const item of verifiedItems) {
           const pData = productSnaps[item.id].data();
-          if (pData.stock !== undefined && pData.stock !== null) {
+          if (!pData.allowRequest && pData.stock !== undefined && pData.stock !== null) {
             if (pData.stock < item.quantity) {
               throw new Error(`স্টক নেই: ${item.name}`);
             }
