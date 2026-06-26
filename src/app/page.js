@@ -202,6 +202,7 @@ export default function Home() {
   const [userOrders, setUserOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showPwaBanner, setShowPwaBanner] = useState(false);
 
   // ── AI Product Clustering Helper ──
   const getProductType = (product) => {
@@ -328,6 +329,14 @@ export default function Home() {
     }).catch(err => console.error("Error loading shops:", err));
 
     if (typeof window === 'undefined') return;
+
+    // Register Service Worker on the main website
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+        .then(reg => console.log('[PWA] Service Worker registered for main website:', reg.scope))
+        .catch(err => console.error('[PWA] Service Worker registration failed:', err));
+    }
+
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     if (isStandalone) {
       setPwaInstalled(true);
@@ -338,6 +347,12 @@ export default function Home() {
       e.preventDefault();
       setDeferredPrompt(e);
       setPwaInstalled(false);
+      localStorage.removeItem('pwa_installed'); // Clean if uninstalled
+      
+      const dismissed = sessionStorage.getItem('pwa-prompt-dismissed');
+      if (!dismissed) {
+        setShowPwaBanner(true);
+      }
     };
     window.addEventListener('beforeinstallprompt', handler);
 
@@ -346,6 +361,7 @@ export default function Home() {
 
     const onInstall = () => {
       setPwaInstalled(true);
+      setShowPwaBanner(false);
       localStorage.setItem('pwa_installed', 'true');
     };
     window.addEventListener('appinstalled', onInstall);
@@ -2687,6 +2703,41 @@ function LandingProductDetailInner({ shop, product, onClose, cart, setCart }) {
           onAddToCart={handleLandingAddToCart} 
         />
         <ReviewSection shopId={safeShop?.id} />
+
+        {/* ── Premium PWA Installation Banner ── */}
+        {showPwaBanner && !pwaInstalled && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] w-[92%] max-w-md p-4 rounded-2xl glass-panel bg-slate-900/90 border border-purple-500/20 shadow-2xl flex items-center justify-between gap-3 animate-fade-in transition-all">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-xl text-purple-400 shrink-0">
+                <Download size={20} className="animate-bounce" />
+              </div>
+              <div className="text-left">
+                <h4 className="text-xs font-black text-white">অ্যাপ হিসেবে ব্যবহার করুন</h4>
+                <p className="text-[10px] text-slate-400 mt-0.5 font-bold leading-relaxed">ব্রাউজার ছাড়াই দ্রুত ও অফলাইনে দাঁড়িপাল্লা ব্যবহার করতে এখনই ডাউনলোড করুন।</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button 
+                onClick={() => {
+                  handleAppDownload();
+                  setShowPwaBanner(false);
+                }}
+                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-black transition-all hover:scale-105 shadow-md whitespace-nowrap cursor-pointer"
+              >
+                ডাউনলোড
+              </button>
+              <button 
+                onClick={() => {
+                  sessionStorage.setItem('pwa-prompt-dismissed', 'true');
+                  setShowPwaBanner(false);
+                }}
+                className="p-1.5 hover:bg-white/10 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

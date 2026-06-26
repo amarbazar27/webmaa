@@ -9,7 +9,7 @@ export async function GET(request) {
     name: "Daripallah Dashboard",
     short_name: "Daripallah",
     description: "Premium AI-Powered Multi-Vendor Marketplace",
-    start_url: "/dashboard",
+    start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#9333ea",

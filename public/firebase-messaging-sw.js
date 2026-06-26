@@ -150,3 +150,11 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// ── PWA Caching Support (sw.js integration for installability) ────────────
+try {
+  importScripts('/sw.js');
+  console.log('[FCM-SW] ✅ Successfully imported sw.js for PWA caching support.');
+} catch (err) {
+  console.warn('[FCM-SW] ⚠️ Failed to import sw.js:', err.message);
+}

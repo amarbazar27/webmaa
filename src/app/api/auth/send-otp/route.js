@@ -25,19 +25,18 @@ export async function POST(req) {
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // Send the email using Ruflo helper
-    const mailResult = await sendOTPEmail({
+    // Send the email using Ruflo helper (non-blocking, fire-and-forget)
+    void sendOTPEmail({
       to: cleanEmail,
       otp,
       purpose: 'লগইন'
+    }).then(result => {
+      if (!result.success) {
+        console.error('[Send OTP Async Failure]:', result.error);
+      }
+    }).catch(err => {
+      console.error('[Send OTP Async Error]:', err.message);
     });
-
-    if (!mailResult.success) {
-      console.error('[Send OTP] Email failed:', mailResult.error);
-      return NextResponse.json({ 
-        error: 'ইমেইল ওটিপি পাঠানো ব্যর্থ হয়েছে। অনুগ্রহ করে রিটেইল ড্যাশবোর্ডে Ruflo ইমেইল কনফিগারেশন চেক করুন।' 
-      }, { status: 500 });
-    }
 
     return NextResponse.json({ success: true, message: 'ওটিপি কোড সফলভাবে পাঠানো হয়েছে।' });
   } catch (err) {
