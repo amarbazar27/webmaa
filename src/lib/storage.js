@@ -5,7 +5,7 @@
  * @param {File} file 
  * @returns {Promise<string>} Download URL of the uploaded image
  */
-export const uploadImage = async (file) => {
+export const uploadImage = async (file, shopId = null) => {
   if (!file) throw new Error('কোনো ফাইল নির্বাচন করা হয়নি।');
   if (!file.type.startsWith('image/')) {
     throw new Error('অবৈধ ফাইল টাইপ! শুধুমাত্র ছবি (Image) আপলোড করা যাবে।');
@@ -14,8 +14,26 @@ export const uploadImage = async (file) => {
     throw new Error('ফাইল সাইজ ৫ মেগাবাইটের বেশি! অনুগ্রহ করে ছোট ছবি ব্যবহার করুন।');
   }
   
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dcsecgwzc';
-  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
+  let cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dcsecgwzc';
+  let uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
+  
+  if (shopId) {
+    try {
+      const { db } = await import('./firebase');
+      const { doc, getDoc } = await import('firebase/firestore');
+      const shopSnap = await getDoc(doc(db, 'shops', shopId));
+      if (shopSnap.exists()) {
+        const shopData = shopSnap.data();
+        if (shopData.cloudinaryCloudName && shopData.cloudinaryUploadPreset) {
+          cloudName = shopData.cloudinaryCloudName.trim();
+          uploadPreset = shopData.cloudinaryUploadPreset.trim();
+          console.log(`[Cloudinary Dynamic Config] Loaded custom config for shop ${shopId}: ${cloudName} / ${uploadPreset}`);
+        }
+      }
+    } catch (err) {
+      console.warn(`[Cloudinary Dynamic Config] Failed to load custom settings for ${shopId}, falling back to default.`, err);
+    }
+  }
   
   console.log(`[Cloudinary Config Debug] Cloud Name: ${cloudName}, Preset: ${uploadPreset}`);
 
@@ -36,7 +54,7 @@ export const uploadImage = async (file) => {
       return data.secure_url;
     } else {
       console.error('❌ Cloudinary Error Response:', data);
-      throw new Error(data?.error?.message || 'Failed to upload image. (Tip: Ensure you have an "Unsigned" preset named "unsigned_preset" in Cloudinary settings)');
+      throw new Error(data?.error?.message || 'Failed to upload image. (Tip: Ensure you have an "Unsigned" preset in your Cloudinary settings)');
     }
   } catch (error) {
     console.error('❌ Cloudinary Upload Exception:', error);
@@ -51,12 +69,12 @@ export const uploadProductImage = async (shopId, file) => {
   if (file && file.size > 3 * 1024 * 1024) {
     throw new Error('পণ্যের ইমেজের সাইজ ৩ মেগাবাইটের বেশি হওয়া যাবে না।');
   }
-  return uploadImage(file);
+  return uploadImage(file, shopId);
 };
 
 /**
  * Shop logo upload helper
  */
 export const uploadShopLogo = async (shopId, file) => {
-  return uploadImage(file);
+  return uploadImage(file, shopId);
 };

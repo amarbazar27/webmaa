@@ -10,7 +10,7 @@ import {
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
   MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette,
-  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download
+  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
@@ -610,6 +610,8 @@ export default function SettingsPage() {
       
       await updateShop(activeShopId, { 
         shopName: shop.shopName,
+        cloudinaryCloudName: shop.cloudinaryCloudName || '',
+        cloudinaryUploadPreset: shop.cloudinaryUploadPreset || '',
         couponCode: shop.couponCode || '',
         couponDiscount: Number(shop.couponDiscount) || 0,
         enableCommonOrder: shop.enableCommonOrder || false,
@@ -1719,6 +1721,26 @@ export default function SettingsPage() {
                       </label>
                    </div>
                 </div>
+              </div>
+            </Card>
+
+            <Card title="Cloud Storage Integration (Optional)" subtitle="Configure your own Cloudinary free-tier account for independent 25GB hosting" icon={Cloud}>
+              <div className="space-y-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-700 font-bold leading-relaxed">
+                  💡 আপনার নিজস্ব ক্লাউডিনারি (Cloudinary) অ্যাকাউন্ট ব্যবহার করলে আপনার স্টোরের জন্য সম্পূর্ণ আলাদা ২৫ জিবি ক্লাউড স্পেস পাবেন, যা স্টোরের ইমেজ লোডিং স্পিড বৃদ্ধি করতে সাহায্য করবে। কনফিগারেশন না দিলে সিস্টেমের ডিফল্ট ক্লাউডিনারি অ্যাকাউন্টটি ব্যবহৃত হবে।
+                </div>
+                <Input
+                  label="Cloudinary Cloud Name"
+                  value={shop.cloudinaryCloudName || ''}
+                  onChange={e => setShop({ ...shop, cloudinaryCloudName: e.target.value.trim() })}
+                  placeholder="e.g. dcsecgwzc"
+                />
+                <Input
+                  label="Cloudinary Upload Preset (Must be Unsigned)"
+                  value={shop.cloudinaryUploadPreset || ''}
+                  onChange={e => setShop({ ...shop, cloudinaryUploadPreset: e.target.value.trim() })}
+                  placeholder="e.g. unsigned_preset"
+                />
               </div>
             </Card>
 

@@ -673,6 +673,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -940,6 +943,70 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       toast.error(`লগইন ব্যর্থ: ${err?.code === 'auth/wrong-password' ? 'পাসওয়ার্ড ভুল' : err?.code === 'auth/user-not-found' ? 'ইমেইল পাওয়া যায়নি' : err.message}`);
     } finally {
       setLoginLoading(false);
+    }
+  };
+
+  const handleSendOTP = async () => {
+    if (!loginEmail || !loginEmail.includes('@')) {
+      toast.error('অনুগ্রহ করে একটি সঠিক ইমেইল আইডি দিন।');
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'ওটিপি পাঠানো হয়েছে! আপনার ইনবক্স চেক করুন।');
+        setOtpSent(true);
+      } else {
+        toast.error(data.error || 'ওটিপি পাঠাতে ব্যর্থ হয়েছে।');
+      }
+    } catch (err) {
+      toast.error('সার্ভারে যোগাযোগ করতে ব্যর্থ হয়েছে।');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (!otpCode || otpCode.trim().length !== 6) {
+      toast.error('৬ ডিজিটের সঠিক ওটিপি লিখুন।');
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, otp: otpCode })
+      });
+      const data = await res.json();
+      if (res.ok && data.customToken) {
+        const { signInWithCustomToken } = await import('firebase/auth');
+        const { auth } = await import('@/lib/firebase');
+        const userCredential = await signInWithCustomToken(auth, data.customToken);
+        
+        const { handleUserSession } = await import('@/lib/auth');
+        await handleUserSession(userCredential.user);
+
+        toast.success('লগইন সফল! 🎉');
+        setShowLoginModal(false);
+        setIsProfileOpen(false);
+        setLoginEmail('');
+        setOtpCode('');
+        setOtpSent(false);
+        if (cart.length > 0) setTimeout(() => setIsOrderOpen(true), 300);
+      } else {
+        toast.error(data.error || 'ভুল ওটিপি কোড।');
+      }
+    } catch (err) {
+      toast.error('ওটিপি ভেরিফিকেশন ব্যর্থ হয়েছে।');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -2764,24 +2831,53 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               )}
 
               {shop.authSettings?.emailAuth && (
-                <div className="space-y-3 pt-2 border-t border-slate-100">
+                <div className="space-y-3 pt-2 border-t border-slate-100 text-left">
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest">ইমেইল দিয়ে ওটিপি লগইন</p>
                   <input 
                     type="email" 
-                    placeholder="ইমেইল" 
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                    placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
+                    disabled={otpSent || otpLoading}
+                    value={loginEmail}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 disabled:opacity-60"
                     onChange={(e) => setLoginEmail(e.target.value)}
                   />
-                  <input 
-                    type="password" 
-                    placeholder="পাসওয়ার্ড" 
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                  />
+                  
+                  {otpSent && (
+                    <div className="space-y-2 animate-slide-in">
+                      <input 
+                        type="text" 
+                        maxLength={6}
+                        placeholder="৬ সংখ্যার ওটিপি কোড লিখুন" 
+                        disabled={otpLoading}
+                        value={otpCode}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 text-center tracking-widest"
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      />
+                      <div className="flex justify-between items-center text-xs font-bold px-1">
+                        <span className="text-slate-400">কোড পাঠানো হয়েছে</span>
+                        <button 
+                          onClick={handleSendOTP} 
+                          disabled={otpLoading}
+                          className="text-purple-600 hover:underline active:scale-95"
+                        >
+                          আবার পাঠান (Resend)
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <button 
-                    onClick={handleEmailLogin}
-                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-sm hover:bg-purple-600 transition-colors"
+                    onClick={otpSent ? handleVerifyOTP : handleSendOTP}
+                    disabled={otpLoading || !loginEmail}
+                    className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10"
                   >
-                    ইমেইল দিয়ে লগইন
+                    {otpLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={16} /> লোড হচ্ছে...
+                      </>
+                    ) : (
+                      otpSent ? 'ওটিপি ভেরিফাই ও লগইন' : 'ওটিপি কোড পাঠান'
+                    )}
                   </button>
                 </div>
               )}
@@ -3540,12 +3636,66 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <p className="text-xs text-slate-500 font-bold mt-1">অর্ডার ইতিহাস ও ডেইলি স্ট্রিক দেখতে লগইন করুন।</p>
                   </div>
                   
-                  {shop.authSettings?.googleAuth !== false ? (
+                  {shop.authSettings?.googleAuth !== false && (
                     <button onClick={handleGoogleLogin} className="w-full py-4 bg-white border-2 border-slate-200 rounded-2xl flex items-center justify-center gap-3 font-black text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
                       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt=""/>
                       গুগল দিয়ে লগইন
                     </button>
-                  ) : (
+                  )}
+
+                  {shop.authSettings?.emailAuth && (
+                    <div className="w-full space-y-3 pt-2 border-t border-slate-100 text-left">
+                      <p className="text-xs font-black text-slate-500 uppercase tracking-widest">ইমেইল দিয়ে ওটিপি লগইন</p>
+                      <input 
+                        type="email" 
+                        placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
+                        disabled={otpSent || otpLoading}
+                        value={loginEmail}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 disabled:opacity-60"
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                      />
+                      
+                      {otpSent && (
+                        <div className="space-y-2 animate-slide-in">
+                          <input 
+                            type="text" 
+                            maxLength={6}
+                            placeholder="৬ সংখ্যার ওটিপি কোড লিখুন" 
+                            disabled={otpLoading}
+                            value={otpCode}
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 text-center tracking-widest"
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                          />
+                          <div className="flex justify-between items-center text-xs font-bold px-1">
+                            <span className="text-slate-400">কোড পাঠানো হয়েছে</span>
+                            <button 
+                              onClick={handleSendOTP} 
+                              disabled={otpLoading}
+                              className="text-purple-600 hover:underline active:scale-95"
+                            >
+                              আবার পাঠান (Resend)
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <button 
+                        onClick={otpSent ? handleVerifyOTP : handleSendOTP}
+                        disabled={otpLoading || !loginEmail}
+                        className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10"
+                      >
+                        {otpLoading ? (
+                          <>
+                            <Loader2 className="animate-spin" size={16} /> লোড হচ্ছে...
+                          </>
+                        ) : (
+                          otpSent ? 'ওটিপি ভেরিফাই ও লগইন' : 'ওটিপি কোড পাঠান'
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {!shop.authSettings?.googleAuth && !shop.authSettings?.emailAuth && (
                     <div className="bg-slate-100 px-4 py-3 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-500 mt-2">
                       এই শপে লগইন সিস্টেম সাময়িকভাবে বন্ধ আছে। আপনি অতিথি হিসেবে অর্ডার করতে পারেন।
                     </div>
