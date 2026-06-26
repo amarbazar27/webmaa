@@ -16,8 +16,8 @@ export async function POST(req) {
     // Generate 6 digit numeric OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Save to firestore under 'otp_codes' collection with 10 minutes expiry
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    // Save to firestore under 'otp_codes' collection with 2 minutes expiry (epoch milliseconds)
+    const expiresAt = Date.now() + 120 * 1000;
     
     await adminDb.collection('otp_codes').doc(cleanEmail).set({
       otp,

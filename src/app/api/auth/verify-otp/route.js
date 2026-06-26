@@ -22,10 +22,8 @@ export async function POST(req) {
 
     const data = otpDoc.data();
     
-    // Check expiry
-    const now = new Date();
-    const expiresAt = data.expiresAt.toDate ? data.expiresAt.toDate() : new Date(data.expiresAt);
-    if (now > expiresAt) {
+    // Check expiry (epoch milliseconds comparison)
+    if (Date.now() > data.expiresAt) {
       await otpDocRef.delete();
       return NextResponse.json({ error: 'ওটিপির মেয়াদ শেষ হয়ে গেছে। পুনরায় চেষ্টা করুন।' }, { status: 400 });
     }

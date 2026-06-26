@@ -676,6 +676,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -946,6 +947,26 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }
   };
 
+  useEffect(() => {
+    let interval = null;
+    if (otpSent && otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer(prev => prev - 1);
+      }, 1000);
+    } else if (otpTimer === 0 && otpSent) {
+      setOtpSent(false);
+      setOtpCode('');
+      toast.error('ওটিপির মেয়াদ শেষ হয়ে গেছে! অনুগ্রহ করে পুনরায় ওটিপি পাঠান।');
+    }
+    return () => clearInterval(interval);
+  }, [otpSent, otpTimer]);
+
+  const formatOtpTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleSendOTP = async () => {
     if (!loginEmail || !loginEmail.includes('@')) {
       toast.error('অনুগ্রহ করে একটি সঠিক ইমেইল আইডি দিন।');
@@ -962,6 +983,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       if (res.ok) {
         toast.success(data.message || 'ওটিপি পাঠানো হয়েছে! আপনার ইনবক্স চেক করুন।');
         setOtpSent(true);
+        setOtpTimer(120); // 2 minutes countdown
       } else {
         toast.error(data.error || 'ওটিপি পাঠাতে ব্যর্থ হয়েছে।');
       }
@@ -2854,11 +2876,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                       />
                       <div className="flex justify-between items-center text-xs font-bold px-1">
-                        <span className="text-slate-400">কোড পাঠানো হয়েছে</span>
+                        <span className="text-slate-500 flex items-center gap-1">
+                          ⏳ মেয়াদ: <span className="text-red-500 font-extrabold">{formatOtpTime(otpTimer)}</span>
+                        </span>
                         <button 
                           onClick={handleSendOTP} 
-                          disabled={otpLoading}
-                          className="text-purple-600 hover:underline active:scale-95"
+                          disabled={otpLoading || otpTimer > 0}
+                          className="text-purple-600 hover:underline active:scale-95 disabled:opacity-50 disabled:no-underline"
                         >
                           আবার পাঠান (Resend)
                         </button>
@@ -2868,8 +2892,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                   <button 
                     onClick={otpSent ? handleVerifyOTP : handleSendOTP}
-                    disabled={otpLoading || !loginEmail}
-                    className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10"
+                    disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
+                    className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10 disabled:opacity-60"
                   >
                     {otpLoading ? (
                       <>
@@ -2882,7 +2906,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
               )}
 
-              {!shop.authSettings?.googleAuth && !shop.authSettings?.emailAuth && (
+              {shop.authSettings?.googleAuth === false && !shop.authSettings?.emailAuth && (
                 <p className="text-sm text-slate-500 font-bold">এই শপে লগইন সুবিধা বন্ধ আছে। অতিথি হিসেবে অর্ডার করুন।</p>
               )}
             </div>
@@ -3667,11 +3691,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                           />
                           <div className="flex justify-between items-center text-xs font-bold px-1">
-                            <span className="text-slate-400">কোড পাঠানো হয়েছে</span>
+                            <span className="text-slate-500 flex items-center gap-1">
+                              ⏳ মেয়াদ: <span className="text-red-500 font-extrabold">{formatOtpTime(otpTimer)}</span>
+                            </span>
                             <button 
                               onClick={handleSendOTP} 
-                              disabled={otpLoading}
-                              className="text-purple-600 hover:underline active:scale-95"
+                              disabled={otpLoading || otpTimer > 0}
+                              className="text-purple-600 hover:underline active:scale-95 disabled:opacity-50 disabled:no-underline"
                             >
                               আবার পাঠান (Resend)
                             </button>
@@ -3681,8 +3707,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                       <button 
                         onClick={otpSent ? handleVerifyOTP : handleSendOTP}
-                        disabled={otpLoading || !loginEmail}
-                        className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10"
+                        disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
+                        className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10 disabled:opacity-60"
                       >
                         {otpLoading ? (
                           <>
@@ -3695,7 +3721,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   )}
 
-                  {!shop.authSettings?.googleAuth && !shop.authSettings?.emailAuth && (
+                  {shop.authSettings?.googleAuth === false && !shop.authSettings?.emailAuth && (
                     <div className="bg-slate-100 px-4 py-3 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-500 mt-2">
                       এই শপে লগইন সিস্টেম সাময়িকভাবে বন্ধ আছে। আপনি অতিথি হিসেবে অর্ডার করতে পারেন।
                     </div>
