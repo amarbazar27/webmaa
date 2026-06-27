@@ -8,7 +8,6 @@ import { calculateBasePrice } from '@/features/product/utils/price';
 import { handleAiCalculate } from '@/features/product/actions/aiActions';
 import { addToCart } from '@/features/product/actions/cartActions';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
 
 import ProductImage from '@/features/product/components/ProductImage';
 import ProductInfo from '@/features/product/components/ProductInfo';
@@ -247,7 +246,7 @@ function Header({ router, product, shop }) {
         <div className="flex-1 min-w-0 flex items-center gap-2.5">
           {shop?.logoUrl ? (
             <div className="w-7 h-7 rounded-lg overflow-hidden border shrink-0" style={{ borderColor: 'var(--sp-border, #e2e8f0)' }}>
-              <Image src={shop.logoUrl} alt={shop.shopName || ''} width={28} height={28} className="object-cover w-full h-full" />
+              <img src={shop.logoUrl} alt={shop.shopName || ''} className="object-cover w-full h-full" style={{ width: 28, height: 28 }} />
             </div>
           ) : (
             <div

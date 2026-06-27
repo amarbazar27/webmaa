@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const FALLBACK_COLORS = ['bg-indigo-600','bg-emerald-600','bg-rose-600','bg-amber-600','bg-cyan-600','bg-fuchsia-600'];
@@ -18,10 +17,14 @@ export default function ProductImage({ product, currentPrice }) {
   const [imgError, setImgError] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
 
-  // Build image list: prefer images[] array, fallback to imageUrl
+  // Build image list: prefer images[] array, fallback to imageUrl, filtering out empty values
   const images = (() => {
-    if (Array.isArray(product?.images) && product.images.length > 0) return product.images;
-    if (product?.imageUrl) return [product.imageUrl];
+    if (Array.isArray(product?.images) && product.images.length > 0) {
+      return product.images.filter(img => typeof img === 'string' && img.trim() !== '');
+    }
+    if (product?.imageUrl && typeof product.imageUrl === 'string' && product.imageUrl.trim() !== '') {
+      return [product.imageUrl.trim()];
+    }
     return [];
   })();
 
@@ -84,27 +87,15 @@ export default function ProductImage({ product, currentPrice }) {
     >
       {hasImages ? (
         <>
-          {/* Main Image */}
-          {currentImg.startsWith('http') ? (
-            <img
-              key={activeIdx}
-              src={currentImg}
-              alt={safeName}
-              className="w-full h-full object-cover transition-opacity duration-300"
-              onError={() => setImgError(true)}
-              draggable={false}
-            />
-          ) : (
-            <Image
-              key={activeIdx}
-              src={currentImg}
-              alt={safeName}
-              fill
-              priority
-              className="object-cover"
-              onError={() => setImgError(true)}
-            />
-          )}
+          {/* Main Image - using standard img to prevent next/image whitelisting and relative path errors */}
+          <img
+            key={activeIdx}
+            src={currentImg}
+            alt={safeName}
+            className="w-full h-full object-cover transition-opacity duration-300"
+            onError={() => setImgError(true)}
+            draggable={false}
+          />
 
           {/* Prev / Next arrows — visible on hover (desktop) */}
           {count > 1 && (

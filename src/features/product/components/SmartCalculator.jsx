@@ -48,9 +48,10 @@ export default function SmartCalculator({ product, setCustomInput, setAiPrice })
     ? product.smartCalc.baseUnit.trim() 
     : detectProductUnit(product);
 
-  const baseQuantity = isCustomCalc && product.smartCalc?.baseQuantity !== undefined 
+  const rawBaseQuantity = isCustomCalc && product.smartCalc?.baseQuantity !== undefined 
     ? Number(product.smartCalc.baseQuantity) 
     : (product.baseQuantity || 1);
+  const baseQuantity = Number.isNaN(rawBaseQuantity) || rawBaseQuantity <= 0 ? 1 : rawBaseQuantity;
   
   if (basePrice <= 0) return null;
 
