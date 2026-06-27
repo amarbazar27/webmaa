@@ -34,17 +34,25 @@ export function useProductLogic(shop, product) {
   const [locationManualInput, setLocationManualInput] = useState('');
   const [detectedLocation, setDetectedLocation] = useState('');
 
-  // Persist note
+  // Persist note safely
   useEffect(() => {
     if (typeof window !== 'undefined' && product?.id) {
-      const saved = localStorage.getItem(`note_${product.id}`);
-      if (saved) setCustomerNote(saved);
+      try {
+        const saved = localStorage.getItem(`note_${product.id}`);
+        if (saved) setCustomerNote(saved);
+      } catch (e) {
+        console.warn('[LocalStorage] Failed to read note:', e.message);
+      }
     }
   }, [product?.id]);
 
   useEffect(() => {
     if (product?.id) {
-      localStorage.setItem(`note_${product.id}`, customerNote);
+      try {
+        localStorage.setItem(`note_${product.id}`, customerNote);
+      } catch (e) {
+        console.warn('[LocalStorage] Failed to write note:', e.message);
+      }
     }
   }, [customerNote, product?.id]);
 

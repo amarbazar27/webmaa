@@ -49,40 +49,49 @@ export default function ProductDetailClient({ shop, product }) {
 
   useEffect(() => {
     if (shop && product) {
-      // 1. Update Document Title
-      document.title = `${product.name} | ${shop.shopName}`;
+      try {
+        const shopNameStr = typeof shop.shopName === 'string' ? shop.shopName : String(shop.shopName || 'Shop');
+        const productNameStr = typeof product.name === 'string' ? product.name : String(product.name || 'পণ্য');
 
-      // 2. Update Favicon in real-time
-      const firstLetter = shop.shopName ? shop.shopName.charAt(0).toUpperCase() : 'S';
-      // Generate consistent color based on shop name
-      let hash = 0;
-      const name = shop.shopName || 'Shop';
-      for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        // 1. Update Document Title
+        document.title = `${productNameStr} | ${shopNameStr}`;
+
+        // 2. Update Favicon in real-time
+        const firstLetter = shopNameStr.charAt(0).toUpperCase() || 'S';
+        // Generate consistent color based on shop name
+        let hash = 0;
+        for (let i = 0; i < shopNameStr.length; i++) {
+          hash = shopNameStr.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const hue = Math.abs(hash % 360);
+        const color = `hsl(${hue}, 70%, 50%)`;
+
+        const svgFavicon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}" rx="8"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-size="18" font-family="system-ui, sans-serif" font-weight="900">${firstLetter}</text></svg>`;
+
+        const logoUrlStr = typeof shop.logoUrl === 'string' ? shop.logoUrl : '';
+        const faviconUrl = logoUrlStr || svgFavicon;
+
+        // Remove all existing icon links to prevent any conflict or caching of the main site icon
+        const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");
+        existingIcons.forEach(el => {
+          try { el.remove(); } catch (e) {}
+        });
+
+        // Create new clean favicon link
+        const iconLink = document.createElement('link');
+        iconLink.rel = 'icon';
+        iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
+        iconLink.href = faviconUrl;
+        document.head.appendChild(iconLink);
+
+        // Create new clean apple touch icon link
+        const appleLink = document.createElement('link');
+        appleLink.rel = 'apple-touch-icon';
+        appleLink.href = faviconUrl;
+        document.head.appendChild(appleLink);
+      } catch (err) {
+        console.error('[FaviconUpdate] Error:', err);
       }
-      const hue = Math.abs(hash % 360);
-      const color = `hsl(${hue}, 70%, 50%)`;
-
-      const svgFavicon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}" rx="8"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-size="18" font-family="system-ui, sans-serif" font-weight="900">${firstLetter}</text></svg>`;
-
-      const faviconUrl = shop.logoUrl || svgFavicon;
-
-      // Remove all existing icon links to prevent any conflict or caching of the main site icon
-      const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");
-      existingIcons.forEach(el => el.remove());
-
-      // Create new clean favicon link
-      const iconLink = document.createElement('link');
-      iconLink.rel = 'icon';
-      iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
-      iconLink.href = faviconUrl;
-      document.head.appendChild(iconLink);
-
-      // Create new clean apple touch icon link
-      const appleLink = document.createElement('link');
-      appleLink.rel = 'apple-touch-icon';
-      appleLink.href = faviconUrl;
-      document.head.appendChild(appleLink);
     }
   }, [shop, product]);
 
