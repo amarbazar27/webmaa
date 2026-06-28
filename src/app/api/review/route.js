@@ -29,7 +29,24 @@ export async function GET(req) {
       .limit(50)
       .get();
 
-    const reviews = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Serialize to plain JSON-safe objects — converts Firestore Timestamps to ISO strings
+    const reviews = snap.docs.map(d => {
+      const raw = d.data();
+      // Convert Firestore Timestamps to ISO strings before JSON serialization
+      const safe = {};
+      for (const [key, val] of Object.entries(raw)) {
+        if (val && typeof val === 'object' && typeof val.toDate === 'function') {
+          // Firestore Timestamp object
+          safe[key] = val.toDate().toISOString();
+        } else if (val && typeof val === 'object' && val._seconds !== undefined) {
+          // Already-plain Timestamp shape
+          safe[key] = new Date(val._seconds * 1000).toISOString();
+        } else {
+          safe[key] = val;
+        }
+      }
+      return { id: d.id, ...safe };
+    });
 
     // Sort: pinned first, then by date
     reviews.sort((a, b) => {

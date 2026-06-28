@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter } from 'next/navigation';
-import { loginWithGoogle, handleLoginRedirect, getUserData } from '@/lib/auth';
+import { loginWithGoogle, handleLoginRedirect } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import { LogIn, ShieldAlert, Store, User, ArrowRight, Zap, ShieldCheck } from 'lucide-react';

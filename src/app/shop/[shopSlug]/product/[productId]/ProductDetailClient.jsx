@@ -18,7 +18,7 @@ import AiCustomization from '@/features/product/components/AiCustomization';
 import SmartCalculator from '@/features/product/components/SmartCalculator';
 import ProductActions from '@/features/product/components/ProductActions';
 import ReviewSection from '@/components/shop/ReviewSection';
-import ServiceBanner from '@/components/shop/ServiceBanner';
+
 
 class ErrorBoundary extends Component {
   state = { hasError: false };
