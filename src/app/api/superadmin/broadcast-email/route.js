@@ -1,8 +1,29 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
+import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 import nodemailer from 'nodemailer';
+
+// ── Auth Guard: Verifies Firebase ID token + superadmin role ──
+async function verifySuperAdmin(request) {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { error: 'Unauthorized: Missing token', status: 401 };
+  }
+  try {
+    const idToken = authHeader.split('Bearer ')[1];
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    // Check Firestore for superadmin role
+    const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+    if (!userDoc.exists || userDoc.data()?.role !== 'superadmin') {
+      return { error: 'Forbidden: Superadmin access required', status: 403 };
+    }
+    return { uid: decoded.uid };
+  } catch (err) {
+    return { error: 'Unauthorized: Invalid token', status: 401 };
+  }
+}
 
 function createTransporter() {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -30,6 +51,12 @@ function createTransporter() {
 
 // GET — Fetch compiled recipients for a target/shop
 export async function GET(request) {
+  // 🔒 Auth required — only superadmin
+  const auth = await verifySuperAdmin(request);
+  if (auth.error) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const target = searchParams.get('target') || 'all_customers';
@@ -175,6 +202,12 @@ export async function GET(request) {
 
 // POST — Send emails to target or direct list
 export async function POST(request) {
+  // 🔒 Auth required — only superadmin
+  const auth = await verifySuperAdmin(request);
+  if (auth.error) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const body = await request.json();
     const { subject, message, target, shopId, emails: passedEmails } = body;

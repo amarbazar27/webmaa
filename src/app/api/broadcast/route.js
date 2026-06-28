@@ -34,11 +34,37 @@ function createTransporter() {
 // POST — Send a broadcast
 export async function POST(request) {
   try {
+    // 🔒 Verify Firebase ID token
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing token' }, { status: 401 });
+    }
+    let decoded;
+    try {
+      const idToken = authHeader.split('Bearer ')[1];
+      decoded = await admin.auth().verifyIdToken(idToken);
+    } catch (authErr) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { 
       message, subject, type = 'info', target = 'all', senderRole, shopId, 
       senderName, shopSlug, segment, emails, broadcastId 
     } = body;
+
+    // 🛡️ Verify retailer actually owns the shop they claim to broadcast for
+    if (senderRole === 'retailer' && shopId) {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      if (!shopDoc.exists || shopDoc.data().ownerId !== decoded.uid) {
+        const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+        const isStaff = (shopDoc.exists && (shopDoc.data().staffEmails || []).includes(decoded.email?.toLowerCase()));
+        const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'superadmin';
+        if (!isStaff && !isSuperAdmin) {
+          return NextResponse.json({ error: 'Forbidden: You do not own this shop' }, { status: 403 });
+        }
+      }
+    }
 
     if (!adminDb) {
       return NextResponse.json({ error: 'সিস্টেম রিফ্রেশ করুন (Database Error)' }, { status: 500 });

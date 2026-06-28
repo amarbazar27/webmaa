@@ -225,9 +225,41 @@ function Header({ router, product, shop }) {
   };
 
   const handleCopy = (url) => {
-    navigator.clipboard.writeText(url || getShareUrl()).then(() => {
-      toast.success('লিংক কপি হয়েছে! 🔗');
-    }).catch(() => toast.error('লিংক কপি করা যায়নি'));
+    const textToCopy = url || getShareUrl();
+    // Try modern clipboard API first, with fallback for older browsers / WebViews
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => toast.success('লিংক কপি হয়েছে! 🔗'))
+        .catch(() => {
+          // Fallback: execCommand (works in HTTP / older Android)
+          try {
+            const ta = document.createElement('textarea');
+            ta.value = textToCopy;
+            ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            toast.success('লিংক কপি হয়েছে! 🔗');
+          } catch (e) {
+            toast.error('লিংক কপি করা যায়নি');
+          }
+        });
+    } else {
+      // Fallback for non-secure contexts (HTTP)
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast.success('লিংক কপি হয়েছে! 🔗');
+      } catch (e) {
+        toast.error('লিংক কপি করা যায়নি');
+      }
+    }
   };
 
   return (

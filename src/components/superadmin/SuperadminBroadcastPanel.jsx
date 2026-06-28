@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Send, Bell, Mail, Users, Store, Loader2, Info, AlertTriangle, Sparkles, ChevronDown, ChevronUp, Check, X, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { subscribeBroadcasts, deleteBroadcast } from '@/lib/firestore';
+import { auth } from '@/lib/firebase';
 
 const NOTIFICATION_TYPES = [
   { id: 'info', icon: Info, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100', label: 'তথ্য' },
@@ -95,8 +96,10 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
     let url = `/api/superadmin/broadcast-email?target=${emailTarget}`;
     if (emailShopId) url += `&shopId=${emailShopId}`;
 
-    fetch(url)
-      .then(r => r.json())
+    // Get auth token for protected endpoint
+    auth.currentUser?.getIdToken().then(token => {
+      return fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    }).then(r => r.json())
       .then(data => {
         const list = data.emails || [];
         setEmailList(list);
@@ -198,9 +201,11 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
         body.shopId = selectedShopId;
       }
 
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) { toast.error('লগইন করুন'); setSendingNotif(false); return; }
       const res = await fetch('/api/broadcast', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
       });
       const data = await res.json();
@@ -220,9 +225,11 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
     if (selectedEmails.size === 0) { toast.error('কমপক্ষে একটি ইমেইল সিলেক্ট করুন'); return; }
     setSendingEmail(true);
     try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) { toast.error('লগইন করুন'); setSendingEmail(false); return; }
       const res = await fetch('/api/superadmin/broadcast-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           subject: emailSubject,
           message: emailMessage,

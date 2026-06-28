@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 export function useProductLogic(shop, product) {
   const router = useRouter();
   
-  // Variant State
-  const variants = product.variants || [];
-  const isLegacySizes = !product.variants && (product.sizes?.length > 0);
-  const sizes = product.sizes || [];
+  // Safe defaults - product can be null/undefined on slow networks
+  const safeProduct = product || {};
+  const variants = safeProduct.variants || [];
+  const isLegacySizes = !safeProduct.variants && (safeProduct.sizes?.length > 0);
+  const sizes = safeProduct.sizes || [];
   
   const [selectedSize, setSelectedSize] = useState(sizes.length > 0 ? sizes[0] : null);
   const [selectedVariants, setSelectedVariants] = useState(() => {
