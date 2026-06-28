@@ -1786,6 +1786,26 @@ export default function SettingsPage() {
                   onChange={e => setShop({ ...shop, cloudinaryUploadPreset: e.target.value.trim() })}
                   placeholder="e.g. unsigned_preset"
                 />
+                {/* Validation warning for signed/default presets */}
+                {shop.cloudinaryUploadPreset && (
+                  shop.cloudinaryUploadPreset.startsWith('ml_default') ? (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 font-bold">
+                      ⚠️ <strong>"{shop.cloudinaryUploadPreset}"</strong> একটি <strong>Signed preset</strong> — এটি কাজ করবে না!
+                      <br />Cloudinary Console &rarr; Settings &rarr; Upload &rarr; <strong>"Add upload preset"</strong> এ গিয়ে Signing mode: <strong>"Unsigned"</strong> সেট করুন এবং সেই preset এর নাম এখানে দিন।
+                    </div>
+                  ) : (
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 font-bold">
+                      ✅ Preset সেট আছে। নিশ্চিত করুন Cloudinary তে এটি <strong>Unsigned</strong> mode এ আছে।
+                    </div>
+                  )
+                )}
+                {/* Status indicator */}
+                {shop.cloudinaryCloudName && shop.cloudinaryUploadPreset && !shop.cloudinaryUploadPreset.startsWith('ml_default') && (
+                  <div className="flex items-center gap-2 text-xs text-emerald-700 font-black">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    আপনার নিজস্ব Cloudinary account (<strong>{shop.cloudinaryCloudName}</strong>) সক্রিয় থাকবে
+                  </div>
+                )}
               </div>
             </Card>
 

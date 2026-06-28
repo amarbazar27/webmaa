@@ -25,13 +25,19 @@ export const uploadImage = async (file, shopId = null) => {
       if (shopSnap.exists()) {
         const shopData = shopSnap.data();
         if (shopData.cloudinaryCloudName && shopData.cloudinaryUploadPreset) {
-          cloudName = shopData.cloudinaryCloudName.trim();
-          uploadPreset = shopData.cloudinaryUploadPreset.trim();
-          console.log(`[Cloudinary Dynamic Config] Loaded custom config for shop ${shopId}: ${cloudName} / ${uploadPreset}`);
+          const preset = shopData.cloudinaryUploadPreset.trim();
+          // ml_default* are SIGNED presets — they won't work for unsigned client uploads
+          if (preset.startsWith('ml_default')) {
+            console.warn(`[Cloudinary] Shop ${shopId} has a signed preset "${preset}". Falling back to platform default. Please create an UNSIGNED preset in Cloudinary settings.`);
+          } else {
+            cloudName = shopData.cloudinaryCloudName.trim();
+            uploadPreset = preset;
+            console.log(`[Cloudinary] Using shop-specific config for ${shopId}: ${cloudName}/${uploadPreset}`);
+          }
         }
       }
     } catch (err) {
-      console.warn(`[Cloudinary Dynamic Config] Failed to load custom settings for ${shopId}, falling back to default.`, err);
+      console.warn(`[Cloudinary] Failed to load shop config for ${shopId}, using platform default.`, err.message);
     }
   }
   
