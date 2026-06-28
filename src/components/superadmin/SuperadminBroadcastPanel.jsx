@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Send, Bell, Mail, Users, Store, Loader2, Info, AlertTriangle, Sparkles, ChevronDown, ChevronUp, Check, X, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { subscribeBroadcasts, deleteBroadcast } from '@/lib/firestore';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/auth';
 
 const NOTIFICATION_TYPES = [
   { id: 'info', icon: Info, color: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-100', label: 'তথ্য' },
