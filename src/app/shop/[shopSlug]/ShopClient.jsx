@@ -412,6 +412,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const { user, userData, loading: authLoading } = useAuth();
   const [shop, setShop] = useState(initialShop);
   const [products, setProducts] = useState(initialProducts || []);
+  
+  const isMesserBazar = shop.subdomainSlug === 'messerbazar' || shop.customDomain === 'messerbazar.com' || shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার';
+
   const [categories] = useState(() => {
     return (initialCategories || []).map(cat => {
       const sortedSubs = cat.subcategories ? [...cat.subcategories].sort((a, b) => a.localeCompare(b, 'bn')) : [];
@@ -1650,7 +1653,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
   const addAllCommonOrderToCart = () => {
     let addedCount = 0;
-    const activeProducts = products.filter(p => p.showInCommonOrder);
+    const activeProducts = products.filter(p => p.showInCommonOrder).sort((a, b) => {
+      const timeA = a.commonOrderUpdatedAt || 0;
+      const timeB = b.commonOrderUpdatedAt || 0;
+      if (timeA !== timeB) return timeA - timeB;
+      return a.name.localeCompare(b.name, 'bn');
+    });
     let updatedCart = [...cart];
     
     activeProducts.forEach(product => {
@@ -2186,7 +2194,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Top Premium Location Bar Removed ── */}
 
       {/* ── Inline Smart Meal AI Planner (Top Storefront) ── */}
-      {shop.enableSmartMeal && (
+      {shop.enableSmartMeal && !isMesserBazar && (
         <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
           <div className="bg-white border-2 border-purple-100 rounded-3xl shadow-xl shadow-purple-500/5 overflow-hidden">
             <SmartMealEngine
@@ -2269,6 +2277,21 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           </div>
         )}
       </div>
+
+      {/* ── Inline Smart Meal AI Planner (For MesserBazar, rendered under banners) ── */}
+      {shop.enableSmartMeal && isMesserBazar && (
+        <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
+          <div className="bg-white border-2 border-purple-100 rounded-3xl shadow-xl shadow-purple-500/5 overflow-hidden">
+            <SmartMealEngine
+              shop={shop}
+              products={products}
+              onAddToCart={addToCart}
+              onClose={() => {}}
+              userOrders={userOrders}
+            />
+          </div>
+        </div>
+      )}
 
       <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 w-full space-y-4 md:space-y-5">
         
@@ -3513,7 +3536,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               </div>
 
               <div className="divide-y divide-slate-100">
-                {products.filter(p => p.showInCommonOrder).map(product => {
+                {products.filter(p => p.showInCommonOrder).sort((a, b) => {
+                  const timeA = a.commonOrderUpdatedAt || 0;
+                  const timeB = b.commonOrderUpdatedAt || 0;
+                  if (timeA !== timeB) return timeA - timeB;
+                  return a.name.localeCompare(b.name, 'bn');
+                }).map(product => {
                   const row = commonOrderRows[product.id] || { qty: '', price: '', piece: '', finalPrice: 0 };
                   const baseUnit = product.smartCalc?.enabled ? product.smartCalc.baseUnit : 'পিস';
                   const basePrice = product.smartCalc?.enabled ? product.smartCalc.basePrice : product.price;

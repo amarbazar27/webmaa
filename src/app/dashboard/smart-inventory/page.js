@@ -156,7 +156,7 @@ export default function SmartInventoryPage() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOption, setSortOption] = useState('name_asc');
+  const [sortOption, setSortOption] = useState('common_order');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   useEffect(() => {
@@ -190,16 +190,40 @@ export default function SmartInventoryPage() {
     }
   };
 
+  const saveProduct = async (productId, currentProduct = null) => {
+    const product = currentProduct || products.find(p => p.id === productId);
+    if (!product) return;
+    setSavingId(productId);
+    try {
+      await updateProduct(activeShopId, productId, {
+        smartCalc: product.smartCalc,
+        showInCommonOrder: product.showInCommonOrder || false,
+        commonOrderUpdatedAt: product.commonOrderUpdatedAt || 0
+      });
+      toast.success('Auto-saved successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to auto-save');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const handleSmartCalcChange = (productId, field, value) => {
     setProducts(prev => prev.map(p => {
       if (p.id === productId) {
-        return {
+        const updated = {
           ...p,
           smartCalc: {
             ...p.smartCalc,
             [field]: value
           }
         };
+        // Auto-save on enabled or type change directly, or baseUnit if standard
+        if (field === 'enabled' || field === 'type' || (field === 'baseUnit' && ['কেজি', 'লিটার', 'গ্রাম', 'সাইজ', 'পিস', 'হালি', 'ডজন'].includes(value))) {
+          saveProduct(productId, updated);
+        }
+        return updated;
       }
       return p;
     }));
@@ -208,31 +232,16 @@ export default function SmartInventoryPage() {
   const handleCommonOrderToggle = (productId, value) => {
     setProducts(prev => prev.map(p => {
       if (p.id === productId) {
-        return {
+        const updated = {
           ...p,
-          showInCommonOrder: value
+          showInCommonOrder: value,
+          commonOrderUpdatedAt: value ? Date.now() : 0
         };
+        saveProduct(productId, updated);
+        return updated;
       }
       return p;
     }));
-  };
-
-  const saveProduct = async (productId) => {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-    setSavingId(productId);
-    try {
-      await updateProduct(activeShopId, productId, {
-        smartCalc: product.smartCalc,
-        showInCommonOrder: product.showInCommonOrder || false
-      });
-      toast.success('Saved successfully!');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to save');
-    } finally {
-      setSavingId(null);
-    }
   };
 
   if (loading) {
@@ -258,7 +267,15 @@ export default function SmartInventoryPage() {
     if (sortOption === 'price_asc') return parseFloat(a.price || 0) - parseFloat(b.price || 0);
     if (sortOption === 'price_desc') return parseFloat(b.price || 0) - parseFloat(a.price || 0);
     if (sortOption === 'calc_enabled') return (b.smartCalc?.enabled ? 1 : 0) - (a.smartCalc?.enabled ? 1 : 0);
-    if (sortOption === 'common_order') return (b.showInCommonOrder ? 1 : 0) - (a.showInCommonOrder ? 1 : 0);
+    if (sortOption === 'common_order') {
+      if (a.showInCommonOrder !== b.showInCommonOrder) {
+        return (b.showInCommonOrder ? 1 : 0) - (a.showInCommonOrder ? 1 : 0);
+      }
+      const timeA = a.commonOrderUpdatedAt || 0;
+      const timeB = b.commonOrderUpdatedAt || 0;
+      if (timeA !== timeB) return timeA - timeB;
+      return a.name.localeCompare(b.name, 'bn');
+    }
     if (sortOption === 'name_desc') return b.name.localeCompare(a.name, 'bn');
     // Default: name_asc
     return a.name.localeCompare(b.name, 'bn');
@@ -375,15 +392,12 @@ export default function SmartInventoryPage() {
                   <span className="ml-2 text-xs font-black text-slate-700">Common Order</span>
                 </label>
 
-                {/* Save Button always in header */}
-                <button 
-                  onClick={() => saveProduct(product.id)}
-                  disabled={savingId === product.id}
-                  className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black flex items-center gap-1.5 hover:bg-black transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  {savingId === product.id ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                  Save
-                </button>
+                {/* Auto-save status indicator */}
+                {savingId === product.id && (
+                  <span className="flex items-center gap-1 text-[10px] text-purple-600 font-black animate-pulse">
+                    <Loader2 size={10} className="animate-spin" /> Saving...
+                  </span>
+                )}
               </div>
             </div>
 
@@ -407,6 +421,7 @@ export default function SmartInventoryPage() {
                     type="number" 
                     value={product.smartCalc.baseQuantity} 
                     onChange={e => handleSmartCalcChange(product.id, 'baseQuantity', Number(e.target.value))}
+                    onBlur={() => saveProduct(product.id)}
                     className="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-500 text-sm"
                   />
                 </div>
@@ -443,6 +458,7 @@ export default function SmartInventoryPage() {
                             placeholder="যেমন: গজ, প্যাকেট, বক্স"
                             value={currentUnit} 
                             onChange={e => handleSmartCalcChange(product.id, 'baseUnit', e.target.value)}
+                            onBlur={() => saveProduct(product.id)}
                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-500 text-sm"
                           />
                         )}
@@ -457,6 +473,7 @@ export default function SmartInventoryPage() {
                     type="number" 
                     value={product.smartCalc.basePrice} 
                     onChange={e => handleSmartCalcChange(product.id, 'basePrice', Number(e.target.value))}
+                    onBlur={() => saveProduct(product.id)}
                     className="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-500 text-sm"
                   />
                 </div>

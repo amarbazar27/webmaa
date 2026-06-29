@@ -550,7 +550,7 @@ export default function SettingsPage() {
     try {
       const croppedFile = await cropTo169(file);
       const { uploadImage } = await import('@/lib/storage');
-      const url = await uploadImage(croppedFile);
+      const url = await uploadImage(croppedFile, activeShopId);
       const newBannerObj = { url, title: '', description: '', linkUrl: '', buttonText: '' };
       const newBanners = [...(shop.banners || []), newBannerObj];
       await updateShop(activeShopId, { banners: newBanners });
@@ -574,7 +574,7 @@ export default function SettingsPage() {
     try {
       const croppedFile = await cropTo169(file);
       const { uploadImage } = await import('@/lib/storage');
-      const url = await uploadImage(croppedFile);
+      const url = await uploadImage(croppedFile, activeShopId);
       const newBanners = [...(shop.banners || [])];
       const existing = newBanners[index];
       if (typeof existing === 'string') {
@@ -617,7 +617,7 @@ export default function SettingsPage() {
       }
 
       if (userPhotoFile) {
-        const uploadedUrl = await uploadImage(userPhotoFile);
+        const uploadedUrl = await uploadImage(userPhotoFile, activeShopId);
         await saveUserData(user.uid, { photoURL: uploadedUrl });
         toast.success('Profile photo updated!');
       }
@@ -1613,7 +1613,7 @@ export default function SettingsPage() {
                                if (!file) return;
                                const { uploadImage } = await import('@/lib/storage');
                                try {
-                                 const url = await uploadImage(file);
+                                 const url = await uploadImage(file, activeShopId);
                                  setLoadingMedia(prev => ({...prev, posters: [...(prev.posters || []), url]}));
                                  toast.success('পোস্টার আপলোড হয়েছে!');
                                } catch { toast.error('আপলোড ব্যর্থ'); }
@@ -1738,76 +1738,78 @@ export default function SettingsPage() {
               </div>
             </Card>
 
-            <Card 
-              title={
-                <div className="flex items-center justify-between w-full">
-                  <span>Cloud Storage Integration (Optional)</span>
-                  <div className="relative ml-2 shrink-0 cloudinary-help-container">
-                    <button 
-                      type="button" 
-                      onClick={() => setShowCloudinaryHelp(!showCloudinaryHelp)}
-                      className={`p-1.5 rounded-full transition-colors flex items-center justify-center border ${showCloudinaryHelp ? 'text-purple-600 border-purple-300 bg-purple-50' : 'text-slate-400 border-slate-200 bg-slate-50 hover:text-purple-600 hover:bg-purple-50'}`}
-                    >
-                      <HelpCircle size={14} />
-                    </button>
-                    {showCloudinaryHelp && (
-                      <div className="absolute right-0 top-7 w-80 p-5 bg-slate-900 text-white text-[11px] font-medium rounded-2xl shadow-2xl border border-slate-700 z-50 space-y-2.5 text-left leading-relaxed">
-                        <p className="font-extrabold text-xs text-purple-400 border-b border-slate-700 pb-1.5 flex items-center gap-1.5">🚀 Cloudinary Setup Instruction</p>
-                        <p>১. প্রথমে <a href="https://cloudinary.com/users/register" target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline font-bold underline">Cloudinary (এখানে ক্লিক করুন)</a> এ একটি ফ্রি অ্যাকাউন্ট তৈরি করে লগইন করুন।</p>
-                        <p>২. লগইন করার পর <a href="https://console.cloudinary.com/console" target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline font-bold underline">Cloudinary Console (এখানে ক্লিক করুন)</a> থেকে আপনার <span className="bg-purple-900/60 px-1 py-0.5 rounded text-amber-300 font-extrabold">Cloud Name</span> কপি করুন।</p>
-                        <p>৩. এরপর সরাসরি <a href="https://console.cloudinary.com/settings/upload/presets" target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline font-bold underline">Upload Settings (presets) (এখানে ক্লিক করুন)</a> লিঙ্কে যান।</p>
-                        <p>৪. নিচে স্ক্রোল করে <span className="text-amber-300 font-bold">"Add Upload Preset"</span> এ ক্লিক করুন:</p>
-                        <ul className="list-disc pl-3.5 space-y-1 text-slate-300">
-                          <li>Preset Name দিন: <span className="bg-purple-900/60 px-1 py-0.5 rounded font-extrabold text-white">unsigned_preset</span> (বা যেকোনো নাম)</li>
-                          <li>Signing Mode অবশ্যই <span className="bg-red-900/60 px-1.5 py-0.5 rounded font-extrabold text-rose-300 border border-red-500/30">Unsigned</span> সিলেক্ট করুন। <span className="text-rose-400 font-extrabold">(🚨 অত্যন্ত গুরুত্বপূর্ণ, Signed হলে ইমেজ আপলোড হবে না!)</span></li>
-                        </ul>
-                        <p>৫. প্রিসেটটি সেভ করে নাম দুটি আপনার ড্যাশবোর্ডে বসিয়ে সেভ করুন।</p>
+            {shop.cloudinaryConfigEnabled !== false && (
+              <Card 
+                title={
+                  <div className="flex items-center justify-between w-full">
+                    <span>Cloud Storage Integration (Optional)</span>
+                    <div className="relative ml-2 shrink-0 cloudinary-help-container">
+                      <button 
+                        type="button" 
+                        onClick={() => setShowCloudinaryHelp(!showCloudinaryHelp)}
+                        className={`p-1.5 rounded-full transition-colors flex items-center justify-center border ${showCloudinaryHelp ? 'text-purple-600 border-purple-300 bg-purple-50' : 'text-slate-400 border-slate-200 bg-slate-50 hover:text-purple-600 hover:bg-purple-50'}`}
+                      >
+                        <HelpCircle size={14} />
+                      </button>
+                      {showCloudinaryHelp && (
+                        <div className="absolute right-0 top-7 w-80 p-5 bg-slate-900 text-white text-[11px] font-medium rounded-2xl shadow-2xl border border-slate-700 z-50 space-y-2.5 text-left leading-relaxed">
+                          <p className="font-extrabold text-xs text-purple-400 border-b border-slate-700 pb-1.5 flex items-center gap-1.5">🚀 Cloudinary Setup Instruction</p>
+                          <p>১. প্রথমে <a href="https://cloudinary.com/users/register" target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline font-bold underline">Cloudinary (এখানে ক্লিক করুন)</a> এ একটি ফ্রি অ্যাকাউন্ট তৈরি করে লগইন করুন।</p>
+                          <p>২. লগইন করার পর <a href="https://console.cloudinary.com/console" target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline font-bold underline">Cloudinary Console (এখানে ক্লিক করুন)</a> থেকে আপনার <span className="bg-purple-900/60 px-1 py-0.5 rounded text-amber-300 font-extrabold">Cloud Name</span> কপি করুন।</p>
+                          <p>৩. এরপর সরাসরি <a href="https://console.cloudinary.com/settings/upload/presets" target="_blank" rel="noopener noreferrer" className="text-purple-300 hover:underline font-bold underline">Upload Settings (presets) (এখানে ক্লিক করুন)</a> লিঙ্কে যান।</p>
+                          <p>৪. নিচে স্ক্রোল করে <span className="text-amber-300 font-bold">"Add Upload Preset"</span> এ ক্লিক করুন:</p>
+                          <ul className="list-disc pl-3.5 space-y-1 text-slate-300">
+                            <li>Preset Name দিন: <span className="bg-purple-900/60 px-1 py-0.5 rounded font-extrabold text-white">unsigned_preset</span> (বা যেকোনো নাম)</li>
+                            <li>Signing Mode অবশ্যই <span className="bg-red-900/60 px-1.5 py-0.5 rounded font-extrabold text-rose-300 border border-red-500/30">Unsigned</span> সিলেক্ট করুন। <span className="text-rose-400 font-extrabold">(🚨 অত্যন্ত গুরুত্বপূর্ণ, Signed হলে ইমেজ আপলোড হবে না!)</span></li>
+                          </ul>
+                          <p>৫. প্রিসেটটি সেভ করে নাম দুটি আপনার ড্যাশবোর্ডে বসিয়ে সেভ করুন।</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                }
+                subtitle="Configure your own Cloudinary free-tier account for independent 25GB hosting" 
+                icon={Cloud}
+              >
+                <div className="space-y-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-700 font-bold leading-relaxed">
+                    💡 আপনার নিজস্ব ক্লাউডিনারি (Cloudinary) অ্যাকাউন্ট ব্যবহার করলে আপনার স্টোরের জন্য সম্পূর্ণ আলাদা ২৫ জিবি ক্লাউড স্পেস পাবেন, যা স্টোরের ইমেজ লোডিং স্পিড বৃদ্ধি করতে সাহায্য করবে। কনফিগারেশন না দিলে সিস্টেমের ডিফল্ট ক্লাউডিনারি অ্যাকাউন্টটি ব্যবহৃত হবে।
+                  </div>
+                  <Input
+                    label="Cloudinary Cloud Name"
+                    value={shop.cloudinaryCloudName || ''}
+                    onChange={e => setShop({ ...shop, cloudinaryCloudName: e.target.value.trim() })}
+                    placeholder="e.g. dcsecgwzc"
+                  />
+                  <Input
+                    label="Cloudinary Upload Preset (Must be Unsigned)"
+                    value={shop.cloudinaryUploadPreset || ''}
+                    onChange={e => setShop({ ...shop, cloudinaryUploadPreset: e.target.value.trim() })}
+                    placeholder="e.g. unsigned_preset"
+                  />
+                  {/* Validation warning for signed/default presets */}
+                  {shop.cloudinaryUploadPreset && (
+                    shop.cloudinaryUploadPreset.startsWith('ml_default') ? (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 font-bold">
+                        ⚠️ <strong>"{shop.cloudinaryUploadPreset}"</strong> একটি <strong>Signed preset</strong> — এটি কাজ করবে না!
+                        <br />Cloudinary Console &rarr; Settings &rarr; Upload &rarr; <strong>"Add upload preset"</strong> এ গিয়ে Signing mode: <strong>"Unsigned"</strong> সেট করুন এবং সেই preset এর নাম এখানে দিন।
                       </div>
-                    )}
-                  </div>
-                </div>
-              }
-              subtitle="Configure your own Cloudinary free-tier account for independent 25GB hosting" 
-              icon={Cloud}
-            >
-              <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-700 font-bold leading-relaxed">
-                  💡 আপনার নিজস্ব ক্লাউডিনারি (Cloudinary) অ্যাকাউন্ট ব্যবহার করলে আপনার স্টোরের জন্য সম্পূর্ণ আলাদা ২৫ জিবি ক্লাউড স্পেস পাবেন, যা স্টোরের ইমেজ লোডিং স্পিড বৃদ্ধি করতে সাহায্য করবে। কনফিগারেশন না দিলে সিস্টেমের ডিফল্ট ক্লাউডিনারি অ্যাকাউন্টটি ব্যবহৃত হবে।
-                </div>
-                <Input
-                  label="Cloudinary Cloud Name"
-                  value={shop.cloudinaryCloudName || ''}
-                  onChange={e => setShop({ ...shop, cloudinaryCloudName: e.target.value.trim() })}
-                  placeholder="e.g. dcsecgwzc"
-                />
-                <Input
-                  label="Cloudinary Upload Preset (Must be Unsigned)"
-                  value={shop.cloudinaryUploadPreset || ''}
-                  onChange={e => setShop({ ...shop, cloudinaryUploadPreset: e.target.value.trim() })}
-                  placeholder="e.g. unsigned_preset"
-                />
-                {/* Validation warning for signed/default presets */}
-                {shop.cloudinaryUploadPreset && (
-                  shop.cloudinaryUploadPreset.startsWith('ml_default') ? (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 font-bold">
-                      ⚠️ <strong>"{shop.cloudinaryUploadPreset}"</strong> একটি <strong>Signed preset</strong> — এটি কাজ করবে না!
-                      <br />Cloudinary Console &rarr; Settings &rarr; Upload &rarr; <strong>"Add upload preset"</strong> এ গিয়ে Signing mode: <strong>"Unsigned"</strong> সেট করুন এবং সেই preset এর নাম এখানে দিন।
+                    ) : (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 font-bold">
+                        ✅ Preset সেট আছে। নিশ্চিত করুন Cloudinary তে এটি <strong>Unsigned</strong> mode এ আছে।
+                      </div>
+                    )
+                  )}
+                  {/* Status indicator */}
+                  {shop.cloudinaryCloudName && shop.cloudinaryUploadPreset && !shop.cloudinaryUploadPreset.startsWith('ml_default') && (
+                    <div className="flex items-center gap-2 text-xs text-emerald-700 font-black">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      আপনার নিজস্ব Cloudinary account (<strong>{shop.cloudinaryCloudName}</strong>) सक्रिय থাকবে
                     </div>
-                  ) : (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 font-bold">
-                      ✅ Preset সেট আছে। নিশ্চিত করুন Cloudinary তে এটি <strong>Unsigned</strong> mode এ আছে।
-                    </div>
-                  )
-                )}
-                {/* Status indicator */}
-                {shop.cloudinaryCloudName && shop.cloudinaryUploadPreset && !shop.cloudinaryUploadPreset.startsWith('ml_default') && (
-                  <div className="flex items-center gap-2 text-xs text-emerald-700 font-black">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    আপনার নিজস্ব Cloudinary account (<strong>{shop.cloudinaryCloudName}</strong>) সক্রিয় থাকবে
-                  </div>
-                )}
-              </div>
-            </Card>
+                  )}
+                </div>
+              </Card>
+            )}
 
             <Card title="Design System" subtitle="10 Premium Themes" icon={Sparkles}>
               <DesignThemeSelector shopId={activeShopId} />

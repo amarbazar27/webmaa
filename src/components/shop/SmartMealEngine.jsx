@@ -125,12 +125,14 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
   }, [availableRiceVariants, selectedRiceId]);
 
   // 2. Helper function to find best product matching keywords (prioritizing keywords in order)
-  const findProductByKeywords = (keywords, allProducts) => {
+  const findProductByKeywords = (keywords, allProducts, excludes = []) => {
     const inStock = allProducts.filter(p => p.stock !== 0);
     for (const keyword of keywords) {
       const match = inStock.find(p => {
         const name = (p.name || '').toLowerCase();
-        return name.includes(keyword.toLowerCase());
+        if (!name.includes(keyword.toLowerCase())) return false;
+        if (excludes.some(ex => name.includes(ex.toLowerCase()))) return false;
+        return true;
       });
       if (match) return match;
     }
@@ -350,7 +352,8 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
       ];
 
       const resolveProduct = (item) => {
-        const prod = findProductByKeywords(item.keywords, products);
+        const excludes = item.key !== 'egg' && ['boiler', 'rui', 'silver', 'mirka'].includes(item.key) ? ['ডিম', 'egg'] : [];
+        const prod = findProductByKeywords(item.keywords, products, excludes);
         if (!prod) return null;
         
         let qty = 0;
@@ -478,12 +481,20 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
 
         // Pass 4: Reduce protein and vegetable quantities by 20% (cost optimization)
         if (lunchProtein) {
-          lunchProtein.qty = Math.max(0.25, Math.round((lunchProtein.qty * 0.8) * 4) / 4);
+          if (lunchProtein.meta?.unit === 'piece' || lunchProtein.product?.unit?.includes('টি') || lunchProtein.product?.unit?.includes('পিস') || lunchProtein.product?.unit?.includes('piece')) {
+            lunchProtein.qty = Math.max(1, Math.round(lunchProtein.qty * 0.8));
+          } else {
+            lunchProtein.qty = Math.max(0.25, Math.round((lunchProtein.qty * 0.8) * 4) / 4);
+          }
           lunchProtein.cost = Math.round(lunchProtein.qty * lunchProtein.product.price);
         }
         
         if (dinnerProtein) {
-          dinnerProtein.qty = Math.max(0.25, Math.round((dinnerProtein.qty * 0.8) * 4) / 4);
+          if (dinnerProtein.meta?.unit === 'piece' || dinnerProtein.product?.unit?.includes('টি') || dinnerProtein.product?.unit?.includes('পিস') || dinnerProtein.product?.unit?.includes('piece')) {
+            dinnerProtein.qty = Math.max(1, Math.round(dinnerProtein.qty * 0.8));
+          } else {
+            dinnerProtein.qty = Math.max(0.25, Math.round((dinnerProtein.qty * 0.8) * 4) / 4);
+          }
           dinnerProtein.cost = Math.round(dinnerProtein.qty * dinnerProtein.product.price);
         }
 
@@ -526,8 +537,111 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
         }
       }
 
-      const finalTotalCost = calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra, extraLunchVeg, extraDinnerVeg);
-      const finalRemaining = budget - finalTotalCost;
+      let finalTotalCost = calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra, extraLunchVeg, extraDinnerVeg);
+      let finalRemaining = budget - finalTotalCost;
+
+      // Budget Maximization / Upscaling Loop to ensure remaining budget is <= 50 taka
+      if (finalTotalCost <= budget && finalRemaining > 50) {
+        let upscalePass = 0;
+        const maxUpscalePasses = 20;
+        while (finalRemaining > 50 && upscalePass < maxUpscalePasses) {
+          upscalePass++;
+          let upgraded = false;
+
+          // 1. Try upgrading lunchProtein from egg to meat/fish if budget allows
+          if (lunchProtein && lunchProtein.meta?.key === 'egg') {
+            const premiumProtein = proteinList.find(p => p.key !== 'egg');
+            if (premiumProtein) {
+              const premiumItem = resolveProduct(premiumProtein);
+              if (premiumItem && (finalRemaining + lunchProtein.cost - premiumItem.cost) >= 0) {
+                finalRemaining = finalRemaining + lunchProtein.cost - premiumItem.cost;
+                lunchProtein = premiumItem;
+                upgraded = true;
+                continue;
+              }
+            }
+          }
+
+          // 2. Try upgrading dinnerProtein from egg to meat/fish if budget allows
+          if (dinnerProtein && dinnerProtein.meta?.key === 'egg') {
+            const premiumProtein = proteinList.find(p => p.key !== 'egg' && (!lunchProtein || p.key !== lunchProtein.meta.key));
+            if (premiumProtein) {
+              const premiumItem = resolveProduct(premiumProtein);
+              if (premiumItem && (finalRemaining + dinnerProtein.cost - premiumItem.cost) >= 0) {
+                finalRemaining = finalRemaining + dinnerProtein.cost - premiumItem.cost;
+                dinnerProtein = premiumItem;
+                upgraded = true;
+                continue;
+              }
+            }
+          }
+
+          // 3. Try adding dinner protein if it was null
+          if (!dinnerProtein) {
+            const eggProtein = proteinList.find(p => p.key === 'egg');
+            if (eggProtein) {
+              const eggItem = resolveProduct(eggProtein);
+              if (eggItem && (finalRemaining - eggItem.cost) >= 0) {
+                finalRemaining -= eggItem.cost;
+                dinnerProtein = eggItem;
+                upgraded = true;
+                continue;
+              }
+            }
+          }
+
+          // 4. Scale up quantity of kg-based proteins
+          if (lunchProtein && lunchProtein.meta?.unit === 'kg') {
+            const addedCost = 0.25 * lunchProtein.product.price;
+            if (finalRemaining - addedCost >= 0) {
+              lunchProtein.qty += 0.25;
+              lunchProtein.cost = Math.round(lunchProtein.qty * lunchProtein.product.price);
+              finalRemaining -= addedCost;
+              upgraded = true;
+              continue;
+            }
+          }
+          if (dinnerProtein && dinnerProtein.meta?.unit === 'kg') {
+            const addedCost = 0.25 * dinnerProtein.product.price;
+            if (finalRemaining - addedCost >= 0) {
+              dinnerProtein.qty += 0.25;
+              dinnerProtein.cost = Math.round(dinnerProtein.qty * dinnerProtein.product.price);
+              finalRemaining -= addedCost;
+              upgraded = true;
+              continue;
+            }
+          }
+
+          // 5. Scale up vegetables
+          if (lunchVeg && lunchVeg.product?.price) {
+            const addedCost = 0.25 * lunchVeg.product.price;
+            if (finalRemaining - addedCost >= 0) {
+              lunchVeg.qty += 0.25;
+              lunchVeg.cost = Math.round(lunchVeg.qty * lunchVeg.product.price);
+              finalRemaining -= addedCost;
+              upgraded = true;
+              continue;
+            }
+          }
+          if (dinnerExtra && dinnerExtra.product?.price) {
+            const addedCost = 0.25 * dinnerExtra.product.price;
+            if (finalRemaining - addedCost >= 0) {
+              dinnerExtra.qty += 0.25;
+              dinnerExtra.cost = Math.round(dinnerExtra.qty * dinnerExtra.product.price);
+              finalRemaining -= addedCost;
+              upgraded = true;
+              continue;
+            }
+          }
+
+          // If nothing could be upgraded, break to prevent infinite loop
+          if (!upgraded) break;
+        }
+        
+        // Recalculate final total cost and remaining budget after upscaling
+        finalTotalCost = calculateTotalCost(morningItem, lunchProtein, lunchVeg, dinnerProtein, dinnerExtra, extraLunchVeg, extraDinnerVeg);
+        finalRemaining = budget - finalTotalCost;
+      }
 
       if (finalTotalCost > budget) {
         throw new Error(`বাজেট অনেক কম (৳${budget})। এত কম বাজেটে ২৫ জনের ১ দিনের বাজার সম্ভব নয়। দয়া করে বাজেট অন্তত ৳${finalTotalCost + 100} করুন।`);

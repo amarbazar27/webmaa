@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import {
   getRetailerInvites, addRetailerInvite, removeRetailerInvite, getAllShops,
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
   getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop,
-  getAllMarketplaceProducts, updateProduct
+  getAllMarketplaceProducts, updateProduct, updateShop
 } from '@/lib/firestore';
 import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
 import dynamic from 'next/dynamic';
@@ -15,7 +15,8 @@ const SuperadminAppBuilder = dynamic(() => import('@/components/superadmin/Super
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
-  Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight
+  Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
+  Cloud, Plus
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -38,6 +39,7 @@ export default function SuperAdminPage() {
   const [impersonatingId, setImpersonatingId] = useState(null);
   const [togglingShopId, setTogglingShopId] = useState(null);
   const [superadminShop, setSuperadminShop] = useState(null);
+  const [expandedCloudinaryShopId, setExpandedCloudinaryShopId] = useState(null);
 
   // ── Smart Curation & Product Overrides ──
   const [allProducts, setAllProducts] = useState([]);
@@ -339,6 +341,16 @@ export default function SuperAdminPage() {
       toast.error('ভিজিবিলিটি আপডেট ব্যর্থ হয়েছে');
     }
     setTogglingShopId(null);
+  };
+
+  const handleUpdateShopCloudinary = async (shopId, updatedFields) => {
+    setShops(prev => prev.map(s => s.id === shopId ? { ...s, ...updatedFields } : s));
+    try {
+      await updateShop(shopId, updatedFields);
+    } catch (err) {
+      toast.error('ক্লাউডিনারি সেটিংস আপডেট করতে ব্যর্থ হয়েছে: ' + err.message);
+      loadData();
+    }
   };
 
   const handleDeleteRequest = async (req) => {
@@ -911,143 +923,298 @@ export default function SuperAdminPage() {
                       const estimatedTotalMB = (2.0 + bannerFootprintMB + productFootprintMB).toFixed(1);
                       
                       return (
-                        <tr key={shop.id} className="bg-white group hover:bg-emerald-50/50 transition-colors border-b border-slate-50 last:border-0">
-                          <td className="p-4 first:rounded-l-2xl">
-                            <div className="flex items-center gap-3">
-                              {shop.logoUrl ? (
-                                <img src={shop.logoUrl} className="w-8 h-8 rounded-lg object-cover border border-slate-200" alt="" />
-                              ) : (
-                                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center font-black text-emerald-600 text-xs text-center leading-none">
-                                  {shop.shopName?.[0] || 'S'}
-                                </div>
-                              )}
-                              <div>
-                                <p className="font-bold text-slate-900 text-sm leading-tight">{shop.shopName || 'Unnamed Store'}</p>
-                                <p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{shop.slogan || 'No slogan'}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div>
-                               <p className="font-bold text-xs text-slate-600">{shop.ownerEmail}</p>
-                               <p className="font-mono text-[9px] text-slate-400">UID: {shop.id.substring(0,8)}...</p>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex flex-col">
-                               <div className="flex items-center gap-2">
-                                  <span className="text-[11px] font-black text-slate-800">{shop.totalSales} Sales</span>
-                                  <span className="text-[11px] font-black text-emerald-600">৳{shop.totalRevenue.toLocaleString()}</span>
-                               </div>
-                               <div className="mt-1 flex items-center gap-1">
-                                  {shop.totalSales > 10 ? (
-                                    <span className="text-[8px] font-black uppercase bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">High Growth</span>
-                                  ) : shop.totalSales > 0 ? (
-                                    <span className="text-[8px] font-black uppercase bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Active</span>
-                                  ) : (
-                                    <span className="text-[8px] font-black uppercase bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded">No Sales</span>
-                                  )}
-                               </div>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div className="space-y-1">
-                              {shop.customDomain && (
-                                <a href={`https://${shop.customDomain}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-black text-purple-600 hover:text-purple-800 hover:underline">
-                                  <Globe size={11} /> {shop.customDomain}
-                                </a>
-                              )}
-                              {shop.subdomainSlug && (
-                                <a href={`https://daripallah.com/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
-                                  <Link2 size={11} /> /{shop.subdomainSlug}
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-full bg-slate-100 rounded-full h-1.5 max-w-[60px]">
-                                <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (estimatedTotalMB / 20) * 100)}%` }}></div>
-                              </div>
-                              <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <button
-                              onClick={() => handleToggleMainSite(shop)}
-                              disabled={togglingShopId === shop.id}
-                              title={shop.showOnMainSite ? 'মেইন সাইট থেকে সরান' : 'মেইন সাইটে দেখান'}
-                              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                                shop.showOnMainSite ? 'bg-emerald-500' : 'bg-slate-300'
-                              }`}
-                            >
-                              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                                shop.showOnMainSite ? 'translate-x-6' : 'translate-x-1'
-                              }`} />
-                            </button>
-                          </td>
-                          <td className="p-4 text-right">
-                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                               <span className={`w-1.5 h-1.5 rounded-full ${shop.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
-                               {shop.isActive !== false ? 'Live' : 'Paused'}
-                             </span>
-                          </td>
-                          <td className="p-4 text-right last:rounded-r-2xl">
-                            <div className="flex items-center justify-end gap-2">
-                              {/* 🔐 Login as Retailer Button */}
-                              <button
-                                onClick={() => handleLoginAsRetailer(shop)}
-                                disabled={impersonatingId === shop.id}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
-                                title="এই রিটেইলারের ড্যাশবোর্ডে প্রবেশ করুন"
-                              >
-                                {impersonatingId === shop.id ? (
-                                  <Loader2 size={11} className="animate-spin" />
+                        <Fragment key={shop.id}>
+                          <tr className="bg-white group hover:bg-emerald-50/50 transition-colors border-b border-slate-50 last:border-0">
+                            <td className="p-4 first:rounded-l-2xl">
+                              <div className="flex items-center gap-3">
+                                {shop.logoUrl ? (
+                                  <img src={shop.logoUrl} className="w-8 h-8 rounded-lg object-cover border border-slate-200" alt="" />
                                 ) : (
-                                  <LogIn size={11} />
+                                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center font-black text-emerald-600 text-xs text-center leading-none">
+                                    {shop.shopName?.[0] || 'S'}
+                                  </div>
                                 )}
-                                Login as
-                              </button>
-
-                              {(shop.subdomainSlug || shop.shopSlug) && (
-                                <a
-                                  href={`${typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com'}/${shop.subdomainSlug || shop.shopSlug}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
-                                  title="Live shop খুলুন"
-                                >
-                                  <ExternalLink size={11} /> Live
-                                </a>
-                              )}
+                                <div>
+                                  <p className="font-bold text-slate-900 text-sm leading-tight">{shop.shopName || 'Unnamed Store'}</p>
+                                  <p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{shop.slogan || 'No slogan'}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div>
+                                 <p className="font-bold text-xs text-slate-600">{shop.ownerEmail}</p>
+                                 <p className="font-mono text-[9px] text-slate-400">UID: {shop.id.substring(0,8)}...</p>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-col">
+                                 <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-black text-slate-800">{shop.totalSales} Sales</span>
+                                    <span className="text-[11px] font-black text-emerald-600">৳{shop.totalRevenue.toLocaleString()}</span>
+                                 </div>
+                                 <div className="mt-1 flex items-center gap-1">
+                                    {shop.totalSales > 10 ? (
+                                      <span className="text-[8px] font-black uppercase bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">High Growth</span>
+                                    ) : shop.totalSales > 0 ? (
+                                      <span className="text-[8px] font-black uppercase bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Active</span>
+                                    ) : (
+                                      <span className="text-[8px] font-black uppercase bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded">No Sales</span>
+                                    )}
+                                 </div>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="space-y-1">
+                                {shop.customDomain && (
+                                  <a href={`https://${shop.customDomain}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-black text-purple-600 hover:text-purple-800 hover:underline">
+                                    <Globe size={11} /> {shop.customDomain}
+                                  </a>
+                                )}
+                                {shop.subdomainSlug && (
+                                  <a href={`https://daripallah.com/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
+                                    <Link2 size={11} /> /{shop.subdomainSlug}
+                                  </a>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-full bg-slate-100 rounded-full h-1.5 max-w-[60px]">
+                                  <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (estimatedTotalMB / 20) * 100)}%` }}></div>
+                                </div>
+                                <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
+                              </div>
+                            </td>
+                            <td className="p-4 text-center">
                               <button
-                                onClick={() => handlePauseShop(shop)}
-                                disabled={processingShopId === shop.id}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all disabled:opacity-50 ${
-                                  shop.isActive !== false
-                                    ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                onClick={() => handleToggleMainSite(shop)}
+                                disabled={togglingShopId === shop.id}
+                                title={shop.showOnMainSite ? 'মেইন সাইট থেকে সরান' : 'মেইন সাইটে দেখান'}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                                  shop.showOnMainSite ? 'bg-emerald-500' : 'bg-slate-300'
                                 }`}
                               >
-                                {processingShopId === shop.id ? (
-                                  <Loader2 size={11} className="animate-spin" />
-                                ) : shop.isActive !== false ? (
-                                  <><Pause size={11} /> Pause</>
-                                ) : (
-                                  <><Play size={11} /> Resume</>
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                                  shop.showOnMainSite ? 'translate-x-6' : 'translate-x-1'
+                                }`} />
+                              </button>
+                            </td>
+                            <td className="p-4 text-right">
+                               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                 <span className={`w-1.5 h-1.5 rounded-full ${shop.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
+                                 {shop.isActive !== false ? 'Live' : 'Paused'}
+                               </span>
+                            </td>
+                            <td className="p-4 text-right last:rounded-r-2xl">
+                              <div className="flex items-center justify-end gap-2 flex-wrap max-w-md">
+                                {/* 🔐 Login as Retailer Button */}
+                                <button
+                                  onClick={() => handleLoginAsRetailer(shop)}
+                                  disabled={impersonatingId === shop.id}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
+                                  title="এই রিটেইলারের ড্যাশবোর্ডে প্রবেশ করুন"
+                                >
+                                  {impersonatingId === shop.id ? (
+                                    <Loader2 size={11} className="animate-spin" />
+                                  ) : (
+                                    <LogIn size={11} />
+                                  )}
+                                  Login as
+                                </button>
+
+                                {(shop.subdomainSlug || shop.shopSlug) && (
+                                  <a
+                                    href={`${typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com'}/${shop.subdomainSlug || shop.shopSlug}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                                    title="Live shop খুলুন"
+                                  >
+                                    <ExternalLink size={11} /> Live
+                                  </a>
                                 )}
-                              </button>
-                              <button
-                                onClick={() => initiateDeleteShop(shop)}
-                                disabled={processingShopId === shop.id}
-                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
-                                title="স্টোর ডিলিট করুন"
-                              >
-                                <Trash2 size={11} /> Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                                
+                                <button
+                                  onClick={() => setExpandedCloudinaryShopId(expandedCloudinaryShopId === shop.id ? null : shop.id)}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                                    expandedCloudinaryShopId === shop.id 
+                                      ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                                      : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+                                  }`}
+                                  title="ক্লাউডিনারি সেটিংস"
+                                >
+                                  <Cloud size={11} /> Cloudinary
+                                </button>
+
+                                <button
+                                  onClick={() => handlePauseShop(shop)}
+                                  disabled={processingShopId === shop.id}
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all disabled:opacity-50 ${
+                                    shop.isActive !== false
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                  }`}
+                                >
+                                  {processingShopId === shop.id ? (
+                                    <Loader2 size={11} className="animate-spin" />
+                                  ) : shop.isActive !== false ? (
+                                    <><Pause size={11} /> Pause</>
+                                  ) : (
+                                    <><Play size={11} /> Resume</>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => initiateDeleteShop(shop)}
+                                  disabled={processingShopId === shop.id}
+                                  className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                                  title="স্টোর ডিলিট করুন"
+                                >
+                                  <Trash2 size={11} /> Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          {expandedCloudinaryShopId === shop.id && (
+                            <tr className="bg-slate-50/50">
+                              <td colSpan={8} className="p-4 border-t border-b border-slate-100">
+                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-left">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
+                                    <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
+                                      ☁️ Cloudinary Configuration for <span className="text-purple-600 font-black">{shop.shopName || 'this store'}</span>
+                                    </h4>
+                                    
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs text-slate-500 font-bold">Cloud Settings visibility to owner:</span>
+                                      <button
+                                        onClick={() => handleUpdateShopCloudinary(shop.id, { 
+                                          cloudinaryConfigEnabled: shop.cloudinaryConfigEnabled === false ? true : false 
+                                        })}
+                                        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                                          shop.cloudinaryConfigEnabled !== false ? 'bg-purple-600' : 'bg-slate-300'
+                                        }`}
+                                      >
+                                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                          shop.cloudinaryConfigEnabled !== false ? 'translate-x-5' : 'translate-x-1'
+                                        }`} />
+                                      </button>
+                                      <span className="text-xs font-black text-slate-700">
+                                        {shop.cloudinaryConfigEnabled !== false ? 'Shown' : 'Hidden'}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-4">
+                                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-xs text-purple-800 leading-relaxed font-bold">
+                                      💡 একাধিক Cloudinary অ্যাকাউন্ট যোগ করলে আপলোডকৃত ফাইলগুলো ওই অ্যাকাউন্টগুলোর মাঝে ভাগ হয়ে যাবে, যা স্টোরটির মোট ফ্রি স্টোরেজ বৃদ্ধি করবে। একটি অ্যাকাউন্ট থাকলে সেটিই শুধুমাত্র ব্যবহৃত হবে।
+                                    </div>
+
+                                    <div className="space-y-3">
+                                      <p className="text-xs font-black text-slate-700 uppercase tracking-wider">Cloudinary Accounts List:</p>
+                                      
+                                      {(() => {
+                                        const accounts = shop.cloudinaryAccounts || [];
+                                        const displayAccounts = accounts.length > 0 
+                                          ? accounts 
+                                          : (shop.cloudinaryCloudName || shop.cloudinaryUploadPreset 
+                                              ? [{ cloudName: shop.cloudinaryCloudName || '', uploadPreset: shop.cloudinaryUploadPreset || '' }] 
+                                              : []);
+
+                                        return (
+                                          <div className="space-y-3">
+                                            {displayAccounts.map((acc, idx) => (
+                                              <div key={idx} className="flex flex-col md:flex-row gap-3 items-end bg-slate-50/60 p-3 rounded-xl border border-slate-200/60">
+                                                <div className="flex-1 space-y-1">
+                                                  <label className="text-[10px] font-black text-slate-400 uppercase">Cloud Name</label>
+                                                  <input
+                                                    type="text"
+                                                    value={acc.cloudName || ''}
+                                                    placeholder="e.g. dcsecgwzc"
+                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                                                    onChange={(e) => {
+                                                      const newAccs = [...displayAccounts];
+                                                      newAccs[idx] = { ...newAccs[idx], cloudName: e.target.value.trim() };
+                                                      setShops(prev => prev.map(s => s.id === shop.id ? { ...s, cloudinaryAccounts: newAccs } : s));
+                                                    }}
+                                                    onBlur={() => {
+                                                      handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: displayAccounts });
+                                                    }}
+                                                  />
+                                                </div>
+                                                
+                                                <div className="flex-1 space-y-1">
+                                                  <label className="text-[10px] font-black text-slate-400 uppercase">Upload Preset (Must be Unsigned)</label>
+                                                  <input
+                                                    type="text"
+                                                    value={acc.uploadPreset || ''}
+                                                    placeholder="e.g. unsigned_preset"
+                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                                                    onChange={(e) => {
+                                                      const newAccs = [...displayAccounts];
+                                                      newAccs[idx] = { ...newAccs[idx], uploadPreset: e.target.value.trim() };
+                                                      setShops(prev => prev.map(s => s.id === shop.id ? { ...s, cloudinaryAccounts: newAccs } : s));
+                                                    }}
+                                                    onBlur={() => {
+                                                      handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: displayAccounts });
+                                                    }}
+                                                  />
+                                                </div>
+
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    const newAccs = displayAccounts.filter((_, i) => i !== idx);
+                                                    handleUpdateShopCloudinary(shop.id, { 
+                                                      cloudinaryAccounts: newAccs,
+                                                      ...(newAccs.length === 0 ? { cloudinaryCloudName: '', cloudinaryUploadPreset: '' } : {})
+                                                    });
+                                                  }}
+                                                  className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors border border-rose-200 flex items-center justify-center h-[38px] w-[38px] shrink-0"
+                                                  title="রিমুভ করুন"
+                                                >
+                                                  <Trash2 size={14} />
+                                                </button>
+                                              </div>
+                                            ))}
+
+                                            <div className="flex flex-wrap gap-3 pt-1">
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  const newAccs = [...displayAccounts, { cloudName: '', uploadPreset: '' }];
+                                                  handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: newAccs });
+                                                }}
+                                                className="px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-black flex items-center gap-1 border border-purple-200 transition-all cursor-pointer"
+                                              >
+                                                <Plus size={12} /> Add Cloudinary Account
+                                              </button>
+
+                                              {displayAccounts.length === 1 && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    const singleAcc = displayAccounts[0];
+                                                    handleUpdateShopCloudinary(shop.id, {
+                                                      cloudinaryCloudName: singleAcc.cloudName || '',
+                                                      cloudinaryUploadPreset: singleAcc.uploadPreset || ''
+                                                    });
+                                                    toast.success('Default configuration updated!');
+                                                  }}
+                                                  className="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold border border-blue-200 transition-all cursor-pointer"
+                                                >
+                                                  Save as Default (Single Config)
+                                                </button>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       );
                     })}
                   </tbody>

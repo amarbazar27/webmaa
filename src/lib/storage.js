@@ -24,11 +24,23 @@ export const uploadImage = async (file, shopId = null) => {
       const shopSnap = await getDoc(doc(db, 'shops', shopId));
       if (shopSnap.exists()) {
         const shopData = shopSnap.data();
-        if (shopData.cloudinaryCloudName && shopData.cloudinaryUploadPreset) {
+        if (shopData.cloudinaryAccounts && Array.isArray(shopData.cloudinaryAccounts) && shopData.cloudinaryAccounts.length > 0) {
+          const validAccounts = shopData.cloudinaryAccounts.filter(acc => acc && acc.cloudName && acc.uploadPreset);
+          if (validAccounts.length > 0) {
+            const selected = validAccounts[Math.floor(Math.random() * validAccounts.length)];
+            cloudName = selected.cloudName.trim();
+            uploadPreset = selected.uploadPreset.trim();
+            console.log(`[Cloudinary] Using shop-specific multi-account for ${shopId}: ${cloudName}/${uploadPreset}`);
+          } else if (shopData.cloudinaryCloudName && shopData.cloudinaryUploadPreset) {
             cloudName = shopData.cloudinaryCloudName.trim();
             uploadPreset = shopData.cloudinaryUploadPreset.trim();
-            console.log(`[Cloudinary] Using shop-specific config for ${shopId}: ${cloudName}/${uploadPreset}`);
+            console.log(`[Cloudinary] Using shop-specific config (fallback) for ${shopId}: ${cloudName}/${uploadPreset}`);
           }
+        } else if (shopData.cloudinaryCloudName && shopData.cloudinaryUploadPreset) {
+          cloudName = shopData.cloudinaryCloudName.trim();
+          uploadPreset = shopData.cloudinaryUploadPreset.trim();
+          console.log(`[Cloudinary] Using shop-specific config for ${shopId}: ${cloudName}/${uploadPreset}`);
+        }
       }
     } catch (err) {
       console.warn(`[Cloudinary] Failed to load shop config for ${shopId}, using platform default.`, err.message);
