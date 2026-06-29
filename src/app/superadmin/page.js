@@ -16,7 +16,7 @@ import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
-  Cloud, Plus
+  Cloud, Plus, Edit2
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -40,6 +40,7 @@ export default function SuperAdminPage() {
   const [togglingShopId, setTogglingShopId] = useState(null);
   const [superadminShop, setSuperadminShop] = useState(null);
   const [expandedCloudinaryShopId, setExpandedCloudinaryShopId] = useState(null);
+  const [expandedDescShopId, setExpandedDescShopId] = useState(null);
 
   // ── Smart Curation & Product Overrides ──
   const [allProducts, setAllProducts] = useState([]);
@@ -1024,7 +1025,7 @@ export default function SuperAdminPage() {
 
                                 {(shop.subdomainSlug || shop.shopSlug) && (
                                   <a
-                                    href={`${typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com'}/${shop.subdomainSlug || shop.shopSlug}`}
+                                    href={`${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/${shop.subdomainSlug || shop.shopSlug}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
@@ -1035,7 +1036,10 @@ export default function SuperAdminPage() {
                                 )}
                                 
                                 <button
-                                  onClick={() => setExpandedCloudinaryShopId(expandedCloudinaryShopId === shop.id ? null : shop.id)}
+                                  onClick={() => {
+                                    setExpandedCloudinaryShopId(expandedCloudinaryShopId === shop.id ? null : shop.id);
+                                    setExpandedDescShopId(null);
+                                  }}
                                   className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${
                                     expandedCloudinaryShopId === shop.id 
                                       ? 'bg-purple-600 text-white hover:bg-purple-700' 
@@ -1044,6 +1048,21 @@ export default function SuperAdminPage() {
                                   title="ক্লাউডিনারি সেটিংস"
                                 >
                                   <Cloud size={11} /> Cloudinary
+                                </button>
+
+                                <button
+                                  onClick={() => {
+                                    setExpandedDescShopId(expandedDescShopId === shop.id ? null : shop.id);
+                                    setExpandedCloudinaryShopId(null);
+                                  }}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                                    expandedDescShopId === shop.id 
+                                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                      : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                                  }`}
+                                  title="স্টোর ডেসক্রিপশন এডিট"
+                                >
+                                  <Edit2 size={11} /> Description
                                 </button>
 
                                 <button
@@ -1214,6 +1233,61 @@ export default function SuperAdminPage() {
                               </td>
                             </tr>
                           )}
+                          {expandedDescShopId === shop.id && (
+                            <tr className="bg-slate-50/50">
+                              <td colSpan={8} className="p-4 border-t border-b border-slate-100">
+                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-left">
+                                  <div className="flex items-center justify-between border-b pb-3">
+                                    <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
+                                      📝 Edit AI & SEO Description for <span className="text-blue-600 font-black">{shop.shopName || 'this store'}</span>
+                                    </h4>
+                                  </div>
+                                  
+                                  <div className="space-y-4">
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 leading-relaxed font-bold">
+                                      💡 এই ডেসক্রিপশনটি কাস্টমারদের স্টোর পেজের উপরে এবং সার্চ ইঞ্জিনের (AEO/SEO) জন্য প্রদর্শিত হবে। এটি সুন্দর এবং তথ্যবহুল হওয়া বাঞ্ছনীয়।
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                      <label className="text-[11px] font-black text-slate-500 uppercase">Banner / SEO Description</label>
+                                      <textarea
+                                        rows={4}
+                                        value={shop.bannerDescription || shop.description || ''}
+                                        placeholder="আমাদের স্টোরে স্বাগতম! এখানে আপনি পাবেন..."
+                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setShops(prev => prev.map(s => s.id === shop.id ? { ...s, bannerDescription: val, description: val } : s));
+                                        }}
+                                      />
+                                    </div>
+
+                                    <div className="flex justify-end gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          try {
+                                            const desc = shop.bannerDescription || '';
+                                            await updateShop(shop.id, { 
+                                              bannerDescription: desc,
+                                              description: desc
+                                            });
+                                            toast.success('ডেসক্রিপশন সফলভাবে আপডেট হয়েছে!');
+                                            setExpandedDescShopId(null);
+                                          } catch (err) {
+                                            toast.error('আপডেট করতে ব্যর্থ হয়েছে: ' + err.message);
+                                          }
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-black shadow-md active:scale-95 transition-all cursor-pointer"
+                                      >
+                                        সংরক্ষণ করুন (Save)
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
                         </Fragment>
                       );
                     })}
@@ -1235,7 +1309,7 @@ export default function SuperAdminPage() {
             <div className="flex items-center justify-between p-5 rounded-2xl border mb-6" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
               <div>
                 <p className="text-sm font-black text-slate-800">শোকেস কিউরেটেশন এনাবল করুন (Showcase Curation Whitelist)</p>
-                <p className="text-xs text-slate-400 font-semibold mt-1">অ্যাক্টিভ থাকলে শুধুমাত্র অনুমোদিত আইটেমগুলোই daripallah.com এ প্রদর্শিত হবে।</p>
+                <p className="text-xs text-slate-400 font-semibold mt-1">অ্যাক্টিভ থাকলে শুধুমাত্র অনুমোদিত আইটেমগুলোই bdretailers.com এ প্রদর্শিত হবে।</p>
               </div>
               <button
                 onClick={handleToggleCuration}

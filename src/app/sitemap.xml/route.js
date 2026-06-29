@@ -2,7 +2,7 @@ import { getShopByDomainServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
 
-const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'localhost', '127.0.0.1'];
+const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'localhost', '127.0.0.1'];
 
 function isMainSiteHost(host) {
   if (!host) return true;
@@ -11,7 +11,7 @@ function isMainSiteHost(host) {
 }
 
 export async function GET(request) {
-  const host = request.headers.get('host') || 'daripallah.com';
+  const host = request.headers.get('host') || 'bdretailers.com';
   const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
   const baseUrl = `${protocol}://${host}`;
   const currentDate = new Date().toISOString();

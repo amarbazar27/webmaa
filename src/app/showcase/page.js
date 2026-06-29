@@ -57,7 +57,7 @@ export default function ShowcasePage() {
       {/* Nav */}
       <nav className="sticky top-0 z-50 px-6 py-5">
         <div className="max-w-7xl mx-auto flex justify-between items-center glass-panel rounded-full px-8 py-4 shadow-2xl">
-          <Logo href="/" className="text-white scale-110" text="daripallah.com" />
+          <Logo href="/" className="text-white scale-110" text="bdretailers.com" />
           <div className="flex items-center gap-4">
             <Link href="/" className="text-[11px] font-black text-white/40 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:block">Home</Link>
             <span className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black tracking-[0.3em] uppercase text-purple-400">

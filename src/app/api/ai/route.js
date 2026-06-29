@@ -205,8 +205,8 @@ export async function POST(req) {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${apiKey}`,
-              'HTTP-Referer': 'https://daripallah.com',
-              'X-Title': 'Daripallah SaaS'
+              'HTTP-Referer': 'https://bdretailers.com',
+              'X-Title': 'BDRetailers SaaS'
             },
             body: JSON.stringify(bodyParameters)
           });

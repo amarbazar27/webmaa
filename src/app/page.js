@@ -873,7 +873,7 @@ export default function Home() {
   }, [activeShopFilter, activeTypeFilter, activeCategory, activeSubcategory, productSearch]);
 
   const handleShareProduct = async (product) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com';
     const shareUrl = `${origin}/?product=${product.id}`;
     
     if (navigator.share) {
@@ -892,7 +892,7 @@ export default function Home() {
   };
 
   const handleCopyLink = (product) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com';
     const shareUrl = `${origin}/?product=${product.id}`;
     
     navigator.clipboard.writeText(shareUrl).then(() => {
@@ -903,7 +903,7 @@ export default function Home() {
   };
 
   const handleShareFilter = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com';
     const params = new URLSearchParams();
     if (activeShopFilter !== 'All') params.set('shop', activeShopFilter);
     if (activeTypeFilter !== 'All') params.set('type', activeTypeFilter);
@@ -1069,11 +1069,11 @@ export default function Home() {
           messages: [
             {
               role: 'system',
-              content: `You are a professional retail shopping assistant for the Daripallah platform (daripallah.com) in Bangladesh. 
+              content: `You are a professional retail shopping assistant for the BDRetailers platform (bdretailers.com) in Bangladesh. 
               Always greet with "Assalamu Alaikum". Speak in Bengali. Be helpful and friendly.
               
               প্লাটফর্মের সকল স্টোরের তথ্য (স্টোরের নাম, ডেলিভারি চার্জ, এবং অন্যান্য তথ্য):
-              ${shopsInfo || 'Daripallah Store - Delivery Charge: ৳60'}
+              ${shopsInfo || 'BDRetailers Store - Delivery Charge: ৳60'}
               
               Current Available Products in the Marketplace (ID|Name|Price|Unit|Description):
               ${productList || 'No products listed yet.'}
@@ -1972,12 +1972,12 @@ export default function Home() {
                  {mainShopData?.logoUrl ? (
                    <img src={mainShopData.logoUrl} className="h-10 object-contain mb-6" alt="Logo" />
                  ) : (
-                   <Logo href="/" className="text-white scale-[1.3] origin-left mb-6" text="daripallah.com" />
+                   <Logo href="/" className="text-white scale-[1.3] origin-left mb-6" text="bdretailers.com" />
                  )}
                  <p className="text-xs text-white/50 leading-relaxed max-w-sm mb-6 font-bold">
-                    Daripallah — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব।
+                    BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব।
                  </p>
-                 <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">daripallah global platform © {new Date().getFullYear()}</span>
+                 <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">bdretailers global platform © {new Date().getFullYear()}</span>
               </div>
               
               {/* Navigation Links */}
@@ -2057,13 +2057,13 @@ export default function Home() {
                     ) : (
                       <li>
                         <a 
-                          href="mailto:support@daripallah.com" 
+                          href="mailto:support@bdretailers.com" 
                           className="flex items-center gap-3 text-xs font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
                         >
                           <div className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shrink-0">
                             <Mail size={14} />
                           </div>
-                          <span>support@daripallah.com</span>
+                          <span>support@bdretailers.com</span>
                         </a>
                       </li>
                     )}

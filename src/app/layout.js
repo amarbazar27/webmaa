@@ -3,19 +3,19 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://daripallah.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Daripallah — আপনার ব্যবসার ডিজিটাল পার্টনার',
-    template: '%s | Daripallah',
+    default: 'BDRetailers — আপনার ব্যবসার ডিজিটাল পার্টনার',
+    template: '%s | BDRetailers',
   },
-  description: 'Daripallah — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
-  keywords: ['daripallah', 'ecommerce', 'saas', 'online store', 'bangladesh ecommerce', 'retailer platform'],
-  authors: [{ name: 'Daripallah', url: BASE_URL }],
-  creator: 'Daripallah',
-  publisher: 'Daripallah',
+  description: 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
+  keywords: ['bdretailers', 'ecommerce', 'saas', 'online store', 'bangladesh ecommerce', 'retailer platform'],
+  authors: [{ name: 'BDRetailers', url: BASE_URL }],
+  creator: 'BDRetailers',
+  publisher: 'BDRetailers',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -35,14 +35,14 @@ export const metadata = {
     type: 'website',
     locale: 'bn_BD',
     url: BASE_URL,
-    siteName: 'Daripallah',
-    title: 'Daripallah — আপনার ব্যবসার ডিজিটাল পার্টনার',
+    siteName: 'BDRetailers',
+    title: 'BDRetailers — আপনার ব্যবসার ডিজিটাল পার্টনার',
     description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম।',
-    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'Daripallah Logo' }],
+    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'BDRetailers Logo' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Daripallah — ই-কমার্স প্ল্যাটফর্ম',
+    title: 'BDRetailers — ই-কমার্স প্ল্যাটফর্ম',
     description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
     images: [`${BASE_URL}/logo.png`],
   },
@@ -61,28 +61,28 @@ export const viewport = {
   minimumScale: 1.0,
   maximumScale: 5.0,
   userScalable: true,
-};
-
-// JSON-LD Structured Data for Google Search Branding
-function JsonLd() {
-  const structuredData = [
-    // Organization — Google search logo + brand
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Daripallah",
-      "alternateName": ["Daripallah SaaS", "daripallah.com", "দাঁড়িপাল্লা"],
-      "url": BASE_URL,
-      "logo": `${BASE_URL}/logo.png`,
-      "image": `${BASE_URL}/logo.png`,
-      "description": "বাংলাদেশের সবচেয়ে আধুনিক এআই-পাওয়ার্ড মাল্টি-ভেন্ডর মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
-      "sameAs": [],
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "contactType": "customer service",
-        "availableLanguage": ["Bengali", "English"]
-      }
-    },
+ };
+ 
+ // JSON-LD Structured Data for Google Search Branding
+ function JsonLd() {
+   const structuredData = [
+     // Organization — Google search logo + brand
+     {
+       "@context": "https://schema.org",
+       "@type": "Organization",
+       "name": "BDRetailers",
+       "alternateName": ["BDRetailers SaaS", "bdretailers.com", "বিডি রিটেইলার্স"],
+       "url": BASE_URL,
+       "logo": `${BASE_URL}/logo.png`,
+       "image": `${BASE_URL}/logo.png`,
+       "description": "বাংলাদেশের সবচেয়ে আধুনিক এআই-পাওয়ার্ড মাল্টি-ভেন্ডর মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
+       "sameAs": [],
+       "contactPoint": {
+         "@type": "ContactPoint",
+         "contactType": "customer service",
+         "availableLanguage": ["Bengali", "English"]
+       }
+     },
     // WebSite — Google search box & SearchAction
     {
       "@context": "https://schema.org",

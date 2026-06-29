@@ -6,7 +6,7 @@ import TemplateRenderer from '@/templates/TemplateRenderer';
 
 export const revalidate = 60; // Cache the page for 60 seconds (ISR)
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://daripallah.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 
 export async function generateMetadata({ params }) {
   try {

@@ -121,12 +121,12 @@ export default function DomainNotFound() {
         lineHeight: 1.75,
         marginBottom: '2.5rem',
       }}>
-        এই ডোমেইনে কোনো Daripallah স্টোর সংযুক্ত নেই।<br />
+        এই ডোমেইনে কোনো BDRetailers স্টোর সংযুক্ত নেই।<br />
         আপনার স্টোরের ঠিকানা সঠিক কিনা যাচাই করুন।
       </p>
 
       <a
-        href="https://daripallah.com"
+        href="https://bdretailers.com"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
@@ -147,7 +147,7 @@ export default function DomainNotFound() {
           transition: 'transform 0.2s, box-shadow 0.2s',
         }}
       >
-        🏠 Daripallah-তে যান
+        🏠 BDRetailers-এ যান
       </a>
 
       <style>{`

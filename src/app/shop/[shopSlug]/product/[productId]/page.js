@@ -1,7 +1,7 @@
 import { getShopServer, getProductsServer } from '@/lib/server-fetch';
 import ProductDetailClient from './ProductDetailClient';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://daripallah.com';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 
 // 🚨 Fail-safe serialization utility moved outside component
 const deepClone = (obj) => {

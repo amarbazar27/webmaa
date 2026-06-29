@@ -399,7 +399,7 @@ export async function POST(req) {
 
           if (amountToCharge > 0) {
             const protocol = req.headers.get('x-forwarded-proto') || 'https';
-            const host = req.headers.get('host') || 'webmaa.daripallah.com';
+            const host = req.headers.get('host') || 'webmaa.bdretailers.com';
             const domainUrl = `${protocol}://${host}`;
 
             const res = await fetch(`${ppUrl}?name=create-charge`, {

@@ -682,7 +682,7 @@ export default function SettingsPage() {
     );
   }
 
-  const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://daripallah.com'}/shop/${shop?.subdomainSlug}`;
+  const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/shop/${shop?.subdomainSlug}`;
 
   // ── Tabs config (plain object, NOT state — safe to define here) ──
   const SETTINGS_TABS = [
@@ -2171,10 +2171,10 @@ export default function SettingsPage() {
                   <div>
                     <span className="text-[10px] font-black uppercase text-slate-400 block mb-0.5">Privacy Policy URL</span>
                     <span className="text-xs font-bold text-slate-800">
-                      https://daripallah.com/{(shop?.subdomainSlug || 'shop')}/privacy-policy
+                      https://bdretailers.com/{(shop?.subdomainSlug || 'shop')}/privacy-policy
                     </span>
                   </div>
-                  <button type="button" onClick={() => { navigator.clipboard.writeText(`https://daripallah.com/${(shop?.subdomainSlug || 'shop')}/privacy-policy`); toast.success('কপি হয়েছে!'); }} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(`https://bdretailers.com/${(shop?.subdomainSlug || 'shop')}/privacy-policy`); toast.success('কপি হয়েছে!'); }} className="text-purple-600 font-bold hover:underline shrink-0">কপি</button>
                 </div>
               </div>
 

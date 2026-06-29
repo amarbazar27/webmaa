@@ -2312,9 +2312,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 w-full space-y-4 md:space-y-5">
         
-        {/* ── Banner Description Box (SEO/AEO/GEO Optimized & Narrow) ── */}
+        {/* ── Banner Description Box (AEO/SEO/GEO Optimized & Premium Design) ── */}
         <div
-          className="rounded-xl border overflow-hidden p-3"
+          className="rounded-2xl border shadow-sm overflow-hidden"
           style={{
             borderColor: shop?.descBoxBorderColor || 'var(--sp-border, #e2e8f0)',
             background: shop?.descBoxBg || 'var(--sp-card, #ffffff)',
@@ -2322,27 +2322,57 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           itemScope
           itemType="https://schema.org/Store"
         >
-          <meta itemprop="url" content={shop?.customDomain ? `https://${shop.customDomain}` : `https://daripallah.com/shop/${shop.shopSlug}`} />
+          <div className="h-1.5 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600" />
+          <meta itemprop="url" content={shop?.customDomain ? `https://${shop.customDomain}` : `https://bdretailers.com/shop/${shop.shopSlug}`} />
           {shop?.logoUrl && <meta itemprop="image" content={shop.logoUrl} />}
           
-          <div className="flex items-center gap-3">
-            {shop?.logoUrl && (
-              <img itemprop="logo" src={shop.logoUrl} alt={shop.shopName} className="w-10 h-10 object-contain rounded-lg border border-slate-200 shrink-0" />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 itemprop="name" className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-none">
-                  {shop?.shopName || ''}
-                </h1>
-                {shop?.slogan && (
-                  <span itemprop="slogan" className="text-[10px] sm:text-xs text-slate-500 font-bold border-l pl-2 border-slate-200 leading-none">
-                    {shop.slogan}
-                  </span>
-                )}
+          <div className="p-4 md:p-6">
+            <div className="flex items-start gap-4">
+              {shop?.logoUrl && (
+                <div className="shrink-0 hidden sm:block">
+                  <img
+                    itemprop="logo"
+                    src={shop.logoUrl}
+                    alt={shop.shopName}
+                    className="w-14 h-14 object-contain rounded-xl border p-1 border-slate-200 bg-white"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                  {shop?.logoUrl && (
+                    <img
+                      src={shop.logoUrl}
+                      alt=""
+                      className="w-6 h-6 object-contain rounded-md border border-slate-200 sm:hidden inline-block"
+                    />
+                  )}
+                  <h1 itemprop="name" className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-tight">
+                    {shop?.shopName || ''}
+                  </h1>
+                  {shop?.slogan && (
+                    <span itemprop="slogan" className="text-[10px] md:text-xs text-slate-500 font-bold border-l pl-2 border-slate-200 leading-none">
+                      {shop.slogan}
+                    </span>
+                  )}
+                </div>
+                <p itemprop="description" className="text-xs md:text-sm font-medium leading-relaxed text-slate-600 whitespace-pre-line">
+                  {shop?.bannerDescription || shop?.description || shop?.slogan || 'আমাদের স্টোরে স্বাগতম! সেরা প্রোডাক্ট এবং দ্রুত ডেলিভারির নিশ্চয়তা।'}
+                </p>
+                
+                {/* ── AI & SEO Optimizations Badges ── */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(shop?.descBoxBadges?.length > 0
+                    ? shop.descBoxBadges
+                    : ['🤖 AI-Search Optimized', '✅ ভেরিফাইড বিক্রেতা', '⚡ দ্রুত ডেলিভারি', '🔒 নিরাপদ পেমেন্ট']
+                  ).map((badge, bi) => (
+                    <span key={bi}
+                      className="inline-flex items-center px-2 py-0.5 text-[9px] md:text-xs font-black rounded-lg border bg-purple-50 text-purple-700 border-purple-200/60 shadow-sm shadow-purple-500/5">
+                      {badge}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <p itemprop="description" className="text-xs sm:text-sm font-medium text-slate-600 mt-1 line-clamp-2 leading-relaxed">
-                {shop?.bannerDescription || shop?.description || shop?.slogan || ''}
-              </p>
             </div>
           </div>
         </div>
@@ -2638,7 +2668,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   {[1,2,3,4,5].map(i => <Star key={i} size={14} className="text-amber-400 fill-amber-400" />)}
                   <span className="text-xs text-slate-500 font-bold ml-1">বিশ্বস্ত সেবা</span>
                 </div>
-                <a href="https://daripallah.com/reviews" target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:text-purple-300 font-black underline flex items-center gap-1">
+                <a href="https://bdretailers.com/reviews" target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:text-purple-300 font-black underline flex items-center gap-1">
                   Platform Reviews <ExternalLink size={10} />
                 </a>
               </div>
@@ -2663,7 +2693,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 {(() => {
                   const rawEmail = shop.deliveryConfig?.contactEmail || shop.ownerEmail || '';
                   const hasEmailPlaceholder = rawEmail.toLowerCase().includes('no contact') || rawEmail.toLowerCase().includes('registered') || rawEmail.toLowerCase().includes('endpoint');
-                  const finalEmail = hasEmailPlaceholder ? 'support@daripallah.com' : rawEmail || 'support@daripallah.com';
+                  const finalEmail = hasEmailPlaceholder ? 'support@bdretailers.com' : rawEmail || 'support@bdretailers.com';
 
                   const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
                   const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
@@ -2734,16 +2764,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <p className="text-slate-600 text-xs font-black flex flex-col gap-1.5 md:text-left text-center">
               <span className="uppercase tracking-[0.25em]">© {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।</span>
               <span className="text-xs text-purple-300 font-bold normal-case tracking-normal block mt-1">
-                🚀 Want to launch your own professional online store in minutes just like this? <a href="https://daripallah.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
+                🚀 Want to launch your own professional online store in minutes just like this? <a href="https://bdretailers.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
               </span>
               <span className="text-xs text-purple-300 font-bold mt-1">
-                এই ওয়েবসাইটটি দাঁড়িয়েপাল্লা (<a href="https://daripallah.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">daripallah.com</a>) দ্বারা তৈরি।
+                এই ওয়েবসাইটটি বিডি রিটেইলার্স (<a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">bdretailers.com</a>) দ্বারা তৈরি।
               </span>
             </p>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-xs font-bold text-slate-600">
-                বানানো হয়েছে <a href="https://daripallah.com" target="_blank" rel="noreferrer" className="underline hover:text-white font-black text-slate-500">daripallah.com</a> দিয়ে
+                বানানো হয়েছে <a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline hover:text-white font-black text-slate-500">bdretailers.com</a> দিয়ে
               </span>
             </div>
           </div>

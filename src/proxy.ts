@@ -25,6 +25,8 @@ function applySecurityHeaders(response: NextResponse, pathname: string): NextRes
 const BYPASS_HOSTS = [
   'webmaa.vercel.app',
   'daripallah.com',
+  'bdretailers.com',
+  'www.bdretailers.com',
   'localhost',
   '127.0.0.1',
 ];
@@ -71,7 +73,10 @@ function getTenantSlug(host: string): string | null {
     return null;
   }
   
-  const isPlatformDomain = host.endsWith('.daripallah.com') || host.endsWith('.webmaa.vercel.app');
+  const isPlatformDomain = 
+    host.endsWith('.daripallah.com') || 
+    host.endsWith('.bdretailers.com') || 
+    host.endsWith('.webmaa.vercel.app');
   
   if (isPlatformDomain) {
     if (parts.length === 3) {
@@ -134,7 +139,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
     
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://daripallah.com';
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdretailers.com';
       const lookupUrl = new URL('/api/domain-lookup', baseUrl);
       lookupUrl.searchParams.set('host', host);
       const lookupResponse = await fetch(lookupUrl.toString(), {
@@ -216,7 +221,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Internal API call — domain → shop slug রেজোলিউশন
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://daripallah.com';
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdretailers.com';
     const lookupUrl = new URL('/api/domain-lookup', baseUrl);
     lookupUrl.searchParams.set('host', host);
 
