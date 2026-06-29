@@ -1514,6 +1514,23 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     setCart(prev => prev.map(item => item.id === id ? { ...item, price: val, clientPrice: val } : item));
   };
 
+  const updateCartItemTotalPrice = (id, newTotal) => {
+    if (newTotal === '') {
+      setCart(prev => prev.map(item => item.id === id ? { ...item, price: '', clientPrice: '' } : item));
+      return;
+    }
+    const val = parseFloat(newTotal);
+    if (isNaN(val)) return;
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const qty = parseFloat(item.quantity) || 1;
+        const unitPrice = qty > 0 ? val / qty : val;
+        return { ...item, price: unitPrice, clientPrice: unitPrice };
+      }
+      return item;
+    }));
+  };
+
   const cartTotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (Number(item.quantity) || 0)), 0);
   const deliveryAdvanceFee = shop.deliveryConfig?.advanceFee ? parseInt(shop.deliveryConfig.advanceFee) : 60;
   const isCOD = shop.deliveryConfig?.isCOD !== false;
@@ -3132,7 +3149,22 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="relative w-full max-w-sm h-full bg-white shadow-2xl flex flex-col overflow-hidden animate-slide-in border-l border-slate-200">
             <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 bg-slate-50">
               <h2 className="text-xl font-black text-slate-900 flex items-center gap-3"><ShoppingCart size={22} className="text-purple-600"/> আমার কার্ট</h2>
-              <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-slate-200 text-slate-500 hover:text-slate-900 rounded-xl transition-all"><X size={20} strokeWidth={2.5} /></button>
+              <div className="flex items-center gap-2">
+                {cart.length > 0 && (
+                  <button 
+                    onClick={() => {
+                      if (confirm('আপনি কি কার্টের সব প্রোডাক্ট মুছে ফেলতে চান?')) {
+                        setCart([]);
+                        toast.success('কার্ট খালি করা হয়েছে 🗑️');
+                      }
+                    }}
+                    className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 hover:text-red-700 rounded-xl text-[10px] font-black transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    সব মুছুন
+                  </button>
+                )}
+                <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-slate-200 text-slate-500 hover:text-slate-900 rounded-xl transition-all"><X size={20} strokeWidth={2.5} /></button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-white">
               {cart.length === 0 ? (
@@ -3149,19 +3181,29 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <h4 className="font-black text-sm text-slate-900 truncate">{item.name}</h4>
                     {item.note && <p className="text-[10px] font-bold text-purple-600 truncate mt-0.5 italic">নোট: {item.note}</p>}
                     
-                    {/* Editable Unit Price Box */}
-                    <div className="flex items-center gap-1.5 mt-1.5">
+                    {/* Editable Total Price Box & Read-only Unit Price */}
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                       <span className="text-xs font-black text-slate-500">৳</span>
                       <input 
                         type="number" 
-                        value={item.price} 
-                        onChange={e => updateCartItemPrice(item.id, e.target.value)} 
+                        value={item.price === '' ? '' : Math.round(parseFloat(item.price || 0) * (parseFloat(item.quantity) || 0))} 
+                        onChange={e => updateCartItemTotalPrice(item.id, e.target.value)} 
                         className="w-16 px-1.5 py-1 text-xs font-black text-purple-700 bg-purple-50 border border-purple-200 rounded-xl outline-none focus:border-purple-500 text-center" 
+                        title="মোট দাম (এডিটেবল)"
                       />
-                      <span className="text-[10px] font-bold text-slate-400">/ পিস</span>
-                      <span className="text-[10px] font-black text-slate-500 ml-1">
-                        (মোট: ৳{(parseFloat(item.price || 0) * (parseFloat(item.quantity) || 0)).toFixed(0)})
-                      </span>
+                      <span className="text-[10px] font-bold text-slate-400">মোট</span>
+                      
+                      {(() => {
+                        const originalProduct = products.find(p => p.id === (item.productId || item.id));
+                        const baseUnit = originalProduct?.smartCalc?.enabled ? originalProduct.smartCalc.baseUnit : 'পিস';
+                        const basePrice = originalProduct?.smartCalc?.enabled ? originalProduct.smartCalc.basePrice : (originalProduct?.price || item.price);
+                        const baseQty = originalProduct?.smartCalc?.enabled ? originalProduct.smartCalc.baseQuantity : 1;
+                        return (
+                          <span className="text-[10px] font-black text-slate-500 border-l border-slate-200 pl-2 ml-1">
+                            ৳{basePrice} / {baseQty !== 1 ? `${baseQty} ` : ''}{baseUnit} (মূল দাম)
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-1.5 mt-2.5">
