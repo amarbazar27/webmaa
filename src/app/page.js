@@ -7,7 +7,7 @@ import {
   X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
-  Share2, Copy, PlayCircle, Download, Briefcase, LogOut
+  Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -202,6 +202,7 @@ export default function Home() {
   const [userOrders, setUserOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [isStoresMenuOpen, setIsStoresMenuOpen] = useState(false);
   const [showPwaBanner, setShowPwaBanner] = useState(false);
 
   // ── AI Product Clustering Helper ──
@@ -231,6 +232,32 @@ export default function Home() {
       return `https://${customDomain}`;
     }
     return `/${shopSlug}`;
+  };
+
+  const renderClickableText = (text) => {
+    if (!text) return '';
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}(?:\/[^\s]*)?)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (urlRegex.test(part)) {
+        let href = part;
+        if (!/^https?:\/\//i.test(href)) {
+          href = 'https://' + href;
+        }
+        return (
+          <a 
+            key={i} 
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-purple-400 hover:text-purple-300 underline font-black transition-colors cursor-pointer"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
   };
 
   // Responsive itemsPerPage calculator (exactly 5 rows)
@@ -1237,18 +1264,27 @@ export default function Home() {
       {/* ── Navigation ── */}
       <nav className="fixed top-0 inset-x-0 z-[100] px-2 py-3 sm:px-6 sm:py-6 transition-all duration-300">
         <div className="max-w-[98%] xl:max-w-[98%] mx-auto flex justify-between items-center glass-panel rounded-full px-3 py-2.5 sm:px-8 sm:py-4 shadow-2xl">
-          <div 
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-            className="flex items-center gap-2 group cursor-pointer select-none"
-          >
-            {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
-              <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
-            ) : (
-              <img src="/logo.png" className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
-            )}
-            <span className="text-base sm:text-xl font-black text-white tracking-tight whitespace-nowrap group-hover:text-purple-400 transition-colors">
-              {globalConfig?.brandName || 'BDRetailers'}
-            </span>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setIsStoresMenuOpen(true)} 
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/20 text-purple-200 rounded-xl text-[10px] sm:text-xs font-black transition-all cursor-pointer mr-2 shadow-lg"
+            >
+              <Menu size={13} className="shrink-0" />
+              <span>স্টোরসমূহ (Stores)</span>
+            </button>
+            <div 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+              className="flex items-center gap-2 group cursor-pointer select-none"
+            >
+              {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
+              ) : (
+                <img src="/logo.png" className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
+              )}
+              <span className="text-base sm:text-xl font-black text-white tracking-tight whitespace-nowrap group-hover:text-purple-400 transition-colors">
+                {globalConfig?.brandName || 'BDRetailers'}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-6">
@@ -1333,7 +1369,7 @@ export default function Home() {
       <section className="relative z-20 pt-28 pb-8 w-full overflow-hidden">
         {mainShopData?.banners && mainShopData.banners.length > 0 ? (
           <div 
-            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[45vh] min-h-[220px] max-h-[500px] bg-[#030612]"
+            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[33vh] min-h-[220px] max-h-[500px] bg-[#030612]"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -1450,28 +1486,17 @@ export default function Home() {
       <section id="marketplace" className="relative z-20 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-2 sm:px-6 py-12 scroll-mt-24">
         
         {/* ── Main Site Description Box (Editable via Superadmin) ── */}
-        <div className="mb-8 p-6 sm:p-8 rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-md relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl -z-10" />
-          <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl -z-10" />
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="max-w-4xl space-y-3">
-              <h3 className="text-lg sm:text-xl font-black text-purple-400 tracking-tight flex items-center gap-2">
-                ✨ {globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম
-              </h3>
-              <p className="text-sm sm:text-base font-bold text-white/80 leading-relaxed">
-                {globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক। সরাসরি ভেরিফাইড লোকাল মার্চেন্টদের ডিজিটাল হাব থেকে আপনার পছন্দের পণ্যগুলো কিনুন আকর্ষণীয় মূল্যে ও সুপার-ফাস্ট ডেলিভারিতে। আপনিও কি আপনার ব্যবসা ডিজিটালি বড় করতে চান? আজই আমাদের প্ল্যাটফর্মে যোগ দিন এবং ১ মিনিটে আপনার নিজের অনলাইন স্টোর তৈরি করে বিক্রি শুরু করুন!'}
-              </p>
-            </div>
-            <div className="shrink-0">
-              <Link 
-                href="/become-retailer"
-                className="inline-flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
-              >
-                🤝 মার্চেন্ট বা রিটেইলার হোন
-                <ArrowRight size={14} />
-              </Link>
-            </div>
-          </div>
+        <div className="mb-4 py-3 px-5 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md relative shadow-md">
+          <p className="text-xs sm:text-sm font-bold text-white/80 leading-relaxed">
+            ✨ <strong className="text-purple-400 font-black">{globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম:</strong>{' '}
+            {renderClickableText(globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক।')}
+            <Link 
+              href="/become-retailer"
+              className="inline-flex items-center gap-1 ml-2 text-purple-400 hover:text-purple-300 hover:underline font-black whitespace-nowrap"
+            >
+              🤝 মার্চেন্ট বা রিটেইলার হোন →
+            </Link>
+          </p>
         </div>
         
         {/* ── AI Shopping List Integration ── */}
@@ -1499,211 +1524,113 @@ export default function Home() {
           </div>
         )}
 
-        {/* Header and search panel */}
-        <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-8 gap-6 border-b border-white/5 pb-8">
-          <div>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-3">
-              Explore Our Marketplace
-            </h2>
-            <p className="text-xs text-white/40 font-bold uppercase tracking-wider">
-              Browse products uploaded live across all registered merchants. Real-time stock, secure shopping.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full md:max-w-xl items-center shrink-0">
-            {/* Search bar */}
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-4 top-3.5 text-white/30" size={15} />
+        {/* ── Unified Compact Search, Store & Sort Row ── */}
+        <div className="flex flex-col gap-3 mb-6 bg-slate-900/50 border border-white/10 rounded-2xl p-4 shadow-lg">
+          <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
+            {/* Search Input */}
+            <div className="relative flex-1 w-full min-w-0">
+              <Search className="absolute left-4 top-3 text-white/30" size={13} />
               <input
                 type="text"
-                placeholder="Search products (English letter/Bangla both work)..."
-                className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 placeholder:text-white/20 transition-all shadow-inner"
+                placeholder="পণ্য খুঁজুন (Search products)..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:border-purple-500 transition-all placeholder:text-white/20"
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
               />
             </div>
             
-            {/* Sort options */}
-            <select
-              value={sortOption}
-              onChange={e => setSortOption(e.target.value)}
-              className="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all cursor-pointer select-arrow hover:bg-white/10 shadow-inner"
-            >
-              <option value="name_asc" className="bg-[#0b132b]">নাম অনুযায়ী (A→Z)</option>
-              <option value="price_asc" className="bg-[#0b132b]">দাম (কম থেকে বেশি)</option>
-              <option value="price_desc" className="bg-[#0b132b]">দাম (বেশি থেকে কম)</option>
-              <option value="name_desc" className="bg-[#0b132b]">নাম অনুযায়ী (Z→A)</option>
-              <option value="newest" className="bg-[#0b132b]">নতুন পণ্য</option>
-            </select>
-          </div>
-        </div>
+            <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 justify-end">
+              {/* Store filter select */}
+              <select
+                value={activeShopFilter}
+                onChange={e => {
+                  setActiveShopFilter(e.target.value);
+                  setActiveCategory('All');
+                  setActiveSubcategory('');
+                }}
+                className="px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:border-purple-500 transition-all cursor-pointer hover:bg-white/10 shrink-0"
+              >
+                <option value="All" className="bg-[#0b132b]">🏪 সব স্টোর (All Stores)</option>
+                {uniqueShops.filter(s => s !== 'All').map(shopName => (
+                  <option key={shopName} value={shopName} className="bg-[#0b132b]">{shopName}</option>
+                ))}
+              </select>
 
-        {/* ── Restructured Double Flow Filter Pills (Merchant FIRST, then Category) ── */}
-        <div className="flex flex-col gap-6 mb-12 bg-white/[0.01] border border-white/5 rounded-3xl p-6 shadow-2xl animate-fade-in">
-          
-          {/* Smart Curation Mode Selector Switch */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-5">
-            <div>
-              <span className="text-[10px] font-black text-purple-400 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full uppercase tracking-widest block w-max">স্মার্ট ফিল্টারিং মোড (Smart Filters)</span>
-              <p className="text-xs text-white/50 font-bold mt-1.5">মার্চেন্ট বা ক্যাটাগরি অনুযায়ী ফিল্টার করে পণ্য খুঁজুন</p>
-            </div>
-            <div className="flex gap-2 p-1 bg-slate-950/40 rounded-2xl border border-white/10 w-max shrink-0 shadow-inner">
-              <button
-                onClick={() => setFilterMode('merchant')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                  filterMode === 'merchant'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'text-white/50 hover:text-white/80'
-                }`}
+              {/* Sort Options */}
+              <select
+                value={sortOption}
+                onChange={e => setSortOption(e.target.value)}
+                className="px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:border-purple-500 transition-all cursor-pointer hover:bg-white/10 shrink-0"
               >
-                🏪 মার্চেন্ট ফিল্টার (By Merchant)
-              </button>
-              <button
-                onClick={() => setFilterMode('type')}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                  filterMode === 'type'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'text-white/50 hover:text-white/80'
-                }`}
-              >
-                🪄 ম্যাজিক প্রোডাক্ট টাইপ (AI Product Type)
-              </button>
+                <option value="name_asc" className="bg-[#0b132b]">নাম (A→Z)</option>
+                <option value="price_asc" className="bg-[#0b132b]">দাম (কম→বেশি)</option>
+                <option value="price_desc" className="bg-[#0b132b]">দাম (বেশি→কম)</option>
+                <option value="name_desc" className="bg-[#0b132b]">নাম (Z→A)</option>
+                <option value="newest" className="bg-[#0b132b]">নতুন পণ্য</option>
+              </select>
             </div>
           </div>
 
-          {/* 1. First Row (Merchant OR AI Type based on filterMode) */}
-          {filterMode === 'merchant' ? (
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Store size={11} /> ১. বিক্রেতা বা মার্চেন্ট (Merchant)</span>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-                {uniqueShops.map(shop => {
-                  const isSelected = activeShopFilter === shop;
-                  return (
-                    <div key={shop} className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => setActiveShopFilter(shop)}
-                        className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border flex items-center gap-2 cursor-pointer ${
-                          isSelected
-                            ? 'bg-purple-600 text-white border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:bg-purple-500'
-                            : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
-                        }`}
-                      >
-                        <Store size={12} />
-                        {shop === 'All' ? 'সব স্টোর (All Stores)' : shop}
-                      </button>
-                      {shop !== 'All' && (
-                        <button
-                          onClick={(e) => handleCopyShopSectorLink(e, shop)}
-                          className="p-2.5 bg-white/5 border border-white/5 hover:bg-purple-600/30 hover:border-purple-500/20 text-white/40 hover:text-purple-400 rounded-2xl transition-all cursor-pointer flex items-center justify-center"
-                          title={`"${shop}" স্টোরের লিংক কপি করুন`}
-                        >
-                          <Share2 size={12} />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Sparkles size={11} /> ১. প্রোডাক্ট ক্যাটাগরি ক্লাস্টার (AI Type)</span>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-                {uniqueTypes.map(type => {
-                  const isSelected = activeTypeFilter === type;
-                  return (
-                    <button
-                      key={type}
-                      onClick={() => setActiveTypeFilter(type)}
-                      className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 flex items-center gap-2 cursor-pointer ${
-                        isSelected
-                          ? 'bg-purple-600 text-white border-purple-500 shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:bg-purple-500'
-                          : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
-                      }`}
-                    >
-                      <Sparkles size={12} />
-                      {type === 'All' ? 'সব ধরণের প্রোডাক্ট (All Types)' : type}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Compact categories row (Horizontal scroll) */}
+          {activeShopFilter !== 'All' && (
+            <div className="flex gap-2 overflow-x-auto pb-1 mt-1 scrollbar-none items-center">
+              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest shrink-0">ক্যাটাগরি:</span>
+              {availableCategories.map(cat => {
+                const isSelected = activeCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setActiveCategory(cat);
+                      setActiveSubcategory('');
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all border shrink-0 cursor-pointer ${
+                      isSelected
+                        ? 'bg-purple-600 text-white border-purple-500 shadow-md'
+                        : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10'
+                    }`}
+                  >
+                    {cat === 'All' ? 'সব' : cat}
+                  </button>
+                );
+              })}
             </div>
           )}
 
-          {/* 2. Category Filter (Row 2 - Progressive stepped display, hidden until merchant/type selected) */}
-          {((filterMode === 'merchant' && activeShopFilter !== 'All') || (filterMode === 'type' && activeTypeFilter !== 'All')) && (
-            <div className="flex flex-col gap-2.5 border-t border-white/5 pt-5 animate-slide-in">
-              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><Filter size={11} /> ২. ক্যাটাগরি বা শ্রেণী (Category)</span>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-                {availableCategories.map(cat => {
-                  const isSelected = activeCategory === cat;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveCategory(cat)}
-                      className={`px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shrink-0 cursor-pointer ${
-                        isSelected
-                          ? 'bg-white text-slate-900 border-white shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:bg-white/90'
-                          : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10 hover:text-white/80'
-                      }`}
-                    >
-                      {cat === 'All' ? 'সব ক্যাটাগরি (All Categories)' : cat}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 3. Subcategories Filter (Row 3 - progressive displaying when activeCategory is not 'All') */}
-          {activeCategory !== 'All' && availableSubcategories.length > 0 && (
-            <div className="flex flex-col gap-2.5 border-t border-white/5 pt-5 animate-slide-in">
-              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest ml-1 flex items-center gap-1.5"><ChevronRight size={11} /> ৩. সাব-ক্যাটাগরি (Subcategory)</span>
-              <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
-                <button
-                  onClick={() => setActiveSubcategory('')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                    !activeSubcategory
-                      ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                      : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
-                  }`}
-                >
-                  সব সাব-ক্যাটাগরি
-                </button>
-                {availableSubcategories.map(sub => {
-                  const isSelected = activeSubcategory === sub;
-                  return (
-                    <button
-                      key={sub}
-                      onClick={() => setActiveSubcategory(sub)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border shrink-0 cursor-pointer ${
-                        isSelected
-                          ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                          : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
-                      }`}
-                    >
-                      {sub}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Share Filter Link Button (Premium Action) */}
-          {(activeShopFilter !== 'All' || activeTypeFilter !== 'All' || activeCategory !== 'All') && (
-            <div className="flex justify-end pt-4 border-t border-white/5 animate-fade-in">
+          {/* Compact subcategories row */}
+          {activeShopFilter !== 'All' && activeCategory !== 'All' && availableSubcategories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 mt-0.5 scrollbar-none items-center">
+              <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest shrink-0">সাব-ক্যাটাগরি:</span>
               <button
-                type="button"
-                onClick={handleShareFilter}
-                className="flex items-center gap-1.5 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-wider text-purple-400 hover:text-purple-300 transition-all cursor-pointer active:scale-95 shadow-md"
+                onClick={() => setActiveSubcategory('')}
+                className={`px-2.5 py-1 rounded-md text-[9px] font-bold border shrink-0 cursor-pointer ${
+                  !activeSubcategory
+                    ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-sm'
+                    : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
+                }`}
               >
-                <Share2 size={11} /> শেয়ার ফিল্টার লিংক (Share Filter)
+                সব
               </button>
+              {availableSubcategories.map(sub => {
+                const isSelected = activeSubcategory === sub;
+                return (
+                  <button
+                    key={sub}
+                    onClick={() => setActiveSubcategory(sub)}
+                    className={`px-2.5 py-1 rounded-md text-[9px] font-bold border shrink-0 cursor-pointer ${
+                      isSelected
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400'
+                        : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
+                    }`}
+                  >
+                    {sub}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
-
+        
         {/* Amazon-style Box View Layout */}
         {globalConfig?.showAmazonBoxes && activeShopFilter === 'All' && (
           <div className="mb-12 animate-fade-in">
@@ -2150,6 +2077,142 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* ── Stores Drawer (Left Side) ── */}
+      <div className={`fixed inset-0 z-[100] transition-all duration-300 ${isStoresMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setIsStoresMenuOpen(false)} />
+        <div className={`absolute top-0 left-0 h-full w-72 bg-slate-900 border-r border-white/10 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isStoresMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="p-5 border-b border-white/10 flex items-center justify-between bg-slate-950/50">
+            <h2 className="text-sm font-black text-white flex items-center gap-2">
+              <Store size={16} className="text-purple-400" /> আমাদের স্টোরসমূহ (Stores)
+            </h2>
+            <button onClick={() => setIsStoresMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer">
+              <X size={16} strokeWidth={3} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+            <button
+              onClick={() => {
+                setActiveShopFilter('All');
+                setActiveCategory('All');
+                setActiveSubcategory('');
+                setIsStoresMenuOpen(false);
+                document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className={`w-full text-left px-4 py-3 rounded-xl font-bold text-xs transition-all ${
+                activeShopFilter === 'All'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white/5 text-white/70 hover:bg-white/10'
+              }`}
+            >
+              সব স্টোর (All Stores)
+            </button>
+            
+            {allShops.filter(s => s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store').map(shop => {
+              const isShopActive = activeShopFilter === shop.shopName;
+              
+              // Get categories for this shop
+              const shopProducts = products.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName);
+              const shopCats = [...new Set(shopProducts.map(p => p.category).filter(Boolean))];
+              
+              return (
+                <div key={shop.id} className="space-y-1">
+                  <button
+                    onClick={() => {
+                      setActiveShopFilter(shop.shopName);
+                      setActiveCategory('All');
+                      setActiveSubcategory('');
+                      if (shopCats.length === 0) {
+                        setIsStoresMenuOpen(false);
+                        document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
+                      isShopActive
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-white/5 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      {shop.logoUrl ? (
+                        <img src={shop.logoUrl} className="w-5 h-5 rounded-md object-contain border border-white/10 bg-white" alt="" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-md bg-purple-900/50 flex items-center justify-center text-[10px] text-purple-200 font-bold">{shop.shopName?.[0]}</div>
+                      )}
+                      <span className="truncate">{shop.shopName}</span>
+                    </div>
+                    {shopCats.length > 0 && <span className="text-[10px] text-white/40">{isShopActive ? '▲' : '▼'}</span>}
+                  </button>
+                  
+                  {isShopActive && shopCats.length > 0 && (
+                    <div className="pl-4 space-y-1 border-l border-white/10 ml-4">
+                      <button
+                        onClick={() => {
+                          setActiveCategory('All');
+                          setActiveSubcategory('');
+                          setIsStoresMenuOpen(false);
+                          document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-[11px] font-bold transition-all ${
+                          activeCategory === 'All' ? 'bg-purple-500/20 text-purple-300' : 'text-white/50 hover:bg-white/5'
+                        }`}
+                      >
+                        সব ক্যাটাগরি
+                      </button>
+                      {shopCats.map(cat => {
+                        const isCatActive = activeCategory === cat;
+                        const catProducts = shopProducts.filter(p => p.category === cat);
+                        const catSubs = [...new Set(catProducts.map(p => p.subcategory).filter(Boolean))];
+                        
+                        return (
+                          <div key={cat} className="space-y-1">
+                            <button
+                              onClick={() => {
+                                setActiveCategory(cat);
+                                setActiveSubcategory('');
+                                if (catSubs.length === 0) {
+                                  setIsStoresMenuOpen(false);
+                                  document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                                }
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] font-bold transition-all ${
+                                isCatActive ? 'bg-purple-500/20 text-purple-300' : 'text-white/50 hover:bg-white/5'
+                              }`}
+                            >
+                              <span className="truncate">{cat}</span>
+                              {catSubs.length > 0 && <span className="text-[9px] text-white/30">{isCatActive ? '▲' : '▼'}</span>}
+                            </button>
+                            
+                            {isCatActive && catSubs.length > 0 && (
+                              <div className="pl-3 space-y-1 border-l border-purple-500/30 ml-3">
+                                {catSubs.map(sub => (
+                                  <button
+                                    key={sub}
+                                    onClick={() => {
+                                      setActiveSubcategory(sub);
+                                      setIsStoresMenuOpen(false);
+                                      document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                                    }}
+                                    className={`w-full text-left px-2 py-1.5 rounded-md text-[10px] font-bold transition-all ${
+                                      activeSubcategory === sub ? 'text-purple-300 font-black' : 'text-white/40 hover:bg-white/5'
+                                    }`}
+                                  >
+                                    {sub}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* ── Footer (Dynamic contacts with platform safety fallbacks) ── */}
       <footer id="contact" className="relative z-20 border-t border-white/5 pt-20 pb-12 bg-[#030612]">
