@@ -601,7 +601,10 @@ export const getAllVisibleShops = async () => {
   try {
     const q = query(collection(db, 'shops'));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => s.isActive !== false && s.showOnMainSite === true);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => {
+      const isTestStore = s.shopSlug === 'test' || s.subdomainSlug === 'test' || s.shopName?.toLowerCase() === 'test';
+      return s.isActive !== false && s.showOnMainSite !== false && (!isTestStore || s.showOnMainSite === true);
+    });
   } catch (err) { return []; }
 };
 

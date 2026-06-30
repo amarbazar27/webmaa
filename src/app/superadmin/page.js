@@ -656,12 +656,43 @@ export default function SuperAdminPage() {
                   onChange={e => setGlobalConfig({...globalConfig, brandName: e.target.value})}
                   placeholder="e.g. BDRetailers"
                 />
-                <Input
-                  label="Platform Logo URL (লোগো ইউআরএল)"
-                  value={globalConfig.logoUrl || ''}
-                  onChange={e => setGlobalConfig({...globalConfig, logoUrl: e.target.value})}
-                  placeholder="e.g. /logo.png or custom https:// url"
-                />
+                <div className="flex flex-col gap-1.5 w-full">
+                  <label className="text-xs font-black tracking-widest uppercase text-slate-600">Platform Logo (লোগো আপলোড)</label>
+                  <div className="flex items-center gap-3">
+                    {globalConfig.logoUrl && (
+                      <img src={globalConfig.logoUrl} className="w-12 h-12 object-contain rounded-xl border p-1 bg-white shrink-0 border-slate-200" alt="Logo preview" />
+                    )}
+                    <div className="flex-1 relative">
+                      <Input
+                        value={globalConfig.logoUrl || ''}
+                        onChange={e => setGlobalConfig({...globalConfig, logoUrl: e.target.value})}
+                        placeholder="e.g. /logo.png or custom URL"
+                        className="pr-20"
+                      />
+                      <label className="absolute right-2 top-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[10px] font-black cursor-pointer transition-colors shadow-sm select-none">
+                        📁 Upload
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const toastId = toast.loading('লোগো আপলোড হচ্ছে...');
+                            try {
+                              const { uploadImage } = await import('@/lib/storage');
+                              const url = await uploadImage(file);
+                              setGlobalConfig(prev => ({...prev, logoUrl: url}));
+                              toast.success('লোগো সফলভাবে আপলোড হয়েছে! 🎉', { id: toastId });
+                            } catch (err) {
+                              toast.error(err.message || 'আপলোড ব্যর্থ হয়েছে।', { id: toastId });
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-black tracking-widest uppercase text-slate-600">Platform Description Box (ল্যান্ডিং পেজের ডেসক্রিপশন)</label>

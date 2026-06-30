@@ -1050,7 +1050,10 @@ export default function Home() {
     setIsAiTyping(true);
 
     try {
-      const shopsInfo = allShops.filter(s => s.isActive !== false && s.showOnMainSite === true).map(s => {
+      const shopsInfo = allShops.filter(s => {
+        const isTestStore = s.shopSlug === 'test' || s.subdomainSlug === 'test' || s.shopName?.toLowerCase() === 'test';
+        return s.isActive !== false && s.showOnMainSite !== false && (!isTestStore || s.showOnMainSite === true);
+      }).map(s => {
         const delFee = s.deliveryConfig?.advanceFee || '60';
         const freeDelMin = s.deliveryConfig?.freeDeliveryMinOrder ? `৳${s.deliveryConfig.freeDeliveryMinOrder}` : 'নেই';
         return `স্টোর: ${s.shopName} (slug: ${s.shopSlug}), ক্যাটাগরি: ${s.businessType || 'সাধারণ'}, ডেলিভারি চার্জ: ৳${delFee}, ফ্রি ডেলিভারি মিনিমাম অর্ডার: ${freeDelMin}, বিবরণ: ${s.description || 'নেই'}।`;
