@@ -214,7 +214,7 @@ export default function OrdersPage() {
           <span style="font-size:16px;font-weight:900">Total</span>
           <span style="font-size:20px;font-weight:900">${taka}${order.total}</span>
         </div>
-        <p style="text-align:center;margin-top:20px;font-size:10px;color:#333;font-weight:bold;">Powered by daripallah.com Admin Panel</p>
+        <p style="text-align:center;margin-top:20px;font-size:10px;color:#333;font-weight:bold;">Powered by bdretailers.com Admin Panel</p>
       `;
       document.body.appendChild(el);
       

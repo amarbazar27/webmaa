@@ -1333,7 +1333,7 @@ export default function Home() {
       <section className="relative z-20 pt-28 pb-8 w-full overflow-hidden">
         {mainShopData?.banners && mainShopData.banners.length > 0 ? (
           <div 
-            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner aspect-[16/7] md:aspect-[21/6] lg:aspect-[24/5] xl:aspect-[28/5] 2xl:aspect-[32/5]"
+            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[33vh] min-h-[140px] max-h-[380px]"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -1362,7 +1362,7 @@ export default function Home() {
                   <img 
                     src={bannerUrl} 
                     alt={bannerTitle} 
-                    className="absolute inset-0 w-full h-full object-cover z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
+                    className="absolute inset-0 w-full h-full object-contain z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
                   />
                   
                   {/* Banner content overlay */}
@@ -1459,7 +1459,7 @@ export default function Home() {
                 ✨ {globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম
               </h3>
               <p className="text-sm sm:text-base font-bold text-white/80 leading-relaxed">
-                {globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব। আপনিও আপনার দোকান ডিজিটাল করতে পারেন ১ মিনিটে।'}
+                {globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক। সরাসরি ভেরিফাইড লোকাল মার্চেন্টদের ডিজিটাল হাব থেকে আপনার পছন্দের পণ্যগুলো কিনুন আকর্ষণীয় মূল্যে ও সুপার-ফাস্ট ডেলিভারিতে। আপনিও কি আপনার ব্যবসা ডিজিটালি বড় করতে চান? আজই আমাদের প্ল্যাটফর্মে যোগ দিন এবং ১ মিনিটে আপনার নিজের অনলাইন স্টোর তৈরি করে বিক্রি শুরু করুন!'}
               </p>
             </div>
             <div className="shrink-0">
@@ -2158,11 +2158,11 @@ export default function Home() {
               
               {/* Brand Description Footer */}
               <div>
-                 {mainShopData?.logoUrl ? (
-                   <img src={mainShopData.logoUrl} className="h-10 object-contain mb-6" alt="Logo" />
-                 ) : (
-                   <Logo href="/" className="text-white scale-[1.3] origin-left mb-6" text="bdretailers.com" />
-                 )}
+                 {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
+                    <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-10 object-contain mb-6" alt="Logo" />
+                  ) : (
+                    <Logo href="/" className="text-white scale-[1.3] origin-left mb-6" text="bdretailers.com" />
+                  )}
                  <p className="text-xs text-white/50 leading-relaxed max-w-sm mb-6 font-bold">
                     BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব।
                  </p>

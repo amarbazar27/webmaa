@@ -2249,12 +2249,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 }`}
               >
                 {/* Actual banner — filled to cover container width and height */}
-                <div className="w-full h-full">
+                <div className="w-full h-full relative">
+                  {/* Blurred Background Copied Image */}
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-cover bg-center blur-3xl scale-110 opacity-30 select-none pointer-events-none" 
+                    style={{ backgroundImage: `url(${banner.url})` }} 
+                  />
                   <img
                     src={banner.url}
                     loading={i === 0 ? "eager" : "lazy"}
                     alt={banner.title || `Banner ${i+1}`}
-                    className="w-full h-full object-cover z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
+                    className="absolute inset-0 w-full h-full object-contain z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
                   />
                 </div>
                 {/* Premium Text Overlay if defined */}
