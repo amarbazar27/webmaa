@@ -6,7 +6,7 @@ import {
   getRetailerRequests, approveRetailerRequest, denyRetailerRequest,
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
-  getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop,
+  getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop, getShopBySlug,
   getAllMarketplaceProducts, updateProduct, updateShop
 } from '@/lib/firestore';
 import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
@@ -16,7 +16,7 @@ import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
-  Cloud, Plus, Edit2
+  Cloud, Plus, Edit2, ImagePlus
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -39,6 +39,8 @@ export default function SuperAdminPage() {
   const [impersonatingId, setImpersonatingId] = useState(null);
   const [togglingShopId, setTogglingShopId] = useState(null);
   const [superadminShop, setSuperadminShop] = useState(null);
+  const [banners, setBanners] = useState([]);
+  const [savingBanners, setSavingBanners] = useState(false);
   const [expandedCloudinaryShopId, setExpandedCloudinaryShopId] = useState(null);
   const [expandedDescShopId, setExpandedDescShopId] = useState(null);
 
@@ -151,6 +153,26 @@ export default function SuperAdminPage() {
       setSuperadminShop(shop);
     }).catch(() => {});
   }, [user]);
+
+  useEffect(() => {
+    if (superadminShop) {
+      setBanners(superadminShop.banners || []);
+    }
+  }, [superadminShop]);
+
+  const handleSaveBanners = async () => {
+    if (!superadminShop?.id) return;
+    setSavingBanners(true);
+    const toastId = toast.loading('ব্যানার সংরক্ষণ হচ্ছে...');
+    try {
+      await updateShop(superadminShop.id, { banners });
+      setSuperadminShop(prev => ({ ...prev, banners }));
+      toast.success('ব্যানারসমূহ সফলভাবে সংরক্ষিত হয়েছে! 🎉', { id: toastId });
+    } catch (err) {
+      toast.error('ব্যানার সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message, { id: toastId });
+    }
+    setSavingBanners(false);
+  };
 
   useEffect(() => { 
     loadData(); 
@@ -638,6 +660,167 @@ export default function SuperAdminPage() {
         </div>
 
         <p className="text-[10px] font-bold text-slate-400 mt-3 px-1">💡 Retailers can override this for their shop. Customers can further override for themselves.</p>
+      </Card>
+
+      {/* ── Landing Page Banners Carousel Manager ── */}
+      <Card title="Landing Page Banners (ল্যান্ডিং পেজ ব্যানার ম্যানেজার)" subtitle="ওয়েবসাইটের মূল স্লাইডার বা ব্যানারগুলো পরিবর্তন ও ছবি আপলোড করুন" icon={ImagePlus} className="border-2 border-indigo-100 bg-indigo-50/10">
+        <div className="space-y-6">
+          {banners.length === 0 ? (
+            <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <p className="text-xs text-slate-400 font-bold">কোনো ব্যানার যুক্ত নেই। নতুন ব্যানার যোগ করতে নিচের বাটনে ক্লিক করুন।</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {banners.map((banner, idx) => (
+                <div key={idx} className="p-5 bg-slate-50 border border-slate-200 rounded-3xl space-y-4 relative group">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+                    <span className="text-xs font-black text-slate-800">ব্যানার #{idx + 1}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const newBanners = banners.filter((_, i) => i !== idx);
+                        setBanners(newBanners);
+                      }} 
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      title="ব্যানারটি মুছুন"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Left: Image selector & upload */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-500">ব্যানার ছবি (Image)</label>
+                      <div className="flex items-center gap-3">
+                        {banner.url && (
+                          <img src={banner.url} className="w-16 h-12 object-cover rounded-lg border border-slate-200 bg-slate-900 shrink-0" alt="" />
+                        )}
+                        <div className="flex-1 relative">
+                          <input 
+                            type="text" 
+                            placeholder="ব্যানার ইমেজ URL" 
+                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white text-slate-800 pr-16"
+                            value={banner.url || ''} 
+                            onChange={e => {
+                              const newBanners = [...banners];
+                              newBanners[idx].url = e.target.value;
+                              setBanners(newBanners);
+                            }}
+                          />
+                          <label className="absolute right-1 top-1.5 px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[9px] font-black cursor-pointer select-none">
+                            📁 Upload
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const toastId = toast.loading('ব্যানার ছবি আপলোড হচ্ছে...');
+                                try {
+                                  const { uploadImage } = await import('@/lib/storage');
+                                  const url = await uploadImage(file);
+                                  const newBanners = [...banners];
+                                  newBanners[idx].url = url;
+                                  setBanners(newBanners);
+                                  toast.success('ছবি সফলভাবে আপলোড হয়েছে! 🎉', { id: toastId });
+                                } catch (err) {
+                                  toast.error(err.message || 'আপলোড ব্যর্থ হয়েছে।', { id: toastId });
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Title */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-500">শিরোনাম (Title)</label>
+                      <input 
+                        type="text" 
+                        placeholder="ব্যানার টাইটেল" 
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white text-slate-800"
+                        value={banner.title || ''} 
+                        onChange={e => {
+                          const newBanners = [...banners];
+                          newBanners[idx].title = e.target.value;
+                          setBanners(newBanners);
+                        }}
+                      />
+                    </div>
+
+                    {/* Bottom row: Description, Link, Button text */}
+                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black uppercase text-slate-500">বিবরণ (Description)</label>
+                        <input 
+                          type="text" 
+                          placeholder="ব্যানার ডেসক্রিপশন" 
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white text-slate-800"
+                          value={banner.description || ''} 
+                          onChange={e => {
+                            const newBanners = [...banners];
+                            newBanners[idx].description = e.target.value;
+                            setBanners(newBanners);
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black uppercase text-slate-500">লিংক URL (Link URL)</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g., #marketplace" 
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white text-slate-800"
+                          value={banner.linkUrl || ''} 
+                          onChange={e => {
+                            const newBanners = [...banners];
+                            newBanners[idx].linkUrl = e.target.value;
+                            setBanners(newBanners);
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black uppercase text-slate-500">বাটন টেক্সট (Button Text)</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g., কেনাকাটা করুন" 
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white text-slate-800"
+                          value={banner.buttonText || ''} 
+                          onChange={e => {
+                            const newBanners = [...banners];
+                            newBanners[idx].buttonText = e.target.value;
+                            setBanners(newBanners);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex justify-between items-center pt-2">
+            <button 
+              type="button" 
+              onClick={() => setBanners([...banners, { url: '', title: '', description: '', linkUrl: '', buttonText: '' }])} 
+              className="text-xs font-black text-purple-600 bg-purple-50 hover:bg-purple-100 px-4 py-2.5 rounded-xl border border-purple-200 cursor-pointer transition-colors"
+            >
+              + Add New Banner
+            </button>
+            <Button 
+              onClick={handleSaveBanners} 
+              loading={savingBanners} 
+              className="bg-slate-900 border-b-4 border-slate-950 hover:bg-black w-40 h-11 text-white text-xs font-black"
+            >
+              Save Banners
+            </Button>
+          </div>
+        </div>
       </Card>
 
       {/* 🚀 Platform AI Intelligence (Global Settings) */}

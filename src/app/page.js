@@ -1176,6 +1176,26 @@ export default function Home() {
     });
   }
 
+  // Group products by shop for the main list view when viewing "All Stores"
+  const flatGroupedByShop = {};
+  if (activeShopFilter === 'All') {
+    filteredProducts.forEach(p => {
+      const key = p.shopName || 'Other Store';
+      if (!flatGroupedByShop[key]) {
+        const matchingShop = allShops.find(s => s.shopSlug === p.shopSlug || s.shopName === p.shopName);
+        flatGroupedByShop[key] = {
+          shopName: key,
+          shopSlug: p.shopSlug,
+          shopLogoUrl: matchingShop?.logoUrl || '/logo.png',
+          customDomain: p.customDomain,
+          domainStatus: p.domainStatus,
+          products: []
+        };
+      }
+      flatGroupedByShop[key].products.push(p);
+    });
+  }
+
   return (
     <div className="min-h-screen relative bg-gradient-to-br from-[#070e24] via-[#091535] to-[#040a17] text-slate-100 selection:bg-purple-900 selection:text-white font-sans overflow-x-hidden pb-10">
       
@@ -1799,6 +1819,147 @@ export default function Home() {
             <ShoppingBag size={48} className="mx-auto text-white/20 mb-4" />
             <h4 className="text-lg font-black text-white/60">কোনো পণ্য পাওয়া যায়নি</h4>
             <p className="text-xs text-white/30 font-bold uppercase tracking-widest mt-1">অনুগ্রহ করে ফিল্টার অথবা সার্চের শব্দ পরিবর্তন করে ট্রাই করুন</p>
+          </div>
+        ) : activeShopFilter === 'All' ? (
+          <div className="space-y-16">
+            {Object.values(flatGroupedByShop).map(group => {
+              const storeLink = getStoreLink(group.shopSlug, group.customDomain, group.domainStatus);
+              return (
+                <div key={group.shopName} className="space-y-6">
+                  {/* Shop Section Header */}
+                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
+                        <img src={group.shopLogoUrl || '/logo.png'} alt={group.shopName} className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-white text-base tracking-tight">{group.shopName}</h3>
+                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">পণ্য সংখ্যা: {group.products.length}টি</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setFilterMode('merchant');
+                        setActiveShopFilter(group.shopName);
+                      }}
+                      className="px-4 py-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/20 hover:border-purple-500 rounded-xl text-xs font-black transition-all cursor-pointer"
+                    >
+                      স্টোর ভিজিট করুন →
+                    </button>
+                  </div>
+
+                  {/* Products Grid for this shop */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 sm:gap-6">
+                    {group.products.map(product => {
+                      const storeLinkOfProduct = getStoreLink(product.shopSlug, product.customDomain, product.domainStatus);
+                      const cartItem = cart.find(item => item.productId === product.id && !item.isCustomized);
+                      
+                      return (
+                        <div
+                          key={product.id}
+                          className="group glass-panel border-white/5 rounded-3xl overflow-hidden hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between bg-slate-950/20"
+                        >
+                          <div 
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setCustomizationNote('');
+                            }}
+                            className="relative aspect-square overflow-hidden bg-slate-950/40 border-b border-white/5 cursor-pointer"
+                          >
+                            <img
+                              src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                            />
+                            {(product.shopSlug === 'daripallah-store' || product.shopSlug === 'webmaa-store') && (
+                              <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
+                                👑 Primary Store
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="p-4 flex-1 flex flex-col justify-between">
+                            <div className="space-y-1 mb-4">
+                              <div className="flex justify-between items-center gap-2">
+                                <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
+                                <a 
+                                  href={storeLinkOfProduct} 
+                                  target="_blank" 
+                                  rel="noreferrer" 
+                                  className="text-[9px] font-black text-white/40 hover:text-purple-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                                >
+                                  🏪 {product.shopName} <ArrowUpRight size={8} />
+                                </a>
+                              </div>
+                              <h3 
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setCustomizationNote('');
+                                }}
+                                className="font-extrabold text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2rem] cursor-pointer hover:text-purple-400 transition-colors"
+                              >
+                                {product.name}
+                              </h3>
+                            </div>
+
+                            <div className="space-y-3 pt-3 border-t border-white/5">
+                              <div className="flex justify-between items-center">
+                                <span className="text-white/40 text-[9px] font-bold">দাম (Price)</span>
+                                <span className="text-white font-black text-xs">৳ {Number(product.price).toLocaleString()}</span>
+                              </div>
+
+                              {product.stock === 0 ? (
+                                <div className="w-full py-2.5 rounded-2xl font-black text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center gap-1.5 cursor-not-allowed">
+                                  🚫 স্টক শেষ (Stock Out)
+                                </div>
+                              ) : (
+                                cartItem ? (
+                                  <div className="flex items-center justify-between bg-purple-900/40 rounded-2xl p-1 border border-purple-500/30">
+                                    <button onClick={() => updateCartQty(product.id, -1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                      <Minus size={12} strokeWidth={2.5} />
+                                    </button>
+                                    <input
+                                      type="number"
+                                      min="0.01"
+                                      step="any"
+                                      value={cartItem.quantity}
+                                      onChange={e => setCartQtyDirect(product.id, e.target.value)}
+                                      className="font-black text-white text-xs w-full text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                    <button onClick={() => updateCartQty(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                      <Plus size={12} strokeWidth={2.5} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => handleAddToCart(product)}
+                                    className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
+                                  >
+                                    <ShoppingCart size={11} /> Add to Cart
+                                  </button>
+                                )
+                              )}
+
+                              {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedProduct(product);
+                                    setCustomizationNote('');
+                                  }}
+                                  className="w-full py-2 rounded-2xl font-black text-[9px] border border-purple-500/20 hover:border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                  >
+                                  <Sparkles size={11} /> কাস্টমাইজ (Customize)
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <>
