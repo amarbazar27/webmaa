@@ -7,7 +7,7 @@ import {
   X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
-  Share2, Copy, PlayCircle, Download
+  Share2, Copy, PlayCircle, Download, Briefcase, LogOut
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -1252,8 +1252,8 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-6">
-            <a href="#marketplace" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:block">Marketplace</a>
-            <Link href="/showcase" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden xs:block">Showcase</Link>
+            <a href="#marketplace" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:flex items-center gap-1.5"><ShoppingBag size={11} className="shrink-0" /> Marketplace</a>
+            <Link href="/showcase" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden xs:flex items-center gap-1.5"><Sparkles size={11} className="shrink-0" /> Showcase</Link>
             
             {/* How to Order Video */}
             {mainShopData?.howToOrderVideo && (
@@ -1313,12 +1313,12 @@ export default function Home() {
                 </button>
 
                 {getDashboardHref() && (
-                  <Link href={getDashboardHref()} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-white text-black rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
-                    Workspace
+                  <Link href={getDashboardHref()} className="flex items-center gap-1.5 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-white text-black rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
+                    <Briefcase size={11} className="shrink-0 text-black" /> Workspace
                   </Link>
                 )}
                 
-                <button onClick={logoutUser} className="text-[9px] sm:text-[10px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.15em] transition-all shrink-0 cursor-pointer">Sign Out</button>
+                <button onClick={logoutUser} className="text-[9px] sm:text-[10px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.15em] transition-all shrink-0 cursor-pointer flex items-center gap-1"><LogOut size={11} className="shrink-0" /> Sign Out</button>
               </div>
             ) : (
               <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-full text-[9px] sm:text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)] shrink-0 cursor-pointer">
@@ -1333,7 +1333,7 @@ export default function Home() {
       <section className="relative z-20 pt-28 pb-8 w-full overflow-hidden">
         {mainShopData?.banners && mainShopData.banners.length > 0 ? (
           <div 
-            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[33vh] min-h-[140px] max-h-[380px]"
+            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[45vh] min-h-[220px] max-h-[500px]"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -1362,7 +1362,7 @@ export default function Home() {
                   <img 
                     src={bannerUrl} 
                     alt={bannerTitle} 
-                    className="absolute inset-0 w-full h-full object-contain z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
+                    className="absolute inset-0 w-full h-full object-cover z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
                   />
                   
                   {/* Banner content overlay */}
