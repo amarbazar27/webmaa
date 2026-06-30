@@ -1050,7 +1050,7 @@ export default function Home() {
     setIsAiTyping(true);
 
     try {
-      const shopsInfo = allShops.filter(s => s.isActive !== false && s.showOnMainSite !== false).map(s => {
+      const shopsInfo = allShops.filter(s => s.isActive !== false && s.showOnMainSite === true).map(s => {
         const delFee = s.deliveryConfig?.advanceFee || '60';
         const freeDelMin = s.deliveryConfig?.freeDeliveryMinOrder ? `৳${s.deliveryConfig.freeDeliveryMinOrder}` : 'নেই';
         return `স্টোর: ${s.shopName} (slug: ${s.shopSlug}), ক্যাটাগরি: ${s.businessType || 'সাধারণ'}, ডেলিভারি চার্জ: ৳${delFee}, ফ্রি ডেলিভারি মিনিমাম অর্ডার: ${freeDelMin}, বিবরণ: ${s.description || 'নেই'}।`;
@@ -1218,13 +1218,13 @@ export default function Home() {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
             className="flex items-center gap-2 group cursor-pointer select-none"
           >
-            {mainShopData?.logoUrl ? (
-              <img src={mainShopData.logoUrl} className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
+            {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
+              <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
             ) : (
               <img src="/logo.png" className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
             )}
             <span className="text-base sm:text-xl font-black text-white tracking-tight whitespace-nowrap group-hover:text-purple-400 transition-colors">
-              Daripallah
+              {globalConfig?.brandName || 'BDRetailers'}
             </span>
           </div>
 
@@ -1401,7 +1401,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-r from-purple-900/60 to-blue-900/40 z-10" />
             <img 
               src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80" 
-              alt="Daripallah Banner" 
+              alt={`${globalConfig?.brandName || 'BDRetailers'} Banner`} 
               className="absolute inset-0 w-full h-full object-cover scale-105 blur-sm opacity-50"
             />
             <div className="relative z-20 px-8 py-20 md:p-24 flex flex-col justify-center items-start h-full max-w-3xl">
@@ -1425,6 +1425,31 @@ export default function Home() {
 
       {/* ── Marketplace Section ── */}
       <section id="marketplace" className="relative z-20 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-2 sm:px-6 py-12 scroll-mt-24">
+        
+        {/* ── Main Site Description Box (Editable via Superadmin) ── */}
+        <div className="mb-8 p-6 sm:p-8 rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-md relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl -z-10" />
+          <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl -z-10" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-4xl space-y-3">
+              <h3 className="text-lg sm:text-xl font-black text-purple-400 tracking-tight flex items-center gap-2">
+                ✨ {globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম
+              </h3>
+              <p className="text-sm sm:text-base font-bold text-white/80 leading-relaxed">
+                {globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব। আপনিও আপনার দোকান ডিজিটাল করতে পারেন ১ মিনিটে।'}
+              </p>
+            </div>
+            <div className="shrink-0">
+              <Link 
+                href="/become-retailer"
+                className="inline-flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+              >
+                🤝 মার্চেন্ট বা রিটেইলার হোন
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </div>
         
         {/* ── AI Shopping List Integration ── */}
         {mainShopData && (
@@ -2128,7 +2153,7 @@ export default function Home() {
                   {daripallahStoreItems.length > 0 && (
                     <div className="bg-purple-950/10 border border-purple-500/20 rounded-2xl p-4 space-y-3">
                       <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
-                        👑 Daripallah Store Products
+                        👑 {globalConfig?.brandName || 'BDRetailers'} Store Products
                       </p>
                       <div className="space-y-3 divide-y divide-purple-500/10">
                         {daripallahStoreItems.map(item => (
@@ -2220,7 +2245,7 @@ export default function Home() {
                       onClick={handleCheckoutDaripallah}
                       className="w-full py-4 bg-white text-black hover:scale-[1.02] rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl cursor-pointer active:scale-95 transition-all"
                     >
-                      Checkout Daripallah Products (৳ {daripallahStoreTotal.toLocaleString()})
+                      Checkout {globalConfig?.brandName || 'BDRetailers'} Products (৳ {daripallahStoreTotal.toLocaleString()})
                     </button>
                   )}
                   <button
@@ -2305,7 +2330,7 @@ export default function Home() {
 
             {/* Footer */}
             <div className="p-4 border-t border-white/10 text-center bg-[#05050a]">
-              <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-black">Daripallah Customer Profile &bull; 2026</p>
+              <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-black">{globalConfig?.brandName || 'BDRetailers'} Customer Profile &bull; 2026</p>
             </div>
           </div>
         </div>
@@ -2341,7 +2366,7 @@ export default function Home() {
                   😊
                 </div>
                 <div>
-                  <h3 className="font-black text-sm tracking-tight leading-tight">{mainShopData?.aiConfig?.botName || 'Daripallah Bot'}</h3>
+                  <h3 className="font-black text-sm tracking-tight leading-tight">{mainShopData?.aiConfig?.botName || (globalConfig?.brandName ? `${globalConfig.brandName} Bot` : 'BDRetailers Bot')}</h3>
                   <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">AI Marketplace Assistant</p>
                 </div>
               </div>
@@ -2704,40 +2729,6 @@ function LandingProductDetailInner({ shop, product, onClose, cart, setCart }) {
         />
         <ReviewSection shopId={safeShop?.id} />
 
-        {/* ── Premium PWA Installation Banner ── */}
-        {showPwaBanner && !pwaInstalled && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] w-[92%] max-w-md p-4 rounded-2xl glass-panel bg-slate-900/90 border border-purple-500/20 shadow-2xl flex items-center justify-between gap-3 animate-fade-in transition-all">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-purple-500/10 border border-purple-500/30 rounded-xl text-purple-400 shrink-0">
-                <Download size={20} className="animate-bounce" />
-              </div>
-              <div className="text-left">
-                <h4 className="text-xs font-black text-white">অ্যাপ হিসেবে ব্যবহার করুন</h4>
-                <p className="text-[10px] text-slate-400 mt-0.5 font-bold leading-relaxed">ব্রাউজার ছাড়াই দ্রুত ও অফলাইনে দাঁড়িপাল্লা ব্যবহার করতে এখনই ডাউনলোড করুন।</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button 
-                onClick={() => {
-                  handleAppDownload();
-                  setShowPwaBanner(false);
-                }}
-                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] font-black transition-all hover:scale-105 shadow-md whitespace-nowrap cursor-pointer"
-              >
-                ডাউনলোড
-              </button>
-              <button 
-                onClick={() => {
-                  sessionStorage.setItem('pwa-prompt-dismissed', 'true');
-                  setShowPwaBanner(false);
-                }}
-                className="p-1.5 hover:bg-white/10 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

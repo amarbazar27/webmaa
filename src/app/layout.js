@@ -83,31 +83,31 @@ export const viewport = {
          "availableLanguage": ["Bengali", "English"]
        }
      },
-    // WebSite — Google search box & SearchAction
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "Daripallah",
-      "alternateName": "Daripallah eCommerce",
-      "url": BASE_URL,
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": `${BASE_URL}/?q={search_term_string}`
-        },
-        "query-input": "required name=search_term_string"
-      }
-    },
-    // WebPage — Entity signals for search optimization
-    {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "@id": `${BASE_URL}/#webpage`,
-      "url": BASE_URL,
-      "name": "Daripallah — দাঁড়িপাল্লা",
-      "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস।"
-    }
+     // WebSite — Google search box & SearchAction
+     {
+       "@context": "https://schema.org",
+       "@type": "WebSite",
+       "name": "BDRetailers",
+       "alternateName": "BDRetailers eCommerce",
+       "url": BASE_URL,
+       "potentialAction": {
+         "@type": "SearchAction",
+         "target": {
+           "@type": "EntryPoint",
+           "urlTemplate": `${BASE_URL}/?q={search_term_string}`
+         },
+         "query-input": "required name=search_term_string"
+       }
+     },
+     // WebPage — Entity signals for search optimization
+     {
+       "@context": "https://schema.org",
+       "@type": "WebPage",
+       "@id": `${BASE_URL}/#webpage`,
+       "url": BASE_URL,
+       "name": "BDRetailers — বিডি রিটেইলার্স",
+       "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস।"
+     }
   ];
 
   return (

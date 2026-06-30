@@ -601,7 +601,7 @@ export const getAllVisibleShops = async () => {
   try {
     const q = query(collection(db, 'shops'));
     const snap = await getDocs(q);
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => s.isActive !== false && s.showOnMainSite !== false);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => s.isActive !== false && s.showOnMainSite === true);
   } catch (err) { return []; }
 };
 

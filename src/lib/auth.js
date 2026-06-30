@@ -116,6 +116,7 @@ const initializeShop = async (user) => {
       shopSlug,
       subdomainSlug: shopSlug,
       isActive: true,
+      showOnMainSite: false,
       createdAt: serverTimestamp(),
       staffEmails: [],
       banners: [

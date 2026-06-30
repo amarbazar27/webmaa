@@ -48,7 +48,7 @@ export async function GET(request) {
     } else {
       // Main site sitemap lists main site home and all active shops
       const shops = await getAllShops();
-      const activeShops = shops.filter(shop => shop.isActive !== false && shop.showOnMainSite !== false);
+      const activeShops = shops.filter(shop => shop.isActive !== false && shop.showOnMainSite === true);
 
       xmlItems += `  <url>
     <loc>${baseUrl}</loc>

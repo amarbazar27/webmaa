@@ -1831,7 +1831,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       if (payloadResp.checkoutUrl) {
         window.location.href = payloadResp.checkoutUrl;
       } else {
-        router.push(`/shop/${shop.shopSlug || shop.subdomainSlug}/order/${orderId}`);
+        const isCustomOrSub = typeof window !== 'undefined' && !['bdretailers.com', 'www.bdretailers.com', 'daripallah.com', 'webmaa.vercel.app', 'localhost', '127.0.0.1'].includes(window.location.hostname.replace(/^www\./i, '').split(':')[0]);
+        if (isCustomOrSub) {
+          window.location.href = `/order/${orderId}`;
+        } else {
+          window.location.href = `/shop/${shop.shopSlug || shop.subdomainSlug}/order/${orderId}`;
+        }
       }
     };
 
@@ -2312,9 +2317,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 w-full space-y-4 md:space-y-5">
         
-        {/* ── Banner Description Box (AEO/SEO/GEO Optimized & Premium Design) ── */}
+        {/* ── Banner Description Box (SEO/AEO/GEO Optimized & Narrow) ── */}
         <div
-          className="rounded-2xl border shadow-sm overflow-hidden"
+          className="rounded-xl border overflow-hidden p-3"
           style={{
             borderColor: shop?.descBoxBorderColor || 'var(--sp-border, #e2e8f0)',
             background: shop?.descBoxBg || 'var(--sp-card, #ffffff)',
@@ -2322,57 +2327,27 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           itemScope
           itemType="https://schema.org/Store"
         >
-          <div className="h-1.5 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600" />
           <meta itemprop="url" content={shop?.customDomain ? `https://${shop.customDomain}` : `https://bdretailers.com/shop/${shop.shopSlug}`} />
           {shop?.logoUrl && <meta itemprop="image" content={shop.logoUrl} />}
           
-          <div className="p-4 md:p-6">
-            <div className="flex items-start gap-4">
-              {shop?.logoUrl && (
-                <div className="shrink-0 hidden sm:block">
-                  <img
-                    itemprop="logo"
-                    src={shop.logoUrl}
-                    alt={shop.shopName}
-                    className="w-14 h-14 object-contain rounded-xl border p-1 border-slate-200 bg-white"
-                  />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                  {shop?.logoUrl && (
-                    <img
-                      src={shop.logoUrl}
-                      alt=""
-                      className="w-6 h-6 object-contain rounded-md border border-slate-200 sm:hidden inline-block"
-                    />
-                  )}
-                  <h1 itemprop="name" className="text-base md:text-xl font-black text-slate-900 tracking-tight leading-tight">
-                    {shop?.shopName || ''}
-                  </h1>
-                  {shop?.slogan && (
-                    <span itemprop="slogan" className="text-[10px] md:text-xs text-slate-500 font-bold border-l pl-2 border-slate-200 leading-none">
-                      {shop.slogan}
-                    </span>
-                  )}
-                </div>
-                <p itemprop="description" className="text-xs md:text-sm font-medium leading-relaxed text-slate-600 whitespace-pre-line">
-                  {shop?.bannerDescription || shop?.description || shop?.slogan || 'আমাদের স্টোরে স্বাগতম! সেরা প্রোডাক্ট এবং দ্রুত ডেলিভারির নিশ্চয়তা।'}
-                </p>
-                
-                {/* ── AI & SEO Optimizations Badges ── */}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(shop?.descBoxBadges?.length > 0
-                    ? shop.descBoxBadges
-                    : ['🤖 AI-Search Optimized', '✅ ভেরিফাইড বিক্রেতা', '⚡ দ্রুত ডেলিভারি', '🔒 নিরাপদ পেমেন্ট']
-                  ).map((badge, bi) => (
-                    <span key={bi}
-                      className="inline-flex items-center px-2 py-0.5 text-[9px] md:text-xs font-black rounded-lg border bg-purple-50 text-purple-700 border-purple-200/60 shadow-sm shadow-purple-500/5">
-                      {badge}
-                    </span>
-                  ))}
-                </div>
+          <div className="flex items-center gap-3">
+            {shop?.logoUrl && (
+              <img itemprop="logo" src={shop.logoUrl} alt={shop.shopName} className="w-10 h-10 object-contain rounded-lg border border-slate-200 shrink-0" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 itemprop="name" className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-none">
+                  {shop?.shopName || ''}
+                </h1>
+                {shop?.slogan && (
+                  <span itemprop="slogan" className="text-[10px] sm:text-xs text-slate-500 font-bold border-l pl-2 border-slate-200 leading-none">
+                    {shop.slogan}
+                  </span>
+                )}
               </div>
+              <p itemprop="description" className="text-xs sm:text-sm font-medium text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                {shop?.bannerDescription || shop?.description || shop?.slogan || ''}
+              </p>
             </div>
           </div>
         </div>

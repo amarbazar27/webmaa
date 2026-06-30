@@ -643,6 +643,38 @@ export default function SuperAdminPage() {
       {/* 🚀 Platform AI Intelligence (Global Settings) */}
       <Card title="Platform Intelligence" subtitle="Manage global AI nodes and API keys (Groq Engine)" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/20">
         <form onSubmit={handleUpdateConfig} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+            {/* ── Platform Branding Settings ── */}
+            <div className="md:col-span-12 grid grid-cols-1 gap-4 pb-6 border-b border-purple-100">
+              <div>
+                <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Crown size={14}/> Platform Branding & Identity (ব্র্যান্ডিং ও আইডেন্টিটি)</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">ওয়েবসাইটের নাম, লোগো এবং প্রধান ডেসক্রিপশন সেট করুন</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Platform Brand Name (ওয়েবসাইটের নাম)"
+                  value={globalConfig.brandName || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, brandName: e.target.value})}
+                  placeholder="e.g. BDRetailers"
+                />
+                <Input
+                  label="Platform Logo URL (লোগো ইউআরএল)"
+                  value={globalConfig.logoUrl || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, logoUrl: e.target.value})}
+                  placeholder="e.g. /logo.png or custom https:// url"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-black tracking-widest uppercase text-slate-600">Platform Description Box (ল্যান্ডিং পেজের ডেসক্রিপশন)</label>
+                <textarea
+                  rows={3}
+                  value={globalConfig.platformDescription || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, platformDescription: e.target.value})}
+                  placeholder="ওয়েবসাইটের প্রধান ডেসক্রিপশন লিখুন যা সবার উপরে দেখাবে..."
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500"
+                />
+              </div>
+            </div>
+
            <div className="md:col-span-10">
               <div className="relative">
                  <Input
