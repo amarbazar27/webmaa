@@ -1333,7 +1333,7 @@ export default function Home() {
       <section className="relative z-20 pt-28 pb-8 w-full overflow-hidden">
         {mainShopData?.banners && mainShopData.banners.length > 0 ? (
           <div 
-            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[45vh] min-h-[220px] max-h-[500px]"
+            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[45vh] min-h-[220px] max-h-[500px] bg-[#030612]"
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
@@ -1362,7 +1362,7 @@ export default function Home() {
                   <img 
                     src={bannerUrl} 
                     alt={bannerTitle} 
-                    className="absolute inset-0 w-full h-full object-cover z-10 select-none opacity-90 transition-transform duration-700 hover:scale-102"
+                    className="absolute inset-0 w-full h-full object-contain z-10 select-none opacity-95 transition-transform duration-700 hover:scale-[1.01]"
                   />
                   
                   {/* Banner content overlay */}

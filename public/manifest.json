@@ -1,7 +1,7 @@
 {
-  "name": "Daripallah — দাঁড়িপাল্লা",
-  "short_name": "Daripallah",
-  "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
+  "name": "BDRetailers — আপনার ব্যবসার ডিজিটাল পার্টনার",
+  "short_name": "BDRetailers",
+  "description": "বাংলাদেশের সবচেয়ে আধুনিক ও প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

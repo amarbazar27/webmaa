@@ -6,9 +6,9 @@ export async function GET(request) {
   const shopSlug = searchParams.get('shop');
 
   const defaultManifest = {
-    name: "Daripallah Dashboard",
-    short_name: "Daripallah",
-    description: "Premium AI-Powered Multi-Vendor Marketplace",
+    name: "BDRetailers — আপনার ব্যবসার ডিজিটাল পার্টনার",
+    short_name: "BDRetailers",
+    description: "বাংলাদেশের সবচেয়ে আধুনিক ও প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
@@ -38,7 +38,7 @@ export async function GET(request) {
     const shop = snap.docs[0].data();
     
     return NextResponse.json({
-      name: shop.shopName || "Daripallah Store",
+      name: shop.shopName || "BDRetailers Store",
       short_name: shop.shopName ? shop.shopName.substring(0, 12) : "Store",
       description: shop.slogan || "Online Store",
       start_url: `/shop/${shopSlug}`,
