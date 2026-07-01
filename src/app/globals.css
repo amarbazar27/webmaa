@@ -829,3 +829,133 @@ body {
   transform: translateY(-2px);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   MAIN SITE THEME OVERRIDE — Dark → Light Neomorphic
+   CSS-only override of page.js dark theme classes
+   ════════════════════════════════════════════════════════════════ */
+
+/* Root wrapper: kill dark gradient, apply neo bg */
+.min-h-screen.bg-gradient-to-br {
+  background: var(--neo-bg) !important;
+  background-image: none !important;
+  color: var(--neo-text) !important;
+}
+
+/* Hide decorative blobs (dark-theme only) */
+.animate-blob { display: none !important; }
+[style*="border-radius: 50%"][style*="blur"] { display: none !important; }
+
+/* ── Navbar ── */
+nav.fixed.top-0 {
+  background: var(--neo-surface-card) !important;
+  box-shadow: var(--neo-shadow-navbar) !important;
+  border-bottom: 1px solid var(--neo-border) !important;
+  backdrop-filter: none !important;
+}
+nav.fixed.top-0 .text-white { color: var(--neo-text) !important; }
+nav.fixed.top-0 .text-white\/80,
+nav.fixed.top-0 .text-white\/60,
+nav.fixed.top-0 .text-white\/40 { color: var(--neo-text-2) !important; }
+nav.fixed.top-0 .bg-white\/5,
+nav.fixed.top-0 .bg-white\/10 { background: var(--neo-bg-dark) !important; }
+nav.fixed.top-0 .border-white\/10 { border-color: var(--neo-border) !important; }
+
+/* ── Banner area (keep as-is — just fix pt top padding) ── */
+section.relative.z-20.pt-\[60px\] { background: transparent !important; }
+
+/* ── Marketplace section ── */
+section#marketplace { background: var(--neo-bg) !important; }
+
+/* ── Description box (dark glass → neo card) ── */
+.bg-slate-900\/50 { background: var(--neo-surface-card) !important; box-shadow: var(--neo-shadow-raised) !important; }
+.bg-slate-900\/70 { background: var(--neo-surface-card) !important; }
+.bg-slate-900\/80 { background: var(--neo-surface-card) !important; }
+
+/* ── Text color fixes ── */
+.text-white\/80 { color: var(--neo-text-2) !important; }
+.text-white\/60 { color: var(--neo-text-2) !important; }
+.text-white\/50 { color: var(--neo-text-3) !important; }
+.text-white\/40 { color: var(--neo-text-3) !important; }
+.text-white\/30 { color: var(--neo-text-3) !important; }
+.text-slate-300 { color: var(--neo-text-2) !important; }
+.text-slate-400 { color: var(--neo-text-3) !important; }
+.text-white { color: var(--neo-text) !important; }
+
+/* Keep accent colors */
+.text-purple-400 { color: var(--neo-accent) !important; }
+.text-purple-300 { color: var(--neo-accent-2) !important; }
+.text-purple-200 { color: var(--neo-accent-2) !important; }
+.text-emerald-400 { color: #059669 !important; }
+
+/* ── Border overrides ── */
+.border-white\/10 { border-color: var(--neo-border) !important; }
+.border-white\/5  { border-color: var(--neo-border) !important; }
+.border-white\/20 { border-color: var(--neo-border) !important; }
+
+/* ── Dark card backgrounds → neo surface ── */
+.bg-\[\#09090f\]  { background: var(--neo-surface-card) !important; }
+.bg-\[\#05050a\]  { background: var(--neo-surface-card) !important; }
+.bg-\[\#0d0d1a\]  { background: var(--neo-surface-card) !important; }
+.bg-\[\#080d1c\]  { background: var(--neo-surface-card) !important; }
+.bg-\[\#0a0a18\]  { background: var(--neo-surface-card) !important; }
+.bg-\[\#030612\]  { background: var(--neo-bg-dark) !important; }
+.bg-\[\#03061a\]  { background: var(--neo-bg-dark) !important; }
+.bg-black\/80     { background: rgba(30,32,48,0.95) !important; }
+
+/* ── Store/Category pill buttons ── */
+button.text-white\/60, button.text-white\/70 { color: var(--neo-text-2) !important; }
+button.bg-white\/5 { background: var(--neo-bg-dark) !important; border: 1px solid var(--neo-border) !important; color: var(--neo-text-2) !important; }
+button.bg-white\/10 { background: var(--neo-bg-dark) !important; }
+button.hover\:bg-white\/10:hover { background: rgba(160,165,185,0.2) !important; }
+
+/* ── Search & Select inputs ── */
+input[placeholder="পণ্য খুঁজুন..."],
+input[placeholder*="search"], input[placeholder*="Search"] {
+  background: var(--neo-bg-dark) !important;
+  border: 1px solid var(--neo-border) !important;
+  color: var(--neo-text) !important;
+  box-shadow: inset 4px 4px 8px rgba(160,165,185,0.45), inset -3px -3px 7px rgba(255,255,255,0.9) !important;
+  border-radius: 14px !important;
+}
+input[placeholder="পণ্য খুঁজুন..."]::placeholder { color: var(--neo-text-3) !important; }
+select { background: var(--neo-bg-dark) !important; border: 1px solid var(--neo-border) !important; color: var(--neo-text) !important; border-radius: 12px !important; }
+
+/* ── Product cards ── */
+.rounded-2xl.overflow-hidden.cursor-pointer,
+.group.cursor-pointer.rounded-2xl {
+  background: var(--neo-surface-card) !important;
+  box-shadow: 5px 5px 14px rgba(160,165,185,0.6), -4px -4px 10px rgba(255,255,255,0.95) !important;
+  border-color: var(--neo-border) !important;
+}
+.group.cursor-pointer.rounded-2xl:hover {
+  box-shadow: 7px 7px 20px rgba(160,165,185,0.7), -5px -5px 14px rgba(255,255,255,1) !important;
+  transform: translateY(-2px);
+}
+
+/* ── Footer ── */
+footer { background: var(--neo-bg-dark) !important; border-top: 1px solid var(--neo-border) !important; }
+footer .text-white { color: var(--neo-text) !important; }
+footer .text-white\/80, footer .text-white\/60 { color: var(--neo-text-2) !important; }
+footer .text-white\/30, footer .text-white\/40 { color: var(--neo-text-3) !important; }
+footer .border-white\/10 { border-color: var(--neo-border) !important; }
+
+/* ── Mobile bottom nav ── */
+.fixed.bottom-0.inset-x-0.z-\[99\] {
+  background: var(--neo-surface-card) !important;
+  box-shadow: 0 -4px 20px rgba(160,165,185,0.4) !important;
+  border-top: 1px solid var(--neo-border) !important;
+}
+.fixed.bottom-0.inset-x-0.z-\[99\] .text-white\/50,
+.fixed.bottom-0.inset-x-0.z-\[99\] .text-white\/60 { color: var(--neo-text-3) !important; }
+
+/* ── Stores drawer ── */
+.fixed.inset-0.z-\[200\] > div:last-child {
+  background: var(--neo-surface-card) !important;
+  box-shadow: 8px 0 32px rgba(160,165,185,0.5) !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--neo-bg-dark); }
+::-webkit-scrollbar-thumb { background: rgba(160,165,185,0.6); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(108,71,255,0.5); }
