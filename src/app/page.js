@@ -1224,7 +1224,139 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen relative bg-gradient-to-br from-[#070e24] via-[#091535] to-[#040a17] text-slate-100 selection:bg-purple-900 selection:text-white font-sans overflow-x-hidden pb-10">
+    <div className="neo-root font-sans overflow-x-hidden pb-20 lg:pb-10">
+      <style jsx global>{`
+        body {
+          background-color: #e8eaf0 !important;
+          color: #2e3040 !important;
+        }
+        .neo-root {
+          --bg-color: #e8eaf0 !important;
+          --text-color: #2e3040 !important;
+          --surface: #e8eaf0 !important;
+          --surface-2: #dcdee4 !important;
+          --surface-3: #d6d8de !important;
+          --panel-bg: #e8eaf0 !important;
+          --border-color: rgba(0, 0, 0, 0.08) !important;
+          
+          /* Custom variables used in components */
+          --neo-text: #2e3040 !important;
+          --neo-text-2: #4a4d66 !important;
+          --neo-text-3: #6b6f8a !important;
+          --neo-border: rgba(0, 0, 0, 0.08) !important;
+          --neo-bg-dark: #dcdee4 !important;
+          --neo-accent: #4f46e5 !important;
+          --neo-shadow-light: #ffffff !important;
+          --neo-shadow-dark: rgba(165,170,190,0.5) !important;
+          
+          background-color: #e8eaf0 !important;
+          color: #2e3040 !important;
+          min-height: 100vh;
+        }
+        .neo-raised {
+          background: #e8eaf0 !important;
+          box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -6px -6px 12px rgba(255,255,255,0.6) !important;
+          border: 1px solid rgba(255,255,255,0.4) !important;
+          border-radius: 1.5rem;
+        }
+        .neo-inset {
+          background: #e8eaf0 !important;
+          box-shadow: inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.5) !important;
+          border: 1px solid rgba(255,255,255,0.2) !important;
+          border-radius: 1.0rem;
+        }
+        .neo-button {
+          background: #e8eaf0 !important;
+          box-shadow: 4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.6) !important;
+          border: 1px solid rgba(255,255,255,0.3) !important;
+          border-radius: 0.75rem;
+          transition: all 0.2s ease-in-out;
+        }
+        .neo-button:active, .neo-button-active {
+          box-shadow: inset 3px 3px 6px rgba(0,0,0,0.06), inset -3px -3px 6px rgba(255,255,255,0.5) !important;
+          transform: scale(0.98);
+        }
+        .neo-product-card {
+          background: #e8eaf0 !important;
+          box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -6px -6px 12px rgba(255,255,255,0.6) !important;
+          border: 1px solid rgba(255,255,255,0.4) !important;
+          border-radius: 1.25rem;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          display: flex;
+          flex-direction: column;
+        }
+        .neo-product-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 8px 8px 16px rgba(0,0,0,0.1), -8px -8px 16px rgba(255,255,255,0.7) !important;
+        }
+        
+        /* Dynamic neomorphic inputs override */
+        .neo-search {
+          background: transparent !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          color: #2e3040 !important;
+        }
+        .neo-select {
+          background: transparent !important;
+          border: none !important;
+          outline: none !important;
+          box-shadow: none !important;
+          color: #2e3040 !important;
+          appearance: none;
+          cursor: pointer;
+          font-weight: 700;
+        }
+        .neo-select option {
+          background-color: #e8eaf0 !important;
+          color: #2e3040 !important;
+        }
+
+        /* ── Readability overrides for text overlays inside product image boxes ── */
+        .bg-gradient-to-t.from-black\\/80.via-black\\/40 p {
+          color: #ffffff !important;
+        }
+        .bg-gradient-to-t.from-black\\/80.via-black\\/40 .text-purple-400 {
+          color: #fcd34d !important; /* Vibrant high-contrast amber yellow for price tags */
+          font-weight: 900 !important;
+        }
+        
+        /* ── Premium High-contrast Neomorphic Footer overrides ── */
+        footer#contact {
+          background-color: #dcdee4 !important;
+          color: #2e3040 !important;
+          border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+          box-shadow: inset 0 6px 12px rgba(0,0,0,0.03) !important;
+        }
+        footer#contact h4 {
+          color: #1e1b4b !important;
+          font-weight: 900 !important;
+        }
+        footer#contact p {
+          color: #2e3040 !important;
+          font-weight: 700 !important;
+        }
+        footer#contact a, footer#contact span {
+          color: #4a4d66 !important;
+          font-weight: 700 !important;
+        }
+        footer#contact a:hover {
+          color: #4f46e5 !important;
+        }
+        footer#contact .bg-white\\/5 {
+          background-color: rgba(0, 0, 0, 0.05) !important;
+          border-color: rgba(0, 0, 0, 0.08) !important;
+          color: #4f46e5 !important;
+        }
+        footer#contact .text-purple-400 {
+          color: #4f46e5 !important;
+        }
+        footer#contact svg {
+          stroke: #4f46e5 !important;
+        }
+      `}</style>
       
       {/* ── Keyframe Injector ── */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -1294,7 +1426,7 @@ export default function Home() {
             {/* Stores trigger */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="neo-button px-3 py-1.5 text-xs font-black text-indigo-600 hover:text-indigo-700 flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-sm shrink-0"
+              className="neo-button px-3 py-1.5 text-xs font-black text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-sm shrink-0"
             >
               <Menu size={13} className="shrink-0" />
               <span className="hidden xs:inline">Stores</span>
@@ -1400,7 +1532,7 @@ export default function Home() {
       </header>
 
       {/* ── Marketplace Section ── */}
-      <section id="marketplace" className="relative z-20 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-2 sm:px-6 py-12 scroll-mt-24">
+      <section id="marketplace" className="relative z-20 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-2 sm:px-6 py-2 md:py-6 scroll-mt-24">
         
         {/* ── Main Site Description Box (Editable via Superadmin) ── */}
         <div className="mb-4 py-3 px-5 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md relative shadow-md">
@@ -1418,7 +1550,7 @@ export default function Home() {
         
         {/* ── AI Shopping List Integration ── */}
         {mainShopData && (
-          <div className="mb-12">
+          <div className="mb-4 md:mb-8">
             <AiShoppingList 
               shop={mainShopData} 
               products={products} 
@@ -1442,10 +1574,10 @@ export default function Home() {
         )}
 
         {/* ── Neomorphic Search & Filters Card ── */}
-        <div className="neo-raised p-5 mb-8 flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="neo-raised p-4 mb-4 flex flex-col gap-3">
+          <div className="flex flex-col md:flex-row gap-3">
             {/* Search bar inset */}
-            <div className="flex-grow neo-inset flex items-center px-4 py-2.5">
+            <div className="flex-grow neo-inset flex items-center px-4 py-2">
               <Search className="text-slate-400 mr-3 shrink-0" size={16} />
               <input
                 id="search-input-field"
@@ -1457,9 +1589,9 @@ export default function Home() {
               />
             </div>
 
-            <div className="flex gap-4 shrink-0">
+            <div className="flex gap-3 shrink-0">
               {/* Store select */}
-              <div className="relative neo-button px-4 py-2.5 flex items-center justify-between min-w-[150px] cursor-pointer">
+              <div className="relative neo-button px-4 py-2 flex items-center justify-between min-w-[140px] cursor-pointer">
                 <select
                   value={activeShopFilter}
                   onChange={e => {
@@ -1479,7 +1611,7 @@ export default function Home() {
               </div>
 
               {/* Sort Options */}
-              <div className="relative neo-button px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer">
+              <div className="relative neo-button px-4 py-2 flex items-center justify-between min-w-[130px] cursor-pointer">
                 <select
                   value={sortOption}
                   onChange={e => setSortOption(e.target.value)}
@@ -1504,7 +1636,7 @@ export default function Home() {
 
           {/* Compact categories row (Horizontal scroll) */}
           {activeShopFilter !== 'All' && (
-            <div className="flex gap-2 overflow-x-auto pb-1 mt-1.5 scrollbar-none items-center border-t border-black/5 pt-3">
+            <div className="flex gap-2 overflow-x-auto pb-0.5 mt-0.5 scrollbar-none items-center border-t border-black/5 pt-2">
               <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest shrink-0">Categories:</span>
               {availableCategories.map(cat => {
                 const isSelected = activeCategory === cat;
@@ -1515,7 +1647,7 @@ export default function Home() {
                       setActiveCategory(cat);
                       setActiveSubcategory('');
                     }}
-                    className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black transition-all shrink-0 cursor-pointer neo-button ${
+                    className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all shrink-0 cursor-pointer neo-button ${
                       isSelected ? 'neo-button-active text-indigo-600 font-extrabold' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
@@ -1528,11 +1660,11 @@ export default function Home() {
 
           {/* Compact subcategories row */}
           {activeShopFilter !== 'All' && activeCategory !== 'All' && availableSubcategories.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 mt-1 scrollbar-none items-center border-t border-black/5 pt-2">
+            <div className="flex gap-2 overflow-x-auto pb-0.5 mt-0.5 scrollbar-none items-center border-t border-black/5 pt-1.5">
               <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest shrink-0">Subcategories:</span>
               <button
                 onClick={() => setActiveSubcategory('')}
-                className={`px-2.5 py-1 rounded-md text-[9px] font-bold shrink-0 cursor-pointer neo-button ${
+                className={`px-2.5 py-0.5 rounded-md text-[9px] font-bold shrink-0 cursor-pointer neo-button ${
                   !activeSubcategory ? 'neo-button-active text-cyan-600 font-extrabold' : 'text-slate-500'
                 }`}
               >
@@ -1544,7 +1676,7 @@ export default function Home() {
                   <button
                     key={sub}
                     onClick={() => setActiveSubcategory(sub)}
-                    className={`px-2.5 py-1 rounded-md text-[9px] font-bold shrink-0 cursor-pointer neo-button ${
+                    className={`px-2.5 py-0.5 rounded-md text-[9px] font-bold shrink-0 cursor-pointer neo-button ${
                       isSelected ? 'neo-button-active text-cyan-600 font-extrabold' : 'text-slate-500'
                     }`}
                   >
