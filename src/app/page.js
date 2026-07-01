@@ -7,7 +7,7 @@ import {
   X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
-  Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag
+  Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag, User
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -1261,226 +1261,114 @@ export default function Home() {
       <div className="fixed top-[-15%] right-[-5%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] animate-blob animation-delay-2000" />
       <div className="fixed bottom-[-15%] left-[10%] w-[600px] h-[600px] bg-pink-600/800 opacity-[0.05] rounded-full blur-[140px] animate-blob animation-delay-4000" />
 
-      {/* ?????? Navigation ?????? */}
-      <nav className="fixed top-0 inset-x-0 z-[100] px-2 py-3 sm:px-6 sm:py-6 transition-all duration-300">
-        <div className="max-w-[98%] xl:max-w-[98%] mx-auto flex justify-between items-center glass-panel rounded-full px-3 py-2.5 sm:px-8 sm:py-4 shadow-2xl">
-          <div className="flex items-center gap-2">
+      {/* ── Neomorphic Navigation Header ── */}
+      <header className="sticky top-0 z-50 px-4 py-4 bg-[#e8eaf0] border-b border-black/5 shadow-sm neo-raised rounded-none transition-all duration-300">
+        <div className="max-w-screen-xl mx-auto flex justify-between items-center gap-4">
+          {/* Left Area: Stores & Logo */}
+          <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/20 text-purple-200 rounded-xl text-[10px] sm:text-xs font-black transition-all cursor-pointer mr-2 shadow-lg"
+              className="neo-button px-3.5 py-2 text-xs font-black text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-sm"
             >
-              <Menu size={13} className="shrink-0" />
-              <span>??????????????????????????? (Stores)</span>
+              <Menu size={14} className="shrink-0" />
+              <span>Stores</span>
             </button>
             <div 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-              className="flex items-center gap-2 group cursor-pointer select-none"
+              className="flex items-center gap-2.5 group cursor-pointer select-none"
             >
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
-                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9 object-contain" alt="Logo" />
               ) : (
-                <img src="/logo.png" className="h-8 sm:h-9.5 object-contain group-hover:scale-105 transition-transform duration-300" alt="Logo" />
+                <div className="w-9 h-9 neo-raised flex items-center justify-center text-indigo-600 font-black text-base rounded-xl">BD</div>
               )}
-              <span className="text-base sm:text-xl font-black text-white tracking-tight whitespace-nowrap group-hover:text-purple-400 transition-colors">
+              <span className="text-lg sm:text-xl font-black text-slate-800 tracking-tight whitespace-nowrap block">
                 {globalConfig?.brandName || 'BDRetailers'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-6">
-            <a href="#marketplace" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden md:flex items-center gap-1.5"><ShoppingBag size={11} className="shrink-0" /> Marketplace</a>
-            <Link href="/showcase" className="text-[10px] sm:text-[11px] font-black text-white/50 hover:text-white uppercase tracking-[0.2em] transition-all hidden xs:flex items-center gap-1.5"><Sparkles size={11} className="shrink-0" /> Showcase</Link>
-            
-            {/* How to Order Video */}
+          {/* Center Links (Desktop only) */}
+          <nav className="hidden md:flex items-center gap-8 font-bold text-xs uppercase tracking-wider">
+            <a href="#marketplace" className="text-indigo-600 border-b-2 border-indigo-600 pb-1">Marketplace</a>
+            <button onClick={() => { if(user) setIsProfileOpen(true); else handleSmartLogin(); }} className="text-slate-500 hover:text-indigo-600 transition-colors">Orders</button>
+            {getDashboardHref() && (
+              <Link href={getDashboardHref()} className="text-slate-500 hover:text-indigo-600 transition-colors">Workspace</Link>
+            )}
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-3">
+            {/* PWA App Download */}
+            {!pwaInstalled && (
+              <button 
+                onClick={handleAppDownload}
+                className="neo-button px-3 py-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 cursor-pointer hidden xs:flex items-center gap-1"
+              >
+                <Download size={12} /> App
+              </button>
+            )}
+
+            {/* Video Guide */}
             {mainShopData?.howToOrderVideo && (
               <a 
                 href={mainShopData.howToOrderVideo} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full text-[9px] sm:text-[10px] font-black transition-all hover:scale-105 shadow-md whitespace-nowrap"
+                className="neo-button px-3 py-2 text-[10px] font-black uppercase tracking-wider text-red-500 hover:text-red-600 flex items-center gap-1"
               >
-                <PlayCircle size={12} className="shrink-0" />
-                <span className="hidden sm:inline">?????????????????? ?????????????????? ????????????????</span>
-                <span className="sm:hidden">???????????????</span>
+                <PlayCircle size={12} /> Video
               </a>
             )}
 
-            {/* PWA App Download */}
-            {!pwaInstalled && (
-              <button 
-                onClick={handleAppDownload} 
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-[9px] sm:text-[10px] font-black transition-all hover:scale-105 shadow-md whitespace-nowrap cursor-pointer shrink-0"
-              >
-                <Download size={12} className="shrink-0" />
-                <span>???????????????</span>
-              </button>
-            )}
-
-            <div className="w-[1px] h-4 bg-white/10 hidden xs:block" />
-            
-            {/* Cart Button */}
+            {/* Cart Icon */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 sm:p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-white transition-all hover:scale-105 flex items-center justify-center cursor-pointer shrink-0"
-              title="Shopping Cart"
+              className="neo-button p-2 text-indigo-600 flex items-center justify-center active:scale-95 transition-all relative cursor-pointer"
             >
-              <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
+              <ShoppingCart size={15} />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4.5 h-4.5 bg-purple-600 text-white text-[8px] sm:text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 bg-indigo-600 text-white text-[8px] font-black rounded-full flex items-center justify-center animate-pulse">
                   {cartItemCount}
                 </span>
               )}
             </button>
 
-            <div className="w-[1px] h-4 bg-white/10 mx-0.5 sm:mx-1 shrink-0" />
+            <div className="w-[1px] h-4 bg-black/10 mx-0.5" />
 
+            {/* Profile / Account / Login */}
             {user ? (
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                {/* Profile Button / Avatar */}
+              <div className="flex items-center gap-3 shrink-0">
                 <button
                   onClick={() => setIsProfileOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/20 text-purple-300 rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-all cursor-pointer shrink-0"
+                  className="neo-button px-3.5 py-1.5 text-xs font-bold text-indigo-600 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                 >
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full overflow-hidden border border-purple-500/30 flex items-center justify-center bg-purple-700 font-bold text-white text-[8px] sm:text-[10px] shrink-0">
+                  <div className="w-5 h-5 rounded-full overflow-hidden border border-black/10 flex items-center justify-center bg-indigo-600 font-bold text-white text-[9px] shrink-0">
                     {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || 'U'}
                   </div>
-                  <span className="hidden xs:inline">???????????? ?????????????????? (Orders)</span>
-                  <span className="xs:hidden">??????????????????</span>
+                  <span className="hidden sm:inline">Orders</span>
                 </button>
 
                 {getDashboardHref() && (
-                  <Link href={getDashboardHref()} className="flex items-center gap-1.5 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-white text-black rounded-full text-[9px] sm:text-xs font-black hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)] shrink-0">
-                    <Briefcase size={11} className="shrink-0 text-black" /> Workspace
+                  <Link href={getDashboardHref()} className="neo-button px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-extrabold text-xs active:scale-95 transition-all shrink-0 flex items-center gap-1.5 shadow-sm">
+                    <Briefcase size={12} className="shrink-0" /> Workspace
                   </Link>
                 )}
-                
-                <button onClick={logoutUser} className="text-[9px] sm:text-[10px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.15em] transition-all shrink-0 cursor-pointer flex items-center gap-1"><LogOut size={11} className="shrink-0" /> Sign Out</button>
+
+                <button onClick={logoutUser} className="text-[10px] font-black text-red-500 hover:text-red-600 transition-colors uppercase cursor-pointer flex items-center gap-1"><LogOut size={12} /> Sign Out</button>
               </div>
             ) : (
-              <button onClick={handleSmartLogin} disabled={loggingIn} className="flex items-center gap-1 px-3.5 py-1.5 sm:px-6 sm:py-2 bg-purple-600 text-white rounded-full text-[9px] sm:text-xs font-black hover:bg-purple-500 hover:scale-105 transition-all shadow-[0_0_30px_rgba(139,92,246,0.3)] shrink-0 cursor-pointer">
+              <button 
+                onClick={handleSmartLogin} 
+                disabled={loggingIn} 
+                className="neo-button px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-extrabold text-xs active:scale-95 transition-all shrink-0 cursor-pointer shadow-sm"
+              >
                 {loggingIn ? "Connecting..." : "Portal Login"}
               </button>
             )}
           </div>
         </div>
-      </nav>
-
-      {/* ?????? Hero Section (Full Width, Swipeable Banners Carousel) ?????? */}
-      <section className="relative z-20 pt-28 pb-8 w-full overflow-hidden">
-        {mainShopData?.banners && mainShopData.banners.length > 0 ? (
-          <div 
-            className="relative w-full overflow-hidden border-b border-white/10 shadow-2xl group/banner h-[33vh] min-h-[220px] max-h-[500px] bg-[#030612]"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            {mainShopData.banners.map((banner, i) => {
-              const isActive = i === activeBanner;
-              const bannerUrl = banner.url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80';
-              const bannerTitle = banner.title || (mainShopData.shopName || 'Daripallah Store');
-              const bannerDesc = banner.description || (mainShopData.slogan || 'Your premium shopping destination.');
-              const bannerLink = banner.linkUrl || '#marketplace';
-              const bannerBtn = banner.buttonText || '???????????????????????? ????????????';
-              
-              return (
-                <div 
-                  key={i} 
-                  className={`absolute inset-0 w-full h-full transition-all duration-1000 ${
-                    isActive ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-95 pointer-events-none z-0'
-                  }`}
-                >
-                  {/* Blurred Background Copied Image */}
-                  <div 
-                    className="absolute inset-0 w-full h-full bg-cover bg-center blur-3xl scale-110 opacity-30 select-none pointer-events-none animate-pulse" 
-                    style={{ backgroundImage: `url(${bannerUrl})` }} 
-                  />
-                  {/* Actual centered contained Image to show the ENTIRE banner content */}
-                  <img 
-                    src={bannerUrl} 
-                    alt={bannerTitle} 
-                    className="absolute inset-0 w-full h-full object-contain z-10 select-none opacity-95 transition-transform duration-700 hover:scale-[1.01]"
-                  />
-                  
-                  {/* Banner content overlay */}
-                  {bannerTitle && (
-                    <div className="absolute inset-x-0 bottom-0 top-0 z-20 px-8 py-10 md:p-16 flex flex-col justify-end bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent">
-                      <div className="max-w-3xl">
-                        <h1 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tight text-white mb-2 leading-tight drop-shadow">
-                          {bannerTitle}
-                        </h1>
-                        <p className="text-white/80 text-[10px] md:text-xs font-bold leading-relaxed line-clamp-2 max-w-xl mb-4 drop-shadow">
-                          {bannerDesc}
-                        </p>
-                        <a 
-                          href={bannerLink} 
-                          className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-[10px] uppercase tracking-wider rounded-xl shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95"
-                        >
-                          {bannerBtn} <ArrowRight size={12} />
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            
-            {/* Slider controls */}
-            {mainShopData.banners.length > 1 && (
-              <>
-                <button 
-                  onClick={() => setActiveBanner(prev => (prev === 0 ? mainShopData.banners.length - 1 : prev - 1))} 
-                  className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95"
-                >
-                  ???
-                </button>
-                <button 
-                  onClick={() => setActiveBanner(prev => (prev === mainShopData.banners.length - 1 ? 0 : prev + 1))} 
-                  className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95"
-                >
-                  ???
-                </button>
-                
-                {/* Dots indicator */}
-                <div className="absolute bottom-6 inset-x-0 z-20 flex justify-center gap-2">
-                  {mainShopData.banners.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveBanner(idx)}
-                      className={`w-2.5 h-2.5 rounded-full transition-all ${
-                        idx === activeBanner ? 'bg-white w-6' : 'bg-white/40'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        ) : (
-          <div className="max-w-[96%] xl:max-w-[98%] mx-auto relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl animate-fade-in" style={{ minHeight: '340px' }}>
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-900/60 to-blue-900/40 z-10" />
-            <img 
-              src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1600&q=80" 
-              alt={`${globalConfig?.brandName || 'BDRetailers'} Banner`} 
-              className="absolute inset-0 w-full h-full object-cover scale-105 blur-sm opacity-50"
-            />
-            <div className="relative z-20 px-8 py-20 md:p-24 flex flex-col justify-center items-start h-full max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-bold text-emerald-400 uppercase tracking-widest mb-6">
-                <Sparkles size={12} /> verified multi-store network
-              </div>
-              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white mb-6">
-                Shop Directly From<br />
-                <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Verified Local Stores.</span>
-              </h1>
-              <p className="text-white/60 text-base md:text-lg max-w-xl mb-8 font-medium">
-                Browse through our comprehensive retailer network. Products are fetched in real-time from store databases with secure checkout.
-              </p>
-              <a href="#marketplace" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-black text-sm rounded-2xl shadow-xl hover:scale-105 transition-all">
-                Start Shopping <ArrowRight size={16} />
-              </a>
-            </div>
-          </div>
-        )}
-      </section>
+      </header>
 
       {/* ?????? Marketplace Section ?????? */}
       <section id="marketplace" className="relative z-20 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-2 sm:px-6 py-12 scroll-mt-24">
@@ -1524,57 +1412,71 @@ export default function Home() {
           </div>
         )}
 
-        {/* ?????? Unified Compact Search, Store & Sort Row ?????? */}
-        <div className="flex flex-col gap-3 mb-6 bg-slate-900/50 border border-white/10 rounded-2xl p-4 shadow-lg">
-          <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
-            {/* Search Input */}
-            <div className="relative flex-1 w-full min-w-0">
-              <Search className="absolute left-4 top-3 text-white/30" size={13} />
+        {/* ── Neomorphic Search & Filters Card ── */}
+        <div className="neo-raised p-5 mb-8 flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search bar inset */}
+            <div className="flex-grow neo-inset flex items-center px-4 py-2.5">
+              <Search className="text-slate-400 mr-3 shrink-0" size={16} />
               <input
+                id="search-input-field"
                 type="text"
-                placeholder="???????????? ?????????????????? (Search products)..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:border-purple-500 transition-all placeholder:text-white/20"
+                placeholder="Search products..."
+                className="bg-transparent border-none focus:ring-0 w-full text-xs font-bold text-slate-800 placeholder-slate-400 p-0 outline-none h-full font-body animate-none"
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
               />
             </div>
-            
-            <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 justify-end">
-              {/* Store filter select */}
-              <select
-                value={activeShopFilter}
-                onChange={e => {
-                  setActiveShopFilter(e.target.value);
-                  setActiveCategory('All');
-                  setActiveSubcategory('');
-                }}
-                className="px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:border-purple-500 transition-all cursor-pointer hover:bg-white/10 shrink-0"
-              >
-                <option value="All" className="bg-[#0b132b]">???? ?????? ??????????????? (All Stores)</option>
-                {uniqueShops.filter(s => s !== 'All').map(shopName => (
-                  <option key={shopName} value={shopName} className="bg-[#0b132b]">{shopName}</option>
-                ))}
-              </select>
+
+            <div className="flex gap-4 shrink-0">
+              {/* Store select */}
+              <div className="relative neo-button px-4 py-2.5 flex items-center justify-between min-w-[150px] cursor-pointer">
+                <select
+                  value={activeShopFilter}
+                  onChange={e => {
+                    setActiveShopFilter(e.target.value);
+                    setActiveCategory('All');
+                    setActiveSubcategory('');
+                  }}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                >
+                  <option value="All">All Stores</option>
+                  {uniqueShops.filter(s => s !== 'All').map(shopName => (
+                    <option key={shopName} value={shopName}>{shopName}</option>
+                  ))}
+                </select>
+                <span className="text-xs font-bold text-slate-700 truncate pr-4">🏪 {activeShopFilter === 'All' ? 'All Stores' : activeShopFilter}</span>
+                <span className="text-[10px] text-slate-400">▼</span>
+              </div>
 
               {/* Sort Options */}
-              <select
-                value={sortOption}
-                onChange={e => setSortOption(e.target.value)}
-                className="px-3 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-white outline-none focus:border-purple-500 transition-all cursor-pointer hover:bg-white/10 shrink-0"
-              >
-                <option value="name_asc" className="bg-[#0b132b]">????????? (A???Z)</option>
-                <option value="price_asc" className="bg-[#0b132b]">????????? (?????????????????????)</option>
-                <option value="price_desc" className="bg-[#0b132b]">????????? (?????????????????????)</option>
-                <option value="name_desc" className="bg-[#0b132b]">????????? (Z???A)</option>
-                <option value="newest" className="bg-[#0b132b]">???????????? ????????????</option>
-              </select>
+              <div className="relative neo-button px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer">
+                <select
+                  value={sortOption}
+                  onChange={e => setSortOption(e.target.value)}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                >
+                  <option value="name_asc">Name (A→Z)</option>
+                  <option value="price_asc">Price (Low→High)</option>
+                  <option value="price_desc">Price (High→Low)</option>
+                  <option value="name_desc">Name (Z→A)</option>
+                  <option value="newest">New Arrivals</option>
+                </select>
+                <span className="text-xs font-bold text-slate-700 truncate pr-4">
+                  {sortOption === 'name_asc' ? 'Name (A→Z)' :
+                   sortOption === 'price_asc' ? 'Price (Low→High)' :
+                   sortOption === 'price_desc' ? 'Price (High→Low)' :
+                   sortOption === 'name_desc' ? 'Name (Z→A)' : 'New Arrivals'}
+                </span>
+                <span className="text-[10px] text-slate-400">▼</span>
+              </div>
             </div>
           </div>
 
           {/* Compact categories row (Horizontal scroll) */}
           {activeShopFilter !== 'All' && (
-            <div className="flex gap-2 overflow-x-auto pb-1 mt-1 scrollbar-none items-center">
-              <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest shrink-0">???????????????????????????:</span>
+            <div className="flex gap-2 overflow-x-auto pb-1 mt-1.5 scrollbar-none items-center border-t border-black/5 pt-3">
+              <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest shrink-0">Categories:</span>
               {availableCategories.map(cat => {
                 const isSelected = activeCategory === cat;
                 return (
@@ -1584,13 +1486,11 @@ export default function Home() {
                       setActiveCategory(cat);
                       setActiveSubcategory('');
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all border shrink-0 cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-600 text-white border-purple-500 shadow-md'
-                        : 'bg-white/5 border-white/5 text-white/50 hover:bg-white/10'
+                    className={`px-3.5 py-1.5 rounded-lg text-[10px] font-black transition-all shrink-0 cursor-pointer neo-button ${
+                      isSelected ? 'neo-button-active text-indigo-600 font-extrabold' : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
-                    {cat === 'All' ? '??????' : cat}
+                    {cat === 'All' ? 'All' : cat}
                   </button>
                 );
               })}
@@ -1599,17 +1499,15 @@ export default function Home() {
 
           {/* Compact subcategories row */}
           {activeShopFilter !== 'All' && activeCategory !== 'All' && availableSubcategories.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 mt-0.5 scrollbar-none items-center">
-              <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest shrink-0">?????????-???????????????????????????:</span>
+            <div className="flex gap-2 overflow-x-auto pb-1 mt-1 scrollbar-none items-center border-t border-black/5 pt-2">
+              <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest shrink-0">Subcategories:</span>
               <button
                 onClick={() => setActiveSubcategory('')}
-                className={`px-2.5 py-1 rounded-md text-[9px] font-bold border shrink-0 cursor-pointer ${
-                  !activeSubcategory
-                    ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-sm'
-                    : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
+                className={`px-2.5 py-1 rounded-md text-[9px] font-bold shrink-0 cursor-pointer neo-button ${
+                  !activeSubcategory ? 'neo-button-active text-cyan-600 font-extrabold' : 'text-slate-500'
                 }`}
               >
-                ??????
+                All
               </button>
               {availableSubcategories.map(sub => {
                 const isSelected = activeSubcategory === sub;
@@ -1617,10 +1515,8 @@ export default function Home() {
                   <button
                     key={sub}
                     onClick={() => setActiveSubcategory(sub)}
-                    className={`px-2.5 py-1 rounded-md text-[9px] font-bold border shrink-0 cursor-pointer ${
-                      isSelected
-                        ? 'bg-cyan-500 text-slate-950 border-cyan-400'
-                        : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
+                    className={`px-2.5 py-1 rounded-md text-[9px] font-bold shrink-0 cursor-pointer neo-button ${
+                      isSelected ? 'neo-button-active text-cyan-600 font-extrabold' : 'text-slate-500'
                     }`}
                   >
                     {sub}
@@ -2078,7 +1974,66 @@ export default function Home() {
         </section>
       )}
 
-      {/* ?????? Stores Drawer (Left Side) ?????? */}
+      
+      {/* ── Bottom Navigation Bar (Mobile Only) ── */}
+      <nav className="neo-raised fixed bottom-0 w-full z-50 lg:hidden flex justify-around items-center h-16 px-4 border-t border-black/5 bg-[#e8eaf0] shadow-[0_-6px_12px_rgba(0,0,0,0.08)]">
+        <button 
+          onClick={() => {
+            setActiveShopFilter('All');
+            setActiveCategory('All');
+            setActiveSubcategory('');
+            document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="flex flex-col items-center justify-center text-indigo-600 rounded-full p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+        >
+          <ShoppingBag size={18} />
+          <span className="text-[9px] font-semibold mt-1">Marketplace</span>
+        </button>
+        <button 
+          onClick={() => {
+            document.getElementById('search-input-field')?.focus();
+            document.getElementById('search-input-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }}
+          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+        >
+          <Search size={18} />
+          <span className="text-[9px] font-semibold mt-1">Search</span>
+        </button>
+        <button 
+          onClick={() => {
+            if (user) {
+              setIsProfileOpen(true);
+            } else {
+              handleSmartLogin();
+            }
+          }}
+          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+        >
+          <Package size={18} />
+          <span className="text-[9px] font-semibold mt-1">My Orders</span>
+        </button>
+        <button 
+          onClick={() => {
+            if (user) {
+              const dashHref = getDashboardHref();
+              if (dashHref) {
+                router.push(dashHref);
+              } else {
+                setIsProfileOpen(true);
+              }
+            } else {
+              handleSmartLogin();
+            }
+          }}
+          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+        >
+          <User size={18} />
+          <span className="text-[9px] font-semibold mt-1">
+            {user ? 'Workspace' : 'Login'}
+          </span>
+        </button>
+      </nav>
+    {/* ?????? Stores Drawer (Left Side) ?????? */}
       <div className={`fixed inset-0 z-[100] transition-all duration-300 ${isStoresMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setIsStoresMenuOpen(false)} />
         <div className={`absolute top-0 left-0 h-full w-72 bg-slate-900 border-r border-white/10 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isStoresMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
