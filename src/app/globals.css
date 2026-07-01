@@ -506,3 +506,326 @@ body {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   NEOMORPHIC DESIGN SYSTEM — BDRetailers v4
+   Light-mode soft UI with deep shadow contrasts
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  --neo-bg: #e8eaf0;
+  --neo-bg-dark: #dde0e8;
+  --neo-surface: #eef0f5;
+  --neo-surface-card: #f0f2f7;
+  --neo-shadow-dark: rgba(160,165,185,0.75);
+  --neo-shadow-light: rgba(255,255,255,0.95);
+  --neo-shadow-raised: 6px 6px 16px var(--neo-shadow-dark), -4px -4px 12px var(--neo-shadow-light);
+  --neo-shadow-pressed: inset 4px 4px 10px var(--neo-shadow-dark), inset -3px -3px 8px var(--neo-shadow-light);
+  --neo-shadow-navbar: 0 4px 24px rgba(160,165,185,0.4), 0 1px 4px rgba(160,165,185,0.2);
+  --neo-accent: #6C47FF;
+  --neo-accent-2: #8B5CF6;
+  --neo-text: #1e2030;
+  --neo-text-2: #555b7a;
+  --neo-text-3: #8890aa;
+  --neo-border: rgba(200,205,220,0.6);
+  --neo-active-glow: 0 0 0 3px rgba(108,71,255,0.18), 6px 6px 16px var(--neo-shadow-dark), -4px -4px 12px var(--neo-shadow-light);
+}
+
+/* ── Root neo wrapper ── */
+.neo-root {
+  background: var(--neo-bg);
+  color: var(--neo-text);
+  min-height: 100vh;
+}
+
+/* ── Raised card (default clickable card) ── */
+.neo-card {
+  background: var(--neo-surface-card);
+  border-radius: 20px;
+  box-shadow: var(--neo-shadow-raised);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.neo-card:hover {
+  box-shadow: 8px 8px 20px var(--neo-shadow-dark), -5px -5px 14px var(--neo-shadow-light);
+  transform: translateY(-1px);
+}
+
+/* ── Inset / pressed (search input, select) ── */
+.neo-inset {
+  background: var(--neo-bg-dark);
+  border-radius: 14px;
+  box-shadow: var(--neo-shadow-pressed);
+  border: 1px solid var(--neo-border);
+}
+
+/* ── Navbar ── */
+.neo-navbar {
+  background: var(--neo-surface-card);
+  box-shadow: var(--neo-shadow-navbar);
+  border-bottom: 1px solid var(--neo-border);
+}
+
+/* ── Sidebar ── */
+.neo-sidebar {
+  background: var(--neo-surface-card);
+  box-shadow: 4px 0 20px rgba(160,165,185,0.3);
+  border-right: 1px solid var(--neo-border);
+}
+
+/* ── Button raised ── */
+.neo-btn {
+  background: var(--neo-surface-card);
+  border-radius: 12px;
+  box-shadow: 4px 4px 10px var(--neo-shadow-dark), -3px -3px 8px var(--neo-shadow-light);
+  border: none;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  color: var(--neo-text-2);
+  font-weight: 700;
+}
+.neo-btn:hover {
+  box-shadow: 5px 5px 13px var(--neo-shadow-dark), -4px -4px 10px var(--neo-shadow-light);
+}
+.neo-btn:active {
+  box-shadow: var(--neo-shadow-pressed);
+}
+
+/* ── Primary accent button ── */
+.neo-btn-primary {
+  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 4px 4px 12px rgba(108,71,255,0.35), -2px -2px 6px rgba(255,255,255,0.6);
+  border: none;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  font-weight: 800;
+}
+.neo-btn-primary:hover {
+  box-shadow: 5px 5px 16px rgba(108,71,255,0.5), -2px -2px 8px rgba(255,255,255,0.7);
+  transform: translateY(-1px);
+}
+.neo-btn-primary:active {
+  box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2);
+  transform: translateY(0);
+}
+
+/* ── Active filter pill ── */
+.neo-active {
+  background: linear-gradient(135deg, #6C47FF, #8B5CF6) !important;
+  color: #fff !important;
+  box-shadow: 3px 3px 8px rgba(108,71,255,0.3), -2px -2px 6px rgba(255,255,255,0.6) !important;
+}
+
+/* ── Category sidebar item ── */
+.neo-sidebar-item {
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--neo-text-2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.neo-sidebar-item:hover {
+  background: var(--neo-bg-dark);
+  box-shadow: inset 2px 2px 6px var(--neo-shadow-dark), inset -2px -2px 5px var(--neo-shadow-light);
+}
+.neo-sidebar-item.active {
+  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  color: #fff;
+  box-shadow: 3px 3px 8px rgba(108,71,255,0.3), -1px -1px 4px rgba(255,255,255,0.5);
+}
+
+/* ── Product card neo ── */
+.neo-product-card {
+  background: var(--neo-surface-card);
+  border-radius: 20px;
+  box-shadow: 5px 5px 14px var(--neo-shadow-dark), -4px -4px 10px var(--neo-shadow-light);
+  overflow: hidden;
+  transition: all 0.22s ease;
+  display: flex;
+  flex-direction: column;
+}
+.neo-product-card:hover {
+  box-shadow: 7px 7px 20px var(--neo-shadow-dark), -5px -5px 14px var(--neo-shadow-light);
+  transform: translateY(-2px);
+}
+
+/* ── Search input neo ── */
+.neo-search {
+  background: var(--neo-bg-dark);
+  border: 1px solid var(--neo-border);
+  border-radius: 14px;
+  box-shadow: inset 4px 4px 10px var(--neo-shadow-dark), inset -3px -3px 8px var(--neo-shadow-light);
+  color: var(--neo-text);
+  font-weight: 700;
+  outline: none;
+  transition: box-shadow 0.18s ease;
+}
+.neo-search::placeholder {
+  color: var(--neo-text-3);
+}
+.neo-search:focus {
+  box-shadow: inset 4px 4px 10px var(--neo-shadow-dark), inset -3px -3px 8px var(--neo-shadow-light), 0 0 0 2px rgba(108,71,255,0.25);
+}
+
+/* ── Select neo ── */
+.neo-select {
+  background: var(--neo-bg-dark);
+  border: 1px solid var(--neo-border);
+  border-radius: 14px;
+  box-shadow: inset 3px 3px 8px var(--neo-shadow-dark), inset -2px -2px 6px var(--neo-shadow-light);
+  color: var(--neo-text);
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  transition: box-shadow 0.18s ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.neo-select:focus {
+  box-shadow: inset 3px 3px 8px var(--neo-shadow-dark), inset -2px -2px 6px var(--neo-shadow-light), 0 0 0 2px rgba(108,71,255,0.25);
+}
+
+/* ── Bottom Mobile Nav ── */
+.neo-bottom-nav {
+  background: var(--neo-surface-card);
+  box-shadow: 0 -4px 20px rgba(160,165,185,0.4);
+  border-top: 1px solid var(--neo-border);
+}
+.neo-bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex: 1;
+  color: var(--neo-text-3);
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+.neo-bottom-nav-item.active {
+  color: var(--neo-accent);
+}
+
+/* ── Tag pill ── */
+.neo-tag {
+  background: var(--neo-bg-dark);
+  border-radius: 8px;
+  box-shadow: 2px 2px 5px var(--neo-shadow-dark), -1px -1px 4px var(--neo-shadow-light);
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--neo-text-2);
+  padding: 4px 10px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.neo-tag:hover, .neo-tag.active {
+  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  color: #fff;
+  box-shadow: 2px 2px 6px rgba(108,71,255,0.3), -1px -1px 4px rgba(255,255,255,0.6);
+}
+
+/* ── Description box ── */
+.neo-info-card {
+  background: linear-gradient(135deg, #f0f2f7, #eaecf3);
+  border-radius: 18px;
+  box-shadow: 5px 5px 14px var(--neo-shadow-dark), -4px -4px 10px var(--neo-shadow-light);
+  border: 1px solid var(--neo-border);
+}
+
+/* ── Section divider ── */
+.neo-section-header {
+  color: var(--neo-text);
+  font-weight: 900;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 6px 0 10px;
+  border-bottom: 2px solid var(--neo-border);
+  margin-bottom: 12px;
+}
+
+/* ── Add-to-cart qty controller ── */
+.neo-qty-ctrl {
+  background: var(--neo-bg-dark);
+  border-radius: 14px;
+  box-shadow: inset 3px 3px 8px var(--neo-shadow-dark), inset -2px -2px 6px var(--neo-shadow-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px;
+  border: 1px solid var(--neo-border);
+}
+.neo-qty-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 2px 2px 5px rgba(108,71,255,0.3);
+  border: none;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.neo-qty-btn:hover {
+  box-shadow: 3px 3px 8px rgba(108,71,255,0.4);
+  transform: scale(1.05);
+}
+
+/* ── Stores drawer neo ── */
+.neo-drawer {
+  background: var(--neo-surface-card);
+  box-shadow: 8px 0 32px rgba(160,165,185,0.5);
+}
+
+/* ── Footer neo ── */
+.neo-footer {
+  background: #dde0e8;
+  border-top: 1px solid var(--neo-border);
+  box-shadow: 0 -4px 20px rgba(160,165,185,0.3);
+}
+
+/* Text colors for neo mode */
+.neo-text { color: var(--neo-text); }
+.neo-text-2 { color: var(--neo-text-2); }
+.neo-text-3 { color: var(--neo-text-3); }
+.neo-accent-text { color: var(--neo-accent); }
+
+/* Animate fade-in */
+@keyframes neo-fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.neo-fadein {
+  animation: neo-fadein 0.3s ease forwards;
+}
+
+/* Amazon bento box neo */
+.neo-bento {
+  background: var(--neo-surface-card);
+  border-radius: 22px;
+  box-shadow: 6px 6px 16px var(--neo-shadow-dark), -4px -4px 12px var(--neo-shadow-light);
+  overflow: hidden;
+  transition: all 0.22s ease;
+  cursor: pointer;
+  border: 1.5px solid rgba(200,205,220,0.4);
+}
+.neo-bento:hover {
+  box-shadow: 8px 8px 22px var(--neo-shadow-dark), -5px -5px 15px var(--neo-shadow-light);
+  transform: translateY(-2px);
+}
+
