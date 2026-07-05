@@ -754,30 +754,6 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }
   }, []);
 
-  // Auto-save draft order (Incomplete order tracking)
-  useEffect(() => {
-    if (!localId || !shop?.id) return;
-    if (!orderForm.name && !orderForm.phone && cart.length === 0) return;
-
-    const timer = setTimeout(() => {
-      fetch('/api/checkout/draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shopId: shop.id,
-          localId,
-          customerName: orderForm.name,
-          customerPhone: orderForm.phone,
-          customerAddress: orderForm.address,
-          total: cartTotal,
-          items: cart.map(i => ({ id: i.productId || i.id, name: i.name, quantity: i.quantity, price: i.price }))
-        })
-      }).catch(err => console.warn('[Draft save failed]', err));
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [orderForm.name, orderForm.phone, orderForm.address, cart, localId, shop?.id, cartTotal]);
-
   const handleDirectOrderFromAi = (items, image) => {
     setCart(items);
     setOrderImage(image);
@@ -1576,6 +1552,30 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   const cartCount = cart.reduce((a, c) => a + (Number(c.quantity) || 0), 0);
   const hasPaymentGateway = shop?.manualPaymentEnabled !== false || shop?.piprapayEnabled === true;
   const isAdvanceRequired = hasPaymentGateway && (!isCOD || (shop.deliveryConfig?.advanceFee && shop.deliveryConfig.advanceFee !== '0'));
+
+  // Auto-save draft order (Incomplete order tracking)
+  useEffect(() => {
+    if (!localId || !shop?.id) return;
+    if (!orderForm.name && !orderForm.phone && cart.length === 0) return;
+
+    const timer = setTimeout(() => {
+      fetch('/api/checkout/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shopId: shop.id,
+          localId,
+          customerName: orderForm.name,
+          customerPhone: orderForm.phone,
+          customerAddress: orderForm.address,
+          total: cartTotal,
+          items: cart.map(i => ({ id: i.productId || i.id, name: i.name, quantity: i.quantity, price: i.price }))
+        })
+      }).catch(err => console.warn('[Draft save failed]', err));
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [orderForm.name, orderForm.phone, orderForm.address, cart, localId, shop?.id, cartTotal]);
 
   const { hasFreeDelivery } = getUserStreak(userOrders);
   const effectiveDelivery = hasFreeDelivery ? 0 : deliveryAdvanceFee;
