@@ -268,6 +268,17 @@ export const subscribeOrders = (shopId, callback) => {
   });
 };
 
+export const subscribeIncompleteOrders = (shopId, callback) => {
+  const q = query(
+    collection(db, 'shops', shopId, 'incomplete_orders'),
+    orderBy('updatedAt', 'desc'),
+    limit(100)
+  );
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+};
+
 // ── CUSTOMERS ─────────────────────────────────────
 export const getCustomers = async (shopId) => {
   const snap = await getDocs(collection(db, 'shops', shopId, 'customers'));

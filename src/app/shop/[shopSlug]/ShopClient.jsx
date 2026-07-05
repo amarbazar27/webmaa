@@ -21,16 +21,18 @@ import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
 import MessengerButton from '@/components/shop/MessengerButton';
 import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
+import dynamic from 'next/dynamic';
 import { TEMPLATES } from '@/templates/index';
-import AiShoppingList from '@/components/shop/AiShoppingList';
-import AiVoicePanel from '@/components/shop/AiVoicePanel';
-import SmartMealEngine from '@/components/shop/SmartMealEngine';
 import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import NotificationInbox from '@/components/shared/NotificationInbox';
-import ReviewSection from '@/components/shop/ReviewSection';
-import MapModal from '@/components/shop/MapModal';
+
+const AiShoppingList = dynamic(() => import('@/components/shop/AiShoppingList'), { ssr: false });
+const AiVoicePanel = dynamic(() => import('@/components/shop/AiVoicePanel'), { ssr: false });
+const SmartMealEngine = dynamic(() => import('@/components/shop/SmartMealEngine'), { ssr: false });
+const ReviewSection = dynamic(() => import('@/components/shop/ReviewSection'), { ssr: false });
+const MapModal = dynamic(() => import('@/components/shop/MapModal'), { ssr: false });
 
 // Product detail modal component imports
 import ProductImage from '@/features/product/components/ProductImage';
@@ -738,6 +740,43 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [pdfProgress, setPdfProgress] = useState(0);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [orderImage, setOrderImage] = useState(null);
+  const [localId, setLocalId] = useState(null);
+
+  // Initialize unique checkout session ID
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      let lid = localStorage.getItem('webmaa_checkout_session_id');
+      if (!lid) {
+        lid = `ch_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
+        localStorage.setItem('webmaa_checkout_session_id', lid);
+      }
+      setLocalId(lid);
+    }
+  }, []);
+
+  // Auto-save draft order (Incomplete order tracking)
+  useEffect(() => {
+    if (!localId || !shop?.id) return;
+    if (!orderForm.name && !orderForm.phone && cart.length === 0) return;
+
+    const timer = setTimeout(() => {
+      fetch('/api/checkout/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shopId: shop.id,
+          localId,
+          customerName: orderForm.name,
+          customerPhone: orderForm.phone,
+          customerAddress: orderForm.address,
+          total: cartTotal,
+          items: cart.map(i => ({ id: i.productId || i.id, name: i.name, quantity: i.quantity, price: i.price }))
+        })
+      }).catch(err => console.warn('[Draft save failed]', err));
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [orderForm.name, orderForm.phone, orderForm.address, cart, localId, shop?.id, cartTotal]);
 
   const handleDirectOrderFromAi = (items, image) => {
     setCart(items);
@@ -1779,7 +1818,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     const yyyy = now.getFullYear();
 
     const reqPayload = {
-      localId: `local_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      localId: localId || `local_${Date.now()}_${Math.random().toString(36).substring(7)}`,
       shopId: shop.id,
       customerName: orderForm.name,
       customerPhone: orderForm.phone,
@@ -1809,8 +1848,33 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
     const onSuccess = async (payloadResp) => {
       const orderId = payloadResp.orderId;
+      
+      // Fire client-side purchase tracking event (with event_id for CAPI deduplication)
+      try {
+        trackStoreEvent('purchase', {
+          value: payloadResp.total || cartTotal,
+          currency: 'BDT',
+          event_id: orderId,
+          content_type: 'product',
+          contents: cart.map(i => ({ id: i.id, quantity: Number(i.quantity) || 1 }))
+        });
+      } catch (trackErr) {
+        console.warn('[Tracking Error]', trackErr);
+      }
+
       setCart([]);
       localStorage.removeItem(CART_KEY);
+      
+      // Clear draft checkout session from localStorage and generate a new one
+      try {
+        localStorage.removeItem('webmaa_checkout_session_id');
+        const newLid = `ch_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
+        localStorage.setItem('webmaa_checkout_session_id', newLid);
+        setLocalId(newLid);
+      } catch (sessErr) {
+        console.warn('[Session reset error]', sessErr);
+      }
+
       toast.success('অর্ডার প্লেস করা হয়েছে! 🎉');
       setOrderImage(null);
       setPaymentScreenshot('');
@@ -3543,6 +3607,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       <MapModal 
         isOpen={isMapOpen} 
         onClose={() => setIsMapOpen(false)} 
+        shop={shop} 
         onConfirm={(coords, addr) => {
           setOrderForm(f => ({
             ...f,

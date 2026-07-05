@@ -172,7 +172,31 @@ export default function SettingsPage() {
   const [disableServiceBanner, setDisableServiceBanner] = useState(false);
   const [customAreas, setCustomAreas] = useState([]);
   const [newCustomArea, setNewCustomArea] = useState('');
-  const [trackingConfig, setTrackingConfig] = useState({ ga4Id: '', clarityId: '' });
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState('');
+  const [courierConfig, setCourierConfig] = useState({
+    steadfastApiKey: '',
+    steadfastSecretKey: '',
+    steadfastWebhookToken: '',
+    steadfastEnabled: false
+  });
+  const [trackingConfig, setTrackingConfig] = useState({
+    ga4Id: '',
+    clarityId: '',
+    metaPixelId: '',
+    metaPixelEnabled: true,
+    metaCapiToken: '',
+    metaCapiTestCode: '',
+    tiktokPixelId: '',
+    tiktokPixelEnabled: true,
+    googleAdsId: '',
+    googleAdsEnabled: true,
+    pinterestPixelId: '',
+    pinterestPixelEnabled: true,
+    snapchatPixelId: '',
+    snapchatPixelEnabled: true,
+    linkedinPartnerId: '',
+    linkedinEnabled: true
+  });
   const [loadingMedia, setLoadingMedia] = useState({ type: 'default', imageUrl: '', posters: [], texts: [] });
   const [newLoadingText, setNewLoadingText] = useState('');
   const [shopProducts, setShopProducts] = useState([]);
@@ -252,7 +276,10 @@ export default function SettingsPage() {
         deliveryDays: data?.deliveryConfig?.deliveryDays ?? '',
         deliveryHours: data?.deliveryConfig?.deliveryHours ?? '',
         deliveryMinutes: data?.deliveryConfig?.deliveryMinutes ?? '',
-        requirePaymentScreenshot: data?.deliveryConfig?.requirePaymentScreenshot ?? false
+        requirePaymentScreenshot: data?.deliveryConfig?.requirePaymentScreenshot ?? false,
+        shopLat: data?.deliveryConfig?.shopLat || '',
+        shopLng: data?.deliveryConfig?.shopLng || '',
+        radiusLimit: data?.deliveryConfig?.radiusLimit || ''
       });
       setAiConfig({
         apiKey: data?.aiConfig?.apiKey || '',
@@ -269,9 +296,32 @@ export default function SettingsPage() {
       setShowLocationSelector(data?.showLocationSelector !== false);
       setDisableServiceBanner(data?.disableServiceBanner || false);
       setCustomAreas(data?.customAreas || []);
+      
+      setGoogleMapsApiKey(data?.googleMapsApiKey || '');
+      setCourierConfig({
+        steadfastApiKey: data?.courierConfig?.steadfastApiKey || '',
+        steadfastSecretKey: data?.courierConfig?.steadfastSecretKey || '',
+        steadfastWebhookToken: data?.courierConfig?.steadfastWebhookToken || '',
+        steadfastEnabled: data?.courierConfig?.steadfastEnabled || false
+      });
+
       setTrackingConfig({
         ga4Id: data?.trackingConfig?.ga4Id || '',
-        clarityId: data?.trackingConfig?.clarityId || ''
+        clarityId: data?.trackingConfig?.clarityId || '',
+        metaPixelId: data?.trackingConfig?.metaPixelId || '',
+        metaPixelEnabled: data?.trackingConfig?.metaPixelEnabled !== false,
+        metaCapiToken: data?.trackingConfig?.metaCapiToken || '',
+        metaCapiTestCode: data?.trackingConfig?.metaCapiTestCode || '',
+        tiktokPixelId: data?.trackingConfig?.tiktokPixelId || '',
+        tiktokPixelEnabled: data?.trackingConfig?.tiktokPixelEnabled !== false,
+        googleAdsId: data?.trackingConfig?.googleAdsId || '',
+        googleAdsEnabled: data?.trackingConfig?.googleAdsEnabled !== false,
+        pinterestPixelId: data?.trackingConfig?.pinterestPixelId || '',
+        pinterestPixelEnabled: data?.trackingConfig?.pinterestPixelEnabled !== false,
+        snapchatPixelId: data?.trackingConfig?.snapchatPixelId || '',
+        snapchatPixelEnabled: data?.trackingConfig?.snapchatPixelEnabled !== false,
+        linkedinPartnerId: data?.trackingConfig?.linkedinPartnerId || '',
+        linkedinEnabled: data?.trackingConfig?.linkedinEnabled !== false
       });
       setLoadingMedia({
         type: data?.loadingMedia?.type || 'default',
@@ -656,6 +706,8 @@ export default function SettingsPage() {
         disableServiceBanner,
         customAreas,
         trackingConfig,
+        courierConfig,
+        googleMapsApiKey,
         loadingMedia,
         featuredProductIds,
         faqItems,
@@ -2057,31 +2109,189 @@ export default function SettingsPage() {
                 </div>
              </Card>
 
-            <Card title="User Tracking (Analytics)" subtitle="Track User Behavior" icon={Users} className="border-2 border-slate-100 shadow-xl bg-white">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                   <Input 
-                     label="Google Analytics 4 (GA4) ID" 
-                     placeholder="G-XXXXXXX" 
-                     value={trackingConfig.ga4Id} 
-                     onChange={e => setTrackingConfig({...trackingConfig, ga4Id: e.target.value})} 
-                   />
-                   <p className="text-[10px] text-slate-400 mt-2 font-bold leading-relaxed">
-                     Tracks product clicks, add to cart, and checkout funnel. Enter your GA4 measurement ID.
-                   </p>
+            <Card title="User Tracking & Pixels (Analytics)" subtitle="Track multi-channel conversions and server-side events" icon={Users} className="border-2 border-slate-100 shadow-xl bg-white">
+              <div className="space-y-6">
+                {/* 1. GA4 & Microsoft Clarity */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                     <Input 
+                       label="Google Analytics 4 (GA4) ID" 
+                       placeholder="G-XXXXXXX" 
+                       value={trackingConfig.ga4Id} 
+                       onChange={e => setTrackingConfig({...trackingConfig, ga4Id: e.target.value})} 
+                     />
+                     <p className="text-[10px] text-slate-400 mt-2 font-bold leading-relaxed">
+                       Tracks product views, add-to-carts, and checkout funnels.
+                     </p>
+                  </div>
+                  <div>
+                     <Input 
+                       label="Microsoft Clarity Project ID" 
+                       placeholder="a1b2c3d4e5" 
+                       value={trackingConfig.clarityId} 
+                       onChange={e => setTrackingConfig({...trackingConfig, clarityId: e.target.value})} 
+                     />
+                     <p className="text-[10px] text-slate-400 mt-2 font-bold leading-relaxed">
+                       Provides storefront session recordings and heatmaps completely free.
+                     </p>
+                  </div>
                 </div>
-                <div>
-                   <Input 
-                     label="Microsoft Clarity Project ID" 
-                     placeholder="a1b2c3d4e5" 
-                     value={trackingConfig.clarityId} 
-                     onChange={e => setTrackingConfig({...trackingConfig, clarityId: e.target.value})} 
-                   />
-                   <p className="text-[10px] text-slate-400 mt-2 font-bold leading-relaxed">
-                     Insanely powerful free tool. Provides session recordings and user heatmaps on your storefront.
-                   </p>
+
+                <hr className="border-slate-100" />
+
+                {/* 2. Meta Pixel & Conversion API */}
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                     <div>
+                        <p className="text-xs font-black text-slate-900">Meta (Facebook) Pixel & Conversion API (CAPI)</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase">Enables browser-level and server-side purchase tracking</p>
+                     </div>
+                     <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={trackingConfig.metaPixelEnabled !== false} onChange={e => setTrackingConfig({...trackingConfig, metaPixelEnabled: e.target.checked})} />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                     </label>
+                  </div>
+                  {trackingConfig.metaPixelEnabled !== false && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slide-in">
+                       <Input label="Meta Pixel ID" placeholder="e.g. 1234567890" value={trackingConfig.metaPixelId} onChange={e => setTrackingConfig({...trackingConfig, metaPixelId: e.target.value})} />
+                       <Input label="Conversion API (CAPI) Access Token" placeholder="EAAB..." value={trackingConfig.metaCapiToken} onChange={e => setTrackingConfig({...trackingConfig, metaCapiToken: e.target.value})} />
+                       <Input label="CAPI Test Event Code" placeholder="TESTXXXXX" value={trackingConfig.metaCapiTestCode} onChange={e => setTrackingConfig({...trackingConfig, metaCapiTestCode: e.target.value})} />
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. TikTok Pixel */}
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                     <div>
+                        <p className="text-xs font-black text-slate-900">TikTok Pixel</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase">Tracks customer behaviors on TikTok ad campaigns</p>
+                     </div>
+                     <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={trackingConfig.tiktokPixelEnabled !== false} onChange={e => setTrackingConfig({...trackingConfig, tiktokPixelEnabled: e.target.checked})} />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                     </label>
+                  </div>
+                  {trackingConfig.tiktokPixelEnabled !== false && (
+                     <div className="animate-slide-in">
+                       <Input label="TikTok Pixel ID" placeholder="e.g. CBTQ..." value={trackingConfig.tiktokPixelId} onChange={e => setTrackingConfig({...trackingConfig, tiktokPixelId: e.target.value})} />
+                     </div>
+                  )}
+                </div>
+
+                {/* 4. Google Ads */}
+                <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                     <div>
+                        <p className="text-xs font-black text-slate-900">Google Ads Conversion Tag</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase">Track Google search & display campaign conversions</p>
+                     </div>
+                     <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={trackingConfig.googleAdsEnabled !== false} onChange={e => setTrackingConfig({...trackingConfig, googleAdsEnabled: e.target.checked})} />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                     </label>
+                  </div>
+                  {trackingConfig.googleAdsEnabled !== false && (
+                     <div className="animate-slide-in">
+                       <Input label="Google Ads Conversion ID" placeholder="AW-XXXXXXXXX" value={trackingConfig.googleAdsId} onChange={e => setTrackingConfig({...trackingConfig, googleAdsId: e.target.value})} />
+                     </div>
+                  )}
+                </div>
+
+                {/* 5. Pinterest, Snapchat & LinkedIn */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                       <span className="text-xs font-black text-slate-900">Pinterest Pixel</span>
+                       <input type="checkbox" checked={trackingConfig.pinterestPixelEnabled !== false} onChange={e => setTrackingConfig({...trackingConfig, pinterestPixelEnabled: e.target.checked})} />
+                    </div>
+                    {trackingConfig.pinterestPixelEnabled !== false && (
+                       <Input label="Tag ID" placeholder="Pinterest ID" value={trackingConfig.pinterestPixelId} onChange={e => setTrackingConfig({...trackingConfig, pinterestPixelId: e.target.value})} />
+                    )}
+                  </div>
+
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                       <span className="text-xs font-black text-slate-900">Snapchat Pixel</span>
+                       <input type="checkbox" checked={trackingConfig.snapchatPixelEnabled !== false} onChange={e => setTrackingConfig({...trackingConfig, snapchatPixelEnabled: e.target.checked})} />
+                    </div>
+                    {trackingConfig.snapchatPixelEnabled !== false && (
+                       <Input label="Snap Pixel ID" placeholder="Snapchat ID" value={trackingConfig.snapchatPixelId} onChange={e => setTrackingConfig({...trackingConfig, snapchatPixelId: e.target.value})} />
+                    )}
+                  </div>
+
+                  <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                       <span className="text-xs font-black text-slate-900">LinkedIn Partner Tag</span>
+                       <input type="checkbox" checked={trackingConfig.linkedinEnabled !== false} onChange={e => setTrackingConfig({...trackingConfig, linkedinEnabled: e.target.checked})} />
+                    </div>
+                    {trackingConfig.linkedinEnabled !== false && (
+                       <Input label="Partner ID" placeholder="LinkedIn ID" value={trackingConfig.linkedinPartnerId} onChange={e => setTrackingConfig({...trackingConfig, linkedinPartnerId: e.target.value})} />
+                    )}
+                  </div>
                 </div>
               </div>
+            </Card>
+
+            {/* Steadfast Courier Settings */}
+            <Card title="Steadfast Courier API Integration" subtitle="One-tap parcel delivery and tracking number generation" icon={Truck} className="border-2 border-slate-100 shadow-xl bg-white">
+               <div className="space-y-6">
+                  <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
+                     <div>
+                        <p className="text-xs font-black text-slate-900">ইন্টিগ্রেশন সক্রিয় করুন (Enable Steadfast Courier)</p>
+                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">অর্ডার অ্যাকশন থেকে ওয়ান-ক্লিক পার্সেল বুকিং করতে এটি অন করুন</p>
+                     </div>
+                     <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" checked={courierConfig.steadfastEnabled || false} onChange={e => setCourierConfig({...courierConfig, steadfastEnabled: e.target.checked})} />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                     </label>
+                  </div>
+
+                  {courierConfig.steadfastEnabled && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-in">
+                       <div>
+                          <Input label="Steadfast API Key" placeholder="API Key" value={courierConfig.steadfastApiKey} onChange={e => setCourierConfig({...courierConfig, steadfastApiKey: e.target.value})} />
+                       </div>
+                       <div>
+                          <Input label="Steadfast Secret Key" placeholder="Secret Key" value={courierConfig.steadfastSecretKey} onChange={e => setCourierConfig({...courierConfig, steadfastSecretKey: e.target.value})} />
+                       </div>
+                       <div>
+                          <Input label="Steadfast Webhook Token (Security)" placeholder="Optional token" value={courierConfig.steadfastWebhookToken} onChange={e => setCourierConfig({...courierConfig, steadfastWebhookToken: e.target.value})} />
+                          <p className="text-[8px] text-slate-400 mt-1 font-bold">
+                             Steadfast-এ এই Callback URL ব্যবহার করুন: <br />
+                             <span className="font-mono text-purple-600 break-all">https://yourdomain.com/api/courier/steadfast/webhook?shopId={activeShopId}</span>
+                          </p>
+                       </div>
+                    </div>
+                  )}
+               </div>
+            </Card>
+
+            {/* Google Maps & Delivery Zone Configuration */}
+            <Card title="Google Maps API & Location Settings" subtitle="Official Google Places and delivery zone radius checks" icon={MapPin} className="border-2 border-slate-100 shadow-xl bg-white">
+               <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div>
+                        <Input label="Google Maps API Key" placeholder="AIzaSy..." value={googleMapsApiKey} onChange={e => setGoogleMapsApiKey(e.target.value)} />
+                        <p className="text-[9px] text-slate-400 mt-1.5 font-bold">
+                           Required for Places Autocomplete and Geocoding.
+                        </p>
+                     </div>
+                     <div>
+                        <Input label="Maximum Delivery Radius (KM)" type="number" placeholder="e.g. 10" value={deliveryConfig.radiusLimit || ''} onChange={e => setDeliveryConfig({...deliveryConfig, radiusLimit: e.target.value})} />
+                        <p className="text-[9px] text-slate-400 mt-1.5 font-bold">
+                           Locks checkouts if customer pins outside this radius from shop coordinates.
+                        </p>
+                     </div>
+                  </div>
+
+                  {deliveryConfig.radiusLimit && (
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 animate-slide-in">
+                        <Input label="Shop Center Latitude" placeholder="e.g. 23.8103" value={deliveryConfig.shopLat || ''} onChange={e => setDeliveryConfig({...deliveryConfig, shopLat: e.target.value})} />
+                        <Input label="Shop Center Longitude" placeholder="e.g. 90.4125" value={deliveryConfig.shopLng || ''} onChange={e => setDeliveryConfig({...deliveryConfig, shopLng: e.target.value})} />
+                     </div>
+                  )}
+               </div>
             </Card>
 
             <Button

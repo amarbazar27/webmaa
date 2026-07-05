@@ -119,6 +119,10 @@ service cloud.firestore {
         allow update, delete: if isShopAdmin(shopId);
       }
 
+      match /incomplete_orders/{orderId} {
+        allow read, write: if isShopAdmin(shopId);
+      }
+
       match /counters/{counterId} {
         allow read, write: if isShopAdmin(shopId);
       }

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
-  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate, Crown
+  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate, Crown, Clock
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -21,6 +21,7 @@ const navItems = [
   { href: '/dashboard/smart-inventory', icon: ShoppingBag, label: 'Smart Inventory', staffAllowed: true },
   { href: '/dashboard/categories', icon: Tag, label: 'Categories', staffAllowed: true },
   { href: '/dashboard/orders', icon: ShoppingCart, label: 'Orders', staffAllowed: true },
+  { href: '/dashboard/incomplete-orders', icon: Clock, label: 'Cart Recovery', staffAllowed: true },
   { href: '/dashboard/customers', icon: Users, label: 'Customers', staffAllowed: false },
   { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates', staffAllowed: false },
   { href: '/dashboard/broadcast', icon: Store, label: 'Broadcast', staffAllowed: false },

@@ -6,6 +6,8 @@ import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib/ruflo';
 import { sendTelegramAlert } from '@/lib/telegram';
+import { runFraudScan } from '@/lib/fraudDetector';
+import { trackMetaServerEvent } from '@/lib/serverTracking';
 
 // ── Strict Payload Validation ───────────────────────────
 const CheckoutSchema = z.object({
@@ -452,6 +454,14 @@ export async function POST(req) {
       }
     }
 
+    // ── Run Heuristic Fraud Detection ───────────────────
+    const vercelCountry = req.headers.get('x-vercel-ip-country') || 'unknown';
+    const fraudScan = await runFraudScan(
+      { shopId, customerName, customerPhone, customerEmail, customerAddress },
+      ip,
+      vercelCountry
+    );
+
     await newOrderRef.set({
       customerName,
       customerPhone,
@@ -480,8 +490,55 @@ export async function POST(req) {
       customerId: customerId,
       customImage: customImage || null,
       coordinates: coordinates || null,
+      clientIp: ip,
+      fraudScore: fraudScan.score,
+      fraudRiskLevel: fraudScan.riskLevel,
+      fraudReasons: fraudScan.reasons,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    // ── Meta Conversion API (CAPI) Server Event ──────────
+    const metaPixelId = shopData.trackingConfig?.metaPixelId;
+    const metaCapiToken = shopData.trackingConfig?.metaCapiToken;
+    const metaCapiTestCode = shopData.trackingConfig?.metaCapiTestCode;
+    const metaPixelEnabled = shopData.trackingConfig?.metaPixelEnabled !== false;
+
+    if (metaPixelEnabled && metaPixelId && metaCapiToken) {
+      // Fire-and-forget in background to not block response
+      void trackMetaServerEvent(
+        { metaPixelId, metaCapiToken, metaCapiTestCode },
+        {
+          eventName: 'Purchase',
+          eventId: newOrderRef.id,
+          sourceUrl: `${req.headers.get('referer') || `https://${shopData.subdomainSlug || shopData.shopSlug}.bdretailers.com`}`,
+          userData: {
+            phone: customerPhone,
+            email: customerEmail,
+            ip: ip,
+            userAgent: req.headers.get('user-agent') || ''
+          },
+          customData: {
+            value: finalTotal,
+            currency: 'BDT',
+            contents: verifiedItems.map(i => ({ id: i.id, quantity: i.quantity }))
+          }
+        }
+      ).catch(err => console.error('[Meta CAPI Background Error]', err));
+    }
+
+    // ── Mark Incomplete Order Draft as Recovered ──────────
+    if (localId) {
+      void adminDb
+        .collection('shops')
+        .doc(shopId)
+        .collection('incomplete_orders')
+        .doc(localId)
+        .update({
+          status: 'recovered',
+          recoveredAt: admin.firestore.FieldValue.serverTimestamp()
+        })
+        .catch(err => console.warn('[Incomplete Order] Failed to update draft status:', err.message));
+    }
 
     // Update shop stats: increment orderCount and totalRevenue
     const isAutomatedPayment = paymentMethod === 'piprapay' || paymentMethod === 'automated';
