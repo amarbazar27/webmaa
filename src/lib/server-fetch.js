@@ -249,3 +249,21 @@ export async function getCategoriesServer(shopId) {
     return [];
   }
 }
+
+export async function getGlobalConfigServer() {
+  try {
+    if (adminDb) {
+      const snap = await adminDb.collection('config').doc('global').get();
+      return snap.exists ? toPlainObject(snap.data()) : {};
+    } else {
+      const url = `${FIRESTORE_REST_BASE}/config/global`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return {};
+      const doc = await res.json();
+      return fromFirestoreRest(doc.fields) || {};
+    }
+  } catch (err) {
+    console.error(`[getGlobalConfigServer] Error:`, err);
+    return {};
+  }
+}

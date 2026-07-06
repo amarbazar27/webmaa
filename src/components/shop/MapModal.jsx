@@ -16,7 +16,7 @@ function getDistanceInKm(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
-export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinates, shop }) {
+export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinates, shop, googleMapsApiKey: propApiKey }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [address, setAddress] = useState('লোকেশন খোঁজা হচ্ছে...');
   const [locating, setLocating] = useState(false);
@@ -37,8 +37,8 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
   const shopLng = parseFloat(shop?.deliveryConfig?.shopLng);
   const radiusLimit = parseFloat(shop?.deliveryConfig?.radiusLimit); // In KM
 
-  // Google Maps API Key: check shop config or fallback to environment variable
-  const googleMapsApiKey = shop?.googleMapsApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  // Google Maps API Key: check prop, config, or fallback
+  const googleMapsApiKey = propApiKey || shop?.googleMapsApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // 1. Dynamic Script Loader
   useEffect(() => {

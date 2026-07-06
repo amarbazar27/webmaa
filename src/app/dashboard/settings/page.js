@@ -121,6 +121,9 @@ export default function SettingsPage() {
   const [userPhotoPreview, setUserPhotoPreview] = useState(null);
   const [showAiKey, setShowAiKey] = useState(false);
   const [showCloudinaryHelp, setShowCloudinaryHelp] = useState(false);
+  const [showAnalyticsHelp, setShowAnalyticsHelp] = useState(false);
+  const [showSteadfastHelp, setShowSteadfastHelp] = useState(false);
+  const [showMapsHelp, setShowMapsHelp] = useState(false);
 
   // Handle click outside of Cloudinary help
   useEffect(() => {
@@ -2111,6 +2114,37 @@ export default function SettingsPage() {
 
             <Card title="User Tracking & Pixels (Analytics)" subtitle="Track multi-channel conversions and server-side events" icon={Users} className="border-2 border-slate-100 shadow-xl bg-white">
               <div className="space-y-6">
+                <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                  <span className="text-xs font-black text-slate-500 uppercase tracking-wider">কনফিগারেশন ফিল্ডস</span>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAnalyticsHelp(!showAnalyticsHelp)} 
+                    className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-[10px] sm:text-xs font-black transition-all border border-purple-200 cursor-pointer shadow-sm select-none"
+                  >
+                    ❓ Setup Guide (সহায়িকা)
+                  </button>
+                </div>
+
+                {showAnalyticsHelp && (
+                  <div className="p-5 bg-gradient-to-br from-purple-50/70 to-indigo-50/30 rounded-2xl border border-purple-100 text-[11px] font-bold text-slate-700 space-y-3 animate-slide-in">
+                    <p className="text-xs sm:text-sm font-black text-purple-900 flex items-center gap-1.5 mb-2">📊 পিক্সেল এবং অ্যানালিটিক্স সেটআপ গাইড</p>
+                    <ul className="list-decimal pl-5 space-y-2.5 leading-relaxed">
+                      <li>
+                        <strong className="text-slate-950">Google Analytics 4 (GA4):</strong> প্রথমে <a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-black">Google Analytics Portal</a> এ যান। আপনার প্রজেক্টের আন্ডারে একটি Web Stream তৈরি করুন এবং <code className="bg-white px-1.5 py-0.5 rounded border border-purple-200 text-purple-700 font-mono font-bold">G-XXXXXXXX</code> ফরম্যাটের Measurement ID-টি কপি করে এখানে বসান।
+                      </li>
+                      <li>
+                        <strong className="text-slate-950">Meta (Facebook) Pixel & CAPI:</strong> <a href="https://business.facebook.com/events_manager2/" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-black">Meta Events Manager</a> এ গিয়ে Web Data Source যুক্ত করে আপনার Pixel ID কপি করুন।
+                      </li>
+                      <li>
+                        <strong className="text-slate-950">Conversion API (CAPI) Token:</strong> ইভেন্টস ম্যানেজারের Settings ট্যাবে গিয়ে নিচে স্ক্রোল করে "Conversions API" সেকশনে "Generate access token" বাটনে ক্লিক করুন। প্রাপ্ত দীর্ঘ টোকেনটি কপি করে এখানে বসান। কাস্টমারদের ব্রাউজার অ্যাড-ব্লকার ব্যবহার করলেও এটি সার্ভার থেকে ফেসবুকে সরাসরি পার্চেজ ডাটা পাঠাবে।
+                      </li>
+                      <li>
+                        <strong className="text-slate-950">CAPI Test Event Code:</strong> টেস্ট করার সময় মেটা পোর্টালে "Test Events" ট্যাবের সার্ভার সেকশনে দেওয়া টেস্ট কোডটি (যেমন: <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono font-bold">TEST12345</code>) এখানে বসিয়ে অর্ডার দিয়ে চেক করুন। টেস্ট শেষে এটি খালি করে দেবেন।
+                      </li>
+                    </ul>
+                  </div>
+                )}
+
                 {/* 1. GA4 & Microsoft Clarity */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -2236,6 +2270,33 @@ export default function SettingsPage() {
             {/* Steadfast Courier Settings */}
             <Card title="Steadfast Courier API Integration" subtitle="One-tap parcel delivery and tracking number generation" icon={Truck} className="border-2 border-slate-100 shadow-xl bg-white">
                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                     <span className="text-xs font-black text-slate-500 uppercase tracking-wider">ইন্টিগ্রেশন সেটিংস</span>
+                     <button 
+                       type="button" 
+                       onClick={() => setShowSteadfastHelp(!showSteadfastHelp)} 
+                       className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-[10px] sm:text-xs font-black transition-all border border-purple-200 cursor-pointer shadow-sm select-none"
+                     >
+                       ❓ Setup Guide (সহায়িকা)
+                     </button>
+                  </div>
+
+                  {showSteadfastHelp && (
+                     <div className="p-5 bg-gradient-to-br from-purple-50/70 to-indigo-50/30 rounded-2xl border border-purple-100 text-[11px] font-bold text-slate-700 space-y-3 animate-slide-in">
+                        <p className="text-xs sm:text-sm font-black text-purple-900 flex items-center gap-1.5 mb-2">🚚 স্টেডফাস্ট কুরিয়ার ইন্টিগ্রেশন গাইড</p>
+                        <ul className="list-decimal pl-5 space-y-2.5 leading-relaxed">
+                           <li>
+                              <strong className="text-slate-950">মার্চেন্ট পোর্টাল লিংক:</strong> সরাসরি অফিসিয়াল <a href="https://steadfast.com.bd/" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-black">Steadfast Courier Portal (steadfast.com.bd)</a> এ গিয়ে আপনার মার্চেন্ট অ্যাকাউন্টে লগইন করুন।
+                           </li>
+                           <li>
+                              <strong className="text-slate-950">এপিআই কী সংগ্রহ:</strong> ড্যাশবোর্ড থেকে <strong className="text-slate-950">Settings &gt; API Information</strong> মেনুতে যান। সেখানে জেনারেট করা <strong className="text-slate-950">API Key</strong> এবং <strong className="text-slate-950">Secret Key</strong> কপি করে এনে নিচের ফিল্ডগুলোতে পেস্ট করুন।
+                           </li>
+                           <li>
+                              <strong className="text-slate-950">অটোমেটিক স্ট্যাটাস আপডেট (Webhook):</strong> স্টেডফাস্ট পোর্টালে Webhook URL হিসেবে নিচে দেখানো Callback URL-টি সেভ করুন। এবং একটি কাস্টম টোকেন লিখে সেটি এখানে বসান। এতে পার্সেল ডেলিভারি বা রিটার্ন হলে আপনার স্টোরের অর্ডার স্ট্যাটাস নিজে নিজেই আপডেট হবে।
+                           </li>
+                        </ul>
+                     </div>
+                  )}
                   <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
                      <div>
                         <p className="text-xs font-black text-slate-900">ইন্টিগ্রেশন সক্রিয় করুন (Enable Steadfast Courier)</p>
@@ -2270,6 +2331,36 @@ export default function SettingsPage() {
             {/* Google Maps & Delivery Zone Configuration */}
             <Card title="Google Maps API & Location Settings" subtitle="Official Google Places and delivery zone radius checks" icon={MapPin} className="border-2 border-slate-100 shadow-xl bg-white">
                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                     <span className="text-xs font-black text-slate-500 uppercase tracking-wider">ডেলিভারি এরিয়া সেটিংস</span>
+                     <button 
+                       type="button" 
+                       onClick={() => setShowMapsHelp(!showMapsHelp)} 
+                       className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-[10px] sm:text-xs font-black transition-all border border-purple-200 cursor-pointer shadow-sm select-none"
+                     >
+                       ❓ Setup Guide (সহায়িকা)
+                     </button>
+                  </div>
+
+                  {showMapsHelp && (
+                     <div className="p-5 bg-gradient-to-br from-purple-50/70 to-indigo-50/30 rounded-2xl border border-purple-100 text-[11px] font-bold text-slate-700 space-y-3 animate-slide-in">
+                        <p className="text-xs sm:text-sm font-black text-purple-900 flex items-center gap-1.5 mb-2">🗺️ গুগল ম্যাপস এপিআই কী সেটআপ গাইড</p>
+                        <ul className="list-decimal pl-5 space-y-2.5 leading-relaxed">
+                           <li>
+                              <strong className="text-slate-950">গুগল ক্লাউড কনসোল:</strong> প্রথমে <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-black">Google Cloud Console</a>-এ লগইন করুন।
+                           </li>
+                           <li>
+                              <strong className="text-slate-950">এপিআই সার্ভিস ইনেবল করুন:</strong> প্রজেক্ট সিলেক্ট করে লাইব্রেরি থেকে <strong className="text-slate-950">Maps JavaScript API</strong>, <strong className="text-slate-950">Places API</strong>, এবং <strong className="text-slate-950">Geocoding API</strong> সার্ভিস ৩টি ইনেবল (Enable) করুন।
+                           </li>
+                           <li>
+                              <strong className="text-slate-950">API Key জেনারেট করুন:</strong> APIs & Services &gt; Credentials থেকে API Key তৈরি করুন। সিকিউরিটির জন্য এটিকে আপনার ডোমেইনে (যেমন `*.camerakini.com`) রেস্ট্রিক্ট করতে পারেন।
+                           </li>
+                           <li>
+                              <strong className="text-slate-950">গ্লোবাল ডিফল্ট কী:</strong> আপনি যদি ব্যক্তিগতভাবে কোনো কী না বসান, তবে সুপারঅ্যাডমিনের সেট করা গ্লোবাল গুগল ম্যাপস কী স্বয়ংক্রিয়ভাবে ডিফল্ট হিসেবে কাজ করবে। কোনো কী সেট না থাকলে কাস্টমার ম্যাপ ছাড়াই সাধারণ টেক্সট ঠিকানায় অর্ডার দিতে পারবেন।
+                           </li>
+                        </ul>
+                     </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <div>
                         <Input label="Google Maps API Key" placeholder="AIzaSy..." value={googleMapsApiKey} onChange={e => setGoogleMapsApiKey(e.target.value)} />

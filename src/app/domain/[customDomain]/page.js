@@ -1,4 +1,4 @@
-import { getProductsServer, getCategoriesServer } from '@/lib/server-fetch';
+import { getProductsServer, getCategoriesServer, getGlobalConfigServer } from '@/lib/server-fetch';
 import { getShopByDomain } from '@/lib/firestore-server';
 import ShopClient from '@/app/shop/[shopSlug]/ShopClient';
 import { notFound } from 'next/navigation';
@@ -82,15 +82,17 @@ export default async function CustomDomainShopPage({ params }) {
     return notFound();
   }
 
-  const [products, categories] = await Promise.all([
+  const [products, categories, globalConfig] = await Promise.all([
     getProductsServer(shop.id),
     getCategoriesServer(shop.id),
+    getGlobalConfigServer(),
   ]);
 
   // 🚨 FAIL-SAFE SERIALIZATION: Guarantee plain objects for Next.js SSR
   const safeShop = JSON.parse(JSON.stringify(shop));
   const safeProducts = JSON.parse(JSON.stringify(products));
   const safeCategories = JSON.parse(JSON.stringify(categories));
+  const safeGlobalConfig = JSON.parse(JSON.stringify(globalConfig || {}));
 
   return (
     <TemplateRenderer
@@ -99,6 +101,7 @@ export default async function CustomDomainShopPage({ params }) {
       categories={safeCategories}
       ShopClientComponent={ShopClient}
       isCustomDomain={true}
+      globalConfig={safeGlobalConfig}
     />
   );
 }

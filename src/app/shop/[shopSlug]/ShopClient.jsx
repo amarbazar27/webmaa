@@ -409,11 +409,13 @@ function LiveCountdown({ deliveryETA }) {
 }
 
 
-export default function ShopClient({ initialShop, initialProducts, initialCategories }) {
+export default function ShopClient({ initialShop, initialProducts, initialCategories, globalConfig }) {
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
   const [shop, setShop] = useState(initialShop);
   const [products, setProducts] = useState(initialProducts || []);
+  
+  const googleMapsApiKey = shop?.googleMapsApiKey || globalConfig?.googleMapsApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   
   const isMesserBazar = shop.subdomainSlug === 'messerbazar' || shop.customDomain === 'messerbazar.com' || shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার';
 
@@ -1766,7 +1768,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    const requiresLocation = shop.requireLocationForOrder === true;
+    const requiresLocation = shop.requireLocationForOrder === true && !!googleMapsApiKey;
     if (requiresLocation && !orderForm.coordinates) {
       toast.error('📍 অর্ডার করতে লোকেশন বাটনে ক্লিক করে আপনার ঠিকানা নিশ্চিত করুন।', { duration: 4000 });
       return;
@@ -3407,20 +3409,22 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ঠিকানা *</label>
-                    <button 
-                      type="button" 
-                      onClick={() => setIsMapOpen(true)} 
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 border-2 ${
-                        orderForm.coordinates 
-                          ? 'bg-emerald-500 border-emerald-200 text-white' 
-                          : shop.requireLocationForOrder === true 
-                            ? 'bg-red-500 border-red-200 text-white animate-pulse' 
-                            : 'bg-slate-100 border-slate-200 text-slate-400'
-                      }`}
-                      title="মানচিত্রে লোকেশন চিহ্নিত করুন"
-                    >
-                      <MapPin size={20} strokeWidth={2.5} />
-                    </button>
+                    {googleMapsApiKey && (
+                      <button 
+                        type="button" 
+                        onClick={() => setIsMapOpen(true)} 
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 border-2 ${
+                          orderForm.coordinates 
+                            ? 'bg-emerald-500 border-emerald-200 text-white' 
+                            : shop.requireLocationForOrder === true 
+                              ? 'bg-red-500 border-red-200 text-white animate-pulse' 
+                              : 'bg-slate-100 border-slate-200 text-slate-400'
+                        }`}
+                        title="মানচিত্রে লোকেশন চিহ্নিত করুন"
+                      >
+                        <MapPin size={20} strokeWidth={2.5} />
+                      </button>
+                    )}
                   </div>
                   <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} />
                 </div>
@@ -3613,6 +3617,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         isOpen={isMapOpen} 
         onClose={() => setIsMapOpen(false)} 
         shop={shop} 
+        googleMapsApiKey={googleMapsApiKey} 
         onConfirm={(coords, addr) => {
           setOrderForm(f => ({
             ...f,

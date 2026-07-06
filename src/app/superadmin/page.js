@@ -51,6 +51,7 @@ export default function SuperAdminPage() {
 
   const [globalConfig, setGlobalConfig] = useState({
     geminiApiKey: '',
+    googleMapsApiKey: '',
     contactLinks: [],
     promotedLinks: [],
     defaultLayout: 'modern',
@@ -63,6 +64,7 @@ export default function SuperAdminPage() {
   const router = useRouter();
   const [showKey, setShowKey] = useState(false);
   const [showPpKey, setShowPpKey] = useState(false);
+  const [showMapsKey, setShowMapsKey] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
   const { theme, setSystemDefault, systemDefault } = useTheme();
   const { loginAsRetailer, user } = useAuth();
@@ -179,6 +181,7 @@ export default function SuperAdminPage() {
     const unsubscribe = subscribeGlobalConfig((configData) => {
       setGlobalConfig({
         geminiApiKey: configData?.geminiApiKey || '',
+        googleMapsApiKey: configData?.googleMapsApiKey || '',
         contactLinks: configData?.contactLinks || [],
         promotedLinks: configData?.promotedLinks || [],
         defaultLayout: configData?.defaultLayout || 'modern',
@@ -914,6 +917,39 @@ export default function SuperAdminPage() {
                 This key is used as a fallback if a retailer does not provide their own Groq API key.
               </p>
            </div>
+
+            {/* ── Global Google Maps API Settings ── */}
+            <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">
+              <div>
+                <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Globe size={14}/> Platform Global Google Maps Settings (গ্লোবাল গুগল ম্যাপস সেটিংস)</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">ডিফল্ট গুগল ম্যাপস এপিআই কী সেট করুন (রিটেইলার নিজের কী সেট না করলে এটি ব্যবহার হবে)</p>
+              </div>
+              <div className="md:col-span-10">
+                <div className="relative">
+                  <Input
+                    label="Global Google Maps API Key"
+                    placeholder="AIzaSy..."
+                    type={showMapsKey ? "text" : "password"}
+                    value={globalConfig.googleMapsApiKey || ''}
+                    onChange={e => setGlobalConfig({...globalConfig, googleMapsApiKey: e.target.value})}
+                    icon={Key}
+                  />
+                  <button 
+                    type="button" 
+                    className="absolute right-4 top-10 text-slate-400 hover:text-purple-600 transition-colors"
+                    onClick={() => setShowMapsKey(!showMapsKey)}
+                  >
+                    {showMapsKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {!showMapsKey && globalConfig.googleMapsApiKey && (
+                  <p className="text-xs font-mono text-purple-700 bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg mt-3 inline-block">Current Key: {maskKey(globalConfig.googleMapsApiKey)}</p>
+                )}
+                <p className="text-[10px] text-slate-400 font-bold mt-3 px-1 uppercase tracking-wider">
+                  এটি সেট থাকলে যেকোনো রিটেইলারের স্টোরে কাস্টমার ম্যাপ চিহ্নিত করে অর্ডার দিতে পারবেন (যদি রিটেইলার নিজস্ব কী ব্যবহার না করেন)। কী সেট না থাকলে অটোমেটিক ম্যাপ ছাড়াই সাধারণ চেকআউট চালু থাকবে।
+                </p>
+              </div>
+            </div>
 
            {/* ⚡ PipraPay Centered Configuration */}
            <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">

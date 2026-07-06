@@ -1,4 +1,4 @@
-import { getShopServer, getProductsServer, getCategoriesServer } from '@/lib/server-fetch';
+import { getShopServer, getProductsServer, getCategoriesServer, getGlobalConfigServer } from '@/lib/server-fetch';
 import ShopClient from './ShopClient';
 import { notFound } from 'next/navigation';
 import Script from 'next/script';
@@ -111,9 +111,10 @@ export default async function ShopPage({ params }) {
       return <ShopPausedPage shopName={shop.shopName} />;
     }
 
-    const [products, categories] = await Promise.all([
+    const [products, categories, globalConfig] = await Promise.all([
       getProductsServer(shop.id),
       getCategoriesServer(shop.id),
+      getGlobalConfigServer(),
     ]);
 
     console.log(`[ShopPage] Data fetched: products=${products.length} categories=${categories.length}`);
@@ -122,6 +123,7 @@ export default async function ShopPage({ params }) {
     const safeShop = JSON.parse(JSON.stringify(shop));
     const safeProducts = JSON.parse(JSON.stringify(products));
     const safeCategories = JSON.parse(JSON.stringify(categories));
+    const safeGlobalConfig = JSON.parse(JSON.stringify(globalConfig || {}));
 
     // Build Organization schema (supports multi-language brand names)
     const canonicalUrl = shop?.customDomain
@@ -160,6 +162,7 @@ export default async function ShopPage({ params }) {
           products={safeProducts}
           categories={safeCategories}
           ShopClientComponent={ShopClient}
+          globalConfig={safeGlobalConfig}
         />
       </>
     );

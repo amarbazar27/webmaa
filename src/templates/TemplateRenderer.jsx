@@ -75,6 +75,7 @@ function TemplateRenderer({
   templateId,
   customization = {},
   ShopClientComponent,
+  globalConfig = {},
   ...rest
 }) {
   const wrapperRef = useRef(null);
@@ -114,6 +115,7 @@ function TemplateRenderer({
           template={template}
           theme={mergedTheme}
           isDark={isDark}
+          globalConfig={globalConfig}
           {...rest}
         />
       </Suspense>
