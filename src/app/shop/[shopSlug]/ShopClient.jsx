@@ -2261,8 +2261,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             )}
 
             {/* FAQ Button */}
-            <button onClick={() => setIsFaqOpen(true)} className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm">
-              <HelpCircle size={14} /> <span>FAQ</span>
+            <button 
+              onClick={() => setIsFaqOpen(true)} 
+              className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 !text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-lg"
+              style={{ color: '#ffffff' }}
+            >
+              <HelpCircle size={14} style={{ color: '#ffffff' }} /> <span>FAQ</span>
             </button>
 
             {/* Profile */}
@@ -2848,9 +2852,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         {/* Floating Cart Button */}
         <button 
           onClick={() => setIsCartOpen(true)} 
-          className="relative w-[60px] h-[60px] bg-slate-900 text-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.3)] flex items-center justify-center hover:scale-110 transition-transform group"
+          className="relative w-[60px] h-[60px] bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 !text-white rounded-full shadow-[0_10px_25px_rgba(219,39,119,0.3)] flex items-center justify-center hover:scale-110 transition-all group"
+          style={{ color: '#ffffff' }}
         >
-          <ShoppingCart size={24} className="group-hover:rotate-12 transition-transform" />
+          <ShoppingCart size={24} style={{ color: '#ffffff' }} className="group-hover:rotate-12 transition-transform" />
           {cartCount > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[12px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-pulse">
               {cartCount}
