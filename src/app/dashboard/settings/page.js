@@ -115,6 +115,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   // ── Settings Tab (must be at top, before any conditional returns) ──
   const [settingsTab, setSettingsTab] = useState('general');
+  const [activeSubTab, setActiveSubTab] = useState('store_info');
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [userPhotoFile, setUserPhotoFile] = useState(null);
@@ -809,10 +810,50 @@ export default function SettingsPage() {
 
       {/* ── General Settings Tab ── */}
       {settingsTab === 'general' && (<>
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Visual Identity & Left Col */}
-        <div className="lg:col-span-4 space-y-8">
-          <Card title="Store Public URL" subtitle="Your live shop link" icon={Link2} className="border-2 border-slate-100 shadow-xl bg-white">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Sub-tab Left Sidebar Navigation */}
+          <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
+            <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি</p>
+              {[
+                 { id: 'store_info', label: 'স্টোর তথ্য ও ডোমেইন', icon: Globe },
+                 { id: 'branding', label: 'ডিজাইন ও লোগো', icon: Palette },
+                 { id: 'access', label: 'কর্মী ও অ্যাক্সেস', icon: ShieldCheck },
+                 { id: 'checkout_payments', label: 'চেকআউট ও পেমেন্ট', icon: Truck },
+                 { id: 'courier_location', label: 'কুরিয়ার ও ম্যাপ', icon: MapPin },
+                 { id: 'marketing', label: 'মার্কেটিং ও কুপন', icon: Gift },
+                 { id: 'ai_companion', label: 'এআই অ্যাসিস্ট্যান্ট', icon: Sparkles },
+                 { id: 'app_faq', label: 'মোবাইল অ্যাপ ও FAQ', icon: Smartphone }
+              ].map(sub => {
+                 const Icon = sub.icon;
+                 return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setActiveSubTab(sub.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                        activeSubTab === sub.id
+                          ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span className="truncate">{sub.label}</span>
+                    </button>
+                 );
+              })}
+            </div>
+          </div>
+
+          {/* Details Right Column Panel */}
+          <div className="lg:col-span-9">
+            <form onSubmit={handleSave} className="space-y-8">
+              
+              {/* Group 1: Store Public URL (store_info) */}
+              {activeSubTab === 'store_info' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Store Public URL" subtitle="Your live shop link" icon={Link2} className="border-2 border-slate-100 shadow-xl bg-white">
             <div className="space-y-4">
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner relative">
                 {slugEditing ? (
@@ -928,9 +969,13 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
+                </div>
+              )}
 
-          {/* 📱 Android App Integration Card */}
-          <Card title="Android App Integration" subtitle="অ্যান্ড্রয়েড মোবাইল অ্যাপ" icon={Smartphone} className="border-2 border-purple-100 bg-purple-50/5">
+              {/* Group 8: Android App Integration (app_faq) */}
+              {activeSubTab === 'app_faq' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Android App Integration" subtitle="অ্যান্ড্রয়েড মোবাইল অ্যাপ" icon={Smartphone} className="border-2 border-purple-100 bg-purple-50/5">
             <div className="space-y-4 text-xs font-medium text-slate-700">
               <p className="leading-relaxed">
                 আপনার ই-কমার্স স্টোরের জন্য গুগল প্লে স্টোর রেডি অ্যান্ড্রয়েড অ্যাপ্লিকেশন (APK & AAB ফাইল)।
@@ -1010,8 +1055,13 @@ export default function SettingsPage() {
               )}
             </div>
           </Card>
+                </div>
+              )}
 
-          <Card title="Brand Assets" subtitle="Visual Logo" icon={ImageIcon} className="shadow-sm">
+              {/* Group 2: Design & Logo (branding) */}
+              {activeSubTab === 'branding' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Brand Assets" subtitle="Visual Logo" icon={ImageIcon} className="shadow-sm">
             <div className="flex flex-col items-center">
               <div className="relative group w-32 h-32 mb-4">
                 <div className="w-full h-full rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center p-3">
@@ -1024,8 +1074,13 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
+                </div>
+              )}
 
-          <Card title="Account Profile" subtitle="Your Identity" icon={Users} className="shadow-sm border-l-4 border-l-purple-500">
+              {/* Group 3: Account Profile (access) */}
+              {activeSubTab === 'access' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Account Profile" subtitle="Your Identity" icon={Users} className="shadow-sm border-l-4 border-l-purple-500">
             <div className="flex flex-col items-center">
               <div className="relative group w-24 h-24 mb-4">
                 <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 border-2 border-white shadow-md flex items-center justify-center">
@@ -1046,9 +1101,13 @@ export default function SettingsPage() {
               </div>
             </div>
           </Card>
+                </div>
+              )}
 
-          
-          <Card title="Loyalty & Promo" subtitle="Customer Retention" icon={Gift} className="border-l-4 border-l-emerald-400">
+              {/* Group 6: Marketing & Promo (marketing) */}
+              {activeSubTab === 'marketing' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Loyalty & Promo" subtitle="Customer Retention" icon={Gift} className="border-l-4 border-l-emerald-400">
              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
                 <div>
                    <p className="text-xs font-black text-slate-900">7th Day Special Hero</p>
@@ -1060,8 +1119,13 @@ export default function SettingsPage() {
                 </label>
              </div>
           </Card>
+                </div>
+              )}
 
-          <Card title="Customer Auth" subtitle="Sign-in Options" icon={Users}>
+              {/* Group 4: Customer Auth (checkout_payments) */}
+              {activeSubTab === 'checkout_payments' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Customer Auth" subtitle="Sign-in Options" icon={Users}>
              <div className="flex flex-col gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                <div className="flex items-center justify-between">
                   <div>
@@ -1097,13 +1161,13 @@ export default function SettingsPage() {
                </div>
              </div>
           </Card>
-        </div>
+                </div>
+              )}
 
-        {/* Configurations Col */}
-        <div className="lg:col-span-8 space-y-8">
-          
-          <form onSubmit={handleSave} className="space-y-8">
-            <Card title="Staff Management" subtitle="Multi-Tenant Isolation" icon={Users} className="border-l-4 border-l-blue-500">
+              {/* Group 3: Access Management (access) */}
+              {activeSubTab === 'access' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Staff Management" subtitle="Multi-Tenant Isolation" icon={Users} className="border-l-4 border-l-blue-500">
                <div className="space-y-4">
                   <p className="text-xs text-slate-500 font-bold leading-relaxed">
                     Add email addresses of users who can manage your inventory and orders. Staff will have a fully isolated dashboard.
@@ -1205,9 +1269,13 @@ export default function SettingsPage() {
                   />
                </div>
             </Card>
+                </div>
+              )}
 
-
-            <Card title="Checkout & Delivery" subtitle="Payments & COD" icon={Truck}>
+              {/* Group 4: Checkout & Payments (checkout_payments) */}
+              {activeSubTab === 'checkout_payments' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Checkout & Delivery" subtitle="Payments & COD" icon={Truck}>
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
                  <div>
                     <p className="text-xs font-black text-slate-900">Cash on Delivery (COD)</p>
@@ -1372,8 +1440,13 @@ export default function SettingsPage() {
                  </div>
                )}
             </Card>
+                </div>
+              )}
 
-            <Card title="Coupon & Bulk Order Settings (কুপন ও বাল্ক অর্ডার সেটিং)" subtitle="Discount coupon and Common Order Sheet" icon={Gift} className="border-l-4 border-l-emerald-500">
+              {/* Group 6: Marketing & Promo (marketing) */}
+              {activeSubTab === 'marketing' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Coupon & Bulk Order Settings (কুপন ও বাল্ক অর্ডার সেটিং)" subtitle="Discount coupon and Common Order Sheet" icon={Gift} className="border-l-4 border-l-emerald-500">
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Input
@@ -1416,8 +1489,13 @@ export default function SettingsPage() {
                 </div>
               </div>
             </Card>
+                </div>
+              )}
 
-            <Card title="Store AI Companion" subtitle="Smart Assistant" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/10">
+              {/* Group 7: AI Companion (ai_companion) */}
+              {activeSubTab === 'ai_companion' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Store AI Companion" subtitle="Smart Assistant" icon={Sparkles} className="border-2 border-purple-100 bg-purple-50/10">
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="relative">
                      <Input
@@ -1467,8 +1545,13 @@ export default function SettingsPage() {
                   </div>
                </div>
             </Card>
+                </div>
+              )}
 
-            <Card title="Display & Branding" subtitle="Marquee and text" icon={Text}>
+              {/* Group 1: Display & Branding (store_info) */}
+              {activeSubTab === 'store_info' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Display & Branding" subtitle="Marquee and text" icon={Text}>
               <div className="space-y-6">
                 <Input
                   label="Display Name"
@@ -1865,13 +1948,23 @@ export default function SettingsPage() {
                 </div>
               </Card>
             )}
+                </div>
+              )}
 
-            <Card title="Design System" subtitle="10 Premium Themes" icon={Sparkles}>
+              {/* Group 2: Design System & Themes (branding) */}
+              {activeSubTab === 'branding' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Design System" subtitle="10 Premium Themes" icon={Sparkles}>
               <DesignThemeSelector shopId={activeShopId} />
             </Card>
+                </div>
+              )}
 
-            {/* Service Area Location */}
-            <Card title="সার্ভিস এলাকা" subtitle="কোথায় ডেলিভারি করেন তা সেট করুন" icon={MapPin} className="border-l-4 border-l-emerald-500">
+              {/* Group 5: Courier & Location (courier_location) */}
+              {activeSubTab === 'courier_location' && (
+                <div className="space-y-8 animate-slide-in">
+                  {/* Service Area Location */}
+                  <Card title="সার্ভিস এলাকা" subtitle="কোথায় ডেলিভারি করেন তা সেট করুন" icon={MapPin} className="border-l-4 border-l-emerald-500">
               <div className="space-y-6">
                 <div className="flex items-center justify-between bg-purple-50 p-4 rounded-xl border border-purple-100">
                   <div>
@@ -2057,9 +2150,14 @@ export default function SettingsPage() {
                 )}
               </div>
             </Card>
+                </div>
+              )}
 
-            {/* FAQ Section */}
-            <Card title="FAQ / প্রশ্ন-উত্তর" subtitle="কাস্টমারদের জন্য সাধারণ প্রশ্ন ও উত্তর" icon={MessageSquare} className="border-l-4 border-l-amber-500">
+              {/* Group 8: Mobile App & FAQ (app_faq) */}
+              {activeSubTab === 'app_faq' && (
+                <div className="space-y-8 animate-slide-in">
+                  {/* FAQ Section */}
+                  <Card title="FAQ / প্রশ্ন-উত্তর" subtitle="কাস্টমারদের জন্য সাধারণ প্রশ্ন ও উত্তর" icon={MessageSquare} className="border-l-4 border-l-amber-500">
               <div className="space-y-4">
                 <p className="text-xs text-slate-500 font-bold leading-relaxed">
                   কাস্টমারদের কাছে শো হবে এমন প্রশ্ন ও উত্তর যোগ করুন। এগুলো শপ পেজে FAQ সেকশনে দেখা যাবে।
@@ -2096,8 +2194,13 @@ export default function SettingsPage() {
                 )}
               </div>
             </Card>
+                </div>
+              )}
 
-            <Card title="Social Ecosystem" subtitle="Connect Audiences" icon={Globe}>
+              {/* Group 2: Social Ecosystem (branding) */}
+              {activeSubTab === 'branding' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Social Ecosystem" subtitle="Connect Audiences" icon={Globe}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                    <Input label="💙 Facebook" placeholder="https://facebook.com/yourpage" value={socialLinks.fb} onChange={e => setSocialLinks({...socialLinks, fb: e.target.value})} />
                    <Input label="💜 Instagram" placeholder="https://instagram.com/yourpage" value={socialLinks.insta} onChange={e => setSocialLinks({...socialLinks, insta: e.target.value})} />
@@ -2111,8 +2214,13 @@ export default function SettingsPage() {
                    <Input label="📌 Pinterest" placeholder="https://pinterest.com/yourpage" value={socialLinks.pinterest || ''} onChange={e => setSocialLinks({...socialLinks, pinterest: e.target.value})} />
                 </div>
              </Card>
+                </div>
+              )}
 
-            <Card title="User Tracking & Pixels (Analytics)" subtitle="Track multi-channel conversions and server-side events" icon={Users} className="border-2 border-slate-100 shadow-xl bg-white">
+              {/* Group 6: User Tracking & Pixels (marketing) */}
+              {activeSubTab === 'marketing' && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="User Tracking & Pixels (Analytics)" subtitle="Track multi-channel conversions and server-side events" icon={Users} className="border-2 border-slate-100 shadow-xl bg-white">
               <div className="space-y-6">
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                   <span className="text-xs font-black text-slate-500 uppercase tracking-wider">কনফিগারেশন ফিল্ডস</span>
@@ -2266,9 +2374,14 @@ export default function SettingsPage() {
                 </div>
               </div>
             </Card>
+                </div>
+              )}
 
-            {/* Steadfast Courier Settings */}
-            <Card title="Steadfast Courier API Integration" subtitle="One-tap parcel delivery and tracking number generation" icon={Truck} className="border-2 border-slate-100 shadow-xl bg-white">
+              {/* Group 5: Courier & Location (courier_location) */}
+              {activeSubTab === 'courier_location' && (
+                <div className="space-y-8 animate-slide-in">
+                  {/* Steadfast Courier Settings */}
+                  <Card title="Steadfast Courier API Integration" subtitle="One-tap parcel delivery and tracking number generation" icon={Truck} className="border-2 border-slate-100 shadow-xl bg-white">
                <div className="space-y-6">
                   <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                      <span className="text-xs font-black text-slate-500 uppercase tracking-wider">ইন্টিগ্রেশন সেটিংস</span>
@@ -2384,6 +2497,8 @@ export default function SettingsPage() {
                   )}
                </div>
             </Card>
+                </div>
+              )}
 
             <Button
               variant="primary"

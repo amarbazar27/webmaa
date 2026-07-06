@@ -16,7 +16,7 @@ function getDistanceInKm(lat1, lon1, lat2, lon2) {
   return R * c; // Distance in km
 }
 
-export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinates, shop, googleMapsApiKey: propApiKey }) {
+export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinates, shop }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [address, setAddress] = useState('লোকেশন খোঁজা হচ্ছে...');
   const [locating, setLocating] = useState(false);
@@ -29,53 +29,57 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerInstanceRef = useRef(null);
-  const autocompleteServiceRef = useRef(null);
-  const geocoderRef = useRef(null);
 
   // Shop delivery config parameters
   const shopLat = parseFloat(shop?.deliveryConfig?.shopLat);
   const shopLng = parseFloat(shop?.deliveryConfig?.shopLng);
   const radiusLimit = parseFloat(shop?.deliveryConfig?.radiusLimit); // In KM
 
-  // Google Maps API Key: check prop, config, or fallback
-  const googleMapsApiKey = propApiKey || shop?.googleMapsApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  // 1. Dynamic Script Loader
+  // 1. Dynamic Leaflet Assets Loader
   useEffect(() => {
-    if (!isOpen || !googleMapsApiKey) return;
+    if (!isOpen) return;
 
     let isMounted = true;
 
-    const loadGoogleMaps = () => {
+    const loadLeaflet = () => {
       return new Promise((resolve, reject) => {
-        if (window.google && window.google.maps) {
-          resolve(window.google.maps);
+        // Load CSS first
+        if (!document.getElementById('leaflet-css')) {
+          const link = document.createElement('link');
+          link.id = 'leaflet-css';
+          link.rel = 'stylesheet';
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+          document.head.appendChild(link);
+        }
+
+        // Check if Leaflet is already loaded in window
+        if (window.L) {
+          resolve(window.L);
           return;
         }
 
-        const scriptId = 'google-maps-script';
+        const scriptId = 'leaflet-script';
         let script = document.getElementById(scriptId);
 
         if (!script) {
           script = document.createElement('script');
           script.id = scriptId;
-          script.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&language=bn`;
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
           script.async = true;
-          script.defer = true;
           document.head.appendChild(script);
         }
 
         script.onload = () => {
-          if (isMounted) resolve(window.google.maps);
+          if (isMounted) resolve(window.L);
         };
 
         script.onerror = () => {
-          reject(new Error('Failed to load Google Maps script.'));
+          reject(new Error('Failed to load Leaflet script.'));
         };
       });
     };
 
-    loadGoogleMaps()
+    loadLeaflet()
       .then(() => {
         if (isMounted) setMapLoaded(true);
       })
@@ -86,7 +90,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
     return () => {
       isMounted = false;
     };
-  }, [isOpen, googleMapsApiKey]);
+  }, [isOpen]);
 
   // Check radius constraints
   useEffect(() => {
@@ -100,19 +104,30 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
     }
   }, [selectedCoords, shopLat, shopLng, radiusLimit]);
 
-  // 2. Reverse Geocoding via Google Geocoder
-  const reverseGeocode = (lat, lng) => {
-    if (!geocoderRef.current) return;
+  // 2. Reverse Geocoding via OpenStreetMap Nominatim API
+  const reverseGeocode = async (lat, lng) => {
     setGeocoding(true);
-
-    geocoderRef.current.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        setAddress(results[0].formatted_address);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=bn,en`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        let displayName = data.display_name || '';
+        const parts = displayName.split(', ');
+        if (parts.length > 2) {
+          displayName = parts.slice(0, parts.length - 2).join(', ');
+        }
+        setAddress(displayName || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       } else {
         setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       }
+    } catch (error) {
+      console.error(error);
+      setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    } finally {
       setGeocoding(false);
-    });
+    }
   };
 
   // 3. Center on user current GPS position
@@ -127,11 +142,10 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
         setLocating(false);
 
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.setCenter(newCoords);
-          mapInstanceRef.current.setZoom(17);
+          mapInstanceRef.current.setView([latitude, longitude], 17);
         }
         if (markerInstanceRef.current) {
-          markerInstanceRef.current.setPosition(newCoords);
+          markerInstanceRef.current.setLatLng([latitude, longitude]);
         }
         reverseGeocode(latitude, longitude);
       },
@@ -144,102 +158,109 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
     );
   };
 
-  // 4. Initialize Map
+  // 4. Initialize Leaflet Map
   useEffect(() => {
     if (!mapLoaded || !isOpen || !mapContainerRef.current) return;
 
-    const maps = window.google.maps;
-    if (!maps) return;
+    const L = window.L;
+    if (!L) return;
 
-    geocoderRef.current = new maps.Geocoder();
-    autocompleteServiceRef.current = new maps.places.AutocompleteService();
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
 
-    // Map Options
-    const mapOptions = {
-      center: selectedCoords,
-      zoom: 16,
+    const map = L.map(mapContainerRef.current, {
       zoomControl: false,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-      styles: [
-        {
-          featureType: 'poi',
-          elementType: 'labels',
-          stylers: [{ visibility: 'off' }]
-        }
-      ]
-    };
-
-    // Create Map Instance
-    const map = new maps.Map(mapContainerRef.current, mapOptions);
+      attributionControl: false
+    }).setView([selectedCoords.lat, selectedCoords.lng], 16);
     mapInstanceRef.current = map;
 
-    // Create Marker
-    const marker = new maps.Marker({
-      position: selectedCoords,
-      map: map,
-      draggable: true,
-      animation: maps.Animation.DROP,
-      icon: {
-        path: maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-        fillColor: '#db2777', // pink
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 2,
-        scale: 7
-      }
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    const customIcon = L.divIcon({
+      html: `<div style="display:flex; justify-content:center; align-items:center; width:40px; height:40px;">
+        <svg viewBox="0 0 24 24" width="38" height="38" fill="#db2777" stroke="#ffffff" stroke-width="2" style="filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.3));">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-12-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+      </div>`,
+      className: 'custom-leaflet-marker',
+      iconSize: [40, 40],
+      iconAnchor: [20, 38]
     });
+
+    const marker = L.marker([selectedCoords.lat, selectedCoords.lng], {
+      draggable: true,
+      icon: customIcon
+    }).addTo(map);
     markerInstanceRef.current = marker;
 
-    // Drag event listeners
-    maps.event.addListener(marker, 'dragend', () => {
-      const pos = marker.getPosition();
+    marker.on('dragend', () => {
+      const pos = marker.getLatLng();
       const newCoords = { lat: pos.lat(), lng: pos.lng() };
       setSelectedCoords(newCoords);
       reverseGeocode(newCoords.lat, newCoords.lng);
     });
 
-    // Map click repositioning
-    maps.event.addListener(map, 'click', (e) => {
-      const pos = e.latLng;
-      marker.setPosition(pos);
+    map.on('click', (e) => {
+      const pos = e.latlng;
+      marker.setLatLng(pos);
       const newCoords = { lat: pos.lat(), lng: pos.lng() };
       setSelectedCoords(newCoords);
       reverseGeocode(newCoords.lat, newCoords.lng);
     });
 
-    // Run initial GPS centering
     getGpsPosition();
 
     return () => {
-      // Clean up map events if any
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
   }, [mapLoaded, isOpen]);
 
-  // Autocomplete address search handler
-  const handleAddressSearch = () => {
-    if (!searchQuery.trim() || !window.google || !window.google.maps) return;
+  const handleAddressSearch = async () => {
+    if (!searchQuery.trim() || !window.L) return;
 
-    const maps = window.google.maps;
-    const geocoder = geocoderRef.current || new maps.Geocoder();
+    setGeocoding(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          searchQuery + ', Bangladesh'
+        )}&countrycodes=bd&limit=1&accept-language=bn,en`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          const item = data[0];
+          const newCoords = { lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
+          setSelectedCoords(newCoords);
+          
+          let displayName = item.display_name || '';
+          const parts = displayName.split(', ');
+          if (parts.length > 2) {
+            displayName = parts.slice(0, parts.length - 2).join(', ');
+          }
+          setAddress(displayName);
 
-    geocoder.geocode({ address: searchQuery + ', Bangladesh' }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        const loc = results[0].geometry.location;
-        const newCoords = { lat: loc.lat(), lng: loc.lng() };
-        setSelectedCoords(newCoords);
-        setAddress(results[0].formatted_address);
-
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.setCenter(newCoords);
-          mapInstanceRef.current.setZoom(17);
-        }
-        if (markerInstanceRef.current) {
-          markerInstanceRef.current.setPosition(newCoords);
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setView([newCoords.lat, newCoords.lng], 17);
+          }
+          if (markerInstanceRef.current) {
+            markerInstanceRef.current.setLatLng([newCoords.lat, newCoords.lng]);
+          }
+        } else {
+          setAddress('লোকেশনটি খুঁজে পাওয়া যায়নি');
         }
       }
-    });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -254,36 +275,38 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
         className="relative w-full h-full sm:max-w-xl sm:h-[85vh] bg-white rounded-none sm:rounded-[2rem] overflow-hidden shadow-2xl flex flex-col cursor-default"
       >
         
-        {/* Header */}
-        <div className="absolute top-4 left-4 right-4 z-40 flex flex-col gap-3 pointer-events-none">
+        {/* Header (Contains Close Button and Search Input) */}
+        <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-3 pointer-events-none">
           <div className="flex items-center justify-between">
             <button 
               type="button" 
               onClick={onClose} 
-              className="w-10 h-10 rounded-full bg-white/90 backdrop-blur shadow-lg flex items-center justify-center hover:bg-slate-50 transition-colors pointer-events-auto border border-slate-100"
+              className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-lg flex items-center justify-center hover:bg-slate-50 transition-colors pointer-events-auto border border-slate-100"
+              title="বন্ধ করুন"
             >
-              <X size={20} className="text-slate-700" />
+              <X size={20} className="text-slate-700 font-bold" />
             </button>
-            <div className="px-4 py-2 rounded-full bg-slate-900/90 backdrop-blur shadow text-white text-[11px] font-black tracking-widest uppercase border border-slate-800">
-              মানচিত্র পিন করুন (Google Maps)
+            
+            <div className="px-4 py-2 rounded-full bg-purple-600/90 backdrop-blur shadow-md text-white text-[11px] font-black tracking-widest uppercase border border-purple-500 pointer-events-auto">
+              ডেলিভারি লোকেশন
             </div>
           </div>
 
-          {/* Search bar */}
+          {/* Place Search Bar */}
           {mapLoaded && (
-            <div className="flex items-center bg-white rounded-2xl shadow-lg border border-slate-200 p-1.5 pointer-events-auto w-full">
+            <div className="flex items-center bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 pointer-events-auto w-full">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddressSearch()}
-                placeholder="এলাকা বা রোড খুঁজুন..."
+                placeholder="ম্যাপে এলাকা বা রোড খুঁজুন (যেমন: হাতিরঝিল)..."
                 className="flex-1 bg-transparent px-3 py-2 text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400"
               />
               <button
                 type="button"
                 onClick={handleAddressSearch}
-                className="w-8 h-8 rounded-xl bg-pink-600 text-white flex items-center justify-center hover:bg-pink-700 transition-all shrink-0"
+                className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-all shrink-0"
               >
                 <Search size={14} />
               </button>
@@ -293,16 +316,10 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
         {/* Map Container */}
         <div className="flex-1 w-full bg-slate-100 relative min-h-[300px]">
-          {!googleMapsApiKey ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center gap-2">
-              <MapPin className="text-red-500" size={32} />
-              <p className="text-sm font-black text-slate-800">Google Maps API Key missing</p>
-              <p className="text-xs text-slate-400">দয়া করে এডমিন ড্যাশবোর্ড থেকে Google Maps API Key সেট করুন।</p>
-            </div>
-          ) : !mapLoaded ? (
+          {!mapLoaded ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="animate-spin text-pink-600" size={32} />
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">গুগল ম্যাপ লোড হচ্ছে...</p>
+              <Loader2 className="animate-spin text-purple-600" size={32} />
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">ম্যাপ লোড হচ্ছে...</p>
             </div>
           ) : (
             <div ref={mapContainerRef} className="w-full h-full z-10" />
@@ -314,7 +331,8 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
               type="button"
               onClick={getGpsPosition}
               disabled={locating}
-              className="absolute bottom-6 right-6 z-20 w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:text-pink-600 transition-colors active:scale-95 disabled:opacity-75"
+              className="absolute bottom-6 right-6 z-[1000] w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:text-purple-600 transition-colors active:scale-95 disabled:opacity-75"
+              title="আমার অবস্থান চিহ্নিত করুন"
             >
               {locating ? (
                 <Loader2 className="animate-spin" size={20} />
@@ -328,7 +346,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
         {/* Bottom Address details card */}
         <div className="bg-white border-t border-slate-100 px-6 py-6 space-y-4 shadow-2xl z-30">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 shrink-0 mt-0.5 border border-pink-100/50">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0 mt-0.5 border border-purple-100/50">
               <MapPin size={20} className="fill-current" />
             </div>
             <div className="flex-1 min-w-0">
@@ -339,7 +357,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
               <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full text-xs sm:text-sm font-extrabold text-slate-900 leading-snug mt-1.5 p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none resize-none h-14"
+                className="w-full text-xs sm:text-sm font-extrabold text-slate-900 leading-snug mt-1.5 p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none resize-none h-14"
                 placeholder="বাসার নম্বর, রোড নম্বর বা হোল্ডিং নম্বর সহ বিস্তারিত ঠিকানা লিখুন..."
               />
             </div>
@@ -368,7 +386,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             type="button"
             disabled={outOfRadius}
             onClick={() => onConfirm(selectedCoords, address)}
-            className="w-full py-4 bg-pink-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-sm hover:bg-pink-700 transition-colors shadow-lg shadow-pink-500/25 active:scale-[0.99] flex items-center justify-center gap-2"
+            className="w-full py-4 bg-purple-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-sm hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/25 active:scale-[0.99] flex items-center justify-center gap-2"
           >
             লোকেশন নিশ্চিত করুন (Confirm Location)
           </button>

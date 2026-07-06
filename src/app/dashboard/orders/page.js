@@ -109,6 +109,54 @@ export default function OrdersPage() {
       await updateOrderStatus(activeShopId, orderId, newStatus, deliveryConfig, actorInfo);
       toast.success(`Order marked as ${newStatus}`);
       setAuthModal({ open: false, orderId: null, newStatus: '', pin: '', actionType: 'status' });
+
+      // Automatically book to Steadfast if enabled for confirmed orders
+      if (newStatus === 'confirmed' && shop?.courierConfig?.steadfastEnabled) {
+         const order = orders.find(o => o.id === orderId);
+         if (order && !order.trackingCode) {
+            let cleanPhone = (order.customerPhone || '').trim().replace(/\D/g, '');
+            if (cleanPhone.startsWith('880')) {
+              cleanPhone = cleanPhone.substring(3);
+            } else if (cleanPhone.startsWith('88')) {
+              cleanPhone = cleanPhone.substring(2);
+            }
+            if (cleanPhone.length === 10 && !cleanPhone.startsWith('0')) {
+              cleanPhone = '0' + cleanPhone;
+            }
+
+            toast.promise(
+              (async () => {
+                const token = await user.getIdToken();
+                const res = await fetch('/api/courier/steadfast/create-parcel', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    shopId: activeShopId,
+                    orderId: order.id,
+                    recipientName: order.customerName || '',
+                    recipientPhone: cleanPhone,
+                    recipientAddress: order.customerAddress || '',
+                    codAmount: parseFloat(order.total) || 0,
+                    note: order.customerNote || ''
+                  })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                  throw new Error(data.error || 'Failed to auto-book parcel');
+                }
+                return data;
+              })(),
+              {
+                loading: 'স্টেডফাস্ট কুরিয়ারে পার্সেল বুকিং করা হচ্ছে...',
+                success: 'স্টেডফাস্টে সফলভাবে অটো-বুকিং করা হয়েছে! 🎉',
+                error: (err) => `স্টেডফাস্ট অটো-বুকিং ব্যর্থ: ${err.message}`
+              }
+            );
+         }
+      }
     } catch (err) {
       console.error('Status update error:', err);
       toast.error('Failed to update status');

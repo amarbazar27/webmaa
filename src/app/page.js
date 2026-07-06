@@ -155,6 +155,9 @@ export default function Home() {
   const router = useRouter();
   const [loggingIn, setLoggingIn] = useState(false);
   const [globalConfig, setGlobalConfig] = useState(null);
+  const globalWhatsapp = globalConfig?.whatsapp || globalConfig?.contactLinks?.find(link => 
+    link.name?.toLowerCase().includes('whatsapp') || link.url?.includes('wa.me')
+  )?.url || '';
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
  
   // ── Marketplace & Cart States ──
@@ -981,6 +984,7 @@ export default function Home() {
 
   // Compile active products list based on hierarchy & search options
   let filteredProducts = products.filter(p => {
+    if (p.showOnMainSite === false) return false;
     // 1. Curation Whitelist Filters
     if (globalConfig?.showcaseCuration?.enabled) {
       const allowedShops = globalConfig.showcaseCuration.allowedShops || [];
@@ -1150,6 +1154,7 @@ export default function Home() {
   const shopGroups = {};
   if (globalConfig?.showAmazonBoxes) {
     products.forEach(p => {
+      if (p.showOnMainSite === false) return;
       // 1. Curation Whitelist Filters
       if (globalConfig?.showcaseCuration?.enabled) {
         const allowedShops = globalConfig.showcaseCuration.allowedShops || [];
@@ -2380,10 +2385,10 @@ export default function Home() {
                           <span>WhatsApp (সরাসরি চ্যাট)</span>
                         </a>
                       </li>
-                    ) : (globalConfig?.whatsapp && getFormattedContactUrl(globalConfig.whatsapp, 'whatsapp') !== '#') ? (
+                    ) : (globalWhatsapp && getFormattedContactUrl(globalWhatsapp, 'whatsapp') !== '#') ? (
                       <li>
                         <a 
-                          href={getFormattedContactUrl(globalConfig.whatsapp, 'whatsapp')} 
+                          href={getFormattedContactUrl(globalWhatsapp, 'whatsapp')} 
                           target="_blank" 
                           rel="noreferrer" 
                           className="flex items-center gap-3 text-xs font-bold text-white/70 group hover:text-white transition-colors cursor-pointer"
@@ -2810,7 +2815,9 @@ export default function Home() {
 
       {/* ── Floating WhatsApp Chat Button (Bottom-Right, shifted for alignment) ── */}
       <a
-        href={mainShopData?.socialLinks?.wa ? getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp') : "https://wa.me/8801734763306"}
+        href={mainShopData?.socialLinks?.wa 
+          ? getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp') 
+          : (globalWhatsapp ? getFormattedContactUrl(globalWhatsapp, 'whatsapp') : "https://wa.me/8801734763306")}
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-8 right-24 z-[120] w-14 h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-115 active:scale-95 transition-all border border-emerald-400/30 cursor-pointer shadow-emerald-500/20"

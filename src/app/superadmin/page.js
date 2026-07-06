@@ -57,7 +57,11 @@ export default function SuperAdminPage() {
     defaultLayout: 'modern',
     piprapayUrl: '',
     piprapayApiKey: '',
-    piprapayCommissionPercent: 0
+    piprapayCommissionPercent: 0,
+    brandName: '',
+    logoUrl: '',
+    platformDescription: '',
+    whatsapp: ''
   });
   const [savingConfig, setSavingConfig] = useState(false);
   
@@ -191,7 +195,11 @@ export default function SuperAdminPage() {
         showAllProductsDirectly: configData?.showAllProductsDirectly ?? true,
         piprapayUrl: configData?.piprapayUrl || '',
         piprapayApiKey: configData?.piprapayApiKey || '',
-        piprapayCommissionPercent: configData?.piprapayCommissionPercent || 0
+        piprapayCommissionPercent: configData?.piprapayCommissionPercent || 0,
+        brandName: configData?.brandName || '',
+        logoUrl: configData?.logoUrl || '',
+        platformDescription: configData?.platformDescription || '',
+        whatsapp: configData?.whatsapp || ''
       });
     });
     return () => unsubscribe();
@@ -880,6 +888,14 @@ export default function SuperAdminPage() {
                   </div>
                 </div>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Platform WhatsApp Support Number (সাপোর্ট হোয়াটসঅ্যাপ নম্বর)"
+                  value={globalConfig.whatsapp || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, whatsapp: e.target.value.replace(/\D/g, '')})}
+                  placeholder="e.g. 01734763306"
+                />
+              </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-black tracking-widest uppercase text-slate-600">Platform Description Box (ল্যান্ডিং পেজের ডেসক্রিপশন)</label>
                 <textarea
@@ -1057,7 +1073,7 @@ export default function SuperAdminPage() {
            </div>
 
            <div className="md:col-span-12 flex justify-end">
-              <Button type="submit" loading={savingConfig} className="bg-slate-900 border-b-4 border-slate-950 hover:bg-black w-40 h-12">
+               <Button type="submit" loading={savingConfig} className="bg-purple-600 border-b-4 border-purple-800 hover:bg-purple-700 w-48 h-12 text-white font-bold">
                 Update All settings
               </Button>
            </div>
@@ -1714,6 +1730,7 @@ export default function SuperAdminPage() {
                       <th className="pb-2 px-4 border-b border-slate-100">মার্চেন্ট বা শপ</th>
                       <th className="pb-2 px-4 border-b border-slate-100">ক্যাটাগরি ওভাররাইড</th>
                       <th className="pb-2 px-4 border-b border-slate-100">এআই টাইপ ওভাররাইড</th>
+                      <th className="pb-2 px-4 border-b border-slate-100 text-center">মেইন সাইটে দেখান</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1758,7 +1775,7 @@ export default function SuperAdminPage() {
                               placeholder="ক্যাটাগরি লিখুন"
                             />
                           </td>
-                          <td className="p-3 last:rounded-r-2xl">
+                          <td className="p-3">
                             <select
                               value={product.superadminType || ''}
                               onChange={async (e) => {
@@ -1782,6 +1799,26 @@ export default function SuperAdminPage() {
                               <option value="পানীয় ও দুগ্ধজাত (Drinks & Dairy)">পানীয় ও দুগ্ধজাত (Drinks & Dairy)</option>
                               <option value="অন্যান্য পণ্য (Others)">অন্যান্য পণ্য (Others)</option>
                             </select>
+                          </td>
+                          <td className="p-3 last:rounded-r-2xl text-center">
+                            <label className="relative inline-flex items-center cursor-pointer justify-center">
+                              <input 
+                                type="checkbox" 
+                                className="sr-only peer" 
+                                checked={product.showOnMainSite !== false} 
+                                onChange={async (e) => {
+                                  const show = e.target.checked;
+                                  setAllProducts(prev => prev.map(p => p.id === product.id ? { ...p, showOnMainSite: show } : p));
+                                  try {
+                                    await updateProduct(product.shopId, product.id, { showOnMainSite: show });
+                                    toast.success(show ? 'পণ্যটি মেইন সাইটে দৃশ্যমান করা হয়েছে' : 'পণ্যটি মেইন সাইট থেকে হাইড করা হয়েছে');
+                                  } catch (err) {
+                                    toast.error('হাইড/শো আপডেট করতে সমস্যা হয়েছে');
+                                  }
+                                }} 
+                              />
+                              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                            </label>
                           </td>
                         </tr>
                       );
