@@ -957,7 +957,7 @@ export default function SettingsPage() {
                       <a 
                         href={shop.appBuildApkUrl} 
                         download
-                        className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-black text-center flex items-center justify-center gap-2 hover:bg-black transition-all"
+                        className="w-full py-2.5 bg-purple-600 text-white rounded-xl font-black text-center flex items-center justify-center gap-2 hover:bg-purple-700 shadow-md shadow-purple-500/10 transition-all"
                       >
                         <Download size={14} /> Download APK (Direct Install)
                       </a>
@@ -2497,7 +2497,7 @@ export default function SettingsPage() {
               <button 
                 type="button"
                 onClick={() => setShowAppInstructions(false)}
-                className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors"
+                className="px-6 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-colors shadow-md"
               >
                 বন্ধ করুন
               </button>

@@ -1115,7 +1115,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
 ৭. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।
 ৮. পণ্য তালিকার বাইরে থাকা কোনো পণ্য বা সেবার অর্ডার নিবে না বা সাজেস্ট করবে না। শুধুমাত্র প্রদত্ত পণ্য তালিকার পণ্যই রেকমেন্ড করবে।
-৯. একই পণ্যের বিভিন্ন রূপ (পিস বনাম কেজি): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।` },
+৯. একই পণ্যের বিভিন্ন রূপ (পিস বনাম কেজি): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।
+১০. পণ্য অনুসন্ধান এবং প্রাপ্যতা (Product Search & Availability): ব্যবহারকারী যদি নির্দিষ্ট কোনো পণ্যের (যেমন: ক্যামেরা) খোঁজ করে, তবে তুমি প্রথমে প্রদত্ত পণ্য তালিকায় তা খুঁজবে। যদি পণ্যটি তালিকায় থাকে, তবে সেটি সাজেস্ট করবে। কিন্তু যদি পণ্যটি তালিকায় না থাকে, তবে স্পষ্টভাবে ব্যবহারকারীকে বলবে যে পণ্যটি এই মুহূর্তে দোকানে উপলব্ধ নেই (available নেই)। এরপর তুমি বিকল্প হিসেবে অন্য কোনো সম্পর্কিত পণ্য (যেমন ক্যামেরা না থাকলে লেন্স বা অন্য কোনো অ্যাক্সেসরিজ যা তালিকায় আছে) বা বিকল্প ব্যবস্থা সাজেস্ট করতে পারো। কখনোই দোকানে না থাকা পণ্যের বদলে অন্য পণ্যকে সরাসরি মূল পণ্য হিসেবে সাজেস্ট করবে না।` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
@@ -3056,7 +3057,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAiOpen(false)} />
           <div className="relative w-full max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] max-h-[700px] border border-slate-200 animate-slide-in">
             {/* Header */}
-            <div className="bg-slate-900 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
+            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-purple-100 overflow-hidden" style={{transform:'scale(0.75)'}}>
                   <CuteAIIcon />
@@ -3069,21 +3070,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
             </div>
 
-            {/* Tab Bar */}
-            <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
-              {[
-                {id:'chat',label:'চ্যাট',icon:'💬', always: true},
-                {id:'meal',label:'স্মার্ট মিল',icon:'🍱', always: isGroceryShop},
-                {id:'voice',label:'ভয়েস',icon:'🎤', always: true},
-                {id:'image',label:'ছবি OCR',icon:'📷', always: true},
-                {id:'text',label:'লিস্ট',icon:'📝', always: true},
-              ].filter(tab => tab.always || tab.show).map(tab => (
-                <button key={tab.id} onClick={() => setAiTab(tab.id)}
-                  className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all ${aiTab === tab.id ? 'bg-white text-purple-600 border-b-2 border-purple-600' : 'text-slate-500 hover:text-slate-800'}`}>
-                  {tab.icon} {tab.label}
-                </button>
-              ))}
-            </div>
+            {/* Tab Bar Removed - Kept only Chat tab view */}
 
             {/* Chat Tab */}
             {aiTab === 'chat' && <>
@@ -3196,29 +3183,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               )}
             </>}
 
-            {/* Voice / Image / Text tabs via AiVoicePanel */}
-            {aiTab !== 'chat' && aiTab !== 'meal' && (
-              <AiVoicePanel
-                shop={shop}
-                products={products}
-                onAddToCart={(item) => { setCart(prev => { const ex = prev.findIndex(i => i.id === item.id); if (ex >= 0) { const n = [...prev]; n[ex] = {...n[ex], quantity: n[ex].quantity + (item.quantity||1)}; return n; } return [...prev, item]; }); }}
-                onDirectOrder={handleDirectOrderFromAi}
-                isOpen={true}
-                  onClose={() => setIsAiOpen(false)}
-                  activeTab={aiTab}
-                />
-            )}
-
-            {/* Smart Meal Engine tab */}
-            {aiTab === 'meal' && (
-              <SmartMealEngine
-                shop={shop}
-                products={products}
-                onAddToCart={addToCart}
-                onClose={() => setIsAiOpen(false)}
-                userOrders={userOrders}
-              />
-            )}
+            {/* Other tabs (Voice/OCR/Meal) views removed */}
           </div>
         </div>
       )}
@@ -3798,7 +3763,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsProfileOpen(false)} />
           <div className="relative w-full max-w-sm h-full bg-slate-50 shadow-2xl flex flex-col overflow-hidden animate-slide-in border-l border-slate-200">
-            <div className="p-6 bg-slate-900 text-white flex flex-col relative overflow-hidden">
+            <div className="p-6 bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white flex flex-col relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/20 rounded-full blur-3xl" />
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div className="w-16 h-16 aspect-square bg-white text-purple-700 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">

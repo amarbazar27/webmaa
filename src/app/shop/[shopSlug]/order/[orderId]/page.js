@@ -343,7 +343,7 @@ export default function OrderSummaryPage({ params }) {
           <h2 className="text-lg font-black text-slate-900">অর্ডার দেখার অনুমতি নেই</h2>
           <p className="text-sm text-slate-500 font-bold mt-2">এই অর্ডারটি দেখতে আপনাকে সংশ্লিষ্ট ইমেইল দিয়ে লগইন করতে হবে।</p>
         </div>
-        <button onClick={() => router.back()} className="w-full py-3 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-purple-600 transition-colors flex items-center justify-center gap-2">
+        <button onClick={() => router.back()} className="w-full py-3 bg-purple-600 text-white rounded-2xl font-black text-sm hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 shadow-lg">
           <ArrowLeft size={16} /> ফিরে যান
         </button>
       </div>
@@ -441,7 +441,7 @@ export default function OrderSummaryPage({ params }) {
         <button
           onClick={generatePDF}
           disabled={isGeneratingPdf}
-          className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-xl disabled:opacity-60 relative overflow-hidden"
+          className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors shadow-xl disabled:opacity-60 relative overflow-hidden"
         >
           {isGeneratingPdf && (
             <div

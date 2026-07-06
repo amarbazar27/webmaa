@@ -17,7 +17,7 @@ export default function LegacySizes({ sizes, selectedSize, setSelectedSize, onRe
             onClick={() => { setSelectedSize(size); onResetAi(); }}
             className={`px-5 py-3 rounded-2xl font-black text-sm transition-all border-2 ${
               selectedSize?.label === size.label
-                ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
+                ? 'bg-purple-600 text-white border-purple-600 shadow-lg scale-105'
                 : 'bg-white text-slate-700 border-slate-200 hover:border-purple-400 hover:text-purple-700'
             }`}
           >

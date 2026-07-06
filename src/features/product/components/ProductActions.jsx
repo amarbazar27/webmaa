@@ -35,7 +35,7 @@ export default function ProductActions({
             ? product.allowRequest
               ? 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer'
               : 'bg-red-500/10 border border-red-500/20 text-red-400 cursor-not-allowed shadow-none'
-            : 'bg-slate-900 hover:bg-purple-600 text-white'
+            : 'bg-purple-600 hover:bg-purple-700 text-white'
         }`}
       >
         {product.stock === 0 ? (

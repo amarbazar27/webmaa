@@ -1114,7 +1114,8 @@ export default function Home() {
               Rule: If a user wants to view their cart, check out, or place their order, write:
               "ACTION:OPEN_CART" at the very end of your response, and tell them you are opening their cart/checkout panel for them.
 
-              🔴 বিশেষ নির্দেশ (একই পণ্যের বিভিন্ন রূপ): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে (যেমন: 'পিস হিসেবেও আছে এবং কেজি হিসেবেও আছে') এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।`
+              🔴 বিশেষ নির্দেশ (একই পণ্যের বিভিন্ন রূপ): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে (যেমন: 'পিস হিসেবেও আছে এবং কেজি হিসেবেও আছে') এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।
+              ১০. পণ্য অনুসন্ধান এবং প্রাপ্যতা (Product Search & Availability): ব্যবহারকারী যদি নির্দিষ্ট কোনো পণ্যের (যেমন: ক্যামেরা) খোঁজ করে, তবে তুমি প্রথমে প্রদত্ত পণ্য তালিকায় তা খুঁজবে। যদি পণ্যটি তালিকায় থাকে, তবে সেটি সাজেস্ট করবে। কিন্তু যদি পণ্যটি তালিকায় না থাকে, তবে স্পষ্টভাবে ব্যবহারকারীকে বলবে যে পণ্যটি এই মুহূর্তে দোকানে উপলব্ধ নেই (available নেই)। এরপর তুমি বিকল্প হিসেবে অন্য কোনো সম্পর্কিত পণ্য (যেমন ক্যামেরা না থাকলে লেন্স বা অন্য কোনো অ্যাক্সেসরিজ যা তালিকায় আছে) বা বিকল্প ব্যবস্থা সাজেস্ট করতে পারো। কখনোই দোকানে না থাকা পণ্যের বদলে অন্য পণ্যকে সরাসরি মূল পণ্য হিসেবে সাজেস্ট করবে না।`
             },
             {
               role: 'user',
@@ -2703,7 +2704,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAiOpen(false)} />
           <div className="relative w-full max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] max-h-[700px] border border-slate-200 animate-slide-in text-slate-800">
             {/* Header */}
-            <div className="bg-slate-900 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
+            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-lg shadow-md shrink-0 animate-bounce">
                   😊
@@ -2716,20 +2717,7 @@ export default function Home() {
               <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
             </div>
 
-            {/* Tab Bar */}
-            <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
-              {[
-                {id:'chat',label:'চ্যাট',icon:'💬'},
-                {id:'voice',label:'ভয়েস',icon:'🎤'},
-                {id:'image',label:'ছবি OCR',icon:'📷'},
-                {id:'text',label:'লিস্ট',icon:'📝'},
-              ].map(tab => (
-                <button key={tab.id} onClick={() => setAiTab(tab.id)}
-                  className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-wider transition-all ${aiTab === tab.id ? 'bg-white text-purple-600 border-b-2 border-purple-600' : 'text-slate-500 hover:text-slate-800'}`}>
-                  {tab.icon} {tab.label}
-                </button>
-              ))}
-            </div>
+            {/* Tab Bar Removed - Kept only Chat tab view */}
 
             {/* Chat Tab */}
             {aiTab === 'chat' && (
@@ -2801,20 +2789,7 @@ export default function Home() {
               </>
             )}
 
-            {/* Voice / OCR / Text List tabs */}
-            {aiTab !== 'chat' && (
-              <div className="flex-1 overflow-y-auto bg-slate-50">
-                <AiVoicePanel 
-                  shop={mainShopData || { id: 'daripallah-store' }} 
-                  products={products}
-                  onAddToCart={handleAddToCart}
-                  onDirectOrder={handleAddToCart}
-                  isOpen={true}
-                  onClose={() => setIsAiOpen(false)}
-                  activeTab={aiTab}
-                />
-              </div>
-            )}
+            {/* Other tabs (Voice/OCR/List) views removed */}
           </div>
         </div>
       )}

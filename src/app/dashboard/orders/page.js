@@ -126,10 +126,20 @@ export default function OrdersPage() {
   };
 
   const openCourierModal = (order) => {
+    let cleanPhone = (order.customerPhone || '').trim().replace(/\D/g, '');
+    if (cleanPhone.startsWith('880')) {
+      cleanPhone = cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('88')) {
+      cleanPhone = cleanPhone.substring(2);
+    }
+    if (cleanPhone.length === 10 && !cleanPhone.startsWith('0')) {
+      cleanPhone = '0' + cleanPhone;
+    }
+
     setSelectedOrderForCourier(order);
     setCourierFormData({
       recipientName: order.customerName || '',
-      recipientPhone: order.customerPhone || '',
+      recipientPhone: cleanPhone,
       recipientAddress: order.customerAddress || '',
       codAmount: parseFloat(order.total) || 0,
       note: order.customerNote || ''
@@ -425,7 +435,7 @@ export default function OrdersPage() {
               onClick={() => setFilter(s)}
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors border ${
                 filter === s
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                  ? 'bg-purple-600 text-white border-purple-600 shadow-md'
                   : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
               }`}
             >
@@ -459,7 +469,7 @@ export default function OrdersPage() {
              <div key={identifier} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="bg-gradient-to-r from-slate-50 to-white px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-slate-900 text-white font-black flex items-center justify-center rounded-2xl shadow-sm">{identifier[0]}</div>
+                      <div className="w-12 h-12 bg-purple-600 text-white font-black flex items-center justify-center rounded-2xl shadow-sm">{identifier[0]}</div>
                       <div>
                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-tight">Customer Network Group</p>
                          <p className="text-xl font-black text-slate-900">{identifier}</p>
@@ -601,7 +611,7 @@ export default function OrdersPage() {
                                      <input type="number" placeholder="মিনিট" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={minutes[order.id] ?? (order.deliveryCountdownFormatted?.match(/(\d+)\s*মিনিট/)?.[1] || '')} onChange={e => setMinutes({...minutes, [order.id]: e.target.value})} />
                                   </div>
                                </div>
-                               <button onClick={() => saveAdvancedFields(order.id)} className="w-[46px] h-[46px] bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md tooltip" title="Save Info">
+                               <button onClick={() => saveAdvancedFields(order.id)} className="w-[46px] h-[46px] bg-purple-600 text-white rounded-xl flex items-center justify-center hover:bg-purple-700 transition-colors shadow-md tooltip" title="Save Info">
                                   <Save size={18} strokeWidth={2.5}/>
                                </button>
                             </div>
@@ -668,7 +678,7 @@ export default function OrdersPage() {
                                                  href={`https://steadfast.com.bd/t/${order.trackingCode}`}
                                                  target="_blank"
                                                  rel="noreferrer"
-                                                 className="w-full py-1.5 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest text-center block hover:bg-purple-600 transition-colors mt-2"
+                                                 className="w-full py-1.5 bg-purple-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest text-center block hover:bg-purple-700 transition-colors mt-2"
                                               >
                                                  Track Parcel
                                               </a>
@@ -812,7 +822,7 @@ export default function OrdersPage() {
       {authModal.open && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setAuthModal({...authModal, open: false})} />
-            <div className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 animate-slide-in">
+            <div className="relative z-50 w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 animate-slide-in">
                <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-5 mx-auto shadow-inner border border-red-100">
                   <Lock size={24} strokeWidth={2.5}/>
                </div>
@@ -843,7 +853,7 @@ export default function OrdersPage() {
       {courierModalOpen && selectedOrderForCourier && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setCourierModalOpen(false)} />
-            <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 animate-slide-in" onClick={e => e.stopPropagation()}>
+            <div className="relative z-50 w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 animate-slide-in" onClick={e => e.stopPropagation()}>
                <div className="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-5 shadow-inner border border-purple-100">
                   <Truck size={24} strokeWidth={2.5}/>
                </div>
@@ -1001,7 +1011,7 @@ function GoogleMapViewer({ coords, onClose, apiKey }) {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative w-full max-w-lg h-[60vh] bg-white rounded-[2rem] overflow-hidden shadow-2xl flex flex-col border border-slate-200 animate-slide-in" onClick={e => e.stopPropagation()}>
+      <div className="relative z-50 w-full max-w-lg h-[60vh] bg-white rounded-[2rem] overflow-hidden shadow-2xl flex flex-col border border-slate-200 animate-slide-in" onClick={e => e.stopPropagation()}>
         <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div>
             <h3 className="font-black text-slate-800 text-sm">গ্রাহকের ম্যাপ লোকেশন (Customer Location Pin)</h3>

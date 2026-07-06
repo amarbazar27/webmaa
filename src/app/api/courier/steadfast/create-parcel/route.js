@@ -45,6 +45,20 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
+    // Sanitize recipientPhone (Steadfast requires exactly 11 digits)
+    let cleanPhone = recipientPhone.trim().replace(/\D/g, '');
+    if (cleanPhone.startsWith('880')) {
+      cleanPhone = cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('88')) {
+      cleanPhone = cleanPhone.substring(2);
+    }
+    if (cleanPhone.length === 10 && !cleanPhone.startsWith('0')) {
+      cleanPhone = '0' + cleanPhone;
+    }
+    if (cleanPhone.length !== 11 || !cleanPhone.startsWith('01')) {
+      return NextResponse.json({ error: 'Recipient phone number must be exactly 11 digits starting with 01.' }, { status: 400 });
+    }
+
     // 🔐 Auth Check
     const authorized = await isAuthorizedShopAdmin(req, shopId);
     if (!authorized) {
@@ -82,7 +96,7 @@ export async function POST(req) {
       {
         invoice: orderData.orderIdVisual || orderId,
         recipientName,
-        recipientPhone,
+        recipientPhone: cleanPhone,
         recipientAddress,
         codAmount: Number(codAmount) || 0,
         note
