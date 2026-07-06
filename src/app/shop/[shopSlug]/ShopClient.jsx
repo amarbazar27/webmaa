@@ -2502,7 +2502,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="hidden md:flex flex-wrap gap-2 -mt-2 animate-slide-in">
               <button
                 onClick={() => setActiveSubcategory('')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
               >সব</button>
               {activeCat.subcategories.map((sub, i) => (
                 <button
@@ -2524,7 +2524,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="md:hidden flex flex-wrap gap-2 -mt-2 animate-slide-in">
               <button
                 onClick={() => setActiveSubcategory('')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200'}`}
               >সব</button>
               {activeCat.subcategories.map((sub, i) => (
                 <button
@@ -2669,7 +2669,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => addToCart(product)} className="w-full py-2.5 rounded-xl font-black text-sm bg-slate-900 text-white hover:bg-purple-600 transition-colors flex items-center justify-center gap-2 shadow-sm">
+                        <button onClick={() => addToCart(product)} className="w-full py-2.5 rounded-xl font-black text-sm bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white transition-all flex items-center justify-center gap-2 shadow-md active:scale-95">
                           <Plus size={15} strokeWidth={2.5} /> কার্টে যোগ করুন
                         </button>
                       )}
@@ -2944,7 +2944,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             </div>
             <button
               onClick={() => generatePDF(orderSuccess)}
-              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-lg"
+              className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
             >
               <Download size={20} /> PDF ডাউনলোড করুন
             </button>
@@ -3025,7 +3025,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <button 
                     onClick={otpSent ? handleVerifyOTP : handleSendOTP}
                     disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
-                    className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10 disabled:opacity-60"
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                   >
                     {otpLoading ? (
                       <>
@@ -3158,7 +3158,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 )}
                 <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-[10px] font-black transition-colors" title="Clear">🗑</button>
                 <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
-                <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md"><MessageCircle size={20} strokeWidth={2.5}/></button>
+                <button onClick={() => sendChatMessage(chatInput)} className="bg-purple-600 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-700 transition-colors shadow-md active:scale-95"><MessageCircle size={20} strokeWidth={2.5}/></button>
               </div>
               
               {showAiSuggestionModal && (
@@ -3300,7 +3300,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         className="w-20 h-9 text-center text-sm sm:text-base font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 px-2 shadow-inner" 
                       />
                       
-                      <button onClick={() => updateQuantity(item.id, 1)} className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-purple-600 transition-all"><Plus size={14} strokeWidth={2.5}/></button>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="w-9 h-9 bg-purple-600 text-white rounded-xl flex items-center justify-center hover:bg-purple-700 transition-all"><Plus size={14} strokeWidth={2.5}/></button>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -3349,7 +3349,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     setIsOrderOpen(true);
                     setIsCartOpen(false);
                   }} 
-                  className="w-full py-4 bg-slate-900 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-lg"
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]"
                 >
                   পরবর্তী ধাপ <ArrowRight size={20} strokeWidth={2.5}/>
                 </button>
@@ -3463,7 +3463,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <button 
                       type="button" 
                       onClick={handleApplyCoupon} 
-                      className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors"
+                      className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-colors shadow-sm active:scale-95"
                     >
                       প্রয়োগ
                     </button>
@@ -3604,7 +3604,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
               </div>
 
-              <button disabled={placing} type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-xl disabled:opacity-50 mt-4">
+              <button disabled={placing} type="submit" className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 mt-4 active:scale-[0.98]">
                 {placing ? <><Loader2 className="animate-spin" size={20} /> প্রসেস হচ্ছে...</> : <><CheckCircle size={20} strokeWidth={2.5}/> অর্ডার প্লেস করুন</>}
               </button>
             </form>
@@ -3747,7 +3747,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         <div className="col-span-1 md:col-span-1 text-right">
                           <button 
                             onClick={() => addCommonOrderRowToCart(product)}
-                            className="w-full px-1 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black hover:bg-purple-600 transition-colors uppercase tracking-tight active:scale-95 text-center"
+                            className="w-full px-1 py-2 bg-purple-600 text-white rounded-xl text-[9px] font-black hover:bg-purple-700 transition-all uppercase tracking-tight active:scale-95 text-center shadow-sm"
                           >
                             যোগ
                           </button>
@@ -3874,7 +3874,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <button 
                         onClick={otpSent ? handleVerifyOTP : handleSendOTP}
                         disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
-                        className="w-full py-3.5 bg-slate-900 hover:bg-purple-600 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-purple-600/10 disabled:opacity-60"
+                        className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                       >
                         {otpLoading ? (
                           <>
