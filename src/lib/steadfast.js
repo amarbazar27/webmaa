@@ -57,11 +57,11 @@ export async function createSteadfastParcel(keys, payload) {
   if (result.status === 401) {
     throw new Error('Steadfast API Key বা Secret Key ভুল। Settings → Courier-এ সঠিক credentials দিন।');
   }
-  if (result.status === 422) {
-    const errMsg = result.errors
-      ? Object.values(result.errors).flat().join(', ')
+  if (result.status === 400 || result.status === 422) {
+    let errMsg = result.errors
+      ? Object.entries(result.errors).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ')
       : result.message || 'Validation error';
-    throw new Error(`Steadfast validation error: ${errMsg}`);
+    throw new Error(errMsg);
   }
   if (result.status && result.status !== 200) {
     throw new Error(result.message || `Steadfast returned error status: ${result.status}`);
