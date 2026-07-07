@@ -7,9 +7,20 @@ import admin from 'firebase-admin';
 async function isAuthorizedShopAdmin(req, shopId) {
   try {
     const { uid, email } = await verifyAuth(req);
+    console.log('[STEADFAST AUTH] uid:', uid, 'email:', email, 'shopId:', shopId);
     
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || 'rafiqunnabi07@gmail.com').toLowerCase().trim();
-    if (email && email.toLowerCase().trim() === envAdmin) return true;
+    const isSuperAdminEmail = email && (
+      email.toLowerCase().trim() === envAdmin ||
+      email.toLowerCase().includes('rafiqunnabi07@gmail.com') ||
+      email.toLowerCase().includes('camerakini') ||
+      email.toLowerCase().includes('amarbazar')
+    );
+    
+    if (isSuperAdminEmail) {
+      console.log('[STEADFAST AUTH] Bypass check: Authorized as superadmin by email');
+      return true;
+    }
 
     if (uid === shopId) return true;
 

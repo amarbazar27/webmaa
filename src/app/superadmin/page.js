@@ -50,6 +50,7 @@ export default function SuperAdminPage() {
   const [productSearchQuery, setProductSearchQuery] = useState('');
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [superadminTab, setSuperadminTab] = useState('marketplace');
 
   const [globalConfig, setGlobalConfig] = useState({
     geminiApiKey: '',
@@ -201,7 +202,8 @@ export default function SuperAdminPage() {
         brandName: configData?.brandName || '',
         logoUrl: configData?.logoUrl || '',
         platformDescription: configData?.platformDescription || '',
-        whatsapp: configData?.whatsapp || ''
+        whatsapp: configData?.whatsapp || '',
+        contactEmail: configData?.contactEmail || ''
       });
     });
     return () => unsubscribe();
@@ -590,8 +592,82 @@ export default function SuperAdminPage() {
         <Card title="Healthy" subtitle="System Engine" icon={Activity} className="border-l-4 border-l-green-500" />
       </div>
 
-      {/* 🎨 System Theme Control */}
-      <Card title="Platform Appearance" subtitle="Set the system-wide default theme for all users" icon={Sparkles} className="border-2 border-indigo-100 bg-indigo-50/10">
+      {/* ── Settings Categories Sidebar ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mt-6">
+        
+        {/* Left Sidebar Navigation */}
+        <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
+          <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সুপারএডমিন সেটিংস</p>
+            
+            <button
+              onClick={() => setSuperadminTab('marketplace')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'marketplace'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles size={16} />
+              <span>মার্কেটপ্লেস কনফিগারেশন</span>
+            </button>
+            
+            <button
+              onClick={() => setSuperadminTab('directory')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'directory'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Store size={16} />
+              <span>মার্চেন্ট ও স্টোর ডিরেক্টরি</span>
+            </button>
+            
+            <button
+              onClick={() => setSuperadminTab('inventory')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'inventory'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Package size={16} />
+              <span>স্মার্ট ইনভেন্টরি ও ক্যাটালগ</span>
+            </button>
+            
+            <button
+              onClick={() => setSuperadminTab('broadcast')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'broadcast'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <MessageCircle size={16} />
+              <span>ব্রডকাস্ট ও মোবাইল অ্যাপ</span>
+            </button>
+            
+            <button
+              onClick={() => setSuperadminTab('security')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'security'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <ShieldAlert size={16} />
+              <span>নিরাপত্তা ও অডিট লগ</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Right Side Settings Cards Container */}
+        <div className="lg:col-span-9 space-y-8">
+
+          {superadminTab === 'marketplace' && (<>
+            {/* 🎨 System Theme Control */}
+            <Card title="Platform Appearance" subtitle="Set the system-wide default theme for all users" icon={Sparkles} className="border-2 border-indigo-100 bg-indigo-50/10">
         <div className="flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
           <div>
             <p className="text-sm font-black" style={{color:'var(--text-color)'}}>System Default Theme</p>
@@ -927,6 +1003,13 @@ export default function SuperAdminPage() {
                   onChange={e => setGlobalConfig({...globalConfig, whatsapp: e.target.value.replace(/\D/g, '')})}
                   placeholder="e.g. 01734763306"
                 />
+                <Input
+                  label="Platform Contact Email Address (সাপোর্ট ইমেইল এড্রেস)"
+                  type="email"
+                  value={globalConfig.contactEmail || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, contactEmail: e.target.value})}
+                  placeholder="e.g. support@bdretailers.com"
+                />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-black tracking-widest uppercase text-slate-600">Platform Description Box (ল্যান্ডিং পেজের ডেসক্রিপশন)</label>
@@ -1111,11 +1194,13 @@ export default function SuperAdminPage() {
            </div>
         </form>
       </Card>
+      </>)}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {superadminTab === 'directory' && (<>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-        {/* Pending Retailer Requests Section */}
-        <div className="lg:col-span-12">
+          {/* Pending Retailer Requests Section */}
+          <div className="lg:col-span-12">
           <Card
             title="Pending Retailer Requests"
             subtitle="Users requesting seller access from the demo store"
@@ -1627,9 +1712,14 @@ export default function SuperAdminPage() {
             )}
           </Card>
         </div>
+      </div>
+      </>)}
 
-        {/* Showcase Curation & Whitelisting Card */}
-        <div className="lg:col-span-12 animate-fade-in">
+      {superadminTab === 'inventory' && (<>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+          {/* Showcase Curation & Whitelisting Card */}
+          <div className="lg:col-span-12 animate-fade-in">
           <Card
             title="Smart Showcase Curation Whitelist"
             subtitle="সুপারঅ্যাডমিন বেছে নিতে পারবে কোন কোন শপ, ক্যাটাগরি এবং সাবক্যাটাগরি মেইন ওয়েবসাইটে দেখাবে"
@@ -1920,9 +2010,14 @@ export default function SuperAdminPage() {
             )}
           </Card>
         </div>
+      </div>
+      </>)}
 
-        {/* 🔍 Impersonation Audit Logs */}
-        <div className="lg:col-span-12">
+      {superadminTab === 'security' && (<>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+          {/* 🔍 Impersonation Audit Logs */}
+          <div className="lg:col-span-12">
           <Card
             title="ইম্পার্সোনেশন অডিট লগ"
             subtitle="সুপারঅ্যাডমিন কখন কোন রিটেইলারের ড্যাশবোর্ডে প্রবেশ করেছেন"
@@ -1970,9 +2065,14 @@ export default function SuperAdminPage() {
             )}
           </Card>
         </div>
+      </div>
+      </>)}
 
-        {/* 🔔 Broadcast Center */}
-        <div className="lg:col-span-12">
+      {superadminTab === 'broadcast' && (<>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+          {/* 🔔 Broadcast Center */}
+          <div className="lg:col-span-12">
           <SuperadminBroadcastPanel shops={shops} />
         </div>
 
@@ -1980,9 +2080,14 @@ export default function SuperAdminPage() {
         <div className="lg:col-span-12">
           <SuperadminAppBuilder />
         </div>
+      </div>
+      </>)}
 
-        {/* Invitation Area */}
-        <div className="lg:col-span-12">
+      {superadminTab === 'directory' && (<>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+          {/* Invitation Area */}
+          <div className="lg:col-span-12">
           <Card
             title="Retailer Management"
             subtitle="Manually invite partners via email"
@@ -2045,6 +2150,10 @@ export default function SuperAdminPage() {
               )}
             </div>
           </Card>
+        </div>
+      </div>
+      </>)}
+
         </div>
       </div>
 
