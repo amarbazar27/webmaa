@@ -1,61 +1,111 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import { verifyAuth } from '@/lib/verifyAuth';
 import { createSteadfastParcel } from '@/lib/steadfast';
 import admin from 'firebase-admin';
 
+/**
+ * 🔐 Robust auth check using Firebase Admin SDK directly.
+ * Supports: direct retailer, superadmin (by role or email), staff, admin.
+ * Works correctly in impersonation mode.
+ */
 async function isAuthorizedShopAdmin(req, shopId) {
   try {
-    const { uid, email } = await verifyAuth(req);
-    console.log('[STEADFAST AUTH] uid:', uid, 'email:', email, 'shopId:', shopId);
-    
-    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || 'rafiqunnabi07@gmail.com').toLowerCase().trim();
-    const isSuperAdminEmail = email && (
-      email.toLowerCase().trim() === envAdmin ||
-      email.toLowerCase().includes('rafiqunnabi07@gmail.com') ||
-      email.toLowerCase().includes('camerakini') ||
-      email.toLowerCase().includes('amarbazar') ||
-      email.toLowerCase().includes('daripallah') ||
-      email.toLowerCase().includes('overwatch') ||
-      email.toLowerCase().includes('webmaa')
-    );
-    
-    if (isSuperAdminEmail) {
-      console.log('[STEADFAST AUTH] Bypass check: Authorized as superadmin by email');
+    // Step 1: Extract Bearer token from Authorization header
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+    if (!token) {
+      console.warn('[STEADFAST AUTH] No Bearer token in request');
+      return false;
+    }
+
+    // Step 2: Verify token using Firebase Admin SDK (more reliable than REST)
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(token);
+    } catch (tokenErr) {
+      console.error('[STEADFAST AUTH] Admin SDK token verification failed:', tokenErr.message);
+      // If token is expired or malformed, deny
+      return false;
+    }
+
+    const uid = decodedToken.uid;
+    const email = (decodedToken.email || '').toLowerCase().trim();
+
+    console.log('[STEADFAST AUTH] Decoded token → uid:', uid, 'email:', email, 'shopId:', shopId);
+
+    // Check 1: uid directly matches shopId (retailer is the shop owner)
+    if (uid === shopId) {
+      console.log('[STEADFAST AUTH] ✅ Authorized: uid === shopId');
       return true;
     }
 
-    if (uid === shopId) return true;
-
+    // Check 2: Look up user in Firestore by uid
     const userSnap = await adminDb.collection('users').doc(uid).get();
     if (userSnap.exists) {
       const userData = userSnap.data();
-      console.log('[STEADFAST AUTH] found user doc:', userData);
-      if (
-        userData.role === 'superadmin' || 
-        userData.email?.toLowerCase()?.includes('rafiqunnabi07@gmail.com') || 
-        userData.email?.toLowerCase()?.includes('camerakini') || 
-        userData.email?.toLowerCase()?.includes('amarbazar') ||
-        userData.email?.toLowerCase()?.includes('daripallah') ||
-        userData.email?.toLowerCase()?.includes('overwatch') ||
-        userData.email?.toLowerCase()?.includes('webmaa')
-      ) {
-        console.log('[STEADFAST AUTH] Bypass check: Authorized as superadmin by role/email in Firestore');
+      console.log('[STEADFAST AUTH] User doc found → role:', userData.role);
+
+      // Superadmin role in Firestore
+      if (userData.role === 'superadmin') {
+        console.log('[STEADFAST AUTH] ✅ Authorized: Firestore role = superadmin');
         return true;
       }
-      if (userData.role === 'staff' && userData.accessShopId === shopId) return true;
+
+      // Staff/Admin with matching shopId
+      if (
+        (userData.role === 'staff' || userData.role === 'admin') &&
+        userData.accessShopId === shopId
+      ) {
+        console.log('[STEADFAST AUTH] ✅ Authorized: staff/admin with correct accessShopId');
+        return true;
+      }
     }
 
+    // Check 3: Env-based superadmin email fallback
+    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || 'rafiqunnabi07@gmail.com')
+      .toLowerCase()
+      .trim();
+    if (email && (email === envAdmin || email.includes('rafiqunnabi07@gmail.com'))) {
+      console.log('[STEADFAST AUTH] ✅ Authorized: email matches NEXT_PUBLIC_SUPER_ADMIN_EMAIL');
+      return true;
+    }
+
+    // Check 4: Firestore globalConfig superadmin email
+    try {
+      const globalSnap = await adminDb.collection('globalConfig').doc('main').get();
+      if (globalSnap.exists) {
+        const globalData = globalSnap.data();
+        const configAdminEmail = (globalData.adminEmail || '').toLowerCase().trim();
+        if (configAdminEmail && email === configAdminEmail) {
+          console.log('[STEADFAST AUTH] ✅ Authorized: email matches globalConfig.adminEmail');
+          return true;
+        }
+      }
+    } catch (gcErr) {
+      console.warn('[STEADFAST AUTH] globalConfig check failed (non-fatal):', gcErr.message);
+    }
+
+    // Check 5: Shop adminEmails / staffEmails
     const shopSnap = await adminDb.collection('shops').doc(shopId).get();
     if (shopSnap.exists) {
       const shopData = shopSnap.data();
-      if (shopData.staffEmails?.includes(email)) return true;
+      if (email && (shopData.adminEmails?.includes(email) || shopData.staffEmails?.includes(email))) {
+        console.log('[STEADFAST AUTH] ✅ Authorized: email found in shop adminEmails/staffEmails');
+        return true;
+      }
+
+      // Check 6: shop ownerId matches uid (alt check)
+      if (shopData.ownerId && shopData.ownerId === uid) {
+        console.log('[STEADFAST AUTH] ✅ Authorized: shop.ownerId matches uid');
+        return true;
+      }
     }
 
-    console.warn('[STEADFAST AUTH FAIL] Authorization failed for uid:', uid, 'email:', email);
+    console.warn('[STEADFAST AUTH] ❌ All checks failed for uid:', uid, 'email:', email);
     return false;
   } catch (err) {
-    console.error('[STEADFAST AUTH ERROR]:', err);
+    console.error('[STEADFAST AUTH ERROR] Unexpected error:', err.message);
     return false;
   }
 }
@@ -77,7 +127,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // Sanitize recipientPhone (Steadfast requires exactly 11 digits)
+    // Sanitize recipientPhone (Steadfast requires exactly 11 digits starting with 01)
     let cleanPhone = recipientPhone.trim().replace(/\D/g, '');
     if (cleanPhone.startsWith('880')) {
       cleanPhone = cleanPhone.substring(3);
@@ -88,12 +138,15 @@ export async function POST(req) {
       cleanPhone = '0' + cleanPhone;
     }
     if (cleanPhone.length !== 11 || !cleanPhone.startsWith('01')) {
-      return NextResponse.json({ error: 'Recipient phone number must be exactly 11 digits starting with 01.' }, { status: 400 });
+      return NextResponse.json({
+        error: 'Recipient phone number must be exactly 11 digits starting with 01.'
+      }, { status: 400 });
     }
 
-    // 🔐 Auth Check
+    // 🔐 Authorization Check
     const authorized = await isAuthorizedShopAdmin(req, shopId);
     if (!authorized) {
+      console.error('[Steadfast] Authorization failed for shopId:', shopId);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -109,11 +162,14 @@ export async function POST(req) {
     const steadfastSecretKey = shopData.courierConfig?.steadfastSecretKey;
     const steadfastEnabled = shopData.courierConfig?.steadfastEnabled;
 
-    if (!steadfastEnabled || !steadfastApiKey || !steadfastSecretKey) {
-      return NextResponse.json({ error: 'Steadfast Courier API is not configured or enabled for this shop.' }, { status: 400 });
+    if (!steadfastEnabled) {
+      return NextResponse.json({ error: 'Steadfast Courier is not enabled for this shop. Please enable it in Settings → Courier & Map.' }, { status: 400 });
+    }
+    if (!steadfastApiKey || !steadfastSecretKey) {
+      return NextResponse.json({ error: 'Steadfast API Key or Secret Key is not configured for this shop.' }, { status: 400 });
     }
 
-    // Fetch order to get visual orderId
+    // Fetch order details
     const orderRef = shopRef.collection('orders').doc(orderId);
     const orderSnap = await orderRef.get();
     if (!orderSnap.exists) {
@@ -122,7 +178,7 @@ export async function POST(req) {
 
     const orderData = orderSnap.data();
 
-    // Call Steadfast API
+    // Call Steadfast Courier API
     const response = await createSteadfastParcel(
       { apiKey: steadfastApiKey, secretKey: steadfastSecretKey },
       {
@@ -137,10 +193,10 @@ export async function POST(req) {
 
     if (response.status === 200) {
       const consignment = response.consignment || {};
-      
+
       const updateData = {
         courierName: 'steadfast',
-        consignmentId: consignment.consignment_id || '',
+        consignmentId: String(consignment.consignment_id || ''),
         trackingCode: consignment.tracking_code || '',
         courierStatus: consignment.status || 'pending',
         courierCharge: consignment.delivery_charge || 0,
@@ -151,10 +207,9 @@ export async function POST(req) {
       await orderRef.update(updateData);
 
       // Log courier action
-      const logRef = orderRef.collection('courier_logs').doc();
-      await logRef.set({
+      await orderRef.collection('courier_logs').doc().set({
         action: 'parcel_created',
-        consignmentId: consignment.consignment_id || '',
+        consignmentId: String(consignment.consignment_id || ''),
         trackingCode: consignment.tracking_code || '',
         status: consignment.status || 'pending',
         rawResponse: response,
