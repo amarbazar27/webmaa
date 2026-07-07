@@ -178,13 +178,17 @@ export async function POST(req) {
 
     const orderData = orderSnap.data();
 
+    // Sanitize invoice: Steadfast only allows letters, numbers, dashes, and underscores
+    const rawInvoice = orderData.orderIdVisual || orderId;
+    const cleanInvoice = String(rawInvoice).trim().replace(/[^a-zA-Z0-9_-]/g, '-');
+
     // Call Steadfast Courier API (throws on any error)
     let sfResponse;
     try {
       sfResponse = await createSteadfastParcel(
         { apiKey: steadfastApiKey, secretKey: steadfastSecretKey },
         {
-          invoice: orderData.orderIdVisual || orderId,
+          invoice: cleanInvoice,
           recipientName,
           recipientPhone: cleanPhone,
           recipientAddress,
