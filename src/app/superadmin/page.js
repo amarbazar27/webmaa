@@ -1326,8 +1326,6 @@ export default function SuperAdminPage() {
                       <th className="pb-2 px-4 border-b border-slate-100">Performance (Sales/Money)</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
-                      <th className="pb-2 px-4 border-b border-slate-100 text-center">Main Site</th>
-                      <th className="pb-2 px-4 border-b border-slate-100 text-right">Status</th>
                       <th className="pb-2 px-4 border-b border-slate-100 text-right">Action</th>
                     </tr>
                   </thead>
@@ -1400,26 +1398,6 @@ export default function SuperAdminPage() {
                                 </div>
                                 <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
                               </div>
-                            </td>
-                            <td className="p-4 text-center">
-                              <button
-                                onClick={() => handleToggleMainSite(shop)}
-                                disabled={togglingShopId === shop.id}
-                                title={shop.showOnMainSite ? 'মেইন সাইট থেকে সরান' : 'মেইন সাইটে দেখান'}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                                  shop.showOnMainSite ? 'bg-emerald-500' : 'bg-slate-300'
-                                }`}
-                              >
-                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                                  shop.showOnMainSite ? 'translate-x-6' : 'translate-x-1'
-                                }`} />
-                              </button>
-                            </td>
-                            <td className="p-4 text-right">
-                               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                 <span className={`w-1.5 h-1.5 rounded-full ${shop.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></span>
-                                 {shop.isActive !== false ? 'Live' : 'Paused'}
-                               </span>
                             </td>
                             <td className="p-4 text-right last:rounded-r-2xl">
                               <div className="flex items-center justify-end gap-2 flex-wrap max-w-md">

@@ -2788,9 +2788,12 @@ export default function Home() {
 
       {/* ── Floating WhatsApp Chat Button (Bottom-Right, shifted for alignment) ── */}
       <a
-        href={mainShopData?.socialLinks?.wa 
-          ? getFormattedContactUrl(mainShopData.socialLinks.wa, 'whatsapp') 
-          : (globalWhatsapp ? getFormattedContactUrl(globalWhatsapp, 'whatsapp') : "https://wa.me/8801734763306")}
+        href={(() => {
+          const rawWa = globalConfig?.whatsapp || mainShopData?.socialLinks?.wa || '01734763306';
+          const cleanWa = rawWa.replace(/[^0-9]/g, '');
+          const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
+          return `https://wa.me/${formattedWa}`;
+        })()}
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-8 right-24 z-[120] w-14 h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-115 active:scale-95 transition-all border border-emerald-400/30 cursor-pointer shadow-emerald-500/20"

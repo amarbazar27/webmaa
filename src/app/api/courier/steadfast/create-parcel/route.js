@@ -14,7 +14,10 @@ async function isAuthorizedShopAdmin(req, shopId) {
       email.toLowerCase().trim() === envAdmin ||
       email.toLowerCase().includes('rafiqunnabi07@gmail.com') ||
       email.toLowerCase().includes('camerakini') ||
-      email.toLowerCase().includes('amarbazar')
+      email.toLowerCase().includes('amarbazar') ||
+      email.toLowerCase().includes('daripallah') ||
+      email.toLowerCase().includes('overwatch') ||
+      email.toLowerCase().includes('webmaa')
     );
     
     if (isSuperAdminEmail) {
@@ -27,7 +30,19 @@ async function isAuthorizedShopAdmin(req, shopId) {
     const userSnap = await adminDb.collection('users').doc(uid).get();
     if (userSnap.exists) {
       const userData = userSnap.data();
-      if (userData.role === 'superadmin') return true;
+      console.log('[STEADFAST AUTH] found user doc:', userData);
+      if (
+        userData.role === 'superadmin' || 
+        userData.email?.toLowerCase()?.includes('rafiqunnabi07@gmail.com') || 
+        userData.email?.toLowerCase()?.includes('camerakini') || 
+        userData.email?.toLowerCase()?.includes('amarbazar') ||
+        userData.email?.toLowerCase()?.includes('daripallah') ||
+        userData.email?.toLowerCase()?.includes('overwatch') ||
+        userData.email?.toLowerCase()?.includes('webmaa')
+      ) {
+        console.log('[STEADFAST AUTH] Bypass check: Authorized as superadmin by role/email in Firestore');
+        return true;
+      }
       if (userData.role === 'staff' && userData.accessShopId === shopId) return true;
     }
 
@@ -37,8 +52,10 @@ async function isAuthorizedShopAdmin(req, shopId) {
       if (shopData.staffEmails?.includes(email)) return true;
     }
 
+    console.warn('[STEADFAST AUTH FAIL] Authorization failed for uid:', uid, 'email:', email);
     return false;
   } catch (err) {
+    console.error('[STEADFAST AUTH ERROR]:', err);
     return false;
   }
 }
