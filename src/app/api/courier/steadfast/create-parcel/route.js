@@ -178,56 +178,56 @@ export async function POST(req) {
 
     const orderData = orderSnap.data();
 
-    // Call Steadfast Courier API
-    const response = await createSteadfastParcel(
-      { apiKey: steadfastApiKey, secretKey: steadfastSecretKey },
-      {
-        invoice: orderData.orderIdVisual || orderId,
-        recipientName,
-        recipientPhone: cleanPhone,
-        recipientAddress,
-        codAmount: Number(codAmount) || 0,
-        note
-      }
-    );
-
-    if (response.status === 200) {
-      const consignment = response.consignment || {};
-
-      const updateData = {
-        courierName: 'steadfast',
-        consignmentId: String(consignment.consignment_id || ''),
-        trackingCode: consignment.tracking_code || '',
-        courierStatus: consignment.status || 'pending',
-        courierCharge: consignment.delivery_charge || 0,
-        courierCOD: consignment.cod_amount || 0,
-        courierUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
-      };
-
-      await orderRef.update(updateData);
-
-      // Log courier action
-      await orderRef.collection('courier_logs').doc().set({
-        action: 'parcel_created',
-        consignmentId: String(consignment.consignment_id || ''),
-        trackingCode: consignment.tracking_code || '',
-        status: consignment.status || 'pending',
-        rawResponse: response,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      return NextResponse.json({
-        success: true,
-        consignmentId: consignment.consignment_id,
-        trackingCode: consignment.tracking_code,
-        status: consignment.status
-      });
-    } else {
-      console.error('[Steadfast API Error]', response);
-      return NextResponse.json({
-        error: response.message || response.errors || 'Failed to create parcel on Steadfast Courier.'
-      }, { status: 400 });
+    // Call Steadfast Courier API (throws on any error)
+    let sfResponse;
+    try {
+      sfResponse = await createSteadfastParcel(
+        { apiKey: steadfastApiKey, secretKey: steadfastSecretKey },
+        {
+          invoice: orderData.orderIdVisual || orderId,
+          recipientName,
+          recipientPhone: cleanPhone,
+          recipientAddress,
+          codAmount: Number(codAmount) || 0,
+          note
+        }
+      );
+    } catch (sfErr) {
+      console.error('[Steadfast API Error]', sfErr.message);
+      return NextResponse.json({ error: sfErr.message }, { status: 400 });
     }
+
+    // Steadfast returns { status: 200, consignment: {...} } on success
+    const consignment = sfResponse.consignment || {};
+
+    const updateData = {
+      courierName: 'steadfast',
+      consignmentId: String(consignment.consignment_id || ''),
+      trackingCode: consignment.tracking_code || '',
+      courierStatus: consignment.status || 'pending',
+      courierCharge: consignment.delivery_charge || 0,
+      courierCOD: consignment.cod_amount || 0,
+      courierUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await orderRef.update(updateData);
+
+    // Log courier action
+    await orderRef.collection('courier_logs').doc().set({
+      action: 'parcel_created',
+      consignmentId: String(consignment.consignment_id || ''),
+      trackingCode: consignment.tracking_code || '',
+      status: consignment.status || 'pending',
+      rawResponse: sfResponse,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return NextResponse.json({
+      success: true,
+      consignmentId: consignment.consignment_id,
+      trackingCode: consignment.tracking_code,
+      status: consignment.status
+    });
 
   } catch (error) {
     console.error('[Steadfast Booking Error]', error);

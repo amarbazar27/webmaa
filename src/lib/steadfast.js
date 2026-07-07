@@ -18,25 +18,55 @@ export async function createSteadfastParcel(keys, payload) {
     throw new Error('Steadfast credentials are not configured.');
   }
 
-  const response = await fetch(`${BASE_URL}/create_order`, {
-    method: 'POST',
-    headers: {
-      'Api-Key': apiKey,
-      'Secret-Key': secretKey,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: JSON.stringify({
-      invoice: payload.invoice,
-      recipient_name: payload.recipientName,
-      recipient_phone: payload.recipientPhone,
-      recipient_address: payload.recipientAddress,
-      cod_amount: Number(payload.codAmount) || 0,
-      note: payload.note || ''
-    })
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/create_order`, {
+      method: 'POST',
+      headers: {
+        'Api-Key': apiKey,
+        'Secret-Key': secretKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        invoice: payload.invoice,
+        recipient_name: payload.recipientName,
+        recipient_phone: payload.recipientPhone,
+        recipient_address: payload.recipientAddress,
+        cod_amount: Number(payload.codAmount) || 0,
+        note: payload.note || ''
+      }),
+      // Add timeout signal
+      signal: AbortSignal.timeout(30000)
+    });
+  } catch (networkErr) {
+    console.error('[Steadfast] Network error calling Steadfast API:', networkErr.message);
+    throw new Error(`Steadfast API connection failed: ${networkErr.message}. Check your API credentials and internet connection.`);
+  }
 
-  const result = await response.json();
+  let result;
+  try {
+    result = await response.json();
+  } catch (parseErr) {
+    console.error('[Steadfast] Failed to parse Steadfast response, HTTP status:', response.status);
+    throw new Error(`Steadfast API returned invalid response (HTTP ${response.status}). Check your API Key and Secret Key.`);
+  }
+
+  console.log('[Steadfast] API response:', JSON.stringify(result));
+
+  // Steadfast returns { status: 200, consignment: {...} } on success
+  // or { status: 401, message: "..." } on auth failure
+  // or { status: 422, errors: {...} } on validation failure
+  if (result.status === 401) {
+    throw new Error('Steadfast API authentication failed. Please check your API Key and Secret Key in Settings → Courier.');
+  }
+  if (result.status === 422) {
+    const errMsg = result.errors
+      ? Object.values(result.errors).flat().join(', ')
+      : result.message || 'Validation error';
+    throw new Error(`Steadfast validation error: ${errMsg}`);
+  }
+
   return result;
 }
 
@@ -54,15 +84,21 @@ export async function getSteadfastStatus(keys, consignmentId) {
     throw new Error('Steadfast credentials are not configured.');
   }
 
-  const response = await fetch(`${BASE_URL}/status_by_cid/${consignmentId}`, {
-    method: 'GET',
-    headers: {
-      'Api-Key': apiKey,
-      'Secret-Key': secretKey,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/status_by_cid/${consignmentId}`, {
+      method: 'GET',
+      headers: {
+        'Api-Key': apiKey,
+        'Secret-Key': secretKey,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      signal: AbortSignal.timeout(15000)
+    });
+  } catch (networkErr) {
+    throw new Error(`Steadfast status check failed: ${networkErr.message}`);
+  }
 
   const result = await response.json();
   return result;
