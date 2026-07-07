@@ -1,31 +1,67 @@
 /**
  * Steadfast Courier API Integration Wrapper
- * Uses Node.js native https module to bypass Vercel fetch restrictions
- * and force IPv4 connectivity to Steadfast's Bangladesh servers.
+ * Uses Node.js native https + custom DNS resolver (Google/Cloudflare)
+ * to bypass Vercel's DNS which cannot resolve .bd TLD domains.
  */
 
 import https from 'node:https';
+import dns from 'node:dns';
 
 const STEADFAST_HOST = 'portal.steadfast.com.bd';
 const STEADFAST_BASE = '/api/v1';
 
+// Use Google & Cloudflare public DNS to resolve .bd domains
+// (Vercel's default DNS often fails on Bangladesh .bd TLD)
+const customResolver = new dns.Resolver();
+customResolver.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1']);
+
 /**
- * Low-level HTTPS request using Node.js native module.
- * Forces IPv4, bypasses Next.js fetch cache/polyfill layer.
+ * Resolve hostname using custom DNS, fallback to system DNS.
  */
-function httpsPost(path, headers, bodyObj) {
+function resolveIPv4(hostname) {
+  return new Promise((resolve, reject) => {
+    customResolver.resolve4(hostname, (err, addresses) => {
+      if (err || !addresses?.length) {
+        // Fallback to system DNS
+        dns.resolve4(hostname, (err2, addrs) => {
+          if (err2 || !addrs?.length) {
+            reject(new Error(
+              `DNS resolution failed for ${hostname}. ` +
+              `Both Google DNS and system DNS could not resolve the domain. ` +
+              `Error: ${err?.message || err2?.message}`
+            ));
+          } else {
+            console.log(`[Steadfast DNS] Resolved via system DNS: ${hostname} → ${addrs[0]}`);
+            resolve(addrs[0]);
+          }
+        });
+      } else {
+        console.log(`[Steadfast DNS] Resolved via Google DNS: ${hostname} → ${addresses[0]}`);
+        resolve(addresses[0]);
+      }
+    });
+  });
+}
+
+/**
+ * Low-level HTTPS POST using Node.js native module with custom DNS.
+ */
+async function httpsPost(path, headers, bodyObj) {
+  // Resolve IP first using custom DNS (bypasses Vercel's broken .bd DNS)
+  const ip = await resolveIPv4(STEADFAST_HOST);
+
   return new Promise((resolve, reject) => {
     const bodyStr = JSON.stringify(bodyObj);
 
     const options = {
-      hostname: STEADFAST_HOST,
+      host: ip,          // Connect to IP directly
       port: 443,
       path: `${STEADFAST_BASE}${path}`,
       method: 'POST',
-      family: 4, // Force IPv4 — avoids IPv6 connectivity issues from Vercel
       timeout: 30000,
       headers: {
         ...headers,
+        'Host': STEADFAST_HOST,      // SNI: send original hostname for SSL
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Content-Length': Buffer.byteLength(bodyStr),
@@ -40,10 +76,11 @@ function httpsPost(path, headers, bodyObj) {
           return reject(new Error(`Steadfast returned empty response (HTTP ${res.statusCode})`));
         }
         try {
-          resolve({ statusCode: res.statusCode, body: JSON.parse(data) });
+          const parsed = JSON.parse(data);
+          resolve({ statusCode: res.statusCode, body: parsed });
         } catch {
           reject(new Error(
-            `Steadfast API returned non-JSON response (HTTP ${res.statusCode}): ${data.substring(0, 300)}`
+            `Steadfast API returned non-JSON (HTTP ${res.statusCode}): ${data.substring(0, 300)}`
           ));
         }
       });
@@ -56,12 +93,11 @@ function httpsPost(path, headers, bodyObj) {
 
     req.on('error', (err) => {
       console.error('[Steadfast HTTPS Error]', err.code, err.message);
-      let msg = `Steadfast connection failed (${err.code || err.message}).`;
-      if (err.code === 'ECONNREFUSED') msg = 'Steadfast server refused connection. Check API credentials.';
-      if (err.code === 'ENOTFOUND') msg = 'Steadfast server not found (DNS failure). Check internet connection.';
-      if (err.code === 'ETIMEDOUT') msg = 'Steadfast server timed out. Try again in a moment.';
-      if (err.code === 'CERT_HAS_EXPIRED' || err.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
-        msg = 'Steadfast SSL certificate issue. Contact Steadfast support.';
+      let msg = `Steadfast connection error: ${err.message}`;
+      if (err.code === 'ECONNREFUSED') msg = 'Steadfast server refused the connection. Check API credentials.';
+      if (err.code === 'ETIMEDOUT') msg = 'Steadfast server timed out. Please try again.';
+      if (err.code?.includes('CERT') || err.code?.includes('SSL')) {
+        msg = `Steadfast SSL error (${err.code}). Contact Steadfast support.`;
       }
       reject(new Error(msg));
     });
@@ -71,17 +107,22 @@ function httpsPost(path, headers, bodyObj) {
   });
 }
 
-function httpsGet(path, headers) {
+/**
+ * Low-level HTTPS GET using Node.js native module with custom DNS.
+ */
+async function httpsGet(path, headers) {
+  const ip = await resolveIPv4(STEADFAST_HOST);
+
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: STEADFAST_HOST,
+      host: ip,
       port: 443,
       path: `${STEADFAST_BASE}${path}`,
       method: 'GET',
-      family: 4,
       timeout: 15000,
       headers: {
         ...headers,
+        'Host': STEADFAST_HOST,
         'Accept': 'application/json',
       },
     };
@@ -116,7 +157,7 @@ export async function createSteadfastParcel(keys, payload) {
     throw new Error('Steadfast credentials are not configured. Please add API Key and Secret Key in Settings → Courier.');
   }
 
-  console.log('[Steadfast] Creating parcel for invoice:', payload.invoice, 'phone:', payload.recipientPhone);
+  console.log('[Steadfast] Creating parcel → invoice:', payload.invoice, 'phone:', payload.recipientPhone);
 
   const { statusCode, body } = await httpsPost('/create_order', {
     'Api-Key': apiKey,
@@ -130,22 +171,17 @@ export async function createSteadfastParcel(keys, payload) {
     note: payload.note || '',
   });
 
-  console.log('[Steadfast] Response status:', statusCode, 'body status:', body?.status);
+  console.log('[Steadfast] Response → HTTP:', statusCode, 'body.status:', body?.status, 'body.message:', body?.message);
 
-  // Steadfast auth failure
   if (body.status === 401 || statusCode === 401) {
     throw new Error('Steadfast API Key বা Secret Key ভুল। Settings → Courier-এ সঠিক credentials দিন।');
   }
-
-  // Steadfast validation failure
   if (body.status === 422 || statusCode === 422) {
     const errMsg = body.errors
       ? Object.values(body.errors).flat().join(', ')
       : body.message || 'Validation error';
     throw new Error(`Steadfast validation error: ${errMsg}`);
   }
-
-  // Any other non-200 from Steadfast's JSON body
   if (body.status && body.status !== 200) {
     throw new Error(body.message || `Steadfast returned error status: ${body.status}`);
   }
