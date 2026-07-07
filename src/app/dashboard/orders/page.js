@@ -55,7 +55,7 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!activeShopId) return;
     
-    // Fetch shop settings to get actionPin
+    // Fetch shop settings (incl. courierConfig for Steadfast)
     getShop(activeShopId).then(setShop);
 
     const unsub = subscribeOrders(activeShopId, (data) => {
@@ -64,6 +64,84 @@ export default function OrdersPage() {
     });
     return () => unsub();
   }, [activeShopId]);
+
+  /**
+   * 🚚 Client-side Steadfast booking.
+   * Calls Steadfast API directly from the BROWSER (Bangladesh connection)
+   * so that Vercel's DNS/geo restrictions don't block the request.
+   * After success, updates the Firestore order document directly.
+   */
+  const bookSteadfastClientSide = async ({
+    shopId, orderId, orderVisualId,
+    recipientName, recipientPhone, recipientAddress,
+    codAmount, note
+  }) => {
+    const courierConfig = shop?.courierConfig || {};
+    const { steadfastApiKey, steadfastSecretKey, steadfastEnabled } = courierConfig;
+
+    if (!steadfastEnabled) {
+      throw new Error('Steadfast Courier সক্রিয় নেই। Settings → Courier-এ চালু করুন।');
+    }
+    if (!steadfastApiKey || !steadfastSecretKey) {
+      throw new Error('Steadfast API Key বা Secret Key দেওয়া নেই। Settings → Courier-এ যোগ করুন।');
+    }
+
+    // Direct call from browser (Bangladesh) → Steadfast API
+    let sfData;
+    try {
+      const sfRes = await fetch('https://portal.steadfast.com.bd/api/v1/create_order', {
+        method: 'POST',
+        headers: {
+          'Api-Key': steadfastApiKey,
+          'Secret-Key': steadfastSecretKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          invoice: orderVisualId || orderId,
+          recipient_name: recipientName,
+          recipient_phone: recipientPhone,
+          recipient_address: recipientAddress,
+          cod_amount: Number(codAmount) || 0,
+          note: note || '',
+        })
+      });
+      sfData = await sfRes.json();
+    } catch (netErr) {
+      throw new Error(`Steadfast connection failed: ${netErr.message}. Browser থেকে Steadfast-এ পৌঁছানো যাচ্ছে না।`);
+    }
+
+    if (sfData.status === 401) {
+      throw new Error('Steadfast API Key বা Secret Key ভুল। Settings → Courier-এ সঠিক credentials দিন।');
+    }
+    if (sfData.status === 422) {
+      const errMsg = sfData.errors
+        ? Object.values(sfData.errors).flat().join(', ')
+        : sfData.message || 'Validation error';
+      throw new Error(`Steadfast validation: ${errMsg}`);
+    }
+    if (sfData.status && sfData.status !== 200) {
+      throw new Error(sfData.message || `Steadfast error: ${sfData.status}`);
+    }
+
+    const consignment = sfData.consignment || {};
+
+    // Update Firestore order directly from client
+    await updateDoc(doc(db, 'shops', shopId, 'orders', orderId), {
+      courierName: 'steadfast',
+      consignmentId: String(consignment.consignment_id || ''),
+      trackingCode: consignment.tracking_code || '',
+      courierStatus: consignment.status || 'pending',
+      courierCharge: consignment.delivery_charge || 0,
+      courierCOD: consignment.cod_amount || 0,
+    });
+
+    return {
+      consignmentId: consignment.consignment_id,
+      trackingCode: consignment.tracking_code,
+      status: consignment.status,
+    };
+  };
 
   const handleStatusAttempt = (orderId, newStatus) => {
     const orderObj = orders.find(o => o.id === orderId);
@@ -125,33 +203,19 @@ export default function OrdersPage() {
             }
 
             toast.promise(
-              (async () => {
-                const token = await user.getIdToken();
-                const res = await fetch('/api/courier/steadfast/create-parcel', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({
-                    shopId: activeShopId,
-                    orderId: order.id,
-                    recipientName: order.customerName || '',
-                    recipientPhone: cleanPhone,
-                    recipientAddress: order.customerAddress || '',
-                    codAmount: parseFloat(order.total) || 0,
-                    note: order.customerNote || ''
-                  })
-                });
-                const data = await res.json();
-                if (!res.ok) {
-                  throw new Error(data.error || 'Failed to auto-book parcel');
-                }
-                return data;
-              })(),
+              bookSteadfastClientSide({
+                shopId: activeShopId,
+                orderId: order.id,
+                orderVisualId: order.orderIdVisual,
+                recipientName: order.customerName || '',
+                recipientPhone: cleanPhone,
+                recipientAddress: order.customerAddress || '',
+                codAmount: parseFloat(order.total) || 0,
+                note: order.customerNote || ''
+              }),
               {
-                loading: 'স্টেডফাস্ট কুরিয়ারে পার্সেল বুকিং করা হচ্ছে...',
-                success: 'স্টেডফাস্টে সফলভাবে অটো-বুকিং করা হয়েছে! 🎉',
+                loading: 'স্টেডফাস্ট কুরিয়ারে পার্সেল বুকিং করা হচ্ছে...',
+                success: (result) => `✅ Steadfast বুকিং সফল! Tracking: ${result.trackingCode || 'N/A'}`,
                 error: (err) => `স্টেডফাস্ট অটো-বুকিং ব্যর্থ: ${err.message}`
               }
             );
@@ -197,37 +261,24 @@ export default function OrdersPage() {
 
   const handleCourierBooking = async (e) => {
     e.preventDefault();
-    if (!user || !activeShopId || !selectedOrderForCourier) return;
+    if (!activeShopId || !selectedOrderForCourier) return;
     setBookingCourier(true);
     try {
-      const token = await user.getIdToken();
-      const res = await fetch('/api/courier/steadfast/create-parcel', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          shopId: activeShopId,
-          orderId: selectedOrderForCourier.id,
-          recipientName: courierFormData.recipientName,
-          recipientPhone: courierFormData.recipientPhone,
-          recipientAddress: courierFormData.recipientAddress,
-          codAmount: Number(courierFormData.codAmount) || 0,
-          note: courierFormData.note
-        })
+      const result = await bookSteadfastClientSide({
+        shopId: activeShopId,
+        orderId: selectedOrderForCourier.id,
+        orderVisualId: selectedOrderForCourier.orderIdVisual,
+        recipientName: courierFormData.recipientName,
+        recipientPhone: courierFormData.recipientPhone,
+        recipientAddress: courierFormData.recipientAddress,
+        codAmount: Number(courierFormData.codAmount) || 0,
+        note: courierFormData.note
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to book parcel');
-      }
-
-      toast.success('পার্সেল সফলভাবে বুক করা হয়েছে! 🎉');
+      toast.success('Steadfast booking successful! Tracking: ' + (result.trackingCode || 'N/A'));
       setCourierModalOpen(false);
     } catch (err) {
       console.error(err);
-      toast.error(`বুকিং ব্যর্থ: ${err.message}`);
+      toast.error('Booking failed: ' + err.message);
     } finally {
       setBookingCourier(false);
     }
@@ -1074,3 +1125,4 @@ function GoogleMapViewer({ coords, onClose, apiKey }) {
     </div>
   );
 }
+
