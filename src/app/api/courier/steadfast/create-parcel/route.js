@@ -7,6 +7,10 @@ import admin from 'firebase-admin';
 async function isAuthorizedShopAdmin(req, shopId) {
   try {
     const { uid, email } = await verifyAuth(req);
+    
+    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || 'rafiqunnabi07@gmail.com').toLowerCase().trim();
+    if (email && email.toLowerCase().trim() === envAdmin) return true;
+
     if (uid === shopId) return true;
 
     const userSnap = await adminDb.collection('users').doc(uid).get();

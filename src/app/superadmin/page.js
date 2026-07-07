@@ -48,6 +48,8 @@ export default function SuperAdminPage() {
   const [allProducts, setAllProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   const [globalConfig, setGlobalConfig] = useState({
     geminiApiKey: '',
@@ -294,6 +296,36 @@ export default function SuperAdminPage() {
       (product.category || '').toLowerCase().includes(q)
     );
   });
+
+  const handleBulkVisibility = async (show) => {
+    if (selectedProductIds.length === 0) return;
+    setBulkProcessing(true);
+    const toastId = toast.loading(`${selectedProductIds.length}টি পণ্যের ভিজিবিলিটি আপডেট হচ্ছে...`);
+    try {
+      const promises = selectedProductIds.map(async (id) => {
+        const product = allProducts.find(p => p.id === id);
+        if (product) {
+          await updateProduct(product.shopId, product.id, { showOnMainSite: show });
+        }
+      });
+      await Promise.all(promises);
+
+      setAllProducts(prev => prev.map(p => {
+        if (selectedProductIds.includes(p.id)) {
+          return { ...p, showOnMainSite: show };
+        }
+        return p;
+      }));
+
+      toast.success(show ? 'নির্বাচিত পণ্যগুলো মেইন সাইটে দৃশ্যমান করা হয়েছে! 🎉' : 'নির্বাচিত পণ্যগুলো মেইন সাইট থেকে হাইড করা হয়েছে! 🛑', { id: toastId });
+      setSelectedProductIds([]);
+    } catch (err) {
+      console.error(err);
+      toast.error('বাল্ক ভিজিবিলিটি আপডেট করতে ব্যর্থ হয়েছে।', { id: toastId });
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -1701,16 +1733,47 @@ export default function SuperAdminPage() {
             icon={Sparkles}
             className="border-2 border-emerald-100 bg-emerald-50/10"
           >
-            {/* Search filter for products */}
-            <div className="relative mb-6">
-              <Search className="absolute left-4 top-3.5 text-slate-400" size={16} />
-              <input
-                type="text"
-                placeholder="প্রোডাক্ট বা মার্চেন্টের নাম লিখে খুঁজুন..."
-                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all shadow-sm"
-                value={productSearchQuery}
-                onChange={e => setProductSearchQuery(e.target.value)}
-              />
+            {/* Search and Bulk Actions */}
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-4 top-3.5 text-slate-400" size={16} />
+                <input
+                  type="text"
+                  placeholder="প্রোডাক্ট বা মার্চেন্টের নাম লিখে খুঁজুন..."
+                  className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all shadow-sm"
+                  value={productSearchQuery}
+                  onChange={e => {
+                    setProductSearchQuery(e.target.value);
+                    setSelectedProductIds([]);
+                  }}
+                />
+              </div>
+
+              {selectedProductIds.length > 0 && (
+                <div className="flex items-center gap-3 w-full md:w-auto shrink-0 bg-purple-50 border border-purple-100 rounded-2xl p-2 px-3 animate-slide-in">
+                  <span className="text-[10px] font-black text-purple-700 uppercase tracking-widest">
+                    {selectedProductIds.length} Selected (নির্বাচিত)
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={bulkProcessing}
+                      onClick={() => handleBulkVisibility(true)}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors disabled:opacity-50"
+                    >
+                      Show Selected
+                    </button>
+                    <button
+                      type="button"
+                      disabled={bulkProcessing}
+                      onClick={() => handleBulkVisibility(false)}
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-colors disabled:opacity-50"
+                    >
+                      Hide Selected
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {productsLoading ? (
@@ -1726,6 +1789,20 @@ export default function SuperAdminPage() {
                 <table className="w-full text-left border-separate border-spacing-y-2">
                   <thead>
                     <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <th className="pb-2 px-4 border-b border-slate-100 w-10">
+                        <input
+                          type="checkbox"
+                          className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                          checked={filteredCurationProducts.length > 0 && selectedProductIds.length === filteredCurationProducts.length}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProductIds(filteredCurationProducts.map(p => p.id));
+                            } else {
+                              setSelectedProductIds([]);
+                            }
+                          }}
+                        />
+                      </th>
                       <th className="pb-2 px-4 border-b border-slate-100">প্রোডাক্ট</th>
                       <th className="pb-2 px-4 border-b border-slate-100">মার্চেন্ট বা শপ</th>
                       <th className="pb-2 px-4 border-b border-slate-100">ক্যাটাগরি ওভাররাইড</th>
@@ -1737,7 +1814,21 @@ export default function SuperAdminPage() {
                     {filteredCurationProducts.map(product => {
                       return (
                         <tr key={product.id} className="bg-white hover:bg-slate-50 transition-colors border-b border-slate-50">
-                          <td className="p-3 first:rounded-l-2xl">
+                          <td className="p-3 first:rounded-l-2xl w-10">
+                            <input
+                              type="checkbox"
+                              className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                              checked={selectedProductIds.includes(product.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedProductIds(prev => [...prev, product.id]);
+                                } else {
+                                  setSelectedProductIds(prev => prev.filter(id => id !== product.id));
+                                }
+                              }}
+                            />
+                          </td>
+                          <td className="p-3">
                             <div className="flex items-center gap-3">
                               <img
                                 src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&q=80'}
