@@ -3,22 +3,10 @@ import { adminDb } from '@/lib/firebase-admin';
 import admin from 'firebase-admin';
 import { z } from 'zod';
 
-// HIGH-5 Fix: IP-based rate limiting (best-effort on serverless)
-const DRAFT_RATE_LIMIT = 30;           // max drafts per window per IP
-const DRAFT_RATE_WINDOW_MS = 600000;   // 10 minute window
-const draftIpMap = new Map();
+import { createRateLimiter } from '@/lib/rate-limit';
 
-function isDraftRateLimited(ip) {
-  const now = Date.now();
-  const entry = draftIpMap.get(ip);
-  if (!entry || now - entry.windowStart > DRAFT_RATE_WINDOW_MS) {
-    draftIpMap.set(ip, { count: 1, windowStart: now });
-    return false;
-  }
-  if (entry.count >= DRAFT_RATE_LIMIT) return true;
-  entry.count++;
-  return false;
-}
+// Phase 5: Distributed rate limiter (Upstash Redis with in-memory fallback)
+const draftLimiter = createRateLimiter({ maxRequests: 30, windowMs: 600000, prefix: 'checkout_draft' });
 
 const DraftCheckoutSchema = z.object({
   shopId: z.string().min(1),
@@ -40,8 +28,9 @@ export async function POST(req) {
   try {
     const ip = req.headers.get('x-forwarded-for') || 'unknown';
 
-    // 🔒 HIGH-5: Rate limit draft saves
-    if (isDraftRateLimited(ip)) {
+    // Phase 5: Distributed rate limit
+    const { limited } = await draftLimiter.check(ip);
+    if (limited) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 

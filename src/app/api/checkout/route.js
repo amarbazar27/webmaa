@@ -8,6 +8,7 @@ import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib
 import { sendTelegramAlert } from '@/lib/telegram';
 import { runFraudScan } from '@/lib/fraudDetector';
 import { trackMetaServerEvent } from '@/lib/serverTracking';
+import { createRateLimiter } from '@/lib/rate-limit';
 
 // ── Strict Payload Validation ───────────────────────────
 const CheckoutSchema = z.object({
@@ -42,40 +43,16 @@ const CheckoutSchema = z.object({
   }).optional().nullable()
 });
 
-// ── Simple Rate Limit (in-memory, basic protection) ─────
-// MED-1 Note: In-memory Map resets on each serverless cold start.
-// This provides best-effort protection within a warm instance only.
-// For strict rate limiting, use Firestore-based counters (see OTP rate limiter).
-const rateLimitMap = new Map();
-function isRateLimited(ip) {
-  const now = Date.now();
-  const windowMs = 60 * 1000; // 1 min
-  const maxReq = 20;
-
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, { count: 1, time: now });
-    return false;
-  }
-
-  const data = rateLimitMap.get(ip);
-
-  if (now - data.time > windowMs) {
-    rateLimitMap.set(ip, { count: 1, time: now });
-    return false;
-  }
-
-  if (data.count >= maxReq) return true;
-
-  data.count++;
-  return false;
-}
+// Phase 5: Distributed rate limiter (Upstash Redis with in-memory fallback)
+const checkoutLimiter = createRateLimiter({ maxRequests: 5, windowMs: 60000, prefix: 'checkout' });
 
 export async function POST(req) {
   try {
     const ip = req.headers.get('x-forwarded-for') || 'unknown';
 
-    // 🚨 Rate limit check
-    if (isRateLimited(ip)) {
+    // 🚨 Rate limit check (distributed via Upstash Redis)
+    const { limited } = await checkoutLimiter.check(ip);
+    if (limited) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["sin1"],
+  "functions": {
+    "src/app/api/checkout/route.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "src/app/api/ai/route.js": {
+      "memory": 512,
+      "maxDuration": 30
+    },
+    "src/app/api/ai-vision/route.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "src/app/api/build-app/route.js": {
+      "memory": 512,
+      "maxDuration": 60
+    },
+    "src/app/api/courier/steadfast/create-parcel/route.js": {
+      "memory": 256,
+      "maxDuration": 15
+    }
+  }
+}

@@ -1,28 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getGlobalConfig, getShop } from '@/lib/firestore';
 
-// HIGH-3 Fix: IP-based rate limiting for unauthenticated AI endpoint
-const AI_RATE_LIMIT = 10;          // max requests per window per IP
-const AI_RATE_WINDOW_MS = 60000;   // 1 minute window
-const ipRequestMap = new Map();    // In-memory fallback (best-effort on serverless)
+import { createRateLimiter } from '@/lib/rate-limit';
 
-function isAiRateLimited(ip) {
-  const now = Date.now();
-  const entry = ipRequestMap.get(ip);
-  if (!entry || now - entry.windowStart > AI_RATE_WINDOW_MS) {
-    ipRequestMap.set(ip, { count: 1, windowStart: now });
-    return false;
-  }
-  if (entry.count >= AI_RATE_LIMIT) return true;
-  entry.count++;
-  return false;
-}
+// Phase 5: Distributed rate limiter (Upstash Redis with in-memory fallback)
+const aiLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60000, prefix: 'ai_chat' });
 
 export async function POST(req) {
   try {
-    // 🔒 HIGH-3: Rate limit by IP
+    // Phase 5: Distributed rate limit by IP
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (isAiRateLimited(clientIp)) {
+    const { limited } = await aiLimiter.check(clientIp);
+    if (limited) {
       return NextResponse.json({ error: { message: 'Too many requests. Please wait.' } }, { status: 429 });
     }
 

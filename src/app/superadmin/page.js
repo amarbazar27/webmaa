@@ -9,8 +9,9 @@ import {
   getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop, getShopBySlug,
   getAllMarketplaceProducts, updateProduct, updateShop
 } from '@/lib/firestore';
-import SuperadminBroadcastPanel from '@/components/superadmin/SuperadminBroadcastPanel';
 import dynamic from 'next/dynamic';
+// Phase 1.3: Dynamic import — SuperadminBroadcastPanel is 34KB
+const SuperadminBroadcastPanel = dynamic(() => import('@/components/superadmin/SuperadminBroadcastPanel'), { ssr: false });
 const SuperadminAppBuilder = dynamic(() => import('@/components/superadmin/SuperadminAppBuilder'), { ssr: false });
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,

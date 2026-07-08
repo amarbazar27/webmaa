@@ -19,9 +19,16 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
 
-  // ⚡ TASK 1: Performance - Turbopack (dev only)
+  // ⚡ Performance - Bundle Optimization (tree-shaking heavy packages)
   experimental: {
-    optimizePackageImports: ['lucide-react', 'firebase', '@firebase/firestore'],
+    optimizePackageImports: [
+      'lucide-react',
+      'firebase',
+      '@firebase/firestore',
+      'recharts',
+      'react-hot-toast',
+      'zod',
+    ],
   },
 
   async headers() {

@@ -4,18 +4,10 @@ import { adminDb } from '@/lib/firebase-admin';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const rateLimitMap = new Map();
-function isRateLimited(ip) {
-  const now = Date.now();
-  const windowMs = 60 * 1000;
-  const maxReq = 15;
-  if (!rateLimitMap.has(ip)) { rateLimitMap.set(ip, { count: 1, time: now }); return false; }
-  const data = rateLimitMap.get(ip);
-  if (now - data.time > windowMs) { rateLimitMap.set(ip, { count: 1, time: now }); return false; }
-  if (data.count >= maxReq) return true;
-  data.count++;
-  return false;
-}
+import { createRateLimiter } from '@/lib/rate-limit';
+
+// Phase 5: Distributed rate limiter (Upstash Redis with in-memory fallback)
+const visionLimiter = createRateLimiter({ maxRequests: 15, windowMs: 60000, prefix: 'ai_vision' });
 
 function getImageMimeType(base64) {
   if (!base64) return 'image/jpeg';
@@ -77,7 +69,9 @@ async function tryGeminiVision(apiKey, systemPrompt, base64Data, mimeType) {
 export async function POST(req) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (isRateLimited(ip)) {
+    // Phase 5: Distributed rate limit
+    const { limited } = await visionLimiter.check(ip);
+    if (limited) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
