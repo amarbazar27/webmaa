@@ -49,10 +49,11 @@ export async function POST(req) {
       return NextResponse.json({ error: 'PipraPay is disabled for this shop' }, { status: 400 });
     }
 
-    // Optional: Validate webhook header key if provided
+    // 🔒 REQUIRED: Validate webhook authentication (CRIT-5 fix)
     const reqApiKey = req.headers.get('mh-piprapay-api-key');
-    if (reqApiKey && reqApiKey !== ppApiKey) {
-      return NextResponse.json({ error: 'Unauthorized: Header key mismatch' }, { status: 401 });
+    if (!reqApiKey || reqApiKey !== ppApiKey) {
+      console.warn('[Webhook] ⚠️ Unauthorized webhook attempt from IP:', req.headers.get('x-forwarded-for'));
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Verify payment status server-to-server with PipraPay
@@ -136,20 +137,16 @@ export async function POST(req) {
         }).catch(e => console.warn('[Webhook Ruflo] Customer email error:', e.message));
       }
 
-      // Fetch shop for contact email
-      const shopSnap = await adminDb.collection('shops').doc(shopId).get();
-      if (shopSnap.exists) {
-        const shopData = shopSnap.data();
-        if (shopData.deliveryConfig?.contactEmail) {
-          const emails = shopData.deliveryConfig.contactEmail.split(',').map(email => email.trim()).filter(email => email);
-          for (const email of emails) {
-            void sendRetailerNotificationEmail({
-              to: email,
-              customerName: orderData.customerName,
-              customerPhone: orderData.customerPhone,
-              ...rufloPayload
-            }).catch(e => console.warn('[Webhook Ruflo] Retailer email error:', e.message));
-          }
+      // Fetch shop for contact email (CRIT-6 fix: use different variable name to avoid const redeclaration)
+      if (shopData.deliveryConfig?.contactEmail) {
+        const emails = shopData.deliveryConfig.contactEmail.split(',').map(email => email.trim()).filter(email => email);
+        for (const email of emails) {
+          void sendRetailerNotificationEmail({
+            to: email,
+            customerName: orderData.customerName,
+            customerPhone: orderData.customerPhone,
+            ...rufloPayload
+          }).catch(e => console.warn('[Webhook Ruflo] Retailer email error:', e.message));
         }
       }
     }
@@ -157,6 +154,6 @@ export async function POST(req) {
     return NextResponse.json({ success: true, verified: true });
   } catch (err) {
     console.error('Webhook endpoint failure:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
 }

@@ -46,14 +46,51 @@ export const resumeShop = async (shopId) => {
   return updateDoc(doc(db, 'shops', shopId), { isActive: true, pausedAt: null });
 };
 
-// Super admin: স্টোর সম্পূর্ণ মুছে ফেলা
+// HIGH-10 Fix: Superadmin destructive operations go through authenticated server API
+// Previously these were direct client-side deleteDoc calls that bypassed server validation
+
+// Super admin: স্টোর সম্পূর্ণ মুছে ফেলা (via server API)
 export const deleteShop = async (shopId) => {
-  return deleteDoc(doc(db, 'shops', shopId));
+  const { getAuth } = await import('firebase/auth');
+  const auth = getAuth();
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error('Authentication required');
+  
+  const res = await fetch('/api/admin/delete-resource', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ type: 'shop', id: shopId })
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || 'Delete failed');
+  }
+  return res.json();
 };
 
-// Super admin: deny করা request চিরতরে মুছে ফেলা (user আবার apply করতে পারবে)
+// Super admin: deny করা request চিরতরে মুছে ফেলা (via server API)
 export const deleteRetailerRequest = async (requestId) => {
-  return deleteDoc(doc(db, 'retailer_requests', requestId));
+  const { getAuth } = await import('firebase/auth');
+  const auth = getAuth();
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error('Authentication required');
+  
+  const res = await fetch('/api/admin/delete-resource', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ type: 'retailer_request', id: requestId })
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || 'Delete failed');
+  }
+  return res.json();
 };
 
 // ── PRODUCTS ──────────────────────────────────────

@@ -2539,25 +2539,33 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         })()}
 
         {/* ── FAQ Schema Injected silently for SEO/AEO ── */}
-        {shop.faqItems && shop.faqItems.length > 0 && (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "FAQPage",
-                "mainEntity": shop.faqItems.map(faq => ({
-                  "@type": "Question",
-                  "name": faq.q,
-                  "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": faq.a
-                  }
-                }))
-              })
-            }}
-          />
-        )}
+        {/* HIGH-1 Fix: Sanitize retailer-controlled FAQ data before JSON-LD injection */}
+        {shop.faqItems && shop.faqItems.length > 0 && (() => {
+          // Strip HTML tags and escape script-breaking sequences from FAQ data
+          const sanitize = (str) => String(str || '')
+            .replace(/<[^>]*>/g, '')           // Strip all HTML tags
+            .replace(/<\/script/gi, '')         // Prevent script tag breakout
+            .replace(/<!--/g, '')              // Strip HTML comments
+            .trim();
+          const safeJson = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": shop.faqItems.map(faq => ({
+              "@type": "Question",
+              "name": sanitize(faq.q),
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": sanitize(faq.a)
+              }
+            }))
+          });
+          return (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: safeJson }}
+            />
+          );
+        })()}
 
         {/* ── Product Grid ── */}
         {filteredProducts.length === 0 ? (

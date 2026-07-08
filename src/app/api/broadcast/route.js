@@ -5,6 +5,17 @@ import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 import nodemailer from 'nodemailer';
 
+// HIGH-2 Fix: HTML-encode user input before email template injection
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ── Email Transporter ────────────────────────────────────────────────────
 function createTransporter() {
   // Support multiple SMTP env var names
@@ -104,11 +115,11 @@ export async function POST(request) {
               html: `
                 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
                   <div style="background:linear-gradient(135deg,#1e40af,#0891b2);padding:30px;border-radius:12px 12px 0 0;text-align:center">
-                    <h1 style="color:white;margin:0;font-size:24px">${activeSenderName}</h1>
+                    <h1 style="color:white;margin:0;font-size:24px">${escapeHtml(activeSenderName)}</h1>
                   </div>
                   <div style="background:#fff;padding:30px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
-                    <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${subject}</h2>
-                    <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${message}</div>
+                    <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${escapeHtml(subject)}</h2>
+                    <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${escapeHtml(message)}</div>
                     <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0" />
                     <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Daripallah</p>
                   </div>
@@ -277,6 +288,18 @@ export async function POST(request) {
 // GET — Fetch recent broadcasts/history for a shop
 export async function GET(request) {
   try {
+    // 🔒 MED-4 Fix: Require authentication for broadcast history
+    const authHeader = request.headers.get('authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    try {
+      await admin.auth().verifyIdToken(token);
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get('shopId');
 

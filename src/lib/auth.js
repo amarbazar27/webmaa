@@ -19,8 +19,8 @@ const determineRole = async (email) => {
     if (!email) return { role: 'user' };
     
     const currentEmail = email.toLowerCase().trim();
-    // 🔐 Super Admin Check
-    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || 'rafiqunnabi07@gmail.com').toLowerCase().trim();
+    // 🔐 Super Admin Check — CRIT-1 fix: no hardcoded fallback
+    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
     if (envAdmin && currentEmail === envAdmin) {
       return { role: 'superadmin' };
     }

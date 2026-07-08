@@ -62,11 +62,11 @@ async function isAuthorizedShopAdmin(req, shopId) {
       }
     }
 
-    // Check 3: Env-based superadmin email fallback
-    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || 'rafiqunnabi07@gmail.com')
+    // Check 3: Env-based superadmin email (CRIT-1 fix: no hardcoded fallback)
+    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '')
       .toLowerCase()
       .trim();
-    if (email && (email === envAdmin || email.includes('rafiqunnabi07@gmail.com'))) {
+    if (envAdmin && email && email === envAdmin) {
       console.log('[STEADFAST AUTH] ✅ Authorized: email matches NEXT_PUBLIC_SUPER_ADMIN_EMAIL');
       return true;
     }

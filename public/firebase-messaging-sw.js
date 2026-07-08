@@ -12,6 +12,9 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
 // Static production Firebase configuration
+// MED-5 Note: Service workers cannot access process.env — these MUST be hardcoded.
+// ⚠️ IMPORTANT: Keep these values in sync with .env.local NEXT_PUBLIC_FIREBASE_* vars.
+// Last verified: 2026-07-08 — all values match .env.local
 const firebaseConfig = {
   apiKey: "AIzaSyAMMzATvPWghOT8islcllFz9hXlCJ6HdFk",
   authDomain: "webmaa-app.firebaseapp.com",

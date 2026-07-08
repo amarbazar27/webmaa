@@ -67,7 +67,7 @@ export function AuthProvider({ children }) {
         logId,
       };
 
-      startImpersonation(session, logId);
+      startImpersonation(session, logId, user.uid);
       setImpersonation(session);
 
       return session;

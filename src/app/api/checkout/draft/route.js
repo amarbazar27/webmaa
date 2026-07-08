@@ -3,6 +3,23 @@ import { adminDb } from '@/lib/firebase-admin';
 import admin from 'firebase-admin';
 import { z } from 'zod';
 
+// HIGH-5 Fix: IP-based rate limiting (best-effort on serverless)
+const DRAFT_RATE_LIMIT = 30;           // max drafts per window per IP
+const DRAFT_RATE_WINDOW_MS = 600000;   // 10 minute window
+const draftIpMap = new Map();
+
+function isDraftRateLimited(ip) {
+  const now = Date.now();
+  const entry = draftIpMap.get(ip);
+  if (!entry || now - entry.windowStart > DRAFT_RATE_WINDOW_MS) {
+    draftIpMap.set(ip, { count: 1, windowStart: now });
+    return false;
+  }
+  if (entry.count >= DRAFT_RATE_LIMIT) return true;
+  entry.count++;
+  return false;
+}
+
 const DraftCheckoutSchema = z.object({
   shopId: z.string().min(1),
   localId: z.string().min(1),
@@ -22,6 +39,12 @@ const DraftCheckoutSchema = z.object({
 export async function POST(req) {
   try {
     const ip = req.headers.get('x-forwarded-for') || 'unknown';
+
+    // 🔒 HIGH-5: Rate limit draft saves
+    if (isDraftRateLimited(ip)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const body = await req.json();
 
     const parsed = DraftCheckoutSchema.safeParse(body);

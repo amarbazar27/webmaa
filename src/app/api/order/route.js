@@ -41,10 +41,6 @@ export async function GET(req) {
     
     const orderData = orderSnap.data();
 
-    // Since we are not doing a full session validation here for public order viewing, 
-    // it's a bit open, but typically order URLs are private (unguessable IDs).
-    // For a fully secure app, you'd verify a session cookie or token.
-    // In this context, we'll allow reading if they have the EXACT order ID.
     // Convert Firestore timestamps to standard format for JSON serialization
     const formatData = (data) => {
       const formatted = { ...data };
@@ -56,9 +52,32 @@ export async function GET(req) {
       return formatted;
     };
 
+    // 🔒 CRIT-4 Fix: Sanitize shop data — never expose internal config/secrets
+    const safeShopData = {
+      id: shopId,
+      shopName: shopData.shopName,
+      shopSlug: shopData.shopSlug || shopData.subdomainSlug,
+      subdomainSlug: shopData.subdomainSlug,
+      logo: shopData.logo || '',
+      deliveryConfig: shopData.deliveryConfig ? {
+        contactPhone: shopData.deliveryConfig.contactPhone,
+        advanceFee: shopData.deliveryConfig.advanceFee,
+        isCOD: shopData.deliveryConfig.isCOD,
+      } : {},
+    };
+
+    // 🔒 CRIT-4 Fix: Sanitize order data — remove internal/sensitive fields
+    const rawOrder = formatData(orderData);
+    const {
+      clientIp, fraudScore, fraudRiskLevel, fraudReasons,
+      localId: _localId, piprapayPpId, piprapayCheckoutUrl,
+      paymentCommission, paymentNetEarning, paymentCommissionPercent,
+      ...safeOrderData
+    } = rawOrder;
+
     return NextResponse.json({ 
-      shop: { id: shopId, ...formatData(shopData) }, 
-      order: { id: orderSnap.id, ...formatData(orderData) } 
+      shop: safeShopData, 
+      order: { id: orderSnap.id, ...safeOrderData } 
     });
 
   } catch (error) {

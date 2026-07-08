@@ -6,16 +6,12 @@
  * 
  * যদি token invalid হয়, error throw করবে।
  * 
- * কিভাবে কাজ করে:
- * - Client থেকে Authorization: Bearer <idToken> হেডার পাঠাতে হবে
- * - এই middleware Firebase REST API দিয়ে token verify করে
- * - Vercel Edge Runtime-এ Firebase Admin SDK লাগে না
+ * CRIT-3 Fix: Uses Firebase Admin SDK verifyIdToken() for full
+ * cryptographic verification instead of the insecure REST API.
  */
 
-const FIREBASE_PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-// Token info endpoint — Firebase publishes this for token verification
-const VERIFY_URL = `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=${process.env.NEXT_PUBLIC_FIREBASE_API_KEY}`;
+import admin from 'firebase-admin';
+import '@/lib/firebase-admin'; // ensure initialized
 
 /**
  * Verify Firebase ID token from request headers
@@ -32,29 +28,14 @@ export async function verifyAuth(request) {
   }
 
   try {
-    // Firebase REST API দিয়ে token verify করা
-    const response = await fetch(VERIFY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: token }),
-    });
-
-    if (!response.ok) {
-      throw new AuthError('Invalid or expired token', 401);
-    }
-
-    const data = await response.json();
-    const user = data.users?.[0];
-
-    if (!user) {
-      throw new AuthError('User not found', 401);
-    }
+    // 🔒 Firebase Admin SDK — full cryptographic token verification
+    const decoded = await admin.auth().verifyIdToken(token);
 
     return {
-      uid: user.localId,
-      email: user.email || '',
-      name: user.displayName || '',
-      emailVerified: user.emailVerified || false,
+      uid: decoded.uid,
+      email: decoded.email || '',
+      name: decoded.name || '',
+      emailVerified: decoded.email_verified || false,
     };
   } catch (error) {
     if (error instanceof AuthError) throw error;

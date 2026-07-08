@@ -14,8 +14,9 @@ export const uploadImage = async (file, shopId = null) => {
     throw new Error('ফাইল সাইজ ৫ মেগাবাইটের বেশি! অনুগ্রহ করে ছোট ছবি ব্যবহার করুন।');
   }
   
-  let cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dcsecgwzc';
-  let uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset';
+  // HIGH-8 Fix: No hardcoded fallback credentials
+  let cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '';
+  let uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '';
   
   if (shopId) {
     try {

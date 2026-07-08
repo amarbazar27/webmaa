@@ -31,7 +31,7 @@ const CheckoutSchema = z.object({
     customizedText: z.string().max(200).optional(),
     baseUnit: z.string().max(50).optional(),
     clientPrice: z.number().positive().optional()
-  })).min(0),
+  })).min(1), // MED-2 Fix: Require at least 1 item (customImage-only orders handled separately below)
   customerId: z.string().min(1),
   customImage: z.string().max(2000000).optional().nullable(),
   couponCode: z.string().max(50).optional().nullable(),
@@ -43,6 +43,9 @@ const CheckoutSchema = z.object({
 });
 
 // ── Simple Rate Limit (in-memory, basic protection) ─────
+// MED-1 Note: In-memory Map resets on each serverless cold start.
+// This provides best-effort protection within a warm instance only.
+// For strict rate limiting, use Firestore-based counters (see OTP rate limiter).
 const rateLimitMap = new Map();
 function isRateLimited(ip) {
   const now = Date.now();
@@ -249,7 +252,12 @@ export async function POST(req) {
       }
 
       // If product allows AI customization, smart calculator, or is shown in common order sheet, trust the clientPrice
+      // MED-3 Fix: Cap clientPrice to 10x base price to prevent price manipulation
       if ((product.allowCustomize || product.smartCalc?.enabled || product.showInCommonOrder) && item.clientPrice && item.clientPrice > 0) {
+         const maxAllowedPrice = price * 10; // 10x safety cap
+         if (item.clientPrice > maxAllowedPrice) {
+           return NextResponse.json({ error: `Price exceeds maximum allowed for ${product.name}` }, { status: 400 });
+         }
          price = item.clientPrice;
       }
 
@@ -297,12 +305,15 @@ export async function POST(req) {
     // ── Delivery logic ─────────────────────────────────
     let freeDelivery = false;
 
-    if (customerPhone) {
+    // MED-9 Fix: Free delivery requires confirmed/completed orders only + minimum subtotal
+    // Previously: any 6 orders (even cancelled/tiny) qualified for free delivery
+    if (customerPhone && total >= 500) {
       const ordersSnap = await adminDb
         .collection('shops')
         .doc(shopId)
         .collection('orders')
         .where('customerPhone', '==', customerPhone)
+        .where('status', 'in', ['confirmed', 'completed', 'delivered'])
         .get();
 
       if (ordersSnap.size >= 6) {
@@ -627,6 +638,6 @@ export async function POST(req) {
       context: { shopId: req.url || 'unknown', errorStack: err.stack }
     });
 
-    return NextResponse.json({ error: `Checkout Failed: ${err.message}` }, { status: 500 });
+    return NextResponse.json({ error: 'Checkout failed. Please try again.' }, { status: 500 });
   }
 }

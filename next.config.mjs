@@ -36,6 +36,24 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(self), interest-cohort=()' },
+          // MED-8 Fix: Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://www.googletagmanager.com https://connect.facebook.net",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https: http:",
+              "font-src 'self' https://fonts.gstatic.com",
+              "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.cloudfunctions.net https://api.cloudinary.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com https://graph.facebook.com https://api.ipify.org https://*.vercel.app",
+              "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com",
+              "media-src 'self' https: blob:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'self'",
+            ].join('; ')
+          },
         ],
       },
       // Cache static assets for 1 year

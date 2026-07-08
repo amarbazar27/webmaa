@@ -24,7 +24,7 @@ async function getTransporter() {
       user: process.env.RUFLO_EMAIL,
       pass: process.env.RUFLO_APP_PASSWORD,
     },
-    tls: { rejectUnauthorized: false }
+    tls: { rejectUnauthorized: true } // HIGH-9 Fix: Enable TLS verification (was false)
   });
   return transporterCache;
 }

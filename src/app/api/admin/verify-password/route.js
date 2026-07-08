@@ -2,20 +2,41 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { adminDb } from '@/lib/firebase-admin';
 import nodemailer from 'nodemailer';
+import admin from 'firebase-admin';
 
 // Gmail SMTP transporter — uses env vars set in Vercel + .env.local
 function createTransporter() {
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.SMTP_USER,      // e.g. rafiqunnabi07@gmail.com
-      pass: process.env.SMTP_PASS,      // Gmail App Password (16-char)
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
   });
 }
 
 export async function POST(request) {
   try {
+    // 🔒 HIGH-4 Fix: Require Firebase auth for all actions
+    const authHeader = request.headers.get('authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    if (!token) {
+      return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+    }
+    let decoded;
+    try {
+      decoded = await admin.auth().verifyIdToken(token);
+    } catch {
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+    }
+
+    // Only superadmin can access this endpoint
+    const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
+    const userData = userDoc.exists ? userDoc.data() : {};
+    if (userData.role !== 'superadmin') {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+    }
+
     const { action, password, otp } = await request.json();
 
     const docRef = adminDb.collection('config').doc('superadmin_security');
@@ -120,6 +141,6 @@ export async function POST(request) {
 
   } catch (error) {
     console.error('[Superadmin Verify Password] Error:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
