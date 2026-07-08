@@ -514,7 +514,8 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-slide-in pb-12">
+    <>
+      <div className="max-w-6xl mx-auto space-y-8 animate-slide-in pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Order Management</h1>
@@ -663,6 +664,13 @@ export default function OrdersPage() {
                 <div className="divide-y divide-slate-100">
                     {filteredUserOrders.map(order => {
                         const isUnpaidAutomatedOrder = (order.paymentMethod === 'piprapay' || order.paymentMethod === 'automated') && order.paymentStatus !== 'paid';
+                        const phone = standardizePhone(order.customerPhone);
+                        const profile = fraudProfiles[phone];
+                        const realTimeRisk = profile ? calculateRiskScoreClient(profile) : null;
+                        const displayScore = realTimeRisk ? realTimeRisk.score : (order.fraudScore || 0);
+                        const displayLevel = realTimeRisk ? realTimeRisk.riskLevel : (order.fraudRiskLevel || 'low');
+                        const displayReasons = realTimeRisk ? realTimeRisk.reasons : (order.fraudReasons || []);
+
                         return (
                           <div key={order.id} className="border-b border-slate-100 last:border-0">
                        <div className="p-6 grid grid-cols-1 xl:grid-cols-12 gap-8 hover:bg-slate-50/50 transition-colors">
@@ -676,23 +684,22 @@ export default function OrdersPage() {
                                         {STATUS_CONFIG[order.status || 'pending'].label}
                                      </div>
                                   </div>
-                                  {order.fraudRiskLevel && (
+                                  {(displayScore > 0 || displayLevel !== 'low') && (
                                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5 mb-2">
                                         <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                          order.fraudRiskLevel === 'very_high' ? 'bg-red-50 text-red-700 border-red-200' :
-                                          order.fraudRiskLevel === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                                          order.fraudRiskLevel === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                          'bg-green-50 text-green-700 border-green-200'
+                                          displayLevel === 'very_high' || displayLevel === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
+                                          displayLevel === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                          'bg-emerald-50 text-emerald-700 border-emerald-200'
                                         }`}>
-                                           🛡️ Risk: {order.fraudRiskLevel.replace('_', ' ')} ({order.fraudScore}%)
+                                           🛡️ Risk: {displayLevel.replace('_', ' ').toUpperCase()} ({displayScore}%)
                                         </span>
-                                        {order.fraudReasons && order.fraudReasons.length > 0 && (
-                                           <span className="text-[9px] text-slate-400 font-bold bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
-                                              {order.fraudReasons.join(', ')}
-                                           </span>
-                                        )}
-                                     </div>
-                                  )}
+                                        {displayReasons && displayReasons.length > 0 && (
+                                           <span className="text-[9px] text-slate-500 font-bold bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
+                                              {displayReasons.slice(0, 2).join(', ')}
+                                            </span>
+                                         )}
+                                      </div>
+                                   )}
                                   {isUnpaidAutomatedOrder && (
                                      <div className="mt-1 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-black flex items-center gap-1.5 animate-pulse">
                                         <AlertCircle size={14} />
@@ -996,9 +1003,10 @@ export default function OrdersPage() {
                </div>
             );
           })}
-      </div>
+      </div> {/* Closes child list wrapper */}
+    </div> {/* Closes max-w-6xl container */}
 
-      {/* Security PIN Modal */}
+    {/* Security PIN Modal */}
       {authModal.open && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setAuthModal({...authModal, open: false})} />
@@ -1175,7 +1183,7 @@ export default function OrdersPage() {
             onClose={() => setMapOverlayCoords(null)} 
          />
       )}
-    </div>
+    </>
   );
 }
 

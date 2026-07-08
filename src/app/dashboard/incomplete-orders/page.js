@@ -13,7 +13,7 @@ import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function IncompleteOrdersPage() {
-  const { user, activeShopId } = useAuth();
+  const { user, activeShopId, loading: authLoading } = useAuth();
   const [shop, setShop] = useState(null);
   const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ export default function IncompleteOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (!activeShopId) return;
+    if (authLoading || !activeShopId || !user) return;
 
     getShop(activeShopId).then(setShop);
 

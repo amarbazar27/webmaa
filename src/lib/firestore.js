@@ -456,13 +456,22 @@ export const subscribeOrders = (shopId, callback) => {
 export const subscribeIncompleteOrders = (shopId, callback, onError) => {
   const q = query(
     collection(db, 'shops', shopId, 'incomplete_orders'),
-    orderBy('updatedAt', 'desc'),
     limit(100)
   );
   return onSnapshot(
     q, 
     (snap) => {
-      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      data.sort((a, b) => {
+        const getMillis = (val) => {
+          if (!val) return 0;
+          if (val.seconds) return val.seconds * 1000;
+          if (val.toDate) return val.toDate().getTime();
+          return new Date(val).getTime() || 0;
+        };
+        return getMillis(b.updatedAt) - getMillis(a.updatedAt);
+      });
+      callback(data);
     },
     (err) => {
       console.error('[Firestore subscribeIncompleteOrders error]', err);
