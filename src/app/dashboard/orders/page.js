@@ -16,12 +16,21 @@ const STATUS_CONFIG = {
 };
 
 export default function OrdersPage() {
+  const getTodayString = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   const { user, userData, activeShopId } = useAuth();
   const [shop, setShop] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDate, setSelectedDate] = useState(getTodayString());
   
   // States for advanced edits
   const [customNote, setCustomNote] = useState({});
@@ -484,8 +493,21 @@ export default function OrdersPage() {
     }
   };
 
-  // Grouping by Phone/Email algorithm
-  const groupedOrders = orders.reduce((acc, order) => {
+  // Grouping by Phone/Email algorithm on filtered orders
+  const getOrderDateString = (order) => {
+    if (!order.createdAt) return '';
+    const dateObj = order.createdAt.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const filteredOrders = selectedDate 
+    ? orders.filter(o => getOrderDateString(o) === selectedDate)
+    : orders;
+
+  const groupedOrders = filteredOrders.reduce((acc, order) => {
      const identifier = order.customerEmail || order.customerPhone || 'Unknown Customer';
      if (!acc[identifier]) acc[identifier] = [];
      acc[identifier].push(order);
@@ -524,8 +546,8 @@ export default function OrdersPage() {
       </div>
 
       {/* Search + Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="flex-1 bg-white border border-slate-200 p-2 rounded-2xl flex items-center gap-3 shadow-sm">
+      <div className="flex flex-col lg:flex-row gap-3">
+        <div className="flex-grow lg:max-w-md bg-white border border-slate-200 p-2 rounded-2xl flex items-center gap-3 shadow-sm">
           <div className="pl-3 text-slate-400">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </div>
@@ -537,12 +559,39 @@ export default function OrdersPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
+
+        {/* Date Filter Input */}
+        <div className="bg-white border border-slate-200 p-2 rounded-2xl flex items-center gap-2 shadow-sm shrink-0">
+          <span className="pl-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Select Date:</span>
+          <input
+            type="date"
+            className="bg-transparent border-none outline-none text-xs font-black text-slate-900 py-1 cursor-pointer"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+          {selectedDate ? (
+            <button 
+              onClick={() => setSelectedDate('')} 
+              className="text-[9px] font-black text-red-500 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+            >
+              All Dates
+            </button>
+          ) : (
+            <button 
+              onClick={() => setSelectedDate(getTodayString())} 
+              className="text-[9px] font-black text-purple-600 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+            >
+              Today
+            </button>
+          )}
+        </div>
+
+        <div className="flex gap-1.5 flex-wrap">
           {['all', 'pending', 'confirmed', 'shipped', 'completed', 'cancelled'].map(s => (
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors border ${
+              className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors border ${
                 filter === s
                   ? 'bg-purple-600 text-white border-purple-600 shadow-md'
                   : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
@@ -554,21 +603,47 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="space-y-10">
-        {identifierKeys
-          .filter(identifier => {
-            if (!searchTerm.trim()) return true;
-            const term = searchTerm.toLowerCase();
-            // Check if identifier (phone/email) matches
-            if (identifier.toLowerCase().includes(term)) return true;
-            // Check orders for name or order ID match
-            return groupedOrders[identifier].some(o =>
-              (o.customerName || '').toLowerCase().includes(term) ||
-              (o.orderIdVisual || '').toLowerCase().includes(term) ||
-              (o.id || '').toLowerCase().includes(term)
-            );
-          })
-          .map(identifier => {
+      {(() => {
+        const hasFilteredOrders = identifierKeys.some(identifier => {
+           const userOrders = groupedOrders[identifier];
+           const filteredUserOrders = filter === 'all' ? userOrders : userOrders.filter(o => o.status === filter);
+           return filteredUserOrders.length > 0;
+        });
+
+        if (!hasFilteredOrders) {
+          return (
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+               <ShoppingBag size={48} className="mx-auto mb-4 text-slate-300 animate-pulse" />
+               <h3 className="text-lg font-black text-slate-400">কোনো অর্ডার পাওয়া যায়নি</h3>
+               <p className="text-slate-400 text-xs mt-1 font-bold">
+                  {selectedDate ? `${selectedDate} তারিখে ${filter === 'all' ? '' : `[${STATUS_CONFIG[filter]?.label || filter}]`} কোনো অর্ডার পাওয়া যায়নি।` : 'কোনো অর্ডার পাওয়া যায়নি।'}
+               </p>
+               {selectedDate && (
+                 <button 
+                   onClick={() => setSelectedDate('')}
+                   className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-md cursor-pointer"
+                 >
+                   সব তারিখের অর্ডার দেখুন
+                 </button>
+               )}
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-10">
+            {identifierKeys
+              .filter(identifier => {
+                if (!searchTerm.trim()) return true;
+                const term = searchTerm.toLowerCase();
+                if (identifier.toLowerCase().includes(term)) return true;
+                return groupedOrders[identifier].some(o =>
+                  (o.customerName || '').toLowerCase().includes(term) ||
+                  (o.orderIdVisual || '').toLowerCase().includes(term) ||
+                  (o.id || '').toLowerCase().includes(term)
+                );
+              })
+              .map(identifier => {
            const userOrders = groupedOrders[identifier];
            const filteredUserOrders = filter === 'all' ? userOrders : userOrders.filter(o => o.status === filter);
            
@@ -671,6 +746,17 @@ export default function OrdersPage() {
                         const displayLevel = realTimeRisk ? realTimeRisk.riskLevel : (order.fraudRiskLevel || 'low');
                         const displayReasons = realTimeRisk ? realTimeRisk.reasons : (order.fraudReasons || []);
 
+                        // Parse coordinates URL if present in address
+                        const mapLinkRegex = /(https?:\/\/[^\s\]]+)/g;
+                        const match = order.customerAddress?.match(mapLinkRegex);
+                        const extractedMapUrl = match ? match[0] : null;
+                        
+                        let cleanAddress = order.customerAddress || 'N/A';
+                        if (extractedMapUrl) {
+                          const mapTextRegex = /\s*\[ম্যাপ:\s*https?:\/\/[^\s\]]+\]/g;
+                          cleanAddress = cleanAddress.replace(mapTextRegex, '').trim();
+                        }
+
                         return (
                            <div key={order.id} className="border-b border-slate-100 last:border-0">
                         <div className="p-6 grid grid-cols-1 xl:grid-cols-12 gap-8 hover:bg-slate-50/50 transition-colors">
@@ -684,26 +770,24 @@ export default function OrdersPage() {
                                          {STATUS_CONFIG[order.status || 'pending'].label}
                                       </div>
                                    </div>
-                                   {(displayScore > 0 || displayLevel !== 'low') && (
-                                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5 mb-2">
-                                         <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                           displayLevel === 'very_high' || displayLevel === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
-                                           displayLevel === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                           'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                         }`}>
-                                            🛡️ Risk: {displayLevel.replace('_', ' ').toUpperCase()} ({displayScore}%)
-                                         </span>
-                                         {displayReasons && displayReasons.length > 0 && (
-                                            <div className="w-full flex flex-col gap-1 mt-1">
-                                               {displayReasons.slice(0, 2).map((r, idx) => (
-                                                  <span key={idx} className="text-[9px] text-slate-500 font-extrabold bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md truncate max-w-full">
-                                                     {r}
-                                                  </span>
-                                               ))}
-                                            </div>
-                                         )}
-                                      </div>
-                                   )}
+                                   <div className="flex flex-wrap items-center gap-1.5 mt-1.5 mb-2">
+                                      <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                                        displayLevel === 'very_high' || displayLevel === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
+                                        displayLevel === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                        'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      }`}>
+                                         🛡️ Risk: {displayLevel.replace('_', ' ').toUpperCase()} ({displayScore}%)
+                                      </span>
+                                      {displayReasons && displayReasons.length > 0 && (
+                                         <div className="w-full flex flex-col gap-1 mt-1">
+                                            {displayReasons.slice(0, 2).map((r, idx) => (
+                                               <span key={idx} className="text-[9px] text-slate-500 font-extrabold bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md truncate max-w-full">
+                                                  {r}
+                                               </span>
+                                            ))}
+                                         </div>
+                                      )}
+                                   </div>
                                    {isUnpaidAutomatedOrder && (
                                       <div className="mt-1 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-black flex items-center gap-1.5 animate-pulse">
                                          <AlertCircle size={14} />
@@ -769,13 +853,19 @@ export default function OrdersPage() {
                                  <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
                                  <div>
                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Shipping Address</p>
-                                   <p className="text-xs font-bold text-slate-800 leading-relaxed">{order.customerAddress || 'N/A'}</p>
-                                   {order.coordinates && (
+                                   <p className="text-xs font-bold text-slate-800 leading-relaxed">{cleanAddress}</p>
+                                   {(order.coordinates || extractedMapUrl) && (
                                      <button
-                                       onClick={() => setMapOverlayCoords(order.coordinates)}
+                                       onClick={() => {
+                                         if (extractedMapUrl) {
+                                           window.open(extractedMapUrl, '_blank');
+                                         } else if (order.coordinates) {
+                                           setMapOverlayCoords(order.coordinates);
+                                         }
+                                       }}
                                        className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-pink-600 bg-pink-50 hover:bg-pink-600 hover:text-white px-2.5 py-1 rounded-full border border-pink-100 transition-colors shadow-sm cursor-pointer"
                                      >
-                                       📍 Open Location Map
+                                       📍 Open Map Location
                                      </button>
                                    )}
                                  </div>
@@ -1030,7 +1120,9 @@ export default function OrdersPage() {
                </div>
             );
           })}
-      </div> {/* Closes child list wrapper */}
+        </div>
+      );
+    })()}
     </div> {/* Closes max-w-6xl container */}
 
     {/* Security PIN Modal */}

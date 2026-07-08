@@ -2123,8 +2123,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         }
       `}} />
 
-      {/* ── Splash Loading Screen (1.5s, with shop branding) ── */}
-      {showSplash && <LoadingScreen visible={showSplash} shop={shop} products={products} minDuration={1500} />}
+      {/* ── Splash Loading Screen (350ms, with shop branding) ── */}
+      {showSplash && <LoadingScreen visible={showSplash} shop={shop} products={products} minDuration={350} />}
       <StoreAnalytics shop={shop} />
       {/* ── Push Notification Permission Modal (elegant, bottom-center, shows once) ── */}
       <NotificationPermissionModal

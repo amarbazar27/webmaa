@@ -15,7 +15,16 @@ service cloud.firestore {
     }
 
     function isShopOwner(shopId) {
-      return isAuthenticated() && request.auth.uid == shopId;
+      return isAuthenticated() && (
+        request.auth.uid == shopId ||
+        (
+          exists(/databases/$(database)/documents/shops/$(shopId)) &&
+          (
+            get(/databases/$(database)/documents/shops/$(shopId)).data.get('ownerId', '') == request.auth.uid ||
+            get(/databases/$(database)/documents/shops/$(shopId)).data.get('ownerUid', '') == request.auth.uid
+          )
+        )
+      );
     }
 
     // Dual check: prevents email case mismatch issues while remaining secure
@@ -23,7 +32,10 @@ service cloud.firestore {
       return isAuthenticated() && (
         (
           exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff' &&
+          (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff' ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+          ) &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accessShopId == shopId
         )
         ||
