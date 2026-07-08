@@ -125,7 +125,7 @@ export default function SuperadminAppBuilder() {
           <div>
             <h2 className="text-xl font-black text-slate-900 tracking-tight">One-Click Android White-Label App Builder</h2>
             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">
-              Daripallah ইকোসিস্টেমের সব রিটেইলারের জন্য অটোমেটেড APK এবং AAB (Google Play ready) ফাইল জেনারেশন সিস্টেম
+              BDRetailers ইকোসিস্টেমের সব রিটেইলারের জন্য অটোমেটেড APK এবং AAB (Google Play ready) ফাইল জেনারেশন সিস্টেম
             </p>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function SuperadminAppBuilder() {
                 const status = shop.appBuildStatus || 'not_generated'; // not_generated, building, completed, failed
                 const rawSlug = (slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
                 const packageSlug = reservedKeywords.has(rawSlug) ? `${rawSlug}app` : rawSlug;
-                const packageId = shop.appBuildPackageName || `com.daripallah.${packageSlug}`;
+                const packageId = shop.appBuildPackageName || `com.bdretailers.${packageSlug}`;
                 const primaryColor = shop.designOverrides?.primaryColor || '#9333ea';
                 
                 return (

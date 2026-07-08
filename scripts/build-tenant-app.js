@@ -57,7 +57,7 @@ const reservedKeywords = new Set([
 ]);
 
 const packageNameSlug = reservedKeywords.has(sanitizedSlug) ? `${sanitizedSlug}app` : sanitizedSlug;
-const packageName = `com.bdretailers.${packageNameSlug}`;
+const packageName = (shopSlug === 'main') ? 'com.bdretailers' : `com.bdretailers.${packageNameSlug}`;
 
 console.log(`🚀 Starting App Build Runner for [${shopSlug}]`);
 console.log(`📦 Package Name: ${packageName}`);
@@ -218,8 +218,8 @@ async function build() {
   const appWorkspace = path.join(tempBuildDir, 'app');
 
   // 1. Fetch Tenant Configuration
-  let shopName = "BDRetailers Store";
-  let targetUrl = `https://bdretailers.com/${shopSlug}`;
+  let shopName = shopSlug === 'main' ? "BDRetailers Platform" : "BDRetailers Store";
+  let targetUrl = shopSlug === 'main' ? "https://bdretailers.com" : `https://bdretailers.com/${shopSlug}`;
   let primaryColor = "#9333ea";
   let logoUrl = null;
   let customDomain = null;
@@ -239,7 +239,9 @@ async function build() {
         logoUrl = shopData.logoUrl || null;
         customDomain = shopData.customDomain || null;
         
-        if (customDomain && shopData.domainStatus === 'active') {
+        if (shopSlug === 'main') {
+          targetUrl = `https://bdretailers.com`;
+        } else if (customDomain && shopData.domainStatus === 'active') {
           targetUrl = `https://${customDomain}`;
         } else {
           targetUrl = `https://bdretailers.com/${shopSlug}`;
