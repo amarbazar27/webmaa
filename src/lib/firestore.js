@@ -305,15 +305,22 @@ export const subscribeOrders = (shopId, callback) => {
   });
 };
 
-export const subscribeIncompleteOrders = (shopId, callback) => {
+export const subscribeIncompleteOrders = (shopId, callback, onError) => {
   const q = query(
     collection(db, 'shops', shopId, 'incomplete_orders'),
     orderBy('updatedAt', 'desc'),
     limit(100)
   );
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-  });
+  return onSnapshot(
+    q, 
+    (snap) => {
+      callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    },
+    (err) => {
+      console.error('[Firestore subscribeIncompleteOrders error]', err);
+      if (onError) onError(err);
+    }
+  );
 };
 
 // ── CUSTOMERS ─────────────────────────────────────

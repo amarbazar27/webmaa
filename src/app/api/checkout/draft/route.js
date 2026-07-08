@@ -11,10 +11,10 @@ const draftLimiter = createRateLimiter({ maxRequests: 30, windowMs: 600000, pref
 const DraftCheckoutSchema = z.object({
   shopId: z.string().min(1),
   localId: z.string().min(1),
-  customerName: z.string().optional().or(z.literal('')),
-  customerPhone: z.string().optional().or(z.literal('')),
-  customerEmail: z.string().optional().or(z.literal('')),
-  customerAddress: z.string().optional().or(z.literal('')),
+  customerName: z.string().nullable().optional().or(z.literal('')),
+  customerPhone: z.string().nullable().optional().or(z.literal('')),
+  customerEmail: z.string().nullable().optional().or(z.literal('')),
+  customerAddress: z.string().nullable().optional().or(z.literal('')),
   total: z.number().optional().default(0),
   items: z.array(z.object({
     id: z.string().min(1),
@@ -38,7 +38,8 @@ export async function POST(req) {
 
     const parsed = DraftCheckoutSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed' }, { status: 400 });
+      console.error('[Draft Checkout Validation Failed]:', parsed.error.format());
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.format() }, { status: 400 });
     }
 
     const {

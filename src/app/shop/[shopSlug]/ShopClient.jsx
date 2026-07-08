@@ -1562,19 +1562,37 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     if (!orderForm.name && !orderForm.phone && cart.length === 0) return;
 
     const timer = setTimeout(() => {
+      const draftPayload = {
+        shopId: shop.id,
+        localId,
+        customerName: orderForm.name || '',
+        customerPhone: orderForm.phone || '',
+        customerAddress: orderForm.address || '',
+        total: Number(cartTotal) || 0,
+        items: cart.map(i => ({
+          id: String(i.productId || i.id || ''),
+          name: String(i.name || ''),
+          quantity: Number(i.quantity) || 1,
+          price: Number(i.price) || 0
+        }))
+      };
+
       fetch('/api/checkout/draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shopId: shop.id,
-          localId,
-          customerName: orderForm.name,
-          customerPhone: orderForm.phone,
-          customerAddress: orderForm.address,
-          total: cartTotal,
-          items: cart.map(i => ({ id: i.productId || i.id, name: i.name, quantity: i.quantity, price: i.price }))
-        })
-      }).catch(err => console.warn('[Draft save failed]', err));
+        body: JSON.stringify(draftPayload)
+      })
+      .then(async (res) => {
+        if (!res.ok) {
+          try {
+            const errData = await res.json();
+            console.error('[Draft save failed]', res.status, errData);
+          } catch (e) {
+            console.error('[Draft save failed with status]', res.status);
+          }
+        }
+      })
+      .catch(err => console.warn('[Draft save network error]', err));
     }, 2000);
 
     return () => clearTimeout(timer);

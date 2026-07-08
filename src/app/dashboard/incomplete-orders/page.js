@@ -25,10 +25,18 @@ export default function IncompleteOrdersPage() {
 
     getShop(activeShopId).then(setShop);
 
-    const unsub = subscribeIncompleteOrders(activeShopId, (data) => {
-      setDrafts(data);
-      setLoading(false);
-    });
+    const unsub = subscribeIncompleteOrders(
+      activeShopId, 
+      (data) => {
+        setDrafts(data);
+        setLoading(false);
+      },
+      (err) => {
+        console.error('Failed to load drafts:', err);
+        toast.error('ড্রাফট কার্ট লোড করতে সমস্যা হয়েছে।');
+        setLoading(false);
+      }
+    );
 
     return () => unsub();
   }, [activeShopId]);
