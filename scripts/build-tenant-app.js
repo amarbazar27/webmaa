@@ -297,16 +297,16 @@ async function build() {
   // B. pubspec.yaml (replace app name)
   const pubspecPath = path.join(appWorkspace, 'pubspec.yaml');
   let pubspecContent = fs.readFileSync(pubspecPath, 'utf8');
-  pubspecContent = pubspecContent.replace('name: daripallah_white_label_app', `name: daripallah_${sanitizedSlug}`);
-  pubspecContent = pubspecContent.replace('description: "Daripallah multi-tenant e-commerce mobile webview app wrapper"', `description: "Daripallah App wrapper for ${shopName}"`);
+  pubspecContent = pubspecContent.replace('name: bdretailers_white_label_app', `name: bdretailers_${sanitizedSlug}`);
+  pubspecContent = pubspecContent.replace('description: "BDRetailers multi-tenant e-commerce mobile webview app wrapper"', `description: "BDRetailers App wrapper for ${shopName}"`);
   fs.writeFileSync(pubspecPath, pubspecContent);
   console.log('  └─ pubspec.yaml configured.');
 
   // C. android/app/build.gradle (replace namespace AND applicationId)
   const buildGradlePath = path.join(appWorkspace, 'android/app/build.gradle');
   let buildGradleContent = fs.readFileSync(buildGradlePath, 'utf8');
-  buildGradleContent = buildGradleContent.replace('namespace "com.daripallah.template"', `namespace "${packageName}"`);
-  buildGradleContent = buildGradleContent.replace('applicationId "com.daripallah.template"', `applicationId "${packageName}"`);
+  buildGradleContent = buildGradleContent.replace('namespace "com.bdretailers.template"', `namespace "${packageName}"`);
+  buildGradleContent = buildGradleContent.replace('applicationId "com.bdretailers.template"', `applicationId "${packageName}"`);
   fs.writeFileSync(buildGradlePath, buildGradleContent);
   console.log('  └─ android/app/build.gradle configured.');
 
