@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:label="Daripallah"
+        android:label="BDRetailers"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:hardwareAccelerated="true"
@@ -45,15 +45,15 @@
                 
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-                <data android:host="*.daripallah.com" />
-                <data android:host="daripallah.com" />
+                <data android:host="*.bdretailers.com" />
+                <data android:host="bdretailers.com" />
             </intent-filter>
         </activity>
         
         <!-- FCM Meta Data config -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="daripallah_channel" />
+            android:value="bdretailers_channel" />
             
         <meta-data
             android:name="flutterEmbedding"

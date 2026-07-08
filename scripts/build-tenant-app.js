@@ -57,7 +57,7 @@ const reservedKeywords = new Set([
 ]);
 
 const packageNameSlug = reservedKeywords.has(sanitizedSlug) ? `${sanitizedSlug}app` : sanitizedSlug;
-const packageName = `com.daripallah.${packageNameSlug}`;
+const packageName = `com.bdretailers.${packageNameSlug}`;
 
 console.log(`🚀 Starting App Build Runner for [${shopSlug}]`);
 console.log(`📦 Package Name: ${packageName}`);
@@ -218,8 +218,8 @@ async function build() {
   const appWorkspace = path.join(tempBuildDir, 'app');
 
   // 1. Fetch Tenant Configuration
-  let shopName = "Daripallah Store";
-  let targetUrl = `https://daripallah.com/${shopSlug}`;
+  let shopName = "BDRetailers Store";
+  let targetUrl = `https://bdretailers.com/${shopSlug}`;
   let primaryColor = "#9333ea";
   let logoUrl = null;
   let customDomain = null;
@@ -242,7 +242,7 @@ async function build() {
         if (customDomain && shopData.domainStatus === 'active') {
           targetUrl = `https://${customDomain}`;
         } else {
-          targetUrl = `https://daripallah.com/${shopSlug}`;
+          targetUrl = `https://bdretailers.com/${shopSlug}`;
         }
         console.log(`✅ Loaded shop metadata: ${shopName} | Color: ${primaryColor} | Domain: ${targetUrl}`);
       } else {
@@ -338,27 +338,27 @@ async function build() {
   // D. android/app/src/main/AndroidManifest.xml (replace app name and deep link domain)
   const manifestPath = path.join(appWorkspace, 'android/app/src/main/AndroidManifest.xml');
   let manifestContent = fs.readFileSync(manifestPath, 'utf8');
-  manifestContent = manifestContent.replace('android:label="Daripallah"', `android:label="${shopName.replace(/"/g, '&quot;')}"`);
+  manifestContent = manifestContent.replace('android:label="BDRetailers"', `android:label="${shopName.replace(/"/g, '&quot;')}"`);
   // If custom domain exists, insert custom host in AndroidManifest
   if (customDomain) {
     const deepLinkHook = `<data android:host="${customDomain}" />`;
-    manifestContent = manifestContent.replace('<data android:host="daripallah.com" />', `<data android:host="daripallah.com" />\n                ${deepLinkHook}`);
+    manifestContent = manifestContent.replace('<data android:host="bdretailers.com" />', `<data android:host="bdretailers.com" />\n                ${deepLinkHook}`);
   }
   fs.writeFileSync(manifestPath, manifestContent);
   console.log('  └─ android/app/src/main/AndroidManifest.xml configured.');
 
   // E. Dynamic Kotlin Folder Structure & MainActivity package rename
   console.log('  └─ Restructuring MainActivity.kt package...');
-  const oldKotlinPath = path.join(appWorkspace, 'android/app/src/main/kotlin/com/daripallah/MainActivity.kt');
-  const newKotlinDir = path.join(appWorkspace, `android/app/src/main/kotlin/com/daripallah/${packageNameSlug}`);
+  const oldKotlinPath = path.join(appWorkspace, 'android/app/src/main/kotlin/com/bdretailers/MainActivity.kt');
+  const newKotlinDir = path.join(appWorkspace, `android/app/src/main/kotlin/com/bdretailers/${packageNameSlug}`);
   
   fs.mkdirSync(newKotlinDir, { recursive: true });
   const newKotlinPath = path.join(newKotlinDir, 'MainActivity.kt');
   
-  const mainActivityContent = `package com.daripallah.${packageNameSlug}
-
+  const mainActivityContent = `package com.bdretailers.${packageNameSlug}
+ 
 import io.flutter.embedding.android.FlutterActivity
-
+ 
 class MainActivity: FlutterActivity() {
 }
 `;
@@ -381,7 +381,7 @@ class MainActivity: FlutterActivity() {
     shortDescription: `Official Android App for ${shopName}. Shop online with fast delivery, reviews, and secure checkout.`,
     longDescription: `Welcome to the official ${shopName} Android mobile application!\n\nBrowse through our extensive catalog of products, manage your cart, apply coupon discounts, track your orders in real-time, and check out securely.\n\nKey App Features:\n- Full access to the catalog and product variants\n- Real-time notifications and alerts\n- Seamless digital and cash-on-delivery payments\n- Dynamic support chats\n- Offline caching and performance optimization\n\nDownload the ${shopName} app today and enjoy a premium e-commerce experience!`,
     privacyPolicyUrl: `${targetUrl}/privacy-policy`,
-    contactEmail: `support@daripallah.com`,
+    contactEmail: `support@bdretailers.com`,
   };
   fs.writeFileSync(path.join(assetsOutDir, 'metadata.json'), JSON.stringify(metadataJson, null, 2));
 

@@ -1,5 +1,5 @@
-name: daripallah_white_label_app
-description: "Daripallah multi-tenant e-commerce mobile webview app wrapper"
+name: bdretailers_white_label_app
+description: "BDRetailers multi-tenant e-commerce mobile webview app wrapper"
 publish_to: 'none'
 version: 1.0.0+1
 

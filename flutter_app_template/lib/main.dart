@@ -38,9 +38,9 @@ void _showNotification(RemoteMessage message) async {
       notification.body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'daripallah_channel',
-          'Daripallah Notifications',
-          channelDescription: 'Notifications for Daripallah stores',
+          'bdretailers_channel',
+          'BDRetailers Notifications',
+          channelDescription: 'Notifications for BDRetailers stores',
           icon: '@mipmap/ic_launcher',
           importance: Importance.max,
           priority: Priority.high,
@@ -63,9 +63,9 @@ void main() async {
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(const AndroidNotificationChannel(
-          'daripallah_channel',
-          'Daripallah Notifications',
-          description: 'Notifications for Daripallah stores',
+          'bdretailers_channel',
+          'BDRetailers Notifications',
+          description: 'Notifications for BDRetailers stores',
           importance: Importance.max,
         ));
     debugPrint("Firebase initialized successfully.");
@@ -218,7 +218,7 @@ class _MainWebViewPageState extends State<MainWebViewPage> {
                     geolocationEnabled: true,
                     allowFileAccessFromFileURLs: true,
                     allowUniversalAccessFromFileURLs: true,
-                    applicationNameForUserAgent: 'DaripallahAndroidApp',
+                    applicationNameForUserAgent: 'BDRetailersAndroidApp',
                     supportZoom: false,
                   ),
                   pullToRefreshController: pullToRefreshController,
