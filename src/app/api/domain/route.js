@@ -207,6 +207,6 @@ export async function GET(req) {
 
   } catch (error) {
     console.error('Domain status check error:', error);
-    return NextResponse.json({ status: 'error', error: error.message }, { status: 500 });
+    return NextResponse.json({ status: 'error', error: 'Domain check failed' }, { status: 500 });
   }
 }

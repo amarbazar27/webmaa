@@ -85,8 +85,8 @@ export async function POST(req) {
     const parsed = CheckoutSchema.safeParse(body);
     if (!parsed.success) {
       console.error('Validation Error:', parsed.error.issues);
-      const errMsgs = parsed.error.issues ? parsed.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') : 'Invalid payload';
-      return NextResponse.json({ error: 'Validation failed: ' + errMsgs }, { status: 400 });
+      // PEN-H5: Don't leak schema structure to attackers
+      return NextResponse.json({ error: 'Invalid order data. Please check your input and try again.' }, { status: 400 });
     }
 
     const {

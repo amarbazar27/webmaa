@@ -2,35 +2,39 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 
-import { sendTelegramAlert } from '@/lib/telegram';
-
+/**
+ * PROD-2: Health Check Endpoint
+ * Used by monitoring systems (UptimeRobot, Vercel, etc.) to verify the app is running.
+ * Returns 200 if the server is healthy, 503 if Firebase Admin SDK failed to initialize.
+ */
 export async function GET() {
-  return NextResponse.json(
-    { 
-      status: 'healthy', 
-      timestamp: new Date().toISOString(),
-      service: 'daripallah-production'
-    },
-    { status: 200 }
-  );
-}
-
-export async function POST(req) {
   try {
-    const body = await req.json();
-    const { type, message, stack, url, timestamp } = body;
+    // Check if Firebase Admin is initialized
+    const admin = (await import('firebase-admin')).default;
+    const isFirebaseReady = admin.apps.length > 0;
 
-    // Send critical frontend errors to Telegram
-    if (type === 'frontend_crash') {
-      await sendTelegramAlert({
-        level: 'error',
-        message: `🚨 Frontend Crash Report\n\nError: ${message}\nURL: ${url}\nTime: ${timestamp}`,
-        context: { stack: stack?.slice(0, 1000) }
-      });
+    if (!isFirebaseReady) {
+      return NextResponse.json({
+        status: 'degraded',
+        firebase: false,
+        timestamp: new Date().toISOString(),
+      }, { status: 503 });
     }
 
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({
+      status: 'healthy',
+      firebase: true,
+      timestamp: new Date().toISOString(),
+    }, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      }
+    });
+  } catch {
+    return NextResponse.json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+    }, { status: 503 });
   }
 }

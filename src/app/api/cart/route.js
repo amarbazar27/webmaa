@@ -58,6 +58,11 @@ export async function POST(req) {
       return NextResponse.json({ error: 'shopId and items required' }, { status: 400 });
     }
 
+    // PEN-H2: Cap items array to prevent payload abuse
+    if (items.length > 50) {
+      return NextResponse.json({ error: 'Too many items (max 50)' }, { status: 400 });
+    }
+
     // ── Stock Validation ────────────────────────────────────
     const productsRef = adminDb.collection('shops').doc(shopId).collection('products');
     const validatedItems = [];
@@ -98,9 +103,17 @@ export async function POST(req) {
         });
       }
 
+      // PEN-H2 Fix: Whitelist safe fields only — prevents mass assignment
+      // Previously used `...item` spread which copied arbitrary attacker fields
       validatedItems.push({
-        ...item,
+        id: item.id,
+        name: String(item.name || product.name || '').slice(0, 200),
         quantity: validQty,
+        price: product.price,
+        imageUrl: String(item.imageUrl || product.imageUrl || '').slice(0, 500),
+        selectedSize: item.selectedSize ? String(item.selectedSize).slice(0, 50) : undefined,
+        selectedVariant: item.selectedVariant ? String(item.selectedVariant).slice(0, 50) : undefined,
+        customizedText: item.customizedText ? String(item.customizedText).slice(0, 200) : undefined,
       });
     }
 

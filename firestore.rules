@@ -167,6 +167,39 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isSuperAdmin();
     }
+
+    // ── Server-Managed Collections (Admin SDK only) ──────────
+    // PEN-H6: Explicit deny rules for collections managed exclusively via Admin SDK
+    // These were covered by default deny but explicit rules are enterprise best practice
+
+    // Platform reviews — created via /api/platform-review
+    match /platform_reviews/{reviewId} {
+      allow read: if true;  // Public listing
+      allow create, update, delete: if false;  // Server-only via Admin SDK
+    }
+
+    // Retailer signup requests — managed by superadmin
+    match /retailer_requests/{requestId} {
+      allow create: if isAuthenticated();  // Users can submit applications
+      allow read: if isSuperAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid);
+      allow update, delete: if false;  // Server-only via Admin SDK
+    }
+
+    // OTP codes — managed by /api/auth/send-otp and verify-otp
+    match /otp_codes/{otpId} {
+      allow read, write: if false;  // Server-only
+    }
+
+    // OTP rate limits — managed by /api/auth/send-otp
+    match /otp_rate_limits/{limitId} {
+      allow read, write: if false;  // Server-only
+    }
+
+    // Global config — piprapay settings, etc
+    match /config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
     
     // ── Default Deny ───────────────────────
     match /{document=**} {

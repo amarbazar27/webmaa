@@ -4,31 +4,30 @@ import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 
-// Helper to sum completed orders across all shops
+// PEN-C2 Fix: Use collectionGroup query instead of scanning ALL shops (O(n²) → O(1))
+// Previously: loaded every shop doc then queried each shop's orders subcollection
 async function getUserCompletedOrderCount(uid, email) {
   if (!adminDb) return 0;
   const orderIds = new Set();
   try {
-    const shopsSnap = await adminDb.collection('shops').get();
-    for (const shopDoc of shopsSnap.docs) {
-      const ordersRef = shopDoc.ref.collection('orders');
-      
-      if (email) {
-        const snap = await ordersRef
-          .where('customerEmail', '==', email.toLowerCase().trim())
-          .where('status', '==', 'completed')
-          .get();
-        snap.docs.forEach(d => orderIds.add(d.id));
-      }
-      
-      const snap2 = await ordersRef
-        .where('customerId', '==', uid)
+    // CollectionGroup query across all 'orders' subcollections — single indexed query
+    if (email) {
+      const byEmail = await adminDb.collectionGroup('orders')
+        .where('customerEmail', '==', email.toLowerCase().trim())
         .where('status', '==', 'completed')
+        .limit(50)
         .get();
-      snap2.docs.forEach(d => orderIds.add(d.id));
+      byEmail.docs.forEach(d => orderIds.add(d.id));
     }
+
+    const byUid = await adminDb.collectionGroup('orders')
+      .where('customerId', '==', uid)
+      .where('status', '==', 'completed')
+      .limit(50)
+      .get();
+    byUid.docs.forEach(d => orderIds.add(d.id));
   } catch (e) {
-    console.error("Order Count Error:", e);
+    console.error('[Platform Review] Order count query failed');
   }
   return orderIds.size;
 }

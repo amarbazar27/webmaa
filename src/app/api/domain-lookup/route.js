@@ -12,14 +12,12 @@ import { NextResponse } from 'next/server';
 import { getShopByDomain } from '@/lib/firestore-server';
 export async function GET(request) {
   // ── Internal Token Check ────────────────────────────────────────────────
+  // PEN-C1 Fix: Token check is now BLOCKING — rejects unauthorized requests
   const internalToken = request.headers.get('x-internal-token');
   const secretKey = process.env.INTERNAL_PROXY_SECRET || '';
   
-  // Only check if secret is configured
   if (secretKey && internalToken !== secretKey) {
-    console.warn('[Domain-Lookup] Unauthorized internal access attempt');
-    // We don't return 401 yet to avoid breaking if env is not synced, 
-    // but we log it for audit.
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
   // ── Host Parameter ──────────────────────────────────────────────────────
@@ -35,7 +33,7 @@ export async function GET(request) {
 
   // ── Firestore Lookup ────────────────────────────────────────────────────
   try {
-    console.log(`[Domain-Lookup] Querying Firestore for host: ${host}`);
+    // PEN-H1: Removed debug log that leaked host parameter
     // getShopByDomain ইতিমধ্যে lowercase + trim করে — src/lib/firestore.js থেকে
     const shop = await getShopByDomain(host);
 

@@ -13,7 +13,7 @@ if (!admin.apps.length && projectId) {
       }),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
-    console.log('[FIREBASE ADMIN] Initialization successful.');
+    // PROD-1: Removed success log — avoid leaking project details in production
   } catch (error) {
     console.error('[FIREBASE ADMIN] Initialization error', error.stack);
   }

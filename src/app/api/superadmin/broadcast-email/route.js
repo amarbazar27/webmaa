@@ -196,7 +196,7 @@ export async function GET(request) {
     return NextResponse.json({ emails });
   } catch (error) {
     console.error('[SuperAdmin Recipient Fetch] Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch recipients' }, { status: 500 });
   }
 }
 
@@ -258,6 +258,8 @@ export async function POST(request) {
     let failed = 0;
 
     if (transporter) {
+      const escHtml = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
       const emailPromises = emails.map(async (email) => {
         try {
           await transporter.sendMail({
@@ -271,8 +273,8 @@ export async function POST(request) {
                   <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px">Platform Announcement</p>
                 </div>
                 <div style="background:#fff;padding:30px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
-                  <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${subject}</h2>
-                  <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${message}</div>
+                  <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${escHtml(subject)}</h2>
+                  <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${escHtml(message)}</div>
                   <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0" />
                   <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Daripallah Platform</p>
                 </div>
