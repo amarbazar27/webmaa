@@ -1,10 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { subscribeOrders, updateOrderStatus, getShop, deleteOrder } from '@/lib/firestore'; 
+import { subscribeOrders, updateOrderStatus, getShop, deleteOrder, reportCustomerFraud } from '@/lib/firestore'; 
 import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { updateDoc, doc } from 'firebase/firestore';
+import { updateDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const STATUS_CONFIG = {
@@ -51,6 +51,66 @@ export default function OrdersPage() {
 
   // Map overlay coordinates viewer
   const [mapOverlayCoords, setMapOverlayCoords] = useState(null);
+
+  // Fraud Profiles and Report states
+  const [fraudProfiles, setFraudProfiles] = useState({});
+  const [reportModal, setReportModal] = useState({ open: false, phone: '', reason: 'fake_order', comment: '' });
+  const [submittingReport, setSubmittingReport] = useState(false);
+
+  const standardizePhone = (phone) => {
+    if (!phone) return '';
+    let cleaned = phone.trim().replace(/\D/g, '');
+    if (cleaned.startsWith('880')) cleaned = cleaned.slice(2);
+    else if (cleaned.startsWith('80')) cleaned = '0' + cleaned.slice(2);
+    else if (cleaned.startsWith('1')) cleaned = '0' + cleaned;
+    if (!cleaned.startsWith('0')) cleaned = '0' + cleaned;
+    return cleaned.slice(0, 11);
+  };
+
+  useEffect(() => {
+    if (orders.length === 0) return;
+    
+    // Extract unique standardized phone numbers from orders
+    const phones = Array.from(new Set(orders.map(o => standardizePhone(o.customerPhone)).filter(Boolean)));
+    if (phones.length === 0) return;
+    
+    // Setup real-time listeners for the fraud profiles of these active phone numbers
+    const unsubs = phones.map(phone => {
+      const docRef = doc(db, 'fraud_profiles', phone);
+      return onSnapshot(docRef, (snap) => {
+        if (snap.exists()) {
+          setFraudProfiles(prev => ({ ...prev, [phone]: snap.data() }));
+        }
+      });
+    });
+
+    return () => unsubs.forEach(unsub => unsub && unsub());
+  }, [orders]);
+
+  const handleOpenReportModal = (phone) => {
+    setReportModal({ open: true, phone, reason: 'fake_order', comment: '' });
+  };
+
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    if (!reportModal.phone) return;
+    setSubmittingReport(true);
+    try {
+      await reportCustomerFraud(reportModal.phone, {
+        shopId: activeShopId,
+        shopName: shop?.shopName || 'BDRetailers Shop',
+        reason: reportModal.reason,
+        comment: reportModal.comment
+      });
+      toast.success('কাস্টমার রিপোর্ট সফলভাবে ডেটাবেজে যুক্ত হয়েছে! 🛡️');
+      setReportModal({ open: false, phone: '', reason: 'fake_order', comment: '' });
+    } catch (err) {
+      console.error(err);
+      toast.error('রিপোর্ট সাবমিট করতে সমস্যা হয়েছে।');
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -518,14 +578,86 @@ export default function OrdersPage() {
                 <div className="bg-gradient-to-r from-slate-50 to-white px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                    <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-purple-600 text-white font-black flex items-center justify-center rounded-2xl shadow-sm">{identifier[0]}</div>
-                      <div>
-                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-tight">Customer Network Group</p>
-                         <p className="text-xl font-black text-slate-900">{identifier}</p>
-                      </div>
+                       <div>
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-tight">Customer Network Group</p>
+                          <div className="flex items-center gap-2">
+                             <span className="text-xl font-black text-slate-900">{identifier}</span>
+                             {(() => {
+                               const phone = standardizePhone(identifier);
+                               const profile = fraudProfiles[phone];
+                               if (!profile) return null;
+                               
+                               const badgeColors = profile.riskLevel === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                   profile.riskLevel === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                                   'bg-emerald-50 text-emerald-700 border-emerald-200';
+                               const badgeText = profile.riskLevel === 'high' ? '🔴 High Risk' :
+                                                 profile.riskLevel === 'medium' ? '🟡 Medium Risk' :
+                                                 '🟢 Trusted';
+                               
+                               return (
+                                 <div className="relative group flex items-center">
+                                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border cursor-help ${badgeColors}`}>
+                                     {badgeText} ({profile.riskScore || 0}%)
+                                   </span>
+                                   
+                                   <div className="absolute left-0 bottom-full mb-2 w-72 p-4 bg-slate-950 text-white text-xs rounded-2xl shadow-xl border border-slate-800 hidden group-hover:block z-50 transition-all leading-relaxed">
+                                     <p className="font-black text-sm border-b border-slate-800 pb-1.5 mb-1.5 flex justify-between">
+                                        <span>AI Risk Profile</span>
+                                        <span className="text-purple-400">{profile.lastProvider || 'Heuristics'}</span>
+                                     </p>
+                                     <div className="grid grid-cols-3 gap-2 text-center my-2 border-b border-slate-800 pb-2">
+                                        <div>
+                                          <p className="text-[10px] text-slate-400 font-bold uppercase">Success</p>
+                                          <p className="font-black text-emerald-400">{profile.successOrders || 0}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] text-slate-400 font-bold uppercase">Cancelled</p>
+                                          <p className="font-black text-amber-400">{profile.cancelOrders || 0}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] text-slate-400 font-bold uppercase">Returned</p>
+                                          <p className="font-black text-red-400">{profile.returnOrders || 0}</p>
+                                        </div>
+                                     </div>
+                                     
+                                     {profile.externalStats && (
+                                       <div className="border-b border-slate-800 pb-2 mb-2">
+                                         <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1">External Courier Stats</p>
+                                         <p className="font-bold text-slate-300">
+                                           Delivered: {profile.externalStats.successful || 0} / Returned: {profile.externalStats.returned || 0} (Total: {profile.externalStats.totalOrders || 0})
+                                         </p>
+                                       </div>
+                                     )}
+
+                                     {profile.reports && profile.reports.length > 0 && (
+                                       <div className="max-h-24 overflow-y-auto space-y-1.5 scrollbar-thin">
+                                         <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Community Reports ({profile.reports.length})</p>
+                                         {profile.reports.map((r, idx) => (
+                                           <div key={idx} className="bg-slate-900 p-1.5 rounded-lg text-[10px] leading-normal border border-slate-800">
+                                             <span className="font-black text-purple-300">{r.shopName}:</span> {r.reason.replace('_', ' ')} - <span className="text-slate-400">{r.comment}</span>
+                                           </div>
+                                         ))}
+                                       </div>
+                                     )}
+                                   </div>
+                                 </div>
+                               );
+                             })()}
+                          </div>
+                       </div>
                    </div>
-                   <div className="px-4 py-1.5 bg-purple-50 text-purple-700 border border-purple-100 rounded-xl text-xs font-black shadow-sm">
-                      {userOrders.length} Orders
-                   </div>
+                    <div className="flex items-center gap-2">
+                       <button
+                          type="button"
+                          onClick={() => handleOpenReportModal(identifier)}
+                          className="px-3.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1 shadow-sm shrink-0"
+                       >
+                          <AlertCircle size={12} /> Report Customer
+                       </button>
+                       <div className="px-4 py-1.5 bg-purple-50 text-purple-700 border border-purple-100 rounded-xl text-xs font-black shadow-sm shrink-0">
+                          {userOrders.length} Orders
+                       </div>
+                    </div>
                 </div>
 
                 <div className="divide-y divide-slate-100">
@@ -969,6 +1101,65 @@ export default function OrdersPage() {
                      <button type="button" onClick={() => setCourierModalOpen(false)} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl transition-colors">Cancel</button>
                      <button type="submit" disabled={bookingCourier} className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-xl transition-colors shadow-md flex items-center justify-center gap-2">
                         {bookingCourier ? 'Booking...' : 'Confirm Booking'}
+                     </button>
+                  </div>
+               </form>
+            </div>
+         </div>
+      )}
+
+      {/* Report Customer Modal Overlay */}
+      {reportModal.open && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setReportModal({ ...reportModal, open: false })} />
+            <div className="relative z-50 w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 animate-slide-in" onClick={e => e.stopPropagation()}>
+               <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-5 shadow-inner border border-red-100">
+                  <AlertCircle size={24} strokeWidth={2.5}/>
+               </div>
+               <h2 className="text-xl font-black text-slate-900 mb-1">Report Customer (ফ্রড রিপোর্ট)</h2>
+               <p className="text-xs font-bold text-slate-500 mb-6">এই গ্রাহকের ক্ষতিকর আচরণের রিপোর্ট করুন। এটি আমাদের AI স্কোর নির্ধারণে সাহায্য করবে।</p>
+               
+               <form onSubmit={handleReportSubmit} className="space-y-4">
+                  <div>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Customer Phone</label>
+                     <input 
+                        disabled
+                        type="text"
+                        className="w-full text-xs font-black text-slate-400 p-3 rounded-xl bg-slate-100 border border-slate-200 outline-none"
+                        value={reportModal.phone}
+                     />
+                  </div>
+                  
+                  <div>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Reason for Report</label>
+                     <select 
+                        required
+                        className="w-full text-xs font-bold text-slate-950 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-purple-600"
+                        value={reportModal.reason}
+                        onChange={e => setReportModal({...reportModal, reason: e.target.value})}
+                     >
+                        <option value="fake_order">Fake Order (ভুয়া অর্ডার)</option>
+                        <option value="phone_off">Phone Off (ফোন বন্ধ/অপ্রাপ্য)</option>
+                        <option value="refused_delivery">Refused Delivery (ডেলিভারি নিতে অস্বীকৃতি)</option>
+                        <option value="fraud_attempt">Fraud Attempt (প্রতারণা প্রচেষ্টা)</option>
+                     </select>
+                  </div>
+
+                  <div>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Comment (মন্তব্য)</label>
+                     <textarea 
+                        rows={3}
+                        placeholder="বিস্তারিত লিখুন (যেমন: বারবার ফোন অফ ছিল...)"
+                        className="w-full text-xs font-bold text-slate-950 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-purple-600 resize-none"
+                        value={reportModal.comment}
+                        onChange={e => setReportModal({...reportModal, comment: e.target.value})}
+                     />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                     <button type="button" onClick={() => setReportModal({ ...reportModal, open: false })} className="flex-1 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl transition-colors">Cancel</button>
+                     <button type="submit" disabled={submittingReport} className="flex-1 py-3.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-colors shadow-md flex items-center justify-center gap-2">
+                        {submittingReport ? 'Reporting...' : 'Submit Report'}
                      </button>
                   </div>
                </form>

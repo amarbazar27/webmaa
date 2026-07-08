@@ -221,6 +221,91 @@ export const saveUserData = async (uid, data) => {
   return setDoc(doc(db, 'users', uid), data, { merge: true });
 };
 
+const standardizePhone = (phone) => {
+  if (!phone) return '';
+  let cleaned = phone.trim().replace(/\D/g, '');
+  if (cleaned.startsWith('880')) cleaned = cleaned.slice(2);
+  else if (cleaned.startsWith('80')) cleaned = '0' + cleaned.slice(2);
+  else if (cleaned.startsWith('1')) cleaned = '0' + cleaned;
+  if (!cleaned.startsWith('0')) cleaned = '0' + cleaned;
+  return cleaned.slice(0, 11);
+};
+
+const calculateRiskScoreClient = (profile) => {
+  let score = 0;
+  const reasons = [];
+
+  const successOrders = Number(profile.successOrders || 0);
+  const cancelOrders = Number(profile.cancelOrders || 0);
+  const returnOrders = Number(profile.returnOrders || 0);
+  const totalOrders = Number(profile.totalOrders || 0);
+
+  const extStats = profile.externalStats || {};
+  const extSuccessful = Number(extStats.successful || 0);
+  const extCancelled = Number(extStats.cancelled || 0);
+  const extReturned = Number(extStats.returned || 0);
+  const extTotal = Number(extStats.totalOrders || 0);
+
+  const combinedTotal = totalOrders + extTotal;
+  const combinedSuccess = successOrders + extSuccessful;
+  const combinedReturned = returnOrders + extReturned;
+  const combinedCancelled = cancelOrders + extCancelled;
+
+  if (combinedTotal > 0) {
+    const successRatio = combinedSuccess / combinedTotal;
+    const returnRatio = combinedReturned / combinedTotal;
+    const cancelRatio = combinedCancelled / combinedTotal;
+
+    if (combinedTotal >= 2) {
+      if (successRatio < 0.5) {
+        score += 30;
+        reasons.push(`Low overall success rate: ${(successRatio * 100).toFixed(0)}%`);
+      } else if (successRatio < 0.75) {
+        score += 15;
+        reasons.push(`Moderate success rate: ${(successRatio * 100).toFixed(0)}%`);
+      }
+
+      if (returnRatio > 0.3) {
+        score += 40;
+        reasons.push(`Extremely high return rate: ${(returnRatio * 100).toFixed(0)}%`);
+      } else if (returnRatio > 0.15) {
+        score += 20;
+        reasons.push(`Moderate return rate: ${(returnRatio * 100).toFixed(0)}%`);
+      }
+
+      if (cancelRatio > 0.4) {
+        score += 15;
+        reasons.push(`High cancellation rate: ${(cancelRatio * 100).toFixed(0)}%`);
+      }
+    }
+  }
+
+  const uniqueAddresses = profile.addresses || [];
+  if (uniqueAddresses.length > 2) {
+    const penalty = Math.min(30, (uniqueAddresses.length - 2) * 10);
+    score += penalty;
+    reasons.push(`Multiple shipping addresses detected (${uniqueAddresses.length})`);
+  }
+
+  const reports = profile.reports || [];
+  if (reports.length > 0) {
+    const uniqueReporters = new Set(reports.map(r => r.shopId));
+    const reportCount = uniqueReporters.size;
+    if (reportCount > 0) {
+      const reportPoints = Math.min(40, reportCount * 15);
+      score += reportPoints;
+      reasons.push(`Reported by ${reportCount} different shop(s) in community`);
+    }
+  }
+
+  const finalScore = Math.max(0, Math.min(100, score));
+  let riskLevel = 'low';
+  if (finalScore >= 60) riskLevel = 'high';
+  else if (finalScore >= 25) riskLevel = 'medium';
+
+  return { score: finalScore, riskLevel, reasons };
+};
+
 export const updateOrderStatus = async (shopId, orderId, status, deliveryConfig = null, updaterInfo = null) => {
   const orderRef = doc(db, 'shops', shopId, 'orders', orderId);
   const orderSnap = await getDoc(orderRef);
@@ -270,6 +355,69 @@ export const updateOrderStatus = async (shopId, orderId, status, deliveryConfig 
      }
 
      await updateDoc(orderRef, updates);
+
+     // ── Update Internal AI Fraud Database Profile (Layer 2) ──
+     if (orderData.customerPhone) {
+       try {
+         const cleanPhone = standardizePhone(orderData.customerPhone);
+         const profileRef = doc(db, 'fraud_profiles', cleanPhone);
+         await runTransaction(db, async (transaction) => {
+           const profileSnap = await transaction.get(profileRef);
+           const currentProfile = profileSnap.exists() ? profileSnap.data() : {
+             phone: cleanPhone,
+             successOrders: 0,
+             cancelOrders: 0,
+             returnOrders: 0,
+             totalOrders: 0,
+             addresses: [],
+             stores: [],
+             reports: [],
+             externalStats: {}
+           };
+
+           const oldStatus = orderData.status;
+           const newStatus = status;
+
+           let successDiff = 0;
+           let cancelDiff = 0;
+           let returnDiff = 0;
+
+           if (oldStatus !== 'completed' && newStatus === 'completed') {
+             successDiff = 1;
+           } else if (oldStatus === 'completed' && newStatus !== 'completed') {
+             successDiff = -1;
+           }
+
+           if (oldStatus !== 'cancelled' && newStatus === 'cancelled') {
+             cancelDiff = 1;
+           } else if (oldStatus === 'cancelled' && newStatus !== 'cancelled') {
+             cancelDiff = -1;
+           }
+
+           if (oldStatus !== 'returned' && newStatus === 'returned') {
+             returnDiff = 1;
+           } else if (oldStatus === 'returned' && newStatus !== 'returned') {
+             returnDiff = -1;
+           }
+
+           const updatedProfile = {
+             ...currentProfile,
+             successOrders: Math.max(0, (Number(currentProfile.successOrders) || 0) + successDiff),
+             cancelOrders: Math.max(0, (Number(currentProfile.cancelOrders) || 0) + cancelDiff),
+             returnOrders: Math.max(0, (Number(currentProfile.returnOrders) || 0) + returnDiff),
+             lastUpdated: serverTimestamp()
+           };
+
+           const riskResult = calculateRiskScoreClient(updatedProfile);
+           updatedProfile.riskScore = riskResult.score;
+           updatedProfile.riskLevel = riskResult.riskLevel;
+
+           transaction.set(profileRef, updatedProfile, { merge: true });
+         });
+       } catch (fErr) {
+         console.warn('[Fraud DB] Failed to update profile status:', fErr.message);
+       }
+     }
 
      // Loyalty Point Logic Isolation
      if (status === 'completed' && orderData.status !== 'completed' && orderData.customerId) {
@@ -716,5 +864,54 @@ export const createSuperadminShop = async (uid, email, name) => {
   }
   const newSnap = await getDoc(ref);
   return { id: uid, ...newSnap.data() };
+};
+
+export const reportCustomerFraud = async (phone, reportData) => {
+  const cleanPhone = standardizePhone(phone);
+  const profileRef = doc(db, 'fraud_profiles', cleanPhone);
+  
+  return runTransaction(db, async (transaction) => {
+    const profileSnap = await transaction.get(profileRef);
+    const currentProfile = profileSnap.exists() ? profileSnap.data() : {
+      phone: cleanPhone,
+      successOrders: 0,
+      cancelOrders: 0,
+      returnOrders: 0,
+      totalOrders: 0,
+      addresses: [],
+      stores: [],
+      reports: [],
+      externalStats: {}
+    };
+
+    const reports = currentProfile.reports || [];
+    const existingIdx = reports.findIndex(r => r.shopId === reportData.shopId);
+    
+    const newReport = {
+      shopId: reportData.shopId,
+      shopName: reportData.shopName || 'Unknown Shop',
+      reason: reportData.reason,
+      comment: reportData.comment || '',
+      createdAt: new Date().toISOString()
+    };
+
+    if (existingIdx > -1) {
+      reports[existingIdx] = newReport;
+    } else {
+      reports.push(newReport);
+    }
+
+    const updatedProfile = {
+      ...currentProfile,
+      reports,
+      lastUpdated: serverTimestamp()
+    };
+
+    const riskResult = calculateRiskScoreClient(updatedProfile);
+    updatedProfile.riskScore = riskResult.score;
+    updatedProfile.riskLevel = riskResult.riskLevel;
+
+    transaction.set(profileRef, updatedProfile, { merge: true });
+  });
 };
 

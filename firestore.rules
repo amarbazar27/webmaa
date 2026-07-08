@@ -201,6 +201,11 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
     
+    // Shared Enterprise Fraud Profiles (Retailer Community Database)
+    match /fraud_profiles/{phone} {
+      allow read, write: if isAuthenticated();
+    }
+    
     // ── Default Deny ───────────────────────
     match /{document=**} {
       allow read, write: if false;

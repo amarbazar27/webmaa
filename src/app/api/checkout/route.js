@@ -6,7 +6,7 @@ import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
 import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib/ruflo';
 import { sendTelegramAlert } from '@/lib/telegram';
-import { runFraudScan } from '@/lib/fraudDetector';
+import { runEnterpriseFraudScan, standardizePhone, calculateRiskScore } from '@/lib/fraud/detector';
 import { trackMetaServerEvent } from '@/lib/serverTracking';
 import { createRateLimiter } from '@/lib/rate-limit';
 
@@ -442,9 +442,9 @@ export async function POST(req) {
       }
     }
 
-    // ── Run Heuristic Fraud Detection ───────────────────
+    // ── Run Enterprise Fraud Detection ───────────────────
     const vercelCountry = req.headers.get('x-vercel-ip-country') || 'unknown';
-    const fraudScan = await runFraudScan(
+    const fraudScan = await runEnterpriseFraudScan(
       { shopId, customerName, customerPhone, customerEmail, customerAddress },
       ip,
       vercelCountry
@@ -484,6 +484,48 @@ export async function POST(req) {
       fraudReasons: fraudScan.reasons,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    // ── Update Internal AI Fraud Database Profile (Layer 2) ──
+    if (adminDb && customerPhone) {
+      try {
+        const cleanPhone = standardizePhone(customerPhone);
+        const profileRef = adminDb.collection('fraud_profiles').doc(cleanPhone);
+        await adminDb.runTransaction(async (transaction) => {
+          const profileSnap = await transaction.get(profileRef);
+          const currentProfile = profileSnap.exists ? profileSnap.data() : {};
+          
+          const uniqueAddresses = new Set(currentProfile.addresses || []);
+          if (customerAddress) {
+            uniqueAddresses.add(customerAddress.trim());
+          }
+          
+          const uniqueStores = new Set(currentProfile.stores || []);
+          if (shopId) {
+            uniqueStores.add(shopId);
+          }
+
+          const totalOrders = (Number(currentProfile.totalOrders) || 0) + 1;
+          
+          const updatedProfile = {
+            ...currentProfile,
+            phone: cleanPhone,
+            customerName: customerName || currentProfile.customerName || '',
+            totalOrders,
+            addresses: Array.from(uniqueAddresses),
+            stores: Array.from(uniqueStores),
+            lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+          };
+          
+          const riskResult = calculateRiskScore(updatedProfile, updatedProfile.externalStats || {});
+          updatedProfile.riskScore = riskResult.score;
+          updatedProfile.riskLevel = riskResult.riskLevel;
+
+          transaction.set(profileRef, updatedProfile, { merge: true });
+        });
+      } catch (err) {
+        console.warn('[Fraud DB] Failed to increment totalOrders on checkout:', err.message);
+      }
+    }
 
     // ── Meta Conversion API (CAPI) Server Event ──────────
     const metaPixelId = shopData.trackingConfig?.metaPixelId;
