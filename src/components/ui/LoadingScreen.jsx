@@ -224,198 +224,68 @@ export default function LoadingScreen({ text, visible = true, minDuration = 1200
         </div>
       ) : null}
 
-      {/* ── Loading Arena (Circular HUD for Dashboard, Football Stadium for Storefront) ── */}
-      {isDashboard ? (
-        <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-          {/* Outer dashed spinning ring */}
-          <div 
-            className="absolute inset-0 rounded-full border-4 border-dashed animate-spin" 
-            style={{ 
-              borderColor: `${themeColor}60`, 
-              animationDuration: '8s',
-              animationName: 'spin'
-            }} 
-          />
-          {/* Inner dotted reverse spinning ring */}
-          <div 
-            className="absolute inset-2 rounded-full border-2 border-dotted animate-spin" 
-            style={{ 
-              borderColor: `${themeColor}bf`, 
-              animationDuration: '4s',
-              animationDirection: 'reverse',
-              animationName: 'spin'
-            }} 
-          />
-          {/* Progress ring track */}
-          <svg className="absolute w-36 h-36 origin-center -rotate-90" viewBox="0 0 150 150">
-             <circle 
-                cx="75" 
-                cy="75" 
-                r="65" 
-                fill="none" 
-                stroke="rgba(255,255,255,0.03)" 
-                strokeWidth="6" 
-             />
-             <circle 
-                cx="75" 
-                cy="75" 
-                r="65" 
-                fill="none" 
-                stroke={themeColor} 
-                strokeWidth="6" 
-                strokeDasharray={svgCircumference}
-                strokeDashoffset={strokeOffset}
-                strokeLinecap="round"
-                className="transition-all duration-100 ease-out"
-                style={{ filter: `drop-shadow(0 0 8px ${themeColor})` }}
-             />
-          </svg>
-          {/* Center core glassmorphic container */}
-          <div 
-            className="absolute w-28 h-28 rounded-full flex flex-col items-center justify-center shadow-2xl border"
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              backdropFilter: 'blur(12px)',
-              borderColor: 'rgba(255, 255, 255, 0.06)'
-            }}
-          >
-            {displayLogo ? (
-              <img src={displayLogo} alt="Logo" className="w-12 h-12 object-contain" />
-            ) : (
-              <span className="text-3xl font-black text-white">{name[0].toUpperCase()}</span>
-            )}
-            <span className="text-sm font-black text-slate-300 font-mono mt-1">{progress}%</span>
-          </div>
+      {/* ── Circular HUD Loading Arena (Always Enabled) ── */}
+      <div className="relative w-48 h-48 flex items-center justify-center mb-8">
+        {/* Outer dashed spinning ring */}
+        <div 
+          className="absolute inset-0 rounded-full border-4 border-dashed animate-spin" 
+          style={{ 
+            borderColor: `${themeColor}60`, 
+            animationDuration: '8s',
+            animationName: 'spin'
+          }} 
+        />
+        {/* Inner dotted reverse spinning ring */}
+        <div 
+          className="absolute inset-2 rounded-full border-2 border-dotted animate-spin" 
+          style={{ 
+            borderColor: `${themeColor}bf`, 
+            animationDuration: '4s',
+            animationDirection: 'reverse',
+            animationName: 'spin'
+          }} 
+        />
+        {/* Progress ring track */}
+        <svg className="absolute w-36 h-36 origin-center -rotate-90" viewBox="0 0 150 150">
+           <circle 
+              cx="75" 
+              cy="75" 
+              r="65" 
+              fill="none" 
+              stroke="rgba(255,255,255,0.03)" 
+              strokeWidth="6" 
+           />
+           <circle 
+              cx="75" 
+              cy="75" 
+              r="65" 
+              fill="none" 
+              stroke={themeColor} 
+              strokeWidth="6" 
+              strokeDasharray={svgCircumference}
+              strokeDashoffset={strokeOffset}
+              strokeLinecap="round"
+              className="transition-all duration-100 ease-out"
+              style={{ filter: `drop-shadow(0 0 8px ${themeColor})` }}
+           />
+        </svg>
+        {/* Center core glassmorphic container */}
+        <div 
+          className="absolute w-28 h-28 rounded-full flex flex-col items-center justify-center shadow-2xl border"
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(12px)',
+            borderColor: 'rgba(255, 255, 255, 0.06)'
+          }}
+        >
+          {displayLogo ? (
+            <img src={displayLogo} alt="Logo" className="w-12 h-12 object-contain" />
+          ) : (
+            <span className="text-3xl font-black text-white">{name[0].toUpperCase()}</span>
+          )}
+          <span className="text-sm font-black text-slate-300 font-mono mt-1">{progress}%</span>
         </div>
-      ) : (
-        <>
-          <style>{`
-            @keyframes wiggle {
-              0%, 100% { transform: translateY(-50%) rotate(0deg); }
-              20% { transform: translateY(-50%) translateX(-4px) rotate(-2deg); }
-              40% { transform: translateY(-50%) translateX(4px) rotate(2deg); }
-              60% { transform: translateY(-50%) translateX(-2px) rotate(-1deg); }
-              80% { transform: translateY(-50%) translateX(2px) rotate(1deg); }
-            }
-          `}</style>
-          <div className="relative w-full max-w-sm h-52 bg-gradient-to-b from-[#0d1527] via-[#052917] to-[#0b1e13] rounded-[2rem] border-2 border-emerald-500/25 overflow-hidden flex items-center justify-between p-6 shadow-2xl mb-8 group select-none">
-             {/* Field Line Markings */}
-             <div className="absolute inset-2 border border-white/5 rounded-[1.75rem] pointer-events-none" />
-             <div className="absolute top-2 bottom-2 left-1/2 -translate-x-1/2 w-[1px] bg-white/5 pointer-events-none" />
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full border border-white/5 pointer-events-none" />
-             <div className="absolute top-2 bottom-2 right-2 w-14 border-l border-white/5 pointer-events-none" />
-
-             {/* Net Backdrop Glow */}
-             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-20 h-32 bg-emerald-500/5 blur-md pointer-events-none" />
-
-             {/* 1. Shooter Leg/Shoe Silhouette */}
-             {(() => {
-                const kickAngle = progress < 20
-                  ? -25 + (progress / 20) * -15 // swings back to -40deg
-                  : Math.max(0, -40 + ((progress - 20) / 5) * 50); // swings forward rapidly to +10deg
-                return (
-                  <div 
-                    className="absolute left-4 bottom-14 w-14 h-16 origin-top-left transition-transform duration-75"
-                    style={{ transform: `rotate(${kickAngle}deg)` }}
-                  >
-                     <svg className="w-full h-full text-slate-200 fill-current drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" viewBox="0 0 100 100">
-                        <path d="M10 20 L25 15 L40 60 L20 65 Z" fill="rgba(255,255,255,0.15)" />
-                        <path d="M40 60 L65 72 L62 82 L30 78 L25 65 Z" fill="#9333ea" />
-                        <path d="M55 67 L68 70 L65 77 L52 75 Z" fill="#ffffff" />
-                        <circle cx="35" cy="80" r="3" fill="#ffffff" />
-                        <circle cx="48" cy="81" r="3" fill="#ffffff" />
-                        <circle cx="58" cy="80" r="3" fill="#ffffff" />
-                     </svg>
-                  </div>
-                );
-             })()}
-
-             {/* 2. Goal Net Netpost */}
-             {(() => {
-                const netWiggleStyle = progress >= 85 ? { animation: 'wiggle 0.25s ease-in-out infinite' } : {};
-                return (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-20 h-32" style={netWiggleStyle}>
-                     <svg className="w-full h-full text-emerald-400/30" viewBox="0 0 100 160">
-                        <path d="M10 10 L90 20 L90 140 L10 150 Z" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                        <path d="M10 10 L90 50 M10 40 L90 80 M10 70 L90 110 M10 100 L90 140" stroke="currentColor" strokeWidth="1" strokeDasharray="3,3" />
-                        <path d="M10 150 L90 110 M10 120 L90 80 M10 90 L90 50 M10 60 L90 20" stroke="currentColor" strokeWidth="1" strokeDasharray="3,3" />
-                        {progress >= 85 && (
-                           <circle cx="50" cy="80" r="25" fill="rgba(16, 185, 129, 0.15)" className="animate-ping" />
-                        )}
-                     </svg>
-                  </div>
-                );
-             })()}
-
-             {/* 3. The Flying Football */}
-             {(() => {
-                let left = '3.5rem';
-                let bottom = '3rem';
-                let scale = 1.0;
-                let rotation = 0;
-                
-                if (progress >= 20) {
-                  const ratio = Math.min(1.0, (progress - 20) / (85 - 20)); // 0.0 to 1.0
-                  const startX = 56;
-                  const endX = 270;
-                  const currentX = startX + ratio * (endX - startX);
-                  left = `${currentX}px`;
-
-                  const startY = 48;
-                  const peakHeight = 60;
-                  const currentY = startY + Math.sin(ratio * Math.PI) * peakHeight - (ratio * 12);
-                  bottom = `${currentY}px`;
-
-                  scale = 1.0 - ratio * 0.45;
-                  rotation = (progress - 20) * 18;
-                }
-
-                return (
-                  <div 
-                    className="absolute transition-all duration-75 ease-out z-25"
-                    style={{
-                      left,
-                      bottom,
-                      transform: `scale(${scale}) rotate(${rotation}deg)`,
-                      filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))'
-                    }}
-                  >
-                     <svg className="w-8 h-8 text-white" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="#1e293b" strokeWidth="4" />
-                        <polygon points="50,30 35,40 38,58 50,68 62,58 65,40" fill="#1e293b" />
-                        <path d="M50,30 L50,2 M35,40 L10,32 M38,58 L18,78 M50,68 L50,98 M62,58 L82,78 M65,40 L90,32" stroke="#1e293b" strokeWidth="4" />
-                        <polygon points="50,2 62,14 80,8 90,32 78,24" fill="#64748b" opacity="0.35" />
-                        <polygon points="50,98 38,86 20,92 10,68 22,76" fill="#64748b" opacity="0.35" />
-                     </svg>
-                  </div>
-                );
-             })()}
-
-             {/* Impact flash at kick contact */}
-             {progress >= 20 && progress < 25 && (
-                <div className="absolute left-[80px] bottom-[40px] w-10 h-10 bg-white rounded-full animate-ping opacity-75 pointer-events-none" />
-             )}
-
-             {/* 4. GOAL Flash Text */}
-             {progress >= 85 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-emerald-950/90 backdrop-blur-xs z-35 animate-[fadeIn_0.3s_ease-out_forwards]">
-                   <h3 className="text-3xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-emerald-400 to-yellow-300 animate-bounce drop-shadow-[0_0_12px_rgba(16,185,129,0.8)]">
-                      GOAL!!! ⚽🔥
-                   </h3>
-                   <p className="text-[9px] font-black text-emerald-300 uppercase tracking-widest mt-1 animate-pulse">
-                      System Load Completed!
-                   </p>
-                </div>
-             )}
-
-             {/* 5. Loader stats card */}
-             <div className="absolute bottom-2 left-3 right-3 flex justify-between items-center bg-slate-900/80 border border-white/5 px-3 py-1.5 rounded-xl backdrop-blur-xs z-10 text-[9px] font-mono">
-                <span className="text-slate-400 font-bold uppercase tracking-wider">World Cup Loading...</span>
-                <span className="text-emerald-400 font-black">{progress}%</span>
-             </div>
-          </div>
-        </>
-      )}
+      </div>
 
       {/* ── Futuristic Terminal Status Monitor ── */}
       <div className="flex flex-col items-center justify-center gap-4 z-10 w-full max-w-[90%] sm:max-w-md px-4 mb-10">
