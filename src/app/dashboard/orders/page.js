@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeOrders, updateOrderStatus, getShop, deleteOrder, reportCustomerFraud } from '@/lib/firestore'; 
-import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download, AlertCircle, Mail, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { updateDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -672,236 +672,263 @@ export default function OrdersPage() {
                         const displayReasons = realTimeRisk ? realTimeRisk.reasons : (order.fraudReasons || []);
 
                         return (
-                          <div key={order.id} className="border-b border-slate-100 last:border-0">
-                       <div className="p-6 grid grid-cols-1 xl:grid-cols-12 gap-8 hover:bg-slate-50/50 transition-colors">
-                         {/* Order Info & Status */}
-                         <div className="xl:col-span-4 space-y-5">
-                            <div className="flex justify-between items-start">
-                               <div>
-                                  <div className="flex items-center gap-2 mb-1">
-                                     <h3 className="font-black text-slate-900 text-lg">Order #{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</h3>
-                                     <div className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border ${STATUS_CONFIG[order.status || 'pending'].color}`}>
-                                        {STATUS_CONFIG[order.status || 'pending'].label}
-                                     </div>
-                                  </div>
-                                  {(displayScore > 0 || displayLevel !== 'low') && (
-                                     <div className="flex flex-wrap items-center gap-1.5 mt-1.5 mb-2">
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                                          displayLevel === 'very_high' || displayLevel === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
-                                          displayLevel === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                          'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                        }`}>
-                                           🛡️ Risk: {displayLevel.replace('_', ' ').toUpperCase()} ({displayScore}%)
-                                        </span>
-                                        {displayReasons && displayReasons.length > 0 && (
-                                           <span className="text-[9px] text-slate-500 font-bold bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
-                                              {displayReasons.slice(0, 2).join(', ')}
-                                            </span>
+                           <div key={order.id} className="border-b border-slate-100 last:border-0">
+                        <div className="p-6 grid grid-cols-1 xl:grid-cols-12 gap-8 hover:bg-slate-50/50 transition-colors">
+                          {/* Column 1: Order Info & Status Summary */}
+                          <div className="xl:col-span-3 space-y-4">
+                             <div className="flex justify-between items-start">
+                                <div>
+                                   <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="font-black text-slate-900 text-lg">Order #{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</h3>
+                                      <div className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border ${STATUS_CONFIG[order.status || 'pending'].color}`}>
+                                         {STATUS_CONFIG[order.status || 'pending'].label}
+                                      </div>
+                                   </div>
+                                   {(displayScore > 0 || displayLevel !== 'low') && (
+                                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5 mb-2">
+                                         <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                                           displayLevel === 'very_high' || displayLevel === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
+                                           displayLevel === 'medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                           'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                         }`}>
+                                            🛡️ Risk: {displayLevel.replace('_', ' ').toUpperCase()} ({displayScore}%)
+                                         </span>
+                                         {displayReasons && displayReasons.length > 0 && (
+                                            <div className="w-full flex flex-col gap-1 mt-1">
+                                               {displayReasons.slice(0, 2).map((r, idx) => (
+                                                  <span key={idx} className="text-[9px] text-slate-500 font-extrabold bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md truncate max-w-full">
+                                                     {r}
+                                                  </span>
+                                               ))}
+                                            </div>
                                          )}
                                       </div>
                                    )}
-                                  {isUnpaidAutomatedOrder && (
-                                     <div className="mt-1 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-black flex items-center gap-1.5 animate-pulse">
-                                        <AlertCircle size={14} />
-                                        <span>Awaiting Payment (অটো পেমেন্ট পেন্ডিং)</span>
-                                     </div>
-                                  )}
-                                  <p className="text-xs font-bold text-slate-400 mt-1">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('en-GB') : 'Just now'}</p>
-                                  {/* Who confirmed / delivered this order */}
-                                  {(order.confirmedBy || order.deliveredBy || order.updatedBy) && (
-                                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                      {order.confirmedBy && (
-                                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
-                                          ✓ Confirmed: {order.confirmedBy.name}
-                                        </span>
-                                      )}
-                                      {order.deliveredBy && (
-                                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
-                                          🚚 Delivered: {order.deliveredBy.name}
-                                        </span>
-                                      )}
-                                      {!order.confirmedBy && !order.deliveredBy && order.updatedBy && (
-                                        <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-purple-700 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full">
-                                          ↻ Updated: {order.updatedBy.name}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                               </div>
-                            </div>
-                            
-                            <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
-                               <div className="flex items-start gap-3">
-                                  <MapPin size={16} className="text-slate-400 shrink-0" />
-                                  <div>
-                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Address</p>
-                                     <p className="text-xs font-bold text-slate-900 leading-relaxed">{order.customerAddress}</p>
-                                     {order.coordinates && (
-                                       <button
-                                         onClick={() => setMapOverlayCoords(order.coordinates)}
-                                         className="mt-1.5 inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-pink-600 bg-pink-50 hover:bg-pink-600 hover:text-white px-2.5 py-1 rounded-full border border-pink-100 transition-colors shadow-sm cursor-pointer"
-                                       >
-                                         📍 View on Map
-                                       </button>
-                                     )}
-                                  </div>
-                               </div>
-                               {order.customerNote && (
-                                 <div className="flex items-start gap-3 pt-2 border-t border-slate-100">
-                                    <FileText size={16} className="text-amber-500 shrink-0" />
-                                    <div><p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Customer Note</p><p className="text-xs font-bold text-amber-900">{order.customerNote}</p></div>
-                                 </div>
-                               )}
-                               {order.transactionId && (
-                                 <div className="flex items-start gap-3 pt-2 border-t border-slate-100">
-                                    <CheckCircle size={16} className="text-emerald-500 shrink-0" />
-                                    <div><p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Advance Txn ID</p><p className="text-xs font-black text-emerald-900 tracking-wider bg-emerald-100 px-2 rounded mt-1 inline-block border border-emerald-200">{order.transactionId}</p></div>
-                                 </div>
-                               )}
-                               {order.paymentScreenshot && (
-                                 <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
-                                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest flex items-center gap-1">📸 Payment Screenshot</p>
-                                    <div className="relative group max-w-[120px] rounded-lg overflow-hidden border border-slate-200 shadow-sm cursor-zoom-in">
-                                      <img 
-                                        src={order.paymentScreenshot} 
-                                        alt="Payment Proof" 
-                                        onClick={() => {
-                                          const w = window.open();
-                                          w.document.write(`<img src="${order.paymentScreenshot}" style="max-width:100%;height:auto;display:block;margin:auto;" />`);
-                                        }}
-                                        className="w-full h-16 object-cover hover:scale-105 transition-transform duration-300" 
-                                      />
-                                    </div>
-                                 </div>
-                               )}
-                            </div>
-                         </div>
-
-                         {/* Action Config (Return note & Countdown) */}
-                         <div className="xl:col-span-5 space-y-4">
-                            <div className="space-y-1.5">
-                               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">রিটার্ন মেসেজ (কাস্টমারকে)</label>
-                               <textarea
-                                 rows={2}
-                                 className="w-full text-xs font-bold text-slate-900 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-purple-500 transition-colors placeholder:text-slate-400"
-                                 placeholder="আপনার পেমেন্ট পাইনি, অনুগ্রহ করে যোগাযোগ করুন..."
-                                 value={customNote[order.id] ?? (order.returnNote || '')}
-                                 onChange={e => setCustomNote({...customNote, [order.id]: e.target.value})}
-                               />
-                            </div>
-                            <div className="flex gap-2 items-end">
-                               <div className="flex-1 space-y-1.5">
-                                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">ডেলিভারি সময় সেট করুন</label>
-                                  <div className="grid grid-cols-3 gap-2">
-                                     <input type="number" placeholder="দিন" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={countdown[order.id] ?? (order.deliveryCountdownFormatted?.match(/(\d+)\s*দিন/)?.[1] || '')} onChange={e => setCountdown({...countdown, [order.id]: e.target.value})} />
-                                     <input type="number" placeholder="ঘণ্টা" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={hours[order.id] ?? (order.deliveryCountdownFormatted?.match(/(\d+)\s*ঘণ্টা/)?.[1] || '')} onChange={e => setHours({...hours, [order.id]: e.target.value})} />
-                                     <input type="number" placeholder="মিনিট" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={minutes[order.id] ?? (order.deliveryCountdownFormatted?.match(/(\d+)\s*মিনিট/)?.[1] || '')} onChange={e => setMinutes({...minutes, [order.id]: e.target.value})} />
-                                  </div>
-                               </div>
-                               <button onClick={() => saveAdvancedFields(order.id)} className="w-[46px] h-[46px] bg-purple-600 text-white rounded-xl flex items-center justify-center hover:bg-purple-700 transition-colors shadow-md tooltip" title="Save Info">
-                                  <Save size={18} strokeWidth={2.5}/>
-                               </button>
-                            </div>
-                            {order.deliveryCountdownFormatted && (
-                               <p className="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-1.5 rounded border border-purple-100 inline-block mt-2">
-                                  সেভ করা সময়: {order.deliveryCountdownFormatted}
-                               </p>
-                            )}
-                         </div>
-
-                         {/* Final Status Control & Summary */}
-                         <div className="xl:col-span-3 flex flex-col justify-between items-end border-l border-slate-100 pl-6 space-y-4">
-                            <div className="w-full">
-                               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-right mb-2">Change Status <Lock size={10} className="inline mb-0.5"/></p>
-                               <div className="flex flex-col gap-2">
-                                  <button 
-                                     onClick={() => handleStatusAttempt(order.id, 'confirmed')} 
-                                     disabled={isUnpaidAutomatedOrder}
-                                     title={isUnpaidAutomatedOrder ? 'পেমেন্ট সম্পন্ন না হওয়া পর্যন্ত কনফার্ম করা যাবে না' : ''}
-                                     className={`w-full px-3 py-2 rounded-lg text-xs font-black transition-colors border shadow-sm text-center ${
-                                       isUnpaidAutomatedOrder
-                                         ? 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed'
-                                         : 'text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border-blue-200'
-                                     }`}
-                                  >
-                                     Confirm Order
-                                  </button>
-                                  <div className="grid grid-cols-2 gap-2">
-                                     <button onClick={() => handleStatusAttempt(order.id, 'cancelled')} className="px-2 py-2 rounded-lg text-[11px] font-black text-red-700 bg-red-50 hover:bg-red-600 hover:text-white transition-colors border border-red-200 shadow-sm">Reject</button>
-                                     <button 
-                                        onClick={() => handleStatusAttempt(order.id, 'completed')} 
-                                        disabled={!allItemsChecked(order.id, order.items) || isUnpaidAutomatedOrder}
-                                        title={isUnpaidAutomatedOrder ? 'পেমেন্ট সম্পন্ন না হওয়া পর্যন্ত Delivered করা যাবে না' : (!allItemsChecked(order.id, order.items) ? 'সব আইটেম চেক করুন তারপর Delivered দিন' : '')}
-                                        className={`px-2 py-2 rounded-lg text-[11px] font-black transition-colors border shadow-sm ${
-                                          allItemsChecked(order.id, order.items) && !isUnpaidAutomatedOrder
-                                            ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border-emerald-200'
-                                            : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed'
-                                        }`}
-                                      >
-                                        {allItemsChecked(order.id, order.items) && !isUnpaidAutomatedOrder ? '✓ Delivered' : '🔒 Delivered'}
-                                      </button>
-                                  </div>
-                                  {(order.status === 'completed' || order.status === 'cancelled') && (
-                                    <button onClick={() => handleDeleteAttempt(order.id)} className="w-full mt-2 px-3 py-2 rounded-lg text-xs font-black text-red-600 bg-white hover:bg-red-50 transition-colors border border-red-100 flex items-center justify-center gap-2 shadow-sm">
-                                       <Trash2 size={14} /> Delete Order
-                                    </button>
-                                  )}
-
-                                  {/* Steadfast Courier Parcel Controls */}
-                                  {shop?.courierConfig?.steadfastEnabled && (
-                                     <div className="mt-4 pt-4 border-t border-slate-100 w-full text-left">
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">🚚 Courier Shipping</p>
-                                        {order.consignmentId ? (
-                                           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
-                                              <div className="flex justify-between items-center">
-                                                 <span className="text-[9px] font-black text-slate-400 uppercase">Steadfast Status</span>
-                                                 <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-100">
-                                                    {order.courierStatus || 'Pending'}
-                                                 </span>
-                                              </div>
-                                              <p className="text-[10px] font-extrabold text-slate-700">Consignment: {order.consignmentId}</p>
-                                              <p className="text-[10px] font-extrabold text-slate-700">Tracking: {order.trackingCode}</p>
-                                              <a
-                                                 href={`https://steadfast.com.bd/t/${order.trackingCode}`}
-                                                 target="_blank"
-                                                 rel="noreferrer"
-                                                 className="w-full py-1.5 bg-purple-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest text-center block hover:bg-purple-700 transition-colors mt-2"
-                                              >
-                                                 Track Parcel
-                                              </a>
-                                           </div>
-                                        ) : (
-                                           <button
-                                              onClick={() => openCourierModal(order)}
-                                              className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest text-center block transition-colors shadow-md shadow-purple-500/10 cursor-pointer"
-                                           >
-                                              Send to Steadfast
-                                           </button>
-                                        )}
-                                     </div>
-                                  )}
-                               </div>
-                            </div>
-
-                            <div className="w-full text-right bg-slate-50 p-4 rounded-xl border border-slate-200">
-                                {order.customImage && (
-                                  <div className="mb-4 text-left w-full">
-                                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2 flex items-center gap-1.5"><FileText size={12}/> Customer Provided Image</p>
-                                    <div className="relative group cursor-pointer overflow-hidden rounded-[1.5rem] border-2 border-purple-100 bg-white shadow-md aspect-[9/16] w-full max-w-[240px] mx-auto" onClick={() => window.open(order.customImage, '_blank')}>
-                                      <img src={order.customImage} alt="Order Attachment" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <span className="text-white text-[10px] font-black uppercase tracking-widest">বড় করে দেখুন</span>
+                                   {isUnpaidAutomatedOrder && (
+                                      <div className="mt-1 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-black flex items-center gap-1.5 animate-pulse">
+                                         <AlertCircle size={14} />
+                                         <span>Awaiting Payment (অটো পেমেন্ট পেন্ডিং)</span>
                                       </div>
-                                    </div>
-                                  </div>
-                                )}
-                               <p className="text-xs font-black text-slate-500">{order.items?.length || 0} Products Total</p>
-                               <p className="text-2xl font-black text-slate-900 mt-1">৳{order.total}</p>
+                                   )}
+                                   <p className="text-xs font-bold text-slate-400 mt-1">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('en-GB') : 'Just now'}</p>
+                                   {/* Who confirmed / delivered this order */}
+                                   {(order.confirmedBy || order.deliveredBy || order.updatedBy) && (
+                                     <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                       {order.confirmedBy && (
+                                         <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                                           ✓ Confirmed: {order.confirmedBy.name}
+                                         </span>
+                                       )}
+                                       {order.deliveredBy && (
+                                         <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                                           🚚 Delivered: {order.deliveredBy.name}
+                                         </span>
+                                       )}
+                                       {!order.confirmedBy && !order.deliveredBy && order.updatedBy && (
+                                         <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-purple-700 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full">
+                                           ↻ Updated: {order.updatedBy.name}
+                                         </span>
+                                       )}
+                                     </div>
+                                   )}
+                                </div>
+                             </div>
+                          </div>
 
-                                {/* Packing Checklist Toggle */}
+                          {/* Column 2: Customer & Delivery Details */}
+                          <div className="xl:col-span-5 bg-slate-50/50 p-5 rounded-2xl border border-slate-200 space-y-3.5 shadow-inner">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-1.5 mb-2">Customer & Delivery Info</p>
+                             
+                             <div className="space-y-2.5">
+                               {/* Name */}
+                               <div className="flex items-center gap-2.5 text-slate-700">
+                                 <Users size={14} className="text-slate-400 shrink-0" />
+                                 <span className="text-xs font-black text-slate-900">{order.customerName || 'N/A'}</span>
+                               </div>
+                               
+                               {/* Phone */}
+                               <div className="flex items-center gap-2.5">
+                                 <Phone size={14} className="text-slate-400 shrink-0" />
+                                 <a href={`tel:${order.customerPhone}`} className="text-xs font-black text-purple-600 hover:text-purple-700 hover:underline">
+                                   {order.customerPhone || 'N/A'}
+                                 </a>
+                               </div>
+
+                               {/* Email */}
+                               {order.customerEmail && (
+                                 <div className="flex items-center gap-2.5">
+                                   <Mail size={14} className="text-slate-400 shrink-0" />
+                                   <a href={`mailto:${order.customerEmail}`} className="text-xs font-bold text-slate-600 hover:text-slate-800 hover:underline truncate">
+                                     {order.customerEmail}
+                                   </a>
+                                 </div>
+                               )}
+
+                               {/* Address */}
+                               <div className="flex items-start gap-2.5 pt-1.5 border-t border-slate-200/60">
+                                 <MapPin size={14} className="text-slate-400 shrink-0 mt-0.5" />
+                                 <div>
+                                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Shipping Address</p>
+                                   <p className="text-xs font-bold text-slate-800 leading-relaxed">{order.customerAddress || 'N/A'}</p>
+                                   {order.coordinates && (
+                                     <button
+                                       onClick={() => setMapOverlayCoords(order.coordinates)}
+                                       className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-pink-600 bg-pink-50 hover:bg-pink-600 hover:text-white px-2.5 py-1 rounded-full border border-pink-100 transition-colors shadow-sm cursor-pointer"
+                                     >
+                                       📍 Open Location Map
+                                     </button>
+                                   )}
+                                 </div>
+                               </div>
+
+                               {/* Customer Note */}
+                               {order.customerNote && (
+                                 <div className="flex items-start gap-2.5 pt-1.5 border-t border-slate-200/60">
+                                   <FileText size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                                   <div>
+                                     <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Customer Note</p>
+                                     <p className="text-xs font-bold text-amber-900 leading-relaxed">{order.customerNote}</p>
+                                   </div>
+                                 </div>
+                               )}
+
+                               {/* Payment Screenshot */}
+                               {order.paymentScreenshot && (
+                                 <div className="flex flex-col gap-1.5 pt-1.5 border-t border-slate-200/60">
+                                   <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">📸 Payment Screenshot</p>
+                                   <div className="relative group max-w-[120px] rounded-lg overflow-hidden border border-slate-200 shadow-sm cursor-zoom-in">
+                                     <img 
+                                       src={order.paymentScreenshot} 
+                                       alt="Payment Proof" 
+                                       onClick={() => {
+                                         const w = window.open();
+                                         w.document.write(`<img src="${order.paymentScreenshot}" style="max-width:100%;height:auto;display:block;margin:auto;" />`);
+                                       }}
+                                       className="w-full h-16 object-cover hover:scale-105 transition-transform duration-300" 
+                                     />
+                                   </div>
+                                 </div>
+                               )}
+                             </div>
+                          </div>
+
+                          {/* Column 3: Fulfillment Controls & Actions */}
+                          <div className="xl:col-span-4 space-y-4 border-l border-slate-200/60 pl-6">
+                             {/* Return Message & Delivery Time */}
+                             <div className="space-y-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+                                <div className="space-y-1">
+                                   <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">রিটার্ন মেসেজ (কাস্টমারকে)</label>
+                                   <textarea
+                                     rows={1}
+                                     className="w-full text-xs font-bold text-slate-900 p-2.5 rounded-xl bg-white border border-slate-200 outline-none focus:border-purple-500 transition-colors placeholder:text-slate-400 resize-none"
+                                     placeholder="আপনার পেমেন্ট পাইনি, অনুগ্রহ করে যোগাযোগ করুন..."
+                                     value={customNote[order.id] ?? (order.returnNote || '')}
+                                     onChange={e => setCustomNote({...customNote, [order.id]: e.target.value})}
+                                   />
+                                </div>
+                                <div className="flex gap-2 items-end">
+                                   <div className="flex-1 space-y-1">
+                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">ডেলিভারি সময় সেট করুন</label>
+                                      <div className="grid grid-cols-3 gap-1.5">
+                                         <input type="number" placeholder="দিন" className="w-full text-xs font-black text-slate-950 p-2 bg-white rounded-lg border border-slate-200 outline-none text-center" value={countdown[order.id] ?? (order.deliveryCountdownFormatted?.match(/(\d+)\s*দিন/)?.[1] || '')} onChange={e => setCountdown({...countdown, [order.id]: e.target.value})} />
+                                         <input type="number" placeholder="ঘণ্টা" className="w-full text-xs font-black text-slate-950 p-2 bg-white rounded-lg border border-slate-200 outline-none text-center" value={hours[order.id] ?? (order.deliveryCountdownFormatted?.match(/(\d+)\s*ঘণ্টা/)?.[1] || '')} onChange={e => setHours({...hours, [order.id]: e.target.value})} />
+                                         <input type="number" placeholder="মিনিট" className="w-full text-xs font-black text-slate-950 p-2 bg-white rounded-lg border border-slate-200 outline-none text-center" value={minutes[order.id] ?? (order.deliveryCountdownFormatted?.match(/(\d+)\s*মিনিট/)?.[1] || '')} onChange={e => setMinutes({...minutes, [order.id]: e.target.value})} />
+                                      </div>
+                                   </div>
+                                   <button onClick={() => saveAdvancedFields(order.id)} className="w-[36px] h-[36px] bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center transition-colors shadow-md" title="Save Info">
+                                      <Save size={14} strokeWidth={2.5}/>
+                                   </button>
+                                </div>
+                                {order.deliveryCountdownFormatted && (
+                                   <p className="text-[9px] font-black text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-100 inline-block">
+                                      সেভ করা সময়: {order.deliveryCountdownFormatted}
+                                   </p>
+                                )}
+                             </div>
+
+                             {/* Status controls */}
+                             <div className="space-y-2">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Change Order Status</p>
+                                <div className="flex flex-col gap-1.5">
+                                   <button 
+                                      onClick={() => handleStatusAttempt(order.id, 'confirmed')} 
+                                      disabled={isUnpaidAutomatedOrder}
+                                      title={isUnpaidAutomatedOrder ? 'পেমেন্ট সম্পন্ন না হওয়া পর্যন্ত কনফার্ম করা যাবে না' : ''}
+                                      className={`w-full py-2 rounded-lg text-xs font-black transition-colors border shadow-sm text-center ${
+                                        isUnpaidAutomatedOrder
+                                          ? 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed'
+                                          : 'text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border-blue-200'
+                                      }`}
+                                   >
+                                      Confirm Order
+                                   </button>
+                                   <div className="grid grid-cols-2 gap-1.5">
+                                      <button onClick={() => handleStatusAttempt(order.id, 'cancelled')} className="py-1.5 rounded-lg text-[10px] font-black text-red-700 bg-red-50 hover:bg-red-600 hover:text-white transition-colors border border-red-200">Reject</button>
+                                      <button 
+                                         onClick={() => handleStatusAttempt(order.id, 'completed')} 
+                                         disabled={!allItemsChecked(order.id, order.items) || isUnpaidAutomatedOrder}
+                                         title={isUnpaidAutomatedOrder ? 'পেমেন্ট সম্পন্ন না হওয়া পর্যন্ত Delivered করা যাবে না' : (!allItemsChecked(order.id, order.items) ? 'সব আইটেম চেক করুন তারপর Delivered দিন' : '')}
+                                         className={`py-1.5 rounded-lg text-[10px] font-black transition-colors border ${
+                                           allItemsChecked(order.id, order.items) && !isUnpaidAutomatedOrder
+                                             ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border-emerald-200'
+                                             : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed'
+                                         }`}
+                                       >
+                                         {allItemsChecked(order.id, order.items) && !isUnpaidAutomatedOrder ? '✓ Delivered' : '🔒 Delivered'}
+                                       </button>
+                                   </div>
+                                   {(order.status === 'completed' || order.status === 'cancelled') && (
+                                     <button onClick={() => handleDeleteAttempt(order.id)} className="w-full py-1.5 rounded-lg text-xs font-black text-red-600 bg-white hover:bg-red-50 transition-colors border border-red-100 flex items-center justify-center gap-1.5 shadow-sm">
+                                        <Trash2 size={12} /> Delete Order
+                                     </button>
+                                   )}
+                                </div>
+                             </div>
+
+                             {/* Steadfast Courier Parcel Controls */}
+                             {shop?.courierConfig?.steadfastEnabled && (
+                                <div className="pt-2 border-t border-slate-100 w-full text-left">
+                                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">🚚 Courier Shipping</p>
+                                   {order.consignmentId ? (
+                                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 space-y-1.5">
+                                         <div className="flex justify-between items-center">
+                                            <span className="text-[8px] font-black text-slate-400 uppercase">Steadfast Status</span>
+                                            <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase bg-purple-50 text-purple-700 border border-purple-100">
+                                               {order.courierStatus || 'Pending'}
+                                            </span>
+                                         </div>
+                                         <p className="text-[9px] font-extrabold text-slate-700">Consignment: {order.consignmentId}</p>
+                                         <a
+                                            href={`https://steadfast.com.bd/t/${order.trackingCode}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="w-full py-1 bg-purple-600 text-white rounded text-[8px] font-black uppercase tracking-widest text-center block hover:bg-purple-700 transition-colors"
+                                         >
+                                            Track Parcel
+                                         </a>
+                                      </div>
+                                   ) : (
+                                      <button
+                                         onClick={() => openCourierModal(order)}
+                                         className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[9px] font-black uppercase tracking-widest text-center block transition-colors shadow-sm cursor-pointer"
+                                      >
+                                         Send to Steadfast
+                                      </button>
+                                   )}
+                                </div>
+                             )}
+
+                             {/* Total Price & custom image if exists */}
+                             <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
+                                <span className="text-xs font-black text-slate-500">{order.items?.length || 0} products</span>
+                                <span className="text-xl font-black text-slate-900">৳{order.total}</span>
+                             </div>
+
+                             {/* Packing Checklist Toggle & PDF Download */}
+                             <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
                                 <button
                                   onClick={() => setExpandedSummary(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
-                                  className={`mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black transition-colors border shadow-sm ${
+                                  className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black transition-colors border shadow-sm ${
                                     expandedSummary[order.id]
                                       ? 'bg-amber-500 text-white border-amber-500'
                                       : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'

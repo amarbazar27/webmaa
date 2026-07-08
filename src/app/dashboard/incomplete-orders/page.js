@@ -13,7 +13,7 @@ import { deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function IncompleteOrdersPage() {
-  const { user, activeShopId, loading: authLoading } = useAuth();
+  const { user, userData, activeShopId, loading: authLoading } = useAuth();
   const [shop, setShop] = useState(null);
   const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,13 +33,18 @@ export default function IncompleteOrdersPage() {
       },
       (err) => {
         console.error('Failed to load drafts:', err);
-        toast.error('ড্রাফট কার্ট লোড করতে সমস্যা হয়েছে।');
+        const isRetailerOrAdmin = userData?.role === 'retailer' || userData?.role === 'superadmin' || userData?.role === 'staff' || userData?.role === 'admin';
+        if (isRetailerOrAdmin) {
+          toast.error(`ড্রাফট কার্ট লোড করতে সমস্যা হয়েছে। [Firestore: subscribeIncompleteOrders] এরর: ${err.message || err.code || err}`);
+        } else {
+          toast.error('ড্রাফট কার্ট লোড করতে সমস্যা হয়েছে।');
+        }
         setLoading(false);
       }
     );
 
     return () => unsub();
-  }, [activeShopId]);
+  }, [activeShopId, userData]);
 
   // Handle deleting draft manually
   const handleDeleteDraft = async (draftId) => {
@@ -49,7 +54,12 @@ export default function IncompleteOrdersPage() {
       toast.success('ড্রাফটটি সফলভাবে মুছে ফেলা হয়েছে।');
     } catch (err) {
       console.error(err);
-      toast.error('ড্রাফট মুছতে সমস্যা হয়েছে');
+      const isRetailerOrAdmin = userData?.role === 'retailer' || userData?.role === 'superadmin' || userData?.role === 'staff' || userData?.role === 'admin';
+      if (isRetailerOrAdmin) {
+        toast.error(`ড্রাফট মুছতে সমস্যা হয়েছে। [deleteDoc: incomplete_orders] এরর: ${err.message || err}`);
+      } else {
+        toast.error('ড্রাফট মুছতে সমস্যা হয়েছে');
+      }
     }
   };
 
