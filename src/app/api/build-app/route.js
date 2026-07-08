@@ -37,7 +37,8 @@ export async function POST(request) {
       }
     } catch (e) {}
 
-    const isSystemAdmin = userRole === 'superadmin' || decodedToken.email === process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
+    // RED-9: Only use Firestore role — NEXT_PUBLIC_SUPER_ADMIN_EMAIL is client-exposed
+    const isSystemAdmin = userRole === 'superadmin';
 
     if (!isSystemAdmin) {
       return NextResponse.json({ error: 'এই কাজটি করার অনুমতি আপনার নেই।' }, { status: 403 });

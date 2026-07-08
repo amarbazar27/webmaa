@@ -88,6 +88,18 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Data missing from request' }, { status: 400 });
     }
 
+    // RED-1: Authentication required — prevents anonymous AI credit consumption
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    try {
+      const admin = (await import('firebase-admin')).default;
+      await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
     if (!adminDb) {
       console.error('[AI Vision] adminDb is NULL.');
       return NextResponse.json({ error: 'Server configuration error (Admin SDK)' }, { status: 500 });
@@ -165,14 +177,13 @@ If the user specifies a specific amount like '400 gram' or '10 piece', set the q
       const currentApiKey = keyObj.key;
       const keySource = keyObj.source;
 
-      console.log(`[AI Vision] Trying call using key source: ${keySource}`);
+      // RED-3: Removed log that leaked API key source
       const result = await tryGeminiVision(currentApiKey, systemPrompt, base64Data, mimeType);
 
       if (result.success && result.text) {
         text = result.text;
         model = result.model;
         visionSuccess = true;
-        console.log(`[AI Vision] Success using key source: ${keySource}`);
         break;
       }
       lastError = new Error(`API call failed or returned empty response using key source ${keySource}`);
@@ -207,6 +218,6 @@ If the user specifies a specific amount like '400 gram' or '10 piece', set the q
 
   } catch (error) {
     console.error('[AI Vision Critical Error]', error);
-    return NextResponse.json({ error: `Server error: ${error.message}` }, { status: 500 });
+    return NextResponse.json({ error: 'AI processing failed' }, { status: 500 });
   }
 }

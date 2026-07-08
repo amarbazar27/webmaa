@@ -280,6 +280,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error('[AI API] Critical Error:', error.message);
-    return NextResponse.json({ error: { message: `Server error processing AI request. (${error.message})` } }, { status: 500 });
+    return NextResponse.json({ error: { message: 'AI processing failed. Please try again.' } }, { status: 500 });
   }
 }

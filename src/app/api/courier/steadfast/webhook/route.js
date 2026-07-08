@@ -38,8 +38,13 @@ export async function POST(req) {
     const shopData = shopSnap.data();
     const configToken = shopData.courierConfig?.steadfastWebhookToken;
 
-    // Secure webhook token check
-    if (configToken && token !== configToken) {
+    // RED-6: Webhook token check is now MANDATORY
+    // Previously: if configToken was empty, ALL requests were accepted
+    if (!configToken) {
+      console.error(`[Steadfast Webhook] Shop ${shopId} has no webhook token configured`);
+      return NextResponse.json({ error: 'Webhook not configured for this shop' }, { status: 403 });
+    }
+    if (token !== configToken) {
       return NextResponse.json({ error: 'Unauthorized webhook access' }, { status: 401 });
     }
 

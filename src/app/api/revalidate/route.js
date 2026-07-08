@@ -6,8 +6,13 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug');
     const domain = searchParams.get('domain');
+    const secret = searchParams.get('secret');
 
-    console.log(`[Revalidate API] Requested revalidation for slug: ${slug}, domain: ${domain}`);
+    // RED-4: Require revalidation secret to prevent DoS via cache purge abuse
+    const expectedSecret = process.env.REVALIDATION_SECRET || '';
+    if (expectedSecret && secret !== expectedSecret) {
+      return NextResponse.json({ error: 'Invalid secret' }, { status: 401 });
+    }
 
     if (slug) {
       revalidatePath(`/shop/${slug}`);
@@ -26,6 +31,6 @@ export async function GET(request) {
     });
   } catch (err) {
     console.error('[Revalidate API] Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Revalidation failed' }, { status: 500 });
   }
 }

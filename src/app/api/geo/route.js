@@ -199,6 +199,6 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('Geodata Error:', error);
-    return NextResponse.json({ error: 'Data not found', detail: error.message }, { status: 404 });
+    return NextResponse.json({ error: 'Data not found' }, { status: 404 });
   }
 }

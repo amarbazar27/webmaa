@@ -57,19 +57,14 @@ async function isAuthorizedShopAdmin(req, shopId) {
         (userData.role === 'staff' || userData.role === 'admin') &&
         userData.accessShopId === shopId
       ) {
-        console.log('[STEADFAST AUTH] ✅ Authorized: staff/admin with correct accessShopId');
+        // RED-10: Removed debug log leaking auth flow
         return true;
       }
     }
 
-    // Check 3: Env-based superadmin email (CRIT-1 fix: no hardcoded fallback)
-    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '')
-      .toLowerCase()
-      .trim();
-    if (envAdmin && email && email === envAdmin) {
-      console.log('[STEADFAST AUTH] ✅ Authorized: email matches NEXT_PUBLIC_SUPER_ADMIN_EMAIL');
-      return true;
-    }
+    // RED-10: Removed NEXT_PUBLIC_SUPER_ADMIN_EMAIL check
+    // NEXT_PUBLIC_ vars are client-exposed — using them as auth is insecure
+    // Superadmin is already validated via Firestore role check above
 
     // Check 4: Firestore globalConfig superadmin email
     try {
@@ -78,7 +73,6 @@ async function isAuthorizedShopAdmin(req, shopId) {
         const globalData = globalSnap.data();
         const configAdminEmail = (globalData.adminEmail || '').toLowerCase().trim();
         if (configAdminEmail && email === configAdminEmail) {
-          console.log('[STEADFAST AUTH] ✅ Authorized: email matches globalConfig.adminEmail');
           return true;
         }
       }
@@ -235,6 +229,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error('[Steadfast Booking Error]', error);
-    return NextResponse.json({ error: 'Internal Server Error: ' + error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
