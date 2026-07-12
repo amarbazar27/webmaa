@@ -104,7 +104,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 animate-slide-in pb-12">
+    <>
+      <div className="space-y-8 animate-slide-in pb-12">
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
@@ -304,11 +305,12 @@ export default function DashboardPage() {
 
       {/* 🔔 Broadcast Notifications */}
       <NotificationBox senderRole="retailer" shopId={activeShopId} />
+      </div>
 
       {/* 💳 Donation Accounts Modal */}
       {isDonateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-fade-in">
-          <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden relative animate-scale-up">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
+          <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden relative animate-scale-in">
             {/* Header Gradient Accent */}
             <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600"></div>
             
@@ -444,7 +446,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-    </div>
+    </>
   );
 }
