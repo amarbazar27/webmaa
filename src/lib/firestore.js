@@ -519,6 +519,27 @@ export const getAllUsers = async () => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
+export const initializeShop = async (uid, email, displayName) => {
+  const shopDoc = await getDoc(doc(db, 'shops', uid));
+  if (!shopDoc.exists()) {
+    const shopSlug = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
+    await setDoc(doc(db, 'shops', uid), {
+      ownerId: uid,
+      shopName: `${displayName || 'My'}'s Premium Store`,
+      shopSlug,
+      subdomainSlug: shopSlug,
+      isActive: true,
+      showOnMainSite: false,
+      createdAt: serverTimestamp(),
+      staffEmails: [],
+      banners: [
+        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
+        'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200'
+      ]
+    });
+  }
+};
+
 // ── RETAILER REQUESTS ─────────────────────────────
 export const addRetailerRequest = async (userData, phone = '') => {
   // uid validation
@@ -526,25 +547,38 @@ export const addRetailerRequest = async (userData, phone = '') => {
   if (!uid) throw new Error('ব্যবহারকারীর তথ্য পাওয়া যাচ্ছে না। আবার লগইন করুন।');
 
   const email = userData?.email?.toLowerCase?.().trim() || userData?.providerData?.[0]?.email?.toLowerCase?.().trim() || '';
+  const displayName = userData?.displayName || userData?.name || 'ব্যবহারকারী';
 
   // Use setDoc with a deterministic ID (uid) to resolve permission issues.
   // This allows us to use standard 'allow read, write: if request.auth.uid == uid' rules.
   const requestRef = doc(db, 'retailer_requests', uid);
   
   try {
+    const config = await getGlobalConfig();
+    const autoApprove = config?.autoApproveRetailers ?? false;
+
     // Check if document exists first to maintain the logic of not over-writing approved ones casually
     // However, if we can't read, we just try to set it.
     await setDoc(requestRef, {
       uid,
       email,
-      name: userData?.displayName || userData?.name || 'ব্যবহারকারী',
+      name: displayName,
       photoURL: userData?.photoURL || '',
       phone: phone || '',
-      status: 'pending',
+      status: autoApprove ? 'approved' : 'pending',
       requestedAt: serverTimestamp(),
     }, { merge: true }); // Merge true to preserve fields if needed
+
+    if (autoApprove) {
+      // 1. Add to retailer_invites
+      await addRetailerInvite(email);
+      // 2. Update users role to retailer
+      await updateDoc(doc(db, 'users', uid), { role: 'retailer' });
+      // 3. Initialize shop
+      await initializeShop(uid, email, displayName);
+    }
     
-    return { id: uid };
+    return { id: uid, autoApproved: autoApprove };
   } catch (err) {
     console.error("Retailer Request Error:", err);
     if (err.code === 'permission-denied') {
@@ -565,11 +599,15 @@ export const getRetailerRequests = async () => {
   } catch (err) { return []; }
 };
 
-export const approveRetailerRequest = async (requestId, email) => {
+export const approveRetailerRequest = async (requestId, email, name = '') => {
   // 1. Add to retailer_invites
   await addRetailerInvite(email);
   // 2. Update request status
   await updateDoc(doc(db, 'retailer_requests', requestId), { status: 'approved' });
+  // 3. Update users role to retailer
+  await updateDoc(doc(db, 'users', requestId), { role: 'retailer' });
+  // 4. Initialize shop
+  await initializeShop(requestId, email, name);
 };
 
 export const denyRetailerRequest = async (requestId) => {

@@ -104,10 +104,15 @@ export default function BecomeRetailerPage() {
         displayName: activeUser.displayName || activeUserData?.name || 'ব্যবহারকারী',
         photoURL: activeUser.photoURL || activeUserData?.photoURL || ''
       };
-      await addRetailerRequest(reqUser, cleanPhone);
+      const res = await addRetailerRequest(reqUser, cleanPhone);
       setSubmitted(true);
-      setExistingStatus('pending');
-      toast.success('আবেদনটি সফলভাবে জমা দেওয়া হয়েছে! 🚀');
+      if (res?.autoApproved) {
+        setExistingStatus('approved');
+        toast.success('আপনার রিটেইলার অ্যাকাউন্ট সফলভাবে সক্রিয় করা হয়েছে! 🎉');
+      } else {
+        setExistingStatus('pending');
+        toast.success('আবেদনটি সফলভাবে জমা দেওয়া হয়েছে! 🚀');
+      }
     } catch (err) {
       toast.error(err.message || 'আবেদন জমা দিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {
@@ -153,7 +158,7 @@ export default function BecomeRetailerPage() {
           {/* Accent Line */}
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500"></div>
 
-          {submitted || existingStatus === 'pending' ? (
+          {(submitted && existingStatus !== 'approved') || existingStatus === 'pending' ? (
             <div className="text-center py-6 space-y-6">
               <div className="w-20 h-20 bg-purple-600/10 border border-purple-500/20 rounded-full flex items-center justify-center mx-auto text-purple-400 animate-pulse">
                 <CheckCircle2 size={40} />

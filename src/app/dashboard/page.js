@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getShop, getOrders, getProducts } from '@/lib/firestore';
-import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap } from 'lucide-react';
+import { getShop, getOrders, getProducts, getGlobalConfig } from '@/lib/firestore';
+import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap, Heart, X } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 import AiInsightsPanel from '@/components/dashboard/AiInsightsPanel';
 import NotificationBox from '@/components/dashboard/NotificationBox';
@@ -16,6 +17,8 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [globalConfig, setGlobalConfig] = useState(null);
+  const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -25,6 +28,7 @@ export default function DashboardPage() {
         const { getRecentOrders, updateShop } = await import('@/lib/firestore');
         const shopData = await getShop(activeShopId);
         const productsData = await getProducts(activeShopId);
+        const configData = await getGlobalConfig();
 
         let finalOrders = [];
         let finalRevenue = shopData?.totalRevenue;
@@ -55,6 +59,7 @@ export default function DashboardPage() {
         setShop(shopData);
         setOrders(finalOrders);
         setProducts(productsData);
+        setGlobalConfig(configData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -109,22 +114,32 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-500 font-medium mt-2">Here's what's happening with your store today.</p>
         </div>
         
-        {shop && (
-          <div className="flex items-center gap-3 p-1.5 pl-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-            <div className="hidden md:block">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Instant Link</p>
-              <p className="text-xs font-bold text-slate-900 truncate max-w-[150px]">{shop.shopName}</p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsDonateModalOpen(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-rose-500/20"
+          >
+            <Heart size={16} className="fill-current animate-pulse" />
+            <span>Donate</span>
+          </button>
+
+          {shop && (
+            <div className="flex items-center gap-3 p-1.5 pl-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+              <div className="hidden md:block">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Instant Link</p>
+                <p className="text-xs font-bold text-slate-900 truncate max-w-[150px]">{shop.shopName}</p>
+              </div>
+              <a 
+                href={shopUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                className="p-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20"
+              >
+                <ExternalLink size={18} />
+              </a>
             </div>
-            <a 
-              href={shopUrl} 
-              target="_blank" 
-              rel="noreferrer"
-              className="p-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20"
-            >
-              <ExternalLink size={18} />
-            </a>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Metrics Row */}
@@ -289,6 +304,146 @@ export default function DashboardPage() {
 
       {/* 🔔 Broadcast Notifications */}
       <NotificationBox senderRole="retailer" shopId={activeShopId} />
+
+      {/* 💳 Donation Accounts Modal */}
+      {isDonateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-fade-in">
+          <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden relative animate-scale-up">
+            {/* Header Gradient Accent */}
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600"></div>
+            
+            {/* Modal Header */}
+            <div className="p-6 md:p-8 flex justify-between items-start border-b border-slate-50">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <Heart size={20} className="text-rose-500 fill-rose-500 animate-pulse" />
+                  Donation Accounts (অনুদান অ্যাকাউন্টস)
+                </h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Select an account to copy details and send donation</p>
+              </div>
+              <button 
+                onClick={() => setIsDonateModalOpen(false)} 
+                className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 md:p-8 space-y-4 max-h-[60vh] overflow-y-auto">
+              {!globalConfig?.bkashNumber && !globalConfig?.nagadNumber && !globalConfig?.rocketNumber && !globalConfig?.bankDetails ? (
+                <div className="text-center py-8">
+                  <Heart size={32} className="text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No accounts configured by Admin yet.</p>
+                </div>
+              ) : (
+                <>
+                  {/* bKash */}
+                  {globalConfig?.bkashNumber && (
+                    <div className="flex items-center justify-between p-4 bg-pink-50/50 border border-pink-100/50 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-pink-500 text-white flex items-center justify-center font-black text-xs">
+                          BK
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-slate-950">bKash (বিকাশ)</p>
+                          <p className="text-xs font-bold text-slate-600 mt-0.5">{globalConfig.bkashNumber}</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(globalConfig.bkashNumber);
+                          toast.success('bKash Number copied to clipboard! 📋');
+                        }}
+                        className="bg-white border border-pink-200 text-pink-600 hover:bg-pink-50 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl"
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Nagad */}
+                  {globalConfig?.nagadNumber && (
+                    <div className="flex items-center justify-between p-4 bg-orange-50/50 border border-orange-100/50 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center font-black text-xs">
+                          NG
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-slate-950">Nagad (নগদ)</p>
+                          <p className="text-xs font-bold text-slate-600 mt-0.5">{globalConfig.nagadNumber}</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(globalConfig.nagadNumber);
+                          toast.success('Nagad Number copied to clipboard! 📋');
+                        }}
+                        className="bg-white border border-orange-200 text-orange-600 hover:bg-orange-50 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl"
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Rocket */}
+                  {globalConfig?.rocketNumber && (
+                    <div className="flex items-center justify-between p-4 bg-purple-50/50 border border-purple-100/50 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-xs">
+                          RK
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-slate-950">Rocket (রকেট)</p>
+                          <p className="text-xs font-bold text-slate-600 mt-0.5">{globalConfig.rocketNumber}</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(globalConfig.rocketNumber);
+                          toast.success('Rocket Number copied to clipboard! 📋');
+                        }}
+                        className="bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl"
+                      >
+                        Copy
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Bank Details */}
+                  {globalConfig?.bankDetails && (
+                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col gap-3">
+                      <div>
+                        <p className="text-xs font-black text-slate-950">Bank Account Details (ব্যাংক অ্যাকাউন্ট বিবরণ)</p>
+                        <p className="text-xs font-bold text-slate-600 whitespace-pre-line mt-1.5 leading-relaxed">{globalConfig.bankDetails}</p>
+                      </div>
+                      <Button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(globalConfig.bankDetails);
+                          toast.success('Bank details copied to clipboard! 📋');
+                        }}
+                        className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl w-full"
+                      >
+                        Copy Details
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <Button 
+                onClick={() => setIsDonateModalOpen(false)}
+                className="bg-slate-900 border-b-4 border-slate-950 hover:bg-slate-800 text-white font-bold h-11 px-6 rounded-2xl"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

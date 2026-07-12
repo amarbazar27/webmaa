@@ -65,7 +65,12 @@ export default function SuperAdminPage() {
     brandName: '',
     logoUrl: '',
     platformDescription: '',
-    whatsapp: ''
+    whatsapp: '',
+    autoApproveRetailers: false,
+    bkashNumber: '',
+    nagadNumber: '',
+    rocketNumber: '',
+    bankDetails: ''
   });
   const [savingConfig, setSavingConfig] = useState(false);
   
@@ -204,7 +209,12 @@ export default function SuperAdminPage() {
         logoUrl: configData?.logoUrl || '',
         platformDescription: configData?.platformDescription || '',
         whatsapp: configData?.whatsapp || '',
-        contactEmail: configData?.contactEmail || ''
+        contactEmail: configData?.contactEmail || '',
+        autoApproveRetailers: configData?.autoApproveRetailers ?? false,
+        bkashNumber: configData?.bkashNumber || '',
+        nagadNumber: configData?.nagadNumber || '',
+        rocketNumber: configData?.rocketNumber || '',
+        bankDetails: configData?.bankDetails || ''
       });
     });
     return () => unsubscribe();
@@ -359,7 +369,7 @@ export default function SuperAdminPage() {
   const handleApprove = async (req) => {
     setProcessingId(req.id);
     try {
-      await approveRetailerRequest(req.id, req.email);
+      await approveRetailerRequest(req.id, req.email, req.name);
       toast.success(`Approved: ${req.email} is now a retailer!`);
       loadData();
     } catch (err) {
@@ -1193,6 +1203,67 @@ export default function SuperAdminPage() {
                 Update All settings
               </Button>
            </div>
+        </form>
+      </Card>
+
+      {/* 💳 Retailer Auto-Approval & Donation Account Settings */}
+      <Card title="Retailer Auto-Approval & Donations" subtitle="Manage auto-approval and setup donation accounts for retailers" icon={Crown} className="border-2 border-purple-100 bg-purple-50/20 mt-8">
+        <form onSubmit={handleUpdateConfig} className="space-y-6">
+          <div className="flex items-center justify-between p-5 rounded-2xl border bg-white border-slate-100">
+            <div>
+              <p className="text-sm font-black text-slate-900">Auto Approve Retailer Requests (অটো-অ্যাপ্রুভ রিটেইলার রিকোয়েস্ট)</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">If enabled, anyone requesting to become a retailer will be approved instantly</p>
+            </div>
+            <input 
+              type="checkbox" 
+              checked={!!globalConfig.autoApproveRetailers} 
+              onChange={e => setGlobalConfig({...globalConfig, autoApproveRetailers: e.target.checked})}
+              className="w-5 h-5 accent-purple-600 cursor-pointer"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-slate-100">
+            <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2">Donation Accounts Setup (অনুদান অ্যাকাউন্টস সেটিংস)</p>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">রিটেইলার ড্যাশবোর্ডে "Donate" বাটনে ক্লিক করলে এই অ্যাকাউন্টগুলো প্রদর্শিত হবে</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Input
+                label="bKash Number (বিকাশ নম্বর)"
+                value={globalConfig.bkashNumber || ''}
+                onChange={e => setGlobalConfig({...globalConfig, bkashNumber: e.target.value})}
+                placeholder="e.g. 017XXXXXXXX"
+              />
+              <Input
+                label="Nagad Number (নগদ নম্বর)"
+                value={globalConfig.nagadNumber || ''}
+                onChange={e => setGlobalConfig({...globalConfig, nagadNumber: e.target.value})}
+                placeholder="e.g. 017XXXXXXXX"
+              />
+              <Input
+                label="Rocket Number (রকেট নম্বর)"
+                value={globalConfig.rocketNumber || ''}
+                onChange={e => setGlobalConfig({...globalConfig, rocketNumber: e.target.value})}
+                placeholder="e.g. 017XXXXXXXX"
+              />
+            </div>
+            
+            <div className="flex flex-col gap-1.5 mt-6">
+              <label className="text-xs font-black tracking-widest uppercase text-slate-600">Bank Account Info / Other (ব্যাংক অ্যাকাউন্ট বিবরণ)</label>
+              <textarea
+                rows={3}
+                value={globalConfig.bankDetails || ''}
+                onChange={e => setGlobalConfig({...globalConfig, bankDetails: e.target.value})}
+                placeholder="Bank Name: Dutch-Bangla Bank&#10;Account Name: Jhon Doe&#10;Account No: 123.456.789&#10;Branch: Banani"
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button type="submit" loading={savingConfig} className="bg-purple-600 border-b-4 border-purple-800 hover:bg-purple-700 w-48 h-12 text-white font-bold">
+              Update settings
+            </Button>
+          </div>
         </form>
       </Card>
       </>)}
