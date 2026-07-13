@@ -26,6 +26,14 @@ export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
   // Resolve initial theme: user pref → shop setting → system setting → light
   const getInitialTheme = () => {
     if (typeof window === 'undefined') return 'light';
+
+    // Force light theme on storefronts / general public pages to prevent broken dark mode styling
+    const isDashboardOrAdmin = window.location.pathname.startsWith('/dashboard') || 
+                               window.location.pathname.startsWith('/superadmin');
+    if (!isDashboardOrAdmin) {
+      return 'light';
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'dark' || saved === 'light') return saved;
     if (shopTheme === 'dark' || shopTheme === 'light') return shopTheme;

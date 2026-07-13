@@ -2320,7 +2320,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
-      <div className="sf-hero relative w-full bg-[#030612] overflow-hidden border-b border-slate-800 group/banner h-[45vh] min-h-[220px] max-h-[500px]">
+      <div className="sf-hero relative w-full bg-slate-50 overflow-hidden border-b border-slate-200 group/banner h-[45vh] min-h-[220px] max-h-[500px]">
         {normalizedBanners.length > 0 ? (
           <div 
             className="relative w-full h-full overflow-hidden"

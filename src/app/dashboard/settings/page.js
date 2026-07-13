@@ -208,6 +208,14 @@ export default function SettingsPage() {
   const [faqItems, setFaqItems] = useState([]);
   const [newFaqQ, setNewFaqQ] = useState('');
   const [newFaqA, setNewFaqA] = useState('');
+  const [appConfig, setAppConfig] = useState({
+    appName: '',
+    appShortDesc: '',
+    appLongDesc: '',
+    packageName: '',
+    privacyUrl: '',
+    developerEmail: '',
+  });
   
   const [geoData, setGeoData] = useState({ divisions: [], districts: [], upazilas: [], unions: [], unionsType: 'unions' });
   const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', upazilaName: '', union: '' });
@@ -341,6 +349,14 @@ export default function SettingsPage() {
       }).catch(err => console.error("Error loading products for settings:", err));
 
       setFaqItems(data?.faqItems || []);
+      setAppConfig({
+        appName: data?.appConfig?.appName || '',
+        appShortDesc: data?.appConfig?.appShortDesc || '',
+        appLongDesc: data?.appConfig?.appLongDesc || '',
+        packageName: data?.appConfig?.packageName || '',
+        privacyUrl: data?.appConfig?.privacyUrl || '',
+        developerEmail: data?.appConfig?.developerEmail || '',
+      });
       setDomainStatus(data?.domainStatus || '');
       
       setPiprapayEnabled(data?.piprapayEnabled || false);
@@ -715,6 +731,7 @@ export default function SettingsPage() {
         loadingMedia,
         featuredProductIds,
         faqItems,
+        appConfig,
         banners: shop.banners || []
       });
       if (shop.subdomainSlug) {
@@ -1049,8 +1066,80 @@ export default function SettingsPage() {
                   <HelpCircle className="text-slate-400 mx-auto mb-2" size={24} />
                   <p className="font-bold text-slate-800">অ্যাপ জেনারেট করা হয়নি</p>
                   <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
-                    আপনার স্টোরের মোবাইল অ্যাপ সংস্করণটি তৈরি করার জন্য অনুগ্রহ করে সুপার এডমিনের সাথে যোগাযোগ করুন।
+                    আপনার স্টোরের মোবাইল অ্যাপ সংস্করণটি তৈরি করার জন্য নিচের কনফিগারেশন তথ্য দিন এবং সেভ করুন।
                   </p>
+                </div>
+              )}
+
+              {/* Form fields for app configuration */}
+              {shop?.appBuildStatus !== 'building' && (
+                <div className="border border-purple-100 rounded-2xl p-4 bg-white mt-6 space-y-4">
+                  <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                    <Smartphone size={16} className="text-purple-600" /> অ্যাপ কনফিগারেশন সেটিংস
+                  </h4>
+                  <p className="text-[10px] text-slate-500 leading-relaxed font-bold">
+                    আপনার কাস্টম অ্যান্ড্রয়েড অ্যাপ্লিকেশনের ব্র্যান্ডিং ও প্লে-স্টোর লিস্টিং এর তথ্য এখানে পরিবর্তন করুন। সেভ করার পর সুপার এডমিন অ্যাপ তৈরি করবেন।
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase">App Name / অ্যাপের নাম</label>
+                      <Input 
+                        placeholder={shop?.shopName || "যেমন: Messer Bazar"} 
+                        value={appConfig.appName} 
+                        onChange={e => setAppConfig({ ...appConfig, appName: e.target.value })} 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase">Package Name / প্যাকেজ আইডি</label>
+                      <Input 
+                        placeholder={`যেমন: com.bdretailers.${shop?.subdomainSlug || 'store'}`}
+                        value={appConfig.packageName} 
+                        onChange={e => setAppConfig({ ...appConfig, packageName: e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, '') })} 
+                      />
+                      <p className="text-[9px] text-slate-400 font-medium">ইংরেজি ছোট হাতের অক্ষর ও ডট (.) দিয়ে ইউনিক আইডি দিন।</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase">Short Description / সংক্ষিপ্ত বর্ণনা (সর্বোচ্চ ৮০ অক্ষর)</label>
+                    <Input 
+                      placeholder="যেমন: Messer Bazar এর অফিশিয়াল অনলাইন গ্রোসারি শপিং অ্যাপ্লিকেশন।" 
+                      maxLength={80}
+                      value={appConfig.appShortDesc} 
+                      onChange={e => setAppConfig({ ...appConfig, appShortDesc: e.target.value })} 
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-slate-500 uppercase">Full Description / বিস্তারিত বর্ণনা</label>
+                    <textarea
+                      placeholder="যেমন: Messer Bazar অ্যাপে আপনাকে স্বাগতম! এখানে আপনি সহজেই আপনার মেসের মিল ম্যানেজার, বাজার করাসহ সব নিত্যপ্রয়োজনীয় পণ্য অর্ডার করতে পারবেন..."
+                      rows={4}
+                      className="w-full bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-600 text-slate-900 resize-none"
+                      value={appConfig.appLongDesc} 
+                      onChange={e => setAppConfig({ ...appConfig, appLongDesc: e.target.value })} 
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase">Privacy Policy URL / প্রাইভেসি পলিসি লিংক</label>
+                      <Input 
+                        placeholder="যেমন: https://messerbazar.com/privacy-policy" 
+                        value={appConfig.privacyUrl} 
+                        onChange={e => setAppConfig({ ...appConfig, privacyUrl: e.target.value })} 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-500 uppercase">Developer Contact Email / ডেভেলপার ইমেইল</label>
+                      <Input 
+                        placeholder="যেমন: support@bdretailers.com" 
+                        value={appConfig.developerEmail} 
+                        onChange={e => setAppConfig({ ...appConfig, developerEmail: e.target.value })} 
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

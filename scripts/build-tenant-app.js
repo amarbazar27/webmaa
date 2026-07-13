@@ -57,7 +57,7 @@ const reservedKeywords = new Set([
 ]);
 
 const packageNameSlug = reservedKeywords.has(sanitizedSlug) ? `${sanitizedSlug}app` : sanitizedSlug;
-const packageName = (shopSlug === 'main') ? 'com.bdretailers' : `com.bdretailers.${packageNameSlug}`;
+let packageName = (shopSlug === 'main') ? 'com.bdretailers' : `com.bdretailers.${packageNameSlug}`;
 
 console.log(`🚀 Starting App Build Runner for [${shopSlug}]`);
 console.log(`📦 Package Name: ${packageName}`);
@@ -223,6 +223,7 @@ async function build() {
   let primaryColor = "#9333ea";
   let logoUrl = null;
   let customDomain = null;
+  let appConfig = {};
 
   if (db && !isDryRun) {
     try {
@@ -234,10 +235,15 @@ async function build() {
 
       if (!snap.empty) {
         const shopData = snap.docs[0].data();
-        shopName = shopData.shopName || shopName;
+        appConfig = shopData.appConfig || {};
+        shopName = appConfig.appName || shopData.shopName || shopName;
         primaryColor = shopData.designOverrides?.primaryColor || primaryColor;
-        logoUrl = shopData.logoUrl || null;
+        logoUrl = appConfig.logoUrl || shopData.logoUrl || null;
         customDomain = shopData.customDomain || null;
+        
+        if (appConfig.packageName) {
+          packageName = appConfig.packageName.trim();
+        }
         
         if (shopSlug === 'main') {
           targetUrl = `https://bdretailers.com`;
@@ -246,7 +252,7 @@ async function build() {
         } else {
           targetUrl = `https://bdretailers.com/${shopSlug}`;
         }
-        console.log(`✅ Loaded shop metadata: ${shopName} | Color: ${primaryColor} | Domain: ${targetUrl}`);
+        console.log(`✅ Loaded shop metadata: ${shopName} | Package: ${packageName} | Color: ${primaryColor} | Domain: ${targetUrl}`);
       } else {
         console.warn(`⚠️ Shop document not found in Firestore. Using default parameters.`);
       }
@@ -352,12 +358,13 @@ async function build() {
   // E. Dynamic Kotlin Folder Structure & MainActivity package rename
   console.log('  └─ Restructuring MainActivity.kt package...');
   const oldKotlinPath = path.join(appWorkspace, 'android/app/src/main/kotlin/com/bdretailers/MainActivity.kt');
-  const newKotlinDir = path.join(appWorkspace, `android/app/src/main/kotlin/com/bdretailers/${packageNameSlug}`);
+  const packagePathPart = packageName.replace(/\./g, '/');
+  const newKotlinDir = path.join(appWorkspace, 'android/app/src/main/kotlin', packagePathPart);
   
   fs.mkdirSync(newKotlinDir, { recursive: true });
   const newKotlinPath = path.join(newKotlinDir, 'MainActivity.kt');
   
-  const mainActivityContent = `package com.bdretailers.${packageNameSlug}
+  const mainActivityContent = `package ${packageName}
  
 import io.flutter.embedding.android.FlutterActivity
  
@@ -366,8 +373,8 @@ class MainActivity: FlutterActivity() {
 `;
   fs.writeFileSync(newKotlinPath, mainActivityContent);
   
-  // Remove the old template MainActivity
-  if (fs.existsSync(oldKotlinPath)) {
+  // Remove the old template MainActivity if it's in a different path
+  if (fs.existsSync(oldKotlinPath) && oldKotlinPath !== newKotlinPath) {
     fs.unlinkSync(oldKotlinPath);
   }
   console.log('  └─ Kotlin folder restructured.');
@@ -380,10 +387,10 @@ class MainActivity: FlutterActivity() {
   const metadataJson = {
     packageName,
     appName: shopName,
-    shortDescription: `Official Android App for ${shopName}. Shop online with fast delivery, reviews, and secure checkout.`,
-    longDescription: `Welcome to the official ${shopName} Android mobile application!\n\nBrowse through our extensive catalog of products, manage your cart, apply coupon discounts, track your orders in real-time, and check out securely.\n\nKey App Features:\n- Full access to the catalog and product variants\n- Real-time notifications and alerts\n- Seamless digital and cash-on-delivery payments\n- Dynamic support chats\n- Offline caching and performance optimization\n\nDownload the ${shopName} app today and enjoy a premium e-commerce experience!`,
-    privacyPolicyUrl: `${targetUrl}/privacy-policy`,
-    contactEmail: `support@bdretailers.com`,
+    shortDescription: appConfig.appShortDesc || `Official Android App for ${shopName}. Shop online with fast delivery, reviews, and secure checkout.`,
+    longDescription: appConfig.appLongDesc || `Welcome to the official ${shopName} Android mobile application!\n\nBrowse through our extensive catalog of products, manage your cart, apply coupon discounts, track your orders in real-time, and check out securely.\n\nKey App Features:\n- Full access to the catalog and product variants\n- Real-time notifications and alerts\n- Seamless digital and cash-on-delivery payments\n- Dynamic support chats\n- Offline caching and performance optimization\n\nDownload the ${shopName} app today and enjoy a premium e-commerce experience!`,
+    privacyPolicyUrl: appConfig.privacyUrl || `${targetUrl}/privacy-policy`,
+    contactEmail: appConfig.developerEmail || `support@bdretailers.com`,
   };
   fs.writeFileSync(path.join(assetsOutDir, 'metadata.json'), JSON.stringify(metadataJson, null, 2));
 
