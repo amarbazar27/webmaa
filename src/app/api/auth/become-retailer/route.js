@@ -24,17 +24,39 @@ export async function POST(req) {
 
     const { action, phone, otpCode } = await req.json();
 
+    // Check if user is already approved as a retailer
+    const userDoc = await adminDb.collection('users').doc(uid).get();
+    const userData = userDoc.data() || {};
+    if (userData.role === 'retailer') {
+      return NextResponse.json({ 
+        error: 'আপনি ইতিমধ্যে একজন ভেরিফাইড রিটেইলার। সরাসরি ড্যাশবোর্ডে লগইন করুন।' 
+      }, { status: 400 });
+    }
+
     if (action === 'send_otp') {
       if (!phone) {
         return NextResponse.json({ error: 'মোবাইল নম্বর প্রদান করুন।' }, { status: 400 });
       }
 
-      // Check if phone number is already registered under another request
+      // Check if phone number is already registered under another approved/pending request
       const phoneCheck = await adminDb.collection('retailer_requests')
         .where('phone', '==', phone.trim())
         .get();
       if (!phoneCheck.empty && phoneCheck.docs.some(doc => doc.id !== uid)) {
-        return NextResponse.json({ error: 'এই মোবাইল নম্বরটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This number is already used)।' }, { status: 400 });
+        const docOwner = phoneCheck.docs.find(doc => doc.id !== uid)?.data();
+        const rawEmail = docOwner?.email || '';
+        let maskedEmail = '';
+        if (rawEmail) {
+          const [localPart, domain] = rawEmail.split('@');
+          if (localPart.length <= 4) {
+            maskedEmail = localPart.slice(0, 1) + '***' + localPart.slice(-1) + '@' + domain;
+          } else {
+            maskedEmail = localPart.slice(0, 2) + '***' + localPart.slice(-2) + '@' + domain;
+          }
+        }
+        return NextResponse.json({ 
+          error: `এই মোবাইল নম্বরটি ইতিমধ্যে ব্যবহৃত হয়েছে (This number is already used)। অনুগ্রহ করে আপনার রেজিস্টার্ড ইমেইল (${maskedEmail}) দিয়ে লগইন করুন।` 
+        }, { status: 400 });
       }
 
       // Check if email is already registered under another request
@@ -42,7 +64,48 @@ export async function POST(req) {
         .where('email', '==', email)
         .get();
       if (!emailCheck.empty && emailCheck.docs.some(doc => doc.id !== uid)) {
-        return NextResponse.json({ error: 'এই ইমেইলটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This email is already used)।' }, { status: 400 });
+        return NextResponse.json({ error: 'এই ইমেইলটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This email is already used)। অনুগ্রহ করে এই অ্যাকাউন্ট দিয়ে লগইন করুন।' }, { status: 400 });
+      }
+
+      // ── Limit: Maximum 10 registrations per day globally ──
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const dayStart = admin.firestore.Timestamp.fromDate(todayDate);
+      
+      const dailyRegistrationsCount = await adminDb.collection('retailer_requests')
+        .where('requestedAt', '>=', dayStart)
+        .get();
+      
+      // Filter out edits of existing request by same user
+      const dailyUniqueUsers = new Set(dailyRegistrationsCount.docs.map(doc => doc.id));
+      if (dailyUniqueUsers.size >= 10 && !dailyUniqueUsers.has(uid)) {
+        return NextResponse.json({ 
+          error: 'দুঃখিত, দৈনিক রিটেইলার আবেদনের সর্বোচ্চ সীমা অতিক্রম হয়েছে। অনুগ্রহ করে আগামীকাল চেষ্টা করুন।' 
+        }, { status: 429 });
+      }
+
+      // ── Limit: Maximum 2 OTP resends per user/phone per day ──
+      const cleanPhone = phone.trim();
+      const limitDocRef = adminDb.collection('otp_limits').doc(cleanPhone);
+      const limitDoc = await limitDocRef.get();
+      
+      const todayString = todayDate.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      
+      if (limitDoc.exists) {
+        const limitData = limitDoc.data();
+        if (limitData.date === todayString) {
+          if (limitData.count >= 2) {
+            return NextResponse.json({ 
+              error: 'দুঃখিত, আপনি দিনে সর্বোচ্চ ২ বার ভেরিফিকেশন কোড পাঠাতে পারবেন।' 
+            }, { status: 429 });
+          } else {
+            await limitDocRef.update({ count: admin.firestore.FieldValue.increment(1) });
+          }
+        } else {
+          await limitDocRef.set({ date: todayString, count: 1 });
+        }
+      } else {
+        await limitDocRef.set({ date: todayString, count: 1 });
       }
 
       // Generate 6 digit OTP
@@ -97,7 +160,20 @@ export async function POST(req) {
         .where('phone', '==', phone.trim())
         .get();
       if (!phoneCheck.empty && phoneCheck.docs.some(doc => doc.id !== uid)) {
-        return NextResponse.json({ error: 'এই মোবাইল নম্বরটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This number is already used)।' }, { status: 400 });
+        const docOwner = phoneCheck.docs.find(doc => doc.id !== uid)?.data();
+        const rawEmail = docOwner?.email || '';
+        let maskedEmail = '';
+        if (rawEmail) {
+          const [localPart, domain] = rawEmail.split('@');
+          if (localPart.length <= 4) {
+            maskedEmail = localPart.slice(0, 1) + '***' + localPart.slice(-1) + '@' + domain;
+          } else {
+            maskedEmail = localPart.slice(0, 2) + '***' + localPart.slice(-2) + '@' + domain;
+          }
+        }
+        return NextResponse.json({ 
+          error: `এই মোবাইল নম্বরটি ইতিমধ্যে ব্যবহৃত হয়েছে (This number is already used)। অনুগ্রহ করে আপনার রেজিস্টার্ড ইমেইল (${maskedEmail}) দিয়ে লগইন করুন।` 
+        }, { status: 400 });
       }
 
       // Check if email is already registered under another request
@@ -105,7 +181,7 @@ export async function POST(req) {
         .where('email', '==', email)
         .get();
       if (!emailCheck.empty && emailCheck.docs.some(doc => doc.id !== uid)) {
-        return NextResponse.json({ error: 'এই ইমেইলটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This email is already used)।' }, { status: 400 });
+        return NextResponse.json({ error: 'এই ইমেইলটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This email is already used)। অনুগ্রহ করে এই অ্যাকাউন্ট দিয়ে লগইন করুন।' }, { status: 400 });
       }
 
       const otpDocRef = adminDb.collection('otp_codes').doc(phone);
