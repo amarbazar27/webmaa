@@ -558,7 +558,7 @@ export default function BecomeRetailerPage() {
                   </div>
                 )}
 
-                <div id="recaptcha-container" className="hidden"></div>
+                <div id="recaptcha-container" className="absolute pointer-events-none opacity-0"></div>
 
                 <button
                   type="submit"
