@@ -228,7 +228,7 @@ export default function BecomeRetailerPage() {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            action: 'send_otp',
+            action: 'check_limits',
             phone: fullPhoneNumber
           })
         });
@@ -237,17 +237,33 @@ export default function BecomeRetailerPage() {
           throw new Error(resData.error || 'ভেরিফিকেশন কোড পাঠাতে ব্যর্থ হয়েছে।');
         }
 
-        if (resData.mock) {
-          setGeneratedOtp(resData.otp);
-          setMockMode(true);
-          toast.success(`[টেস্ট মোড] ভেরিফিকেশন কোড: ${resData.otp}`, { duration: 20000 });
-        } else {
-          setMockMode(false);
-          toast.success('ভেরিফিকেশন কোডটি আপনার মোবাইলে পাঠানো হয়েছে।');
+        // Initialize Firebase Phone Auth client side
+        const { RecaptchaVerifier, signInWithPhoneNumber } = await import('firebase/auth');
+        const { auth } = await import('@/lib/auth');
+
+        // Clean up any old recaptcha instances
+        if (window.recaptchaVerifier) {
+          try {
+            window.recaptchaVerifier.clear();
+          } catch (_) {}
         }
+
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible'
+        });
+
+        const confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
+        window.confirmationResult = confirmationResult;
         setOtpSent(true);
+        toast.success('ভেরিফিকেশন কোডটি আপনার মোবাইলে পাঠানো হয়েছে।');
       } catch (err) {
         toast.error(err.message || 'ভেরিফিকেশন কোড পাঠাতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+        if (window.recaptchaVerifier) {
+          try {
+            window.recaptchaVerifier.clear();
+            window.recaptchaVerifier = null;
+          } catch (_) {}
+        }
       } finally {
         setSubmitting(false);
       }
@@ -255,9 +271,36 @@ export default function BecomeRetailerPage() {
     }
 
     // Verify OTP code entered by user on server
+    if (!userOtp || userOtp.length !== 6) {
+      toast.error('দয়া করে সঠিক ৬ ডিজিটের ওটিপি দিন।');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const token = await activeUser.getIdToken();
+      // Confirm OTP code with Firebase Phone Auth
+      const verificationResult = await window.confirmationResult.confirm(userOtp);
+      const phoneUser = verificationResult.user;
+
+      // Link phone credential with current Google logged-in user
+      const { PhoneAuthProvider, linkWithCredential } = await import('firebase/auth');
+      const credential = PhoneAuthProvider.credential(window.confirmationResult.verificationId, userOtp);
+      
+      try {
+        await linkWithCredential(activeUser, credential);
+      } catch (linkErr) {
+        if (linkErr.code === 'auth/credential-already-in-use') {
+          throw new Error('এই মোবাইল নম্বরটি ইতিমধ্যে অন্য একটি গুগল অ্যাকাউন্টের সাথে লিঙ্ক করা আছে। অনুগ্রহ করে অন্য নম্বর ব্যবহার করুন।');
+        }
+        // If already linked to current account, ignore and proceed
+        if (linkErr.code !== 'auth/provider-already-linked') {
+          throw linkErr;
+        }
+      }
+
+      // Force refresh auth token so server receives the linked phone number claim
+      const token = await activeUser.getIdToken(true);
+
       const response = await fetch('/api/auth/become-retailer', {
         method: 'POST',
         headers: {
@@ -266,13 +309,12 @@ export default function BecomeRetailerPage() {
         },
         body: JSON.stringify({
           action: 'verify_otp',
-          phone: fullPhoneNumber,
-          otpCode: userOtp
+          phone: fullPhoneNumber
         })
       });
       const resData = await response.json();
       if (!response.ok) {
-        throw new Error(resData.error || 'ভেরিফিকেশন কোডটি সঠিক নয়।');
+        throw new Error(resData.error || 'আবেদন সাবমিট করতে ব্যর্থ হয়েছে।');
       }
 
       setSubmitted(true);
@@ -284,7 +326,7 @@ export default function BecomeRetailerPage() {
         toast.success('আবেদনটি সফলভাবে জমা দেওয়া হয়েছে! 🚀');
       }
     } catch (err) {
-      toast.error(err.message || 'আবেদন জমা দিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+      toast.error(err.message || 'ভেরিফিকেশন কোডটি সঠিক নয় বা আবেদন জমার সময়ে সমস্যা হয়েছে।');
     } finally {
       setSubmitting(false);
     }
@@ -509,20 +551,14 @@ export default function BecomeRetailerPage() {
                         required
                         className="w-full text-center tracking-[0.5em] px-5 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-lg font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
                       />
-                      {mockMode ? (
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 mt-2">
-                          <p className="text-[10px] font-extrabold uppercase tracking-wider leading-relaxed">
-                            ⚠️ [টেস্ট মোড] এসএমএস গেটওয়ে সেটআপ নেই। আপনার ভেরিফিকেশন কোড: <strong className="text-white bg-amber-600 px-1.5 py-0.5 rounded font-mono">{generatedOtp}</strong>
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">
-                          * আপনার মোবাইলে পাঠানো ৬ ডিজিটের ওটিপি কোডটি এখানে দিন।
-                        </p>
-                      )}
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">
+                        * আপনার মোবাইলে পাঠানো ৬ ডিজিটের ওটিপি কোডটি এখানে দিন।
+                      </p>
                     </div>
                   </div>
                 )}
+
+                <div id="recaptcha-container" className="hidden"></div>
 
                 <button
                   type="submit"

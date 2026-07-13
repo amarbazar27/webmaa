@@ -33,7 +33,7 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    if (action === 'send_otp') {
+    if (action === 'check_limits') {
       if (!phone) {
         return NextResponse.json({ error: 'মোবাইল নম্বর প্রদান করুন।' }, { status: 400 });
       }
@@ -108,51 +108,12 @@ export async function POST(req) {
         await limitDocRef.set({ date: todayString, count: 1 });
       }
 
-      // Generate 6 digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-      // Fetch global config
-      const configDoc = await adminDb.collection('config').doc('global').get();
-      const config = configDoc.data() || {};
-      const gateway = config.smsGateway || 'mock';
-      const greenwebToken = config.greenwebToken || '';
-
-      // Save to temporary OTP codes
-      await adminDb.collection('otp_codes').doc(phone).set({
-        otp,
-        expiresAt,
-        attempts: 0,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-
-      if (gateway === 'greenweb' && greenwebToken) {
-        const message = `BDRetailers রিটেইলার ভেরিফিকেশন কোড: ${otp}`;
-        const smsUrl = `https://api.greenweb.com.bd/api.php?token=${encodeURIComponent(greenwebToken)}&to=${encodeURIComponent(phone)}&message=${encodeURIComponent(message)}`;
-        
-        try {
-          const smsRes = await fetch(smsUrl);
-          const smsText = await smsRes.text();
-          console.log('[Greenweb SMS Response]', smsText);
-          return NextResponse.json({ success: true, message: 'আপনার মোবাইলে কোড পাঠানো হয়েছে।' });
-        } catch (err) {
-          console.error('[SMS Send Error]', err);
-          return NextResponse.json({ error: 'এসএমএস পাঠাতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।' }, { status: 500 });
-        }
-      }
-
-      // Fallback or Mock Mode
-      return NextResponse.json({ 
-        success: true, 
-        mock: true, 
-        otp, 
-        message: 'এসএমএস গেটওয়ে কনফিগার করা নেই। কোডটি স্ক্রিনে দেওয়া হল।' 
-      });
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'verify_otp') {
-      if (!phone || !otpCode) {
-        return NextResponse.json({ error: 'মোবাইল নম্বর এবং ভেরিফিকেশন কোড প্রদান করুন।' }, { status: 400 });
+      if (!phone) {
+        return NextResponse.json({ error: 'মোবাইল নম্বর প্রদান করুন।' }, { status: 400 });
       }
 
       // Check if phone number is already registered under another request
@@ -184,25 +145,14 @@ export async function POST(req) {
         return NextResponse.json({ error: 'এই ইমেইলটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This email is already used)। অনুগ্রহ করে এই অ্যাকাউন্ট দিয়ে লগইন করুন।' }, { status: 400 });
       }
 
-      const otpDocRef = adminDb.collection('otp_codes').doc(phone);
-      const otpDoc = await otpDocRef.get();
-      if (!otpDoc.exists) {
-        return NextResponse.json({ error: 'ভেরিফিকেশন কোড পাওয়া যায়নি বা মেয়াদ শেষ হয়েছে।' }, { status: 400 });
+      // Verify that the user has linked this phone number under Firebase Auth
+      const firebaseUser = await adminAuth.getUser(uid);
+      const isVerified = firebaseUser.phoneNumber === phone.trim() || 
+                         firebaseUser.providerData.some(p => p.providerId === 'phone' && p.phoneNumber === phone.trim());
+      
+      if (!isVerified) {
+        return NextResponse.json({ error: 'মোবাইল নম্বরটি ভেরিফাই করা হয়নি বা অবৈধ ভেরিফিকেশন সেশন।' }, { status: 400 });
       }
-
-      const data = otpDoc.data();
-      if (Date.now() > data.expiresAt) {
-        await otpDocRef.delete();
-        return NextResponse.json({ error: 'কোডের মেয়াদ শেষ হয়েছে। আবার নতুন কোড পাঠান।' }, { status: 400 });
-      }
-
-      if (data.otp !== otpCode.trim()) {
-        await otpDocRef.update({ attempts: admin.firestore.FieldValue.increment(1) });
-        return NextResponse.json({ error: 'ভেরিফিকেশন কোডটি সঠিক নয়।' }, { status: 400 });
-      }
-
-      // Code validated!
-      await otpDocRef.delete();
 
       // Fetch config to check autoApprove
       const configDoc = await adminDb.collection('config').doc('global').get();
