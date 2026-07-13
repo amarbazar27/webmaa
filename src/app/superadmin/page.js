@@ -70,7 +70,9 @@ export default function SuperAdminPage() {
     bkashNumber: '',
     nagadNumber: '',
     rocketNumber: '',
-    bankDetails: ''
+    bankDetails: '',
+    greenwebToken: '',
+    smsGateway: 'mock'
   });
   const [savingConfig, setSavingConfig] = useState(false);
   
@@ -214,7 +216,9 @@ export default function SuperAdminPage() {
         bkashNumber: configData?.bkashNumber || '',
         nagadNumber: configData?.nagadNumber || '',
         rocketNumber: configData?.rocketNumber || '',
-        bankDetails: configData?.bankDetails || ''
+        bankDetails: configData?.bankDetails || '',
+        greenwebToken: configData?.greenwebToken || '',
+        smsGateway: configData?.smsGateway || 'mock'
       });
     });
     return () => unsubscribe();
@@ -1256,6 +1260,34 @@ export default function SuperAdminPage() {
                 placeholder="Bank Name: Dutch-Bangla Bank&#10;Account Name: Jhon Doe&#10;Account No: 123.456.789&#10;Branch: Banani"
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500"
               />
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-6">
+              <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2">SMS Gateway Settings (মোবাইল ওটিপি গেটওয়ে সেটিংস)</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">রিটেইলার ভেরিফিকেশন ওটিপি পাঠানোর জন্য গেটওয়ে সেটআপ করুন</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-black tracking-widest uppercase text-slate-600">SMS Gateway Provider (ওটিপি গেটওয়ে)</label>
+                  <select
+                    value={globalConfig.smsGateway || 'mock'}
+                    onChange={e => setGlobalConfig({...globalConfig, smsGateway: e.target.value})}
+                    className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 cursor-pointer"
+                  >
+                    <option value="mock">Mock/Demo Mode (স্ক্রিন ভেরিফিকেশন কোড)</option>
+                    <option value="greenweb">GreenWeb SMS Gateway (বাংলাদেশী রিয়েল এসএমএস)</option>
+                  </select>
+                </div>
+
+                {globalConfig.smsGateway === 'greenweb' && (
+                  <Input
+                    label="GreenWeb API Token (গ্রিনওয়েব টোকেন)"
+                    value={globalConfig.greenwebToken || ''}
+                    onChange={e => setGlobalConfig({...globalConfig, greenwebToken: e.target.value})}
+                    placeholder="e.g. 1234567890abcdef..."
+                  />
+                )}
+              </div>
             </div>
           </div>
 

@@ -17,8 +17,86 @@ const countries = [
   { code: '+44', flag: '🇬🇧', name: 'United Kingdom', length: 10 },
   { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia', length: 9 },
   { code: '+971', flag: '🇦🇪', name: 'UAE', length: 9 },
+  { code: '+968', flag: '🇴🇲', name: 'Oman', length: 8 },
+  { code: '+974', flag: '🇶🇦', name: 'Qatar', length: 8 },
+  { code: '+965', flag: '🇰🇼', name: 'Kuwait', length: 8 },
+  { code: '+973', flag: '🇧🇭', name: 'Bahrain', length: 8 },
   { code: '+60', flag: '🇲🇾', name: 'Malaysia', length: 9 },
   { code: '+65', flag: '🇸🇬', name: 'Singapore', length: 8 },
+  { code: '+39', flag: '🇮🇹', name: 'Italy', length: 10 },
+  { code: '+34', flag: '🇪🇸', name: 'Spain', length: 9 },
+  { code: '+33', flag: '🇫🇷', name: 'France', length: 9 },
+  { code: '+49', flag: '🇩🇪', name: 'Germany', length: 10 },
+  { code: '+61', flag: '🇦🇺', name: 'Australia', length: 9 },
+  { code: '+81', flag: '🇯🇵', name: 'Japan', length: 10 },
+  { code: '+90', flag: '🇹🇷', name: 'Turkey', length: 10 },
+  { code: '+960', flag: '🇲🇻', name: 'Maldives', length: 7 },
+  { code: '+27', flag: '🇿🇦', name: 'South Africa', length: 9 },
+  { code: '+82', flag: '🇰🇷', name: 'South Korea', length: 9 },
+  { code: '+7', flag: '🇷🇺', name: 'Russia', length: 10 },
+  { code: '+55', flag: '🇧🇷', name: 'Brazil', length: 11 },
+  { code: '+86', flag: '🇨🇳', name: 'China', length: 11 },
+  { code: '+31', flag: '🇳🇱', name: 'Netherlands', length: 9 },
+  { code: '+32', flag: '🇧🇪', name: 'Belgium', length: 9 },
+  { code: '+41', flag: '🇨🇭', name: 'Switzerland', length: 9 },
+  { code: '+46', flag: '🇸🇪', name: 'Sweden', length: 9 },
+  { code: '+64', flag: '🇳🇿', name: 'New Zealand', length: 9 },
+  { code: '+94', flag: '🇱🇰', name: 'Sri Lanka', length: 9 },
+  { code: '+977', flag: '🇳🇵', name: 'Nepal', length: 10 },
+  { code: '+93', flag: '🇦🇫', name: 'Afghanistan', length: 9 },
+  { code: '+20', flag: '🇪🇬', name: 'Egypt', length: 10 },
+  { code: '+62', flag: '🇮🇩', name: 'Indonesia', length: 10 },
+  { code: '+63', flag: '🇵🇭', name: 'Philippines', length: 10 },
+  { code: '+66', flag: '🇹🇭', name: 'Thailand', length: 9 },
+  { code: '+84', flag: '🇻🇳', name: 'Vietnam', length: 9 },
+  { code: '+98', flag: '🇮🇷', name: 'Iran', length: 10 },
+  { code: '+964', flag: '🇮🇶', name: 'Iraq', length: 10 },
+  { code: '+962', flag: '🇯🇴', name: 'Jordan', length: 9 },
+  { code: '+961', flag: '🇱🇧', name: 'Lebanon', length: 8 },
+  { code: '+212', flag: '🇲🇦', name: 'Morocco', length: 9 },
+  { code: '+218', flag: '🇱🇾', name: 'Libya', length: 9 },
+  { code: '+216', flag: '🇹🇳', name: 'Tunisia', length: 8 },
+  { code: '+213', flag: '🇩🇿', name: 'Algeria', length: 9 },
+  { code: '+351', flag: '🇵🇹', name: 'Portugal', length: 9 },
+  { code: '+30', flag: '🇬🇷', name: 'Greece', length: 10 },
+  { code: '+353', flag: '🇮🇪', name: 'Ireland', length: 9 },
+  { code: '+45', flag: '🇩🇰', name: 'Denmark', length: 8 },
+  { code: '+47', flag: '🇳🇴', name: 'Norway', length: 8 },
+  { code: '+358', flag: '🇫🇮', name: 'Finland', length: 9 },
+  { code: '+43', flag: '🇦🇹', name: 'Austria', length: 10 },
+  { code: '+48', flag: '🇵🇱', name: 'Poland', length: 9 },
+  { code: '+380', flag: '🇺🇦', name: 'Ukraine', length: 9 },
+  { code: '+40', flag: '🇷🇴', name: 'Romania', length: 9 },
+  { code: '+36', flag: '🇭🇺', name: 'Hungary', length: 9 },
+  { code: '+352', flag: '🇱🇺', name: 'Luxembourg', length: 9 },
+  { code: '+354', flag: '🇮🇸', name: 'Iceland', length: 9 },
+  { code: '+356', flag: '🇲🇹', name: 'Malta', length: 8 },
+  { code: '+370', flag: '🇱🇹', name: 'Lithuania', length: 8 },
+  { code: '+371', flag: '🇱🇻', name: 'Latvia', length: 8 },
+  { code: '+372', flag: '🇪🇪', name: 'Estonia', length: 7 },
+  { code: '+381', flag: '🇷🇸', name: 'Serbia', length: 9 },
+  { code: '+385', flag: '🇭🇷', name: 'Croatia', length: 9 },
+  { code: '+386', flag: '🇸🇮', name: 'Slovenia', length: 9 },
+  { code: '+359', flag: '🇧🇬', name: 'Bulgaria', length: 9 },
+  { code: '+420', flag: '🇨🇿', name: 'Czech Republic', length: 9 },
+  { code: '+421', flag: '🇸🇰', name: 'Slovakia', length: 9 },
+  { code: '+357', flag: '🇨🇾', name: 'Cyprus', length: 8 },
+  { code: '+506', flag: '🇨🇷', name: 'Costa Rica', length: 8 },
+  { code: '+507', flag: '🇵🇦', name: 'Panama', length: 8 },
+  { code: '+593', flag: '🇪🇨', name: 'Ecuador', length: 9 },
+  { code: '+57', flag: '🇨🇴', name: 'Colombia', length: 10 },
+  { code: '+58', flag: '🇻🇪', name: 'Venezuela', length: 10 },
+  { code: '+51', flag: '🇵🇪', name: 'Peru', length: 9 },
+  { code: '+56', flag: '🇨🇱', name: 'Chile', length: 9 },
+  { code: '+54', flag: '🇦🇷', name: 'Argentina', length: 10 },
+  { code: '+598', flag: '🇺🇾', name: 'Uruguay', length: 8 },
+  { code: '+595', flag: '🇵🇾', name: 'Paraguay', length: 9 },
+  { code: '+502', flag: '🇬🇹', name: 'Guatemala', length: 8 },
+  { code: '+503', flag: '🇸🇻', name: 'El Salvador', length: 8 },
+  { code: '+504', flag: '🇭🇳', name: 'Honduras', length: 8 },
+  { code: '+505', flag: '🇳🇮', name: 'Nicaragua', length: 8 },
+  { code: '+591', flag: '🇧🇴', name: 'Bolivia', length: 8 },
+  { code: 'other', flag: '🌐', name: 'Other (অন্যান্য)', length: 15 }
 ];
 
 export default function BecomeRetailerPage() {
@@ -28,9 +106,11 @@ export default function BecomeRetailerPage() {
   const [phone, setPhone] = useState('');
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [phoneVal, setPhoneVal] = useState('');
+  const [customCode, setCustomCode] = useState('+');
   const [otpSent, setOtpSent] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [userOtp, setUserOtp] = useState('');
+  const [mockMode, setMockMode] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -90,9 +170,20 @@ export default function BecomeRetailerPage() {
       return;
     }
 
-    if (cleanPhoneVal.length !== selectedCountry.length) {
-      toast.error(`দয়া করে ঠিক ${selectedCountry.length} সংখ্যার নম্বর লিখুন।`);
-      return;
+    if (selectedCountry.code !== 'other') {
+      if (cleanPhoneVal.length !== selectedCountry.length) {
+        toast.error(`দয়া করে ঠিক ${selectedCountry.length} সংখ্যার নম্বর লিখুন।`);
+        return;
+      }
+    } else {
+      if (!customCode.trim() || customCode.trim() === '+') {
+        toast.error('দয়া করে সঠিক কান্ট্রি কোড লিখুন। (যেমন: +৮৮০)');
+        return;
+      }
+      if (cleanPhoneVal.length < 6 || cleanPhoneVal.length > 15) {
+        toast.error('দয়া করে ৬ থেকে ১৫ সংখ্যার সঠিক মোবাইল নম্বর লিখুন।');
+        return;
+      }
     }
 
     let activeUser = user;
@@ -122,41 +213,70 @@ export default function BecomeRetailerPage() {
       }
     }
 
-    // OTP verification step
+    const codePrefix = selectedCountry.code === 'other' ? customCode.trim() : selectedCountry.code;
+    const fullPhoneNumber = codePrefix + cleanPhoneVal;
+
+    // Send OTP request to server
     if (!otpSent) {
       setSubmitting(true);
       try {
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        setGeneratedOtp(code);
+        const token = await activeUser.getIdToken();
+        const response = await fetch('/api/auth/become-retailer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            action: 'send_otp',
+            phone: fullPhoneNumber
+          })
+        });
+        const resData = await response.json();
+        if (!response.ok) {
+          throw new Error(resData.error || 'ভেরিফিকেশন কোড পাঠাতে ব্যর্থ হয়েছে।');
+        }
+
+        if (resData.mock) {
+          setGeneratedOtp(resData.otp);
+          setMockMode(true);
+          toast.success(`[টেস্ট মোড] ভেরিফিকেশন কোড: ${resData.otp}`, { duration: 20000 });
+        } else {
+          setMockMode(false);
+          toast.success('ভেরিফিকেশন কোডটি আপনার মোবাইলে পাঠানো হয়েছে।');
+        }
         setOtpSent(true);
-        toast.success(`💬 SMS: দাঁড়িপাল্লা ভেরিফিকেশন কোড: ${code}`, { duration: 15000 });
       } catch (err) {
-        toast.error('ভেরিফিকেশন কোড পাঠাতে সমস্যা হয়েছে।');
+        toast.error(err.message || 'ভেরিফিকেশন কোড পাঠাতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
       } finally {
         setSubmitting(false);
       }
       return;
     }
 
-    // Verify OTP code entered by user
-    if (userOtp !== generatedOtp) {
-      toast.error('ভেরিফিকেশন কোডটি সঠিক নয়! আবার চেষ্টা করুন।');
-      return;
-    }
-
+    // Verify OTP code entered by user on server
     setSubmitting(true);
-    const fullPhoneNumber = selectedCountry.code + cleanPhoneVal;
     try {
-      // Pass user auth info and phone to Firestore helper
-      const reqUser = {
-        uid: activeUser.uid,
-        email: activeUser.email,
-        displayName: activeUser.displayName || activeUserData?.name || 'ব্যবহারকারী',
-        photoURL: activeUser.photoURL || activeUserData?.photoURL || ''
-      };
-      const res = await addRetailerRequest(reqUser, fullPhoneNumber);
+      const token = await activeUser.getIdToken();
+      const response = await fetch('/api/auth/become-retailer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          action: 'verify_otp',
+          phone: fullPhoneNumber,
+          otpCode: userOtp
+        })
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.error || 'ভেরিফিকেশন কোডটি সঠিক নয়।');
+      }
+
       setSubmitted(true);
-      if (res?.autoApproved) {
+      if (resData.autoApproved) {
         setExistingStatus('approved');
         toast.success('আপনার রিটেইলার অ্যাকাউন্ট সফলভাবে সক্রিয় করা হয়েছে! 🎉');
       } else {
@@ -204,7 +324,7 @@ export default function BecomeRetailerPage() {
 
       {/* Main Form Content */}
       <main className="relative z-10 max-w-lg w-full mx-auto px-6 py-12 flex-1 flex flex-col justify-center">
-        <div className="bg-slate-950/40 border border-white/5 backdrop-blur-2xl p-8 md:p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        <div className="bg-[#0d1527] border border-slate-800 p-8 md:p-12 rounded-[2.5rem] shadow-2xl relative overflow-hidden text-slate-100">
           {/* Accent Line */}
           <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-600 via-pink-500 to-cyan-500"></div>
 
@@ -214,15 +334,15 @@ export default function BecomeRetailerPage() {
                 <CheckCircle2 size={40} />
               </div>
               <h2 className="text-2xl font-black text-white tracking-tight">আবেদনটি সফলভাবে প্রক্রিয়াধীন আছে</h2>
-              <p className="text-xs text-white/50 leading-relaxed font-bold">
+              <p className="text-xs text-slate-300 leading-relaxed font-bold">
                 ধন্যবাদ! আপনার রিটেইলার অ্যাকাউন্ট ডিলারের আবেদনটি দাঁড়িপাল্লা এডমিন প্যানেলে জমা হয়েছে। আমাদের টীম আপনার মোবাইল নম্বরে শীঘ্রই যোগাযোগ করবে।
               </p>
               
-              <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-left space-y-2 text-xs">
-                <p className="text-white/40 uppercase tracking-widest font-black text-[9px]">আবেদনের বিবরণ (Application Details)</p>
-                <p className="text-white/80 font-bold"><span className="text-white/40">নাম:</span> {user?.displayName || 'ব্যবহারকারী'}</p>
-                <p className="text-white/80 font-bold"><span className="text-white/40">ইমেইল:</span> {user?.email}</p>
-                <p className="text-white/80 font-bold"><span className="text-white/40">মোবাইল:</span> {phone || 'N/A'}</p>
+              <div className="p-4 bg-[#070e24] border border-slate-800 rounded-2xl text-left space-y-2 text-xs">
+                <p className="text-slate-400 uppercase tracking-widest font-black text-[9px]">আবেদনের বিবরণ (Application Details)</p>
+                <p className="text-slate-200 font-bold"><span className="text-slate-400">নাম:</span> {user?.displayName || 'ব্যবহারকারী'}</p>
+                <p className="text-slate-200 font-bold"><span className="text-slate-400">ইমেইল:</span> {user?.email}</p>
+                <p className="text-slate-200 font-bold"><span className="text-slate-400">মোবাইল:</span> {phone || 'N/A'}</p>
                 <p className="text-purple-400 font-extrabold mt-2 flex items-center gap-1.5"><ShieldCheck size={12} /> স্ট্যাটাস: পেন্ডিং (Pending Approval)</p>
               </div>
 
@@ -236,7 +356,7 @@ export default function BecomeRetailerPage() {
                 <ShieldCheck size={40} />
               </div>
               <h2 className="text-2xl font-black text-white tracking-tight">আপনার আবেদন অনুমোদিত হয়েছে!</h2>
-              <p className="text-xs text-white/50 leading-relaxed font-bold">
+              <p className="text-xs text-slate-300 leading-relaxed font-bold">
                 অভিনন্দন! আপনার আবেদনটি এডমিন দ্বারা অনুমোদিত হয়েছে। এখন আপনি আপনার দাঁড়িপাল্লা রিটেইলার ড্যাশবোর্ডে প্রবেশ করতে পারবেন।
               </p>
               
@@ -251,15 +371,15 @@ export default function BecomeRetailerPage() {
                   Merchant Partnership
                 </span>
                 <h1 className="text-3xl font-black tracking-tight text-white leading-none">Become a Retailer</h1>
-                <p className="text-xs text-white/40 mt-3 font-bold leading-relaxed">
+                <p className="text-xs text-slate-300 mt-3 font-bold leading-relaxed">
                   দাঁড়িপাল্লা প্ল্যাটফর্মে আপনার দোকান লিস্টিং করে রিটেইলার হিসেবে পণ্য বিক্রি শুরু করুন।
                 </p>
               </div>
 
               <div className="space-y-6">
                 {!user ? (
-                  <div className="p-5 bg-white/[0.02] border border-white/5 rounded-3xl text-center space-y-4">
-                    <p className="text-xs text-white/60 font-bold leading-relaxed">
+                  <div className="p-5 bg-[#070e24] border border-slate-800 rounded-3xl text-center space-y-4">
+                    <p className="text-xs text-slate-300 font-bold leading-relaxed">
                       আবেদন জমা দিতে প্রথমে আপনার গুগল অ্যাকাউন্ট দিয়ে লগইন সম্পন্ন করুন।
                     </p>
                     <button
@@ -279,7 +399,7 @@ export default function BecomeRetailerPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center gap-3 animate-fade-in">
+                  <div className="p-4 bg-[#070e24] border border-slate-800 rounded-2xl flex items-center gap-3 animate-fade-in">
                     <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center">
                       {user.photoURL ? (
                         <img src={user.photoURL} alt={user.displayName} className="w-full h-full object-cover" />
@@ -289,16 +409,15 @@ export default function BecomeRetailerPage() {
                     </div>
                     <div>
                       <p className="text-xs font-black text-white">{user.displayName || 'ব্যবহারকারী'}</p>
-                      <p className="text-[10px] font-bold text-white/30 truncate max-w-[200px]">{user.email}</p>
+                      <p className="text-[10px] font-bold text-slate-400 truncate max-w-[200px]">{user.email}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Always show active phone number box and submission button */}
                 {/* Country Code and Phone input block */}
                 {!otpSent ? (
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
                       <Phone size={12} /> মোবাইল নম্বর দিন
                     </label>
                     <div className="flex gap-2">
@@ -309,33 +428,62 @@ export default function BecomeRetailerPage() {
                           setSelectedCountry(c);
                           setPhoneVal('');
                         }}
-                        className="bg-white/5 border border-white/10 rounded-2xl px-3 py-3.5 text-white font-black text-xs outline-none focus:border-purple-500 cursor-pointer"
+                        className="bg-[#070e24] border border-slate-700 rounded-2xl px-3 py-3.5 text-white font-black text-xs outline-none focus:border-purple-500 cursor-pointer"
                       >
                         {countries.map(c => (
                           <option key={c.code} value={c.code} className="bg-slate-900 text-white">
-                            {c.flag} {c.code}
+                            {c.flag} {c.code === 'other' ? 'Other' : c.code}
                           </option>
                         ))}
                       </select>
-                      <input
-                        type="tel"
-                        value={phoneVal}
-                        onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, selectedCountry.length))}
-                        placeholder={`${selectedCountry.length} সংখ্যার নম্বর দিন`}
-                        required
-                        className="flex-1 px-5 py-3.5 rounded-2xl border border-white/10 focus:border-purple-500 bg-white/5 text-white placeholder-white/20 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
-                      />
+                      
+                      {selectedCountry.code === 'other' ? (
+                        <div className="flex-1 flex gap-2">
+                          <input
+                            type="text"
+                            value={customCode}
+                            onChange={e => {
+                              let val = e.target.value;
+                              if (!val.startsWith('+')) val = '+' + val.replace(/[^0-9]/g, '');
+                              else val = '+' + val.slice(1).replace(/[^0-9]/g, '');
+                              setCustomCode(val);
+                            }}
+                            placeholder="+880"
+                            required
+                            className="w-24 px-4 py-3.5 rounded-2xl border border-slate-700 focus:border-purple-500 bg-[#070e24] text-white placeholder-slate-600 text-sm font-black outline-none focus:ring-2 focus:ring-purple-500/20"
+                          />
+                          <input
+                            type="tel"
+                            value={phoneVal}
+                            onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, 15))}
+                            placeholder="মোবাইল নম্বর দিন"
+                            required
+                            className="flex-1 px-5 py-3.5 rounded-2xl border border-slate-700 focus:border-purple-500 bg-[#070e24] text-white placeholder-slate-600 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
+                          />
+                        </div>
+                      ) : (
+                        <input
+                          type="tel"
+                          value={phoneVal}
+                          onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, selectedCountry.length))}
+                          placeholder={`${selectedCountry.length} ডিজিটের মোবাইল নম্বর`}
+                          required
+                          className="flex-1 px-5 py-3.5 rounded-2xl border border-slate-700 focus:border-purple-500 bg-[#070e24] text-white placeholder-slate-600 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
+                      )}
                     </div>
-                    <p className="text-[10px] text-white/30 font-bold uppercase tracking-wider px-1">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider px-1">
                       * এই দেশীয় নম্বরে দাঁড়িপাল্লা প্যানেল থেকে আপনার সাথে যোগাযোগ করা হবে।
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
+                    <div className="p-4 bg-[#070e24] border border-slate-800 rounded-2xl flex items-center justify-between">
                        <div>
-                         <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Selected Mobile Number</p>
-                         <p className="text-xs font-black text-white mt-0.5">{selectedCountry.code} {phoneVal}</p>
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Selected Mobile Number</p>
+                         <p className="text-xs font-black text-white mt-0.5">
+                           {selectedCountry.code === 'other' ? customCode : selectedCountry.code} {phoneVal}
+                         </p>
                        </div>
                        <button
                          type="button"
@@ -350,7 +498,7 @@ export default function BecomeRetailerPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                      <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 ml-1">
                         ভেরিফিকেশন কোড দিন (Enter OTP)
                       </label>
                       <input
@@ -360,11 +508,17 @@ export default function BecomeRetailerPage() {
                         onChange={e => setUserOtp(e.target.value.replace(/[^0-9]/g, ''))}
                         placeholder="------"
                         required
-                        className="w-full text-center tracking-[0.5em] px-5 py-3.5 rounded-2xl border border-white/10 focus:border-purple-500 bg-white/5 text-white placeholder-white/20 text-lg font-black transition-all outline-none"
+                        className="w-full text-center tracking-[0.5em] px-5 py-3.5 rounded-2xl border border-slate-700 focus:border-purple-500 bg-[#070e24] text-white placeholder-slate-600 text-lg font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
                       />
-                      <p className="text-[10px] text-purple-400/80 font-bold uppercase tracking-wider px-1">
-                        * ডেমো কোডটি আপনার স্ক্রিনের টোস্ট নোটিফিকেশনে দেখা যাচ্ছে।
-                      </p>
+                      {mockMode ? (
+                        <p className="text-[10px] text-amber-400 font-extrabold uppercase tracking-wider px-1">
+                          * [টেস্ট মোড] এসএমএস গেটওয়ে সেটআপ নেই। আপনার ভেরিফিকেশন কোড: <strong className="text-white bg-amber-600 px-1.5 py-0.5 rounded font-mono">{generatedOtp}</strong>
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider px-1">
+                          * আপনার মোবাইলে পাঠানো ৬ ডিজিটের ওটিপি কোডটি এখানে দিন।
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

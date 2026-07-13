@@ -70,6 +70,11 @@ service cloud.firestore {
       );
     }
 
+    function isAutoApproveEnabled() {
+      return exists(/databases/$(database)/documents/config/global) &&
+             get(/databases/$(database)/documents/config/global).data.get('autoApproveRetailers', false) == true;
+    }
+
     // ── Config & Invites ──────────────────────────────────────────
     match /config/global {
       allow read: if true;
@@ -82,8 +87,15 @@ service cloud.firestore {
     }
 
     match /retailer_requests/{docId} {
-      allow create: if isAuthenticated() && request.auth.uid == docId;
+      allow create: if isAuthenticated() && request.auth.uid == docId &&
+                    (request.resource.data.status == 'pending' || (request.resource.data.status == 'approved' && isAutoApproveEnabled()));
       allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == docId);
+      allow update: if isAuthenticated() && request.auth.uid == docId &&
+                    (
+                      request.resource.data.status == 'pending' || 
+                      (request.resource.data.status == 'approved' && isAutoApproveEnabled()) ||
+                      (request.resource.data.status == resource.data.status)
+                    );
       allow update, delete: if isSuperAdmin();
     }
     
@@ -190,12 +202,7 @@ service cloud.firestore {
       allow create, update, delete: if false;  // Server-only via Admin SDK
     }
 
-    // Retailer signup requests — managed by superadmin
-    match /retailer_requests/{requestId} {
-      allow create: if isAuthenticated();  // Users can submit applications
-      allow read: if isSuperAdmin() || (isAuthenticated() && resource.data.uid == request.auth.uid);
-      allow update, delete: if false;  // Server-only via Admin SDK
-    }
+
 
     // OTP codes — managed by /api/auth/send-otp and verify-otp
     match /otp_codes/{otpId} {
