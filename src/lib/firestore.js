@@ -570,11 +570,9 @@ export const addRetailerRequest = async (userData, phone = '') => {
     }, { merge: true }); // Merge true to preserve fields if needed
 
     if (autoApprove) {
-      // 1. Add to retailer_invites
-      await addRetailerInvite(email);
-      // 2. Update users role to retailer
+      // 1. Update users role to retailer
       await updateDoc(doc(db, 'users', uid), { role: 'retailer' });
-      // 3. Initialize shop
+      // 2. Initialize shop
       await initializeShop(uid, email, displayName);
     }
     

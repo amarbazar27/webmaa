@@ -9,11 +9,29 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, User, Phone, Sparkles, ShieldCheck, CheckCircle2, ChevronRight, Zap } from 'lucide-react';
 import Link from 'next/link';
 
+const countries = [
+  { code: '+880', flag: '🇧🇩', name: 'Bangladesh', length: 10 },
+  { code: '+91', flag: '🇮🇳', name: 'India', length: 10 },
+  { code: '+92', flag: '🇵🇰', name: 'Pakistan', length: 10 },
+  { code: '+1', flag: '🇺🇸', name: 'USA/Canada', length: 10 },
+  { code: '+44', flag: '🇬🇧', name: 'United Kingdom', length: 10 },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia', length: 9 },
+  { code: '+971', flag: '🇦🇪', name: 'UAE', length: 9 },
+  { code: '+60', flag: '🇲🇾', name: 'Malaysia', length: 9 },
+  { code: '+65', flag: '🇸🇬', name: 'Singapore', length: 8 },
+];
+
 export default function BecomeRetailerPage() {
   const router = useRouter();
   const { user, userData, loading: authLoading, forceUpdateAuth } = useAuth();
   
   const [phone, setPhone] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
+  const [phoneVal, setPhoneVal] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [userOtp, setUserOtp] = useState('');
+
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(false);
@@ -29,7 +47,16 @@ export default function BecomeRetailerPage() {
           const myReq = reqs.find(r => r.id === user.uid);
           if (myReq) {
             setExistingStatus(myReq.status || 'pending');
-            if (myReq.phone) setPhone(myReq.phone);
+            if (myReq.phone) {
+              setPhone(myReq.phone);
+              const matchedCountry = countries.find(c => myReq.phone.startsWith(c.code));
+              if (matchedCountry) {
+                setSelectedCountry(matchedCountry);
+                setPhoneVal(myReq.phone.replace(matchedCountry.code, ''));
+              } else {
+                setPhoneVal(myReq.phone);
+              }
+            }
           }
         })
         .catch(err => console.error("Error loading request status:", err))
@@ -57,14 +84,14 @@ export default function BecomeRetailerPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const cleanPhone = phone.trim();
-    if (!cleanPhone) {
+    const cleanPhoneVal = phoneVal.trim();
+    if (!cleanPhoneVal) {
       toast.error('দয়া করে আপনার সচল মোবাইল নম্বরটি লিখুন।');
       return;
     }
 
-    if (cleanPhone.length < 10) {
-      toast.error('দয়া করে একটি সঠিক মোবাইল নম্বর লিখুন।');
+    if (cleanPhoneVal.length !== selectedCountry.length) {
+      toast.error(`দয়া করে ঠিক ${selectedCountry.length} সংখ্যার নম্বর লিখুন।`);
       return;
     }
 
@@ -80,7 +107,7 @@ export default function BecomeRetailerPage() {
           activeUser = loginResult.user;
           activeUserData = loginResult.userData;
           forceUpdateAuth(loginResult.user, loginResult.userData);
-          toast.success('লগইন সফল হয়েছে! আবেদন জমা দেওয়া হচ্ছে...', { id: toastId });
+          toast.success('লগইন সফল হয়েছে!', { id: toastId });
         } else {
           toast.error('লগইন ব্যর্থ হয়েছে বা বাতিল করা হয়েছে।', { id: toastId });
           setLoginLoading(false);
@@ -95,7 +122,30 @@ export default function BecomeRetailerPage() {
       }
     }
 
+    // OTP verification step
+    if (!otpSent) {
+      setSubmitting(true);
+      try {
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedOtp(code);
+        setOtpSent(true);
+        toast.success(`💬 SMS: দাঁড়িপাল্লা ভেরিফিকেশন কোড: ${code}`, { duration: 15000 });
+      } catch (err) {
+        toast.error('ভেরিফিকেশন কোড পাঠাতে সমস্যা হয়েছে।');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // Verify OTP code entered by user
+    if (userOtp !== generatedOtp) {
+      toast.error('ভেরিফিকেশন কোডটি সঠিক নয়! আবার চেষ্টা করুন।');
+      return;
+    }
+
     setSubmitting(true);
+    const fullPhoneNumber = selectedCountry.code + cleanPhoneVal;
     try {
       // Pass user auth info and phone to Firestore helper
       const reqUser = {
@@ -104,7 +154,7 @@ export default function BecomeRetailerPage() {
         displayName: activeUser.displayName || activeUserData?.name || 'ব্যবহারকারী',
         photoURL: activeUser.photoURL || activeUserData?.photoURL || ''
       };
-      const res = await addRetailerRequest(reqUser, cleanPhone);
+      const res = await addRetailerRequest(reqUser, fullPhoneNumber);
       setSubmitted(true);
       if (res?.autoApproved) {
         setExistingStatus('approved');
@@ -245,22 +295,79 @@ export default function BecomeRetailerPage() {
                 )}
 
                 {/* Always show active phone number box and submission button */}
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                    <Phone size={12} /> মোবাইল নম্বর দিন
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value.replace(/[^0-9+]/g, ''))}
-                    placeholder="01XXXXXXXXX"
-                    required
-                    className="w-full px-5 py-3.5 rounded-2xl border border-white/10 focus:border-purple-500 bg-white/5 text-white placeholder-white/20 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
-                  />
-                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-wider px-1">
-                    * এই নম্বরে দাঁড়িপাল্লা এডমিন প্যানেল থেকে আপনার সাথে যোগাযোগ করা হবে।
-                  </p>
-                </div>
+                {/* Country Code and Phone input block */}
+                {!otpSent ? (
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                      <Phone size={12} /> মোবাইল নম্বর দিন
+                    </label>
+                    <div className="flex gap-2">
+                      <select 
+                        value={selectedCountry.code}
+                        onChange={e => {
+                          const c = countries.find(x => x.code === e.target.value);
+                          setSelectedCountry(c);
+                          setPhoneVal('');
+                        }}
+                        className="bg-white/5 border border-white/10 rounded-2xl px-3 py-3.5 text-white font-black text-xs outline-none focus:border-purple-500 cursor-pointer"
+                      >
+                        {countries.map(c => (
+                          <option key={c.code} value={c.code} className="bg-slate-900 text-white">
+                            {c.flag} {c.code}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="tel"
+                        value={phoneVal}
+                        onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, selectedCountry.length))}
+                        placeholder={`${selectedCountry.length} সংখ্যার নম্বর দিন`}
+                        required
+                        className="flex-1 px-5 py-3.5 rounded-2xl border border-white/10 focus:border-purple-500 bg-white/5 text-white placeholder-white/20 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
+                      />
+                    </div>
+                    <p className="text-[10px] text-white/30 font-bold uppercase tracking-wider px-1">
+                      * এই দেশীয় নম্বরে দাঁড়িপাল্লা প্যানেল থেকে আপনার সাথে যোগাযোগ করা হবে।
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
+                       <div>
+                         <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Selected Mobile Number</p>
+                         <p className="text-xs font-black text-white mt-0.5">{selectedCountry.code} {phoneVal}</p>
+                       </div>
+                       <button
+                         type="button"
+                         onClick={() => {
+                           setOtpSent(false);
+                           setUserOtp('');
+                         }}
+                         className="text-[10px] font-black text-purple-400 hover:text-purple-300 uppercase tracking-wider transition-colors"
+                       >
+                         Change Number
+                       </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                        ভেরিফিকেশন কোড দিন (Enter OTP)
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={userOtp}
+                        onChange={e => setUserOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="------"
+                        required
+                        className="w-full text-center tracking-[0.5em] px-5 py-3.5 rounded-2xl border border-white/10 focus:border-purple-500 bg-white/5 text-white placeholder-white/20 text-lg font-black transition-all outline-none"
+                      />
+                      <p className="text-[10px] text-purple-400/80 font-bold uppercase tracking-wider px-1">
+                        * ডেমো কোডটি আপনার স্ক্রিনের টোস্ট নোটিফিকেশনে দেখা যাচ্ছে।
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -271,7 +378,8 @@ export default function BecomeRetailerPage() {
                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                   ) : (
                     <>
-                      <Sparkles size={14} /> আবেদন সাবমিট করুন (Submit Request)
+                      <Sparkles size={14} /> 
+                      {otpSent ? 'আবেদন সাবমিট করুন (Submit Request)' : 'ভেরিফিকেশন কোড পাঠান (Send Verification Code)'}
                     </>
                   )}
                 </button>
