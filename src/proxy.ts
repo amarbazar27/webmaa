@@ -27,6 +27,8 @@ const BYPASS_HOSTS = [
   'daripallah.com',
   'bdretailers.com',
   'www.bdretailers.com',
+  'freeappweb.com',
+  'www.freeappweb.com',
   'localhost',
   '127.0.0.1',
 ];
@@ -76,6 +78,7 @@ function getTenantSlug(host: string): string | null {
   const isPlatformDomain = 
     host.endsWith('.daripallah.com') || 
     host.endsWith('.bdretailers.com') || 
+    host.endsWith('.freeappweb.com') || 
     host.endsWith('.webmaa.vercel.app');
   
   if (isPlatformDomain) {

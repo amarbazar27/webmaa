@@ -29,6 +29,22 @@ export async function POST(req) {
         return NextResponse.json({ error: 'মোবাইল নম্বর প্রদান করুন।' }, { status: 400 });
       }
 
+      // Check if phone number is already registered under another request
+      const phoneCheck = await adminDb.collection('retailer_requests')
+        .where('phone', '==', phone.trim())
+        .get();
+      if (!phoneCheck.empty && phoneCheck.docs.some(doc => doc.id !== uid)) {
+        return NextResponse.json({ error: 'এই মোবাইল নম্বরটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This number is already used)।' }, { status: 400 });
+      }
+
+      // Check if email is already registered under another request
+      const emailCheck = await adminDb.collection('retailer_requests')
+        .where('email', '==', email)
+        .get();
+      if (!emailCheck.empty && emailCheck.docs.some(doc => doc.id !== uid)) {
+        return NextResponse.json({ error: 'এই ইমেইলটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This email is already used)।' }, { status: 400 });
+      }
+
       // Generate 6 digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
@@ -48,7 +64,7 @@ export async function POST(req) {
       });
 
       if (gateway === 'greenweb' && greenwebToken) {
-        const message = `দাঁড়িপাল্লা রিটেইলার ভেরিফিকেশন কোড: ${otp}`;
+        const message = `BDRetailers রিটেইলার ভেরিফিকেশন কোড: ${otp}`;
         const smsUrl = `https://api.greenweb.com.bd/api.php?token=${encodeURIComponent(greenwebToken)}&to=${encodeURIComponent(phone)}&message=${encodeURIComponent(message)}`;
         
         try {
@@ -74,6 +90,22 @@ export async function POST(req) {
     if (action === 'verify_otp') {
       if (!phone || !otpCode) {
         return NextResponse.json({ error: 'মোবাইল নম্বর এবং ভেরিফিকেশন কোড প্রদান করুন।' }, { status: 400 });
+      }
+
+      // Check if phone number is already registered under another request
+      const phoneCheck = await adminDb.collection('retailer_requests')
+        .where('phone', '==', phone.trim())
+        .get();
+      if (!phoneCheck.empty && phoneCheck.docs.some(doc => doc.id !== uid)) {
+        return NextResponse.json({ error: 'এই মোবাইল নম্বরটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This number is already used)।' }, { status: 400 });
+      }
+
+      // Check if email is already registered under another request
+      const emailCheck = await adminDb.collection('retailer_requests')
+        .where('email', '==', email)
+        .get();
+      if (!emailCheck.empty && emailCheck.docs.some(doc => doc.id !== uid)) {
+        return NextResponse.json({ error: 'এই ইমেইলটি দিয়ে ইতিমধ্যে আবেদন করা হয়েছে (This email is already used)।' }, { status: 400 });
       }
 
       const otpDocRef = adminDb.collection('otp_codes').doc(phone);

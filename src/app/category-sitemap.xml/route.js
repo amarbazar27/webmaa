@@ -3,7 +3,7 @@ import { getShopByDomainServer, getProductsServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
 
-const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'localhost', '127.0.0.1'];
+const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'freeappweb.com', 'localhost', '127.0.0.1'];
 
 function isMainSiteHost(host) {
   if (!host) return true;
