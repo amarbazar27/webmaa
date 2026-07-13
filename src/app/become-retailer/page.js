@@ -10,7 +10,7 @@ import { ArrowLeft, User, Phone, Sparkles, ShieldCheck, CheckCircle2, ChevronRig
 import Link from 'next/link';
 
 const countries = [
-  { code: '+880', flag: '🇧🇩', name: 'Bangladesh', length: 10 },
+  { code: '+88', flag: '🇧🇩', name: 'Bangladesh', length: 11 },
   { code: '+91', flag: '🇮🇳', name: 'India', length: 10 },
   { code: '+92', flag: '🇵🇰', name: 'Pakistan', length: 10 },
   { code: '+1', flag: '🇺🇸', name: 'USA/Canada', length: 10 },
@@ -177,7 +177,7 @@ export default function BecomeRetailerPage() {
       }
     } else {
       if (!customCode.trim() || customCode.trim() === '+') {
-        toast.error('দয়া করে সঠিক কান্ট্রি কোড লিখুন। (যেমন: +৮৮০)');
+        toast.error('দয়া করে সঠিক কান্ট্রি কোড লিখুন। (যেমন: +৮৮)');
         return;
       }
       if (cleanPhoneVal.length < 6 || cleanPhoneVal.length > 15) {
@@ -216,91 +216,9 @@ export default function BecomeRetailerPage() {
     const codePrefix = selectedCountry.code === 'other' ? customCode.trim() : selectedCountry.code;
     const fullPhoneNumber = codePrefix + cleanPhoneVal;
 
-    // Send OTP request to server
-    if (!otpSent) {
-      setSubmitting(true);
-      try {
-        const token = await activeUser.getIdToken();
-        const response = await fetch('/api/auth/become-retailer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            action: 'check_limits',
-            phone: fullPhoneNumber
-          })
-        });
-        const resData = await response.json();
-        if (!response.ok) {
-          throw new Error(resData.error || 'ভেরিফিকেশন কোড পাঠাতে ব্যর্থ হয়েছে।');
-        }
-
-        // Initialize Firebase Phone Auth client side
-        const { RecaptchaVerifier, signInWithPhoneNumber } = await import('firebase/auth');
-        const { auth } = await import('@/lib/auth');
-
-        // Clean up any old recaptcha instances
-        if (window.recaptchaVerifier) {
-          try {
-            window.recaptchaVerifier.clear();
-          } catch (_) {}
-        }
-
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible'
-        });
-
-        const confirmationResult = await signInWithPhoneNumber(auth, fullPhoneNumber, window.recaptchaVerifier);
-        window.confirmationResult = confirmationResult;
-        setOtpSent(true);
-        toast.success('ভেরিফিকেশন কোডটি আপনার মোবাইলে পাঠানো হয়েছে।');
-      } catch (err) {
-        toast.error(err.message || 'ভেরিফিকেশন কোড পাঠাতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
-        if (window.recaptchaVerifier) {
-          try {
-            window.recaptchaVerifier.clear();
-            window.recaptchaVerifier = null;
-          } catch (_) {}
-        }
-      } finally {
-        setSubmitting(false);
-      }
-      return;
-    }
-
-    // Verify OTP code entered by user on server
-    if (!userOtp || userOtp.length !== 6) {
-      toast.error('দয়া করে সঠিক ৬ ডিজিটের ওটিপি দিন।');
-      return;
-    }
-
     setSubmitting(true);
     try {
-      // Confirm OTP code with Firebase Phone Auth
-      const verificationResult = await window.confirmationResult.confirm(userOtp);
-      const phoneUser = verificationResult.user;
-
-      // Link phone credential with current Google logged-in user
-      const { PhoneAuthProvider, linkWithCredential } = await import('firebase/auth');
-      const credential = PhoneAuthProvider.credential(window.confirmationResult.verificationId, userOtp);
-      
-      try {
-        await linkWithCredential(activeUser, credential);
-      } catch (linkErr) {
-        if (linkErr.code === 'auth/credential-already-in-use') {
-          throw new Error('এই মোবাইল নম্বরটি ইতিমধ্যে অন্য একটি গুগল অ্যাকাউন্টের সাথে লিঙ্ক করা আছে। অনুগ্রহ করে অন্য নম্বর ব্যবহার করুন।');
-        }
-        // If already linked to current account, ignore and proceed
-        if (linkErr.code !== 'auth/provider-already-linked') {
-          throw linkErr;
-        }
-      }
-
-      // Force refresh auth token so server receives the linked phone number claim
-      const token = await activeUser.getIdToken(true);
-
+      const token = await activeUser.getIdToken();
       const response = await fetch('/api/auth/become-retailer', {
         method: 'POST',
         headers: {
@@ -308,7 +226,6 @@ export default function BecomeRetailerPage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          action: 'verify_otp',
           phone: fullPhoneNumber
         })
       });
@@ -326,7 +243,7 @@ export default function BecomeRetailerPage() {
         toast.success('আবেদনটি সফলভাবে জমা দেওয়া হয়েছে! 🚀');
       }
     } catch (err) {
-      toast.error(err.message || 'ভেরিফিকেশন কোডটি সঠিক নয় বা আবেদন জমার সময়ে সমস্যা হয়েছে।');
+      toast.error(err.message || 'আবেদন জমা দিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {
       setSubmitting(false);
     }
@@ -456,109 +373,66 @@ export default function BecomeRetailerPage() {
                 )}
 
                 {/* Country Code and Phone input block */}
-                {!otpSent ? (
-                  <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                      <Phone size={12} /> মোবাইল নম্বর দিন
-                    </label>
-                    <div className="flex gap-2">
-                      <select 
-                        value={selectedCountry.code}
-                        onChange={e => {
-                          const c = countries.find(x => x.code === e.target.value);
-                          setSelectedCountry(c);
-                          setPhoneVal('');
-                        }}
-                        className="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3.5 text-slate-800 font-black text-xs outline-none focus:border-purple-500 cursor-pointer"
-                      >
-                        {countries.map(c => (
-                          <option key={c.code} value={c.code} className="bg-white text-slate-900">
-                            {c.flag} {c.code === 'other' ? 'Other' : c.code}
-                          </option>
-                        ))}
-                      </select>
-                      
-                      {selectedCountry.code === 'other' ? (
-                        <div className="flex-1 flex gap-2">
-                          <input
-                            type="text"
-                            value={customCode}
-                            onChange={e => {
-                              let val = e.target.value;
-                              if (!val.startsWith('+')) val = '+' + val.replace(/[^0-9]/g, '');
-                              else val = '+' + val.slice(1).replace(/[^0-9]/g, '');
-                              setCustomCode(val);
-                            }}
-                            placeholder="+880"
-                            required
-                            className="w-24 px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-sm font-black outline-none focus:ring-2 focus:ring-purple-500/20"
-                          />
-                          <input
-                            type="tel"
-                            value={phoneVal}
-                            onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, 15))}
-                            placeholder="মোবাইল নম্বর দিন"
-                            required
-                            className="flex-1 px-5 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
-                          />
-                        </div>
-                      ) : (
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                    <Phone size={12} /> মোবাইল নম্বর দিন
+                  </label>
+                  <div className="flex gap-2">
+                    <select 
+                      value={selectedCountry.code}
+                      onChange={e => {
+                        const c = countries.find(x => x.code === e.target.value);
+                        setSelectedCountry(c);
+                        setPhoneVal('');
+                      }}
+                      className="bg-slate-50 border border-slate-200 rounded-2xl px-3 py-3.5 text-slate-800 font-black text-xs outline-none focus:border-purple-500 cursor-pointer"
+                    >
+                      {countries.map(c => (
+                        <option key={c.code} value={c.code} className="bg-white text-slate-900">
+                          {c.flag} {c.code === 'other' ? 'Other' : c.code}
+                        </option>
+                      ))}
+                    </select>
+                    
+                    {selectedCountry.code === 'other' ? (
+                      <div className="flex-1 flex gap-2">
+                        <input
+                          type="text"
+                          value={customCode}
+                          onChange={e => {
+                            let val = e.target.value;
+                            if (!val.startsWith('+')) val = '+' + val.replace(/[^0-9]/g, '');
+                            else val = '+' + val.slice(1).replace(/[^0-9]/g, '');
+                            setCustomCode(val);
+                          }}
+                          placeholder="+88"
+                          required
+                          className="w-24 px-4 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-sm font-black outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
                         <input
                           type="tel"
                           value={phoneVal}
-                          onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, selectedCountry.length))}
-                          placeholder={`${selectedCountry.length} ডিজিটের মোবাইল নম্বর`}
+                          onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, 15))}
+                          placeholder="মোবাইল নম্বর দিন"
                           required
                           className="flex-1 px-5 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
                         />
-                      )}
-                    </div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">
-                      * এই দেশীয় নম্বরে BDRetailers প্যানেল থেকে আপনার সাথে যোগাযোগ করা হবে।
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
-                       <div>
-                         <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Selected Mobile Number</p>
-                         <p className="text-xs font-black text-slate-800 mt-0.5">
-                           {selectedCountry.code === 'other' ? customCode : selectedCountry.code} {phoneVal}
-                         </p>
-                       </div>
-                       <button
-                         type="button"
-                         onClick={() => {
-                           setOtpSent(false);
-                           setUserOtp('');
-                         }}
-                         className="text-[10px] font-black text-purple-600 hover:text-purple-500 uppercase tracking-wider transition-colors"
-                       >
-                         Change Number
-                       </button>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                        ভেরিফিকেশন কোড দিন (Enter OTP)
-                      </label>
+                      </div>
+                    ) : (
                       <input
-                        type="text"
-                        maxLength={6}
-                        value={userOtp}
-                        onChange={e => setUserOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                        placeholder="------"
+                        type="tel"
+                        value={phoneVal}
+                        onChange={e => setPhoneVal(e.target.value.replace(/[^0-9]/g, '').slice(0, selectedCountry.length))}
+                        placeholder={`${selectedCountry.length} ডিজিটের মোবাইল নম্বর`}
                         required
-                        className="w-full text-center tracking-[0.5em] px-5 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-lg font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
+                        className="flex-1 px-5 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
                       />
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">
-                        * আপনার মোবাইলে পাঠানো ৬ ডিজিটের ওটিপি কোডটি এখানে দিন।
-                      </p>
-                    </div>
+                    )}
                   </div>
-                )}
-
-                <div id="recaptcha-container" className="absolute pointer-events-none opacity-0"></div>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-1">
+                    * এই দেশীয় নম্বরে BDRetailers প্যানেল থেকে আপনার সাথে যোগাযোগ করা হবে।
+                  </p>
+                </div>
 
                 <button
                   type="submit"
@@ -570,7 +444,7 @@ export default function BecomeRetailerPage() {
                   ) : (
                     <>
                       <Sparkles size={14} /> 
-                      {otpSent ? 'আবেদন সাবমিট করুন (Submit Request)' : 'ভেরিফিকেশন কোড পাঠান (Send Verification Code)'}
+                      আবেদন জমা দিন (Submit Request)
                     </>
                   )}
                 </button>
