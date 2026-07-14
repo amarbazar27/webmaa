@@ -1599,23 +1599,46 @@ export default function SuperAdminPage() {
                                       ☁️ Cloudinary Configuration for <span className="text-purple-600 font-black">{shop.shopName || 'this store'}</span>
                                     </h4>
                                     
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-xs text-slate-500 font-bold">Cloud Settings visibility to owner:</span>
-                                      <button
-                                        onClick={() => handleUpdateShopCloudinary(shop.id, { 
-                                          cloudinaryConfigEnabled: shop.cloudinaryConfigEnabled === false ? true : false 
-                                        })}
-                                        className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-                                          shop.cloudinaryConfigEnabled !== false ? 'bg-purple-600' : 'bg-slate-300'
-                                        }`}
-                                      >
-                                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                                          shop.cloudinaryConfigEnabled !== false ? 'translate-x-5' : 'translate-x-1'
-                                        }`} />
-                                      </button>
-                                      <span className="text-xs font-black text-slate-700">
-                                        {shop.cloudinaryConfigEnabled !== false ? 'Shown' : 'Hidden'}
-                                      </span>
+                                    <div className="flex flex-wrap items-center gap-4">
+                                      {/* Cloudinary Toggle */}
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs text-slate-500 font-bold">Cloud Settings:</span>
+                                        <button
+                                          onClick={() => handleUpdateShopCloudinary(shop.id, { 
+                                            cloudinaryConfigEnabled: shop.cloudinaryConfigEnabled === false ? true : false 
+                                          })}
+                                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                                            shop.cloudinaryConfigEnabled !== false ? 'bg-purple-600' : 'bg-slate-300'
+                                          }`}
+                                        >
+                                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                            shop.cloudinaryConfigEnabled !== false ? 'translate-x-5' : 'translate-x-1'
+                                          }`} />
+                                        </button>
+                                        <span className="text-xs font-black text-slate-700">
+                                          {shop.cloudinaryConfigEnabled !== false ? 'Shown' : 'Hidden'}
+                                        </span>
+                                      </div>
+
+                                      {/* Data Export Toggle */}
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs text-slate-500 font-bold">Data Export:</span>
+                                        <button
+                                          onClick={() => handleUpdateShopCloudinary(shop.id, { 
+                                            dataExportEnabled: shop.dataExportEnabled === false ? true : false 
+                                          })}
+                                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                                            shop.dataExportEnabled === true ? 'bg-purple-600' : 'bg-slate-300'
+                                          }`}
+                                        >
+                                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                            shop.dataExportEnabled === true ? 'translate-x-5' : 'translate-x-1'
+                                          }`} />
+                                        </button>
+                                        <span className="text-xs font-black text-slate-700">
+                                          {shop.dataExportEnabled === true ? 'Allowed' : 'Blocked'}
+                                        </span>
+                                      </div>
                                     </div>
                                   </div>
 

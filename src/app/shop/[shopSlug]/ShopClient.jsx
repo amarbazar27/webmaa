@@ -2844,7 +2844,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 🚀 Want to launch your own professional online store in minutes just like this? <a href="https://bdretailers.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
               </span>
               <span className="text-xs text-purple-300 font-bold mt-1">
-                এই ওয়েবসাইটটি বিডি রিটেইলার্স (<a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">bdretailers.com</a>) দ্বারা তৈরি।
+                এই ওয়েবসাইটটি বিডি রিটেইলার্স (<a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">bdretailers.com</a>) দ্বারা তৈরি। | <a href="https://bdretailers.com/privacy-policy" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">Privacy Policy</a>
               </span>
             </p>
             <div className="flex items-center gap-2">

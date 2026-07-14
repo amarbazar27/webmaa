@@ -2374,6 +2374,7 @@ export default function Home() {
                     <li><Link href="/dashboard" className="hover:text-white transition-colors">Store Admin Portal</Link></li>
                     <li><Link href="/become-retailer" className="text-purple-400 hover:text-purple-300 font-black uppercase tracking-wider transition-colors flex items-center gap-1">🤝 Become Retailer</Link></li>
                     <li><Link href="/reviews" className="text-purple-400 hover:text-purple-300 font-black uppercase tracking-wider transition-colors flex items-center gap-1">⭐ Platform Reviews</Link></li>
+                    <li><Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
                  </ul>
               </div>
 

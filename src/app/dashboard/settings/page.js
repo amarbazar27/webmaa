@@ -676,6 +676,77 @@ export default function SettingsPage() {
     }
   };
 
+  const handleExportShopData = () => {
+    if (!shop) return;
+    const exportObj = {
+      exportType: 'shop_configuration',
+      platform: 'BDRetailers',
+      exportedAt: new Date().toISOString(),
+      shopId: activeShopId,
+      shopSlug: shop.subdomainSlug || shop.shopSlug || '',
+      shopName: shop.shopName || '',
+      slogan: shop.slogan || '',
+      notices: shop.notices || '',
+      welcomeMessage: shop.welcomeMessage || '',
+      customDomain: shop.customDomain || '',
+      socialLinks: socialLinks || {},
+      authSettings: authSettings || {},
+      promoSettings: promoSettings || {},
+      deliveryConfig: deliveryConfig || {},
+      aiConfig: aiConfig || {},
+      faqItems: faqItems || [],
+      banners: shop.banners || []
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `bdretailers_shop_config_${shop.subdomainSlug || 'export'}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    toast.success('স্টোর সেটিংস ডাউনলোড সম্পন্ন হয়েছে! 📥');
+  };
+
+  const handleExportProductsData = () => {
+    if (!shopProducts || shopProducts.length === 0) {
+      toast.error('স্টোরে কোনো পণ্য পাওয়া যায়নি রপ্তানি করার জন্য।');
+      return;
+    }
+    const exportObj = {
+      exportType: 'products_list',
+      platform: 'BDRetailers',
+      exportedAt: new Date().toISOString(),
+      shopName: shop?.shopName || '',
+      productsCount: shopProducts.length,
+      products: shopProducts.map(p => ({
+        id: p.id,
+        name: p.name || '',
+        price: Number(p.price) || 0,
+        comparePrice: Number(p.comparePrice) || 0,
+        description: p.description || '',
+        category: p.category || '',
+        subcategory: p.subcategory || '',
+        imageUrl: p.imageUrl || '',
+        images: p.images || [],
+        videoUrl: p.videoUrl || '',
+        stock: p.stock ?? 100,
+        isActive: p.isActive ?? true,
+        variants: p.variants || [],
+        createdAt: p.createdAt || null
+      }))
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `bdretailers_products_${shop?.subdomainSlug || 'export'}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    toast.success('পণ্য তালিকা ডাউনলোড সম্পন্ন হয়েছে! 📥');
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!user || !shop) return;
@@ -833,16 +904,17 @@ export default function SettingsPage() {
           <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
             <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
               <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি</p>
-              {[
-                 { id: 'store_info', label: 'স্টোর তথ্য ও ডোমেইন', icon: Globe },
-                 { id: 'branding', label: 'ডিজাইন ও লোগো', icon: Palette },
-                 { id: 'access', label: 'কর্মী ও অ্যাক্সেস', icon: ShieldCheck },
-                 { id: 'checkout_payments', label: 'চেকআউট ও পেমেন্ট', icon: Truck },
-                 { id: 'courier_location', label: 'কুরিয়ার ও ম্যাপ', icon: MapPin },
-                 { id: 'marketing', label: 'মার্কেটিং ও কুপন', icon: Gift },
-                 { id: 'ai_companion', label: 'এআই অ্যাসিস্ট্যান্ট', icon: Sparkles },
-                 { id: 'app_faq', label: 'মোবাইল অ্যাপ ও FAQ', icon: Smartphone }
-              ].map(sub => {
+               {[
+                  { id: 'store_info', label: 'স্টোর তথ্য ও ডোমেইন', icon: Globe },
+                  { id: 'branding', label: 'ডিজাইন ও লোগো', icon: Palette },
+                  { id: 'access', label: 'কর্মী ও অ্যাক্সেস', icon: ShieldCheck },
+                  { id: 'checkout_payments', label: 'চেকআউট ও পেমেন্ট', icon: Truck },
+                  { id: 'courier_location', label: 'কুরিয়ার ও ম্যাপ', icon: MapPin },
+                  { id: 'marketing', label: 'মার্কেটিং ও কুপন', icon: Gift },
+                  { id: 'ai_companion', label: 'এআই অ্যাসিস্ট্যান্ট', icon: Sparkles },
+                  { id: 'app_faq', label: 'মোবাইল অ্যাপ ও FAQ', icon: Smartphone },
+                  ...(shop?.dataExportEnabled === true ? [{ id: 'data_export', label: 'ডাটা মাইগ্রেশন', icon: Cloud }] : [])
+               ].map(sub => {
                  const Icon = sub.icon;
                  return (
                     <button
@@ -1144,6 +1216,61 @@ export default function SettingsPage() {
               )}
             </div>
           </Card>
+                </div>
+              )}
+
+              {/* Group 9: Data Portability & Export (data_export) */}
+              {activeSubTab === 'data_export' && shop?.dataExportEnabled === true && (
+                <div className="space-y-8 animate-slide-in">
+                  <Card title="Data Portability & Migration" subtitle="স্টোরের তথ্য ব্যাকআপ ও মাইগ্রেশন" icon={Download} className="border-2 border-purple-100 bg-purple-50/5">
+                    <div className="space-y-6 text-xs font-medium text-slate-700 leading-relaxed">
+                      <p>
+                        <strong>ডাটা পোর্টাবিলিটি এবং ব্যাকআপ (Data Portability):</strong> বিডি রিটেইলার্স মার্চেন্টদের ডাটা স্বাধিকার ও স্বাধীনতাকে সর্বোচ্চ প্রাধান্য দেয়। আপনার স্টোরের সকল ডাটা (পণ্য, মূল্য, বিবরণী, ক্লাউডিনারি মিডিয়া ফাইল ও কনফিগারেশন) আপনার নিজস্ব সম্পত্তি। আপনি যেকোনো সময় পুরো স্টোরের ডাটা ব্যাকআপ ফাইল আকারে ডাউনলোড করে সংরক্ষণ করতে পারেন এবং চাইলে অন্য কোনো সার্ভার বা ই-কমার্স প্ল্যাটফর্মে মাইগ্রেট করতে পারেন।
+                      </p>
+
+                      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-[11px] text-amber-800 font-bold leading-relaxed space-y-2">
+                        <p>⚠️ <strong>গুরুত্বपूर्ण তথ্য:</strong></p>
+                        <ul className="list-disc pl-4 space-y-1">
+                          <li>রপ্তানি করা ডাটা ফাইলে আপনার পণ্যের নাম, দাম, ছবি/ভিডিওর ক্লাউডিনারি হোস্টেড লিংক এবং ক্যাটাগরি কনফিগারেশন থাকবে।</li>
+                          <li>ছবি এবং ভিডিওগুলোর ক্লাউডিনারি লিংক সুরক্ষিত থাকবে। আপনি যেকোনো প্ল্যাটফর্মে ডাটা ফাইলটি আপলোড করলে ছবিগুলো সেখানেও একইভাবে লোড হবে (যতক্ষণ না আপনি ক্লাউডিনারি থেকে ডিলিট করছেন)।</li>
+                        </ul>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                        <button
+                          type="button"
+                          onClick={handleExportShopData}
+                          className="py-3 bg-purple-600 text-white rounded-xl font-black text-center flex items-center justify-center gap-2 hover:bg-purple-700 shadow-md shadow-purple-500/10 transition-all cursor-pointer"
+                        >
+                          <Download size={14} /> স্টোর সেটিংস এক্সপোর্ট করুন (JSON)
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={handleExportProductsData}
+                          className="py-3 bg-purple-600 text-white rounded-xl font-black text-center flex items-center justify-center gap-2 hover:bg-purple-700 shadow-md shadow-purple-500/10 transition-all cursor-pointer"
+                        >
+                          <Download size={14} /> সকল পণ্য ও ক্যাটাগরি এক্সপোর্ট (JSON)
+                        </button>
+                      </div>
+
+                      {/* Migration Guide */}
+                      <div className="border border-slate-200 rounded-2xl p-5 bg-white space-y-4">
+                        <h4 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                          📋 ডাটা মাইগ্রেশন ও রিকভারি নির্দেশিকা (How to Transfer/Restore)
+                        </h4>
+                        <div className="space-y-3 text-xs leading-relaxed text-slate-600 font-medium">
+                          <p><strong>১. ডাটা ব্যাকআপ রাখা:</strong> নিয়মিত বিরতিতে আপনার পণ্য ও ক্যাটাগরি এক্সপোর্ট ফাইলটি ডাউনলোড করে আপনার পিসি বা গুগল ড্রাইভে সেভ রাখুন। যেকোনো ভুল অপারেশনে ডাটা ডিলিট হলে এই ফাইল আপলোড করে তা রিস্টোর করা যাবে।</p>
+                          <p><strong>২. অন্য হোস্টিং-এ স্টোর স্থানান্তর করা:</strong> আপনি যদি বিডি রিটেইলার্স থেকে সম্পূর্ণ আলাদাভাবে নিজস্ব ডোমেইন বা অন্য কোনো কাস্টম সার্ভারে (যেমন ওয়ার্ডপ্রেস, শপিফাই বা নিজস্ব লারাভেল অ্যাপ) স্টোর শিফট করতে চান, তবে ডাউনলোডকৃত প্রোডাক্টস JSON ফাইলটি সহজেই ব্যবহার করতে পারবেন:</p>
+                          <ul className="list-disc pl-5 space-y-1 text-[11px] text-slate-500">
+                            <li>আপনার নতুন ওয়েবসাইটের ডাটাবেস ইম্পোর্টারকে JSON ফরম্যাট রিড করার অনুমতি দিন।</li>
+                            <li>ছবিগুলো ক্লাউডিনারিতে (Cloudinary) হোস্ট করা থাকায় নতুন সার্ভারে পুনরায় আপলোড করার কোনো প্রয়োজন নেই। শুধু JSON ফাইলের ইমেজ ইউআরএলগুলো ডেটাবেসে ম্যাপিং করে দিলেই সাথে সাথে ছবিগুলো লোড হবে।</li>
+                          </ul>
+                          <p><strong>৩. ক্লাউডিনারি ব্যাকআপ:</strong> আপনি নিজস্ব ক্লাউডিনারি অ্যাকাউন্ট ব্যবহার করে থাকলে, আপনার আপলোডকৃত সকল মিডিয়া ফাইলের অ্যাক্সেস সম্পূর্ণ আপনার কাছেই থাকবে। মার্চেন্ট ক্লাউডিনারি ড্যাশবোর্ড থেকে বাল্ক ডাউনলোড করে ছবিগুলোর লোকাল ব্যাকআপও রাখা সম্ভব।</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
                 </div>
               )}
 
