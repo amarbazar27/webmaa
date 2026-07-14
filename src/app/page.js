@@ -2383,7 +2383,7 @@ export default function Home() {
                   <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80 mb-6">যোগাযোগ করুন</h4>
                   <div className="space-y-3">
                     {(() => {
-                      const rawEmail = globalConfig?.contactEmail || 'support@bdretailers.com';
+                      const rawEmail = globalConfig?.contactEmail || 'bdretailers26@gmail.com';
                       const rawWa = globalConfig?.whatsapp || '01734763306';
                       
                       const cleanWa = rawWa.replace(/[^0-9]/g, '');

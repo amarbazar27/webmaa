@@ -101,7 +101,7 @@ export default function PrivacyPolicyPage() {
             <div className="space-y-2 text-xs">
               <p className="flex items-center gap-2 font-bold text-slate-700">
                 <Bot size={14} className="text-purple-600" /> 
-                ইমেইল: <a href="mailto:support@bdretailers.com" className="text-purple-600 hover:underline">support@bdretailers.com</a>
+                ইমেইল: <a href="mailto:bdretailers26@gmail.com" className="text-purple-600 hover:underline">bdretailers26@gmail.com</a>
               </p>
               <p className="font-bold text-slate-700">ওয়েবসাইট: <a href="https://bdretailers.com" className="text-purple-600 hover:underline">https://bdretailers.com</a></p>
             </div>
