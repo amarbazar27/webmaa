@@ -949,7 +949,7 @@ export default function SuperAdminPage() {
             <Button 
               onClick={handleSaveBanners} 
               loading={savingBanners} 
-              className="bg-slate-900 border-b-4 border-slate-950 hover:bg-black w-40 h-11 text-white text-xs font-black"
+              className="bg-purple-600 hover:bg-purple-700 text-slate-50 w-40 h-11 text-xs font-black transition-all shadow-md active:scale-95 cursor-pointer border-0"
             >
               Save Banners
             </Button>

@@ -21,7 +21,7 @@ export default function Error({ error, reset }) {
       <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs">
         <button
           onClick={() => reset()}
-          className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-95"
+          className="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-slate-50 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 cursor-pointer border-0"
         >
           <RefreshCw size={18} strokeWidth={2.5} /> আবার চেষ্টা করুন
         </button>

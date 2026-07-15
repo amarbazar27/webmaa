@@ -44,7 +44,7 @@ export default function InvoicePage({ params }) {
           {/* Action Bar (Hidden in Print) */}
           <div className="flex justify-between items-center mb-6 print:hidden">
              <h2 className="font-black text-slate-400 uppercase tracking-widest text-xs">অর্ডার ইনভয়েস</h2>
-             <button onClick={() => window.print()} className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl font-black text-sm hover:bg-purple-600 transition-colors shadow-lg active:scale-95">
+             <button onClick={() => window.print()} className="flex items-center gap-2 bg-purple-600 text-slate-50 px-5 py-2.5 rounded-xl font-black text-sm hover:bg-purple-700 transition-all shadow-lg active:scale-95 cursor-pointer border-0">
                 <Printer size={18} strokeWidth={2.5} /> প্রিন্ট করুন
              </button>
           </div>

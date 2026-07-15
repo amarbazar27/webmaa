@@ -2766,7 +2766,7 @@ export default function Home() {
                 <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0">
                   <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-xs font-black transition-colors" title="Clear">🗑</button>
                   <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
-                  <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-600 transition-colors shadow-md shrink-0"><MessageCircle size={20} strokeWidth={2.5}/></button>
+                  <button onClick={() => sendChatMessage(chatInput)} className="bg-purple-600 text-slate-50 w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-700 transition-all shadow-md shrink-0 cursor-pointer border-0"><MessageCircle size={20} strokeWidth={2.5}/></button>
                 </div>
               </>
             )}

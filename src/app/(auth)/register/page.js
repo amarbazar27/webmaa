@@ -90,14 +90,14 @@ export default function RegisterPage() {
                 <button 
                    onClick={handleRegister}
                    disabled={loading || authLoading}
-                   className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-slate-200 disabled:opacity-50 group border-b-4 border-black"
+                   className="w-full h-16 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl font-black text-lg flex items-center justify-center gap-4 active:scale-95 transition-all shadow-md shadow-slate-100 disabled:opacity-50 group cursor-pointer"
                 >
                    {loading ? (
-                     <Loader2 className="animate-spin" size={24} />
+                     <Loader2 className="animate-spin text-slate-800" size={24} />
                    ) : (
                      <>
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
-                        Continue with Google
+                        <span className="text-slate-800">Continue with Google</span>
                      </>
                    )}
                 </button>

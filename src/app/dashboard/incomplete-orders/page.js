@@ -323,7 +323,7 @@ export default function IncompleteOrdersPage() {
                      <div className="grid grid-cols-2 gap-3">
                         <a 
                            href={`tel:${draft.customerPhone}`}
-                           className="py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                           className="py-3 bg-purple-600 hover:bg-purple-700 text-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
                         >
                            <Phone size={12} /> Call Customer
                         </a>

@@ -86,15 +86,15 @@ export default function LoginPage() {
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full py-4.5 px-6 rounded-2xl flex items-center justify-center gap-4 bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] transition-all font-black text-lg shadow-xl shadow-slate-200 disabled:opacity-50 group"
+            className="w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-4 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-md active:scale-[0.98] transition-all font-black text-lg disabled:opacity-50 group cursor-pointer"
           >
             {loading ? (
-              <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+              <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
             ) : (
               <>
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-                <span>Continue with Google</span>
-                <ArrowRight className="w-5 h-5 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                <span className="text-slate-800">Continue with Google</span>
+                <ArrowRight className="w-5 h-5 text-slate-600 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
               </>
             )}
           </button>

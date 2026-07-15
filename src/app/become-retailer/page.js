@@ -344,14 +344,14 @@ export default function BecomeRetailerPage() {
                       type="button"
                       onClick={handleGoogleLogin}
                       disabled={loginLoading}
-                      className="w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-3 bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] transition-all font-black text-sm shadow-xl disabled:opacity-50 cursor-pointer"
+                      className="w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-md active:scale-[0.98] transition-all font-black text-sm disabled:opacity-50 cursor-pointer"
                     >
                       {loginLoading ? (
-                        <div className="w-5 h-5 border-2 border-slate-300 border-t-purple-600 rounded-full animate-spin"></div>
+                        <div className="w-5 h-5 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
                       ) : (
                         <>
                           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-                          <span>Google অ্যাকাউন্ট দিয়ে লগইন করুন</span>
+                          <span className="text-slate-800">Google অ্যাকাউন্ট দিয়ে লগইন করুন</span>
                         </>
                       )}
                     </button>

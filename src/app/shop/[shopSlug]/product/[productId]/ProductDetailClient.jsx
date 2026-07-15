@@ -35,7 +35,7 @@ const ErrorFallback = () => (
     <h2 className="text-xl font-black mb-2">পণ্যটি প্রদর্শনে সমস্যা হচ্ছে</h2>
     <p className="text-sm text-slate-500 mb-6">দুঃখিত, এই পণ্যটি সাময়িকভাবে দেখা যাচ্ছে না।</p>
     <div className="flex gap-4">
-      <button onClick={() => window.location.reload()} className="px-6 py-2 bg-slate-900 text-white rounded-xl font-bold">আবার চেষ্টা করুন</button>
+      <button onClick={() => window.location.reload()} className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-slate-50 rounded-xl font-bold transition-all shadow-md active:scale-95 cursor-pointer border-0">আবার চেষ্টা করুন</button>
       <button onClick={() => window.history.back()} className="px-6 py-2 bg-slate-100 text-slate-900 rounded-xl font-bold border border-slate-200">ফিরে যান</button>
     </div>
   </div>

@@ -438,7 +438,7 @@ export default function DashboardPage() {
             <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
               <Button 
                 onClick={() => setIsDonateModalOpen(false)}
-                className="bg-slate-900 border-b-4 border-slate-950 hover:bg-slate-800 text-white font-bold h-11 px-6 rounded-2xl"
+                className="bg-purple-600 hover:bg-purple-700 text-slate-50 font-bold h-11 px-6 rounded-2xl transition-all shadow-md active:scale-95 cursor-pointer border-0"
               >
                 Close
               </Button>
