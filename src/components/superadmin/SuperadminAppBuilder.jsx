@@ -195,7 +195,28 @@ export default function SuperadminAppBuilder() {
 
                     {/* Package ID */}
                     <td className="p-4 border-y border-slate-100 font-mono text-xs text-slate-600 font-semibold">
-                      {packageId}
+                      <div className="flex items-center gap-2 max-w-[200px]">
+                        <input
+                          type="text"
+                          defaultValue={packageId}
+                          onBlur={async (e) => {
+                            const val = e.target.value.trim().toLowerCase().replace(/[^a-z0-9.]/g, '');
+                            if (val && val !== packageId) {
+                              try {
+                                const shopRef = doc(db, 'shops', shop.id);
+                                await updateDoc(shopRef, {
+                                  appBuildPackageName: val,
+                                  'appConfig.packageName': val
+                                });
+                                toast.success(`প্যাকেজ আইডি আপডেট করা হয়েছে: ${val}`);
+                              } catch (err) {
+                                toast.error("প্যাকেজ আইডি সেভ করতে ব্যর্থ হয়েছে।");
+                              }
+                            }
+                          }}
+                          className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-mono text-slate-800 font-bold focus:bg-white focus:border-purple-500 outline-none w-full transition-all"
+                        />
+                      </div>
                     </td>
 
                     {/* Branding overrides */}

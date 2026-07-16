@@ -415,6 +415,7 @@ export async function POST(req) {
                 full_name: customerName,
                 email: customerEmail || 'customer@webmaa.com',
                 amount: amountToCharge.toString(),
+                currency: 'BDT',
                 metadata: {
                   orderId: orderIdVisual,
                   shopId: shopId,

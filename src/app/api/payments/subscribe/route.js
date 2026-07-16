@@ -152,6 +152,7 @@ export async function POST(req) {
           return p;
         })(),
         amount: finalAmount.toString(),
+        currency: 'BDT',
         metadata: {
           type: 'subscription',
           shopId: shopId,
