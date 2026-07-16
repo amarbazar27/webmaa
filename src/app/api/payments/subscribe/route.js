@@ -158,6 +158,7 @@ export async function POST(req) {
           packageType: packageType
         },
         redirect_url: `${domainUrl}/dashboard/billing?status=success`,
+        cancel_url: `${domainUrl}/dashboard/billing?status=cancel`,
         webhook_url: `${domainUrl}/api/payments/uddoktapay-webhook`
       })
     });

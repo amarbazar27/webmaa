@@ -171,7 +171,7 @@ export default function SuperadminAppBuilder() {
                 const status = shop.appBuildStatus || 'not_generated'; // not_generated, building, completed, failed
                 const rawSlug = (slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
                 const packageSlug = reservedKeywords.has(rawSlug) ? `${rawSlug}app` : rawSlug;
-                const packageId = shop.appBuildPackageName || `com.bdretailers.${packageSlug}`;
+                const packageId = shop.appBuildPackageName || `com.${packageSlug}`;
                 const primaryColor = shop.designOverrides?.primaryColor || '#9333ea';
                 
                 return (

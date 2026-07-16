@@ -421,6 +421,7 @@ export async function POST(req) {
                   dbOrderId: newOrderRef.id
                 },
                 redirect_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}/order/${newOrderRef.id}`,
+                cancel_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}/order/${newOrderRef.id}?status=cancel`,
                 webhook_url: `${domainUrl}/api/payments/uddoktapay-webhook`
               })
             });

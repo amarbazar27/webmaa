@@ -1173,7 +1173,7 @@ export default function SettingsPage() {
                     <div className="space-y-1">
                       <label className="text-[10px] font-black text-slate-500 uppercase">Package Name / প্যাকেজ আইডি</label>
                       <Input 
-                        placeholder={`যেমন: com.bdretailers.${shop?.subdomainSlug || 'store'}`}
+                        placeholder={`যেমন: com.${shop?.subdomainSlug || 'store'}`}
                         value={appConfig.packageName} 
                         onChange={e => setAppConfig({ ...appConfig, packageName: e.target.value.toLowerCase().replace(/[^a-z0-9.]/g, '') })} 
                       />

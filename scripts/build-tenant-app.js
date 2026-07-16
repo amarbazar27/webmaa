@@ -57,7 +57,7 @@ const reservedKeywords = new Set([
 ]);
 
 const packageNameSlug = reservedKeywords.has(sanitizedSlug) ? `${sanitizedSlug}app` : sanitizedSlug;
-let packageName = (shopSlug === 'main') ? 'com.bdretailers' : `com.bdretailers.${packageNameSlug}`;
+let packageName = (shopSlug === 'main') ? 'com.bdretailers' : `com.${packageNameSlug}`;
 
 console.log(`🚀 Starting App Build Runner for [${shopSlug}]`);
 console.log(`📦 Package Name: ${packageName}`);
