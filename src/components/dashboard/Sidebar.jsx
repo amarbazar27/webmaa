@@ -25,6 +25,7 @@ const navItems = [
   { href: '/dashboard/customers', icon: Users, label: 'Customers', staffAllowed: false },
   { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates', staffAllowed: false },
   { href: '/dashboard/broadcast', icon: Store, label: 'Broadcast', staffAllowed: false },
+  { href: '/dashboard/billing', icon: ShieldCheck, label: 'Billing', staffAllowed: false },
   { href: '/dashboard/settings', icon: Settings, label: 'Preferences', staffAllowed: false },
 ];
 

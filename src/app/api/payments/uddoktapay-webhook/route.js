@@ -22,9 +22,16 @@ export async function POST(req) {
     const invoiceId = body.invoice_id || metadata?.invoice_id || body.uuid;
     const shopId = metadata?.shopId;
     const dbOrderId = metadata?.dbOrderId;
+    const isSubscription = metadata?.type === 'subscription';
 
-    if (!invoiceId || !shopId || !dbOrderId) {
-      return NextResponse.json({ error: 'Invalid payload: missing invoiceId, shopId, or dbOrderId' }, { status: 400 });
+    if (isSubscription) {
+      if (!invoiceId || !shopId) {
+        return NextResponse.json({ error: 'Invalid payload: missing invoiceId or shopId for subscription' }, { status: 400 });
+      }
+    } else {
+      if (!invoiceId || !shopId || !dbOrderId) {
+        return NextResponse.json({ error: 'Invalid payload: missing invoiceId, shopId, or dbOrderId' }, { status: 400 });
+      }
     }
 
     if (!adminDb) {
@@ -45,6 +52,11 @@ export async function POST(req) {
     // 3. Resolve API URL and Key
     let utUrl = shopData?.uddoktapayUrl?.trim() || globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
     let utApiKey = shopData?.uddoktapayApiKey?.trim() || globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
+
+    if (isSubscription) {
+      utUrl = globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
+      utApiKey = globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
+    }
 
     if (utUrl) {
       utUrl = utUrl.replace(/\/$/, '');
@@ -83,6 +95,35 @@ export async function POST(req) {
     const isPaid = verifyData.status === 'COMPLETED' || verifyData.status === 'completed';
     if (!isPaid) {
       return NextResponse.json({ error: `Payment not completed. Status: ${verifyData.status}` }, { status: 400 });
+    }
+
+    if (isSubscription) {
+      const packageType = metadata.packageType || 'monthly';
+      let days = 30;
+      if (packageType === 'quarterly') days = 90;
+      if (packageType === 'yearly') days = 365;
+
+      const durationMs = days * 24 * 60 * 60 * 1000;
+      let newExpiry = Date.now() + durationMs;
+
+      const currentExpiry = shopData.subscriptionExpiresAt;
+      if (currentExpiry) {
+        const currentExpiryMs = currentExpiry.toDate ? currentExpiry.toDate().getTime() : new Date(currentExpiry).getTime();
+        if (currentExpiryMs > Date.now()) {
+          newExpiry = currentExpiryMs + durationMs;
+        }
+      }
+
+      await adminDb.collection('shops').doc(shopId).update({
+        subscriptionStatus: 'active',
+        subscriptionPackage: packageType,
+        subscriptionExpiresAt: new Date(newExpiry),
+        subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
+        subscriptionPendingPackage: admin.firestore.FieldValue.delete()
+      });
+
+      console.log(`[UddoktaPay Webhook] Subscription updated for shop ${shopId} to ${packageType} package (expires ${new Date(newExpiry).toISOString()})`);
+      return NextResponse.json({ success: true, verified: true, subscription: true });
     }
 
     // Update the order in Firestore

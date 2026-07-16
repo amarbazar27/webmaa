@@ -564,6 +564,96 @@ export default function SuperAdminPage() {
     setSavingConfig(false);
   };
 
+  const handleApproveSubscription = async (shopId, packageType) => {
+    const loadingToast = toast.loading('সাবস্ক্রিপশন অনুমোদন করা হচ্ছে...');
+    try {
+      let days = 30;
+      if (packageType === 'quarterly') days = 90;
+      if (packageType === 'yearly') days = 365;
+
+      const durationMs = days * 24 * 60 * 60 * 1000;
+      
+      const targetShop = shops.find(s => s.id === shopId);
+      let newExpiry = Date.now() + durationMs;
+
+      const currentExpiry = targetShop?.subscriptionExpiresAt;
+      if (currentExpiry) {
+        const currentExpiryMs = currentExpiry.toDate ? currentExpiry.toDate().getTime() : new Date(currentExpiry).getTime();
+        if (currentExpiryMs > Date.now()) {
+          newExpiry = currentExpiryMs + durationMs;
+        }
+      }
+
+      const { db } = await import('@/lib/firebase');
+      const { doc, updateDoc, deleteField } = await import('firebase/firestore');
+
+      await updateDoc(doc(db, 'shops', shopId), {
+        subscriptionStatus: 'active',
+        subscriptionPackage: packageType,
+        subscriptionExpiresAt: new Date(newExpiry),
+        subscriptionPendingTxn: deleteField(),
+        subscriptionPendingPackage: deleteField()
+      });
+
+      toast.success('সাবস্ক্রিপশন সফলভাবে সক্রিয় করা হয়েছে! 🎉', { id: loadingToast });
+      
+      setShops(prev => prev.map(s => {
+        if (s.id === shopId) {
+          return {
+            ...s,
+            subscriptionStatus: 'active',
+            subscriptionPackage: packageType,
+            subscriptionExpiresAt: { toDate: () => new Date(newExpiry) },
+            subscriptionPendingTxn: null,
+            subscriptionPendingPackage: null
+          };
+        }
+        return s;
+      }));
+
+    } catch (err) {
+      console.error(err);
+      toast.error('অনুমোদন করতে সমস্যা হয়েছে।', { id: loadingToast });
+    }
+  };
+
+  const handleCancelSubscription = async (shopId) => {
+    if (!confirm('আপনি কি নিশ্চিত যে এই শপের সাবস্ক্রিপশন বাতিল করতে চান?')) return;
+    const loadingToast = toast.loading('সাবস্ক্রিপশন বাতিল করা হচ্ছে...');
+    try {
+      const { db } = await import('@/lib/firebase');
+      const { doc, updateDoc, deleteField } = await import('firebase/firestore');
+
+      await updateDoc(doc(db, 'shops', shopId), {
+        subscriptionStatus: 'none',
+        subscriptionPackage: 'none',
+        subscriptionExpiresAt: deleteField(),
+        subscriptionPendingTxn: deleteField(),
+        subscriptionPendingPackage: deleteField()
+      });
+
+      toast.success('সাবস্ক্রিপশন সফলভাবে বাতিল করা হয়েছে।', { id: loadingToast });
+      
+      setShops(prev => prev.map(s => {
+        if (s.id === shopId) {
+          return {
+            ...s,
+            subscriptionStatus: 'none',
+            subscriptionPackage: 'none',
+            subscriptionExpiresAt: null,
+            subscriptionPendingTxn: null,
+            subscriptionPendingPackage: null
+          };
+        }
+        return s;
+      }));
+
+    } catch (err) {
+      console.error(err);
+      toast.error('বাতিল করতে সমস্যা হয়েছে।', { id: loadingToast });
+    }
+  };
+
   const pendingRequests = requests.filter(r => r.status === 'pending');
   const processedRequests = requests.filter(r => r.status !== 'pending');
 
@@ -679,6 +769,18 @@ export default function SuperAdminPage() {
             >
               <ShieldAlert size={16} />
               <span>নিরাপত্তা ও অডিট লগ</span>
+            </button>
+            
+            <button
+              onClick={() => setSuperadminTab('subscriptions')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'subscriptions'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Crown size={16} />
+              <span>সাবস্ক্রিপশন ও বিলিং</span>
             </button>
           </div>
         </div>
@@ -2263,6 +2365,190 @@ export default function SuperAdminPage() {
           </Card>
         </div>
       </div>
+      </>)}
+
+      {superadminTab === 'subscriptions' && (<>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Subscription Settings */}
+          <div className="lg:col-span-12 animate-slide-in">
+            <Card
+              title="সাবস্ক্রিপশন প্যাকেজ কনফিগারেশন"
+              subtitle="মার্চেন্টদের জন্য মাসিক, ত্রৈমাসিক ও বার্ষিক সাবস্ক্রিপশন ফি নির্ধারণ করুন"
+              icon={Crown}
+            >
+              <form onSubmit={handleUpdateConfig} className="space-y-6">
+                <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl w-max mb-2">
+                  <label className="text-xs font-black text-slate-700">সাবস্ক্রিপশন সিস্টেম চালু করুন:</label>
+                  <input
+                    type="checkbox"
+                    checked={!!globalConfig.subscriptionsEnabled}
+                    onChange={e => setGlobalConfig({ ...globalConfig, subscriptionsEnabled: e.target.checked })}
+                    className="rounded text-purple-600 focus:ring-purple-500 w-5 h-5 cursor-pointer"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">মাসিক প্যাকেজ ফি (৳) *</label>
+                    <Input
+                      type="number"
+                      placeholder="যেমন: ৫০০"
+                      value={globalConfig.subPriceMonthly || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subPriceMonthly: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">ত্রৈমাসিক প্যাকেজ ফি (৳) *</label>
+                    <Input
+                      type="number"
+                      placeholder="যেমন: ১৩৫০"
+                      value={globalConfig.subPriceQuarterly || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subPriceQuarterly: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">বার্ষিক প্যাকেজ ফি (৳) *</label>
+                    <Input
+                      type="number"
+                      placeholder="যেমন: ৫০০০"
+                      value={globalConfig.subPriceYearly || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subPriceYearly: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button type="submit" loading={savingConfig} className="w-56 h-[52px]">
+                    কনফিগারেশন সেভ করুন
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+
+          {/* Subscribers Directory */}
+          <div className="lg:col-span-12 animate-slide-in">
+            <Card
+              title="মার্চেন্ট সাবস্ক্রিপশন ডিরেক্টরি"
+              subtitle="সকল রিটেইলারদের সাবস্ক্রিপশন মেয়াদ এবং পেমেন্ট রিকোয়েস্ট ম্যানেজ করুন"
+              icon={Store}
+            >
+              <div className="overflow-x-auto w-full">
+                <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-2.5">
+                  <thead>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <th className="pb-2 px-4">রিটেইলার স্টোর</th>
+                      <th className="pb-2 px-4">প্যাকেজ</th>
+                      <th className="pb-2 px-4">মেয়াদ শেষ</th>
+                      <th className="pb-2 px-4">স্ট্যাটাস</th>
+                      <th className="pb-2 px-4">পেমেন্ট বিবরণ</th>
+                      <th className="pb-2 px-4 text-right">অ্যাকশন</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shops.map((shopItem) => {
+                      const expiryDate = shopItem.subscriptionExpiresAt
+                        ? (shopItem.subscriptionExpiresAt.toDate ? shopItem.subscriptionExpiresAt.toDate() : new Date(shopItem.subscriptionExpiresAt))
+                        : null;
+                      
+                      const isExpired = expiryDate ? expiryDate.getTime() < Date.now() : true;
+
+                      return (
+                        <tr key={shopItem.id} className="bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 rounded-2xl group">
+                          {/* Store Info */}
+                          <td className="py-4 px-4 rounded-l-2xl">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 bg-purple-100 text-purple-700 font-black text-sm rounded-xl flex items-center justify-center">
+                                {shopItem.shopName?.[0] || 'S'}
+                              </div>
+                              <div>
+                                <span className="text-xs font-black text-slate-900 block">{shopItem.shopName}</span>
+                                <span className="text-[9px] text-slate-400 font-bold font-mono tracking-wider">{shopItem.subdomainSlug || shopItem.shopSlug}.bdretailers.com</span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Package */}
+                          <td className="py-4 px-4 text-xs font-black uppercase text-slate-600 tracking-wider">
+                            {shopItem.subscriptionPackage || 'None'}
+                          </td>
+
+                          {/* Expiration */}
+                          <td className="py-4 px-4 text-xs font-bold text-slate-700">
+                            {expiryDate ? (
+                              <span className={isExpired ? 'text-red-500 font-extrabold' : 'text-emerald-600 font-extrabold'}>
+                                {expiryDate.toLocaleDateString('en-GB')}
+                                {isExpired && ' (Expired)'}
+                              </span>
+                            ) : (
+                              'N/A'
+                            )}
+                          </td>
+
+                          {/* Status */}
+                          <td className="py-4 px-4">
+                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
+                              shopItem.subscriptionStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                              shopItem.subscriptionStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                              'bg-rose-50 text-rose-700 border-rose-200'
+                            }`}>
+                              {shopItem.subscriptionStatus || 'expired'}
+                            </span>
+                          </td>
+
+                          {/* Payment details */}
+                          <td className="py-4 px-4 text-[10px] text-slate-600 font-bold max-w-xs truncate" title={shopItem.subscriptionPendingTxn}>
+                            {shopItem.subscriptionPendingTxn || 'None'}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-4 px-4 rounded-r-2xl text-right">
+                            <div className="flex gap-2 justify-end">
+                              {shopItem.subscriptionStatus === 'pending' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveSubscription(shopItem.id, shopItem.subscriptionPendingPackage || 'monthly')}
+                                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                              
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const packageSel = prompt('Enter package duration to extend (monthly / quarterly / yearly):', 'monthly');
+                                  if (packageSel && ['monthly', 'quarterly', 'yearly'].includes(packageSel.toLowerCase())) {
+                                    handleApproveSubscription(shopItem.id, packageSel.toLowerCase());
+                                  } else if (packageSel) {
+                                    alert('Invalid package type. Use: monthly, quarterly, or yearly.');
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                              >
+                                Extend
+                              </button>
+
+                              {shopItem.subscriptionStatus === 'active' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCancelSubscription(shopItem.id)}
+                                  className="px-2.5 py-1.5 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        </div>
       </>)}
 
         </div>
