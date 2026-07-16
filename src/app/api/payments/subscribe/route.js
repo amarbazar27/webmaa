@@ -118,6 +118,6 @@ export async function POST(req) {
 
   } catch (err) {
     console.error('Subscription API failure:', err);
-    return NextResponse.json({ error: 'Internal server error during subscription' }, { status: 500 });
+    return NextResponse.json({ error: `Internal server error during subscription: ${err.message || err}` }, { status: 500 });
   }
 }

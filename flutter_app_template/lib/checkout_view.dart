@@ -205,7 +205,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             const Text('Order Summary / অর্ডার সারসংক্ষেপ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                             const Divider(height: 24),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.between,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('Subtotal / সাবটোটাল'),
                                 Text('৳${cart.subtotalAmount.toStringAsFixed(2)}'),
@@ -213,7 +213,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             ),
                             const SizedBox(height: 8),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.between,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('Delivery Fee / ডেলিভারি চার্জ'),
                                 Text('৳${_deliveryFee.toStringAsFixed(2)}'),
@@ -221,7 +221,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                             ),
                             const Divider(height: 20),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.between,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('Total / সর্বমোট', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                 Text('৳${totalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: themeColor)),

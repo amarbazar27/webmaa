@@ -328,7 +328,7 @@ class _StorefrontViewState extends State<StorefrontView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.between,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         'শপিং কার্ট (Shopping Cart)',
@@ -379,7 +379,7 @@ class _StorefrontViewState extends State<StorefrontView> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.between,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('সর্বমোট (Subtotal):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                         Text('৳${cart.subtotalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: themeColor)),
