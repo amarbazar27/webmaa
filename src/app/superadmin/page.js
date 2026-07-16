@@ -7,7 +7,7 @@ import {
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
   getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop, getShopBySlug,
-  getAllMarketplaceProducts, updateProduct, updateShop
+  getAllMarketplaceProducts, updateProduct, updateShop, getAllUsers
 } from '@/lib/firestore';
 import dynamic from 'next/dynamic';
 // Phase 1.3: Dynamic import — SuperadminBroadcastPanel is 34KB
@@ -141,10 +141,11 @@ export default function SuperAdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [invitesData, shopsData, requestsData] = await Promise.all([
+      const [invitesData, shopsData, requestsData, usersData] = await Promise.all([
         getRetailerInvites(),
         getAllShops(),
-        getRetailerRequests()
+        getRetailerRequests(),
+        getAllUsers()
       ]);
       
       // Fetch metrics for each shop in parallel
@@ -155,14 +156,15 @@ export default function SuperAdminPage() {
           const totalSales = completedOrders.length;
           const totalRevenue = completedOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
           
-          // Match owner email from requests
+          // Match owner email from requests & users
           const owner = requestsData.find(r => r.id === shop.id);
+          const user = usersData.find(u => u.id === shop.id || u.id === shop.ownerId);
           
           return {
             ...shop,
             totalSales,
             totalRevenue,
-            ownerEmail: owner?.email || shop.ownerEmail || 'Unknown',
+            ownerEmail: owner?.email || user?.email || shop.ownerEmail || 'Unknown',
             orderCount: orders.length
           };
         } catch (e) {
@@ -2448,6 +2450,58 @@ export default function SuperAdminPage() {
 
       {superadminTab === 'subscriptions' && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Pending Manual Approvals Section */}
+          {shops.filter(s => s.subscriptionStatus === 'pending').length > 0 && (
+            <div className="lg:col-span-12">
+              <Card
+                title="পেন্ডিং ম্যানুয়াল পেমেন্ট অনুমোদন (Pending Manual Approvals)"
+                subtitle="রিটেইলারদের পাঠানো ট্রানজেকশন আইডি যাচাই করে সাবস্ক্রিপশন অ্যাপ্রুভ করুন"
+                icon={Crown}
+                className="border-2 border-amber-200 bg-amber-50/10 shadow-lg"
+              >
+                <div className="space-y-4">
+                  {shops.filter(s => s.subscriptionStatus === 'pending').map((pendingShop) => (
+                    <div key={pendingShop.id} className="bg-white border-2 border-amber-100 rounded-3xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-amber-200 hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-black text-lg shrink-0">
+                          {pendingShop.shopName?.[0] || 'S'}
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-900 text-sm">{pendingShop.shopName}</p>
+                          <p className="text-xs text-slate-500 font-bold">{pendingShop.ownerEmail || 'No Email'}</p>
+                          <div className="mt-2 flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-black uppercase bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                              Package: {pendingShop.subscriptionPendingPackage || 'monthly'}
+                            </span>
+                            <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-200">
+                              {pendingShop.subscriptionPendingTxn}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleApproveSubscription(pendingShop.id, pendingShop.subscriptionPendingPackage || 'monthly')}
+                          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md"
+                        >
+                          Approve Payment
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCancelSubscription(pendingShop.id)}
+                          className="px-5 py-2.5 bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+
           {/* Subscription Settings */}
           <div className="lg:col-span-12 animate-slide-in">
             <Card

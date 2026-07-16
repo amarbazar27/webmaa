@@ -31,6 +31,12 @@ export async function POST(req) {
     }
     const shopData = shopSnap.data();
 
+    // Fetch owner user profile to get real email & phone number
+    const userSnap = await adminDb.collection('users').doc(shopId).get();
+    const userData = userSnap.exists ? userSnap.data() : {};
+    const ownerEmail = userData.email || shopData.ownerEmail || '';
+    const ownerPhone = userData.phone || shopData.phone || '';
+
     // Price mappings
     const priceMap = {
       monthly: Number(globalData.subPriceMonthly) || 500,
@@ -129,13 +135,21 @@ export async function POST(req) {
         'RT-UDDOKTAPAY-API-KEY': utApiKey
       },
       body: JSON.stringify({
-        full_name: shopData.shopName || 'Retailer',
+        full_name: shopData.shopName || userData.name || 'Retailer',
         email: (() => {
-          let email = shopData.deliveryConfig?.contactEmail?.split(',')[0]?.trim() || '';
+          let email = ownerEmail || shopData.deliveryConfig?.contactEmail?.split(',')[0]?.trim() || '';
           if (!email.includes('@') || !email.includes('.')) {
-            return `retailer-${shopId}@bdretailers.com`;
+            return `retailer-${shopId.toLowerCase()}@bdretailers.com`;
           }
-          return email;
+          return email.toLowerCase();
+        })(),
+        phone: (() => {
+          let p = ownerPhone || shopData.deliveryConfig?.contactPhone || '01700000000';
+          p = p.replace(/\D/g, '');
+          if (p.length !== 11 || !p.startsWith('01')) {
+            return '01700000000';
+          }
+          return p;
         })(),
         amount: finalAmount.toString(),
         metadata: {
@@ -161,7 +175,16 @@ export async function POST(req) {
     } else {
       const errText = await res.text();
       console.error("Subscription payment status error:", res.status, errText);
-      return NextResponse.json({ error: `Gateway returned status error: ${res.status}` }, { status: 400 });
+      let errMsg = `Gateway returned status error: ${res.status}`;
+      try {
+        const parsedErr = JSON.parse(errText);
+        if (parsedErr.message) {
+          errMsg += ` - ${parsedErr.message}`;
+        } else if (parsedErr.errors) {
+          errMsg += ` - ${JSON.stringify(parsedErr.errors)}`;
+        }
+      } catch (e) {}
+      return NextResponse.json({ error: errMsg }, { status: 400 });
     }
 
   } catch (err) {
