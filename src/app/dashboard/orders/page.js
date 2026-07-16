@@ -65,6 +65,33 @@ export default function OrdersPage() {
   const [fraudProfiles, setFraudProfiles] = useState({});
   const [reportModal, setReportModal] = useState({ open: false, phone: '', reason: 'fake_order', comment: '' });
   const [submittingReport, setSubmittingReport] = useState(false);
+  const [verifyingId, setVerifyingId] = useState(null);
+
+  const handleVerifyPayment = async (orderId, shopId) => {
+    setVerifyingId(orderId);
+    const loadingToast = toast.loading('পেমেন্ট স্ট্যাটাস গেটওয়েতে যাচাই করা হচ্ছে...');
+    try {
+      const res = await fetch('/api/payments/verify-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, shopId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'ভেরিফিকেশন সম্পন্ন করা যায়নি।');
+      }
+      if (data.success) {
+        toast.success(data.message || 'পেমেন্ট সফলভাবে ভেরিফাই ও অর্ডার কনফার্ম হয়েছে! 🎉', { id: loadingToast });
+      } else {
+        toast.error(data.message || 'পেমেন্ট এখনো সম্পন্ন হয়নি।', { id: loadingToast });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'ভেরিফিকেশন রিকোয়েস্টে সমস্যা হয়েছে।', { id: loadingToast });
+    } finally {
+      setVerifyingId(null);
+    }
+  };
 
   const standardizePhone = (phone) => {
     if (!phone) return '';
@@ -789,11 +816,20 @@ export default function OrdersPage() {
                                       )}
                                    </div>
                                    {isUnpaidAutomatedOrder && (
-                                      <div className="mt-1 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-black flex items-center gap-1.5 animate-pulse">
-                                         <AlertCircle size={14} />
-                                         <span>Awaiting Payment (অটো পেমেন্ট পেন্ডিং)</span>
-                                      </div>
-                                   )}
+                                       <div className="flex flex-col gap-2 mt-1.5">
+                                         <div className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-black flex items-center gap-1.5 animate-pulse w-max">
+                                            <AlertCircle size={14} />
+                                            <span>Awaiting Payment (অটো পেমেন্ট পেন্ডিং)</span>
+                                         </div>
+                                         <button
+                                            onClick={() => handleVerifyPayment(order.id, activeShopId)}
+                                            disabled={verifyingId === order.id}
+                                            className="px-3 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 disabled:opacity-50 rounded-xl text-[10px] font-black w-max flex items-center gap-1 transition-all cursor-pointer"
+                                         >
+                                            <RefreshCw size={10} className={verifyingId === order.id ? 'animate-spin' : ''} /> পেমেন্ট যাচাই করুন (Verify Payment)
+                                         </button>
+                                       </div>
+                                    )}
                                    <p className="text-xs font-bold text-slate-400 mt-1">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleString('en-GB') : 'Just now'}</p>
                                    {/* Who confirmed / delivered this order */}
                                    {(order.confirmedBy || order.deliveredBy || order.updatedBy) && (

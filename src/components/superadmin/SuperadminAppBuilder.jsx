@@ -154,8 +154,8 @@ export default function SuperadminAppBuilder() {
           <p className="text-slate-500 font-bold uppercase tracking-wider text-xs">কোনো শপ পাওয়া যায়নি</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-separate border-spacing-y-2.5">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-2.5">
             <thead>
               <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
                 <th className="pb-2 px-4">রিটেইলার স্টোর</th>

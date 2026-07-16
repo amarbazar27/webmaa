@@ -214,6 +214,39 @@ export default function OrderSummaryPage({ params }) {
   const [pdfProgress, setPdfProgress] = useState(0);
   const [pdfState, setPdfState] = useState('');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleVerifyPayment = async () => {
+    setIsVerifying(true);
+    const loadingToast = toast.loading('পেমেন্ট যাচাই করা হচ্ছে...');
+    try {
+      const res = await fetch('/api/payments/verify-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, shopId: shop.id })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'ভেরিফিকেশন সম্পন্ন করা যায়নি।');
+      }
+      if (data.success) {
+        toast.success(data.message || 'পেমেন্ট সফলভাবে ভেরিফাই ও অর্ডার কনফার্ম হয়েছে! 🎉', { id: loadingToast });
+        // Reload order state
+        const updatedOrderRes = await fetch(`/api/order?shopSlug=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`);
+        if (updatedOrderRes.ok) {
+          const updatedData = await updatedOrderRes.json();
+          setOrder(updatedData.order);
+        }
+      } else {
+        toast.error(data.message || 'পেমেন্ট এখনো সম্পন্ন হয়নি।', { id: loadingToast });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'ভেরিফিকেশন রিকোয়েস্টে সমস্যা হয়েছে।', { id: loadingToast });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -420,14 +453,24 @@ export default function OrderSummaryPage({ params }) {
               </div>
             </div>
             {order.piprapayCheckoutUrl && (
-              <a
-                href={order.piprapayCheckoutUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-500/20 active:scale-95 text-center"
-              >
-                পেমেন্ট সম্পন্ন করুন (Pay Now)
-              </a>
+              <div className="flex flex-col gap-2 w-full">
+                <a
+                  href={order.piprapayCheckoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-500/20 active:scale-95 text-center"
+                >
+                  পেমেন্ট সম্পন্ন করুন (Pay Now)
+                </a>
+                <button
+                  onClick={handleVerifyPayment}
+                  disabled={isVerifying}
+                  className="w-full py-3 bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 disabled:opacity-50 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
+                >
+                  {isVerifying ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                  পেমেন্ট ভেরিফাই করুন (Verify Payment)
+                </button>
+              </div>
             )}
           </div>
         )}

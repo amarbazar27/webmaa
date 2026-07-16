@@ -377,6 +377,9 @@ export async function POST(req) {
 
         if (utUrl) {
           utUrl = utUrl.replace(/\/$/, '');
+          if (utUrl.endsWith('/api')) {
+            utUrl = utUrl.substring(0, utUrl.length - 4);
+          }
           if (!utUrl.startsWith('http://') && !utUrl.startsWith('https://')) {
             utUrl = 'https://' + utUrl;
           }
