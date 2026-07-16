@@ -86,10 +86,16 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Sender number and Transaction ID are required for manual payment' }, { status: 400 });
       }
 
+      const cleanedNumber = senderNumber.trim();
+      const numberRegex = /^01\d{9}$/;
+      if (!numberRegex.test(cleanedNumber)) {
+        return NextResponse.json({ error: 'আপনার প্রেরক নম্বরটি অবশ্যই ১১ ডিজিটের হতে হবে এবং শুধুমাত্র সংখ্যা (যেমন: 01xxxxxxxxx) হতে হবে।' }, { status: 400 });
+      }
+
       await adminDb.collection('shops').doc(shopId).update({
         subscriptionStatus: 'pending',
         subscriptionPendingPackage: packageType,
-        subscriptionPendingTxn: `Method: manual, Sender: ${senderNumber}, Txn: ${transactionId}`
+        subscriptionPendingTxn: `Method: manual, Sender: ${cleanedNumber}, Txn: ${transactionId.trim()}`
       });
 
       return NextResponse.json({ success: true, message: 'Subscription request submitted for approval!' });

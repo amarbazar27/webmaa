@@ -1579,6 +1579,7 @@ export default function SuperAdminPage() {
                       <th className="pb-2 px-4 border-b border-slate-100">Performance (Sales/Money)</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
+                      <th className="pb-2 px-4 border-b border-slate-100">Subscription</th>
                       <th className="pb-2 px-4 border-b border-slate-100 text-right">Action</th>
                     </tr>
                   </thead>
@@ -1650,6 +1651,43 @@ export default function SuperAdminPage() {
                                   <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (estimatedTotalMB / 20) * 100)}%` }}></div>
                                 </div>
                                 <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
+                                    shop.subscriptionStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                    shop.subscriptionStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                                    'bg-rose-50 text-rose-700 border-rose-200'
+                                  }`}>
+                                    {shop.subscriptionStatus || 'expired'}
+                                  </span>
+                                  {shop.subscriptionPackage && shop.subscriptionPackage !== 'none' && (
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">{shop.subscriptionPackage}</span>
+                                  )}
+                                </div>
+                                {shop.subscriptionExpiresAt && (
+                                  <p className="text-[9px] text-slate-400 font-bold">
+                                    Expires: {(() => {
+                                      const d = shop.subscriptionExpiresAt.toDate ? shop.subscriptionExpiresAt.toDate() : new Date(shop.subscriptionExpiresAt);
+                                      return d.toLocaleDateString('en-GB');
+                                    })()}
+                                  </p>
+                                )}
+                                {shop.subscriptionStatus === 'pending' && shop.subscriptionPendingTxn && (
+                                  <div className="mt-1 p-2 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5 max-w-[200px] text-left">
+                                    <p className="text-[9px] text-amber-800 font-bold leading-normal break-words">
+                                      {shop.subscriptionPendingTxn}
+                                    </p>
+                                    <button
+                                      onClick={() => handleApproveSubscription(shop.id, shop.subscriptionPendingPackage || 'monthly')}
+                                      className="w-full py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer text-center block"
+                                    >
+                                      Approve
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             </td>
                             <td className="p-4 text-right last:rounded-r-2xl">

@@ -37,7 +37,7 @@ export default function SuperAdminLayout({ children }) {
       <div className="fixed top-0 inset-x-0 h-64 bg-gradient-to-b from-red-50 to-transparent pointer-events-none"></div>
 
       {/* Super Admin Navbar */}
-      <nav className="sticky top-0 z-50 glass-panel mx-4 mt-4 p-4 flex justify-between items-center bg-white/80 border-red-100 shadow-md">
+      <nav className="sticky top-0 z-50 glass-panel max-w-[1700px] mx-auto mt-4 p-4 flex justify-between items-center bg-white/80 border-red-100 shadow-md w-[calc(100%-2rem)]">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 border border-red-100 shadow-sm">
             <ShieldAlert size={24} />
@@ -66,7 +66,7 @@ export default function SuperAdminLayout({ children }) {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
+      <main className="max-w-[1700px] mx-auto px-6 py-8 relative z-10">
         {children}
       </main>
     </div>

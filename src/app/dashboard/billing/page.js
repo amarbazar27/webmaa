@@ -162,8 +162,13 @@ export default function BillingPage() {
         if (!senderNumber.trim() || !transactionId.trim()) {
           throw new Error('দয়া করে আপনার বিকাশ/নগদ নম্বর এবং ট্রানজেকশন আইডি প্রদান করুন।');
         }
-        payload.senderNumber = senderNumber;
-        payload.transactionId = transactionId;
+        const cleanedNumber = senderNumber.trim();
+        const numberRegex = /^01\d{9}$/;
+        if (!numberRegex.test(cleanedNumber)) {
+          throw new Error('আপনার প্রেরক নম্বরটি অবশ্যই ১১ ডিজিটের হতে হবে এবং শুধুমাত্র সংখ্যা (যেমন: 01xxxxxxxxx) হতে হবে।');
+        }
+        payload.senderNumber = cleanedNumber;
+        payload.transactionId = transactionId.trim();
       }
 
       const res = await fetch('/api/payments/subscribe', {
@@ -493,7 +498,7 @@ export default function BillingPage() {
                       type="text"
                       placeholder="যে নম্বর থেকে টাকা পাঠিয়েছেন..."
                       value={senderNumber}
-                      onChange={(e) => setSenderNumber(e.target.value)}
+                      onChange={(e) => setSenderNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
                       className="bg-white border border-slate-200 rounded-xl"
                     />
                   </div>
