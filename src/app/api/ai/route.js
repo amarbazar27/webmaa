@@ -40,7 +40,7 @@ export async function POST(req) {
     const isValidApiKey = (key) => {
       if (!key || typeof key !== 'string') return false;
       const k = key.trim();
-      return k.startsWith('AIza') || k.startsWith('gsk_') || k.startsWith('sk-') || k.startsWith('sk-or-');
+      return k.startsWith('AIza') || k.startsWith('gsk_') || k.startsWith('sk-') || k.startsWith('sk-or-') || k.startsWith('lfu_');
     };
 
     // 1. Try shop custom key first
@@ -112,6 +112,9 @@ export async function POST(req) {
         } else if (apiKey.startsWith('sk-or-')) {
           endpoint = 'https://openrouter.ai/api/v1/chat/completions';
           defaultModel = model || 'google/gemini-2.5-flash';
+        } else if (apiKey.startsWith('lfu_')) {
+          endpoint = 'https://logfare.ai/v1/chat/completions';
+          defaultModel = model || 'deepseek-v4-flash';
         } else {
           endpoint = 'https://api.openai.com/v1/chat/completions';
           defaultModel = model || 'gpt-4o-mini';

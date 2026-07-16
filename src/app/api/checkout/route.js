@@ -363,7 +363,7 @@ export async function POST(req) {
       .collection('orders')
       .doc();
 
-    // ── PipraPay Automated Payment Charge Creation ─────────────────────
+    // ── UddoktaPay Automated Payment Charge Creation ─────────────────────
     let checkoutUrl = null;
     let piprapayPpId = null;
 
@@ -371,16 +371,18 @@ export async function POST(req) {
       try {
         const globalSnap = await adminDb.collection('config').doc('global').get();
         const globalData = globalSnap.exists ? globalSnap.data() : {};
-        let ppUrl = globalData.piprapayUrl?.trim() || '';
-        if (ppUrl) {
-          if (!ppUrl.endsWith('/')) ppUrl += '/';
-          if (!ppUrl.endsWith('/api/')) {
-            ppUrl = ppUrl.replace(/\/$/, '') + '/api/';
+        
+        let utUrl = shopData.uddoktapayUrl?.trim() || globalData.uddoktapayUrl?.trim() || globalData.piprapayUrl?.trim() || '';
+        let utApiKey = shopData.uddoktapayApiKey?.trim() || globalData.uddoktapayApiKey?.trim() || globalData.piprapayApiKey?.trim() || '';
+
+        if (utUrl) {
+          utUrl = utUrl.replace(/\/$/, '');
+          if (!utUrl.startsWith('http://') && !utUrl.startsWith('https://')) {
+            utUrl = 'https://' + utUrl;
           }
         }
-        const ppApiKey = globalData.piprapayApiKey?.trim();
 
-        if (shopData.piprapayEnabled && ppUrl && ppApiKey) {
+        if (shopData.piprapayEnabled && utUrl && utApiKey) {
           // Compute amount to charge. 
           // If COD is true, charge delivery fee (advanceFee). If COD is false, charge full amount (finalTotal).
           const amountToCharge = isCOD 
@@ -392,52 +394,46 @@ export async function POST(req) {
             const host = req.headers.get('host') || 'webmaa.bdretailers.com';
             const domainUrl = `${protocol}://${host}`;
 
-            const res = await fetch(`${ppUrl}?name=create-charge`, {
+            const res = await fetch(`${utUrl}/api/checkout-v2`, {
               method: 'POST',
               headers: {
                 'accept': 'application/json',
                 'content-type': 'application/json',
-                'mh-piprapay-api-key': ppApiKey
+                'RT-UDDOKTAPAY-API-KEY': utApiKey
               },
               body: JSON.stringify({
                 full_name: customerName,
-                email_mobile: customerEmail || customerPhone,
+                email: customerEmail || 'customer@webmaa.com',
                 amount: amountToCharge.toString(),
                 metadata: {
                   orderId: orderIdVisual,
                   shopId: shopId,
-                  dbOrderId: newOrderRef.id,
-                  bkash_number: shopData.piprapayBkash || '',
-                  nagad_number: shopData.piprapayNagad || '',
-                  rocket_number: shopData.piprapayRocket || ''
+                  dbOrderId: newOrderRef.id
                 },
                 redirect_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}/order/${newOrderRef.id}`,
-                return_type: 'POST',
-                cancel_url: `${domainUrl}/shop/${shopData.subdomainSlug || shopData.shopSlug}`,
-                webhook_url: `${domainUrl}/api/payments/piprapay-webhook`,
-                currency: 'BDT'
+                webhook_url: `${domainUrl}/api/payments/uddoktapay-webhook`
               })
             });
 
             if (res.ok) {
-              const ppData = await res.json();
-              const isSuccess = ppData.success === true || ppData.status === true || ppData.status === 'true';
-              const payUrl = ppData.payment_url || ppData.pp_url;
+              const utData = await res.json();
+              const isSuccess = utData.status === true || utData.status === 'true';
+              const payUrl = utData.payment_url;
               if (isSuccess && payUrl) {
                 checkoutUrl = payUrl;
-                piprapayPpId = ppData.pp_id || null;
+                piprapayPpId = utData.invoice_id || null;
               } else {
-                console.error("PipraPay error response:", ppData);
+                console.error("UddoktaPay error response:", utData);
                 return NextResponse.json({ error: 'Automated payment gateway failed to initialize. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
               }
             } else {
-              console.error("PipraPay status error:", res.status);
+              console.error("UddoktaPay status error:", res.status);
               return NextResponse.json({ error: 'Automated payment gateway returned a status error. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
             }
           }
         }
       } catch (err) {
-        console.error("Failed to initiate PipraPay charge:", err);
+        console.error("Failed to initiate UddoktaPay charge:", err);
         return NextResponse.json({ error: 'Failed to connect to automated payment gateway. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
       }
     }

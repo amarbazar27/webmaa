@@ -62,6 +62,9 @@ export default function SuperAdminPage() {
     piprapayUrl: '',
     piprapayApiKey: '',
     piprapayCommissionPercent: 0,
+    uddoktapayUrl: '',
+    uddoktapayApiKey: '',
+    uddoktapayCommissionPercent: 0,
     brandName: '',
     logoUrl: '',
     platformDescription: '',
@@ -207,6 +210,9 @@ export default function SuperAdminPage() {
         piprapayUrl: configData?.piprapayUrl || '',
         piprapayApiKey: configData?.piprapayApiKey || '',
         piprapayCommissionPercent: configData?.piprapayCommissionPercent || 0,
+        uddoktapayUrl: configData?.uddoktapayUrl || '',
+        uddoktapayApiKey: configData?.uddoktapayApiKey || '',
+        uddoktapayCommissionPercent: configData?.uddoktapayCommissionPercent || 0,
         brandName: configData?.brandName || '',
         logoUrl: configData?.logoUrl || '',
         platformDescription: configData?.platformDescription || '',
@@ -1097,26 +1103,26 @@ export default function SuperAdminPage() {
               </div>
             </div>
 
-           {/* ⚡ PipraPay Centered Configuration */}
+           {/* ⚡ UddoktaPay Centered Configuration */}
            <div className="md:col-span-12 grid grid-cols-1 gap-4 pt-6 border-t border-purple-100">
              <div>
-               <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Globe size={14}/> PipraPay Automated Payment (পিপরাপেই অটোমেটেড পেমেন্ট সেটিংস)</p>
+               <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Globe size={14}/> UddoktaPay Automated Payment (উদ্যোক্তাপেই অটোমেটেড পেমেন্ট সেটিংস)</p>
                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">গ্লোবাল পেমেন্ট গেটওয়ে সার্ভার ও কমিশন কনফিগারেশন</p>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Input
-                  label="PipraPay Server Base URL (সার্ভার ইউআরএল)"
-                  value={globalConfig.piprapayUrl || ''}
-                  onChange={e => setGlobalConfig({...globalConfig, piprapayUrl: e.target.value})}
-                  placeholder="e.g. https://piprapay-server.onrender.com"
+                  label="UddoktaPay API URL (সার্ভার/ডোমেন ইউআরএল)"
+                  value={globalConfig.uddoktapayUrl || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, uddoktapayUrl: e.target.value})}
+                  placeholder="e.g. https://bdretailers.paymently.io"
                 />
                 <div className="relative">
                   <Input
-                    label="PipraPay API Key (এপিআই কী)"
+                    label="UddoktaPay API Key (এপিআই কী)"
                     type={showPpKey ? "text" : "password"}
-                    value={globalConfig.piprapayApiKey || ''}
-                    onChange={e => setGlobalConfig({...globalConfig, piprapayApiKey: e.target.value})}
-                    placeholder="mh-piprapay-api-key..."
+                    value={globalConfig.uddoktapayApiKey || ''}
+                    onChange={e => setGlobalConfig({...globalConfig, uddoktapayApiKey: e.target.value})}
+                    placeholder="Enter UddoktaPay API Key"
                   />
                   <button 
                     type="button" 
@@ -1132,13 +1138,13 @@ export default function SuperAdminPage() {
                   min="0"
                   max="100"
                   step="0.01"
-                  value={globalConfig.piprapayCommissionPercent || ''}
-                  onChange={e => setGlobalConfig({...globalConfig, piprapayCommissionPercent: parseFloat(e.target.value) || 0})}
+                  value={globalConfig.uddoktapayCommissionPercent || ''}
+                  onChange={e => setGlobalConfig({...globalConfig, uddoktapayCommissionPercent: parseFloat(e.target.value) || 0})}
                   placeholder="e.g. 5.0"
                 />
              </div>
              <p className="text-[10px] text-slate-400 font-bold px-1 uppercase tracking-wider">
-               এখানে PipraPay প্যানেলের URL এবং API Key দিন। অর্ডারের পেমেন্ট সফল হলে স্বয়ংক্রিয়ভাবে কমিশন কেটে রিটেইলারের অর্ডারে সেট করা হবে।
+               এখানে UddoktaPay Hosted প্যানেলের API URL (যেমন `https://yoursubdomain.paymently.io`) এবং API Key দিন। অর্ডারের পেমেন্ট সফল হলে স্বয়ংক্রিয়ভাবে কমিশন হিসাব করা হবে।
              </p>
            </div>
            

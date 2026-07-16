@@ -167,6 +167,8 @@ export default function SettingsPage() {
   const [piprapayBkash, setPiprapayBkash] = useState('');
   const [piprapayNagad, setPiprapayNagad] = useState('');
   const [piprapayRocket, setPiprapayRocket] = useState('');
+  const [uddoktapayUrl, setUddoktapayUrl] = useState('');
+  const [uddoktapayApiKey, setUddoktapayApiKey] = useState('');
   const [manualPaymentEnabled, setManualPaymentEnabled] = useState(true);
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
@@ -363,6 +365,8 @@ export default function SettingsPage() {
       setPiprapayBkash(data?.piprapayBkash || '');
       setPiprapayNagad(data?.piprapayNagad || '');
       setPiprapayRocket(data?.piprapayRocket || '');
+      setUddoktapayUrl(data?.uddoktapayUrl || '');
+      setUddoktapayApiKey(data?.uddoktapayApiKey || '');
       setManualPaymentEnabled(data?.manualPaymentEnabled !== false);
       setLoading(false);
     });
@@ -775,6 +779,8 @@ export default function SettingsPage() {
         piprapayBkash,
         piprapayNagad,
         piprapayRocket,
+        uddoktapayUrl,
+        uddoktapayApiKey,
         manualPaymentEnabled,
         slogan: shop.slogan,
         notices: shop.notices,
@@ -1573,89 +1579,73 @@ export default function SettingsPage() {
               </p>
             </Card>
 
-            <Card title="PipraPay Automated Payment (পিপরাপেই অটো পেমেন্ট)" subtitle="bKash/Nagad/Rocket API Integration" icon={Smartphone} className="border-l-4 border-l-purple-500">
-              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
-                 <div>
-                    <p className="text-xs font-black text-slate-900">অটোমেটেড পেমেন্ট গেটওয়ে চালু করুন (Enable PipraPay)</p>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকরা সরাসরি বিকাশ, নগদ, রকেটে অটো পেমেন্ট করতে পারবে</p>
-                 </div>
-                 <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" checked={piprapayEnabled} onChange={e => setPiprapayEnabled(e.target.checked)} />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                 </label>
-              </div>
-
-              {piprapayEnabled && (
-                <div className="space-y-6 border-t border-slate-100 pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <Input
-                       label="বিকাশ পার্সোনাল নম্বর"
-                       value={piprapayBkash}
-                       onChange={e => setPiprapayBkash(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                       placeholder="017XXXXXXXX"
-                     />
-                     <Input
-                       label="নগদ পার্সোনাল নম্বর"
-                       value={piprapayNagad}
-                       onChange={e => setPiprapayNagad(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                       placeholder="017XXXXXXXX"
-                     />
-                     <Input
-                       label="রকেট পার্সোনাল নম্বর"
-                       value={piprapayRocket}
-                       onChange={e => setPiprapayRocket(e.target.value.replace(/\D/g, '').slice(0, 12))}
-                       placeholder="017XXXXXXXXX"
-                     />
+            <Card title="UddoktaPay Automated Payment (উদ্যোক্তাপেই অটো পেমেন্ট)" subtitle="bKash/Nagad/Rocket API Integration" icon={Smartphone} className="border-l-4 border-l-purple-500">
+               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                  <div>
+                     <p className="text-xs font-black text-slate-900">অটোমেটেড পেমেন্ট গেটওয়ে চালু করুন (Enable UddoktaPay)</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকরা সরাসরি বিকাশ, নগদ, রকেটে অটো পেমেন্ট করতে পারবে</p>
                   </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                     <input type="checkbox" className="sr-only peer" checked={piprapayEnabled} onChange={e => setPiprapayEnabled(e.target.checked)} />
+                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+               </div>
 
-                  <div className="bg-purple-50/50 rounded-2xl p-5 border border-purple-100 space-y-4">
-                     <h3 className="text-xs font-black text-purple-900 uppercase tracking-wider flex items-center gap-2">
-                       📱 PipraPay Companion App Setup Guide
-                     </h3>
-                     <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                       স্বয়ংক্রিয় পেমেন্ট ভেরিফিকেশনের জন্য আপনার ফোনে <strong>Enterprise Companion (PipraPay)</strong> অ্যাপটি ইনস্টল করে সার্ভারের সাথে সংযুক্ত করতে হবে:
-                     </p>
-                     
-                     <div className="space-y-3 pl-1 text-[11px] text-slate-600 font-medium">
-                       <div className="flex gap-2">
-                         <span className="text-purple-600 font-bold">১.</span>
-                         <p>
-                           আপনার ব্যবহৃত অ্যান্ড্রোয়েড ফোনে আপনার বিকাশ/নগদ/রকেট সিম কার্ডটি সচল রাখুন।
-                         </p>
-                       </div>
-                       <div className="flex gap-2">
-                         <span className="text-purple-600 font-bold">২.</span>
-                         <p>
-                           Google Play Store-এ <strong>"Enterprise Companion"</strong> লিখে সার্চ করুন অথবা সরাসরি এই লিংকের মাধ্যমে <a href="https://play.google.com/store/apps/details?id=com.qubeplug.billpax_tools&pcampaignid=web_share" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">Enterprise Companion App ডাউনলোড করুন</a>।
-                         </p>
-                       </div>
-                       <div className="flex gap-2">
+               {piprapayEnabled && (
+                 <div className="space-y-6 border-t border-slate-100 pt-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="UddoktaPay Domain / API URL"
+                        value={uddoktapayUrl}
+                        onChange={e => setUddoktapayUrl(e.target.value)}
+                        placeholder="e.g. https://yoursubdomain.paymently.io"
+                      />
+                      <Input
+                        label="UddoktaPay API Key"
+                        value={uddoktapayApiKey}
+                        onChange={e => setUddoktapayApiKey(e.target.value)}
+                        placeholder="Enter your UddoktaPay API Key"
+                      />
+                   </div>
+
+                   <div className="bg-purple-50/50 rounded-2xl p-5 border border-purple-100 space-y-4">
+                      <h3 className="text-xs font-black text-purple-900 uppercase tracking-wider flex items-center gap-2">
+                        📋 UddoktaPay Hosted Setup Guide
+                      </h3>
+                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                        আপনার স্টোরে স্বয়ংক্রিয় পেমেন্ট পাওয়ার জন্য নিচের ধাপগুলো অনুসরণ করুন:
+                      </p>
+                      
+                      <div className="space-y-3 pl-1 text-[11px] text-slate-600 font-medium">
+                        <div className="flex gap-2">
+                          <span className="text-purple-600 font-bold">১.</span>
+                          <p>
+                            প্রথমে <a href="https://uddoktapay.com" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">UddoktaPay পোর্টালে</a> একটি মার্চেন্ট অ্যাকাউন্ট তৈরি করুন।
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-purple-600 font-bold">২.</span>
+                          <p>
+                            আপনার UddoktaPay ড্যাশবোর্ডে লগইন করে <strong>Gateways</strong> সেকশনে আপনার বিকাশ, নগদ ও রকেট নম্বর যুক্ত করুন।
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
                           <span className="text-purple-600 font-bold">৩.</span>
                           <p>
-                            অ্যাপটি ওপেন করে ডানদিকের সেটিংস আইকনে ক্লিক করুন। সেখানে একটি মাত্র কনফিগারেশন ইনপুট ফিল্ড (<strong>"Enter Webhook URL"</strong>) দেখতে পাবেন।
+                            ড্যাশবোর্ডের <strong>Brand Settings ➔ API Settings</strong> থেকে আপনার API Key এবং Hosted Domain URL কপি করে উপরের বক্সে বসিয়ে দিন।
                           </p>
                         </div>
-                       <div className="flex gap-2">
+                        <div className="flex gap-2">
                           <span className="text-purple-600 font-bold">৪.</span>
                           <p>
-                            আপনার PipraPay প্যানেল থেকে সম্পূর্ণ Webhook URL টি কপি করে এই বক্সে পেস্ট করুন।
-                             <br />
-                             <span className="text-[10px] text-slate-400 block mt-1">
-                               (Webhook URL পেতে: PipraPay এডমিন প্যানেলে লগইন করুন &rarr; ডানপাশের <strong>Connect Android App</strong> এ ক্লিক করুন &rarr; সম্পূর্ণ <strong>Webhook URL</strong> যেমন <code className="bg-slate-100 px-1 text-slate-700 rounded font-mono font-normal">https://piprapay-server-1.onrender.com/?webhook=YOUR_KEY</code> কপি করে অ্যাপের বক্সে পেস্ট করে Save করুন। সরাসরি QR কোড স্ক্যান না করে এই উপায়ে ম্যানুয়ালি পেস্ট করা সবচেয়ে নিরাপদ। <strong>গুরুত্বপূর্ণ:</strong> অ্যাপের ভেতর URL টি পেস্ট করার সময় অবশ্যই শেষে একটি স্ল্যাশ <code>/</code> দিতে হবে (যেমন: <code>https://piprapay-server-1.onrender.com/api/</code> অথবা <code>https://piprapay-server-1.onrender.com/api/?webhook=...</code>), নাহলে কানেক্ট করার সময় "Network Error" দেখাবে।)
-                             </span>
+                            <strong>গুরুত্বপূর্ণ:</strong> যদি আপনি নিজের এপিআই কী ও ডোমেন খালি রাখেন, তবে পেমেন্ট গ্লোবাল সুপারঅ্যাডমিনের অ্যাকাউন্টে জমা হবে।
                           </p>
                         </div>
-                       <div className="flex gap-2">
-                         <span className="text-purple-600 font-bold">৫.</span>
-                         <p>
-                           অ্যাপটিকে <strong>Read SMS & Receive SMS</strong> পারমিশন দিন এবং ফোনের <strong>Battery Optimization</strong> বন্ধ করুন (যাতে ব্যাকগ্রাউন্ডে অ্যাপটি সচল থাকে)।
-                         </p>
-                       </div>
-                     </div>
+                      </div>
+                   </div>
                   </div>
-                 </div>
-               )}
-            </Card>
+                )}
+             </Card>
                 </div>
               )}
 
