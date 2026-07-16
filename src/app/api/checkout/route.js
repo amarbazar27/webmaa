@@ -427,11 +427,12 @@ export async function POST(req) {
                 piprapayPpId = utData.invoice_id || null;
               } else {
                 console.error("UddoktaPay error response:", utData);
-                return NextResponse.json({ error: 'Automated payment gateway failed to initialize. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
+                return NextResponse.json({ error: `Automated payment gateway failed to initialize: ${utData.message || 'Unknown gateway message'}. Please use Manual Payment or Cash on Delivery.` }, { status: 400 });
               }
             } else {
-              console.error("UddoktaPay status error:", res.status);
-              return NextResponse.json({ error: 'Automated payment gateway returned a status error. Please use Manual Payment or Cash on Delivery.' }, { status: 400 });
+              const errText = await res.text();
+              console.error("UddoktaPay status error:", res.status, errText);
+              return NextResponse.json({ error: `Automated payment gateway returned a status error: ${res.status}. Please use Manual Payment or Cash on Delivery.` }, { status: 400 });
             }
           }
         }
