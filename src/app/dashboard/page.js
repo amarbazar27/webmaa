@@ -116,13 +116,15 @@ export default function DashboardPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsDonateModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-rose-500/20"
-          >
-            <Heart size={16} className="fill-current animate-pulse" />
-            <span>Donate</span>
-          </button>
+          {globalConfig?.donationEnabled !== false && (
+            <button
+              onClick={() => setIsDonateModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-rose-500/20"
+            >
+              <Heart size={16} className="fill-current animate-pulse" />
+              <span>Donate</span>
+            </button>
+          )}
 
           {shop && (
             <div className="flex items-center gap-3 p-1.5 pl-4 bg-white border border-slate-100 rounded-2xl shadow-sm">

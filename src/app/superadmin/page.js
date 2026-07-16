@@ -73,6 +73,10 @@ export default function SuperAdminPage() {
     subTrialMonthly: 7,
     subTrialQuarterly: 14,
     subTrialYearly: 30,
+    subCouponCode: '',
+    subCouponDiscount: 0,
+    subCouponDiscountType: 'percent',
+    subCouponEnabled: false,
     brandName: '',
     logoUrl: '',
     platformDescription: '',
@@ -81,6 +85,7 @@ export default function SuperAdminPage() {
     bkashNumber: '',
     nagadNumber: '',
     rocketNumber: '',
+    donationEnabled: true,
     bankDetails: '',
     greenwebToken: '',
     smsGateway: 'mock'
@@ -229,6 +234,10 @@ export default function SuperAdminPage() {
         subTrialMonthly: configData?.subTrialMonthly || 7,
         subTrialQuarterly: configData?.subTrialQuarterly || 14,
         subTrialYearly: configData?.subTrialYearly || 30,
+        subCouponCode: configData?.subCouponCode || '',
+        subCouponDiscount: configData?.subCouponDiscount || 0,
+        subCouponDiscountType: configData?.subCouponDiscountType || 'percent',
+        subCouponEnabled: configData?.subCouponEnabled ?? false,
         brandName: configData?.brandName || '',
         logoUrl: configData?.logoUrl || '',
         platformDescription: configData?.platformDescription || '',
@@ -238,6 +247,7 @@ export default function SuperAdminPage() {
         bkashNumber: configData?.bkashNumber || '',
         nagadNumber: configData?.nagadNumber || '',
         rocketNumber: configData?.rocketNumber || '',
+        donationEnabled: configData?.donationEnabled !== false,
         bankDetails: configData?.bankDetails || '',
         greenwebToken: configData?.greenwebToken || '',
         smsGateway: configData?.smsGateway || 'mock'
@@ -1350,9 +1360,23 @@ export default function SuperAdminPage() {
             />
           </div>
 
-          <div className="pt-4 border-t border-slate-100">
-            <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2">Donation Accounts Setup (অনুদান অ্যাকাউন্টস সেটিংস)</p>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">রিটেইলার ড্যাশবোর্ডে "Donate" বাটনে ক্লিক করলে এই অ্যাকাউন্টগুলো প্রদর্শিত হবে</p>
+          <div className="pt-4 border-t border-slate-100 space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-2xl border bg-slate-50 border-slate-100">
+              <div>
+                <p className="text-xs font-black text-slate-900">Enable Donation Button (ডনেশন বাটন চালু করুন)</p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">If enabled, retailers will see a "Donate" button on their overview page</p>
+              </div>
+              <input 
+                type="checkbox" 
+                checked={globalConfig.donationEnabled !== false} 
+                onChange={e => setGlobalConfig({...globalConfig, donationEnabled: e.target.checked})}
+                className="w-5 h-5 accent-purple-600 cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2">Donation Accounts Setup (অনুদান অ্যাকাউন্টস সেটিংস)</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-4">রিটেইলার ড্যাশবোর্ডে "Donate" বাটনে ক্লিক করলে এই অ্যাকাউন্টগুলো প্রদর্শিত হবে</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Input
@@ -1384,6 +1408,7 @@ export default function SuperAdminPage() {
                 placeholder="Bank Name: Dutch-Bangla Bank&#10;Account Name: Jhon Doe&#10;Account No: 123.456.789&#10;Branch: Banani"
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500"
               />
+            </div>
             </div>
 
             <div className="pt-6 border-t border-slate-100 mt-6">
@@ -2498,6 +2523,53 @@ export default function SuperAdminPage() {
                       placeholder="Enter API Key"
                       value={globalConfig.uddoktapayApiKey || ''}
                       onChange={e => setGlobalConfig({ ...globalConfig, uddoktapayApiKey: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Horizontal divider */}
+                <div className="border-t border-slate-100 my-6"></div>
+
+                <h4 className="text-xs font-black text-slate-700 mb-4 uppercase tracking-widest">সাবস্ক্রিপশন কুপন কনফিগারেশন (Subscription Coupon)</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">কুপন কোড (Coupon Code)</label>
+                    <Input
+                      type="text"
+                      placeholder="যেমন: BDFREE"
+                      value={globalConfig.subCouponCode || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subCouponCode: e.target.value.toUpperCase() })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">ডিসকাউন্ট ভ্যালু</label>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Input
+                          type="number"
+                          placeholder="যেমন: ১০"
+                          value={globalConfig.subCouponDiscount || ''}
+                          onChange={e => setGlobalConfig({ ...globalConfig, subCouponDiscount: Number(e.target.value) })}
+                        />
+                      </div>
+                      <select
+                        value={globalConfig.subCouponDiscountType || 'percent'}
+                        onChange={e => setGlobalConfig({ ...globalConfig, subCouponDiscountType: e.target.value })}
+                        className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 transition-all cursor-pointer h-[52px] w-24"
+                      >
+                        <option value="percent">%</option>
+                        <option value="flat">৳</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl h-[52px]">
+                    <label className="text-xs font-black text-slate-700">কুপন সক্রিয় করুন:</label>
+                    <input
+                      type="checkbox"
+                      checked={!!globalConfig.subCouponEnabled}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subCouponEnabled: e.target.checked })}
+                      className="rounded text-purple-600 focus:ring-purple-500 w-5 h-5 cursor-pointer"
                     />
                   </div>
                 </div>

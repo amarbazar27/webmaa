@@ -7,7 +7,7 @@ import { adminDb } from '@/lib/firebase-admin';
 export async function POST(req) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { shopId, packageType, paymentMethod, senderNumber, transactionId } = body;
+    const { shopId, packageType, paymentMethod, senderNumber, transactionId, couponCode } = body;
 
     if (!shopId || !packageType) {
       return NextResponse.json({ error: 'Missing shopId or packageType' }, { status: 400 });
@@ -38,6 +38,42 @@ export async function POST(req) {
       yearly: Number(globalData.subPriceYearly) || 5000
     };
     const amountToCharge = priceMap[packageType];
+
+    // 1.5 Apply Subscription Coupon
+    let finalAmount = amountToCharge;
+    if (couponCode && globalData.subCouponEnabled && couponCode.trim().toUpperCase() === globalData.subCouponCode.trim().toUpperCase()) {
+      const discountType = globalData.subCouponDiscountType || 'percent';
+      const discountVal = Number(globalData.subCouponDiscount) || 0;
+      if (discountVal > 0) {
+        if (discountType === 'flat') {
+          finalAmount = Math.max(0, finalAmount - discountVal);
+        } else {
+          const discountAmt = Math.round((finalAmount * discountVal) / 100);
+          finalAmount = Math.max(0, finalAmount - discountAmt);
+        }
+      }
+    }
+
+    if (finalAmount <= 0) {
+      // 100% off coupon -> Activate instantly!
+      const durationDaysMap = {
+        monthly: 30,
+        quarterly: 90,
+        yearly: 365
+      };
+      const days = durationDaysMap[packageType];
+      const newExpiry = Date.now() + days * 24 * 60 * 60 * 1000;
+      
+      await adminDb.collection('shops').doc(shopId).update({
+        subscriptionStatus: 'active',
+        subscriptionPackage: packageType,
+        subscriptionExpiresAt: new Date(newExpiry),
+        subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
+        subscriptionPendingPackage: admin.firestore.FieldValue.delete()
+      });
+      
+      return NextResponse.json({ success: true, isFree: true, message: 'Subscription activated for free using coupon code! 🎉' });
+    }
 
     // Determine current domain
     const host = req.headers.get('host') || 'localhost:3000';
@@ -78,7 +114,7 @@ export async function POST(req) {
     }
 
     // Call checkout-v2 of UddoktaPay
-    console.log(`[Subscription API] Initiating checkout-v2 at ${utUrl}/api/checkout-v2 for amount ${amountToCharge}`);
+    console.log(`[Subscription API] Initiating checkout-v2 at ${utUrl}/api/checkout-v2 for amount ${finalAmount}`);
     const res = await fetch(`${utUrl}/api/checkout-v2`, {
       method: 'POST',
       headers: {
@@ -88,8 +124,14 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         full_name: shopData.shopName || 'Retailer',
-        email: shopData.deliveryConfig?.contactEmail?.split(',')[0] || 'retailer@webmaa.com',
-        amount: amountToCharge.toString(),
+        email: (() => {
+          let email = shopData.deliveryConfig?.contactEmail?.split(',')[0]?.trim() || '';
+          if (!email.includes('@') || !email.includes('.')) {
+            return `retailer-${shopId}@bdretailers.com`;
+          }
+          return email;
+        })(),
+        amount: finalAmount.toString(),
         metadata: {
           type: 'subscription',
           shopId: shopId,

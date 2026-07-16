@@ -20,6 +20,13 @@ export default function BillingPage() {
   const [transactionId, setTransactionId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Coupon States
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [appliedCouponCode, setAppliedCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponDiscountType, setCouponDiscountType] = useState('percent');
+  const [couponError, setCouponError] = useState('');
+
   useEffect(() => {
     if (!activeShopId) return;
 
@@ -101,6 +108,43 @@ export default function BillingPage() {
     }
   };
 
+  const handleApplyCoupon = () => {
+    setCouponError('');
+    if (!couponCodeInput.trim()) {
+      setCouponError('কুপন কোড লিখুন।');
+      return;
+    }
+    const cleanInput = couponCodeInput.trim().toUpperCase();
+    const globalCoupon = (globalConfig?.subCouponCode || '').trim().toUpperCase();
+    if (globalConfig?.subCouponEnabled && globalCoupon && cleanInput === globalCoupon) {
+      setAppliedCouponCode(cleanInput);
+      setCouponDiscount(Number(globalConfig.subCouponDiscount) || 0);
+      setCouponDiscountType(globalConfig.subCouponDiscountType || 'percent');
+      toast.success('কুপন কোডটি সফলভাবে প্রয়োগ করা হয়েছে! 🎉');
+    } else {
+      setCouponError('ভুল কুপন কোড! দয়া করে সঠিক কোড দিন।');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCouponCode('');
+    setCouponDiscount(0);
+    setCouponCodeInput('');
+    setCouponError('');
+    toast.success('কুপন কোড সরানো হয়েছে');
+  };
+
+  const getFinalAmount = () => {
+    const base = priceMap[selectedPackage] || 0;
+    if (!appliedCouponCode) return base;
+    if (couponDiscountType === 'flat') {
+      return Math.max(0, base - couponDiscount);
+    } else {
+      const discountAmt = Math.round((base * couponDiscount) / 100);
+      return Math.max(0, base - discountAmt);
+    }
+  };
+
   const handleSubscribe = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -110,7 +154,8 @@ export default function BillingPage() {
       const payload = {
         shopId: activeShopId,
         packageType: selectedPackage,
-        paymentMethod
+        paymentMethod,
+        couponCode: appliedCouponCode || null
       };
 
       if (paymentMethod === 'manual') {
@@ -132,7 +177,12 @@ export default function BillingPage() {
         throw new Error(data.error || 'অনুরোধটি সম্পন্ন করা সম্ভব হয়নি।');
       }
 
-      if (paymentMethod === 'automated' && data.payment_url) {
+      if (data.isFree) {
+        toast.success(data.message || 'সাবস্ক্রিপশন সফলভাবে সক্রিয় করা হয়েছে! 🎉', { id: loadingToast });
+        getShop(activeShopId).then(setShop);
+        setAppliedCouponCode('');
+        setCouponCodeInput('');
+      } else if (paymentMethod === 'automated' && data.payment_url) {
         toast.success('পেমেন্ট গেটওয়েতে রিডাইরেক্ট করা হচ্ছে...', { id: loadingToast });
         window.location.href = data.payment_url;
       } else {
@@ -328,6 +378,52 @@ export default function BillingPage() {
             </div>
           </div>
 
+          {/* Subscription Coupon Input */}
+          {globalConfig?.subCouponEnabled && (
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-4">
+              <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3">১.৫ সাবস্ক্রিপশন কুপন কোড (Apply Coupon)</h2>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">কুপন কোড (Promo Code)</label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: WELCOME50"
+                    value={couponCodeInput}
+                    onChange={e => setCouponCodeInput(e.target.value.toUpperCase())}
+                    disabled={!!appliedCouponCode}
+                    className="w-full mt-1.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all disabled:bg-slate-100 disabled:text-slate-500 h-[52px]"
+                  />
+                </div>
+                {appliedCouponCode ? (
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="px-6 py-3.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-black transition-all h-[52px] cursor-pointer"
+                  >
+                    কুপন সরান
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    className="px-6 py-3.5 bg-purple-600 text-white hover:bg-purple-700 rounded-xl text-xs font-black transition-all h-[52px] cursor-pointer"
+                  >
+                    কুপন প্রয়োগ
+                  </button>
+                )}
+              </div>
+              {couponError && <p className="text-xs text-red-500 font-bold mt-1">{couponError}</p>}
+              {appliedCouponCode && (
+                <p className="text-xs text-emerald-600 font-bold mt-1 flex items-center gap-1.5">
+                  <span>✅ কুপন <strong>{appliedCouponCode}</strong> সক্রিয়!</span>
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-black">
+                    {couponDiscountType === 'flat' ? `৳${couponDiscount} Flat OFF` : `${couponDiscount}% OFF`}
+                  </span>
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Payment Option */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm space-y-6">
             <h2 className="text-lg font-black text-slate-900 border-b border-slate-100 pb-3">২. পেমেন্ট পদ্ধতি নির্বাচন করুন (Select Payment)</h2>
@@ -424,7 +520,7 @@ export default function BillingPage() {
               {submitting ? (
                 <><RefreshCw className="animate-spin" size={16} /> অনুরোধ প্রসেস হচ্ছে...</>
               ) : (
-                <>নিশ্চিত করুন (Pay ৳{priceMap[selectedPackage]})</>
+                <>নিশ্চিত করুন ({getFinalAmount() === 0 ? 'Activate for Free' : `Pay ৳${getFinalAmount()}`})</>
               )}
             </Button>
           </div>
