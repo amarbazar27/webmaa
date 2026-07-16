@@ -70,6 +70,37 @@ export default function BillingPage() {
     );
   };
 
+  const handleClaimTrial = async (packageType) => {
+    const days = packageType === 'monthly' 
+      ? (globalConfig?.subTrialMonthly || 7) 
+      : packageType === 'quarterly' 
+        ? (globalConfig?.subTrialQuarterly || 14) 
+        : (globalConfig?.subTrialYearly || 30);
+
+    if (!confirm(`আপনি কি এই প্যাকেজের অধীনে ${days} দিনের ফ্রি ট্রায়াল শুরু করতে চান?`)) return;
+    setSubmitting(true);
+    const loadingToast = toast.loading('ফ্রি ট্রায়াল সক্রিয় করা হচ্ছে...');
+    try {
+      const res = await fetch('/api/payments/claim-trial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shopId: activeShopId, packageType })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'ট্রায়াল সক্রিয় করতে সমস্যা হয়েছে।');
+      }
+      toast.success(data.message || 'ফ্রি ট্রায়াল সফলভাবে সক্রিয় হয়েছে! 🎉', { id: loadingToast });
+      // Refresh shop data
+      getShop(activeShopId).then(setShop);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'ত্রুটি ঘটেছে। আবার চেষ্টা করুন।', { id: loadingToast });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubscribe = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -183,6 +214,38 @@ export default function BillingPage() {
                 {shop.subscriptionPendingTxn}
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Free Trial Banner */}
+      {!shop?.trialClaimed && globalConfig?.trialsEnabled && (
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 animate-slide-in mb-6">
+          <div>
+            <h3 className="text-xl font-black flex items-center gap-2">
+              🌟 আপনার প্রথম স্টোর? ফ্রি ট্রায়াল শুরু করুন!
+            </h3>
+            <p className="text-xs text-purple-100 font-medium mt-1">
+              পেমেন্ট ছাড়াই আজই ফ্রি ট্রায়াল সক্রিয় করুন এবং প্রজেক্টের সব প্রিমিয়াম ফিচার ব্যবহার করুন।
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleClaimTrial('monthly')}
+              disabled={submitting}
+              className="px-4 py-2.5 bg-white text-purple-700 hover:bg-purple-50 rounded-xl text-xs font-black transition-colors cursor-pointer"
+            >
+              Start {globalConfig.subTrialMonthly || 7} Days Trial (Monthly)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleClaimTrial('quarterly')}
+              disabled={submitting}
+              className="px-4 py-2.5 bg-purple-500 hover:bg-purple-400 text-white rounded-xl text-xs font-black border border-purple-400 transition-colors cursor-pointer"
+            >
+              Start {globalConfig.subTrialQuarterly || 14} Days Trial (Quarterly)
+            </button>
           </div>
         </div>
       )}

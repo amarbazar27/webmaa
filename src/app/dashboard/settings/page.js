@@ -108,6 +108,7 @@ export default function SettingsPage() {
     banners: [],
     couponCode: '',
     couponDiscount: 0,
+    couponDiscountType: 'percent',
     enableCommonOrder: false,
     enableSmartMeal: false
   });
@@ -773,6 +774,7 @@ export default function SettingsPage() {
         cloudinaryUploadPreset: shop.cloudinaryUploadPreset || '',
         couponCode: shop.couponCode || '',
         couponDiscount: Number(shop.couponDiscount) || 0,
+        couponDiscountType: shop.couponDiscountType || 'percent',
         enableCommonOrder: shop.enableCommonOrder || false,
         enableSmartMeal: shop.enableSmartMeal || false,
         piprapayEnabled, // Save public flag for UI checks
@@ -1661,15 +1663,30 @@ export default function SettingsPage() {
                     onChange={e => setShop({ ...shop, couponCode: e.target.value.toUpperCase() })}
                     placeholder="e.g. EID2026"
                   />
-                  <Input
-                    label="Discount Percentage (ডিসকাউন্ট %)"
-                    type="number"
-                    value={shop.couponDiscount || 0}
-                    onChange={e => setShop({ ...shop, couponDiscount: Number(e.target.value) })}
-                    placeholder="e.g. 10"
-                    min={0}
-                    max={100}
-                  />
+                  <div className="flex gap-4 items-end">
+                    <div className="flex-1">
+                      <Input
+                        label={shop.couponDiscountType === 'flat' ? "Discount Value (ডিসকাউন্ট ৳ Flat)" : "Discount Value (ডিসকাউন্ট %)"}
+                        type="number"
+                        value={shop.couponDiscount || 0}
+                        onChange={e => setShop({ ...shop, couponDiscount: Number(e.target.value) })}
+                        placeholder={shop.couponDiscountType === 'flat' ? "e.g. 50" : "e.g. 10"}
+                        min={0}
+                        max={shop.couponDiscountType === 'flat' ? undefined : 100}
+                      />
+                    </div>
+                    <div className="w-36">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">ডিসকাউন্ট টাইপ</label>
+                      <select
+                        value={shop.couponDiscountType || 'percent'}
+                        onChange={e => setShop({ ...shop, couponDiscountType: e.target.value })}
+                        className="w-full mt-1.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all cursor-pointer h-[52px]"
+                      >
+                        <option value="percent">শতাংশ (%)</option>
+                        <option value="flat">টাকা (৳ Flat)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">

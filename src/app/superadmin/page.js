@@ -65,6 +65,14 @@ export default function SuperAdminPage() {
     uddoktapayUrl: '',
     uddoktapayApiKey: '',
     uddoktapayCommissionPercent: 0,
+    subscriptionsEnabled: false,
+    subPriceMonthly: 500,
+    subPriceQuarterly: 1350,
+    subPriceYearly: 5000,
+    trialsEnabled: false,
+    subTrialMonthly: 7,
+    subTrialQuarterly: 14,
+    subTrialYearly: 30,
     brandName: '',
     logoUrl: '',
     platformDescription: '',
@@ -213,6 +221,14 @@ export default function SuperAdminPage() {
         uddoktapayUrl: configData?.uddoktapayUrl || '',
         uddoktapayApiKey: configData?.uddoktapayApiKey || '',
         uddoktapayCommissionPercent: configData?.uddoktapayCommissionPercent || 0,
+        subscriptionsEnabled: configData?.subscriptionsEnabled ?? false,
+        subPriceMonthly: configData?.subPriceMonthly || 500,
+        subPriceQuarterly: configData?.subPriceQuarterly || 1350,
+        subPriceYearly: configData?.subPriceYearly || 5000,
+        trialsEnabled: configData?.trialsEnabled ?? false,
+        subTrialMonthly: configData?.subTrialMonthly || 7,
+        subTrialQuarterly: configData?.subTrialQuarterly || 14,
+        subTrialYearly: configData?.subTrialYearly || 30,
         brandName: configData?.brandName || '',
         logoUrl: configData?.logoUrl || '',
         platformDescription: configData?.platformDescription || '',
@@ -2413,6 +2429,75 @@ export default function SuperAdminPage() {
                       placeholder="যেমন: ৫০০০"
                       value={globalConfig.subPriceYearly || ''}
                       onChange={e => setGlobalConfig({ ...globalConfig, subPriceYearly: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+
+                {/* Horizontal divider */}
+                <div className="border-t border-slate-100 my-6"></div>
+
+                <h4 className="text-xs font-black text-slate-700 mb-4 uppercase tracking-widest">ফ্রি ট্রায়াল কনফিগারেশন (Trial Settings)</h4>
+                <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl w-max mb-4">
+                  <label className="text-xs font-black text-slate-700">ফ্রি ট্রায়াল অপশন চালু করুন:</label>
+                  <input
+                    type="checkbox"
+                    checked={!!globalConfig.trialsEnabled}
+                    onChange={e => setGlobalConfig({ ...globalConfig, trialsEnabled: e.target.checked })}
+                    className="rounded text-purple-600 focus:ring-purple-500 w-5 h-5 cursor-pointer"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">মাসিক প্যাকেজ ট্রায়াল (দিন) *</label>
+                    <Input
+                      type="number"
+                      placeholder="যেমন: ৭"
+                      value={globalConfig.subTrialMonthly || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subTrialMonthly: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">ত্রৈমাসিক প্যাকেজ ট্রায়াল (দিন) *</label>
+                    <Input
+                      type="number"
+                      placeholder="যেমন: ১৪"
+                      value={globalConfig.subTrialQuarterly || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subTrialQuarterly: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">বার্ষিক প্যাকেজ ট্রায়াল (দিন) *</label>
+                    <Input
+                      type="number"
+                      placeholder="যেমন: ৩০"
+                      value={globalConfig.subTrialYearly || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subTrialYearly: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+
+                {/* Horizontal divider */}
+                <div className="border-t border-slate-100 my-6"></div>
+
+                <h4 className="text-xs font-black text-slate-700 mb-4 uppercase tracking-widest font-black text-slate-900">গ্লোবাল পেমেন্ট গেটওয়ে সেটিংস (উদ্যোক্তাপেই)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">উদ্যোক্তাপেই এপিআই ইউআরএল (API URL) *</label>
+                    <Input
+                      type="text"
+                      placeholder="যেমন: https://uddoktapay.com/api"
+                      value={globalConfig.uddoktapayUrl || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, uddoktapayUrl: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">উদ্যোক্তাপেই এপিআই কী (API Key) *</label>
+                    <Input
+                      type="text"
+                      placeholder="Enter API Key"
+                      value={globalConfig.uddoktapayApiKey || ''}
+                      onChange={e => setGlobalConfig({ ...globalConfig, uddoktapayApiKey: e.target.value })}
                     />
                   </div>
                 </div>

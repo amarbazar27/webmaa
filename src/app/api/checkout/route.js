@@ -272,9 +272,16 @@ export async function POST(req) {
     let couponDiscountPercent = 0;
     let couponDiscountAmount = 0;
     if (couponCode && shopData.couponCode && couponCode.trim().toUpperCase() === shopData.couponCode.trim().toUpperCase()) {
-      couponDiscountPercent = Number(shopData.couponDiscount) || 0;
-      if (couponDiscountPercent > 0) {
-        couponDiscountAmount = Math.round((total * couponDiscountPercent) / 100);
+      const discountType = shopData.couponDiscountType || 'percent';
+      const discountVal = Number(shopData.couponDiscount) || 0;
+      if (discountVal > 0) {
+        if (discountType === 'flat') {
+          couponDiscountAmount = discountVal;
+          couponDiscountPercent = total > 0 ? Math.round((couponDiscountAmount * 100) / total) : 0;
+        } else {
+          couponDiscountPercent = discountVal;
+          couponDiscountAmount = Math.round((total * couponDiscountPercent) / 100);
+        }
         total = Math.max(0, total - couponDiscountAmount);
       }
     }

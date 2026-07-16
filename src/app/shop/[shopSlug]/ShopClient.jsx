@@ -656,6 +656,17 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCouponCode, setAppliedCouponCode] = useState('');
   const [couponDiscountPercent, setCouponDiscountPercent] = useState(0);
+  const [couponDiscountType, setCouponDiscountType] = useState('percent');
+
+  const getCouponDiscountAmount = () => {
+    if (!appliedCouponCode) return 0;
+    const baseTotal = cart.length === 0 && orderImage ? 1 : cartTotal;
+    if (couponDiscountType === 'flat') {
+      return couponDiscountPercent;
+    } else {
+      return Math.round((baseTotal * couponDiscountPercent) / 100);
+    }
+  };
   const [couponError, setCouponError] = useState('');
 
   // Common Order states
@@ -1654,6 +1665,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     if (shopCoupon && cleanInput === shopCoupon) {
       setAppliedCouponCode(cleanInput);
       setCouponDiscountPercent(Number(shop.couponDiscount) || 0);
+      setCouponDiscountType(shop.couponDiscountType || 'percent');
       toast.success('কুপন কোডটি সফলভাবে প্রয়োগ করা হয়েছে! 🎉');
     } else {
       setCouponError('ভুল কুপন কোড! দয়া করে সঠিক কোড দিন।');
@@ -1663,6 +1675,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   const handleRemoveCoupon = () => {
     setAppliedCouponCode('');
     setCouponDiscountPercent(0);
+    setCouponDiscountType('percent');
     setCouponCodeInput('');
     setCouponError('');
     toast.success('কুপন কোড সরানো হয়েছে');
@@ -3432,7 +3445,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
                     <div>
                       <p className="text-xs font-black text-emerald-800">✅ কুপন {appliedCouponCode} সক্রিয়!</p>
-                      <p className="text-[10px] text-emerald-600 font-bold">{couponDiscountPercent}% ডিসকাউন্ট পাওয়া গেছে।</p>
+                      <p className="text-[10px] text-emerald-600 font-bold">{couponDiscountType === 'flat' ? `৳${couponDiscountPercent}` : `${couponDiscountPercent}%`} ডিসকাউন্ট পাওয়া গেছে।</p>
                     </div>
                     <button 
                       type="button" 
@@ -3468,7 +3481,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <div className="flex items-start gap-3">
                     <AlertCircle size={20} className="text-purple-700 mt-0.5 shrink-0" strokeWidth={2.5} />
                     <p className="text-sm font-bold text-purple-900 leading-snug">
-                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100) : 0)) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
+                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - getCouponDiscountAmount()) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
                     </p>
                   </div>
                   
@@ -3581,8 +3594,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="flex justify-between text-sm text-slate-600 font-bold"><span>প্রোডাক্টস (×{cartCount || (orderImage ? 'ছবি থেকে' : 0)})</span><span className="text-slate-900 font-black">৳{(cart.length === 0 && orderImage ? 1 : cartTotal)}</span></div>
                 {appliedCouponCode && (
                   <div className="flex justify-between text-sm text-emerald-600 font-bold">
-                    <span>কুপন ডিসকাউন্ট ({couponDiscountPercent}%)</span>
-                    <span>- ৳{Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100)}</span>
+                    <span>কুপন ডিসকাউন্ট ({couponDiscountType === 'flat' ? `৳${couponDiscountPercent}` : `${couponDiscountPercent}%`})</span>
+                    <span>- ৳{getCouponDiscountAmount()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-slate-600 font-bold">
@@ -3591,7 +3604,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t-2 border-slate-200 font-black text-slate-900 text-xl">
                   <span>সর্বমোট</span>
-                  <span className="text-purple-700 text-2xl">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - (appliedCouponCode ? Math.round(((cart.length === 0 && orderImage ? 1 : cartTotal) * couponDiscountPercent) / 100) : 0)) + effectiveDelivery}</span>
+                  <span className="text-purple-700 text-2xl">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - getCouponDiscountAmount()) + effectiveDelivery}</span>
                 </div>
               </div>
 
