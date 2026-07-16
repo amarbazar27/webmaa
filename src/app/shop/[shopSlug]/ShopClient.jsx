@@ -2095,7 +2095,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   // Auth state resolves in background — shopping is always public.
   return (
     <div 
-      className="min-h-screen font-sans pb-24"
+      className="min-h-screen font-sans pb-24 retailer-storefront"
       style={{ 
         ...themeVars, 
         backgroundColor: 'var(--sp-bg)',
@@ -2857,7 +2857,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 🚀 Want to launch your own professional online store in minutes just like this? <a href="https://bdretailers.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
               </span>
               <span className="text-xs text-purple-300 font-bold mt-1">
-                এই ওয়েবসাইটটি বিডি রিটেইলার্স (<a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">bdretailers.com</a>) দ্বারা তৈরি। | <a href="https://bdretailers.com/privacy-policy" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">Privacy Policy</a>
+                এই ওয়েবসাইটটি বিডি রিটেইলার্স (<a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">bdretailers.com</a>) দ্বারা তৈরি। | <a href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`} target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">Privacy Policy</a>
               </span>
             </p>
             <div className="flex items-center gap-2">
