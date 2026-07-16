@@ -6,7 +6,8 @@ import { adminDb } from '@/lib/firebase-admin';
 
 export async function POST(req) {
   try {
-    const { shopId, packageType, paymentMethod } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { shopId, packageType, paymentMethod, senderNumber, transactionId } = body;
 
     if (!shopId || !packageType) {
       return NextResponse.json({ error: 'Missing shopId or packageType' }, { status: 400 });
@@ -45,8 +46,6 @@ export async function POST(req) {
 
     // 2. Handle manual subscription request
     if (paymentMethod === 'manual') {
-      const { senderNumber, transactionId } = await req.json().catch(() => ({}));
-      
       if (!senderNumber || !transactionId) {
         return NextResponse.json({ error: 'Sender number and Transaction ID are required for manual payment' }, { status: 400 });
       }
