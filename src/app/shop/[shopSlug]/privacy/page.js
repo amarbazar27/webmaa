@@ -2,7 +2,7 @@ import { getShopServer } from '@/lib/server-fetch';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-export const revalidate = 600; // Cache for 10 minutes
+export const revalidate = 600;
 
 export async function generateMetadata({ params }) {
   const { shopSlug } = await params;
@@ -18,152 +18,162 @@ export async function generateMetadata({ params }) {
 export default async function ShopPrivacyPage({ params }) {
   const { shopSlug } = await params;
   const shop = await getShopServer(shopSlug);
+  if (!shop) { notFound(); }
 
-  if (!shop) {
-    notFound();
-  }
+  // Email — same logic as footer
+  const rawEmail = shop.deliveryConfig?.contactEmail || shop.ownerEmail || '';
+  const hasEmailPlaceholder = rawEmail.toLowerCase().includes('no contact') || rawEmail.toLowerCase().includes('registered') || rawEmail.toLowerCase().includes('endpoint');
+  const email = hasEmailPlaceholder ? 'bdretailers26@gmail.com' : rawEmail || 'bdretailers26@gmail.com';
 
-  const email = shop.deliveryConfig?.contactEmail?.split(',')[0]?.trim() || shop.ownerEmail || 'support@bdretailers.com';
-  const phone = shop.deliveryConfig?.contactPhone || shop.phone || '+8801700000000';
+  // Phone — use WhatsApp number (same as footer), properly formatted
+  const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
+  const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
+  const finalWa = hasWaPlaceholder ? '' : rawWa || '';
+  const cleanWa = finalWa.replace(/[^0-9]/g, '');
+  const phone = cleanWa ? (cleanWa.startsWith('880') ? `+${cleanWa}` : `+880${cleanWa.replace(/^0/, '')}`) : (shop.phone || 'N/A');
+
+  const primaryColor = shop.primaryColor || '#7c3aed';
 
   return (
-    <div className="min-h-screen bg-[#060814] text-slate-100 flex flex-col font-sans selection:bg-purple-600 selection:text-white">
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 50%, #faf5ff 100%)', color: '#1e1b4b', display: 'flex', flexDirection: 'column', fontFamily: "'Inter', system-ui, sans-serif" }}>
+
       {/* Header */}
-      <header className="border-b border-slate-900 bg-[#060814]/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href={`/shop/${shopSlug}`} className="flex items-center gap-3 group">
+      <header style={{ borderBottom: '1px solid rgba(99,102,241,0.12)', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 1px 24px rgba(99,102,241,0.08)' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Link href={`/shop/${shopSlug}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
             {shop.logoUrl ? (
-              <img src={shop.logoUrl} className="w-8 h-8 rounded-lg object-cover border border-purple-500/20" alt="Logo" />
+              <img src={shop.logoUrl} style={{ width: '36px', height: '36px', borderRadius: '10px', objectFit: 'cover', border: '1.5px solid rgba(99,102,241,0.2)', boxShadow: '0 2px 8px rgba(99,102,241,0.12)' }} alt="Logo" />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm">
-                {shop.shopName?.[0]}
-              </div>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `linear-gradient(135deg, ${primaryColor}, #4f46e5)`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '16px' }}>{shop.shopName?.[0]}</div>
             )}
-            <span className="font-black text-slate-200 group-hover:text-purple-400 transition-colors text-sm">{shop.shopName}</span>
+            <span style={{ fontWeight: 800, fontSize: '15px', color: '#1e1b4b' }}>{shop.shopName}</span>
           </Link>
-          <Link href={`/shop/${shopSlug}`} className="text-xs font-black uppercase tracking-wider text-purple-400 hover:text-purple-300 border border-purple-500/20 hover:border-purple-500/40 rounded-xl px-4 py-2 transition-all">
-            Back to Store (স্টোরে ফিরে যান)
+          <Link href={`/shop/${shopSlug}`} style={{ fontSize: '12px', fontWeight: 800, color: primaryColor, textDecoration: 'none', border: `1.5px solid ${primaryColor}30`, borderRadius: '20px', padding: '8px 18px', background: `${primaryColor}08`, letterSpacing: '0.04em' }}>
+            ← স্টোরে ফিরুন
           </Link>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-3xl mx-auto px-6 py-12">
-        <div className="bg-slate-950/40 border border-slate-900 rounded-3xl p-8 md:p-10 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-600/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Main */}
+      <main style={{ flex: 1, maxWidth: '860px', margin: '0 auto', padding: '48px 24px', width: '100%' }}>
+        {/* Title Card */}
+        <div style={{ background: '#fff', borderRadius: '24px', padding: '36px 40px', marginBottom: '24px', boxShadow: '0 4px 40px rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.1)' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: `${primaryColor}10`, border: `1px solid ${primaryColor}25`, borderRadius: '20px', padding: '6px 14px', marginBottom: '16px' }}>
+            <span style={{ fontSize: '16px' }}>🔒</span>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: primaryColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>গোপনীয়তা নীতি</span>
+          </div>
+          <h1 style={{ fontSize: '28px', fontWeight: 900, color: '#0f172a', margin: '0 0 8px', lineHeight: 1.2 }}>Privacy Policy</h1>
+          <p style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600, margin: 0 }}>Last Updated: {new Date().toLocaleDateString('en-GB')} · {shop.shopName}</p>
+        </div>
 
-          <h1 className="text-3xl font-black text-white mb-2 leading-none">Privacy Policy (গোপনীয়তা নীতি)</h1>
-          <p className="text-xs font-bold text-slate-500 mb-8">Last Updated: {new Date().toLocaleDateString('en-GB')}</p>
+        {/* Content Card */}
+        <div style={{ background: '#fff', borderRadius: '24px', padding: '36px 40px', boxShadow: '0 4px 40px rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.08)' }}>
+          <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.8, margin: '0 0 8px', fontWeight: 500 }}>
+            Welcome to <strong style={{ color: '#1e1b4b' }}>{shop.shopName}</strong>. We value your privacy and are committed to protecting your personal data. This Privacy Policy describes how we collect, use, and share your information when you visit our website or make purchases from our online store.
+          </p>
+          <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.8, margin: '0 0 28px', fontStyle: 'italic', background: '#f8faff', padding: '16px', borderRadius: '12px', border: '1px solid #e0e7ff' }}>
+            <strong>{shop.shopName}</strong>-এ আপনাকে স্বাগতম। আমরা আপনার গোপনীয়তাকে অত্যন্ত গুরুত্ব সহকারে বিবেচনা করি। আমাদের ওয়েবসাইট বা অ্যাপ ব্যবহার করার সময় আমরা কীভাবে আপনার তথ্য সংগ্রহ ও সুরক্ষিত রাখি তা এই নীতিমালায় ব্যাখ্যা করা হয়েছে।
+          </p>
 
-          <div className="space-y-6 text-sm text-slate-300 leading-relaxed font-medium">
-            <p>
-              Welcome to <strong>{shop.shopName}</strong>. We value your privacy and are committed to protecting your personal data. This Privacy Policy describes how we collect, use, and share your information when you visit our website, use our services, or make purchases from our online store.
-            </p>
-            <p className="text-slate-400 italic">
-              <strong>{shop.shopName}</strong>-এ আপনাকে স্বাগতম। আমরা আপনার গোপনীয়তাকে অত্যন্ত গুরুত্ব সহকারে বিবেচনা করি। আমাদের ওয়েবসাইট বা মোবাইল অ্যাপ ব্যবহার করার সময় আমরা কীভাবে আপনার তথ্য সংগ্রহ, ব্যবহার এবং সুরক্ষিত রাখি তা এই নীতিমালায় বিস্তারিত ব্যাখ্যা করা হয়েছে।
-            </p>
-
-            <hr className="border-slate-900 my-6" />
-
-            {/* Section 1 */}
-            <section className="space-y-2">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-purple-500 rounded-full inline-block" />
-                1. Information We Collect (আমরা যে তথ্য সংগ্রহ করি)
+          {/* Section */}
+          {[
+            {
+              num: '1',
+              en: 'Information We Collect (আমরা যে তথ্য সংগ্রহ করি)',
+              content: (
+                <div>
+                  <p style={{ color: '#475569', fontSize: '14px', lineHeight: 1.7, margin: '0 0 12px' }}>When you make a purchase or place an order through the store, we collect certain personal information including:</p>
+                  <ul style={{ margin: 0, padding: '0 0 0 20px', color: '#475569', fontSize: '14px', lineHeight: 2 }}>
+                    <li>Name (নাম)</li>
+                    <li>Delivery Address (ডেলিভারি ঠিকানা)</li>
+                    <li>Phone Number (মোবাইল নম্বর)</li>
+                    <li>Email Address (ইমেইল ঠিকানা)</li>
+                    <li>Order History and Preferences (অর্ডারের বিবরণ)</li>
+                  </ul>
+                </div>
+              )
+            },
+            {
+              num: '2',
+              en: 'How We Use Your Information (তথ্য ব্যবহারের উদ্দেশ্য)',
+              content: (
+                <div>
+                  <p style={{ color: '#475569', fontSize: '14px', lineHeight: 1.7, margin: '0 0 12px' }}>We use your information to fulfill your orders and improve our service:</p>
+                  <ul style={{ margin: 0, padding: '0 0 0 20px', color: '#475569', fontSize: '14px', lineHeight: 2 }}>
+                    <li>Processing transactions and payments (পেমেন্ট ও অর্ডার প্রসেসিং)</li>
+                    <li>Arranging delivery and shipment (হোম ডেলিভারি নিশ্চিতকরণ)</li>
+                    <li>Providing customer support and order updates</li>
+                    <li>Preventing fraud and ensuring platform security</li>
+                  </ul>
+                </div>
+              )
+            },
+            {
+              num: '3',
+              en: 'Sharing Your Information (তথ্য শেয়ারিং নীতি)',
+              content: (
+                <div style={{ color: '#475569', fontSize: '14px', lineHeight: 1.8 }}>
+                  <p style={{ margin: '0 0 8px' }}>We only share your personal data with third-party partners who help process deliveries and payments (e.g., courier services, payment gateways). We do <strong style={{ color: '#1e1b4b' }}>NOT</strong> sell or lease your personal information to third parties for marketing purposes.</p>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>আমরা আপনার ব্যক্তিগত তথ্য কোনো তৃতীয় পক্ষের কাছে বিজ্ঞাপনের উদ্দেশ্যে বিক্রি করি না।</p>
+                </div>
+              )
+            },
+            {
+              num: '4',
+              en: 'Data Security (তথ্য নিরাপত্তা)',
+              content: <p style={{ color: '#475569', fontSize: '14px', lineHeight: 1.8, margin: 0 }}>We implement industry-standard security measures, including SSL encryption and secure databases, to maintain the safety of your personal information when you place an order.</p>
+            },
+            {
+              num: '5',
+              en: 'Data Deletion Requests (তথ্য মুছে ফেলার অনুরোধ)',
+              content: (
+                <div style={{ color: '#475569', fontSize: '14px', lineHeight: 1.8 }}>
+                  <p style={{ margin: '0 0 8px' }}>Under the Google Play Developer Policy, you have the right to request deletion of your account and personal data. Contact us at <a href={`mailto:${email}`} style={{ color: primaryColor, fontWeight: 700 }}>{email}</a> or call <strong style={{ color: '#1e1b4b' }}>{phone}</strong>. We will process your request within 7 business days.</p>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>গুগল প্লে স্টোর পলিসি অনুযায়ী আপনি যেকোনো সময় আপনার অ্যাকাউন্ট ও সমস্ত ব্যক্তিগত তথ্য মুছে ফেলার অনুরোধ করতে পারেন।</p>
+                </div>
+              )
+            }
+          ].map((sec) => (
+            <div key={sec.num} style={{ marginBottom: '28px', paddingBottom: '28px', borderBottom: '1px solid #f1f5f9' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '15px', fontWeight: 900, color: '#0f172a', margin: '0 0 12px' }}>
+                <span style={{ width: '28px', height: '28px', borderRadius: '8px', background: `${primaryColor}15`, color: primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '12px', flexShrink: 0 }}>{sec.num}</span>
+                {sec.en}
               </h2>
-              <p>
-                When you make a purchase or attempt to place an order through the store, we collect certain personal information from you, including:
-              </p>
-              <ul className="list-disc list-inside pl-4 space-y-1 text-slate-400 font-semibold">
-                <li>Name (নাম)</li>
-                <li>Delivery Address (ডেলিভারি ঠিকানা)</li>
-                <li>Phone Number (মোবাইল নম্বর)</li>
-                <li>Email Address (ইমেইল ঠিকানা)</li>
-                <li>Order History and Preferences (অর্ডারের বিবরণ)</li>
-              </ul>
-            </section>
+              {sec.content}
+            </div>
+          ))}
 
-            {/* Section 2 */}
-            <section className="space-y-2">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-purple-500 rounded-full inline-block" />
-                2. How We Use Your Information (তথ্য ব্যবহারের উদ্দেশ্য)
-              </h2>
-              <p>
-                We use the information we collect to fulfill your orders and improve our service, specifically:
-              </p>
-              <ul className="list-disc list-inside pl-4 space-y-1 text-slate-400 font-semibold">
-                <li>Processing transactions and payments (পেমেন্ট ও অর্ডার প্রসেসিং)</li>
-                <li>Arranging for delivery and shipment (হোম ডেলিভারি নিশ্চিতকরণ)</li>
-                <li>Providing customer support and order updates (অর্ডার আপডেট ও কাস্টমার সাপোর্ট)</li>
-                <li>Preventing fraud and ensuring platform security (প্রতারণা রোধ ও নিরাপত্তা নিশ্চিতকরণ)</li>
-              </ul>
-            </section>
-
-            {/* Section 3 */}
-            <section className="space-y-2">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-purple-500 rounded-full inline-block" />
-                3. Sharing Your Information (তথ্য শেয়ারিং নীতি)
-              </h2>
-              <p>
-                We only share your personal data with third-party partners who help us process deliveries and payments, such as shipping couriers and payment gateways. We do <strong>NOT</strong> sell or lease your personal information to third parties for marketing purposes.
-              </p>
-              <p className="text-slate-400">
-                আমরা আপনার ব্যক্তিগত তথ্য কোনো তৃতীয় পক্ষের কাছে বিজ্ঞাপনের উদ্দেশ্যে বিক্রি করি না। শুধুমাত্র আপনার অর্ডারকৃত পণ্য আপনার ঠিকানায় পৌঁছে দেওয়া (কুরিয়ার সার্ভিস) এবং পেমেন্ট ভেরিফাই করার জন্য প্রয়োজনীয় তথ্য শেয়ার করা হয়ে থাকে।
-              </p>
-            </section>
-
-            {/* Section 4 */}
-            <section className="space-y-2">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-purple-500 rounded-full inline-block" />
-                4. Data Security (তথ্য নিরাপত্তা)
-              </h2>
-              <p>
-                We implement a variety of standard security measures, including SSL encryption and secure databases, to maintain the safety of your personal information when you place an order.
-              </p>
-            </section>
-
-            {/* Section 5 */}
-            <section className="space-y-2">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-purple-500 rounded-full inline-block" />
-                5. Data Deletion Requests (তথ্য মুছে ফেলার অনুরোধ)
-              </h2>
-              <p>
-                Under the Google Play Developer Policy, you have the right to request deletion of your account and personal data. If you wish to delete your account or have your collected data removed, please contact us at <strong>{email}</strong> or call <strong>{phone}</strong>. We will process your request within 7 business days.
-              </p>
-              <p className="text-slate-400">
-                গুগল প্লে স্টোর ডেভলপার পলিসি অনুযায়ী আপনি যেকোনো সময় আপনার অ্যাকাউন্ট এবং সমস্ত ব্যক্তিগত তথ্য মুছে ফেলার অনুরোধ করতে পারেন। তথ্য মুছে ফেলতে আমাদের <strong>{email}</strong> ঠিকানায় ইমেইল করুন অথবা কল করুন <strong>{phone}</strong> নম্বরে।
-              </p>
-            </section>
-
-            {/* Section 6 */}
-            <section className="space-y-2">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <span className="w-1.5 h-6 bg-purple-500 rounded-full inline-block" />
-                6. Contact Us (যোগাযোগ)
-              </h2>
-              <p>
-                For any questions or concerns regarding this Privacy Policy, please contact us:
-              </p>
-              <div className="bg-slate-900/50 border border-slate-900 rounded-2xl p-4 space-y-1 font-semibold text-slate-300">
-                <p>🏪 Shop: {shop.shopName}</p>
-                <p>📧 Email: <a href={`mailto:${email}`} className="text-purple-400 hover:underline">{email}</a></p>
-                <p>📞 Phone: {phone}</p>
-                <p>🌐 Platform: <a href="https://bdretailers.com" className="text-purple-400 hover:underline">bdretailers.com</a></p>
-              </div>
-            </section>
+          {/* Contact Box */}
+          <div style={{ background: 'linear-gradient(135deg, #f8faff, #f0f4ff)', borderRadius: '16px', padding: '24px', border: '1px solid #e0e7ff' }}>
+            <h2 style={{ fontSize: '15px', fontWeight: 900, color: '#0f172a', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>📞</span> 6. Contact Us (যোগাযোগ)
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+              {[
+                { icon: '🏪', label: 'Shop', value: shop.shopName },
+                { icon: '📧', label: 'Email', value: email, href: `mailto:${email}` },
+                { icon: '📞', label: 'Phone', value: phone },
+                { icon: '🌐', label: 'Platform', value: 'bdretailers.com', href: 'https://bdretailers.com' },
+              ].map(item => (
+                <div key={item.label} style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', border: '1px solid rgba(99,102,241,0.1)', boxShadow: '0 1px 4px rgba(99,102,241,0.05)' }}>
+                  <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{item.icon} {item.label}</div>
+                  {item.href ? (
+                    <a href={item.href} style={{ fontSize: '13px', fontWeight: 700, color: primaryColor, textDecoration: 'none', wordBreak: 'break-all' }}>{item.value}</a>
+                  ) : (
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e1b4b' }}>{item.value}</div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/20 py-8 text-center text-xs font-bold text-slate-600">
-        <p>© {new Date().getFullYear()} {shop.shopName}. All Rights Reserved.</p>
-        <p className="mt-1">Powered by <a href="https://bdretailers.com" className="hover:text-slate-400 underline">bdretailers.com</a></p>
+      <footer style={{ borderTop: '1px solid rgba(99,102,241,0.1)', background: '#fff', padding: '24px', textAlign: 'center' }}>
+        <p style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600, margin: 0 }}>
+          © {new Date().getFullYear()} <strong style={{ color: '#475569' }}>{shop.shopName}</strong>. All Rights Reserved. · Powered by <a href="https://bdretailers.com" style={{ color: primaryColor, fontWeight: 700, textDecoration: 'none' }}>bdretailers.com</a>
+        </p>
       </footer>
     </div>
   );
