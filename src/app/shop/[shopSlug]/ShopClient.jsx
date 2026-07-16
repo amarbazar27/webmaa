@@ -2730,141 +2730,123 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         )}
       </main>
 
-      {/* ── PREMIUM FOOTER ── */}
-      <footer className="relative mt-auto overflow-hidden">
-        {/* Background layers */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-indigo-600/10 rounded-full blur-3xl" />
-
-        <div className="relative z-10 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+      {/* ── PREMIUM FOOTER — INLINE STYLES, CSS-PROOF ── */}
+      <footer style={{ position: 'relative', marginTop: 'auto', overflow: 'hidden', background: 'linear-gradient(135deg, #030712 0%, #0f0a1e 50%, #0c0520 100%)', color: '#e2e8f0' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #030712 0%, #0f0a1e 50%, #0c0520 100%)', zIndex: 0 }} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(to right, transparent, #7c3aed, transparent)' }} />
+        <div style={{ position: 'absolute', top: '-160px', right: '-160px', width: '384px', height: '384px', background: 'rgba(124,58,237,0.08)', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '288px', height: '288px', background: 'rgba(79,70,229,0.08)', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '1400px', margin: '0 auto', padding: '64px 24px 32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '40px', marginBottom: '48px' }}>
             {/* Brand Column */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 {shop.logoUrl ? (
-                  <img loading="lazy" src={shop.logoUrl} className="w-12 h-12 rounded-2xl border-2 border-purple-500/30 object-cover shadow-lg shadow-purple-900/30" alt="Logo" />
+                  <img loading="lazy" src={shop.logoUrl} style={{ width: '48px', height: '48px', borderRadius: '16px', border: '2px solid rgba(124,58,237,0.4)', objectFit: 'cover', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }} alt="Logo" />
                 ) : (
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center font-black text-2xl shadow-lg">{shop.shopName?.[0]}</div>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '20px', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>{shop.shopName?.[0]}</div>
                 )}
-                <h2 className="text-2xl font-black text-white">{shop.shopName}</h2>
+                <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#f1f5f9', margin: 0 }}>{shop.shopName}</h2>
               </div>
               {shop.slogan && (
-                <p className="text-slate-400 text-sm font-medium leading-relaxed italic">"{shop.slogan}"</p>
+                <p style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 500, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>"{shop.slogan}"</p>
               )}
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1">
-                  {[1,2,3,4,5].map(i => <Star key={i} size={14} className="text-amber-400 fill-amber-400" />)}
-                  <span className="text-xs text-slate-500 font-bold ml-1">বিশ্বস্ত সেবা</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {[1,2,3,4,5].map(i => <Star key={i} size={14} style={{ color: '#fbbf24', fill: '#fbbf24' }} />)}
+                  <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, marginLeft: '4px' }}>বিশ্বস্ত সেবা</span>
                 </div>
-                <a href="https://bdretailers.com/reviews" target="_blank" rel="noreferrer" className="text-xs text-purple-400 hover:text-purple-300 font-black underline flex items-center gap-1">
+                <a href="https://bdretailers.com/reviews" target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 800, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Platform Reviews <ExternalLink size={10} />
                 </a>
               </div>
             </div>
-
             {/* Quick Links */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">দ্রুত নেভিগেশন</h3>
-              <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>দ্রুত নেভিগেশন</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {categories.slice(0, 5).map(c => (
-                  <button key={c.id} onClick={() => { setActiveCategory(c.name); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="block text-slate-400 hover:text-purple-400 text-sm font-bold transition-colors">
+                  <button key={c.id} onClick={() => { setActiveCategory(c.name); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', fontSize: '14px', fontWeight: 700, color: '#94a3b8', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#a78bfa'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                  >
                     → {c.name}
                   </button>
                 ))}
               </div>
             </div>
-
             {/* Social & Contact */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">যোগাযোগ করুন</h3>
-              <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>যোগাযোগ করুন</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {(() => {
                   const rawEmail = shop.deliveryConfig?.contactEmail || shop.ownerEmail || '';
                   const hasEmailPlaceholder = rawEmail.toLowerCase().includes('no contact') || rawEmail.toLowerCase().includes('registered') || rawEmail.toLowerCase().includes('endpoint');
                   const finalEmail = hasEmailPlaceholder ? 'bdretailers26@gmail.com' : rawEmail || 'bdretailers26@gmail.com';
-
                   const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
                   const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
                   const finalWa = hasWaPlaceholder ? '8801734763306' : rawWa || '8801734763306';
-
                   const cleanWa = finalWa.replace(/[^0-9]/g, '');
                   const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
-
                   return (
                     <>
-                      <a href={`mailto:${finalEmail}`} className="flex items-center gap-2 text-slate-400 hover:text-purple-400 group transition-colors">
-                        <Bot size={14} className="group-hover:text-purple-400" />
-                        <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">{finalEmail}</span>
+                      <a href={`mailto:${finalEmail}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#a78bfa'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; }}>
+                        <Bot size={14} /><span>{finalEmail}</span>
                       </a>
-                      <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-slate-400 hover:text-emerald-400 group transition-colors">
-                        <Phone size={14} className="group-hover:text-emerald-400" />
-                        <span className="text-sm font-bold group-hover:text-slate-200 transition-colors">
-                          {finalWa.startsWith('+') || finalWa.startsWith('88') ? finalWa : `+88${finalWa.replace(/^0+/, '')}`}
-                        </span>
+                      <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#34d399'; }} onMouseLeave={e => { e.currentTarget.style.color = '#94a3b8'; }}>
+                        <Phone size={14} /><span>{finalWa.startsWith('+') || finalWa.startsWith('88') ? finalWa : `+88${finalWa.replace(/^0+/, '')}`}</span>
                       </a>
                     </>
                   );
                 })()}
               </div>
-              <div className="flex gap-3 flex-wrap pt-2">
-                {shop.socialLinks?.fb && (
-                  <a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                  </a>
-                )}
-                {shop.socialLinks?.insta && (
-                  <a href={shop.socialLinks.insta} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-gradient-to-br hover:from-pink-600 hover:to-orange-500 hover:border-pink-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                  </a>
-                )}
-                {shop.socialLinks?.yt && (
-                  <a href={shop.socialLinks.yt} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-600 hover:border-red-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
-                  </a>
-                )}
-                {shop.socialLinks?.wa && (
-                  <a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-emerald-600 hover:border-emerald-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-                  </a>
-                )}
-                {shop.socialLinks?.linkedin && (
-                  <a href={shop.socialLinks.linkedin} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-blue-700 hover:border-blue-700 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                  </a>
-                )}
-                {shop.socialLinks?.tiktok && (
-                  <a href={shop.socialLinks.tiktok} target="_blank" rel="noreferrer" className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-slate-800 hover:border-slate-600 text-slate-400 hover:text-white hover:scale-110 transition-all duration-300 shadow-lg">
-                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-                  </a>
-                )}
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '8px' }}>
+                {shop.socialLinks?.fb && (<a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#1d4ed8'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>)}
+                {shop.socialLinks?.insta && (<a href={shop.socialLinks.insta} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg,#db2777,#ea580c)'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#db2777'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>)}
+                {shop.socialLinks?.yt && (<a href={shop.socialLinks.yt} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#dc2626'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#dc2626'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg></a>)}
+                {shop.socialLinks?.wa && (<a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#059669'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#059669'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>)}
+                {shop.socialLinks?.linkedin && (<a href={shop.socialLinks.linkedin} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>)}
+                {shop.socialLinks?.tiktok && (<a href={shop.socialLinks.tiktok} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>)}
               </div>
               {hasFreeDelivery && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 flex items-center gap-2">
-                  <Gift size={16} className="text-amber-400 shrink-0" />
-                  <p className="text-amber-300 text-xs font-black">আপনার আজকে ফ্রি ডেলিভারি আছে! 🎁</p>
+                <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Gift size={16} style={{ color: '#fbbf24', flexShrink: 0 }} />
+                  <p style={{ color: '#fcd34d', fontSize: '12px', fontWeight: 900, margin: 0 }}>আপনার আজকে ফ্রি ডেলিভারি আছে! 🎁</p>
                 </div>
               )}
             </div>
           </div>
-
           {/* Bottom bar */}
-          <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-600 text-xs font-black flex flex-col gap-1.5 md:text-left text-center">
-              <span className="uppercase tracking-[0.25em]">© {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।</span>
-              <span className="text-xs text-purple-300 font-bold normal-case tracking-normal block mt-1">
-                🚀 Want to launch your own professional online store in minutes just like this? <a href="https://bdretailers.com/become-retailer" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white ml-1">Start Free Trial now!</a>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <p style={{ fontSize: '11px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>
+                © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399' }} />
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b' }}>
+                  বানানো হয়েছে{' '}<a href="https://bdretailers.com" target="_blank" rel="noreferrer" style={{ color: '#94a3b8', textDecoration: 'underline', fontWeight: 900 }}>bdretailers.com</a> দিয়ে
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', paddingBottom: '8px' }}>
+              <span style={{ fontSize: '12px', color: '#c4b5fd', fontWeight: 700 }}>
+                🚀 Want to launch your own store?{' '}
+                <a href="https://bdretailers.com/become-retailer" target="_blank" rel="noreferrer" style={{ color: '#fff', textDecoration: 'underline', fontWeight: 900 }}>Start Free Trial now!</a>
               </span>
-              <span className="text-xs text-purple-300 font-bold mt-1">
-                এই ওয়েবসাইটটি বিডি রিটেইলার্স (<a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">bdretailers.com</a>) দ্বারা তৈরি। | <a href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`} target="_blank" rel="noreferrer" className="underline font-black hover:text-purple-100 text-white">Privacy Policy</a>
-              </span>
-            </p>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-bold text-slate-600">
-                বানানো হয়েছে <a href="https://bdretailers.com" target="_blank" rel="noreferrer" className="underline hover:text-white font-black text-slate-500">bdretailers.com</a> দিয়ে
-              </span>
+              <a
+                href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: '20px', padding: '6px 16px', fontSize: '12px', fontWeight: 800, color: '#c4b5fd', textDecoration: 'none' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.3)'; e.currentTarget.style.color = '#ede9fe'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.15)'; e.currentTarget.style.color = '#c4b5fd'; }}
+              >
+                🔒 Privacy Policy
+              </a>
             </div>
           </div>
         </div>
