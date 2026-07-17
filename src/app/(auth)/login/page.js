@@ -14,6 +14,8 @@ export default function LoginPage() {
   const { user: authUser, userData: authData, loading: authLoading, forceUpdateAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   // Redirection logic — declared before useEffect to avoid hoisting issue
   const handleRedirection = useCallback((currUser, role) => {
@@ -48,6 +50,36 @@ export default function LoginPage() {
       }
     } catch (err) {
       toast.error('Login failed: ' + (err.message || 'Server error'));
+      setLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error('ইমেইল ও পাসওয়ার্ড প্রদান করুন।');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      const { auth } = await import('@/lib/auth');
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      
+      const { handleUserSession } = await import('@/lib/auth');
+      const result = await handleUserSession(userCredential.user);
+      
+      if (result?.user && result?.userData) {
+        forceUpdateAuth(result.user, result.userData);
+        setRedirecting(true);
+        handleRedirection(result.user, result.userData.role || 'user');
+      }
+    } catch (err) {
+      let errorMsg = err.message;
+      if (err.code === 'auth/wrong-password') errorMsg = 'ভুল পাসওয়ার্ড';
+      else if (err.code === 'auth/user-not-found') errorMsg = 'ইমেইল পাওয়া যায়নি';
+      else if (err.code === 'auth/invalid-credential') errorMsg = 'ভুল ইমেইল অথবা পাসওয়ার্ড';
+      toast.error('লগইন ব্যর্থ: ' + errorMsg);
       setLoading(false);
     }
   };
@@ -98,6 +130,48 @@ export default function LoginPage() {
               </>
             )}
           </button>
+
+          <div className="flex items-center gap-4 my-8">
+             <div className="flex-1 h-px bg-slate-100"></div>
+             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">or</span>
+             <div className="flex-1 h-px bg-slate-100"></div>
+          </div>
+
+          <form onSubmit={handleEmailLogin} className="space-y-5 text-left">
+             <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                <input 
+                   type="email" 
+                   required
+                   placeholder="name@example.com"
+                   className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                   value={email}
+                   onChange={e => setEmail(e.target.value)}
+                />
+             </div>
+             
+             <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                <input 
+                   type="password" 
+                   required
+                   placeholder="••••••••"
+                   className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                   value={password}
+                   onChange={e => setPassword(e.target.value)}
+                />
+             </div>
+
+             <button 
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60 cursor-pointer"
+             >
+                {loading ? (
+                   <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin"></div>
+                ) : 'Sign In with Email'}
+             </button>
+          </form>
 
           <div className="mt-12 grid grid-cols-1 gap-4 text-left">
              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-4">

@@ -24,7 +24,7 @@ export default function OrdersPage() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const { user, userData, activeShopId } = useAuth();
+  const { user, userData, activeShopId, isImpersonating } = useAuth();
   const [shop, setShop] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

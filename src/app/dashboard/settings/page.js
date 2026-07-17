@@ -97,7 +97,7 @@ const getCityWards = (district) => {
 };
 
 export default function SettingsPage() {
-  const { user, userData, activeShopId } = useAuth();
+  const { user, userData, activeShopId, isImpersonating } = useAuth();
   const [shop, setShop] = useState({ 
     shopName: '', 
     slogan: '', 
@@ -160,7 +160,7 @@ export default function SettingsPage() {
 
   // Complex substates to prevent null referencing
   const [socialLinks, setSocialLinks] = useState({ fb: '', insta: '', yt: '', wa: '', linkedin: '', tiktok: '' });
-  const [authSettings, setAuthSettings] = useState({ emailAuth: false, actionPin: '', requireLoginBeforeOrder: true });
+  const [authSettings, setAuthSettings] = useState({ emailAuth: false, googleAuth: true, emailPasswordAuth: false, actionPin: '', requireLoginBeforeOrder: true });
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '', requirePaymentScreenshot: false });
   const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true, smartCalcEnabled: true });
@@ -275,6 +275,8 @@ export default function SettingsPage() {
       });
       setAuthSettings({
         emailAuth: data?.authSettings?.emailAuth || false, 
+        googleAuth: data?.authSettings?.googleAuth ?? true,
+        emailPasswordAuth: data?.authSettings?.emailPasswordAuth || false,
         actionPin: data?.authSettings?.actionPin || '',
         requireLoginBeforeOrder: data?.authSettings?.requireLoginBeforeOrder ?? true
       });
@@ -1353,8 +1355,8 @@ export default function SettingsPage() {
              <div className="flex flex-col gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
                <div className="flex items-center justify-between">
                   <div>
-                     <p className="text-xs font-black text-slate-900">Email & Password Auth</p>
-                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Allow custom registration</p>
+                     <p className="text-xs font-black text-slate-900">Email OTP Auth</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">1-tap login verification link / OTP code</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={authSettings.emailAuth} onChange={e => setAuthSettings({...authSettings, emailAuth: e.target.checked})} />

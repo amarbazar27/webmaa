@@ -1,7 +1,7 @@
 name: bdretailers_white_label_app
 description: "BDRetailers multi-tenant e-commerce mobile webview app wrapper"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

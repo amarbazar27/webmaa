@@ -698,6 +698,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [otpTimer, setOtpTimer] = useState(0);
   const [loginPassword, setLoginPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [customerRegName, setCustomerRegName] = useState('');
+  const [loginMode, setLoginMode] = useState('login'); // 'login' or 'signup'
 
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
@@ -977,13 +979,42 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     try {
       const { signInWithEmailAndPassword } = await import('firebase/auth');
       const { auth } = await import('@/lib/auth');
-      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      
+      const { handleUserSession } = await import('@/lib/auth');
+      await handleUserSession(userCredential.user);
+
       toast.success('লগইন সফল! 🎉');
       setShowLoginModal(false);
       setLoginEmail(''); setLoginPassword('');
       if (cart.length > 0) setTimeout(() => setIsOrderOpen(true), 300);
     } catch (err) {
       toast.error(`লগইন ব্যর্থ: ${err?.code === 'auth/wrong-password' ? 'পাসওয়ার্ড ভুল' : err?.code === 'auth/user-not-found' ? 'ইমেইল পাওয়া যায়নি' : err.message}`);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleEmailSignUp = async () => {
+    if (!loginEmail || !loginPassword) { toast.error('ইমেইল ও পাসওয়ার্ড দিন।'); return; }
+    if (loginPassword.length < 6) { toast.error('পাসওয়ার্ড কমপক্ষে ৬ ডিজিটের হতে হবে।'); return; }
+    setLoginLoading(true);
+    try {
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+      const { auth } = await import('@/lib/auth');
+      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+      if (customerRegName) {
+        await updateProfile(userCredential.user, { displayName: customerRegName });
+      }
+      const { handleUserSession } = await import('@/lib/auth');
+      await handleUserSession(userCredential.user);
+
+      toast.success('নিবন্ধন সফল এবং লগইন হয়েছে! 🎉');
+      setShowLoginModal(false);
+      setLoginEmail(''); setLoginPassword(''); setCustomerRegName('');
+      if (cart.length > 0) setTimeout(() => setIsOrderOpen(true), 300);
+    } catch (err) {
+      toast.error(`নিবন্ধন ব্যর্থ: ${err.message}`);
     } finally {
       setLoginLoading(false);
     }
@@ -3060,7 +3091,58 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
               )}
 
-              {shop.authSettings?.googleAuth === false && !shop.authSettings?.emailAuth && (
+              {shop.authSettings?.emailPasswordAuth && (
+                <div className="space-y-3 pt-2 border-t border-slate-100 text-left">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                      {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
+                    </p>
+                    <button 
+                      type="button"
+                      onClick={() => setLoginMode(loginMode === 'login' ? 'signup' : 'login')}
+                      className="text-xs font-extrabold text-purple-600 hover:underline"
+                    >
+                      {loginMode === 'login' ? 'অ্যাকাউন্ট নেই?' : 'লগইন করুন'}
+                    </button>
+                  </div>
+
+                  {loginMode === 'signup' && (
+                    <input 
+                      type="text" 
+                      placeholder="আপনার নাম" 
+                      value={customerRegName}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                      onChange={(e) => setCustomerRegName(e.target.value)}
+                    />
+                  )}
+
+                  <input 
+                    type="email" 
+                    placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
+                    value={loginEmail}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                  />
+                  
+                  <input 
+                    type="password" 
+                    placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
+                    value={loginPassword}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                  />
+
+                  <button 
+                    onClick={loginMode === 'signup' ? handleEmailSignUp : handleEmailLogin}
+                    disabled={loginLoading}
+                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                  >
+                    {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : 'লগইন করুন')}
+                  </button>
+                </div>
+              )}
+
+              {shop.authSettings?.googleAuth === false && !shop.authSettings?.emailAuth && !shop.authSettings?.emailPasswordAuth && (
                 <p className="text-sm text-slate-500 font-bold">এই শপে লগইন সুবিধা বন্ধ আছে। অতিথি হিসেবে অর্ডার করুন।</p>
               )}
             </div>
@@ -3873,7 +3955,58 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   )}
 
-                  {shop.authSettings?.googleAuth === false && !shop.authSettings?.emailAuth && (
+                  {shop.authSettings?.emailPasswordAuth && (
+                    <div className="w-full space-y-3 pt-2 border-t border-slate-100 text-left animate-slide-in">
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                          {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
+                        </p>
+                        <button 
+                          type="button"
+                          onClick={() => setLoginMode(loginMode === 'login' ? 'signup' : 'login')}
+                          className="text-xs font-extrabold text-purple-600 hover:underline"
+                        >
+                          {loginMode === 'login' ? 'অ্যাকাউন্ট নেই?' : 'লগইন করুন'}
+                        </button>
+                      </div>
+
+                      {loginMode === 'signup' && (
+                        <input 
+                          type="text" 
+                          placeholder="আপনার নাম" 
+                          value={customerRegName}
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                          onChange={(e) => setCustomerRegName(e.target.value)}
+                        />
+                      )}
+
+                      <input 
+                        type="email" 
+                        placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
+                        value={loginEmail}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                      />
+                      
+                      <input 
+                        type="password" 
+                        placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
+                        value={loginPassword}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                      />
+
+                      <button 
+                        onClick={loginMode === 'signup' ? handleEmailSignUp : handleEmailLogin}
+                        disabled={loginLoading}
+                        className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                      >
+                        {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : 'লগইন করুন')}
+                      </button>
+                    </div>
+                  )}
+
+                  {shop.authSettings?.googleAuth === false && !shop.authSettings?.emailAuth && !shop.authSettings?.emailPasswordAuth && (
                     <div className="bg-slate-100 px-4 py-3 rounded-xl border border-slate-200 text-center text-xs font-bold text-slate-500 mt-2">
                       এই শপে লগইন সিস্টেম সাময়িকভাবে বন্ধ আছে। আপনি অতিথি হিসেবে অর্ডার করতে পারেন।
                     </div>
