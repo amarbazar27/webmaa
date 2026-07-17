@@ -1363,6 +1363,17 @@ export default function SettingsPage() {
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                   </label>
                </div>
+
+               <div className="flex items-center justify-between border-t border-slate-200 pt-4">
+                  <div>
+                     <p className="text-xs font-black text-slate-900">Email & Password Auth</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">Allow custom registration & password login</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={authSettings.emailPasswordAuth} onChange={e => setAuthSettings({...authSettings, emailPasswordAuth: e.target.checked})} />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+               </div>
                
                <div className="flex items-center justify-between border-t border-slate-200 pt-4">
                   <div>
