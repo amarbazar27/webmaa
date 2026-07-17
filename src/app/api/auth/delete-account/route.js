@@ -6,6 +6,27 @@ import { sendOTPEmail } from '@/lib/ruflo';
 
 const MAX_OTP_ATTEMPTS = 5;
 
+async function deleteCollection(db, collectionPath) {
+  const collectionRef = db.collection(collectionPath);
+  const snapshot = await collectionRef.get();
+  
+  if (snapshot.size === 0) return;
+
+  const chunks = [];
+  const docs = snapshot.docs;
+  for (let i = 0; i < docs.length; i += 500) {
+    chunks.push(docs.slice(i, i + 500));
+  }
+
+  for (const chunk of chunks) {
+    const batch = db.batch();
+    chunk.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+  }
+}
+
 export async function POST(req) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -87,18 +108,35 @@ export async function POST(req) {
       // OTP matches! Clean up codes
       await otpDocRef.delete();
 
-      // Delete user's Firestore profile
+      // 1. Delete user's cart subcollection
+      await deleteCollection(adminDb, `users/${uid}/carts`);
+
+      // 2. Delete user's Firestore profile
       await adminDb.collection('users').doc(uid).delete();
 
-      // Delete any shop that the user owns (if any)
+      // 3. Delete any shop that the user owns and its subcollections (if any)
       const shopsQuery = await adminDb.collection('shops').where('ownerEmail', '==', email).get();
-      const batch = adminDb.batch();
-      shopsQuery.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      await batch.commit();
+      for (const shopDoc of shopsQuery.docs) {
+        const shopId = shopDoc.id;
+        const subcollections = [
+          'products',
+          'categories',
+          'orders',
+          'incomplete_orders',
+          'reviews',
+          'fcmTokens',
+          'counters'
+        ];
+        
+        for (const sub of subcollections) {
+          await deleteCollection(adminDb, `shops/${shopId}/${sub}`);
+        }
+        
+        // Delete the main shop document
+        await adminDb.collection('shops').doc(shopId).delete();
+      }
 
-      // Delete user from Firebase Auth
+      // 4. Delete user from Firebase Auth
       await adminAuth.deleteUser(uid);
 
       return NextResponse.json({ success: true, message: 'আপনার অ্যাকাউন্টটি স্থায়ীভাবে মুছে ফেলা হয়েছে।' });
