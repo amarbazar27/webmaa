@@ -2,11 +2,12 @@
 import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import useLocation from '@/lib/useLocation';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Script from 'next/script';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2,
-  User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings,
+  User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings, Trash2,
   ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
   Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
@@ -4117,7 +4118,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             </div>
 
             {user && (
-              <div className="p-5 border-t border-slate-200 bg-white">
+              <div className="p-5 border-t border-slate-200 bg-white flex flex-col gap-2">
+                <Link 
+                  href={`/shop/${shop.shopSlug || shop.subdomainSlug}/account-delete`}
+                  onClick={() => setIsProfileOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 hover:bg-red-50 text-slate-500 hover:text-red-600 font-extrabold text-xs rounded-xl border border-slate-200/60 hover:border-red-200 transition-all text-center"
+                >
+                  <Trash2 size={14} /> অ্যাকাউন্ট মুছে ফেলুন (Delete Account)
+                </Link>
+                
                 <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3.5 bg-red-50 text-red-600 font-black text-sm rounded-xl hover:bg-red-600 hover:text-white border border-red-100 transition-all shadow-sm">
                   <LogOut size={18} strokeWidth={2.5}/> লগ আউট
                 </button>

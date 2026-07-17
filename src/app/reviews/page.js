@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { loginWithGoogle } from '@/lib/auth';
 import { uploadImage } from '@/lib/storage';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Star, Camera, Loader2, User, CheckCircle2, MessageSquare, ShoppingBag, Edit2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ReviewsPage() {
   const { user, userData, forceUpdateAuth } = useAuth();
+  const router = useRouter();
   
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
@@ -103,16 +105,8 @@ export default function ReviewsPage() {
     }
   };
 
-  const handleSmartLogin = async () => {
-    try {
-      const result = await loginWithGoogle();
-      if (result?.user && result?.userData) {
-        forceUpdateAuth(result.user, result.userData);
-        toast.success(`লগইন সফল হয়েছে! 🎉`);
-      }
-    } catch (err) {
-      toast.error('লগইন ব্যর্থ হয়েছে: ' + (err.message || 'সার্ভার ত্রুটি'));
-    }
+  const handleSmartLogin = () => {
+    router.push('/login');
   };
 
   const handleSubmitReview = async (e) => {

@@ -490,22 +490,8 @@ export default function Home() {
     return null;
   };
 
-  const handleSmartLogin = async () => {
-    setLoggingIn(true);
-    try {
-      const result = await loginWithGoogle();
-      if (!result) return;
-      
-      const role = result?.userData?.role;
-      if (role === 'superadmin') router.push('/superadmin');
-      else if (role === 'retailer' || role === 'staff' || role === 'admin') router.push('/dashboard');
-      else toast.success(`স্বাগতম, ${result.user.displayName}!`);
-    } catch (err) {
-      console.error("[SmartLogin] Error:", err);
-      toast.error(err.message || 'লগইন করতে সমস্যা হয়েছে।');
-    } finally {
-      setLoggingIn(false);
-    }
+  const handleSmartLogin = () => {
+    router.push('/login');
   };
 
   const handleAddToCart = (product, customNote = '') => {
@@ -2655,7 +2641,14 @@ export default function Home() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-white/10 text-center bg-[#05050a]">
+            <div className="p-4 border-t border-white/10 text-center bg-[#05050a] flex flex-col gap-3">
+              <Link 
+                href="/account-delete"
+                onClick={() => setIsProfileOpen(false)}
+                className="mx-auto flex items-center justify-center gap-2 py-2 px-4 bg-white/5 hover:bg-red-500/10 text-white/50 hover:text-red-400 font-extrabold text-xs rounded-xl border border-white/10 hover:border-red-500/20 transition-all text-center max-w-[200px]"
+              >
+                <Trash2 size={12} /> Delete Account
+              </Link>
               <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-black">{globalConfig?.brandName || 'BDRetailers'} Customer Profile &bull; 2026</p>
             </div>
           </div>

@@ -146,19 +146,8 @@ export default function BecomeRetailerPage() {
     }
   }, [user]);
 
-  const handleGoogleLogin = async () => {
-    setLoginLoading(true);
-    try {
-      const result = await loginWithGoogle();
-      if (result?.user && result?.userData) {
-        forceUpdateAuth(result.user, result.userData);
-        toast.success(`লগইন সফল হয়েছে! 🎉`);
-      }
-    } catch (err) {
-      toast.error('লগইন ব্যর্থ হয়েছে: ' + (err.message || 'সার্ভার ত্রুটি'));
-    } finally {
-      setLoginLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    router.push('/login');
   };
 
   const handleSubmit = async (e) => {
@@ -190,27 +179,9 @@ export default function BecomeRetailerPage() {
     let activeUserData = userData;
 
     if (!activeUser) {
-      setLoginLoading(true);
-      const toastId = toast.loading('আবেদন করার জন্য প্রথমে লগইন সম্পন্ন করুন...');
-      try {
-        const loginResult = await loginWithGoogle();
-        if (loginResult?.user) {
-          activeUser = loginResult.user;
-          activeUserData = loginResult.userData;
-          forceUpdateAuth(loginResult.user, loginResult.userData);
-          toast.success('লগইন সফল হয়েছে!', { id: toastId });
-        } else {
-          toast.error('লগইন ব্যর্থ হয়েছে বা বাতিল করা হয়েছে।', { id: toastId });
-          setLoginLoading(false);
-          return;
-        }
-      } catch (err) {
-        toast.error('লগইন ব্যর্থ হয়েছে।', { id: toastId });
-        setLoginLoading(false);
-        return;
-      } finally {
-        setLoginLoading(false);
-      }
+      toast.error('আবেদন করার জন্য প্রথমে লগইন সম্পন্ন করুন।');
+      router.push('/login');
+      return;
     }
 
     const codePrefix = selectedCountry.code === 'other' ? customCode.trim() : selectedCountry.code;
