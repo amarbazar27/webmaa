@@ -15,6 +15,24 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [globalConfig, setGlobalConfig] = useState(null);
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const { subscribeGlobalConfig } = await import('@/lib/firestore');
+        const unsub = subscribeGlobalConfig((config) => {
+          setGlobalConfig(config);
+        });
+        return unsub;
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    let unsubFn;
+    loadConfig().then(unsub => { unsubFn = unsub; });
+    return () => { if (unsubFn) unsubFn(); };
+  }, []);
 
   useEffect(() => {
     if (user && !authLoading) {
@@ -121,74 +139,86 @@ export default function RegisterPage() {
              </div>
 
              <div className="space-y-6">
-                 <button 
-                    onClick={handleRegister}
-                    disabled={loading || authLoading}
-                    className="w-full h-16 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl font-black text-lg flex items-center justify-center gap-4 active:scale-95 transition-all shadow-md shadow-slate-100 disabled:opacity-50 group cursor-pointer"
-                 >
-                    {loading ? (
-                      <Loader2 className="animate-spin text-slate-800" size={24} />
-                    ) : (
-                      <>
-                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
-                         <span className="text-slate-800">Continue with Google</span>
-                      </>
-                    )}
-                 </button>
-
-                 <div className="flex items-center gap-4 py-4">
-                    <div className="flex-1 h-px bg-slate-100"></div>
-                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">or</span>
-                    <div className="flex-1 h-px bg-slate-100"></div>
-                 </div>
-
-                 <form onSubmit={handleEmailRegister} className="space-y-4 text-left">
-                    <div className="space-y-1">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                       <input 
-                          type="text" 
-                          required
-                          placeholder="John Doe"
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
-                          value={name}
-                          onChange={e => setName(e.target.value)}
-                       />
-                    </div>
-
-                    <div className="space-y-1">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                       <input 
-                          type="email" 
-                          required
-                          placeholder="name@example.com"
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                       />
-                    </div>
-                    
-                    <div className="space-y-1">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                       <input 
-                          type="password" 
-                          required
-                          placeholder="••••••••"
-                          className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                       />
-                    </div>
-
+                {globalConfig?.googleAuth !== false && (
                     <button 
-                       type="submit"
+                       onClick={handleRegister}
                        disabled={loading || authLoading}
-                       className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60 cursor-pointer"
+                       className="w-full h-16 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl font-black text-lg flex items-center justify-center gap-4 active:scale-95 transition-all shadow-md shadow-slate-100 disabled:opacity-50 group cursor-pointer"
                     >
                        {loading ? (
-                          <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin"></div>
-                       ) : 'Sign Up with Email'}
+                         <Loader2 className="animate-spin text-slate-800" size={24} />
+                       ) : (
+                         <>
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" alt="Google" />
+                            <span className="text-slate-800">Continue with Google</span>
+                         </>
+                       )}
                     </button>
-                 </form>
+                  )}
+
+                  {globalConfig?.googleAuth !== false && globalConfig?.emailPasswordAuth !== false && (
+                    <div className="flex items-center gap-4 py-4">
+                       <div className="flex-1 h-px bg-slate-100"></div>
+                       <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">or</span>
+                       <div className="flex-1 h-px bg-slate-100"></div>
+                    </div>
+                  )}
+
+                  {globalConfig?.emailPasswordAuth !== false && (
+                    <form onSubmit={handleEmailRegister} className="space-y-4 text-left">
+                       <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                          <input 
+                             type="text" 
+                             required
+                             placeholder="John Doe"
+                             className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                             value={name}
+                             onChange={e => setName(e.target.value)}
+                          />
+                       </div>
+
+                       <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                          <input 
+                             type="email" 
+                             required
+                             placeholder="name@example.com"
+                             className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                             value={email}
+                             onChange={e => setEmail(e.target.value)}
+                          />
+                       </div>
+                       
+                       <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                          <input 
+                             type="password" 
+                             required
+                             placeholder="••••••••"
+                             className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                             value={password}
+                             onChange={e => setPassword(e.target.value)}
+                          />
+                       </div>
+
+                       <button 
+                          type="submit"
+                          disabled={loading || authLoading}
+                          className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60 cursor-pointer"
+                       >
+                          {loading ? (
+                             <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin"></div>
+                          ) : 'Sign Up with Email'}
+                       </button>
+                    </form>
+                  )}
+
+                  {globalConfig?.googleAuth === false && globalConfig?.emailPasswordAuth === false && (
+                    <div className="bg-slate-100 p-4 rounded-2xl text-center text-xs font-bold text-slate-500 my-4">
+                      নিবন্ধন সুবিধা সাময়িকভাবে বন্ধ আছে।
+                    </div>
+                  )}
 
                 <div className="flex items-center gap-4 py-4">
                    <div className="flex-1 h-px bg-slate-100"></div>

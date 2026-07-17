@@ -3072,6 +3072,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           আবার পাঠান (Resend)
                         </button>
                       </div>
+                      <p className="text-[10px] text-amber-600 font-bold bg-amber-50 border border-amber-100 p-2 rounded-lg leading-relaxed mt-1">
+                        ⚠️ ওটিপি (OTP) না পেলে দয়া করে আপনার ইমেইলের **Spam (স্প্যাম) ফোল্ডার** চেক করুন।
+                      </p>
                     </div>
                   )}
 
@@ -3936,6 +3939,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                               আবার পাঠান (Resend)
                             </button>
                           </div>
+                          <p className="text-[10px] text-amber-600 font-bold bg-amber-50 border border-amber-100 p-2 rounded-lg leading-relaxed mt-1">
+                            ⚠️ ওটিপি (OTP) না পেলে দয়া করে আপনার ইমেইলের **Spam (স্প্যাম) ফোল্ডার** চেক করুন।
+                          </p>
                         </div>
                       )}
 

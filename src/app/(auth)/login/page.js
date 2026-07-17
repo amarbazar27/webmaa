@@ -16,6 +16,24 @@ export default function LoginPage() {
   const [redirecting, setRedirecting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [globalConfig, setGlobalConfig] = useState(null);
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const { subscribeGlobalConfig } = await import('@/lib/firestore');
+        const unsub = subscribeGlobalConfig((config) => {
+          setGlobalConfig(config);
+        });
+        return unsub;
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    let unsubFn;
+    loadConfig().then(unsub => { unsubFn = unsub; });
+    return () => { if (unsubFn) unsubFn(); };
+  }, []);
 
   // Redirection logic — declared before useEffect to avoid hoisting issue
   const handleRedirection = useCallback((currUser, role) => {
@@ -115,63 +133,75 @@ export default function LoginPage() {
           <h1 className="text-3xl font-black mb-3 text-slate-900 tracking-tight">System Login</h1>
           <p className="text-sm text-slate-400 mb-12 font-medium leading-relaxed">Sign in with your verified identity to access the cloud manager.</p>
 
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-4 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-md active:scale-[0.98] transition-all font-black text-lg disabled:opacity-50 group cursor-pointer"
-          >
-            {loading ? (
-              <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-                <span className="text-slate-800">Continue with Google</span>
-                <ArrowRight className="w-5 h-5 text-slate-600 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
-              </>
-            )}
-          </button>
+          {globalConfig?.googleAuth !== false && (
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-4 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-md active:scale-[0.98] transition-all font-black text-lg disabled:opacity-50 group cursor-pointer"
+            >
+              {loading ? (
+                <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
+                  <span className="text-slate-800">Continue with Google</span>
+                  <ArrowRight className="w-5 h-5 text-slate-600 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                </>
+              )}
+            </button>
+          )}
 
-          <div className="flex items-center gap-4 my-8">
-             <div className="flex-1 h-px bg-slate-100"></div>
-             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">or</span>
-             <div className="flex-1 h-px bg-slate-100"></div>
-          </div>
+          {globalConfig?.googleAuth !== false && globalConfig?.emailPasswordAuth !== false && (
+            <div className="flex items-center gap-4 my-8">
+               <div className="flex-1 h-px bg-slate-100"></div>
+               <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">or</span>
+               <div className="flex-1 h-px bg-slate-100"></div>
+            </div>
+          )}
 
-          <form onSubmit={handleEmailLogin} className="space-y-5 text-left">
-             <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-                <input 
-                   type="email" 
-                   required
-                   placeholder="name@example.com"
-                   className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
-                   value={email}
-                   onChange={e => setEmail(e.target.value)}
-                />
-             </div>
-             
-             <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
-                <input 
-                   type="password" 
-                   required
-                   placeholder="••••••••"
-                   className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
-                   value={password}
-                   onChange={e => setPassword(e.target.value)}
-                />
-             </div>
+          {globalConfig?.emailPasswordAuth !== false && (
+            <form onSubmit={handleEmailLogin} className="space-y-5 text-left">
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <input 
+                     type="email" 
+                     required
+                     placeholder="name@example.com"
+                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                     value={email}
+                     onChange={e => setEmail(e.target.value)}
+                  />
+               </div>
+               
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                  <input 
+                     type="password" 
+                     required
+                     placeholder="••••••••"
+                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                     value={password}
+                     onChange={e => setPassword(e.target.value)}
+                  />
+               </div>
 
-             <button 
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60 cursor-pointer"
-             >
-                {loading ? (
-                   <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin"></div>
-                ) : 'Sign In with Email'}
-             </button>
-          </form>
+               <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60 cursor-pointer"
+               >
+                  {loading ? (
+                     <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin"></div>
+                  ) : 'Sign In with Email'}
+               </button>
+            </form>
+          )}
+
+          {globalConfig?.googleAuth === false && globalConfig?.emailPasswordAuth === false && (
+            <div className="bg-slate-100 p-4 rounded-2xl text-center text-xs font-bold text-slate-500 my-4">
+              লগইন সুবিধা সাময়িকভাবে বন্ধ আছে।
+            </div>
+          )}
 
           <div className="mt-12 grid grid-cols-1 gap-4 text-left">
              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-4">

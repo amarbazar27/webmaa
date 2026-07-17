@@ -229,7 +229,7 @@ export async function sendOrderConfirmationEmail({ to, shopId, shopName, custome
   return sendWithRetry({
     from: `"${activeShopName}" <${process.env.RUFLO_EMAIL}>`,
     to,
-    subject: `✅ অর্ডার নিশ্চিত হয়েছে — #${orderId} | ${activeShopName}`,
+    subject: `অর্ডার নিশ্চিত হয়েছে — #${orderId} | ${activeShopName}`,
     html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, customerAddress, coordinates, items, total }),
   });
 }
@@ -245,7 +245,7 @@ export async function sendRetailerNotificationEmail({ to, shopId, shopName, orde
   return sendWithRetry({
     from: `"BDRetailers Ruflo" <${process.env.RUFLO_EMAIL}>`,
     to,
-    subject: `📦 নতুন অর্ডার #${orderId} — ${activeShopName}`,
+    subject: `নতুন অর্ডার #${orderId} — ${activeShopName}`,
     html: buildRetailerEmail({ shopName: activeShopName, orderId, customerName, customerPhone, customerAddress, coordinates, items, total }),
   });
 }
@@ -259,7 +259,7 @@ export async function sendOTPEmail({ to, name, otp, purpose = 'লগইন' }) 
   return sendWithRetry({
     from: `"BDRetailers Security" <${process.env.RUFLO_EMAIL}>`,
     to,
-    subject: `🔐 আপনার ${purpose} কোড: ${otp}`,
+    subject: `BDRetailers Security - আপনার ${purpose} কোড: ${otp}`,
     html: buildOTPEmail({ name, otp, purpose }),
   });
 }
@@ -273,9 +273,9 @@ export async function sendStatusUpdateEmail({ to, shopId, shopName, customerName
   const activeShopName = await getRealtimeShopName(shopId, shopName);
 
   const subjectMap = {
-    confirmed: '✅ আপনার অর্ডার নিশ্চিত হয়েছে',
-    completed: '🎉 ডেলিভারি সম্পন্ন হয়েছে',
-    cancelled: '❌ অর্ডার বাতিল হয়েছে',
+    confirmed: 'আপনার অর্ডার নিশ্চিত হয়েছে',
+    completed: 'ডেলিভারি সম্পন্ন হয়েছে',
+    cancelled: 'অর্ডার বাতিল হয়েছে',
   };
   const subject = `${subjectMap[status] || 'অর্ডার আপডেট'} — #${orderId}`;
 
