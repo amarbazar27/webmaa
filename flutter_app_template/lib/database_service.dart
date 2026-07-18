@@ -18,7 +18,7 @@ class DatabaseService {
       // 2. Fallback query by subdomainSlug
       final snapSubdomain = await _db
           .collection('shops')
-          .where('subdomainSlug', '==', shopId)
+          .where('subdomainSlug', isEqualTo: shopId)
           .limit(1)
           .get();
       if (snapSubdomain.docs.isNotEmpty && snapSubdomain.docs.first.data() != null) {
@@ -29,7 +29,7 @@ class DatabaseService {
       // 3. Fallback query by shopSlug
       final snapSlug = await _db
           .collection('shops')
-          .where('shopSlug', '==', shopId)
+          .where('shopSlug', isEqualTo: shopId)
           .limit(1)
           .get();
       if (snapSlug.docs.isNotEmpty && snapSlug.docs.first.data() != null) {
@@ -40,7 +40,7 @@ class DatabaseService {
       // 4. Fallback query by customDomain
       final snapDomain = await _db
           .collection('shops')
-          .where('customDomain', '==', shopId)
+          .where('customDomain', isEqualTo: shopId)
           .limit(1)
           .get();
       if (snapDomain.docs.isNotEmpty && snapDomain.docs.first.data() != null) {
