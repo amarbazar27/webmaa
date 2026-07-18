@@ -30,28 +30,49 @@ class _StorefrontViewState extends State<StorefrontView> {
   String _selectedCategoryId = 'all';
   String _searchQuery = '';
 
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
     _loadStoreData();
   }
 
-  void _loadStoreData() async {
-    final shop = await _db.getShop(widget.shopId);
-    if (shop != null) {
-      final categories = await _db.getCategories(widget.shopId);
-      final products = await _db.getProducts(widget.shopId);
-      setState(() {
-        _shop = shop;
-        _categories = categories;
-        _products = products;
-        _filteredProducts = products;
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
+  Future<void> _loadStoreData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final shop = await _db.getShop(widget.shopId);
+      if (shop != null) {
+        final categories = await _db.getCategories(shop.id);
+        final products = await _db.getProducts(shop.id);
+        if (mounted) {
+          setState(() {
+            _shop = shop;
+            _categories = categories;
+            _products = products;
+            _filteredProducts = products;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'স্টোর খুঁজে পাওয়া যায়নি! (ID: ${widget.shopId})';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'নেটওয়ার্ক বা ডাটাবেজ কানেকশনে সমস্যা হয়েছে।';
+        });
+      }
     }
   }
 
@@ -68,14 +89,62 @@ class _StorefrontViewState extends State<StorefrontView> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'স্টোর ডাটা লোড হচ্ছে...',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     if (_shop == null) {
-      return const Scaffold(
-        body: Center(child: Text('স্টোর খুঁজে পাওয়া যায়নি!')),
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.store_mall_directory_outlined, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  _errorMessage ?? 'স্টোর খুঁজে পাওয়া যায়নি!',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'দয়া করে ইন্টারনেট কানেকশন চেক করে পুনরায় চেষ্টা করুন।',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: _loadStoreData,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('আবার চেষ্টা করুন (Retry)'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF9333EA),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
@@ -106,8 +175,10 @@ class _StorefrontViewState extends State<StorefrontView> {
           ],
         ),
       ),
-      body: Column(
-        children: [
+      body: RefreshIndicator(
+        onRefresh: _loadStoreData,
+        child: Column(
+          children: [
           // Search Bar
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -166,6 +237,7 @@ class _StorefrontViewState extends State<StorefrontView> {
           ),
         ],
       ),
+    ),
       // Floating Shopping Cart Bubble
       floatingActionButton: cart.itemCount > 0
           ? FloatingActionButton.extended(

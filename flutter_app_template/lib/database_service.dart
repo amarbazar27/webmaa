@@ -4,12 +4,48 @@ import 'models.dart';
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Fetch shop metadata by ID
+  // Fetch shop metadata by ID or Slug
   Future<Shop?> getShop(String shopId) async {
     try {
+      if (shopId.trim().isEmpty) return null;
+
+      // 1. Try direct doc ID query
       final doc = await _db.collection('shops').doc(shopId).get();
       if (doc.exists && doc.data() != null) {
         return Shop.fromFirestore(doc.id, doc.data()!);
+      }
+
+      // 2. Fallback query by subdomainSlug
+      final snapSubdomain = await _db
+          .collection('shops')
+          .where('subdomainSlug', '==', shopId)
+          .limit(1)
+          .get();
+      if (snapSubdomain.docs.isNotEmpty && snapSubdomain.docs.first.data() != null) {
+        final d = snapSubdomain.docs.first;
+        return Shop.fromFirestore(d.id, d.data());
+      }
+
+      // 3. Fallback query by shopSlug
+      final snapSlug = await _db
+          .collection('shops')
+          .where('shopSlug', '==', shopId)
+          .limit(1)
+          .get();
+      if (snapSlug.docs.isNotEmpty && snapSlug.docs.first.data() != null) {
+        final d = snapSlug.docs.first;
+        return Shop.fromFirestore(d.id, d.data());
+      }
+
+      // 4. Fallback query by customDomain
+      final snapDomain = await _db
+          .collection('shops')
+          .where('customDomain', '==', shopId)
+          .limit(1)
+          .get();
+      if (snapDomain.docs.isNotEmpty && snapDomain.docs.first.data() != null) {
+        final d = snapDomain.docs.first;
+        return Shop.fromFirestore(d.id, d.data());
       }
     } catch (e) {
       print('Error fetching shop: $e');
@@ -54,10 +90,10 @@ class DatabaseService {
           .collection('shops')
           .doc(shopId)
           .collection('products')
-          .where('inStock', isEqualTo: true)
           .get();
       return snapshot.docs
           .map((doc) => Product.fromFirestore(doc.id, doc.data()))
+          .where((p) => p.inStock)
           .toList();
     } catch (e) {
       print('Error fetching products: $e');

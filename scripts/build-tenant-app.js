@@ -224,6 +224,7 @@ async function build() {
   let logoUrl = null;
   let customDomain = null;
   let appConfig = {};
+  let actualShopId = shopSlug;
 
   if (db && !isDryRun) {
     try {
@@ -232,9 +233,14 @@ async function build() {
       if (snap.empty) {
         snap = await db.collection('shops').where('shopSlug', '==', shopSlug).limit(1).get();
       }
+      if (snap.empty) {
+        snap = await db.collection('shops').doc(shopSlug).get();
+      }
 
       if (!snap.empty) {
-        const shopData = snap.docs[0].data();
+        const shopDoc = snap.docs ? snap.docs[0] : snap;
+        actualShopId = shopDoc.id;
+        const shopData = shopDoc.data();
         appConfig = shopData.appConfig || {};
         shopName = appConfig.appName || shopData.shopName || shopName;
         primaryColor = shopData.designOverrides?.primaryColor || primaryColor;
@@ -252,7 +258,7 @@ async function build() {
         } else {
           targetUrl = `https://bdretailers.com/${shopSlug}`;
         }
-        console.log(`✅ Loaded shop metadata: ${shopName} | Package: ${packageName} | Color: ${primaryColor} | Domain: ${targetUrl}`);
+        console.log(`✅ Loaded shop metadata: ${shopName} | DocId: ${actualShopId} | Package: ${packageName} | Color: ${primaryColor} | Domain: ${targetUrl}`);
       } else {
         console.warn(`⚠️ Shop document not found in Firestore. Using default parameters.`);
       }
@@ -296,7 +302,8 @@ async function build() {
   static const String appName = "${shopName.replace(/"/g, '\\"').trim()}";
   static const String targetUrl = "${targetUrl.trim()}";
   static const String primaryColorHex = "${primaryColor.trim()}";
-  static const String shopId = "${shopSlug.trim()}";
+  static const String shopId = "${actualShopId.trim()}";
+  static const String shopSlug = "${shopSlug.trim()}";
 }
 `;
   fs.writeFileSync(configDartPath, configContent);

@@ -161,7 +161,11 @@ export async function getShopServer(slug) {
       const shopsRef = adminDb.collection('shops');
       let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
       if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
-      if (snap.empty) return null;
+      if (snap.empty) {
+        const doc = await shopsRef.doc(slug).get();
+        if (doc.exists) return { id: doc.id, ...toPlainObject(doc.data()) };
+        return null;
+      }
       const doc = snap.docs[0];
       return { id: doc.id, ...toPlainObject(doc.data()) };
     } else {
