@@ -9,8 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'config.dart';
 import 'cart_provider.dart';
-import 'storefront_view.dart';
-import 'marketplace_view.dart';
+import 'app_webview_screen.dart';
 
 // Local Notifications Plugin setup for background messages
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -64,7 +63,7 @@ void main() async {
         ?.createNotificationChannel(const AndroidNotificationChannel(
           'bdretailers_channel',
           'BDRetailers Notifications',
-          description: 'Notifications for BDRetailers stores',
+          channelDescription: 'Notifications for BDRetailers stores',
           importance: Importance.max,
         ));
     debugPrint("Firebase initialized successfully.");
@@ -107,27 +106,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
         useMaterial3: true,
       ),
-      home: const MainRootNavigator(),
+      home: const AppWebViewScreen(),
     );
-  }
-}
-
-class MainRootNavigator extends StatefulWidget {
-  const MainRootNavigator({super.key});
-
-  @override
-  State<MainRootNavigator> createState() => _MainRootNavigatorState();
-}
-
-class _MainRootNavigatorState extends State<MainRootNavigator> {
-  @override
-  Widget build(BuildContext context) {
-    // If shopId is bdretailers or main, load Marketplace View directory
-    if (AppConfig.shopId == 'bdretailers' || AppConfig.shopId == 'main') {
-      return const MarketplaceView();
-    }
-    // Load specific storefront directly
-    return StorefrontView(shopId: AppConfig.shopId);
   }
 }
 
