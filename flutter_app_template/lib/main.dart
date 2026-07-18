@@ -63,7 +63,7 @@ void main() async {
         ?.createNotificationChannel(const AndroidNotificationChannel(
           'bdretailers_channel',
           'BDRetailers Notifications',
-          channelDescription: 'Notifications for BDRetailers stores',
+          description: 'Notifications for BDRetailers stores',
           importance: Importance.max,
         ));
     debugPrint("Firebase initialized successfully.");
