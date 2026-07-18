@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'models.dart';
 import 'database_service.dart';
 import 'cart_provider.dart';
 import 'product_detail_view.dart';
 import 'checkout_view.dart';
+import 'web_shop_view.dart';
 
 class StorefrontView extends StatefulWidget {
   final String shopId;
@@ -21,6 +23,8 @@ class StorefrontView extends StatefulWidget {
 
 class _StorefrontViewState extends State<StorefrontView> {
   final DatabaseService _db = DatabaseService();
+  final TextEditingController _searchController = TextEditingController();
+
   Shop? _shop;
   List<Category> _categories = [];
   List<Product> _products = [];
@@ -28,14 +32,21 @@ class _StorefrontViewState extends State<StorefrontView> {
 
   bool _isLoading = true;
   String _selectedCategoryId = 'all';
+  String _selectedSubcategory = 'all';
   String _searchQuery = '';
-
+  int _currentBottomNavIndex = 0;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _loadStoreData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadStoreData() async {
@@ -77,8 +88,11 @@ class _StorefrontViewState extends State<StorefrontView> {
   }
 
   void _filterProducts() {
+    final query = _searchQuery.trim().toLowerCase();
+
     setState(() {
       _filteredProducts = _products.where((p) {
+        // 1. Category Matching
         bool matchesCategory = _selectedCategoryId == 'all';
         if (!matchesCategory) {
           final pCat = p.categoryId.trim().toLowerCase();
@@ -100,10 +114,45 @@ class _StorefrontViewState extends State<StorefrontView> {
           }
         }
 
-        final matchesSearch = _searchQuery.isEmpty || p.name.toLowerCase().contains(_searchQuery.trim().toLowerCase());
-        return matchesCategory && matchesSearch;
+        // 2. Subcategory Matching
+        bool matchesSubcategory = _selectedSubcategory == 'all';
+        if (!matchesSubcategory && p.subcategory.isNotEmpty) {
+          matchesSubcategory = p.subcategory.trim().toLowerCase() == _selectedSubcategory.trim().toLowerCase();
+        }
+
+        // 3. Search Query Matching (Name, Description, Category, Subcategory)
+        bool matchesSearch = query.isEmpty;
+        if (!matchesSearch) {
+          final nameMatch = p.name.toLowerCase().contains(query);
+          final descMatch = p.description.toLowerCase().contains(query);
+          final catMatch = p.categoryId.toLowerCase().contains(query);
+          final subcatMatch = p.subcategory.toLowerCase().contains(query);
+          matchesSearch = nameMatch || descMatch || catMatch || subcatMatch;
+        }
+
+        return matchesCategory && matchesSubcategory && matchesSearch;
       }).toList();
     });
+  }
+
+  // Get active subcategories for current selected category
+  List<String> get _currentSubcategories {
+    if (_selectedCategoryId == 'all') return [];
+    final catObj = _categories.firstWhere(
+      (c) => c.id == _selectedCategoryId || c.name == _selectedCategoryId,
+      orElse: () => Category(id: '', name: '', icon: ''),
+    );
+    return catObj.subcategories;
+  }
+
+  void _launchWhatsApp(String message) async {
+    final phone = _shop?.whatsappPhone.isNotEmpty == true ? _shop!.whatsappPhone : _shop?.contactPhone ?? '';
+    if (phone.isEmpty) return;
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final uri = Uri.parse("https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -194,72 +243,66 @@ class _StorefrontViewState extends State<StorefrontView> {
             ),
           ],
         ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadStoreData,
-        child: Column(
-          children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'পণ্য খুঁজুন...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onChanged: (val) {
-                _searchQuery = val;
-                _filterProducts();
-              },
-            ),
-          ),
-
-          // Categories Tabs Bar
-          if (_categories.isNotEmpty)
-            Container(
-              height: 45,
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  _buildCategoryChip('all', 'সব প্রোডাক্ট', themeColor),
-                  ..._categories.map((c) => _buildCategoryChip(c.id, c.name, themeColor)),
-                ],
-              ),
-            ),
-
-          // Products Catalog Grid
-          Expanded(
-            child: _filteredProducts.isEmpty
-                ? const Center(child: Text('কোনো প্রোডাক্ট পাওয়া যায়নি।'))
-                : GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.72,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
-                    itemCount: _filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = _filteredProducts[index];
-                      return _buildProductCard(product, themeColor);
-                    },
-                  ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.black87),
+            onPressed: () => _openCartBottomSheet(context, themeColor),
           ),
         ],
       ),
-    ),
+      body: IndexedStack(
+        index: _currentBottomNavIndex,
+        children: [
+          // Tab 0: Native Storefront Catalog
+          _buildNativeStorefront(themeColor, cart),
+
+          // Tab 1: Embedded Web Shop (100% Website Features)
+          WebShopView(url: _shop!.targetUrl, title: '${_shop!.name} (ফুল ওয়েবসাইট)'),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentBottomNavIndex,
+        selectedItemColor: themeColor,
+        unselectedItemColor: Colors.grey[600],
+        type: BottomNavigationBarType.fixed,
+        onTap: (index) {
+          if (index == 2) {
+            // WhatsApp Direct Action
+            _launchWhatsApp("হ্যালো! ${_shop!.name}-এর পণ্য সম্পর্কে জানতে চাই।");
+          } else if (index == 3) {
+            // Open Cart Bottom Sheet directly
+            _openCartBottomSheet(context, themeColor);
+          } else {
+            setState(() {
+              _currentBottomNavIndex = index;
+            });
+          }
+        },
+        items: [
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.storefront),
+            label: 'স্টোর',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.language),
+            label: 'ফুল শপ',
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: 'WhatsApp',
+          ),
+          BottomNavigationBarItem(
+            icon: Badge(
+              label: Text('${cart.itemCount}'),
+              isLabelVisible: cart.itemCount > 0,
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            label: 'কার্ট',
+          ),
+        ],
+      ),
       // Floating Shopping Cart Bubble
-      floatingActionButton: cart.itemCount > 0
+      floatingActionButton: cart.itemCount > 0 && _currentBottomNavIndex == 0
           ? FloatingActionButton.extended(
               onPressed: () => _openCartBottomSheet(context, themeColor),
               backgroundColor: themeColor,
@@ -273,18 +316,196 @@ class _StorefrontViewState extends State<StorefrontView> {
     );
   }
 
+  Widget _buildNativeStorefront(Color themeColor, CartProvider cart) {
+    final subcats = _currentSubcategories;
+
+    return RefreshIndicator(
+      onRefresh: _loadStoreData,
+      child: Column(
+        children: [
+          // Banner / Announcement Notice
+          if (_shop!.notice.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: themeColor.withOpacity(0.08),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.campaign, size: 18, color: themeColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _shop!.notice,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: themeColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Search Bar with Clear Icon (X)
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'পণ্য, ক্যাটাগরি বা বিবরণ লিখে খুঁজুন...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                          _filterProducts();
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (val) {
+                setState(() {
+                  _searchQuery = val;
+                });
+                _filterProducts();
+              },
+            ),
+          ),
+
+          // Main Categories Tabs Bar
+          if (_categories.isNotEmpty)
+            Container(
+              height: 42,
+              margin: const EdgeInsets.only(bottom: 6),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _buildCategoryChip('all', 'সব প্রোডাক্ট', themeColor),
+                  ..._categories.map((c) => _buildCategoryChip(c.id, c.name, themeColor)),
+                ],
+              ),
+            ),
+
+          // Subcategories Chips Bar (If selected category has subcategories)
+          if (subcats.isNotEmpty)
+            Container(
+              height: 34,
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _buildSubcategoryChip('all', 'সব সাব-ক্যাটাগরি', themeColor),
+                  ...subcats.map((sub) => _buildSubcategoryChip(sub, sub, themeColor)),
+                ],
+              ),
+            ),
+
+          // Banner Carousel / Image header if available
+          if (_shop!.bannerUrls.isNotEmpty && _selectedCategoryId == 'all' && _searchQuery.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: _shop!.bannerUrls.first,
+                  height: 140,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(height: 140, color: Colors.grey[200]),
+                  errorWidget: (context, url, error) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+
+          // Products Catalog Grid
+          Expanded(
+            child: _filteredProducts.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 50, color: Colors.grey[400]),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'কোনো প্রোডাক্ট পাওয়া যায়নি।',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          if (_searchQuery.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              '"$_searchQuery"-এর সাথে মেলে এমন কোনো পণ্য পাওয়া যায়নি।',
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                  _selectedCategoryId = 'all';
+                                  _selectedSubcategory = 'all';
+                                });
+                                _filterProducts();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: themeColor,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('সব ফিল্টার ক্লিয়ার করুন'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.66,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: _filteredProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = _filteredProducts[index];
+                      return _buildProductCard(product, themeColor);
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCategoryChip(String id, String label, Color themeColor) {
     final isSelected = _selectedCategoryId == id;
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedCategoryId = id;
-          _filterProducts();
+          _selectedSubcategory = 'all';
         });
+        _filterProducts();
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? themeColor : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -304,7 +525,43 @@ class _StorefrontViewState extends State<StorefrontView> {
     );
   }
 
+  Widget _buildSubcategoryChip(String id, String label, Color themeColor) {
+    final isSelected = _selectedSubcategory == id;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedSubcategory = id;
+        });
+        _filterProducts();
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? themeColor.withOpacity(0.15) : Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: isSelected ? themeColor : Colors.grey[300]!),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? themeColor : Colors.black54,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildProductCard(Product product, Color themeColor) {
+    final hasDiscount = product.originalPrice > product.price;
+    final discountPercent = hasDiscount
+        ? (((product.originalPrice - product.price) / product.originalPrice) * 100).round()
+        : 0;
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -317,87 +574,113 @@ class _StorefrontViewState extends State<StorefrontView> {
         color: Colors.white,
         elevation: 0.5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            // Product Image
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-                child: CachedNetworkImage(
-                  imageUrl: product.images.isNotEmpty ? product.images.first : '',
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: Colors.grey[100]),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[100],
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
-                  ),
-                ),
-              ),
-            ),
-            // Title & Pricing
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        '৳${product.price.toStringAsFixed(0)}',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: themeColor, fontSize: 14),
-                      ),
-                      if (product.originalPrice > product.price) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          '৳${product.originalPrice.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  // Add Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 28,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<CartProvider>().addItem(product);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${product.name} কার্টে যোগ করা হয়েছে।'),
-                            duration: const Duration(milliseconds: 500),
-                            backgroundColor: themeColor,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: themeColor,
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      child: const Text(
-                        'অর্ডার করুন',
-                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Product Image
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                    child: CachedNetworkImage(
+                      imageUrl: product.images.isNotEmpty ? product.images.first : '',
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: Colors.grey[100]),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[100],
+                        child: const Icon(Icons.broken_image, color: Colors.grey),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                // Title & Pricing
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (product.subcategory.isNotEmpty)
+                        Text(
+                          product.subcategory,
+                          style: TextStyle(fontSize: 9, color: themeColor, fontWeight: FontWeight.bold),
+                        ),
+                      Text(
+                        product.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            '৳${product.price.toStringAsFixed(0)}',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: themeColor, fontSize: 14),
+                          ),
+                          if (hasDiscount) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '৳${product.originalPrice.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Add Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 28,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context.read<CartProvider>().addItem(product);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.name} কার্টে যোগ করা হয়েছে।'),
+                                duration: const Duration(milliseconds: 600),
+                                backgroundColor: themeColor,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: themeColor,
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                          child: const Text(
+                            'অর্ডার করুন',
+                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            // Discount Tag
+            if (hasDiscount && discountPercent > 0)
+              Positioned(
+                top: 6,
+                left: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '-$discountPercent%',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -509,7 +792,6 @@ class _StorefrontViewState extends State<StorefrontView> {
   }
 }
 
-// HSL Hex parser fallback inside file
 class HexColor {
   static Color fromHex(String hexString) {
     final buffer = StringBuffer();

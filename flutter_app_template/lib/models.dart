@@ -10,6 +10,10 @@ class Shop {
   final String contactEmail;
   final String? uddoktapayUrl;
   final String? uddoktapayApiKey;
+  final List<String> bannerUrls;
+  final String notice;
+  final String whatsappPhone;
+  final String targetUrl;
 
   Shop({
     required this.id,
@@ -23,6 +27,10 @@ class Shop {
     required this.contactEmail,
     this.uddoktapayUrl,
     this.uddoktapayApiKey,
+    this.bannerUrls = const [],
+    this.notice = '',
+    this.whatsappPhone = '',
+    this.targetUrl = '',
   });
 
   factory Shop.fromFirestore(String docId, Map<String, dynamic> data) {
@@ -30,9 +38,28 @@ class Shop {
     final delivery = data['deliveryConfig'] is Map ? data['deliveryConfig'] : {};
     final design = data['designOverrides'] is Map ? data['designOverrides'] : {};
     final appCfg = data['appConfig'] is Map ? data['appConfig'] : {};
+    final social = data['socialLinks'] is Map ? data['socialLinks'] : {};
 
     String primaryColor = design['primaryColor'] ?? data['primaryColor'] ?? data['primaryColorHex'] ?? '#9333ea';
     if (!primaryColor.startsWith('#')) primaryColor = '#$primaryColor';
+
+    List<String> bannersList = [];
+    if (data['banners'] is List) {
+      for (var b in data['banners']) {
+        if (b is Map && b['url'] != null && b['url'].toString().isNotEmpty) {
+          bannersList.add(b['url'].toString());
+        } else if (b is String && b.isNotEmpty) {
+          bannersList.add(b);
+        }
+      }
+    }
+    if (bannersList.isEmpty && data['coverImg'] != null && data['coverImg'].toString().isNotEmpty) {
+      bannersList.add(data['coverImg'].toString());
+    }
+
+    final subSlug = data['subdomainSlug'] ?? data['shopSlug'] ?? docId;
+    final domain = data['customDomain'] ?? '';
+    final fullUrl = domain.isNotEmpty ? 'https://$domain' : 'https://bdretailers.com/shop/$subSlug';
 
     return Shop(
       id: docId,
@@ -42,10 +69,14 @@ class Shop {
       primaryColorHex: primaryColor,
       deliveryInsideDhaka: double.tryParse(delivery['insideDhaka']?.toString() ?? delivery['inside']?.toString() ?? data['deliveryInsideDhaka']?.toString() ?? '80') ?? 80,
       deliveryOutsideDhaka: double.tryParse(delivery['outsideDhaka']?.toString() ?? delivery['outside']?.toString() ?? data['deliveryOutsideDhaka']?.toString() ?? '150') ?? 150,
-      contactPhone: delivery['contactPhone'] ?? data['phone'] ?? data['contactPhone'] ?? data['ownerPhone'] ?? '',
+      contactPhone: delivery['methods'] ?? delivery['contactPhone'] ?? data['phone'] ?? data['contactPhone'] ?? data['ownerPhone'] ?? '',
       contactEmail: delivery['contactEmail'] ?? data['email'] ?? data['contactEmail'] ?? data['ownerEmail'] ?? '',
       uddoktapayUrl: data['uddoktapayUrl'],
       uddoktapayApiKey: data['uddoktapayApiKey'],
+      bannerUrls: bannersList,
+      notice: data['notices'] ?? data['notice'] ?? data['welcomeMessage'] ?? '',
+      whatsappPhone: social['wa'] ?? delivery['methods'] ?? data['phone'] ?? '',
+      targetUrl: fullUrl,
     );
   }
 }
@@ -54,11 +85,13 @@ class Category {
   final String id;
   final String name;
   final String icon;
+  final List<String> subcategories;
 
   Category({
     required this.id,
     required this.name,
     required this.icon,
+    this.subcategories = const [],
   });
 
   factory Category.fromFirestore(String docId, Map<String, dynamic> data) {
@@ -66,6 +99,7 @@ class Category {
       id: docId,
       name: data['name'] ?? data['title'] ?? data['categoryName'] ?? 'Category',
       icon: data['icon'] ?? '',
+      subcategories: List<String>.from(data['subcategories'] ?? []),
     );
   }
 }
@@ -80,7 +114,9 @@ class Product {
   final List<String> sizes;
   final List<String> colors;
   final String categoryId;
+  final String subcategory;
   final bool inStock;
+  final double stock;
 
   Product({
     required this.id,
@@ -92,7 +128,9 @@ class Product {
     required this.sizes,
     required this.colors,
     required this.categoryId,
+    this.subcategory = '',
     required this.inStock,
+    this.stock = 1,
   });
 
   factory Product.fromFirestore(String docId, Map<String, dynamic> data) {
@@ -109,12 +147,18 @@ class Product {
 
     final inStockVal = data['inStock'];
     final stockVal = data['stock'];
+    double stockNum = 1.0;
     bool inStockBool = true;
+    if (stockVal != null) {
+      stockNum = double.tryParse(stockVal.toString()) ?? 1.0;
+    }
     if (inStockVal is bool) {
       inStockBool = inStockVal;
-    } else if (stockVal != null) {
-      final stockNum = int.tryParse(stockVal.toString()) ?? 1;
+    } else {
       inStockBool = stockNum > 0;
+    }
+    if (data['isHidden'] == true) {
+      inStockBool = false;
     }
 
     return Product(
@@ -127,7 +171,9 @@ class Product {
       sizes: List<String>.from(data['sizes'] ?? []),
       colors: List<String>.from(data['colors'] ?? []),
       categoryId: data['category'] ?? data['categoryId'] ?? data['categoryName'] ?? '',
+      subcategory: data['subcategory'] ?? data['subCategory'] ?? '',
       inStock: inStockBool,
+      stock: stockNum,
     );
   }
 }
