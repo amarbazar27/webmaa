@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 
@@ -27,6 +28,17 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
   void initState() {
     super.initState();
     _initPullToRefresh();
+    _requestInitialPermissions();
+  }
+
+  Future<void> _requestInitialPermissions() async {
+    try {
+      if (Platform.isAndroid) {
+        await Permission.location.request();
+      }
+    } catch (e) {
+      debugPrint("Permission request error: $e");
+    }
   }
 
   void _initPullToRefresh() {
@@ -110,9 +122,37 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
                     allowUniversalAccessFromFileURLs: true,
                     javaScriptCanOpenWindowsAutomatically: true,
                     supportMultipleWindows: false,
+                    geolocationEnabled: true,
+                    cacheEnabled: true,
+                    hardwareAcceleration: true,
+                    thirdPartyCookiesEnabled: true,
+                    transparentBackground: false,
+                    verticalScrollBarEnabled: false,
+                    horizontalScrollBarEnabled: false,
+                    overScrollMode: OverScrollMode.NEVER,
+                    disableDefaultErrorPage: true,
                   ),
                   onWebViewCreated: (controller) {
                     _webViewController = controller;
+                  },
+                  onGeolocationPermissionsShowPrompt: (controller, origin) async {
+                    try {
+                      final status = await Permission.location.request();
+                      if (status.isGranted || status.isLimited) {
+                        return GeolocationPermissionShowPromptResponse(
+                          origin: origin,
+                          allow: true,
+                          retain: true,
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Geolocation prompt error: $e");
+                    }
+                    return GeolocationPermissionShowPromptResponse(
+                      origin: origin,
+                      allow: true,
+                      retain: true,
+                    );
                   },
                   onLoadStart: (controller, url) {
                     setState(() {
