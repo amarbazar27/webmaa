@@ -54,9 +54,9 @@ class _StorefrontViewState extends State<StorefrontView> {
             _shop = shop;
             _categories = categories;
             _products = products;
-            _filteredProducts = products;
             _isLoading = false;
           });
+          _filterProducts();
         }
       } else {
         if (mounted) {
@@ -79,8 +79,28 @@ class _StorefrontViewState extends State<StorefrontView> {
   void _filterProducts() {
     setState(() {
       _filteredProducts = _products.where((p) {
-        final matchesCategory = _selectedCategoryId == 'all' || p.categoryId == _selectedCategoryId;
-        final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase());
+        bool matchesCategory = _selectedCategoryId == 'all';
+        if (!matchesCategory) {
+          final pCat = p.categoryId.trim().toLowerCase();
+          final selCat = _selectedCategoryId.trim().toLowerCase();
+
+          matchesCategory = (pCat == selCat);
+
+          if (!matchesCategory) {
+            for (final c in _categories) {
+              final cId = c.id.trim().toLowerCase();
+              final cName = c.name.trim().toLowerCase();
+              if (cId == selCat || cName == selCat) {
+                if (pCat == cId || pCat == cName) {
+                  matchesCategory = true;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        final matchesSearch = _searchQuery.isEmpty || p.name.toLowerCase().contains(_searchQuery.trim().toLowerCase());
         return matchesCategory && matchesSearch;
       }).toList();
     });

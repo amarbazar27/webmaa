@@ -64,7 +64,7 @@ class Category {
   factory Category.fromFirestore(String docId, Map<String, dynamic> data) {
     return Category(
       id: docId,
-      name: data['name'] ?? data['title'] ?? 'Category',
+      name: data['name'] ?? data['title'] ?? data['categoryName'] ?? 'Category',
       icon: data['icon'] ?? '',
     );
   }
@@ -126,7 +126,7 @@ class Product {
       images: imgs,
       sizes: List<String>.from(data['sizes'] ?? []),
       colors: List<String>.from(data['colors'] ?? []),
-      categoryId: data['category'] ?? data['categoryId'] ?? '',
+      categoryId: data['category'] ?? data['categoryId'] ?? data['categoryName'] ?? '',
       inStock: inStockBool,
     );
   }
