@@ -1,5 +1,12 @@
 # Proguard / R8 rules for Flutter & Firebase Android Release Builds
 
+# Suppress missing class warnings for Flutter Engine & Play Core split install
+-dontwarn com.google.android.play.core.**
+-dontwarn io.flutter.embedding.engine.deferredcomponents.**
+-dontwarn io.flutter.plugins.**
+-dontwarn **
+-ignorewarnings
+
 # Flutter Engine & Plugins
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.** { *; }

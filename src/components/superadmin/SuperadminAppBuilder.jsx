@@ -188,7 +188,11 @@ export default function SuperadminAppBuilder() {
                         )}
                         <div>
                           <p className="font-black text-slate-900 text-sm leading-none">{shop.shopName}</p>
-                          <p className="text-[10px] text-slate-400 font-bold mt-1.5 truncate max-w-[150px]">{shop.ownerEmail}</p>
+                          <p className="text-[10px] text-slate-400 font-bold mt-1.5 truncate max-w-[150px]">
+                            {(shop.subdomainSlug === 'main' || shop.shopSlug === 'main' || shop.ownerEmail === 'admin@bdretailers.com' || !shop.ownerEmail)
+                              ? 'rafiqunnabi07@gmail.com'
+                              : shop.ownerEmail}
+                          </p>
                         </div>
                       </div>
                     </td>

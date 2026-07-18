@@ -397,7 +397,7 @@ class MainActivity: FlutterActivity() {
     shortDescription: appConfig.appShortDesc || `Official Android App for ${shopName}. Shop online with fast delivery, reviews, and secure checkout.`,
     longDescription: appConfig.appLongDesc || `Welcome to the official ${shopName} Android mobile application!\n\nBrowse through our extensive catalog of products, manage your cart, apply coupon discounts, track your orders in real-time, and check out securely.\n\nKey App Features:\n- Full access to the catalog and product variants\n- Real-time notifications and alerts\n- Seamless digital and cash-on-delivery payments\n- Dynamic support chats\n- Offline caching and performance optimization\n\nDownload the ${shopName} app today and enjoy a premium e-commerce experience!`,
     privacyPolicyUrl: appConfig.privacyUrl || `${targetUrl}/privacy-policy`,
-    contactEmail: appConfig.developerEmail || `support@bdretailers.com`,
+    contactEmail: appConfig.developerEmail || `rafiqunnabi07@gmail.com`,
   };
   fs.writeFileSync(path.join(assetsOutDir, 'metadata.json'), JSON.stringify(metadataJson, null, 2));
 
