@@ -1782,7 +1782,7 @@ export default function Home() {
 
         {/* Product Showcase Grid (Premium Wide 10-column Layout - Zero Wasted Spacing) */}
         <div id="products-grid-section">
-        {(!globalConfig?.showAmazonBoxes || globalConfig?.showAllProductsDirectly || activeShopFilter !== 'All') && (
+        {(globalConfig?.showAllProductsDirectly || activeShopFilter !== 'All' || activeCategory !== 'All' || activeSubcategory || productSearch) && (
           productsLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-4 md:gap-6 animate-pulse">
             {[1, 2, 3, 4, 5, 6].map(n => (
