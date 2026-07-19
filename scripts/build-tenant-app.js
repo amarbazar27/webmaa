@@ -339,14 +339,32 @@ async function build() {
   fs.writeFileSync(configDartPath, configContent);
   console.log('  └─ lib/config.dart configured.');
 
-  // B. pubspec.yaml (replace app name AND increment version code)
+  // B. pubspec.yaml (replace app name AND auto-increment version code per shop)
+  const versionsFilePath = path.join(rootDir, 'scripts/app-versions.json');
+  let appVersions = {};
+  if (fs.existsSync(versionsFilePath)) {
+    try {
+      appVersions = JSON.parse(fs.readFileSync(versionsFilePath, 'utf8'));
+    } catch (_) {}
+  }
+
+  const previousVersionCode = appVersions[shopSlug] || appConfig.versionCode || (shopSlug === 'messerbazar' ? 3 : 1);
+  const targetVersionCode = customVersionCode || (previousVersionCode + 1);
+  const targetVersionName = appConfig.versionName || `1.0.${targetVersionCode - 1}`;
+
+  // Persist updated version code back to app-versions.json
+  appVersions[shopSlug] = targetVersionCode;
+  try {
+    fs.writeFileSync(versionsFilePath, JSON.stringify(appVersions, null, 2));
+    console.log(`  📌 Auto-incremented version code for [${shopSlug}]: ${previousVersionCode} ➔ ${targetVersionCode}`);
+  } catch (err) {
+    console.warn(`  ⚠️ Could not update app-versions.json: ${err.message}`);
+  }
+
   const pubspecPath = path.join(appWorkspace, 'pubspec.yaml');
   let pubspecContent = fs.readFileSync(pubspecPath, 'utf8');
   pubspecContent = pubspecContent.replace('name: bdretailers_white_label_app', `name: bdretailers_${sanitizedSlug}`);
   pubspecContent = pubspecContent.replace('description: "BDRetailers multi-tenant e-commerce mobile webview app wrapper"', `description: "BDRetailers App wrapper for ${shopName}"`);
-  
-  const targetVersionCode = customVersionCode || appConfig.versionCode || 3;
-  const targetVersionName = appConfig.versionName || `1.0.${targetVersionCode - 1}`;
   pubspecContent = pubspecContent.replace(/version:\s*[\d\.\+\-]+/, `version: ${targetVersionName}+${targetVersionCode}`);
 
   fs.writeFileSync(pubspecPath, pubspecContent);
