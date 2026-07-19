@@ -38,6 +38,8 @@ loadEnvFile(path.join(__dirname, '../.env'));
 const shopSlug = process.argv[2];
 const isDryRun = process.argv.includes('--dry-run');
 const isGitHubActions = process.argv.includes('--github-actions');
+const versionCodeFlag = process.argv.find(arg => arg.startsWith('--version-code='));
+const customVersionCode = versionCodeFlag ? parseInt(versionCodeFlag.split('=')[1], 10) : null;
 
 if (!shopSlug) {
   console.error('❌ Error: Please specify shopSlug as the first argument.');
@@ -337,13 +339,18 @@ async function build() {
   fs.writeFileSync(configDartPath, configContent);
   console.log('  └─ lib/config.dart configured.');
 
-  // B. pubspec.yaml (replace app name)
+  // B. pubspec.yaml (replace app name AND increment version code)
   const pubspecPath = path.join(appWorkspace, 'pubspec.yaml');
   let pubspecContent = fs.readFileSync(pubspecPath, 'utf8');
   pubspecContent = pubspecContent.replace('name: bdretailers_white_label_app', `name: bdretailers_${sanitizedSlug}`);
   pubspecContent = pubspecContent.replace('description: "BDRetailers multi-tenant e-commerce mobile webview app wrapper"', `description: "BDRetailers App wrapper for ${shopName}"`);
+  
+  const targetVersionCode = customVersionCode || appConfig.versionCode || 3;
+  const targetVersionName = appConfig.versionName || `1.0.${targetVersionCode - 1}`;
+  pubspecContent = pubspecContent.replace(/version:\s*[\d\.\+\-]+/, `version: ${targetVersionName}+${targetVersionCode}`);
+
   fs.writeFileSync(pubspecPath, pubspecContent);
-  console.log('  └─ pubspec.yaml configured.');
+  console.log(`  └─ pubspec.yaml configured with Version Code: ${targetVersionCode} (${targetVersionName}).`);
 
   // C. android/app/build.gradle (replace namespace AND applicationId)
   const buildGradlePath = path.join(appWorkspace, 'android/app/build.gradle');
