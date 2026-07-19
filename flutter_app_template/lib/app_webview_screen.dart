@@ -124,6 +124,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
                     supportMultipleWindows: false,
                     geolocationEnabled: true,
                     cacheEnabled: true,
+                    cacheMode: CacheMode.LOAD_DEFAULT,
                     hardwareAcceleration: true,
                     thirdPartyCookiesEnabled: true,
                     transparentBackground: false,
@@ -131,9 +132,18 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
                     horizontalScrollBarEnabled: false,
                     overScrollMode: OverScrollMode.NEVER,
                     disableDefaultErrorPage: true,
+                    preferredContentMode: UserPreferredContentMode.MOBILE,
                   ),
                   onWebViewCreated: (controller) {
                     _webViewController = controller;
+                  },
+                  onPageCommitVisible: (controller, url) {
+                    _pullToRefreshController?.endRefreshing();
+                    if (mounted) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+                    }
                   },
                   onGeolocationPermissionsShowPrompt: (controller, origin) async {
                     try {
@@ -155,27 +165,36 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> {
                     );
                   },
                   onLoadStart: (controller, url) {
-                    setState(() {
-                      _isLoading = true;
-                      _hasError = false;
-                    });
+                    if (_progress == 0 || _progress == 1.0) {
+                      if (mounted) {
+                        setState(() {
+                          _isLoading = true;
+                          _hasError = false;
+                        });
+                      }
+                    }
                   },
                   onLoadStop: (controller, url) async {
                     _pullToRefreshController?.endRefreshing();
-                    setState(() {
-                      _isLoading = false;
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+                    }
                   },
                   onProgressChanged: (controller, progress) {
-                    if (progress == 100) {
+                    final newProgress = progress / 100;
+                    if (progress >= 50) {
                       _pullToRefreshController?.endRefreshing();
                     }
-                    setState(() {
-                      _progress = progress / 100;
-                      if (progress == 100) {
-                        _isLoading = false;
-                      }
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _progress = newProgress;
+                        if (progress >= 50) {
+                          _isLoading = false;
+                        }
+                      });
+                    }
                   },
                   onReceivedError: (controller, request, error) {
                     _pullToRefreshController?.endRefreshing();

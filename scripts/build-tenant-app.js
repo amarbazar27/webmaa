@@ -293,6 +293,34 @@ async function build() {
     }
   }
 
+  // Ensure logo icon has Android Adaptive Icon safe-zone padding (prevents edge cropping)
+  if (fs.existsSync(iconDest)) {
+    try {
+      const sharp = require('sharp');
+      const inputBuffer = fs.readFileSync(iconDest);
+      const resizedLogo = await sharp(inputBuffer)
+        .resize(330, 330, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+        .toBuffer();
+
+      await sharp({
+        create: {
+          width: 512,
+          height: 512,
+          channels: 4,
+          background: { r: 255, g: 255, b: 255, alpha: 0 }
+        }
+      })
+      .composite([{ input: resizedLogo, gravity: 'center' }])
+      .png()
+      .toFile(iconDest + '.padded.png');
+
+      fs.renameSync(iconDest + '.padded.png', iconDest);
+      console.log('✅ Applied 512x512 safe-zone padding to logo icon (no side cropping).');
+    } catch (sharpErr) {
+      console.warn(`⚠️ Safe-zone logo padding warning: ${sharpErr.message}`);
+    }
+  }
+
   // 4. Overwrite Config files
   console.log('✍️ Overwriting template files with branding parameters...');
   
