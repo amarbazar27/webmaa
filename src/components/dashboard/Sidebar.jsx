@@ -251,6 +251,8 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         )} style={{background:'var(--surface)'}}>
           <SidebarContent />
         </aside>
+      </div>
+
       {/* 🔒 Subscription Lock Modal */}
       {isLockModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
