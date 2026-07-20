@@ -455,14 +455,8 @@ export default function SettingsPage() {
   const isSubscriptionActive = () => {
     if (!shop) return true;
     if (userData?.role === 'superadmin') return true;
-    if (shop.subscriptionStatus === 'active') {
-      if (!shop.subscriptionExpiresAt) return true;
-      const dateObj = shop.subscriptionExpiresAt.toDate 
-        ? shop.subscriptionExpiresAt.toDate() 
-        : new Date(shop.subscriptionExpiresAt);
-      return dateObj.getTime() > Date.now();
-    }
-    return false;
+    if (shop.subscriptionStatus === 'expired' || shop.trialClaimed === false) return false;
+    return true;
   };
 
   if (!loading && !isSubscriptionActive()) {

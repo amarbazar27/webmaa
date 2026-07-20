@@ -109,10 +109,7 @@ export default function DashboardPage() {
     }
   };
 
-  const expTime = getSubscriptionExpiryTime(shop?.subscriptionExpiresAt);
-  const showTrialOfferBanner = !shop?.subscriptionStatus || 
-    shop.subscriptionStatus !== 'active' || 
-    (expTime > 0 && expTime <= Date.now());
+  const showTrialOfferBanner = shop?.subscriptionStatus === 'expired' || shop?.trialClaimed === false;
 
   if (loading) {
     return (
