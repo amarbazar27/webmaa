@@ -71,7 +71,7 @@ export default function DashboardPage() {
 
   const totalRevenue = shop?.totalRevenue !== undefined ? shop.totalRevenue : orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
   const totalOrdersCount = shop?.orderCount !== undefined ? shop.orderCount : orders.length;
-  const shopUrl = `${window?.location?.origin || ''}/shop/${shop?.shopSlug}`;
+  const shopUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/shop/${shop?.shopSlug || ''}`;
   
   const estimatedVisitors = totalOrdersCount > 0 ? (totalOrdersCount * 7) + 32 : 14;
   const activeNow = totalOrdersCount > 0 ? Math.min(Math.floor(totalOrdersCount / 2) + 1, 8) : 0;
@@ -93,6 +93,26 @@ export default function DashboardPage() {
   };
 
   const visitorStats = getVisitorStats();
+
+  const getSubscriptionExpiryTime = (expiresAt) => {
+    if (!expiresAt) return 0;
+    try {
+      if (typeof expiresAt?.toDate === 'function') return expiresAt.toDate().getTime();
+      if (typeof expiresAt === 'object' && (expiresAt.seconds || expiresAt._seconds)) {
+        const s = expiresAt.seconds ?? expiresAt._seconds;
+        return s * 1000;
+      }
+      const d = new Date(expiresAt);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    } catch {
+      return 0;
+    }
+  };
+
+  const expTime = getSubscriptionExpiryTime(shop?.subscriptionExpiresAt);
+  const showTrialOfferBanner = !shop?.subscriptionStatus || 
+    shop.subscriptionStatus !== 'active' || 
+    (expTime > 0 && expTime <= Date.now());
 
   if (loading) {
     return (
@@ -146,7 +166,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 🎁 1-Month Free Claim Offer Banner for New Retailers / Expired Accounts */}
-      {(!shop?.subscriptionStatus || shop?.subscriptionStatus !== 'active' || (shop?.subscriptionExpiresAt && (shop.subscriptionExpiresAt.toDate ? shop.subscriptionExpiresAt.toDate() : new Date(shop.subscriptionExpiresAt)).getTime() <= Date.now())) && (
+      {showTrialOfferBanner && (
         <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-purple-400/30 animate-pulse">
           <div className="space-y-2 text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-sm">
