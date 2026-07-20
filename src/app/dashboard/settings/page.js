@@ -10,8 +10,9 @@ import {
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
   MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette,
-  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud
+  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock
 } from 'lucide-react';
+import Link from 'next/link';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
 import DesignThemeSelector from '@/components/dashboard/DesignThemeSelector';
@@ -449,6 +450,45 @@ export default function SettingsPage() {
   // Protect page from staff users just in case they land here
   if (userData?.role === 'staff') {
      return <div className="p-20 text-center font-black text-slate-400">Settings restricted to Store Owner.</div>;
+  }
+
+  const isSubscriptionActive = () => {
+    if (!shop) return true;
+    if (userData?.role === 'superadmin') return true;
+    if (shop.subscriptionStatus === 'active') {
+      if (!shop.subscriptionExpiresAt) return true;
+      const dateObj = shop.subscriptionExpiresAt.toDate 
+        ? shop.subscriptionExpiresAt.toDate() 
+        : new Date(shop.subscriptionExpiresAt);
+      return dateObj.getTime() > Date.now();
+    }
+    return false;
+  };
+
+  if (!loading && !isSubscriptionActive()) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-6 text-center space-y-6 animate-scale-in">
+        <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-amber-500/10">
+          <Lock size={40} />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+            স্টোর সেটিংস ও প্রেফারেন্স লক করা রয়েছে 🔒
+          </h2>
+          <p className="text-sm text-slate-500 font-medium max-w-lg mx-auto leading-relaxed">
+            আপনার নতুন অ্যাকাউন্ট ১ মাসের ফ্রি ট্রায়াল অফার ক্লেইম করুন অথবা সাবস্ক্রিপশন নবায়ন করুন! স্টোর ব্র্যান্ডিং, লোগো, ব্যানার, ডোমেইন ও সেটিংস অপশন আনলক করতে বিলিং পেজে যান।
+          </p>
+        </div>
+        <div className="pt-4">
+          <Link
+            href="/dashboard/billing"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xl shadow-purple-500/20 active:scale-95"
+          >
+            <span>বিলিং পেজে গিয়ে ১ মাসের ফ্রি ট্রায়াল ক্লেইম / রিনিউ করুন →</span>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const handleLogoChange = (e) => {

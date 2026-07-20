@@ -26,12 +26,13 @@ const navItems = [
   { href: '/dashboard/templates', icon: LayoutTemplate, label: 'Templates', staffAllowed: false },
   { href: '/dashboard/broadcast', icon: Store, label: 'Broadcast', staffAllowed: false },
   { href: '/dashboard/billing', icon: ShieldCheck, label: 'Billing', staffAllowed: false },
-  { href: '/dashboard/settings', icon: Settings, label: 'Preferences', staffAllowed: false },
+  { href: '/dashboard/settings', icon: Settings, label: 'Preferences', staffAllowed: false, isLockable: true },
 ];
 
 export default function Sidebar({ isOpen, onClose, onOpen }) {
   const { userData, activeShopId } = useAuth();
   const [shop, setShop] = useState(null);
+  const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -80,6 +81,21 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     router.push('/login');
   };
 
+  const isSubscriptionActive = () => {
+    if (!shop) return true; // loading fallback
+    if (userData?.role === 'superadmin') return true;
+    if (shop.subscriptionStatus === 'active') {
+      if (!shop.subscriptionExpiresAt) return true;
+      const dateObj = shop.subscriptionExpiresAt.toDate 
+        ? shop.subscriptionExpiresAt.toDate() 
+        : new Date(shop.subscriptionExpiresAt);
+      return dateObj.getTime() > Date.now();
+    }
+    return false;
+  };
+
+  const isSubActive = isSubscriptionActive();
+
   const SidebarContent = () => (
     <>
       <div className="p-8 pb-10">
@@ -110,8 +126,32 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
 
       <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar pb-10">
         <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Navigation</p>
-        {visibleNavItems.map(({ href, icon: Icon, label }) => {
+        {visibleNavItems.map(({ href, icon: Icon, label, isLockable }) => {
           const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+          const isLocked = isLockable && !isSubActive;
+
+          if (isLocked) {
+            return (
+              <button
+                key={href}
+                type="button"
+                onClick={() => {
+                  if (onClose) onClose();
+                  setIsLockModalOpen(true);
+                }}
+                className="w-full group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 text-slate-400 hover:text-slate-700 hover:bg-amber-50/50 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon size={18} className="text-slate-400 group-hover:text-amber-600 transition-colors" />
+                  <span>{label}</span>
+                </div>
+                <div className="flex items-center gap-1 bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  <Lock size={10} /> Locked
+                </div>
+              </button>
+            );
+          }
+
           return (
             <Link
               key={href}
@@ -211,8 +251,49 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         )} style={{background:'var(--surface)'}}>
           <SidebarContent />
         </aside>
-      </div>
+      {/* 🔒 Subscription Lock Modal */}
+      {isLockModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
+          <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl w-full max-w-md p-6 md:p-8 space-y-6 relative animate-scale-in text-center">
+            <button 
+              onClick={() => setIsLockModalOpen(false)}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <X size={18} />
+            </button>
 
+            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/10">
+              <Lock size={32} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                সেটিংস অপশন লক করা রয়েছে 🔒
+              </h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                আপনার ১ মাসের ফ্রি ট্রায়াল ক্লেইম করুন অথবা সাবস্ক্রিপশন নবায়ন করুন! স্টোর সেটিংস, ব্র্যান্ডিং, লোগো ও ডোমেইন কাস্টমাইজ করতে বিলিং পেজে গিয়ে ট্রায়াল শুরু করুন।
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <Link
+                href="/dashboard/billing"
+                onClick={() => setIsLockModalOpen(false)}
+                className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl shadow-purple-500/20 active:scale-95"
+              >
+                <span>বিলিং পেজে গিয়ে ক্লেইম / রিনিউ করুন →</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsLockModalOpen(false)}
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-xs transition-colors cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

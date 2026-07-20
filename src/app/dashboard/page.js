@@ -145,6 +145,30 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* 🎁 1-Month Free Claim Offer Banner for New Retailers / Expired Accounts */}
+      {(!shop?.subscriptionStatus || shop?.subscriptionStatus !== 'active' || (shop?.subscriptionExpiresAt && (shop.subscriptionExpiresAt.toDate ? shop.subscriptionExpiresAt.toDate() : new Date(shop.subscriptionExpiresAt)).getTime() <= Date.now())) && (
+        <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-purple-400/30 animate-pulse">
+          <div className="space-y-2 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-sm">
+              🎁 নতুন অ্যাকাউন্ট অফার
+            </div>
+            <h2 className="text-xl md:text-2xl font-black tracking-tight">
+              ১ মাস (৩০ দিন) ফ্রি ক্লেইম করুন!
+            </h2>
+            <p className="text-xs text-purple-100 font-medium max-w-xl leading-relaxed">
+              আপনার স্টোরের লোগো, কাস্টম ডোমেইন ও প্রেফারেন্স সেটিংস আনলক করতে এখনই ১ মাসের ফ্রি ট্রায়াল ক্লেইম করুন। বিলিং পেজে গিয়ে ট্রায়াল শুরু করুন।
+            </p>
+          </div>
+          <Link
+            href="/dashboard/billing"
+            className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-400/20 shrink-0 flex items-center gap-2 hover:scale-105 active:scale-95"
+          >
+            <span>Claim 1 Month Free in Billing</span>
+            <ArrowUpRight size={16} />
+          </Link>
+        </div>
+      )}
+
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
          <Card 

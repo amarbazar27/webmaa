@@ -24,15 +24,15 @@ export async function POST(req) {
     const globalSnap = await adminDb.collection('config').doc('global').get();
     const globalData = globalSnap.exists ? globalSnap.data() : {};
 
-    const trialsEnabled = globalData.trialsEnabled ?? false;
+    const trialsEnabled = globalData.trialsEnabled ?? true;
     if (!trialsEnabled) {
       return NextResponse.json({ error: 'Free trials are currently disabled by the platform administrator.' }, { status: 400 });
     }
 
-    // Determine trial days based on package type
+    // Determine trial days based on package type (1 month = 30 days)
     const trialDaysMap = {
-      monthly: Number(globalData.subTrialMonthly) || 7,
-      quarterly: Number(globalData.subTrialQuarterly) || 14,
+      monthly: Number(globalData.subTrialMonthly) || 30,
+      quarterly: Number(globalData.subTrialQuarterly) || 30,
       yearly: Number(globalData.subTrialYearly) || 30
     };
     const trialDays = trialDaysMap[packageType];
