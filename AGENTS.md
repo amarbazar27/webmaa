@@ -9,3 +9,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Every time an app is built for a shop (e.g. `messerbazar`, `camerakini`, `main`), `scripts/build-tenant-app.js` MUST automatically auto-increment the version code (e.g. 3 -> 4 -> 5).
 - Never re-use previous version codes for Play Console uploads.
 
+# Git Deployment & Vercel Push Rules
+- ALWAYS perform a `git add .`, `git commit -m "..."`, and `git push` after completing any update, fix, or feature request from the user.
+- This ensures Vercel automatically deploys the latest version for live viewing without needing user intervention.
+
+

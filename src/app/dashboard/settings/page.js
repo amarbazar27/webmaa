@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getShop, updateShop, saveUserData, getShopProducts } from '@/lib/firestore';
+import { getShop, updateShop, saveUserData, getShopProducts, subscribeGlobalConfig } from '@/lib/firestore';
+import { checkIsSubscriptionActive } from '@/lib/subscription';
 import { uploadShopLogo, uploadImage } from '@/lib/storage';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -225,6 +226,14 @@ export default function SettingsPage() {
   const [geoSelections, setGeoSelections] = useState({ division: '', district: '', upazila: '', upazilaName: '', union: '' });
   const [geoLoading, setGeoLoading] = useState(false);
   const [showAppInstructions, setShowAppInstructions] = useState(false);
+  const [globalConfig, setGlobalConfig] = useState(null);
+
+  useEffect(() => {
+    const unsubConfig = subscribeGlobalConfig((config) => {
+      setGlobalConfig(config);
+    });
+    return () => unsubConfig();
+  }, []);
 
   useEffect(() => {
     if (!activeShopId) return;
@@ -452,14 +461,9 @@ export default function SettingsPage() {
      return <div className="p-20 text-center font-black text-slate-400">Settings restricted to Store Owner.</div>;
   }
 
-  const isSubscriptionActive = () => {
-    if (!shop) return true;
-    if (userData?.role === 'superadmin') return true;
-    if (shop.subscriptionStatus === 'expired' || shop.trialClaimed === false) return false;
-    return true;
-  };
+  const isSubActive = checkIsSubscriptionActive(shop, userData, globalConfig);
 
-  if (!loading && !isSubscriptionActive()) {
+  if (!loading && !isSubActive) {
     return (
       <div className="max-w-2xl mx-auto py-16 px-6 text-center space-y-6 animate-scale-in">
         <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-amber-500/10">

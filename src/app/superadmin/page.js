@@ -17,7 +17,7 @@ import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
-  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle
+  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -97,8 +97,43 @@ export default function SuperAdminPage() {
   const [showPpKey, setShowPpKey] = useState(false);
   const [showMapsKey, setShowMapsKey] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
+  const [copyingCloudinaryShopId, setCopyingCloudinaryShopId] = useState(null);
   const { theme, setSystemDefault, systemDefault } = useTheme();
   const { loginAsRetailer, user } = useAuth();
+
+  const handleCopyCloudinaryMedia = async (shopId) => {
+    if (!confirm('আপনি কি এই মার্চেন্টের সমস্ত মিডিয়া ফাইল (লোগো, ব্যানার, প্রোডাক্ট ও ক্যাটাগরি ছবি) মেইন সাইটের Cloudinary থেকে মার্চেন্টের ডেডিকেটেড Cloudinary অ্যাকাউন্টে ১-ক্লিকে কপি করতে চান?')) return;
+
+    setCopyingCloudinaryShopId(shopId);
+    const toastId = toast.loading('ফাইলগুলো কপি করা হচ্ছে...');
+    try {
+      const { getAuth } = await import('firebase/auth');
+      const auth = getAuth();
+      const token = await auth.currentUser?.getIdToken();
+
+      const res = await fetch('/api/admin/copy-cloudinary-media', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ shopId })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'মিডিয়া কপি ব্যর্থ হয়েছে।');
+      }
+
+      toast.success(data.message || 'মিডিয়া সফলভাবে কপি করা হয়েছে! 🎉', { id: toastId });
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'কপি করার সময় ত্রুটি হয়েছে।', { id: toastId });
+    } finally {
+      setCopyingCloudinaryShopId(null);
+    }
+  };
 
   // Helper to mask key
   const maskKey = (key) => {
@@ -1971,6 +2006,17 @@ export default function SuperAdminPage() {
                                                   Save as Default (Single Config)
                                                 </button>
                                               )}
+
+                                              <button
+                                                type="button"
+                                                disabled={copyingCloudinaryShopId === shop.id}
+                                                onClick={() => handleCopyCloudinaryMedia(shop.id)}
+                                                className="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-black border border-emerald-200 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+                                                title="মেইন সাইটের Cloudinary থেকে মার্চেন্টের ডেডিকেটেড Cloudinary-তে ছবিগুলো কপি করুন"
+                                              >
+                                                <Copy size={13} />
+                                                {copyingCloudinaryShopId === shop.id ? 'কপি হচ্ছে...' : '১-ক্লিকে মিডিয়া কপি করুন'}
+                                              </button>
                                             </div>
                                           </div>
                                         );

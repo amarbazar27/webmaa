@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
-  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate, Crown, Clock
+  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, LayoutTemplate, Crown, Clock, Lock
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
-import { getShop } from '@/lib/firestore';
+import { getShop, subscribeGlobalConfig } from '@/lib/firestore';
+import { checkIsSubscriptionActive } from '@/lib/subscription';
 import clsx from 'clsx';
 import AiCompanion from './AiCompanion';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
@@ -32,6 +33,7 @@ const navItems = [
 export default function Sidebar({ isOpen, onClose, onOpen }) {
   const { userData, activeShopId } = useAuth();
   const [shop, setShop] = useState(null);
+  const [globalConfig, setGlobalConfig] = useState(null);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -42,12 +44,18 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     if (activeShopId) {
       getShop(activeShopId).then(setShop);
     }
+    const unsub = subscribeGlobalConfig((config) => {
+      setGlobalConfig(config);
+    });
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => {
+      unsub();
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
   }, [activeShopId]);
 
   useEffect(() => {
@@ -81,14 +89,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     router.push('/login');
   };
 
-  const isSubscriptionActive = () => {
-    if (!shop) return true; // loading fallback
-    if (userData?.role === 'superadmin') return true;
-    if (shop.subscriptionStatus === 'expired' || shop.trialClaimed === false) return false;
-    return true;
-  };
-
-  const isSubActive = isSubscriptionActive();
+  const isSubActive = checkIsSubscriptionActive(shop, userData, globalConfig);
 
   const SidebarContent = () => (
     <>
