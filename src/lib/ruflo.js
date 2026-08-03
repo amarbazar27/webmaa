@@ -13,9 +13,12 @@ let transporterCache = null;
 
 async function getTransporter() {
   if (transporterCache) return transporterCache;
-  const nodemailer = await import('nodemailer');
+  const nodemailerPkg = await import('nodemailer');
+  // nodemailer v9 exports createTransport both as default.createTransport and named
+  const nodemailer = nodemailerPkg.default || nodemailerPkg;
+  const createTransport = nodemailer.createTransport || nodemailerPkg.createTransport;
   
-  transporterCache = nodemailer.default.createTransport({
+  transporterCache = createTransport({
     service: 'gmail',
     pool: true,
     maxConnections: 5,
@@ -24,10 +27,11 @@ async function getTransporter() {
       user: process.env.RUFLO_EMAIL,
       pass: process.env.RUFLO_APP_PASSWORD,
     },
-    tls: { rejectUnauthorized: true } // HIGH-9 Fix: Enable TLS verification (was false)
+    tls: { rejectUnauthorized: true }
   });
   return transporterCache;
 }
+
 
 // ── Retry Logic ────────────────────────────────
 async function sendWithRetry(mailOptions, maxRetries = 3) {

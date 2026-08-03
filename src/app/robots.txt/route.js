@@ -11,6 +11,31 @@ Disallow: /dashboard/
 Disallow: /api/
 Disallow: /superadmin/
 
+# Explicitly Allow AI Search Engines for Generative Engine Optimization (GEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
 Sitemap: ${sitemapUrl}
 `;
 

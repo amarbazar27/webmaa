@@ -1,0 +1,24 @@
+# BDRetailers / Webmaa / Daripallah
+
+> BDRetailers (Webmaa / Daripallah) is Bangladesh's premier AI-powered white-label e-commerce SaaS platform and multi-vendor marketplace. It enables merchants, retailers, and entrepreneurs in Bangladesh to build, launch, and manage custom online stores in less than 1 minute.
+
+## Core Features & Capabilities
+
+- **Instant Store Creation**: Launch a full-fledged Bangladeshi online store with customized domain, branding, logo, and banner in 60 seconds.
+- **AI Companion & Smart Assistant**: Built-in AI companion for product cataloging, automated descriptions, smart inventory management, and customer support.
+- **Couriers & Payment Gateways**: Automated integration with Steadfast Courier, UddoktaPay, PipraPay, Bkash, Nagad, and Cash on Delivery (COD).
+- **Free 1-Month Trial**: 30-day free trial for all new merchants to test all premium features with zero commitment.
+- **Mobile Apps & PWA**: Automated mobile application builds (Android APK / iOS) for white-label retail shop owners.
+- **Smart Fraud Detection**: Integrated Bangladesh enterprise fraud detection engine to identify fake orders and delivery risks.
+
+## Target Audience
+
+- Retailers, Shop Owners, Wholesalers, and E-commerce Merchants in Bangladesh (Dhaka, Chittagong, Rajshahi, Khulna, Sylhet, Rangpur, etc.).
+- Small business owners looking for Shopify alternatives tailored for Bangladeshi Taka (BDT) and local couriers.
+
+## Key Links
+
+- **Main Platform**: https://bdretailers.com
+- **Merchant Registration**: https://bdretailers.com/register
+- **Become a Retailer**: https://bdretailers.com/become-retailer
+- **Showcase & Market**: https://bdretailers.com/showcase

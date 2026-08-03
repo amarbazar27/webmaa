@@ -3,13 +3,32 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
+import { verifyAuth } from '@/lib/verifyAuth';
+
 
 export async function POST(req) {
   try {
+    // 🔒 Auth: Must be a logged-in retailer who owns this shop
+    let authUser;
+    try {
+      authUser = await verifyAuth(req);
+    } catch {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
     const { shopId, packageType } = await req.json();
 
     if (!shopId || !packageType) {
       return NextResponse.json({ error: 'Missing shopId or packageType' }, { status: 400 });
+    }
+
+    // Verify caller owns this shop (unless superadmin)
+    if (authUser.uid !== shopId) {
+      const userDoc = await adminDb.collection('users').doc(authUser.uid).get();
+      const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'superadmin';
+      if (!isSuperAdmin) {
+        return NextResponse.json({ error: 'Not authorized for this shop.' }, { status: 403 });
+      }
     }
 
     if (!['monthly', 'quarterly', 'yearly'].includes(packageType)) {

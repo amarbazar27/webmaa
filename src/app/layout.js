@@ -8,11 +8,17 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'BDRetailers — আপনার ব্যবসার ডিজিটাল পার্টনার',
+    default: 'BDRetailers — বাংলাদেশের সেরা ই-কমার্স SaaS প্ল্যাটফর্ম',
     template: '%s | BDRetailers',
   },
-  description: 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
-  keywords: ['bdretailers', 'ecommerce', 'saas', 'online store', 'bangladesh ecommerce', 'retailer platform'],
+  description: 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক AI-পাওয়ার্ড ই-কমার্স SaaS প্ল্যাটফর্ম। মাত্র ১ মিনিটে নিজের অনলাইন স্টোর খুলুন। Steadfast কুরিয়ার, বিকাশ, নগদ, UddoktaPay পেমেন্ট সমর্থিত। ৩০ দিনের ফ্রি ট্রায়াল।',
+  keywords: [
+    'bdretailers', 'ecommerce bangladesh', 'online store bangladesh', 'saas ecommerce',
+    'shopify alternative bangladesh', 'online shop create bangladesh', 'বাংলাদেশ ই-কমার্স',
+    'অনলাইন স্টোর', 'ডিজিটাল শপ', 'বিডি রিটেইলার্স', 'steadfast courier integration',
+    'uddoktapay', 'bkash payment', 'nagad payment', 'retailer platform bd',
+    'white label ecommerce', 'multi vendor marketplace bangladesh', 'free online store bangladesh',
+  ],
   authors: [{ name: 'BDRetailers', url: BASE_URL }],
   creator: 'BDRetailers',
   publisher: 'BDRetailers',
@@ -36,19 +42,26 @@ export const metadata = {
     locale: 'bn_BD',
     url: BASE_URL,
     siteName: 'BDRetailers',
-    title: 'BDRetailers — আপনার ব্যবসার ডিজিটাল পার্টনার',
-    description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম।',
-    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'BDRetailers Logo' }],
+    title: 'BDRetailers — বাংলাদেশের সেরা AI ই-কমার্স প্ল্যাটফর্ম',
+    description: 'বাংলাদেশের প্রথম AI-পাওয়ার্ড ই-কমার্স SaaS। ৩০ দিনের ফ্রি ট্রায়াল। Steadfast কুরিয়ার, বিকাশ, নগদ সাপোর্ট।',
+    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'BDRetailers — বাংলাদেশের সেরা ই-কমার্স প্ল্যাটফর্ম' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BDRetailers — ই-কমার্স প্ল্যাটফর্ম',
-    description: 'বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। নিজের অনলাইন স্টোর খুলুন মাত্র ১ মিনিটে।',
+    title: 'BDRetailers — AI ই-কমার্স প্ল্যাটফর্ম বাংলাদেশ',
+    description: 'বাংলাদেশের সবচেয়ে আধুনিক AI-پাওয়ার্ড ই-কমার্স SaaS। ৩০ দিনের ফ্রি ট্রায়াল। মাত্র ১ মিনিটে স্টোর খুলুন।',
     images: [`${BASE_URL}/logo.png`],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   alternates: {
     canonical: BASE_URL,
@@ -107,6 +120,22 @@ export const viewport = {
        "url": BASE_URL,
        "name": "BDRetailers — বিডি রিটেইলার্স",
        "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস।"
+     },
+     // SoftwareApplication — AI & Search Engine SaaS Product Entity
+     {
+       "@context": "https://schema.org",
+       "@type": "SoftwareApplication",
+       "name": "BDRetailers Webmaa",
+       "alternateName": "BDRetailers E-commerce SaaS",
+       "operatingSystem": "Web, Android, iOS",
+       "applicationCategory": "BusinessApplication",
+       "offers": {
+         "@type": "Offer",
+         "price": "0",
+         "priceCurrency": "BDT",
+         "description": "1-Month Free Trial Available"
+       },
+       "description": "Premium Bangladeshi E-commerce SaaS Platform to create online stores with Steadfast Courier and UddoktaPay integration in 60 seconds."
      }
   ];
 

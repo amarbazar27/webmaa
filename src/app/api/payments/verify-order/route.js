@@ -3,9 +3,19 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import admin from 'firebase-admin';
 import { adminDb } from '@/lib/firebase-admin';
+import { verifyAuth } from '@/lib/verifyAuth';
+
 
 export async function POST(req) {
   try {
+    // 🔒 Auth: Must be authenticated (shop owner or customer who placed the order)
+    let authUser;
+    try {
+      authUser = await verifyAuth(req);
+    } catch {
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+    }
+
     const { orderId, shopId } = await req.json();
 
     if (!orderId || !shopId) {

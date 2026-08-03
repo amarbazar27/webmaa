@@ -93,7 +93,13 @@ const MANUAL_UPAZILAS = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const ALLOWED_GEO_TYPES = new Set(['divisions', 'districts', 'upazilas', 'unions']);
+
 function readGeoFile(type) {
+  // 🔒 Security: Whitelist allowed types to prevent path traversal attacks
+  if (!ALLOWED_GEO_TYPES.has(type)) {
+    throw new Error(`Invalid geo type: ${type}`);
+  }
   const filePath = path.join(process.cwd(), 'node_modules', 'bd-geodata', 'data', `${type}.json`);
   const fileContents = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(fileContents);
@@ -193,9 +199,8 @@ export async function GET(request) {
       }
     }
 
-    // fallback: raw file read
-    const data = sortByBnName(readGeoFile(type));
-    return NextResponse.json(data);
+    // Reject unknown types (already validated by readGeoFile whitelist)
+    return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
 
   } catch (error) {
     console.error('Geodata Error:', error);
