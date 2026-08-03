@@ -54,8 +54,10 @@ async function getUpstashRatelimit(prefix, maxRequests, windowSec) {
   }
 
   try {
-    const { Ratelimit } = await import('@upstash/ratelimit');
-    const { Redis } = await import('@upstash/redis');
+    const ratelimitPkg = '@upstash/ratelimit';
+    const redisPkg = '@upstash/redis';
+    const { Ratelimit } = await import(ratelimitPkg);
+    const { Redis } = await import(redisPkg);
 
     const redis = new Redis({ url, token });
     upstashAvailable = true;

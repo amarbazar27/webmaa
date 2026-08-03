@@ -260,34 +260,42 @@ export async function POST(request) {
     if (transporter) {
       const escHtml = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-      const emailPromises = emails.map(async (email) => {
-        try {
-          await transporter.sendMail({
-            from: `"Daripallah" <${process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
-            to: email,
-            subject: subject,
-            html: `
-              <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
-                <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:30px;border-radius:12px 12px 0 0;text-align:center">
-                  <h1 style="color:white;margin:0;font-size:24px">Daripallah</h1>
-                  <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px">Platform Announcement</p>
+      // Send emails in batches of 5 to prevent SMTP connection throttling
+      const batchSize = 5;
+      for (let i = 0; i < emails.length; i += batchSize) {
+        const batch = emails.slice(i, i + batchSize);
+        const promises = batch.map(async (email) => {
+          try {
+            await transporter.sendMail({
+              from: `"Daripallah" <${process.env.SMTP_USER || process.env.EMAIL_USER || process.env.GMAIL_USER}>`,
+              to: email,
+              subject: subject,
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+                  <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:30px;border-radius:12px 12px 0 0;text-align:center">
+                    <h1 style="color:white;margin:0;font-size:24px">Daripallah</h1>
+                    <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px">Platform Announcement</p>
+                  </div>
+                  <div style="background:#fff;padding:30px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
+                    <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${escHtml(subject)}</h2>
+                    <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${escHtml(message)}</div>
+                    <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0" />
+                    <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Daripallah Platform</p>
+                  </div>
                 </div>
-                <div style="background:#fff;padding:30px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px">
-                  <h2 style="color:#1e293b;font-size:18px;margin-bottom:16px">${escHtml(subject)}</h2>
-                  <div style="color:#475569;font-size:15px;line-height:1.7;white-space:pre-wrap">${escHtml(message)}</div>
-                  <hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0" />
-                  <p style="color:#94a3b8;font-size:12px;text-align:center">Powered by Daripallah Platform</p>
-                </div>
-              </div>
-            `,
-          });
-          sent++;
-        } catch (err) {
-          console.error(`[SuperAdmin Email] Failed to ${email}:`, err.message);
-          failed++;
+              `,
+            });
+            sent++;
+          } catch (err) {
+            console.error(`[SuperAdmin Email] Failed to ${email}:`, err.message);
+            failed++;
+          }
+        });
+        await Promise.all(promises);
+        if (i + batchSize < emails.length) {
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
-      });
-      await Promise.all(emailPromises);
+      }
     } else {
       console.warn('[SuperAdmin Email] No SMTP configured.');
       failed = emails.length;

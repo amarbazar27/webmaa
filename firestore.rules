@@ -220,9 +220,10 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
     
-    // Shared Enterprise Fraud Profiles (Retailer Community Database)
+    // Shared Enterprise Fraud Profiles (Managed server-side via Admin SDK)
     match /fraud_profiles/{phone} {
-      allow read, write: if isAuthenticated();
+      allow read: if isAuthenticated();
+      allow write: if false; // Server-only via Admin SDK
     }
     
     // ── Default Deny ───────────────────────
