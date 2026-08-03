@@ -109,7 +109,8 @@ export default function DashboardPage() {
     }
   };
 
-  const showTrialOfferBanner = shop?.subscriptionStatus === 'expired' || shop?.trialClaimed === false;
+  const isTrialEligible = !shop?.trialClaimed && globalConfig?.trialsEnabled !== false;
+  const showTrialOfferBanner = isTrialEligible && (shop?.subscriptionStatus !== 'active' || !shop?.subscriptionStatus);
 
   if (loading) {
     return (

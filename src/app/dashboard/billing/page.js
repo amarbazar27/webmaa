@@ -274,14 +274,17 @@ export default function BillingPage() {
       )}
 
       {/* Free Trial Banner */}
-      {!shop?.trialClaimed && globalConfig?.trialsEnabled && (
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 animate-slide-in mb-6">
-          <div>
-            <h3 className="text-xl font-black flex items-center gap-2">
-              🌟 আপনার প্রথম স্টোর? ফ্রি ট্রায়াল শুরু করুন!
+      {!shop?.trialClaimed && globalConfig?.trialsEnabled !== false && (
+        <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 animate-slide-in mb-6 border border-purple-400/30">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider mb-1">
+              🎁 ১-বার গ্রহণযোগ্য অফার
+            </div>
+            <h3 className="text-xl md:text-2xl font-black flex items-center gap-2 tracking-tight">
+              🌟 আপনার নতুন স্টোরে ১ মাস (৩০ দিন) ফ্রি ট্রায়াল ক্লেইম করুন!
             </h3>
-            <p className="text-xs text-purple-100 font-medium mt-1">
-              পেমেন্ট ছাড়াই আজই ফ্রি ট্রায়াল সক্রিয় করুন এবং প্রজেক্টের সব প্রিমিয়াম ফিচার ব্যবহার করুন।
+            <p className="text-xs text-purple-100 font-medium">
+              কোনো পেমেন্ট ছাড়াই আজই ৩০ দিনের ফ্রি ট্রায়াল সক্রিয় করুন এবং স্টোর সেটিংস ও সব প্রিমিয়াম ফিচার আনলক করুন।
             </p>
           </div>
           <div className="flex gap-2 shrink-0">
@@ -289,17 +292,9 @@ export default function BillingPage() {
               type="button"
               onClick={() => handleClaimTrial('monthly')}
               disabled={submitting}
-              className="px-4 py-2.5 bg-white text-purple-700 hover:bg-purple-50 rounded-xl text-xs font-black transition-colors cursor-pointer"
+              className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-amber-400/20 hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
             >
-              Start {globalConfig.subTrialMonthly || 7} Days Trial (Monthly)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleClaimTrial('quarterly')}
-              disabled={submitting}
-              className="px-4 py-2.5 bg-purple-500 hover:bg-purple-400 text-white rounded-xl text-xs font-black border border-purple-400 transition-colors cursor-pointer"
-            >
-              Start {globalConfig.subTrialQuarterly || 14} Days Trial (Quarterly)
+              🎁 ১ মাসের ফ্রি ট্রায়াল ক্লেইম করুন ({globalConfig?.subTrialMonthly || 30} Days Free)
             </button>
           </div>
         </div>
