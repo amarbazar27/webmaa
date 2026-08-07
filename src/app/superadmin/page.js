@@ -17,8 +17,9 @@ import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
-  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy
+  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy, Target
 } from 'lucide-react';
+import Link from 'next/link';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
@@ -845,6 +846,19 @@ export default function SuperAdminPage() {
               <Crown size={16} />
               <span>সাবস্ক্রিপশন ও বিলিং</span>
             </button>
+
+            {/* Lead Generation — separate page */}
+            <div className="pt-2 mt-2 border-t border-slate-100">
+              <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">বিজনেস টুলস</p>
+              <Link
+                href="/superadmin/leads"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 border border-transparent hover:border-indigo-100"
+              >
+                <Target size={16} />
+                <span>🎯 Lead Generation</span>
+                <ExternalLink size={11} className="ml-auto opacity-50" />
+              </Link>
+            </div>
           </div>
         </div>
 
