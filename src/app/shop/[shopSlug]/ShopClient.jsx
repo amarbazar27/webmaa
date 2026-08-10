@@ -2432,9 +2432,105 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             )}
           </div>
         ) : (
-          <div className="w-full h-full min-h-[100px] sm:min-h-[150px] md:min-h-[200px] bg-gradient-to-r from-purple-800 via-purple-600 to-blue-700 flex items-center justify-center p-4 text-center shadow-inner relative">
-            {shop.coverImg && <img loading="eager" src={shop.coverImg} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="" />}
-            <h2 className="relative z-10 text-3xl md:text-5xl font-black text-white drop-shadow-xl tracking-tight">{shop.welcomeMessage || 'স্বাগতম আমাদের স্টোরে!'}</h2>
+          <div className="w-full h-full min-h-[300px] md:min-h-[420px] relative overflow-hidden flex items-center justify-center">
+            {/* Dynamic Template Hero fallback based on shop.templateId / category */}
+            {(() => {
+              const activeTId = shop?.templateId || 'grocery-fresh-bazaar';
+              const activeTConfig = TEMPLATES[activeTId] || TEMPLATES['grocery-fresh-bazaar'];
+              const cat = activeTConfig?.category || (
+                activeTId.startsWith('luxury') ? 'luxury' :
+                activeTId.startsWith('tech') ? 'electronics' :
+                activeTId.startsWith('beauty') ? 'beauty' :
+                activeTId.startsWith('home') ? 'home' :
+                activeTId.startsWith('sports') ? 'sports' : 'grocery'
+              );
+
+              if (cat === 'luxury') {
+                return (
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-black flex items-center justify-center text-center px-6">
+                    <div className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuDrn-VgOqD0GDQxblDT4pjDA--bBi9IMqvXAKyRKJu3eMagvAGOBkn3xAgMCNDwMhYKz8vYhDdCozQhOaIpMBWN8xr7Gu8xTDZV2AeHcGgHkIShykWfbt6SAJLAzSF0YEQ3UEJWcjGl2qlgZE3DGIDj6QSmY0wk9OTw-5DUxO-F1-eQhERLo_Ve6YVBUR0Dl1b69RL02kwfNQgYGFEKh7sIsslmCeI2SgwYVF3GetSGT-NjD_nWCg')` }} />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                    <div className="relative z-10 max-w-3xl text-white flex flex-col items-center">
+                      <span className="text-xs text-[#C9A84C] tracking-[0.3em] uppercase font-bold mb-3">Autumn / Winter</span>
+                      <h1 className="font-serif text-3xl md:text-5xl font-normal mb-4 tracking-tight leading-tight">{shop.welcomeMessage || 'The Art of Minimalist Elegance'}</h1>
+                      <p className="text-sm md:text-base text-gray-300 mb-6 max-w-xl font-light leading-relaxed">{shop.slogan || 'Discover the new seasonal collection where architectural precision meets fluid drape.'}</p>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#C9A84C] text-black px-8 py-3 rounded-xs text-xs font-bold uppercase tracking-widest hover:bg-amber-400 transition-colors">Explore Collection</button>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (cat === 'electronics') {
+                return (
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#0A192F] flex items-center px-6 md:px-12">
+                    <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuDiWTqaibMLBKYP5p6jmSZt9NHr0g8R2yullSxWyP82AAu-izAJ3Lm0Ud-R_uRSFguubCDdpl77OwFRGVQL9yhwyzj1AgpukGW9t2H324qkTzzlYvFNp4YGqMRrALnqSQ0vrNtt-oZ6NMNIoKOcHmHZiB4hSGgAjo7VrmMB4hF0BX72bq2nd7dXYFitWxi-ZCpVKL5De1sK2DL8Zq8zCq7S2mqoas6zFs1u1v1GYu3ugu77UGy0DQ')` }} />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0A192F] via-[#0A192F]/80 to-transparent" />
+                    <div className="relative z-10 max-w-2xl text-white">
+                      <span className="inline-block px-3 py-1 bg-[#1565C0]/20 border border-[#1565C0]/50 text-[#00E5FF] rounded-full text-xs font-bold uppercase tracking-widest mb-3 backdrop-blur-sm">New Arrivals</span>
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Next-Gen Gadgets.'}</h1>
+                      <p className="text-sm md:text-base text-blue-200/80 mb-5">{shop.slogan || 'Experience the bleeding edge of innovation. Discover devices designed to push the boundaries of what is possible.'}</p>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#1565C0] hover:bg-blue-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-[0_0_15px_rgba(21,101,192,0.5)] transition-all">Explore Collection</button>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (cat === 'beauty') {
+                return (
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F8E6E9] flex items-center justify-center text-center px-6">
+                    <div className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-multiply" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAAKjeSMXbLQp4-ddw35iT05Z-MIuqkCGMyUgAvc_8UQpf_fthBb8e3yhSpbuBge6Eli_RsEAs846-_QUnQ8y8x1K8ngQooz0W-3UIqJ_HeP5udc2qFtQKl9iBBhyK5TiqtmVEjCEUf923BZMRJzMgXCWw2QpXXv5-PF8G_r2PJDvZolmiDcNYjH5y46-JsqpKCtVMwGWnVI0EHdtEBroqsq6Glw4At8-HcjFV5k8oj6dYQrDmbOA')` }} />
+                    <div className="relative z-10 max-w-2xl text-slate-900">
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight">{shop.welcomeMessage || 'Glow from Within'}</h1>
+                      <p className="text-sm md:text-base text-slate-700 mb-5 max-w-lg mx-auto font-medium">{shop.slogan || 'Discover our curated collection of premium skincare, organic makeup, and signature fragrances.'}</p>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#B76E79] hover:bg-rose-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-pink-500/20 transition-all">Shop the Collection</button>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (cat === 'home') {
+                return (
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F5F5DC] flex items-center px-6 md:px-12">
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAVnWdcy-hdkBLqv-40CAo56B3hkGb50nYhmJH7rPDrzpilltnSb4m-5GgbRblT1QDCknIMCkQZcl-AAslikkk4rlQz2l8XNFHsbsZBmaTS5ok7afUCYhTsiSK5ry1lwnj5f4sjw45bxVCVIWIKqudZhWaDZK95opcKUhaEpisAmFRnRsP-DaFWhlYmrF_M9ZWCV1HgITuMWBf97vfywILfqhELZZW-KJFgWPUYfW7g6zaDRL9lrQ')` }} />
+                    <div className="absolute inset-0 bg-gradient-to-r from-stone-900/80 via-stone-900/40 to-transparent" />
+                    <div className="relative z-10 max-w-2xl text-white">
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Revitalize Your Space'}</h1>
+                      <p className="text-sm md:text-base text-stone-200 mb-5">{shop.slogan || 'Curated earthy tones and minimalist designs to bring warmth and comfort into your daily life.'}</p>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#CC5500] hover:bg-orange-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg transition-all">Shop the Collection</button>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (cat === 'sports') {
+                return (
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#1B1B1B] flex items-center px-6 md:px-12">
+                    <div className="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-overlay" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuBdkqt3KxwIpi59sHy7ZIYHhXqNnifh-KAizOuvtO5qlI2-uS3d2Nfl6ZnfpX3v4qkSMNGtuhLLP8CgFzTRNruyzdN_jRFprpS3_D2LH7E0GkW-XX08BfV9NtifZU6wyacQHBAq3V7Qw4Ol6AZQNHLQl129hcloQtQODyBhYzvNA87mM3DSlYqS-LmISSteiDE931JxvcbdF7vWitcg2m_BtG-IQaYvBmn4udPbTLRZiMZC-B7FQg')` }} />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
+                    <div className="relative z-10 max-w-2xl text-white">
+                      <span className="text-xs text-[#FF5722] font-bold uppercase tracking-[0.2em] mb-2 inline-block">New Collection</span>
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Push Your Limits. Defy Gravity.'}</h1>
+                      <p className="text-sm md:text-base text-gray-200 mb-5">{shop.slogan || 'High-performance gear engineered for the relentless. Equip yourself with the latest activewear and outdoor equipment.'}</p>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#FF5722] hover:bg-orange-600 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-orange-500/20 transition-all">Shop Collection</button>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Default Grocery / Fresh Harvest fallback hero
+              return (
+                <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#E8F5E9] flex items-center px-6 md:px-12">
+                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuB0ZS-Zro6Kt3tbQWZGIrFH0wD-N-iKtaxKwpm6lQk8i2xPtoMLB4sXM_kG-WvyZTNQ9W0fKsaveI1eSButEW-B_GvlX2IKoZU97yR8Yey-bTcU0OIhR6Ec24d3yqoIKx2Scrwi_TniJmriyicGt3Gn-N1MCSJpv3VTTzQwMnrMEgg95QFzyBJrCynvKZTq_-XDIgRZtUY5BCmjv4T9Un5SKmQJPN4z4faeOdrrTmMRr3HWgM3Yhg')` }} />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-transparent" />
+                  <div className="relative z-10 max-w-2xl text-white">
+                    <span className="inline-block px-3 py-1 bg-[#E8F5E9] text-[#2E7D32] rounded-full text-xs font-bold uppercase tracking-wider mb-3">Farm to Table</span>
+                    <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Fresh from Farm, Direct to You.'}</h1>
+                    <p className="text-sm md:text-base text-gray-200 mb-5">{shop.slogan || 'Discover our curated selection of organic, locally sourced produce and dairy. Harvested daily for maximum freshness.'}</p>
+                    <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#2E7D32] hover:bg-emerald-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all">Shop Fresh Harvest</button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -2542,21 +2638,142 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           </div>
         </div>
 
-        {/* ── Category Strip (Always Visible on Mobile & Desktop) ── */}
-        {categories.length > 0 && (
-          <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide pb-1">
-            <button
-              onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
-              className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === 'All' ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
-            >🏪 সব</button>
-            {categories.map(c => (
-              <button key={c.id}
-                onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
-                className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
-              >{c.name}</button>
-            ))}
-          </div>
-        )}
+        {/* ── Dynamic Template Category Switcher ── */}
+        {(() => {
+          const activeTId = shop?.templateId || 'grocery-fresh-bazaar';
+          const activeTConfig = TEMPLATES[activeTId] || TEMPLATES['grocery-fresh-bazaar'];
+          const cat = activeTConfig?.category || (
+            activeTId.startsWith('luxury') ? 'luxury' :
+            activeTId.startsWith('tech') ? 'electronics' :
+            activeTId.startsWith('beauty') ? 'beauty' :
+            activeTId.startsWith('home') ? 'home' :
+            activeTId.startsWith('sports') ? 'sports' : 'grocery'
+          );
+
+          const presetCats = {
+            grocery: [
+              { name: 'Fresh Produce', icon: 'local_florist', color: '#2E7D32' },
+              { name: 'Dairy & Eggs', icon: 'egg', color: '#785a1a' },
+              { name: 'Bakery', icon: 'bakery_dining', color: '#5d4201' },
+              { name: 'Meat & Seafood', icon: 'kebab_dining', color: '#ba1a1a' },
+              { name: 'Pantry', icon: 'kitchen', color: '#15803d' },
+            ],
+            luxury: [
+              { name: 'Timepieces', icon: 'watch', color: '#C9A84C' },
+              { name: 'Leather', icon: 'shopping_bag', color: '#C9A84C' },
+              { name: 'Couture', icon: 'checkroom', color: '#C9A84C' },
+              { name: 'Jewelry', icon: 'diamond', color: '#C9A84C' },
+            ],
+            electronics: [
+              { name: 'Phones', icon: 'smartphone', color: '#00E5FF' },
+              { name: 'Laptops', icon: 'laptop_mac', color: '#00E5FF' },
+              { name: 'Audio', icon: 'headphones', color: '#00E5FF' },
+              { name: 'Wearables', icon: 'watch', color: '#00E5FF' },
+              { name: 'Smart Home', icon: 'router', color: '#00E5FF' },
+              { name: 'Gaming', icon: 'videogame_asset', color: '#00E5FF' },
+            ],
+            beauty: [
+              { name: 'Skincare', icon: 'water_drop', color: '#B76E79' },
+              { name: 'Makeup', icon: 'brush', color: '#B76E79' },
+              { name: 'Fragrances', icon: 'spa', color: '#B76E79' },
+              { name: 'Organic', icon: 'eco', color: '#B76E79' },
+            ],
+            home: [
+              { name: 'Furniture', icon: 'chair', color: '#CC5500' },
+              { name: 'Lighting', icon: 'light', color: '#CC5500' },
+              { name: 'Decor', icon: 'potted_plant', color: '#CC5500' },
+              { name: 'Bedding', icon: 'bed', color: '#CC5500' },
+            ],
+            sports: [
+              { name: 'Activewear', icon: 'directions_run', color: '#FF5722' },
+              { name: 'Equipment', icon: 'fitness_center', color: '#FF5722' },
+              { name: 'Outdoor', icon: 'hiking', color: '#FF5722' },
+              { name: 'Court Sports', icon: 'sports_tennis', color: '#FF5722' },
+              { name: 'Swim', icon: 'pool', color: '#FF5722' },
+            ],
+          }[cat];
+
+          if (presetCats && presetCats.length > 0) {
+            return (
+              <div className="w-full overflow-x-auto py-2 scrollbar-hide">
+                <div className="flex items-center gap-6 min-w-max px-2">
+                  <button
+                    onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
+                    className={`flex flex-col items-center gap-1.5 group shrink-0 ${activeCategory === 'All' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
+                  >
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
+                      activeCategory === 'All'
+                        ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    }`}>
+                      <span className="text-xl">🏪</span>
+                    </div>
+                    <span className="text-xs font-black text-slate-800">সব পণ্য</span>
+                  </button>
+
+                  {presetCats.map((item, idx) => {
+                    const isSelected = activeCategory === item.name;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => { setActiveCategory(item.name); setActiveSubcategory(''); }}
+                        className={`flex flex-col items-center gap-1.5 group shrink-0 transition-transform ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
+                      >
+                        <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
+                          isSelected
+                            ? 'border-current bg-purple-50 shadow-lg'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`} style={{ color: item.color, borderColor: isSelected ? item.color : undefined }}>
+                          <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                        </div>
+                        <span className="text-xs font-bold text-slate-800" style={{ color: isSelected ? item.color : undefined }}>
+                          {item.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {categories.map(c => {
+                    const isSelected = activeCategory === c.name;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
+                        className={`flex flex-col items-center gap-1.5 group shrink-0 transition-transform ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
+                      >
+                        <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
+                          isSelected ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        }`}>
+                          <span className="text-xs font-black uppercase">{c.name.slice(0, 3)}</span>
+                        </div>
+                        <span className={`text-xs font-bold ${isSelected ? 'text-purple-600 font-black' : 'text-slate-700'}`}>
+                          {c.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            categories.length > 0 && (
+              <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide pb-1">
+                <button
+                  onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === 'All' ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
+                >🏪 সব</button>
+                {categories.map(c => (
+                  <button key={c.id}
+                    onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
+                    className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
+                  >{c.name}</button>
+                ))}
+              </div>
+            )
+          );
+        })()}
 
         {/* ── Desktop Subcategory Strip ── */}
         {activeCategory !== 'All' && (() => {
@@ -2632,17 +2849,53 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
         {/* ── Product Grid ── */}
         {filteredProducts.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-300">
+          <div id="product-section" className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-300">
             <Package size={64} className="mx-auto mb-4 text-slate-300" strokeWidth={1.5} />
             <h3 className="text-2xl font-black text-slate-800">কোনো পণ্য পাওয়া যায়নি। 🥺</h3>
             <p className="text-slate-500 text-sm mt-3 font-semibold">অন্য ক্যাটাগরিতে খুঁজে দেখুন।</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-3 sm:gap-4">
+          <div id="product-section" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-3 sm:gap-4">
             {filteredProducts.map((product, index) => {
               const cartItem = cart.find(i => i.id === product.id);
+
+              const activeTId = shop?.templateId || 'grocery-fresh-bazaar';
+              const activeTConfig = TEMPLATES[activeTId] || TEMPLATES['grocery-fresh-bazaar'];
+              const catStyle = activeTConfig?.category || (
+                activeTId.startsWith('luxury') ? 'luxury' :
+                activeTId.startsWith('tech') ? 'electronics' :
+                activeTId.startsWith('beauty') ? 'beauty' :
+                activeTId.startsWith('home') ? 'home' :
+                activeTId.startsWith('sports') ? 'sports' : 'grocery'
+              );
+
+              const btnStyleMap = {
+                luxury: 'bg-[#C9A84C] hover:bg-amber-400 text-black font-serif uppercase tracking-wider',
+                electronics: 'bg-[#1565C0] hover:bg-blue-700 text-white shadow-[0_0_12px_rgba(21,101,192,0.4)]',
+                beauty: 'bg-[#B76E79] hover:bg-rose-700 text-white rounded-full',
+                home: 'bg-[#CC5500] hover:bg-orange-700 text-white',
+                sports: 'bg-[#FF5722] hover:bg-orange-600 text-white shadow-md shadow-orange-500/20',
+                grocery: 'bg-[#2E7D32] hover:bg-emerald-700 text-white rounded-full',
+              };
+
+              const priceColorMap = {
+                luxury: 'text-[#C9A84C] font-serif',
+                electronics: 'text-[#00E5FF] font-mono',
+                beauty: 'text-[#B76E79]',
+                home: 'text-[#CC5500]',
+                sports: 'text-[#FF5722]',
+                grocery: 'text-[#2E7D32]',
+              };
+
+              const cardBtnClass = btnStyleMap[catStyle] || 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white';
+              const priceClass = priceColorMap[catStyle] || 'text-slate-900';
+
               return (
-                <div key={product.id} className="sf-product-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border border-slate-200 flex flex-col">
+                <div key={product.id} className={`sf-product-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border flex flex-col ${
+                  catStyle === 'luxury' ? 'bg-[#111111] text-white border-amber-900/30 hover:border-[#C9A84C]' :
+                  catStyle === 'electronics' ? 'bg-[#0A192F] text-white border-blue-900/40 hover:border-[#00E5FF]' :
+                  'bg-white text-slate-900 border-slate-200'
+                }`}>
                   {/* Image — clickable to detail page */}
                   <div 
                     className="relative h-40 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
@@ -2673,20 +2926,28 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   </div>
 
                   {/* Info + Actions */}
-                  <div className="p-3.5 sm:p-4 flex flex-col flex-1 bg-white">
+                  <div className={`p-3.5 sm:p-4 flex flex-col flex-1 ${
+                    catStyle === 'luxury' ? 'bg-[#111111]' :
+                    catStyle === 'electronics' ? 'bg-[#0A192F]' :
+                    'bg-white'
+                  }`}>
                     <h3 
                       onClick={() => {
                         trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
                         setSelectedProductForModal(product);
                       }}
-                      className="font-extrabold text-slate-900 text-[14px] leading-tight group-hover:text-purple-700 transition-colors line-clamp-2 mb-3 cursor-pointer"
+                      className={`font-extrabold text-[14px] leading-tight transition-colors line-clamp-2 mb-3 cursor-pointer ${
+                        catStyle === 'luxury' ? 'text-white group-hover:text-[#C9A84C]' :
+                        catStyle === 'electronics' ? 'text-white group-hover:text-[#00E5FF]' :
+                        'text-slate-900 group-hover:text-purple-700'
+                      }`}
                     >
                       {product.name}
                     </h3>
 
                     {/* Price and Unit right above Cart Controls */}
                     <div className="mb-3 flex items-baseline gap-1">
-                      <span className="text-lg font-black text-slate-900">৳{product.price}</span>
+                      <span className={`text-lg font-black ${priceClass}`}>৳{product.price}</span>
                       {product.unit && (
                         <span className="text-[11px] font-bold text-slate-400">/ {product.unit}</span>
                       )}
@@ -2741,7 +3002,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => addToCart(product)} className="w-full py-2.5 rounded-xl font-black text-sm bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white transition-all flex items-center justify-center gap-2 shadow-md active:scale-95">
+                        <button onClick={() => addToCart(product)} className={`w-full py-2.5 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-md active:scale-95 ${cardBtnClass}`}>
                           <Plus size={15} strokeWidth={2.5} /> কার্টে যোগ করুন
                         </button>
                       )}
@@ -2754,7 +3015,6 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         </button>
                       )}
                     </div>
-                  </div>
                 </div>
               );
             })}

@@ -1,20 +1,933 @@
 /**
- * Webmaa Template Engine — Central Registry v3
+ * Webmaa Template Engine — Central Registry v4
  *
  * Each template is a FULL STOREFRONT IDENTITY, not just a color scheme.
- * Differences include: layout, typography, spacing, hero, cards, buttons,
- * shadows, animations, category UI, navbar, and footer.
+ * Includes 18+ rich templates across 6 core categories (Grocery, Luxury, Tech, Beauty, Home, Sports, General).
+ * Differences include: layout, typography, spacing, hero, product cards, category switchers, header, footer.
  *
  * SSR-safe: pure config objects, no browser APIs.
  */
 
-// ── Template Definitions ───────────────────────────────────────────────────
-
 export const TEMPLATES = {
 
   // ══════════════════════════════════════════════════════════════════
-  // 1. MINIMAL CLEAN — Distraction-free boutique
+  // CATEGORY 1: GROCERY & FRESH MARKET (গ্রোসারি - ৩টি টেমপ্লেট)
   // ══════════════════════════════════════════════════════════════════
+  
+  'grocery-fresh-bazaar': {
+    id: 'grocery-fresh-bazaar',
+    name: 'Grocery Fresh Harvest',
+    namebn: 'গ্রোসারি ফ্রেশ হারভেস্ট',
+    tagline: 'Farm to table fresh produce & organic market',
+    taglinebn: 'ফার্ম ফ্রেশ ফলমূল, শাকসবজি ও অর্গানিক বাজার',
+    category: 'grocery',
+    styleType: 'grocery-fresh-bazaar',
+    layoutClass: 'layout-grocery',
+    tags: ['grocery', 'fresh', 'farm', 'organic', 'vegetable', 'daily', 'green'],
+    personality: 'Vibrant green. Farm fresh. Organic leaf badges and green accent buttons.',
+    accentColor: '#2E7D32',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['grocery', 'fresh-produce', 'organic', 'vegetables', 'fruit'],
+    industryFit: 'grocery',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 1 },
+      { id: 'farm-hero',        label: 'ফার্ম হিরো ব্যানার', visible: true, order: 2 },
+      { id: 'organic-veg',      label: 'অর্গানিক ভেজিটেবল', visible: true, order: 3 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 4 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#2E7D32',
+      secondaryColor: '#1B5E20',
+      accentColor:    '#4CAF50',
+      bgColor:        '#F8F9FA',
+      textColor:      '#191C1D',
+      headerBg:       'rgba(248, 249, 250, 0.85)',
+      headerText:     '#191C1D',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#E1E3E4',
+      buttonRadius:   '50px',
+      cardRadius:     '16px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'md',
+      headerStyle:    'sticky-blur',
+      footerStyle:    'full',
+      heroStyle:      'farm-harvest-hero',
+      categoryStyle:  'circle-icons-green',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'grocery-supermarket': {
+    id: 'grocery-supermarket',
+    name: 'Grocery Supermarket',
+    namebn: 'গ্রোসারি সুপারমার্কেট',
+    tagline: 'Daily deals, fast add-to-cart, super convenience',
+    taglinebn: 'দৈনন্দিন কেনাকাটা, অফার ডিল ও সুপার শপ',
+    category: 'grocery',
+    styleType: 'grocery-supermarket',
+    layoutClass: 'layout-grocery',
+    tags: ['grocery', 'supermarket', 'deals', 'fast-add', 'daily'],
+    personality: 'Fast & convenient. Yellow deal callouts & vibrant green add buttons.',
+    accentColor: '#16A34A',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['supermarket', 'grocery', 'bazaar', 'daily-needs'],
+    industryFit: 'grocery',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'deal-hero',        label: 'সুপার ডিল ব্যানার', visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#16A34A',
+      secondaryColor: '#15803D',
+      accentColor:    '#FACC15',
+      bgColor:        '#F0FDF4',
+      textColor:      '#14532D',
+      headerBg:       '#16A34A',
+      headerText:     '#FFFFFF',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#DCFCE7',
+      buttonRadius:   '12px',
+      cardRadius:     '16px',
+      fontFamily:     '"Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'md',
+      headerStyle:    'fixed',
+      footerStyle:    'compact',
+      heroStyle:      'super-deal-hero',
+      categoryStyle:  'circle-icons-green',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'grocery-organic-farm': {
+    id: 'grocery-organic-farm',
+    name: 'Organic Earth Farm',
+    namebn: 'অর্গানিক আর্থ ফার্ম',
+    tagline: 'Eco-friendly sustainable fresh market',
+    taglinebn: 'পরিবেশবান্ধব অর্গানিক খামার ও তাজা বাজার',
+    category: 'grocery',
+    styleType: 'grocery-organic-farm',
+    layoutClass: 'layout-grocery',
+    tags: ['organic', 'farm', 'eco', 'earthy', 'green', 'fresh'],
+    personality: 'Natural earthy green. Sustainable, clean produce look.',
+    accentColor: '#15803D',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['organic-food', 'farm-produce', 'eco-store'],
+    industryFit: 'grocery',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'eco-hero',         label: 'ইকো হিরো ব্যানার',  visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#15803D',
+      secondaryColor: '#166534',
+      accentColor:    '#84CC16',
+      bgColor:        '#F7FEE7',
+      textColor:      '#1A2E05',
+      headerBg:       '#15803D',
+      headerText:     '#FFFFFF',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#ECFCCB',
+      buttonRadius:   '24px',
+      cardRadius:     '16px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'sm',
+      headerStyle:    'sticky',
+      footerStyle:    'full',
+      heroStyle:      'eco-harvest-hero',
+      categoryStyle:  'circle-icons-green',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+
+  // ══════════════════════════════════════════════════════════════════
+  // CATEGORY 2: LUXURY FASHION (লাক্সারি ফ্যাশন - ৩টি টেমপ্লেট)
+  // ══════════════════════════════════════════════════════════════════
+
+  'luxury-couture': {
+    id: 'luxury-couture',
+    name: 'Luxury Couture Editorial',
+    namebn: 'লাক্সারি কুটুর এডিটোরিয়াল',
+    tagline: 'Minimalist haute couture & high fashion',
+    taglinebn: 'হাই-ফ্যাশন কুটুর, আর্কিটেকচারাল ডিজাইন ও প্রিমিয়াম স্টাইল',
+    category: 'luxury',
+    styleType: 'luxury-couture',
+    layoutClass: 'layout-luxury',
+    tags: ['luxury', 'fashion', 'couture', 'high-fashion', 'editorial', 'gold', 'chic'],
+    personality: 'Ultra-luxurious, monochrome & gold accents, architectural serif typography.',
+    accentColor: '#C9A84C',
+    darkMode: true,
+    complexity: 'premium',
+    recommended: ['luxury-fashion', 'couture', 'designer-wear', 'high-end-boutique'],
+    industryFit: 'luxury',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'couture-hero',     label: 'কুটুর হিরো ব্যানার', visible: true, order: 1 },
+      { id: 'luxury-cats',      label: 'লাক্সারি ক্যাটাগরি',  visible: true, order: 2 },
+      { id: 'bento-grid',       label: 'সিগনেচার কালেকশন', visible: true, order: 3 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 4 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#C9A84C',
+      secondaryColor: '#8B6914',
+      accentColor:    '#D4AF37',
+      bgColor:        '#000000',
+      textColor:      '#F8F9FA',
+      headerBg:       'rgba(0, 0, 0, 0.85)',
+      headerText:     '#FFFFFF',
+      cardBg:         '#111111',
+      cardBorder:     'rgba(201, 168, 76, 0.3)',
+      buttonRadius:   '2px',
+      cardRadius:     '4px',
+      fontFamily:     '"Cormorant Garamond", "Montserrat", serif',
+      fontSize:       'lg',
+      shadow:         'xl',
+      headerStyle:    'fixed',
+      footerStyle:    'full',
+      heroStyle:      'couture-editorial-hero',
+      categoryStyle:  'circle-icons-gold',
+      animationLevel: 'cinematic',
+      gridCols:       3,
+      spacing:        'editorial',
+    },
+  },
+
+  'luxury-dark-gold': {
+    id: 'luxury-dark-gold',
+    name: 'Obsidian 24K Gold',
+    namebn: 'অবসিডিয়ান ২৪কে গোল্ড',
+    tagline: 'Timepieces, fine jewelry & luxury leather',
+    taglinebn: 'ঘড়ি, প্রিমিয়াম জুয়েলারি ও লেদার আইটেম',
+    category: 'luxury',
+    styleType: 'luxury-dark-gold',
+    layoutClass: 'layout-luxury',
+    tags: ['jewelry', 'watches', 'gold', 'leather', 'dark', 'obsidian', 'luxury'],
+    personality: 'Dramatic dark obsidian backdrop with gleaming 24k gold frames.',
+    accentColor: '#D4AF37',
+    darkMode: true,
+    complexity: 'premium',
+    recommended: ['jewelry', 'watches', 'leather-goods', 'perfume', 'luxury'],
+    industryFit: 'luxury',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'obsidian-hero',    label: 'অবসিডিয়ান হিরো',   visible: true, order: 1 },
+      { id: 'luxury-cats',      label: 'লাক্সারি ক্যাটাগরি',  visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#D4AF37',
+      secondaryColor: '#AA7C11',
+      accentColor:    '#F3E5AB',
+      bgColor:        '#0A0A0A',
+      textColor:      '#E5E5E5',
+      headerBg:       '#050505',
+      headerText:     '#D4AF37',
+      cardBg:         '#141414',
+      cardBorder:     'rgba(212, 175, 55, 0.25)',
+      buttonRadius:   '4px',
+      cardRadius:     '8px',
+      fontFamily:     '"Cormorant Garamond", Georgia, serif',
+      fontSize:       'lg',
+      shadow:         'xl',
+      headerStyle:    'fixed',
+      footerStyle:    'full',
+      heroStyle:      'obsidian-gold-hero',
+      categoryStyle:  'circle-icons-gold',
+      animationLevel: 'cinematic',
+      gridCols:       3,
+      spacing:        'editorial',
+    },
+  },
+
+  'luxury-minimal-editorial': {
+    id: 'luxury-minimal-editorial',
+    name: 'Monochrome Minimal Gallery',
+    namebn: 'মনোক্রোম মিনিমাল গ্যালারি',
+    tagline: 'White space gallery fashion aesthetic',
+    taglinebn: 'সাদা গ্যালারি ব্যাকগ্রাউন্ড ও মিনিমাল ডিজাইনার কালেকশন',
+    category: 'luxury',
+    styleType: 'luxury-minimal-editorial',
+    layoutClass: 'layout-luxury',
+    tags: ['gallery', 'white', 'fashion', 'monochrome', 'clean', 'editorial'],
+    personality: 'Pristine gallery white, crisp black typography, generous white space.',
+    accentColor: '#18181B',
+    darkMode: false,
+    complexity: 'premium',
+    recommended: ['boutique', 'designer-wear', 'fashion-house', 'art-gallery'],
+    industryFit: 'luxury',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'gallery-hero',     label: 'গ্যালারি হিরো',     visible: true, order: 1 },
+      { id: 'luxury-cats',      label: 'লাক্সারি ক্যাটাগরি',  visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#18181B',
+      secondaryColor: '#3F3F46',
+      accentColor:    '#C9A84C',
+      bgColor:        '#FFFFFF',
+      textColor:      '#18181B',
+      headerBg:       'rgba(255, 255, 255, 0.9)',
+      headerText:     '#18181B',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#E4E4E7',
+      buttonRadius:   '0px',
+      cardRadius:     '2px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'none',
+      headerStyle:    'sticky-blur',
+      footerStyle:    'minimal',
+      heroStyle:      'monochrome-gallery-hero',
+      categoryStyle:  'circle-icons-gold',
+      animationLevel: 'smooth',
+      gridCols:       3,
+      spacing:        'relaxed',
+    },
+  },
+
+
+  // ══════════════════════════════════════════════════════════════════
+  // CATEGORY 3: TECH & ELECTRONICS (টেক ও ইলেকট্রনিক্স - ৩টি টেমপ্লেট)
+  // ══════════════════════════════════════════════════════════════════
+
+  'tech-gadget-hub': {
+    id: 'tech-gadget-hub',
+    name: 'Tech Gadget Hub',
+    namebn: 'টেক গ্যাজেট হাব',
+    tagline: 'Next-gen devices, smart electronics & gadgets',
+    taglinebn: 'স্মার্টফোন, ল্যাপটপ, অডিও ও আগামী দিনের প্রযুক্তি',
+    category: 'electronics',
+    styleType: 'tech-gadget-hub',
+    layoutClass: 'layout-tech',
+    tags: ['tech', 'electronics', 'gadgets', 'smartphones', 'laptops', 'blue', 'futuristic'],
+    personality: 'Electric blue glow on dark obsidian. High-tech product specifications.',
+    accentColor: '#1565C0',
+    darkMode: true,
+    complexity: 'standard',
+    recommended: ['tech', 'electronics', 'smartphones', 'gadgets', 'accessories'],
+    industryFit: 'technology',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'tech-hero',        label: 'টেক হিরো ব্যানার',  visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#1565C0',
+      secondaryColor: '#0D47A1',
+      accentColor:    '#00E5FF',
+      bgColor:        '#0A192F',
+      textColor:      '#F8F9FA',
+      headerBg:       'rgba(10, 25, 47, 0.85)',
+      headerText:     '#FFFFFF',
+      cardBg:         '#112240',
+      cardBorder:     'rgba(21, 101, 192, 0.3)',
+      buttonRadius:   '50px',
+      cardRadius:     '16px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'xl',
+      headerStyle:    'sticky-blur',
+      footerStyle:    'full',
+      heroStyle:      'nextgen-gadget-hero',
+      categoryStyle:  'circle-icons-blue',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'tech-neon-cyber': {
+    id: 'tech-neon-cyber',
+    name: 'Cyberpunk Neon Gaming',
+    namebn: 'সাইবারপাঙ্ক নিয়ন গেমিং',
+    tagline: 'RGB glow, gaming PCs, peripherals & cyber tech',
+    taglinebn: 'গেমিং গিয়ার, আরজিবি নিয়ন ইফেক্ট ও সাইবার ডিজাইন',
+    category: 'electronics',
+    styleType: 'tech-neon-cyber',
+    layoutClass: 'layout-tech',
+    tags: ['gaming', 'neon', 'rgb', 'cyberpunk', 'pc', 'dark', 'tech'],
+    personality: 'High energy RGB neon cyan/green glows, futuristic sharp tech lines.',
+    accentColor: '#00FF88',
+    darkMode: true,
+    complexity: 'advanced',
+    recommended: ['gaming', 'pc-hardware', 'electronics', 'software'],
+    industryFit: 'technology',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'cyber-hero',       label: 'সাইবার হিরো',       visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#00FF88',
+      secondaryColor: '#00D4FF',
+      accentColor:    '#FF0080',
+      bgColor:        '#060B14',
+      textColor:      '#E2F1FF',
+      headerBg:       '#0D1B2A',
+      headerText:     '#00FF88',
+      cardBg:         'rgba(0, 255, 136, 0.04)',
+      cardBorder:     'rgba(0, 255, 136, 0.25)',
+      buttonRadius:   '8px',
+      cardRadius:     '16px',
+      fontFamily:     '"Outfit", "Exo 2", sans-serif',
+      fontSize:       'base',
+      shadow:         'xl',
+      headerStyle:    'fixed',
+      footerStyle:    'full',
+      heroStyle:      'cyber-neon-hero',
+      categoryStyle:  'circle-icons-blue',
+      animationLevel: 'immersive',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'tech-minimal-apple': {
+    id: 'tech-minimal-apple',
+    name: 'Apple Studio Minimal',
+    namebn: 'অ্যাপল স্টুডিও মিনিমাল',
+    tagline: 'Ultra-clean product spotlight & precision engineering',
+    taglinebn: 'অ্যাপল স্টাইল আল্ট্রা-ক্লিন ডিজাইন ও প্রিমিয়াম ফিনিশিং',
+    category: 'electronics',
+    styleType: 'tech-minimal-apple',
+    layoutClass: 'layout-tech',
+    tags: ['apple', 'minimal', 'clean', 'tech', 'smartphones', 'white'],
+    personality: 'Crisp white canvas, Apple-blue buttons, edge-to-edge product renders.',
+    accentColor: '#0071E3',
+    darkMode: false,
+    complexity: 'premium',
+    recommended: ['apple-products', 'premium-electronics', 'gadgets'],
+    industryFit: 'technology',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'apple-hero',       label: 'অ্যাপল হিরো',       visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#0071E3',
+      secondaryColor: '#1D1D1F',
+      accentColor:    '#0071E3',
+      bgColor:        '#F5F5F7',
+      textColor:      '#1D1D1F',
+      headerBg:       'rgba(255, 255, 255, 0.8)',
+      headerText:     '#1D1D1F',
+      cardBg:         '#FFFFFF',
+      cardBorder:     'rgba(0, 0, 0, 0.08)',
+      buttonRadius:   '980px',
+      cardRadius:     '18px',
+      fontFamily:     '"Inter", "-apple-system", sans-serif',
+      fontSize:       'base',
+      shadow:         'sm',
+      headerStyle:    'sticky-blur',
+      footerStyle:    'minimal',
+      heroStyle:      'apple-studio-hero',
+      categoryStyle:  'circle-icons-blue',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'relaxed',
+    },
+  },
+
+
+  // ══════════════════════════════════════════════════════════════════
+  // CATEGORY 4: BEAUTY & COSMETICS (বিউটি ও কসমেটিক্স - ৩টি টেমপ্লেট)
+  // ══════════════════════════════════════════════════════════════════
+
+  'beauty-rose-glow': {
+    id: 'beauty-rose-glow',
+    name: 'Radiance Rose Glow',
+    namebn: 'রেডিয়েন্স রোজ গ্লো',
+    tagline: 'Skincare, organic cosmetics & signature fragrances',
+    taglinebn: 'স্কিনকেয়ার, অর্গানিক মেকআপ ও পারফিউম কালেকশন',
+    category: 'beauty',
+    styleType: 'beauty-rose-glow',
+    layoutClass: 'layout-beauty',
+    tags: ['beauty', 'skincare', 'cosmetics', 'rose-gold', 'pink', 'makeup', 'glow'],
+    personality: 'Soft pastel pink, rose gold accents, dewy skincare droppers and soft shadows.',
+    accentColor: '#B76E79',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['skincare', 'beauty', 'cosmetics', 'makeup', 'spa'],
+    industryFit: 'beauty',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'rose-hero',        label: 'রোজ গ্লো হিরো',     visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#B76E79',
+      secondaryColor: '#9C535E',
+      accentColor:    '#F8E6E9',
+      bgColor:        '#F8F9FA',
+      textColor:      '#191C1D',
+      headerBg:       'rgba(255, 255, 255, 0.8)',
+      headerText:     '#191C1D',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#F8E6E9',
+      buttonRadius:   '50px',
+      cardRadius:     '16px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'md',
+      headerStyle:    'sticky-blur',
+      footerStyle:    'full',
+      heroStyle:      'rose-glow-hero',
+      categoryStyle:  'circle-icons-rose',
+      animationLevel: 'smooth',
+      gridCols:       3,
+      spacing:        'comfortable',
+    },
+  },
+
+  'beauty-organic-spa': {
+    id: 'beauty-organic-spa',
+    name: 'Botanical Spa Glow',
+    namebn: 'বোটানিক্যাল স্পা গ্লো',
+    tagline: 'Natural skincare, botanical oils & wellness',
+    taglinebn: 'প্রাকৃতিক বোটানিক্যাল অয়েল, স্পা কেয়ার ও ওয়েলনেস',
+    category: 'beauty',
+    styleType: 'beauty-organic-spa',
+    layoutClass: 'layout-beauty',
+    tags: ['organic', 'spa', 'botanical', 'wellness', 'skincare', 'green'],
+    personality: 'Serene botanical sage green, gentle dewy light, organic spa feel.',
+    accentColor: '#059669',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['organic-skincare', 'wellness', 'herbal-beauty', 'spa'],
+    industryFit: 'beauty',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'spa-hero',         label: 'স্পা হিরো ব্যানার', visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#059669',
+      secondaryColor: '#047857',
+      accentColor:    '#34D399',
+      bgColor:        '#F0FDF4',
+      textColor:      '#064E3B',
+      headerBg:       '#059669',
+      headerText:     '#FFFFFF',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#D1FAE5',
+      buttonRadius:   '50px',
+      cardRadius:     '16px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'sm',
+      headerStyle:    'sticky',
+      footerStyle:    'full',
+      heroStyle:      'botanical-spa-hero',
+      categoryStyle:  'circle-icons-rose',
+      animationLevel: 'smooth',
+      gridCols:       3,
+      spacing:        'comfortable',
+    },
+  },
+
+  'beauty-glam-chic': {
+    id: 'beauty-glam-chic',
+    name: 'Glamour Chic Cosmetics',
+    namebn: 'গ্ল্যামার চিক কসমেটিক্স',
+    tagline: 'Vibrant lipstick, glam makeup & luxury perfumes',
+    taglinebn: 'গ্ল্যামারাস মেকআপ, লিপস্টিক ও ব্র্যান্ডেড পারফিউম',
+    category: 'beauty',
+    styleType: 'beauty-glam-chic',
+    layoutClass: 'layout-beauty',
+    tags: ['glam', 'makeup', 'perfume', 'chic', 'lipstick', 'pink', 'magenta'],
+    personality: 'Bold magenta & rose pink highlights, high contrast glamour aesthetic.',
+    accentColor: '#E11D48',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['makeup-store', 'perfumes', 'cosmetics-brand'],
+    industryFit: 'beauty',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'glam-hero',        label: 'গ্ল্যাম হিরো',      visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#E11D48',
+      secondaryColor: '#BE123C',
+      accentColor:    '#FB7185',
+      bgColor:        '#FFF1F2',
+      textColor:      '#4C0519',
+      headerBg:       '#E11D48',
+      headerText:     '#FFFFFF',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#FFE4E6',
+      buttonRadius:   '24px',
+      cardRadius:     '16px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'lg',
+      headerStyle:    'sticky',
+      footerStyle:    'full',
+      heroStyle:      'glamour-chic-hero',
+      categoryStyle:  'circle-icons-rose',
+      animationLevel: 'smooth',
+      gridCols:       3,
+      spacing:        'comfortable',
+    },
+  },
+
+
+  // ══════════════════════════════════════════════════════════════════
+  // CATEGORY 5: HOME & LIVING (হোম ও লিভিং - ৩টি টেমপ্লেট)
+  // ══════════════════════════════════════════════════════════════════
+
+  'home-earthy-sanctuary': {
+    id: 'home-earthy-sanctuary',
+    name: 'Earthy Home Sanctuary',
+    namebn: 'আর্থি হোম স্যাঙ্কচুয়ারি',
+    tagline: 'Terracotta tones, minimalist furniture & home decor',
+    taglinebn: 'টেরাকোটা শেড, মিনিমাল আসবাবপত্র ও হোম ডেকোরেশন',
+    category: 'home',
+    styleType: 'home-earthy-sanctuary',
+    layoutClass: 'layout-home',
+    tags: ['home', 'furniture', 'terracotta', 'living', 'decor', 'earthy', 'warm'],
+    personality: 'Warm terracotta `#CC5500`, natural beige linen textures, cozy living room ambiance.',
+    accentColor: '#CC5500',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['furniture', 'home-decor', 'interior-design', 'lighting'],
+    industryFit: 'home',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'earthy-hero',      label: 'লিভিং রুম হিরো',    visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#CC5500',
+      secondaryColor: '#A04000',
+      accentColor:    '#F5F5DC',
+      bgColor:        '#F8F9FA',
+      textColor:      '#191C1D',
+      headerBg:       'rgba(248, 249, 250, 0.8)',
+      headerText:     '#191C1D',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#E1E3E4',
+      buttonRadius:   '50px',
+      cardRadius:     '12px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'md',
+      headerStyle:    'sticky-blur',
+      footerStyle:    'full',
+      heroStyle:      'earthy-living-hero',
+      categoryStyle:  'circle-icons-orange',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'home-nordic-scandi': {
+    id: 'home-nordic-scandi',
+    name: 'Nordic Scandi Living',
+    namebn: 'নরডিক স্ক্যান্ডি লিভিং',
+    tagline: 'Scandinavian light wood, minimalist bedding & lighting',
+    taglinebn: 'স্ক্যান্ডিনেভিয়ান লাইট উড, লাইটিং ও বেডিং কালেকশন',
+    category: 'home',
+    styleType: 'home-nordic-scandi',
+    layoutClass: 'layout-home',
+    tags: ['scandi', 'nordic', 'wood', 'furniture', 'minimalist', 'home'],
+    personality: 'Warm light oak wood tones, off-white linen, minimalist furniture aesthetics.',
+    accentColor: '#D97706',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['furniture', 'nordic-home', 'bedding', 'lighting'],
+    industryFit: 'home',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'scandi-hero',      label: 'স্ক্যান্ডি হিরো',     visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#D97706',
+      secondaryColor: '#B45309',
+      accentColor:    '#FBBF24',
+      bgColor:        '#FFFBEB',
+      textColor:      '#451A03',
+      headerBg:       '#D97706',
+      headerText:     '#FFFFFF',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#FEF3C7',
+      buttonRadius:   '24px',
+      cardRadius:     '12px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'sm',
+      headerStyle:    'sticky',
+      footerStyle:    'full',
+      heroStyle:      'nordic-scandi-hero',
+      categoryStyle:  'circle-icons-orange',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'home-modern-decor': {
+    id: 'home-modern-decor',
+    name: 'Modern Slate Decor',
+    namebn: 'মডার্ন স্লেট ডেকোর',
+    tagline: 'Contemporary lighting, ceramics & luxury home decor',
+    taglinebn: 'আধুনিক লাইটিং, সিরামিক ডেকোর ও মেটাল ফার্নিচার',
+    category: 'home',
+    styleType: 'home-modern-decor',
+    layoutClass: 'layout-home',
+    tags: ['decor', 'modern', 'lighting', 'ceramics', 'interior', 'home'],
+    personality: 'Sleek neutral slate `#4B5563`, ceramic ambient lamp highlights.',
+    accentColor: '#4B5563',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['home-decor', 'lighting-shop', 'interior-accessories'],
+    industryFit: 'home',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'decor-hero',       label: 'ডেকোর হিরো',       visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#4B5563',
+      secondaryColor: '#374151',
+      accentColor:    '#9CA3AF',
+      bgColor:        '#F9FAFB',
+      textColor:      '#111827',
+      headerBg:       '#4B5563',
+      headerText:     '#FFFFFF',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#E5E7EB',
+      buttonRadius:   '8px',
+      cardRadius:     '12px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'md',
+      headerStyle:    'sticky',
+      footerStyle:    'full',
+      heroStyle:      'modern-slate-hero',
+      categoryStyle:  'circle-icons-orange',
+      animationLevel: 'smooth',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+
+  // ══════════════════════════════════════════════════════════════════
+  // CATEGORY 6: SPORTS & OUTDOORS (স্পোর্টস ও আউটডোর - ৩টি টেমপ্লেট)
+  // ══════════════════════════════════════════════════════════════════
+
+  'sports-ultra-athlete': {
+    id: 'sports-ultra-athlete',
+    name: 'Sports Ultra Athlete',
+    namebn: 'স্পোর্টস আল্ট্রা অ্যাথলিট',
+    tagline: 'High-performance activewear & outdoor athletic gear',
+    taglinebn: 'হাই-পারফরম্যান্স স্পোর্টস গিয়ার, রানিং শু ও ফিটনেস ড্রেস',
+    category: 'sports',
+    styleType: 'sports-ultra-athlete',
+    layoutClass: 'layout-sports',
+    tags: ['sports', 'athlete', 'activewear', 'shoes', 'running', 'fitness', 'orange'],
+    personality: 'High energy vibrant orange `#FF5722`, dark trail runner hero, action badges.',
+    accentColor: '#FF5722',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['sports', 'activewear', 'footwear', 'gym', 'outdoor'],
+    industryFit: 'sports',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'sports-hero',      label: 'ট্রেইল রানিং হিরো', visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#FF5722',
+      secondaryColor: '#E64A19',
+      accentColor:    '#FF8A65',
+      bgColor:        '#F8F9FA',
+      textColor:      '#191C1D',
+      headerBg:       'rgba(248, 249, 250, 0.8)',
+      headerText:     '#191C1D',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#E1E3E4',
+      buttonRadius:   '50px',
+      cardRadius:     '12px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'md',
+      headerStyle:    'sticky-blur',
+      footerStyle:    'full',
+      heroStyle:      'trail-runner-hero',
+      categoryStyle:  'circle-icons-orange',
+      animationLevel: 'energetic',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'sports-outdoor-summit': {
+    id: 'sports-outdoor-summit',
+    name: 'Outdoor Summit Trekker',
+    namebn: 'আউটডোর সামিট ট্রেকার',
+    tagline: 'Trekking boots, camping gear & extreme outdoor adventure',
+    taglinebn: 'হাইকিং বুট, ট্র্যাকিং ও ক্যাম্পিং অ্যাক্সেসরিজ',
+    category: 'sports',
+    styleType: 'sports-outdoor-summit',
+    layoutClass: 'layout-sports',
+    tags: ['outdoor', 'hiking', 'camping', 'boots', 'trekking', 'adventure'],
+    personality: 'Rugged dark slate & summit orange accents, waterproof tech specs.',
+    accentColor: '#EA580C',
+    darkMode: false,
+    complexity: 'standard',
+    recommended: ['outdoor-gear', 'hiking-shop', 'camping-store', 'sports'],
+    industryFit: 'sports',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'summit-hero',      label: 'সামিট হিরো',       visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#EA580C',
+      secondaryColor: '#C2410C',
+      accentColor:    '#F97316',
+      bgColor:        '#FFF7ED',
+      textColor:      '#431407',
+      headerBg:       '#EA580C',
+      headerText:     '#FFFFFF',
+      cardBg:         '#FFFFFF',
+      cardBorder:     '#FFEDD5',
+      buttonRadius:   '24px',
+      cardRadius:     '12px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'md',
+      headerStyle:    'sticky',
+      footerStyle:    'full',
+      heroStyle:      'summit-trekker-hero',
+      categoryStyle:  'circle-icons-orange',
+      animationLevel: 'energetic',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+  'sports-pro-performance': {
+    id: 'sports-pro-performance',
+    name: 'Pro Performance Gym Power',
+    namebn: 'প্রো পারফরম্যান্স জিম পাওয়ার',
+    tagline: 'Gym weights, kettlebells & athletic compression wear',
+    taglinebn: 'জিম ফ্রি-ওয়েট, কেটলবেল ও হাই-কম্প্রেশন স্পোর্টসওয়্যার',
+    category: 'sports',
+    styleType: 'sports-pro-performance',
+    layoutClass: 'layout-sports',
+    tags: ['gym', 'fitness', 'workout', 'weights', 'compression', 'sports'],
+    personality: 'Raw gym power, dark charcoal ambiance with high-visibility neon lime accents.',
+    accentColor: '#16A34A',
+    darkMode: true,
+    complexity: 'standard',
+    recommended: ['gym-store', 'fitness-equipment', 'supplement-shop'],
+    industryFit: 'sports',
+
+    sections: [
+      { id: 'top-bar',          label: 'টপ নেভ বার',        visible: true, order: 0 },
+      { id: 'gym-hero',         label: 'জিম পাওয়ার হিরো',   visible: true, order: 1 },
+      { id: 'category-pills',   label: 'ক্যাটাগরি সুইচ',    visible: true, order: 2 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true, order: 3 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#16A34A',
+      secondaryColor: '#15803D',
+      accentColor:    '#22C55E',
+      bgColor:        '#090D16',
+      textColor:      '#F8FAFC',
+      headerBg:       '#0F172A',
+      headerText:     '#22C55E',
+      cardBg:         '#1E293B',
+      cardBorder:     '#334155',
+      buttonRadius:   '8px',
+      cardRadius:     '12px',
+      fontFamily:     '"Montserrat", "Inter", sans-serif',
+      fontSize:       'base',
+      shadow:         'xl',
+      headerStyle:    'fixed',
+      footerStyle:    'full',
+      heroStyle:      'gym-power-hero',
+      categoryStyle:  'circle-icons-orange',
+      animationLevel: 'energetic',
+      gridCols:       4,
+      spacing:        'comfortable',
+    },
+  },
+
+
+  // ══════════════════════════════════════════════════════════════════
+  // BACKWARD COMPATIBILITY ALIASES & OTHER SPECIALIZED TEMPLATES
+  // ══════════════════════════════════════════════════════════════════
+
   'minimal-clean': {
     id: 'minimal-clean',
     name: 'Minimal Clean',
@@ -22,8 +935,8 @@ export const TEMPLATES = {
     tagline: 'Distraction-free boutique shopping',
     taglinebn: 'পরিষ্কার, সরল ডিজাইন',
     category: 'general',
-    styleType: 'minimal-clean',       // → [data-sf-style] CSS
-    layoutClass: 'layout-minimal',    // → layout modifier
+    styleType: 'minimal-clean',
+    layoutClass: 'layout-minimal',
     tags: ['minimal', 'clean', 'boutique', 'art', 'handcraft', 'simple'],
     personality: 'Quiet elegance. Content-first. Nothing is extra.',
     accentColor: '#18181B',
@@ -35,8 +948,6 @@ export const TEMPLATES = {
     sections: [
       { id: 'minimal-hero',    label: 'হিরো',         visible: true,  order: 0 },
       { id: 'all-products',   label: 'সকল পণ্য',     visible: true,  order: 1 },
-      { id: 'about-section',  label: 'সম্পর্কে',      visible: true,  order: 2 },
-      { id: 'faq',            label: 'FAQ',           visible: false, order: 3 },
     ],
 
     defaultTheme: {
@@ -64,9 +975,6 @@ export const TEMPLATES = {
     },
   },
 
-  // ══════════════════════════════════════════════════════════════════
-  // 2. MODERN GLASS — Glassmorphism premium store
-  // ══════════════════════════════════════════════════════════════════
   'modern-glass': {
     id: 'modern-glass',
     name: 'Modern Glass',
@@ -87,10 +995,7 @@ export const TEMPLATES = {
     sections: [
       { id: 'glass-hero',      label: 'গ্লাস হিরো',    visible: true,  order: 0 },
       { id: 'category-strip',  label: 'ক্যাটাগরি',     visible: true,  order: 1 },
-      { id: 'featured-products', label: 'ফিচার পণ্য',  visible: true,  order: 2 },
-      { id: 'all-products',    label: 'সকল পণ্য',      visible: true,  order: 3 },
-      { id: 'reviews',         label: 'রিভিউ',         visible: true,  order: 4 },
-      { id: 'faq',             label: 'FAQ',            visible: false, order: 5 },
+      { id: 'all-products',    label: 'সকল পণ্য',      visible: true,  order: 2 },
     ],
 
     defaultTheme: {
@@ -118,9 +1023,6 @@ export const TEMPLATES = {
     },
   },
 
-  // ══════════════════════════════════════════════════════════════════
-  // 3. BOLD COMMERCE — High-density marketplace
-  // ══════════════════════════════════════════════════════════════════
   'bold-commerce': {
     id: 'bold-commerce',
     name: 'Bold Commerce',
@@ -139,13 +1041,9 @@ export const TEMPLATES = {
     industryFit: 'marketplace',
 
     sections: [
-      { id: 'offer-bar',       label: 'অফার বার',      visible: true,  order: 0 },
-      { id: 'hero-banner',     label: 'হিরো ব্যানার',  visible: true,  order: 1 },
-      { id: 'category-strip',  label: 'ক্যাটাগরি',     visible: true,  order: 2 },
-      { id: 'featured-products', label: 'ফিচার পণ্য',  visible: true,  order: 3 },
-      { id: 'promo-banner',    label: 'প্রমো ব্যানার', visible: true,  order: 4 },
-      { id: 'all-products',    label: 'সকল পণ্য',      visible: true,  order: 5 },
-      { id: 'reviews',         label: 'রিভিউ',         visible: true,  order: 6 },
+      { id: 'hero-banner',     label: 'হিরো ব্যানার',  visible: true,  order: 0 },
+      { id: 'category-strip',  label: 'ক্যাটাগরি',     visible: true,  order: 1 },
+      { id: 'all-products',    label: 'সকল পণ্য',      visible: true,  order: 2 },
     ],
 
     defaultTheme: {
@@ -173,62 +1071,6 @@ export const TEMPLATES = {
     },
   },
 
-  // ══════════════════════════════════════════════════════════════════
-  // 4. LUXURY DARK — Premium dark editorial
-  // ══════════════════════════════════════════════════════════════════
-  'luxury-dark': {
-    id: 'luxury-dark',
-    name: 'Luxury Dark',
-    namebn: 'লাক্সারি ডার্ক',
-    tagline: 'Editorial dark — jewelry, watches, premium goods',
-    taglinebn: 'সিনেমাটিক ডার্ক লাক্সারি অভিজ্ঞতা',
-    category: 'luxury',
-    styleType: 'luxury-dark',
-    layoutClass: 'layout-luxury',
-    tags: ['luxury', 'dark', 'premium', 'jewelry', 'watches', 'gold', 'editorial'],
-    personality: 'Cinematic. Slow. Every pixel is intentional.',
-    accentColor: '#C9A84C',
-    darkMode: true,
-    complexity: 'premium',
-    recommended: ['luxury', 'jewelry', 'watches', 'perfume', 'premium-fashion'],
-    industryFit: 'luxury',
-
-    sections: [
-      { id: 'luxury-hero',        label: 'সিনেমাটিক হিরো', visible: true,  order: 0 },
-      { id: 'brand-story',        label: 'ব্র্যান্ড স্টোরি',  visible: true,  order: 1 },
-      { id: 'featured-products',  label: 'কিউরেটেড পণ্য',    visible: true,  order: 2 },
-      { id: 'all-products',       label: 'সকল পণ্য',          visible: true,  order: 3 },
-      { id: 'testimonials',       label: 'ক্লায়েন্ট মতামত', visible: true,  order: 4 },
-    ],
-
-    defaultTheme: {
-      primaryColor:   '#C9A84C',
-      secondaryColor: '#8B6914',
-      accentColor:    '#FFD700',
-      bgColor:        '#0A0A0A',
-      textColor:      '#E8E8E8',
-      headerBg:       '#111111',
-      headerText:     '#C9A84C',
-      cardBg:         '#1A1A1A',
-      cardBorder:     'rgba(201,168,76,0.25)',
-      buttonRadius:   '0px',
-      cardRadius:     '2px',
-      fontFamily:     '"Cormorant Garamond", "Playfair Display", Georgia, serif',
-      fontSize:       'lg',
-      shadow:         'xl',
-      headerStyle:    'fixed',
-      footerStyle:    'full',
-      heroStyle:      'cinematic-fullscreen',
-      categoryStyle:  'elegant-list',
-      animationLevel: 'cinematic',
-      gridCols:       2,
-      spacing:        'editorial',
-    },
-  },
-
-  // ══════════════════════════════════════════════════════════════════
-  // 5. LOCAL BAZAAR — Grocery / daily market
-  // ══════════════════════════════════════════════════════════════════
   'local-bazaar': {
     id: 'local-bazaar',
     name: 'Local Bazaar',
@@ -236,8 +1078,8 @@ export const TEMPLATES = {
     tagline: 'Fresh market, fast checkout, dense value',
     taglinebn: 'দ্রুত ডেলিভারি, সাশ্রয়ী মূল্য, লোকাল বাজার',
     category: 'grocery',
-    styleType: 'local-bazaar',
-    layoutClass: 'layout-bazaar',
+    styleType: 'grocery-fresh-bazaar',
+    layoutClass: 'layout-grocery',
     tags: ['grocery', 'food', 'market', 'fresh', 'daily', 'vegetable', 'bazaar'],
     personality: 'Energetic. Price-forward. Feels like your local market.',
     accentColor: '#2E7D32',
@@ -247,12 +1089,8 @@ export const TEMPLATES = {
     industryFit: 'grocery',
 
     sections: [
-      { id: 'delivery-banner',  label: 'ডেলিভারি ব্যানার', visible: true,  order: 0 },
-      { id: 'quick-categories', label: 'দ্রুত ক্যাটাগরি',  visible: true,  order: 1 },
-      { id: 'daily-deals',      label: 'আজকের অফার',       visible: true,  order: 2 },
-      { id: 'all-products',     label: 'সকল পণ্য',          visible: true,  order: 3 },
-      { id: 'delivery-info',    label: 'ডেলিভারি তথ্য',    visible: true,  order: 4 },
-      { id: 'faq',              label: 'FAQ',               visible: true,  order: 5 },
+      { id: 'quick-categories', label: 'দ্রুত ক্যাটাগরি',  visible: true,  order: 0 },
+      { id: 'all-products',     label: 'সকল পণ্য',          visible: true,  order: 1 },
     ],
 
     defaultTheme: {
@@ -280,18 +1118,62 @@ export const TEMPLATES = {
     },
   },
 
-  // ══════════════════════════════════════════════════════════════════
-  // 6. AI FUTURISTIC — Neon glassmorphism
-  // ══════════════════════════════════════════════════════════════════
+  'luxury-dark': {
+    id: 'luxury-dark',
+    name: 'Luxury Dark',
+    namebn: 'লাক্সারি ডার্ক',
+    tagline: 'Editorial dark — jewelry, watches, premium goods',
+    taglinebn: 'সিনেমাটিক ডার্ক লাক্সারি অভিজ্ঞতা',
+    category: 'luxury',
+    styleType: 'luxury-dark-gold',
+    layoutClass: 'layout-luxury',
+    tags: ['luxury', 'dark', 'premium', 'jewelry', 'watches', 'gold', 'editorial'],
+    personality: 'Cinematic. Slow. Every pixel is intentional.',
+    accentColor: '#C9A84C',
+    darkMode: true,
+    complexity: 'premium',
+    recommended: ['luxury', 'jewelry', 'watches', 'perfume', 'premium-fashion'],
+    industryFit: 'luxury',
+
+    sections: [
+      { id: 'luxury-hero',        label: 'সিনেমাটিক হিরো', visible: true,  order: 0 },
+      { id: 'all-products',       label: 'সকল পণ্য',          visible: true,  order: 1 },
+    ],
+
+    defaultTheme: {
+      primaryColor:   '#C9A84C',
+      secondaryColor: '#8B6914',
+      accentColor:    '#FFD700',
+      bgColor:        '#0A0A0A',
+      textColor:      '#E8E8E8',
+      headerBg:       '#111111',
+      headerText:     '#C9A84C',
+      cardBg:         '#1A1A1A',
+      cardBorder:     'rgba(201,168,76,0.25)',
+      buttonRadius:   '0px',
+      cardRadius:     '2px',
+      fontFamily:     '"Cormorant Garamond", Georgia, serif',
+      fontSize:       'lg',
+      shadow:         'xl',
+      headerStyle:    'fixed',
+      footerStyle:    'full',
+      heroStyle:      'cinematic-fullscreen',
+      categoryStyle:  'elegant-list',
+      animationLevel: 'cinematic',
+      gridCols:       2,
+      spacing:        'editorial',
+    },
+  },
+
   'ai-futuristic': {
     id: 'ai-futuristic',
     name: 'AI Futuristic',
     namebn: 'এআই ফিউচারিস্টিক',
     tagline: 'Glassmorphism, glow, neon — the future of commerce',
     taglinebn: 'গ্লো ইফেক্ট, নিয়ন ডিজাইন, ভবিষ্যতের শপিং',
-    category: 'general',
-    styleType: 'ai-futuristic',
-    layoutClass: 'layout-futuristic',
+    category: 'electronics',
+    styleType: 'tech-neon-cyber',
+    layoutClass: 'layout-tech',
     tags: ['ai', 'futuristic', 'neon', 'glow', 'glassmorphism', 'dark', 'tech'],
     personality: 'Immersive. Glowing. Feels like 2035.',
     accentColor: '#6C47FF',
@@ -302,10 +1184,7 @@ export const TEMPLATES = {
 
     sections: [
       { id: 'ai-hero',         label: 'অ্যানিমেটেড হিরো',  visible: true,  order: 0 },
-      { id: 'ai-categories',   label: 'স্মার্ট ক্যাটাগরি', visible: true,  order: 1 },
-      { id: 'featured-products', label: 'AI পিক্স',        visible: true,  order: 2 },
-      { id: 'all-products',    label: 'সকল পণ্য',           visible: true,  order: 3 },
-      { id: 'reviews',         label: 'রিভিউ',              visible: true,  order: 4 },
+      { id: 'all-products',    label: 'সকল পণ্য',           visible: true,  order: 1 },
     ],
 
     defaultTheme: {
@@ -333,7 +1212,6 @@ export const TEMPLATES = {
     },
   },
 
-  // Keep backward-compatible aliases
   'modern-commerce': {
     id: 'modern-commerce',
     name: 'Bold Commerce',
@@ -352,9 +1230,7 @@ export const TEMPLATES = {
     industryFit: 'marketplace',
     sections: [
       { id: 'hero-banner',      label: 'হিরো ব্যানার', visible: true,  order: 0 },
-      { id: 'category-strip',   label: 'ক্যাটাগরি',    visible: true,  order: 1 },
-      { id: 'featured-products', label: 'ফিচার পণ্য',  visible: true,  order: 2 },
-      { id: 'all-products',     label: 'সকল পণ্য',     visible: true,  order: 3 },
+      { id: 'all-products',     label: 'সকল পণ্য',     visible: true,  order: 1 },
     ],
     defaultTheme: {
       primaryColor: '#FF6B00', secondaryColor: '#232F3E', accentColor: '#FEBD69',
@@ -373,8 +1249,8 @@ export const TEMPLATES = {
     tagline: 'Fresh market, fast checkout',
     taglinebn: 'দ্রুত ডেলিভারি',
     category: 'grocery',
-    styleType: 'local-bazaar',
-    layoutClass: 'layout-bazaar',
+    styleType: 'grocery-fresh-bazaar',
+    layoutClass: 'layout-grocery',
     tags: ['grocery', 'food', 'market', 'fresh'],
     personality: 'Local market energy.',
     accentColor: '#2E7D32',
@@ -383,9 +1259,7 @@ export const TEMPLATES = {
     recommended: ['grocery', 'food', 'market'],
     industryFit: 'grocery',
     sections: [
-      { id: 'offer-banner',    label: 'অফার ব্যানার',   visible: true, order: 0 },
-      { id: 'quick-categories', label: 'ক্যাটাগরি',     visible: true, order: 1 },
-      { id: 'all-products',    label: 'সকল পণ্য',       visible: true, order: 2 },
+      { id: 'all-products',    label: 'সকল পণ্য',       visible: true, order: 0 },
     ],
     defaultTheme: {
       primaryColor: '#2E7D32', secondaryColor: '#1B5E20', accentColor: '#FF6F00',
@@ -404,7 +1278,7 @@ export const TEMPLATES = {
     tagline: 'Premium luxury experience',
     taglinebn: 'প্রিমিয়াম লাক্সারি',
     category: 'luxury',
-    styleType: 'luxury-dark',
+    styleType: 'luxury-couture',
     layoutClass: 'layout-luxury',
     tags: ['luxury', 'fashion', 'premium'],
     personality: 'Editorial luxury.',
@@ -414,8 +1288,7 @@ export const TEMPLATES = {
     recommended: ['luxury', 'fashion', 'premium'],
     industryFit: 'luxury',
     sections: [
-      { id: 'luxury-hero',    label: 'হিরো',      visible: true, order: 0 },
-      { id: 'all-products',  label: 'সকল পণ্য', visible: true, order: 1 },
+      { id: 'all-products',  label: 'সকল পণ্য', visible: true, order: 0 },
     ],
     defaultTheme: {
       primaryColor: '#C9A84C', secondaryColor: '#8B6914', accentColor: '#FFD700',
@@ -427,347 +1300,58 @@ export const TEMPLATES = {
     },
   },
 
-  // ══════════════════════════════════════════════════════════════════
-  // 7. NEON GAMING — Dark Electronics / Gaming Store
-  // ══════════════════════════════════════════════════════════════════
-  'neon-gaming': {
-    id: 'neon-gaming',
-    name: 'Neon Gaming',
-    namebn: 'নিয়ন গেমিং',
-    tagline: 'RGB neon — for tech & gaming stores',
-    taglinebn: 'গেমিং / টেক স্টোরের জন্য নিয়ন ডিজাইন',
-    category: 'electronics',
-    styleType: 'neon-gaming',
-    layoutClass: 'layout-gaming',
-    tags: ['gaming', 'electronics', 'dark', 'neon', 'rgb', 'tech', 'gadget'],
-    personality: 'High-energy. RGB. Every product feels like a boss drop.',
-    accentColor: '#00FF88',
-    darkMode: true,
-    complexity: 'advanced',
-    recommended: ['gaming', 'electronics', 'pc-parts', 'accessories', 'gadgets'],
-    industryFit: 'technology',
-
-    sections: [
-      { id: 'rgb-hero',          label: 'RGB হিরো',         visible: true,  order: 0 },
-      { id: 'flash-deals',       label: 'ফ্ল্যাশ ডিল',      visible: true,  order: 1 },
-      { id: 'category-neon',     label: 'ক্যাটাগরি গ্রিড',  visible: true,  order: 2 },
-      { id: 'featured-products', label: 'ফিচার পণ্য',       visible: true,  order: 3 },
-      { id: 'all-products',      label: 'সকল পণ্য',          visible: true,  order: 4 },
-      { id: 'reviews',           label: 'রিভিউ',             visible: true,  order: 5 },
-    ],
-
-    defaultTheme: {
-      primaryColor:   '#00FF88',
-      secondaryColor: '#00D4FF',
-      accentColor:    '#FF0080',
-      bgColor:        '#060B14',
-      textColor:      '#E2F1FF',
-      headerBg:       'linear-gradient(135deg, #060B14, #0D1B2A)',
-      headerText:     '#00FF88',
-      cardBg:         'rgba(0,255,136,0.05)',
-      cardBorder:     'rgba(0,255,136,0.25)',
-      buttonRadius:   '6px',
-      cardRadius:     '12px',
-      fontFamily:     '"Outfit", "Exo 2", monospace',
-      fontSize:       'base',
-      shadow:         'xl',
-      headerStyle:    'fixed',
-      footerStyle:    'full',
-      heroStyle:      'rgb-animated',
-      categoryStyle:  'neon-grid',
-      animationLevel: 'immersive',
-      gridCols:       4,
-      spacing:        'compact',
-    },
-  },
-
-  // ══════════════════════════════════════════════════════════════════
-  // 8. INSTAGRAM FASHION — Social-first Fashion Store
-  // ══════════════════════════════════════════════════════════════════
-  'instagram-fashion': {
-    id: 'instagram-fashion',
-    name: 'Instagram Fashion',
-    namebn: 'ইনস্টাগ্রাম ফ্যাশন',
-    tagline: 'Social-first fashion with editorial aesthetic',
-    taglinebn: 'ইনস্টাগ্রাম স্টাইল ফ্যাশন শপ',
-    category: 'fashion',
-    styleType: 'instagram-fashion',
-    layoutClass: 'layout-instagram',
-    tags: ['fashion', 'instagram', 'social', 'beauty', 'lifestyle', 'trendy', 'boutique'],
-    personality: 'Curated. Aesthetic. Looks like an IG feed.',
-    accentColor: '#E91E8C',
-    darkMode: false,
-    complexity: 'standard',
-    recommended: ['fashion', 'beauty', 'lifestyle', 'clothing', 'accessories'],
-    industryFit: 'fashion',
-
-    sections: [
-      { id: 'ig-hero',            label: 'IG হিরো',           visible: true,  order: 0 },
-      { id: 'ig-story-grid',      label: 'স্টোরি গ্রিড',      visible: true,  order: 1 },
-      { id: 'featured-products',  label: 'কিউরেটেড পণ্য',    visible: true,  order: 2 },
-      { id: 'all-products',       label: 'সকল পণ্য',          visible: true,  order: 3 },
-      { id: 'reviews',            label: 'কাস্টমার রিভিউ',   visible: true,  order: 4 },
-    ],
-
-    defaultTheme: {
-      primaryColor:   '#E91E8C',
-      secondaryColor: '#FF6DB0',
-      accentColor:    '#FF9A3C',
-      bgColor:        '#FFFBFE',
-      textColor:      '#1A0A14',
-      headerBg:       '#FFFFFF',
-      headerText:     '#1A0A14',
-      cardBg:         '#FFFFFF',
-      cardBorder:     '#F3E8F0',
-      buttonRadius:   '50px',
-      cardRadius:     '16px',
-      fontFamily:     '"DM Sans", "Nunito", sans-serif',
-      fontSize:       'base',
-      shadow:         'md',
-      headerStyle:    'sticky',
-      footerStyle:    'minimal',
-      heroStyle:      'full-bleed-image',
-      categoryStyle:  'story-circles',
-      animationLevel: 'smooth',
-      gridCols:       2,
-      spacing:        'relaxed',
-    },
-  },
-
-  // ══════════════════════════════════════════════════════════════════
-  // 9. HALAL MARKETPLACE — Islamic / Arabic Inspired
-  // ══════════════════════════════════════════════════════════════════
-  'halal-marketplace': {
-    id: 'halal-marketplace',
-    name: 'Halal Marketplace',
-    namebn: 'হালাল মার্কেটপ্লেস',
-    tagline: 'Elegant Arabic-inspired halal store',
-    taglinebn: 'ইসলামিক ডিজাইন, হালাল পণ্য',
-    category: 'islamic',
-    styleType: 'halal-marketplace',
-    layoutClass: 'layout-halal',
-    tags: ['halal', 'islamic', 'arabic', 'muslim', 'modest', 'organic', 'trust'],
-    personality: 'Trustworthy. Elegant. Islamic geometric patterns.',
-    accentColor: '#2E7D5E',
-    darkMode: false,
-    complexity: 'standard',
-    recommended: ['halal-food', 'modest-fashion', 'islamic-products', 'organic', 'prayer'],
-    industryFit: 'islamic',
-
-    sections: [
-      { id: 'halal-hero',         label: 'মেইন ব্যানার',      visible: true,  order: 0 },
-      { id: 'trust-badges',       label: 'বিশ্বাসযোগ্যতা',    visible: true,  order: 1 },
-      { id: 'category-islamic',   label: 'ক্যাটাগরি',          visible: true,  order: 2 },
-      { id: 'featured-products',  label: 'বিশেষ পণ্য',        visible: true,  order: 3 },
-      { id: 'all-products',       label: 'সকল পণ্য',           visible: true,  order: 4 },
-      { id: 'reviews',            label: 'সন্তুষ্ট গ্রাহক',    visible: true,  order: 5 },
-    ],
-
-    defaultTheme: {
-      primaryColor:   '#2E7D5E',
-      secondaryColor: '#1B5E43',
-      accentColor:    '#C9A84C',
-      bgColor:        '#F8F5F0',
-      textColor:      '#1A1208',
-      headerBg:       '#2E7D5E',
-      headerText:     '#FFFFFF',
-      cardBg:         '#FFFFFF',
-      cardBorder:     '#D4C9B0',
-      buttonRadius:   '8px',
-      cardRadius:     '12px',
-      fontFamily:     '"Noto Sans Bengali", "Hind Siliguri", sans-serif',
-      fontSize:       'base',
-      shadow:         'md',
-      headerStyle:    'sticky',
-      footerStyle:    'full',
-      heroStyle:      'pattern-overlay',
-      categoryStyle:  'diamond-grid',
-      animationLevel: 'minimal',
-      gridCols:       3,
-      spacing:        'comfortable',
-    },
-  },
-
-  // ══════════════════════════════════════════════════════════════════
-  // 10. FOOD DELIVERY — Restaurant / Food Delivery
-  // ══════════════════════════════════════════════════════════════════
-  'food-delivery': {
-    id: 'food-delivery',
-    name: 'Food Delivery',
-    namebn: 'ফুড ডেলিভারি',
-    tagline: 'Hungry? Order in 30 minutes.',
-    taglinebn: 'দ্রুত খাবার অর্ডার, ৩০ মিনিটে ডেলিভারি',
-    category: 'restaurant',
-    styleType: 'food-delivery',
-    layoutClass: 'layout-food',
-    tags: ['food', 'restaurant', 'delivery', 'fast-food', 'menu', 'cooking', 'cafe'],
-    personality: 'Warm. Appetizing. Makes you hungry just looking at it.',
-    accentColor: '#FF5722',
-    darkMode: false,
-    complexity: 'standard',
-    recommended: ['restaurant', 'fast-food', 'cafe', 'bakery', 'home-kitchen'],
-    industryFit: 'food',
-
-    sections: [
-      { id: 'food-hero',          label: 'হিরো ব্যানার',       visible: true,  order: 0 },
-      { id: 'eta-banner',         label: 'ডেলিভারি সময়',       visible: true,  order: 1 },
-      { id: 'menu-categories',    label: 'মেনু ক্যাটাগরি',     visible: true,  order: 2 },
-      { id: 'popular-items',      label: 'জনপ্রিয় খাবার',     visible: true,  order: 3 },
-      { id: 'all-products',       label: 'সম্পূর্ণ মেনু',       visible: true,  order: 4 },
-      { id: 'delivery-info',      label: 'ডেলিভারি তথ্য',       visible: true,  order: 5 },
-    ],
-
-    defaultTheme: {
-      primaryColor:   '#FF5722',
-      secondaryColor: '#FF8A65',
-      accentColor:    '#FFC107',
-      bgColor:        '#FFF8F5',
-      textColor:      '#1A0800',
-      headerBg:       '#FF5722',
-      headerText:     '#FFFFFF',
-      cardBg:         '#FFFFFF',
-      cardBorder:     '#FFE0D4',
-      buttonRadius:   '50px',
-      cardRadius:     '20px',
-      fontFamily:     '"Nunito", "Inter", sans-serif',
-      fontSize:       'base',
-      shadow:         'lg',
-      headerStyle:    'sticky',
-      footerStyle:    'compact',
-      heroStyle:      'food-banner',
-      categoryStyle:  'emoji-pills',
-      animationLevel: 'energetic',
-      gridCols:       2,
-      spacing:        'comfortable',
-    },
-  },
-
-  // ══════════════════════════════════════════════════════════════════
-  // 11. DARAZ STYLE — Dense Marketplace like Daraz/Shopee
-  // ══════════════════════════════════════════════════════════════════
-  'daraz-style': {
-    id: 'daraz-style',
-    name: 'Daraz Inspired',
-    namebn: 'দারাজ স্টাইল',
-    tagline: 'Flash sales, vouchers, dense product discovery',
-    taglinebn: 'ফ্ল্যাশ সেল, ভাউচার, ঘন পণ্য গ্রিড',
-    category: 'general',
-    styleType: 'daraz-style',
-    layoutClass: 'layout-daraz',
-    tags: ['daraz', 'shopee', 'marketplace', 'flash-sale', 'voucher', 'dense', 'general'],
-    personality: 'Deal-hungry. Flash sales everywhere. Urgency-driven.',
-    accentColor: '#F05A24',
-    darkMode: false,
-    complexity: 'standard',
-    recommended: ['general', 'electronics', 'fashion', 'grocery', 'marketplace'],
-    industryFit: 'marketplace',
-
-    sections: [
-      { id: 'flash-sale-bar',     label: 'ফ্ল্যাশ সেল বার',   visible: true,  order: 0 },
-      { id: 'mega-banner',        label: 'মেগা ব্যানার',        visible: true,  order: 1 },
-      { id: 'voucher-strip',      label: 'ভাউচার স্ট্রিপ',     visible: true,  order: 2 },
-      { id: 'category-grid',      label: 'ক্যাটাগরি গ্রিড',    visible: true,  order: 3 },
-      { id: 'featured-products',  label: 'বেস্ট ডিল',          visible: true,  order: 4 },
-      { id: 'all-products',       label: 'সকল পণ্য',            visible: true,  order: 5 },
-    ],
-
-    defaultTheme: {
-      primaryColor:   '#F05A24',
-      secondaryColor: '#FF8C00',
-      accentColor:    '#FFD200',
-      bgColor:        '#F5F5F5',
-      textColor:      '#333333',
-      headerBg:       '#F05A24',
-      headerText:     '#FFFFFF',
-      cardBg:         '#FFFFFF',
-      cardBorder:     '#EEEEEE',
-      buttonRadius:   '4px',
-      cardRadius:     '8px',
-      fontFamily:     '"Inter", "Roboto", sans-serif',
-      fontSize:       'sm',
-      shadow:         'sm',
-      headerStyle:    'fixed',
-      footerStyle:    'full',
-      heroStyle:      'slideshow',
-      categoryStyle:  'icon-grid',
-      animationLevel: 'minimal',
-      gridCols:       5,
-      spacing:        'tight',
-    },
-  },
-
-  // ══════════════════════════════════════════════════════════════════
-  // 12. APPLE MINIMAL — Ultra-clean Apple-inspired Design
-  // ══════════════════════════════════════════════════════════════════
   'apple-minimal': {
     id: 'apple-minimal',
     name: 'Apple Inspired',
     namebn: 'অ্যাপল মিনিমাল',
     tagline: 'Think different. Ultra-clean, product-first.',
     taglinebn: 'অ্যাপলের মতো পরিষ্কার, প্রিমিয়াম ডিজাইন',
-    category: 'general',
-    styleType: 'apple-minimal',
-    layoutClass: 'layout-apple',
-    tags: ['apple', 'minimal', 'premium', 'clean', 'white', 'tech', 'luxury'],
-    personality: 'Effortless. Every product is art. White space is king.',
+    category: 'electronics',
+    styleType: 'tech-minimal-apple',
+    layoutClass: 'layout-tech',
+    tags: ['apple', 'minimal', 'premium', 'clean', 'white', 'tech'],
+    personality: 'Effortless. Every product is art.',
     accentColor: '#0071E3',
     darkMode: false,
     complexity: 'premium',
-    recommended: ['tech', 'gadgets', 'premium', 'design', 'electronics'],
+    recommended: ['tech', 'gadgets', 'premium'],
     industryFit: 'premium-tech',
-
     sections: [
-      { id: 'hero-fullscreen',    label: 'ফুলস্ক্রিন হিরো',   visible: true,  order: 0 },
-      { id: 'product-spotlight',  label: 'প্রোডাক্ট স্পটলাইট', visible: true, order: 1 },
-      { id: 'feature-grid',       label: 'ফিচার গ্রিড',        visible: true,  order: 2 },
-      { id: 'all-products',       label: 'সকল পণ্য',            visible: true,  order: 3 },
+      { id: 'all-products',       label: 'সকল পণ্য',            visible: true,  order: 0 },
     ],
-
     defaultTheme: {
-      primaryColor:   '#0071E3',
-      secondaryColor: '#1D1D1F',
-      accentColor:    '#0071E3',
-      bgColor:        '#FFFFFF',
-      textColor:      '#1D1D1F',
-      headerBg:       'rgba(255,255,255,0.85)',
-      headerText:     '#1D1D1F',
-      cardBg:         '#FFFFFF',
-      cardBorder:     'rgba(0,0,0,0.08)',
-      buttonRadius:   '980px',
-      cardRadius:     '18px',
-      fontFamily:     '"Inter", "-apple-system", "BlinkMacSystemFont", sans-serif',
-      fontSize:       'lg',
-      shadow:         'sm',
-      headerStyle:    'sticky-blur',
-      footerStyle:    'minimal',
-      heroStyle:      'fullscreen-video',
-      categoryStyle:  'text-links',
-      animationLevel: 'smooth',
-      gridCols:       2,
-      spacing:        'editorial',
+      primaryColor:   '#0071E3', secondaryColor: '#1D1D1F', accentColor: '#0071E3',
+      bgColor:        '#FFFFFF', textColor: '#1D1D1F', headerBg: 'rgba(255,255,255,0.85)', headerText: '#1D1D1F',
+      cardBg:         '#FFFFFF', cardBorder: 'rgba(0,0,0,0.08)', buttonRadius: '980px', cardRadius: '18px',
+      fontFamily:     '"Inter", sans-serif', fontSize: 'lg', shadow: 'sm',
+      headerStyle:    'sticky-blur', footerStyle: 'minimal', heroStyle: 'fullscreen-video',
+      categoryStyle:  'text-links', animationLevel: 'smooth', gridCols: 2, spacing: 'editorial',
     },
   },
 };
 
 // ── Category registry ──────────────────────────────────────────────────────
 export const TEMPLATE_CATEGORIES = [
-  { id: 'all',       label: 'সব টেমপ্লেট',  labelEn: 'All Templates' },
-  { id: 'general',   label: 'সাধারণ',         labelEn: 'General' },
-  { id: 'grocery',   label: 'গ্রোসারি',       labelEn: 'Grocery' },
-  { id: 'luxury',    label: 'লাক্সারি',       labelEn: 'Luxury' },
-  { id: 'fashion',   label: 'ফ্যাশন',         labelEn: 'Fashion' },
+  { id: 'all',          label: 'সব টেমপ্লেট',       labelEn: 'All Templates' },
+  { id: 'grocery',      label: 'গ্রোসারি (Grocery)', labelEn: 'Grocery' },
+  { id: 'luxury',       label: 'লাক্সারি ফ্যাশন',   labelEn: 'Luxury Fashion' },
+  { id: 'electronics',  label: 'টেক ও ইলেকট্রনিক্স', labelEn: 'Tech & Electronics' },
+  { id: 'beauty',       label: 'বিউটি ও কসমেটিক্স',  labelEn: 'Beauty & Cosmetics' },
+  { id: 'home',         label: 'হোম ও লিভিং',        labelEn: 'Home & Living' },
+  { id: 'sports',       label: 'স্পোর্টস ও আউটডোর',  labelEn: 'Sports & Outdoors' },
+  { id: 'general',      label: 'সাধারণ',             labelEn: 'General Marketplace' },
 ];
 
 // ── Helper functions ───────────────────────────────────────────────────────
-export const getTemplateById = (id) => TEMPLATES[id] || TEMPLATES['bold-commerce'] || TEMPLATES['modern-commerce'];
+export const getTemplateById = (id) => TEMPLATES[id] || TEMPLATES['grocery-fresh-bazaar'] || TEMPLATES['bold-commerce'];
 
 export const getTemplateList = () => Object.values(TEMPLATES);
 
 export const getUniqueTemplates = () => {
   const seen = new Set();
   return Object.values(TEMPLATES).filter(t => {
-    if (seen.has(t.styleType)) return false;
-    seen.add(t.styleType);
+    if (seen.has(t.id)) return false;
+    seen.add(t.id);
     return true;
   });
 };
@@ -781,15 +1365,16 @@ export const getTemplatesByCategory = (category) => {
 export const suggestTemplateFromDescription = (description = '') => {
   const lowerDesc = description.toLowerCase();
   const keywords = {
-    'luxury-dark':    ['luxury', 'premium', 'jewelry', 'watch', 'gold', 'লাক্সারি', 'গহনা', 'প্রিমিয়াম'],
-    'local-bazaar':   ['grocery', 'food', 'market', 'fresh', 'vegetable', 'গ্রোসারি', 'বাজার', 'তরকারি', 'মাছ', 'মাংস'],
-    'ai-futuristic':  ['tech', 'ai', 'software', 'digital', 'gaming', 'gadget', 'টেক', 'গেমিং', 'ডিজিটাল'],
-    'minimal-clean':  ['minimal', 'boutique', 'handcraft', 'art', 'মিনিমাল', 'বুটিক', 'হস্তশিল্প'],
-    'modern-glass':   ['fashion', 'beauty', 'lifestyle', 'ফ্যাশন', 'বিউটি', 'লাইফস্টাইল'],
-    'bold-commerce':  ['shop', 'store', 'product', 'ecommerce', 'দোকান', 'পণ্য', 'সব'],
+    'grocery-fresh-bazaar':  ['grocery', 'food', 'market', 'fresh', 'vegetable', 'গ্রোসারি', 'বাজার', 'তরকারি', 'ফল', 'মাছ', 'মাংস'],
+    'luxury-couture':        ['luxury', 'couture', 'high-fashion', 'jewelry', 'watch', 'gold', 'লাক্সারি', 'গহনা', 'প্রিমিয়াম'],
+    'tech-gadget-hub':       ['tech', 'electronics', 'smartphone', 'laptop', 'gadget', 'টেক', 'মোবাইল', 'ল্যাপটপ'],
+    'beauty-rose-glow':      ['beauty', 'skincare', 'cosmetics', 'makeup', 'perfume', 'বিউটি', 'কসমেটিক্স', 'মেকআপ'],
+    'home-earthy-sanctuary': ['home', 'furniture', 'decor', 'living', 'terracotta', 'হোম', 'ফার্নিচার', 'ডেকোর'],
+    'sports-ultra-athlete':  ['sports', 'outdoor', 'running', 'gym', 'activewear', 'স্পোর্টস', 'জিম', 'জুতা'],
+    'bold-commerce':         ['shop', 'store', 'product', 'ecommerce', 'দোকান', 'পণ্য', 'সব'],
   };
 
-  let bestMatch = 'bold-commerce';
+  let bestMatch = 'grocery-fresh-bazaar';
   let bestScore = 0;
 
   Object.entries(keywords).forEach(([templateId, words]) => {
@@ -797,17 +1382,18 @@ export const suggestTemplateFromDescription = (description = '') => {
     if (score > bestScore) { bestScore = score; bestMatch = templateId; }
   });
 
-  return TEMPLATES[bestMatch] || TEMPLATES['bold-commerce'];
+  return TEMPLATES[bestMatch] || TEMPLATES['grocery-fresh-bazaar'];
 };
 
 // ── Color palette presets ──────────────────────────────────────────────────
 export const AI_COLOR_PALETTES = {
-  luxury:      { name: 'লাক্সারি গোল্ড',   primaryColor: '#C9A84C', accentColor: '#FFD700',  bgColor: '#0A0A0A' },
-  fashion:     { name: 'মডার্ন ভায়োলেট',   primaryColor: '#6C47FF', accentColor: '#8B5CF6',  bgColor: '#F5F3FF' },
-  grocery:     { name: 'ফ্রেশ গ্রিন',       primaryColor: '#2E7D32', accentColor: '#FF6F00',  bgColor: '#F1F8E9' },
-  futuristic:  { name: 'নিয়ন গ্লো',        primaryColor: '#6C47FF', accentColor: '#22D3EE',  bgColor: '#020617' },
-  general:     { name: 'ক্লাসিক অরেঞ্জ',   primaryColor: '#FF6B00', accentColor: '#FEBD69',  bgColor: '#F5F5F5' },
-  minimal:     { name: 'মিনিমাল ব্ল্যাক',  primaryColor: '#18181B', accentColor: '#71717A',  bgColor: '#FFFFFF' },
+  grocery:     { name: 'ফ্রেশ অর্গানিক গ্রিন', primaryColor: '#2E7D32', accentColor: '#4CAF50',  bgColor: '#F8F9FA' },
+  luxury:      { name: 'লাক্সারি ডার্ক গোল্ড',   primaryColor: '#C9A84C', accentColor: '#D4AF37',  bgColor: '#000000' },
+  electronics: { name: 'টেক ইলেকট্রিক ব্লু',   primaryColor: '#1565C0', accentColor: '#00E5FF',  bgColor: '#0A192F' },
+  beauty:      { name: 'বিউটি রোজ গ্লো',      primaryColor: '#B76E79', accentColor: '#F8E6E9',  bgColor: '#F8F9FA' },
+  home:        { name: 'হোম টেরাকোটা ওয়ার্ম',  primaryColor: '#CC5500', accentColor: '#F5F5DC',  bgColor: '#F8F9FA' },
+  sports:      { name: 'স্পোর্টস অরেঞ্জ অ্যাকশন', primaryColor: '#FF5722', accentColor: '#FF8A65',  bgColor: '#F8F9FA' },
+  general:     { name: 'ক্লাসিক অরেঞ্জ',       primaryColor: '#FF6B00', accentColor: '#FEBD69',  bgColor: '#F5F5F5' },
 };
 
 export default TEMPLATES;
