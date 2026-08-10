@@ -3015,6 +3015,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         </button>
                       )}
                     </div>
+                  </div>
                 </div>
               );
             })}
