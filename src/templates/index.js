@@ -1342,8 +1342,51 @@ export const TEMPLATE_CATEGORIES = [
   { id: 'general',      label: 'সাধারণ',             labelEn: 'General Marketplace' },
 ];
 
-// ── Helper functions ───────────────────────────────────────────────────────
-export const getTemplateById = (id) => TEMPLATES[id] || TEMPLATES['grocery-fresh-bazaar'] || TEMPLATES['bold-commerce'];
+export const getTemplateById = (id) => {
+  if (!id) return TEMPLATES['grocery-fresh-bazaar'];
+  if (TEMPLATES[id]) return TEMPLATES[id];
+  if (typeof id === 'string' && (id.startsWith('ai-single-') || id.includes('single') || id.includes('spotlight'))) {
+    return {
+      id,
+      name: 'AI Custom Vision (Single Product Spotlight)',
+      namebn: 'AI কাস্টম ভিশন (Single Product Spotlight)',
+      category: 'sports',
+      layoutType: 'single-product',
+      styleType: 'ai-spotlight-hero',
+      layoutClass: 'layout-sports',
+      tags: ['ai-generated', 'single-product'],
+      defaultTheme: {
+        primaryColor: '#FF5722', secondaryColor: '#1E293B', accentColor: '#FF8A65',
+        bgColor: '#FFF8F6', textColor: '#0F172A', headerBg: '#FFFFFF', headerText: '#0F172A',
+        cardBg: '#FFFFFF', cardBorder: '#FFEDD5', buttonRadius: '50px', cardRadius: '24px',
+        fontFamily: '"Outfit", "Inter", sans-serif', fontSize: 'base', shadow: 'lg',
+        headerStyle: 'sticky-blur', footerStyle: 'full', heroStyle: 'single-product-spotlight-hero',
+        categoryStyle: 'circle-icons-orange', animationLevel: 'cinematic', gridCols: 1, spacing: 'comfortable'
+      }
+    };
+  }
+  if (typeof id === 'string' && (id.startsWith('ai-split-') || id.includes('split'))) {
+    return {
+      id,
+      name: 'AI Custom Vision (50/50 Split Showcase)',
+      namebn: 'AI কাস্টম ভিশন (50/50 Split Showcase)',
+      category: 'electronics',
+      layoutType: 'split-screen',
+      styleType: 'ai-split-showcase',
+      layoutClass: 'layout-tech',
+      tags: ['ai-generated', 'split-screen'],
+      defaultTheme: {
+        primaryColor: '#0066FF', secondaryColor: '#0F172A', accentColor: '#38BDF8',
+        bgColor: '#F0F8FF', textColor: '#0F172A', headerBg: '#F0F8FF', headerText: '#0F172A',
+        cardBg: '#FFFFFF', cardBorder: '#BAE6FD', buttonRadius: '12px', cardRadius: '20px',
+        fontFamily: '"Montserrat", "Inter", sans-serif', fontSize: 'base', shadow: 'md',
+        headerStyle: 'fixed', footerStyle: 'full', heroStyle: 'split-showcase-hero',
+        categoryStyle: 'circle-icons-blue', animationLevel: 'smooth', gridCols: 2, spacing: 'relaxed'
+      }
+    };
+  }
+  return TEMPLATES['grocery-fresh-bazaar'] || TEMPLATES['bold-commerce'];
+};
 
 export const getTemplateList = () => Object.values(TEMPLATES);
 

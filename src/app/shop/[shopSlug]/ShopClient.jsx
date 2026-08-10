@@ -430,6 +430,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   });
   const [activeCategory, setActiveCategory] = useState('All');
   const [activeSubcategory, setActiveSubcategory] = useState('');
+  const [selectedSize, setSelectedSize] = useState('39');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('name_asc');
   const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
@@ -2641,123 +2642,37 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             activeTId.startsWith('sports') ? 'sports' : 'grocery'
           );
 
-          // For custom theme templates (Beauty, Tech, Luxury, Home, Sports), render clean category boxes matching design screenshots
-          if (['beauty', 'electronics', 'luxury', 'home', 'sports'].includes(cat)) {
-            const templatePresetBoxes = {
-              beauty: [
-                { name: 'Skincare', img: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=120&auto=format&fit=crop&q=80' },
-                { name: 'Makeup', img: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=120&auto=format&fit=crop&q=80' },
-                { name: 'Fragrances', img: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=120&auto=format&fit=crop&q=80' },
-                { name: 'Organic', img: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=120&auto=format&fit=crop&q=80' },
-              ],
-              electronics: [
-                { name: 'Phones', label: '📱' },
-                { name: 'Laptops', label: '💻' },
-                { name: 'Audio', label: '🎧' },
-                { name: 'Wearables', label: '⌚' },
-                { name: 'Smart Home', label: '📡' },
-                { name: 'Gaming', label: '🎮' },
-              ],
-              luxury: [
-                { name: 'Timepieces', label: '⌚' },
-                { name: 'Leather', label: '👜' },
-                { name: 'Couture', label: '👗' },
-                { name: 'Jewelry', label: '💎' },
-              ],
-              home: [
-                { name: 'Furniture', label: '🪑' },
-                { name: 'Lighting', label: '💡' },
-                { name: 'Decor', label: '🪴' },
-                { name: 'Bedding', label: '🛏️' },
-              ],
-              sports: [
-                { name: 'Activewear', label: '🏃' },
-                { name: 'Equipment', label: '🏋️' },
-                { name: 'Outdoor', label: '🧗' },
-                { name: 'Court Sports', label: '🎾' },
-              ]
-            }[cat];
-
-            return (
-              <div className="w-full overflow-x-auto py-3 scrollbar-hide">
-                <div className="flex items-center gap-4 min-w-max px-1">
-                  <button
-                    onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
-                    className={`flex flex-col items-center gap-2 group shrink-0 ${activeCategory === 'All' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
-                  >
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all ${
-                      activeCategory === 'All' ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md' : 'border-slate-200 bg-white text-slate-700'
-                    }`}>
-                      <span className="text-xl font-bold">🏪</span>
-                    </div>
-                    <span className="text-xs font-bold text-slate-800">All</span>
-                  </button>
-
-                  {templatePresetBoxes.map((box, idx) => {
-                    const isSelected = activeCategory === box.name;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => { setActiveCategory(box.name); setActiveSubcategory(''); }}
-                        className={`flex flex-col items-center gap-2 group shrink-0 transition-all ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
-                      >
-                        <div className={`w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center border-2 transition-all ${
-                          isSelected ? 'border-slate-900 shadow-md' : 'border-slate-200 bg-slate-50'
-                        }`}>
-                          {box.img ? (
-                            <img src={box.img} alt={box.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-2xl">{box.label}</span>
-                          )}
-                        </div>
-                        <span className={`text-xs font-bold ${isSelected ? 'text-slate-900 font-black' : 'text-slate-600'}`}>
-                          {box.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-
-                  {categories.map(c => {
-                    const isSelected = activeCategory === c.name;
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
-                        className={`flex flex-col items-center gap-2 group shrink-0 transition-all ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
-                      >
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all ${
-                          isSelected ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md' : 'border-slate-200 bg-white text-slate-700'
-                        }`}>
-                          <span className="text-xs font-black uppercase">{c.name.slice(0, 3)}</span>
-                        </div>
-                        <span className={`text-xs font-bold ${isSelected ? 'text-purple-600 font-black' : 'text-slate-600'}`}>
-                          {c.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          }
-
-          // Standard Clean Category Pills for Grocery and Default Shops (e.g. MesserBazar)
+          // Render real Firestore Categories managed by merchant in Dashboard -> Categories
           return (
             categories.length > 0 && (
-              <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide py-1">
+              <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide py-2">
                 <button
                   onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
-                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${
-                    activeCategory === 'All' ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-xs font-black transition-all border ${
+                    activeCategory === 'All'
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20 scale-105'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
                   }`}
-                >🏪 সব</button>
-                {categories.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
-                    className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${
-                      activeCategory === c.name ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
-                    }`}
+                >🏪 All</button>
+                {categories.map(c => {
+                  const isSelected = activeCategory === c.name;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
+                      className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-xs font-black transition-all border ${
+                        isSelected
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20 scale-105'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
+                      }`}
+                    >
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )
+          );
                   >{c.name}</button>
                 ))}
               </div>
