@@ -433,21 +433,6 @@ export default function TemplateMarketplace({ shopId, shopSlug, shopDomain, acti
     }
   }, [shopId, applying, onTemplateApplied]);
 
-      if (shopSlug) {
-        fetch(`/api/revalidate?slug=${shopSlug}&domain=${shopDomain || ''}`).catch(e => console.error(e));
-      }
-
-      setCurrentActive(templateId);
-      onTemplateApplied?.(templateId);
-      toast.success(`✨ ${template?.namebn || templateId} টেমপ্লেট সফলভাবে প্রয়োগ হয়েছে!`);
-    } catch (err) {
-      console.error('[TemplateMarketplace] Apply error:', err);
-      toast.error('টেমপ্লেট পরিবর্তন ব্যর্থ হয়েছে।');
-    } finally {
-      setApplying(null);
-    }
-  }, [shopId, applying, onTemplateApplied]);
-
   const handleAiSuggest = useCallback((template) => {
     setCurrentActive(null); // highlight suggestion
     setPreviewTemplate(template);
