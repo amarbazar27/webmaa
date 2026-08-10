@@ -2127,11 +2127,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   // Auth state resolves in background — shopping is always public.
   return (
     <div 
-      className="min-h-screen font-sans pb-24 retailer-storefront"
+      className="min-h-screen font-sans pb-24 retailer-storefront bg-slate-50 text-slate-900"
       style={{ 
         ...themeVars, 
-        backgroundColor: 'var(--sp-bg)',
-        color: 'var(--sp-text)'
+        backgroundColor: (themeVars['--sp-bg'] && !themeVars['--sp-bg'].startsWith('#0') && !themeVars['--sp-bg'].startsWith('#1') && themeVars['--sp-bg'] !== '#000000' && themeVars['--sp-bg'] !== 'black') ? themeVars['--sp-bg'] : '#F8FAFC',
+        color: '#0F172A'
       }}
     >
       {/* ── Dynamic Theme Styles ── */}
@@ -2878,8 +2878,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
             return (
               <div key={product.id} className={`sf-product-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border flex flex-col ${
-                catStyle === 'luxury' ? 'bg-[#111111] text-white border-amber-900/30 hover:border-[#C9A84C]' :
-                catStyle === 'electronics' ? 'bg-[#0A192F] text-white border-blue-900/40 hover:border-[#00E5FF]' :
+                catStyle === 'luxury' ? 'bg-[#FAF9F6] text-slate-900 border-amber-200 hover:border-[#C9A84C]' :
+                catStyle === 'electronics' ? 'bg-white text-slate-900 border-blue-200 hover:border-blue-500' :
                 'bg-white text-slate-900 border-slate-200'
               }`}>
                 <div 
@@ -2911,8 +2911,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
 
                 <div className={`p-3.5 sm:p-4 flex flex-col flex-1 ${
-                  catStyle === 'luxury' ? 'bg-[#111111]' :
-                  catStyle === 'electronics' ? 'bg-[#0A192F]' :
+                  catStyle === 'luxury' ? 'bg-[#FAF9F6]' :
+                  catStyle === 'electronics' ? 'bg-white' :
                   'bg-white'
                 }`}>
                   <h3 
@@ -3166,18 +3166,18 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  <div onClick={() => setSelectedProductForModal(p0)} className="lg:col-span-7 relative h-[400px] md:h-[460px] rounded-2xl overflow-hidden shadow-xl group cursor-pointer bg-black">
+                  <div onClick={() => setSelectedProductForModal(p0)} className="lg:col-span-7 relative h-[400px] md:h-[460px] rounded-2xl overflow-hidden shadow-xl group cursor-pointer bg-[#FAF9F6] border border-amber-200">
                     {(p0.images?.[0] || p0.imageUrl) ? (
-                      <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-85" />
+                      <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
                     ) : (
-                      <div className="w-full h-full bg-black flex items-center justify-center p-6 text-center font-serif text-white text-2xl">{p0.name}</div>
+                      <div className="w-full h-full bg-[#FAF9F6] flex items-center justify-center p-6 text-center font-serif text-slate-800 text-2xl">{p0.name}</div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                    <div className="absolute top-4 left-4 bg-[#C9A84C] text-black px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest">Icon Collection</div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                    <div className="absolute top-4 left-4 bg-[#C9A84C] text-slate-900 px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md">Icon Collection</div>
                     <div className="absolute bottom-6 left-6 right-6 text-white">
                       <h3 className="font-serif text-2xl md:text-3xl font-normal mb-1 drop-shadow-md">{p0.name}</h3>
                       <p className="text-[#C9A84C] text-xl font-serif font-bold mb-3">৳{p0.price}</p>
-                      <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="bg-[#C9A84C] hover:bg-amber-400 text-black px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all">Add to Bag</button>
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="bg-[#C9A84C] hover:bg-amber-400 text-slate-900 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all rounded-md">Add to Bag</button>
                     </div>
                   </div>
 

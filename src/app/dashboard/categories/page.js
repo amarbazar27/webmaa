@@ -104,6 +104,66 @@ export default function CategoriesPage() {
     }
   };
 
+  const handleImportPresetCategories = async () => {
+    if (!activeShopId) return;
+    setAdding(true);
+    try {
+      const { getShop } = await import('@/lib/firestore');
+      const shopDoc = await getShop(activeShopId);
+      const tId = shopDoc?.templateId || 'grocery-fresh-bazaar';
+      const cat = tId.startsWith('luxury') ? 'luxury' : tId.startsWith('tech') ? 'electronics' : tId.startsWith('beauty') ? 'beauty' : tId.startsWith('home') ? 'home' : tId.startsWith('sports') ? 'sports' : 'grocery';
+
+      const presetMap = {
+        luxury: [
+          { name: 'Timepieces' },
+          { name: 'Leather' },
+          { name: 'Couture' },
+          { name: 'Jewelry' }
+        ],
+        electronics: [
+          { name: 'Phones' },
+          { name: 'Laptops' },
+          { name: 'Audio' },
+          { name: 'Gaming' }
+        ],
+        beauty: [
+          { name: 'Skincare' },
+          { name: 'Makeup' },
+          { name: 'Fragrances' },
+          { name: 'Organic' }
+        ],
+        home: [
+          { name: 'Living Room' },
+          { name: 'Kitchen' },
+          { name: 'Lighting' }
+        ],
+        sports: [
+          { name: 'Activewear' },
+          { name: 'Footwear' },
+          { name: 'Equipment' }
+        ],
+        grocery: [
+          { name: 'কাঁচাবাজার' },
+          { name: 'ফলমূল' },
+          { name: 'আমিষ' },
+          { name: 'মুদি দোকান' }
+        ]
+      };
+
+      const presetsToImport = presetMap[cat] || presetMap.grocery;
+      for (const item of presetsToImport) {
+        await addCategory(activeShopId, item);
+      }
+      toast.success('টেমপ্লেট ক্যাটাগরি সফলভাবে ইম্পোর্ট করা হয়েছে! ✨');
+      fetchCategories();
+    } catch (err) {
+      console.error('Import error:', err);
+      toast.error('ইম্পোর্ট ব্যর্থ হয়েছে');
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-slide-in pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -111,6 +171,13 @@ export default function CategoriesPage() {
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Product Taxonomy</h1>
           <p className="text-sm text-slate-500 font-medium">Organize your store catalog into logical groups</p>
         </div>
+        <button
+          onClick={handleImportPresetCategories}
+          disabled={adding}
+          className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-black rounded-2xl text-xs flex items-center gap-2 shadow-md transition-all active:scale-95 disabled:opacity-50"
+        >
+          <Sparkles size={16} /> ✨ টেমপ্লেট ক্যাটাগরি ইম্পোর্ট করুন (Import Presets)
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-8">
