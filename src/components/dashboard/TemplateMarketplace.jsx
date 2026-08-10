@@ -221,14 +221,17 @@ function PreviewModal({ template, onClose, onApply, isApplying }) {
   const [view, setView] = useState('desktop');
   if (!template) return null;
 
+  const cat = template.category || 'grocery';
+  const theme = template.defaultTheme;
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
       <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
-            <h2 className="font-black text-slate-900">{template.namebn} টেমপ্লেট</h2>
-            <p className="text-xs text-slate-500">{template.tagline}</p>
+            <h2 className="font-black text-slate-900">{template.namebn} টেমপ্লেট প্রিভিউ</h2>
+            <p className="text-xs text-slate-500">{template.taglinebn || template.tagline}</p>
           </div>
           <div className="flex items-center gap-3">
             {/* View toggle */}
@@ -250,44 +253,82 @@ function PreviewModal({ template, onClose, onApply, isApplying }) {
           </div>
         </div>
 
-        {/* Preview Area */}
-        <div className="flex-1 overflow-auto bg-slate-50 p-6 flex items-center justify-center">
+        {/* Dynamic Simulated Store Preview */}
+        <div className="flex-1 overflow-auto bg-slate-100 p-4 md:p-6 flex items-center justify-center">
           <div
-            className={`bg-white shadow-xl overflow-hidden transition-all duration-500 ${
-              view === 'mobile' ? 'w-[375px] rounded-[2rem] border-8 border-slate-900' : 'w-full rounded-2xl'
+            className={`bg-white shadow-2xl overflow-hidden transition-all duration-500 ${
+              view === 'mobile' ? 'w-[375px] rounded-[2rem] border-8 border-slate-900' : 'w-full rounded-2xl border border-slate-200'
             }`}
+            style={{ background: theme.bgColor, color: theme.textColor, fontFamily: theme.fontFamily }}
           >
-            {/* Simulated Store Preview */}
-            <div style={{ background: template.defaultTheme.bgColor, color: template.defaultTheme.textColor, fontFamily: template.defaultTheme.fontFamily }}>
-              {/* Header */}
-              <div style={{ background: template.defaultTheme.headerBg, color: template.defaultTheme.headerText, padding: '16px 24px' }} className="flex items-center justify-between">
-                <div className="font-black text-lg">🛍️ আপনার স্টোর</div>
-                <div className="flex items-center gap-4 text-sm opacity-80">
-                  <span>পণ্য</span><span>অর্ডার</span><span>কার্ট 🛒</span>
-                </div>
+            {/* Header */}
+            <div style={{ background: theme.headerBg, color: theme.headerText }} className="px-5 py-3 flex items-center justify-between border-b border-slate-200">
+              <div className="font-black text-base flex items-center gap-2">🛍️ <span>আপনার স্টোর</span></div>
+              <div className="flex items-center gap-3 text-xs font-bold opacity-90">
+                <span>পণ্য</span><span>অর্ডার</span><span>কার্ট 🛒</span>
               </div>
+            </div>
 
-              {/* Hero */}
-              <div style={{ background: `linear-gradient(135deg, ${template.defaultTheme.primaryColor}20, ${template.defaultTheme.accentColor}30)`, padding: '48px 24px', textAlign: 'center' }}>
-                <p className="text-sm font-bold opacity-60 mb-2">সেরা মানের পণ্য</p>
-                <h1 style={{ color: template.defaultTheme.textColor }} className="text-2xl font-black mb-4">আপনার স্বপ্নের পণ্য খুঁজে নিন</h1>
-                <button style={{ background: template.defaultTheme.primaryColor, color: '#fff', borderRadius: template.defaultTheme.buttonRadius, padding: '12px 32px', fontWeight: 900, fontSize: '14px' }}>
-                  এখনই কিনুন
-                </button>
-              </div>
+            {/* Dynamic Hero Banner for Category */}
+            <div className="p-6 text-center relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.bgColor} 0%, ${theme.accentColor}25 100%)` }}>
+              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mb-2" style={{ background: theme.primaryColor + '20', color: theme.primaryColor }}>
+                {cat === 'beauty' ? 'Essential Skincare' : cat === 'electronics' ? 'Flagship Devices' : cat === 'luxury' ? 'Signature Collection' : 'Farm Harvest'}
+              </span>
+              <h1 className="text-xl md:text-3xl font-black mb-2" style={{ color: theme.textColor }}>
+                {cat === 'beauty' ? 'Glow from Within' : cat === 'electronics' ? 'Next-Gen Gadgets.' : cat === 'luxury' ? 'The Art of Minimalist Elegance' : 'Fresh produce direct to you'}
+              </h1>
+              <p className="text-xs font-medium opacity-80 mb-4 max-w-md mx-auto">{template.taglinebn || template.tagline}</p>
+              <button style={{ background: theme.primaryColor, color: '#ffffff', borderRadius: theme.buttonRadius }} className="px-6 py-2 text-xs font-black uppercase tracking-wider shadow-md">
+                Shop Collection
+              </button>
+            </div>
 
-              {/* Product Grid */}
-              <div className="p-6 grid grid-cols-3 gap-4">
-                {['পণ্য ১', 'পণ্য ২', 'পণ্য ৩'].map(p => (
-                  <div key={p} style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}`, borderRadius: template.defaultTheme.cardRadius, padding: '16px' }}>
-                    <div style={{ background: template.defaultTheme.primaryColor + '20', height: '80px', borderRadius: '8px', marginBottom: '10px' }} />
-                    <p className="font-black text-sm">{p}</p>
-                    <p style={{ color: template.defaultTheme.primaryColor }} className="font-black mt-1">৳৫০০</p>
-                    <button style={{ background: template.defaultTheme.primaryColor, color: '#fff', borderRadius: template.defaultTheme.buttonRadius, padding: '6px 16px', fontWeight: 900, fontSize: '11px', marginTop: '8px', width: '100%' }}>
-                      কার্টে যোগ
-                    </button>
+            {/* Category Pills Preview */}
+            <div className="px-5 py-3 border-y border-slate-200/60 bg-white/50 flex gap-2 overflow-x-auto">
+              {(cat === 'beauty' ? ['Skincare', 'Makeup', 'Fragrance', 'Organic'] :
+                cat === 'electronics' ? ['Phones', 'Laptops', 'Audio', 'Gaming'] :
+                cat === 'luxury' ? ['Couture', 'Jewelry', 'Watches', 'Leather'] :
+                ['কাঁচাবাজার', 'ফলমূল', 'শাকসবজি', 'মুদি দোকান']
+              ).map((name, i) => (
+                <span key={i} className="px-3 py-1 rounded-full text-[11px] font-bold border border-slate-200 bg-white whitespace-nowrap shadow-xs" style={{ color: theme.textColor }}>
+                  {name}
+                </span>
+              ))}
+            </div>
+
+            {/* Asymmetric Product Showcase Preview Grid */}
+            <div className="p-4 md:p-6 space-y-4">
+              <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: theme.primaryColor }}>
+                {cat === 'beauty' ? 'Essential Skincare' : cat === 'electronics' ? 'Flagship Devices' : cat === 'luxury' ? 'Signature Collection' : 'Featured Products'}
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* 1st Large Hero Card */}
+                <div className="md:col-span-2 rounded-2xl p-4 flex flex-col justify-between min-h-[160px] border shadow-xs" style={{ background: theme.cardBg, borderColor: theme.cardBorder, borderRadius: theme.cardRadius }}>
+                  <div className="w-full h-24 rounded-xl mb-3 flex items-center justify-center font-bold text-xs" style={{ background: theme.primaryColor + '15', color: theme.primaryColor }}>
+                    🖼️ [Large Hero Product Image]
                   </div>
-                ))}
+                  <div>
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded" style={{ background: theme.primaryColor, color: '#fff' }}>Bestseller #1</span>
+                    <h3 className="font-black text-sm mt-1">{cat === 'beauty' ? 'Hydrating Serum 50ml' : cat === 'electronics' ? 'Pro Smartphone 256GB' : 'Luxury Chronograph Watch'}</h3>
+                    <p className="font-black text-sm mt-1" style={{ color: theme.primaryColor }}>৳১,৯৫০</p>
+                  </div>
+                </div>
+
+                {/* Stacked Right Side Cards */}
+                <div className="space-y-3 flex flex-col justify-between">
+                  {[1, 2].map(i => (
+                    <div key={i} className="rounded-2xl p-3 flex items-center gap-3 border shadow-xs" style={{ background: theme.cardBg, borderColor: theme.cardBorder, borderRadius: theme.cardRadius }}>
+                      <div className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center font-bold text-[10px]" style={{ background: theme.accentColor + '25', color: theme.primaryColor }}>
+                        Product #{i+1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-black text-xs truncate">Highlight Item #{i+1}</h4>
+                        <p className="font-bold text-xs" style={{ color: theme.primaryColor }}>৳৭৫০</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -303,8 +344,8 @@ function PreviewModal({ template, onClose, onApply, isApplying }) {
               ))}
             </div>
             <div>
-              <p className="text-xs font-black text-slate-900">{template.name}</p>
-              <p className="text-[10px] text-slate-500">{template.sections?.length} সেকশন</p>
+              <p className="text-xs font-black text-slate-900">{template.namebn}</p>
+              <p className="text-[10px] font-bold text-emerald-600">১০০% লাইট থিম & হাই কন্ট্রাস্ট</p>
             </div>
           </div>
           <button
@@ -327,7 +368,7 @@ export default function TemplateMarketplace({ shopId, shopSlug, shopDomain, acti
   const [searchQuery, setSearchQuery] = useState('');
   const [applying, setApplying] = useState(null);
   const [previewTemplate, setPreviewTemplate] = useState(null);
-  const [currentActive, setCurrentActive] = useState(activeTemplateId || 'modern-commerce');
+  const [currentActive, setCurrentActive] = useState(activeTemplateId || 'grocery-fresh-bazaar');
 
   const filteredTemplates = useMemo(() => {
     let list = getTemplatesByCategory(activeCategory === 'all' ? null : activeCategory);
@@ -347,16 +388,50 @@ export default function TemplateMarketplace({ shopId, shopSlug, shopDomain, acti
     if (!shopId || applying) return;
     setApplying(templateId);
     try {
-      const { auth } = await import('@/lib/auth');
-      const { updateShop } = await import('@/lib/firestore');
+      const { updateShop, getCategories, addCategory } = await import('@/lib/firestore');
       const template = TEMPLATES[templateId];
 
       await updateShop(shopId, {
         templateId,
         templateAppliedAt: new Date().toISOString(),
-        // Store default theme as base (retailer can override later)
         themeOverrides: template?.defaultTheme || {},
       });
+
+      // Seed sample categories into Firestore if shop has 0 categories
+      try {
+        const existingCats = await getCategories(shopId);
+        if (!existingCats || existingCats.length === 0) {
+          const sampleCatNames = {
+            beauty: ['Skincare', 'Makeup', 'Fragrances', 'Organic Body Care'],
+            electronics: ['Phones', 'Laptops', 'Audio & Sound', 'Wearables'],
+            luxury: ['Watches', 'Handbags', 'Jewelry', 'Apparel'],
+            home: ['Living Room', 'Kitchen & Dining', 'Lighting', 'Decor'],
+            sports: ['Activewear', 'Footwear', 'Equipment', 'Nutrition'],
+            grocery: ['কাঁচাবাজার', 'ফলমূল', 'আমিষ', 'মুদি দোকান'],
+          }[template?.category || 'grocery'] || ['কাঁচাবাজার', 'ফলমূল', 'আমিষ', 'মুদি দোকান'];
+
+          for (const catName of sampleCatNames) {
+            await addCategory(shopId, { name: catName });
+          }
+        }
+      } catch (catErr) {
+        console.error('Error seeding sample categories:', catErr);
+      }
+
+      if (shopSlug) {
+        fetch(`/api/revalidate?slug=${shopSlug}&domain=${shopDomain || ''}`).catch(e => console.error(e));
+      }
+
+      setCurrentActive(templateId);
+      onTemplateApplied?.(templateId);
+      toast.success(`✨ ${template?.namebn || templateId} টেমপ্লেট সফলভাবে প্রয়োগ হয়েছে!`);
+    } catch (err) {
+      console.error('[TemplateMarketplace] Apply error:', err);
+      toast.error('টেমপ্লেট পরিবর্তন ব্যর্থ হয়েছে।');
+    } finally {
+      setApplying(null);
+    }
+  }, [shopId, applying, onTemplateApplied]);
 
       if (shopSlug) {
         fetch(`/api/revalidate?slug=${shopSlug}&domain=${shopDomain || ''}`).catch(e => console.error(e));

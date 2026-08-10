@@ -51,8 +51,8 @@ export default function SmartMealEngine({ shop, products, onAddToCart, onClose, 
   const [membersInput, setMembersInput] = useState('25');
   const [budgetInput, setBudgetInput] = useState('1300');
   
-  // Rice States
-  const [riceEnabled, setRiceEnabled] = useState(true);
+  // Rice States — default OFF unless retailer turns defaultIncludeRice ON in settings
+  const [riceEnabled, setRiceEnabled] = useState(shop?.settings?.defaultIncludeRice === true || shop?.defaultIncludeRice === true);
   const [selectedRiceId, setSelectedRiceId] = useState('');
   const [riceMorningInput, setRiceMorningInput] = useState('3.5');
   const [riceLunchInput, setRiceLunchInput] = useState('6.0');

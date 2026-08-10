@@ -2447,14 +2447,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               if (cat === 'luxury') {
                 return (
-                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-black flex items-center justify-center text-center px-6">
-                    <div className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuDrn-VgOqD0GDQxblDT4pjDA--bBi9IMqvXAKyRKJu3eMagvAGOBkn3xAgMCNDwMhYKz8vYhDdCozQhOaIpMBWN8xr7Gu8xTDZV2AeHcGgHkIShykWfbt6SAJLAzSF0YEQ3UEJWcjGl2qlgZE3DGIDj6QSmY0wk9OTw-5DUxO-F1-eQhERLo_Ve6YVBUR0Dl1b69RL02kwfNQgYGFEKh7sIsslmCeI2SgwYVF3GetSGT-NjD_nWCg')` }} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                    <div className="relative z-10 max-w-3xl text-white flex flex-col items-center">
-                      <span className="text-xs text-[#C9A84C] tracking-[0.3em] uppercase font-bold mb-3">Autumn / Winter</span>
-                      <h1 className="font-serif text-3xl md:text-5xl font-normal mb-4 tracking-tight leading-tight">{shop.welcomeMessage || 'The Art of Minimalist Elegance'}</h1>
-                      <p className="text-sm md:text-base text-gray-300 mb-6 max-w-xl font-light leading-relaxed">{shop.slogan || 'Discover the new seasonal collection where architectural precision meets fluid drape.'}</p>
-                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#C9A84C] text-black px-8 py-3 rounded-xs text-xs font-bold uppercase tracking-widest hover:bg-amber-400 transition-colors">Explore Collection</button>
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FAF9F6] bg-gradient-to-r from-amber-100/60 via-amber-50 to-stone-100 flex items-center justify-center text-center px-6">
+                    <div className="relative z-10 max-w-3xl text-slate-900 flex flex-col items-center">
+                      <span className="text-xs text-[#967423] tracking-[0.3em] uppercase font-black mb-3 px-3 py-1 bg-amber-100/80 rounded-full border border-amber-300">Autumn / Winter Collection</span>
+                      <h1 className="font-serif text-3xl md:text-5xl font-normal mb-4 tracking-tight leading-tight text-slate-900">{shop.welcomeMessage || 'The Art of Minimalist Elegance'}</h1>
+                      <p className="text-sm md:text-base text-slate-700 mb-6 max-w-xl font-light leading-relaxed">{shop.slogan || 'Discover the new seasonal collection where architectural precision meets fluid drape.'}</p>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#C9A84C] text-slate-900 px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest hover:bg-amber-400 shadow-md transition-colors">Explore Collection</button>
                     </div>
                   </div>
                 );
@@ -2462,14 +2460,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               if (cat === 'electronics') {
                 return (
-                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#0A192F] flex items-center px-6 md:px-12">
-                    <div className="absolute inset-0 bg-cover bg-center opacity-50" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuDiWTqaibMLBKYP5p6jmSZt9NHr0g8R2yullSxWyP82AAu-izAJ3Lm0Ud-R_uRSFguubCDdpl77OwFRGVQL9yhwyzj1AgpukGW9t2H324qkTzzlYvFNp4YGqMRrALnqSQ0vrNtt-oZ6NMNIoKOcHmHZiB4hSGgAjo7VrmMB4hF0BX72bq2nd7dXYFitWxi-ZCpVKL5De1sK2DL8Zq8zCq7S2mqoas6zFs1u1v1GYu3ugu77UGy0DQ')` }} />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#0A192F] via-[#0A192F]/80 to-transparent" />
-                    <div className="relative z-10 max-w-2xl text-white">
-                      <span className="inline-block px-3 py-1 bg-[#1565C0]/20 border border-[#1565C0]/50 text-[#00E5FF] rounded-full text-xs font-bold uppercase tracking-widest mb-3 backdrop-blur-sm">New Arrivals</span>
-                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Next-Gen Gadgets.'}</h1>
-                      <p className="text-sm md:text-base text-blue-200/80 mb-5">{shop.slogan || 'Experience the bleeding edge of innovation. Discover devices designed to push the boundaries of what is possible.'}</p>
-                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#1565C0] hover:bg-blue-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-[0_0_15px_rgba(21,101,192,0.5)] transition-all">Explore Collection</button>
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F0F8FF] bg-gradient-to-r from-blue-100/80 via-sky-50 to-indigo-50 flex items-center px-6 md:px-12">
+                    <div className="relative z-10 max-w-2xl text-slate-900">
+                      <span className="inline-block px-3.5 py-1 bg-blue-100 border border-blue-300 text-blue-800 rounded-full text-xs font-black uppercase tracking-widest mb-3">New Arrivals</span>
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-slate-900">{shop.welcomeMessage || 'Next-Gen Gadgets.'}</h1>
+                      <p className="text-sm md:text-base text-slate-700 mb-5 font-medium">{shop.slogan || 'Experience the bleeding edge of innovation. Discover devices designed to push the boundaries of what is possible.'}</p>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#0066FF] hover:bg-blue-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all">Explore Collection</button>
                     </div>
                   </div>
                 );
@@ -2477,10 +2473,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               if (cat === 'beauty') {
                 return (
-                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F8E6E9] flex items-center justify-center text-center px-6">
-                    <div className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-multiply" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAAKjeSMXbLQp4-ddw35iT05Z-MIuqkCGMyUgAvc_8UQpf_fthBb8e3yhSpbuBge6Eli_RsEAs846-_QUnQ8y8x1K8ngQooz0W-3UIqJ_HeP5udc2qFtQKl9iBBhyK5TiqtmVEjCEUf923BZMRJzMgXCWw2QpXXv5-PF8G_r2PJDvZolmiDcNYjH5y46-JsqpKCtVMwGWnVI0EHdtEBroqsq6Glw4At8-HcjFV5k8oj6dYQrDmbOA')` }} />
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FFF5F7] bg-gradient-to-r from-pink-100/70 via-rose-50 to-purple-50 flex items-center justify-center text-center px-6">
                     <div className="relative z-10 max-w-2xl text-slate-900">
-                      <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight">{shop.welcomeMessage || 'Glow from Within'}</h1>
+                      <span className="inline-block px-3.5 py-1 bg-rose-100 text-[#B76E79] rounded-full text-xs font-black uppercase tracking-wider mb-3">Radiant Skincare</span>
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight text-slate-900">{shop.welcomeMessage || 'Glow from Within'}</h1>
                       <p className="text-sm md:text-base text-slate-700 mb-5 max-w-lg mx-auto font-medium">{shop.slogan || 'Discover our curated collection of premium skincare, organic makeup, and signature fragrances.'}</p>
                       <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#B76E79] hover:bg-rose-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-pink-500/20 transition-all">Shop the Collection</button>
                     </div>
@@ -2490,12 +2486,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               if (cat === 'home') {
                 return (
-                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F5F5DC] flex items-center px-6 md:px-12">
-                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAVnWdcy-hdkBLqv-40CAo56B3hkGb50nYhmJH7rPDrzpilltnSb4m-5GgbRblT1QDCknIMCkQZcl-AAslikkk4rlQz2l8XNFHsbsZBmaTS5ok7afUCYhTsiSK5ry1lwnj5f4sjw45bxVCVIWIKqudZhWaDZK95opcKUhaEpisAmFRnRsP-DaFWhlYmrF_M9ZWCV1HgITuMWBf97vfywILfqhELZZW-KJFgWPUYfW7g6zaDRL9lrQ')` }} />
-                    <div className="absolute inset-0 bg-gradient-to-r from-stone-900/80 via-stone-900/40 to-transparent" />
-                    <div className="relative z-10 max-w-2xl text-white">
-                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Revitalize Your Space'}</h1>
-                      <p className="text-sm md:text-base text-stone-200 mb-5">{shop.slogan || 'Curated earthy tones and minimalist designs to bring warmth and comfort into your daily life.'}</p>
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FAF4F0] bg-gradient-to-r from-orange-100/60 via-amber-50 to-stone-50 flex items-center px-6 md:px-12">
+                    <div className="relative z-10 max-w-2xl text-stone-900">
+                      <span className="inline-block px-3.5 py-1 bg-orange-100 text-[#CC5500] rounded-full text-xs font-black uppercase tracking-wider mb-3">Modern Living</span>
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-stone-900">{shop.welcomeMessage || 'Revitalize Your Space'}</h1>
+                      <p className="text-sm md:text-base text-stone-700 mb-5 font-medium">{shop.slogan || 'Curated earthy tones and minimalist designs to bring warmth and comfort into your daily life.'}</p>
                       <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#CC5500] hover:bg-orange-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg transition-all">Shop the Collection</button>
                     </div>
                   </div>
@@ -2504,13 +2499,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               if (cat === 'sports') {
                 return (
-                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#1B1B1B] flex items-center px-6 md:px-12">
-                    <div className="absolute inset-0 bg-cover bg-center opacity-80 mix-blend-overlay" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuBdkqt3KxwIpi59sHy7ZIYHhXqNnifh-KAizOuvtO5qlI2-uS3d2Nfl6ZnfpX3v4qkSMNGtuhLLP8CgFzTRNruyzdN_jRFprpS3_D2LH7E0GkW-XX08BfV9NtifZU6wyacQHBAq3V7Qw4Ol6AZQNHLQl129hcloQtQODyBhYzvNA87mM3DSlYqS-LmISSteiDE931JxvcbdF7vWitcg2m_BtG-IQaYvBmn4udPbTLRZiMZC-B7FQg')` }} />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent" />
-                    <div className="relative z-10 max-w-2xl text-white">
-                      <span className="text-xs text-[#FF5722] font-bold uppercase tracking-[0.2em] mb-2 inline-block">New Collection</span>
-                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Push Your Limits. Defy Gravity.'}</h1>
-                      <p className="text-sm md:text-base text-gray-200 mb-5">{shop.slogan || 'High-performance gear engineered for the relentless. Equip yourself with the latest activewear and outdoor equipment.'}</p>
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FFF8F6] bg-gradient-to-r from-orange-100/70 via-red-50 to-slate-50 flex items-center px-6 md:px-12">
+                    <div className="relative z-10 max-w-2xl text-slate-900">
+                      <span className="text-xs text-[#FF5722] font-black uppercase tracking-[0.2em] mb-2 inline-block px-3 py-1 bg-orange-100 rounded-full">New Pro Collection</span>
+                      <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-slate-900">{shop.welcomeMessage || 'Push Your Limits. Defy Gravity.'}</h1>
+                      <p className="text-sm md:text-base text-slate-700 mb-5 font-medium">{shop.slogan || 'High-performance gear engineered for the relentless. Equip yourself with the latest activewear and outdoor equipment.'}</p>
                       <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#FF5722] hover:bg-orange-600 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-orange-500/20 transition-all">Shop Collection</button>
                     </div>
                   </div>
@@ -2519,14 +2512,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               // Default Grocery / Fresh Harvest fallback hero
               return (
-                <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#E8F5E9] flex items-center px-6 md:px-12">
-                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuB0ZS-Zro6Kt3tbQWZGIrFH0wD-N-iKtaxKwpm6lQk8i2xPtoMLB4sXM_kG-WvyZTNQ9W0fKsaveI1eSButEW-B_GvlX2IKoZU97yR8Yey-bTcU0OIhR6Ec24d3yqoIKx2Scrwi_TniJmriyicGt3Gn-N1MCSJpv3VTTzQwMnrMEgg95QFzyBJrCynvKZTq_-XDIgRZtUY5BCmjv4T9Un5SKmQJPN4z4faeOdrrTmMRr3HWgM3Yhg')` }} />
-                  <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-transparent" />
-                  <div className="relative z-10 max-w-2xl text-white">
-                    <span className="inline-block px-3 py-1 bg-[#E8F5E9] text-[#2E7D32] rounded-full text-xs font-bold uppercase tracking-wider mb-3">Farm to Table</span>
-                    <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight">{shop.welcomeMessage || 'Fresh from Farm, Direct to You.'}</h1>
-                    <p className="text-sm md:text-base text-gray-200 mb-5">{shop.slogan || 'Discover our curated selection of organic, locally sourced produce and dairy. Harvested daily for maximum freshness.'}</p>
-                    <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#2E7D32] hover:bg-emerald-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all">Shop Fresh Harvest</button>
+                <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F0FDF4] bg-gradient-to-r from-emerald-100/70 via-green-50 to-teal-50 flex items-center px-6 md:px-12">
+                  <div className="relative z-10 max-w-2xl text-slate-900">
+                    <span className="inline-block px-3.5 py-1 bg-emerald-100 text-[#15803D] rounded-full text-xs font-black uppercase tracking-wider mb-3">Farm to Table</span>
+                    <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-slate-900">{shop.welcomeMessage || 'Fresh from Farm, Direct to You.'}</h1>
+                    <p className="text-sm md:text-base text-slate-700 mb-5 font-medium">{shop.slogan || 'Discover our curated selection of organic, locally sourced produce and dairy. Harvested daily for maximum freshness.'}</p>
+                    <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#15803D] hover:bg-emerald-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all">Shop Fresh Harvest</button>
                   </div>
                 </div>
               );
@@ -3010,11 +3001,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             );
           };
 
-          const p0 = filteredProducts[0];
-          const p1 = filteredProducts[1];
-          const p2 = filteredProducts[2];
-          const p3 = filteredProducts[3];
-          const restProducts = filteredProducts.slice(catStyle === 'electronics' ? 4 : 3);
+          const sortedForShowcase = [...filteredProducts].sort((a, b) => {
+            const posA = a.highlightPosition ? parseInt(a.highlightPosition) : (a.isFeatured ? 1 : 999);
+            const posB = b.highlightPosition ? parseInt(b.highlightPosition) : (b.isFeatured ? 1 : 999);
+            return posA - posB;
+          });
+
+          const p0 = sortedForShowcase[0];
+          const p1 = sortedForShowcase[1];
+          const p2 = sortedForShowcase[2];
+          const p3 = sortedForShowcase[3];
+          const restProducts = sortedForShowcase.slice(catStyle === 'electronics' ? 4 : 3);
 
           if (catStyle === 'beauty' && filteredProducts.length >= 3) {
             return (

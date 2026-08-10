@@ -277,7 +277,21 @@ export default function ProductsPage() {
                     onSave={v => handleUpdate(product.id, 'name', v)}
                     className="text-slate-900 text-sm"
                   />
-                  <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">ID: {product.id.slice(-6).toUpperCase()}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">ID: {product.id.slice(-6).toUpperCase()}</span>
+                    <select
+                      value={product.highlightPosition || 0}
+                      onChange={e => handleUpdate(product.id, 'highlightPosition', parseInt(e.target.value))}
+                      className="text-[10px] font-black bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg px-2 py-0.5 outline-none cursor-pointer shadow-xs transition-colors"
+                      title="হোমপেজ শোকেস গ্রিড পজিশন (১ম লার্জ হিরো, ২য়, ৩য়, ৪র্থ)"
+                    >
+                      <option value={0}>সাধারণ তালিকা</option>
+                      <option value={1}>⭐ পজিশন ১ (লার্জ হিরো)</option>
+                      <option value={2}>⭐ পজিশন ২ (২য় হিরো)</option>
+                      <option value={3}>⭐ পজিশন ৩ (৩য় হিরো)</option>
+                      <option value={4}>⭐ পজিশন ৪ (৪র্থ হিরো)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
