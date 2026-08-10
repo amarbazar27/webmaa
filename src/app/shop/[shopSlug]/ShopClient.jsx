@@ -2673,11 +2673,6 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               </div>
             )
           );
-                  >{c.name}</button>
-                ))}
-              </div>
-            )
-          );
         })()}
 
         {/* ── Desktop Subcategory Strip ── */}
