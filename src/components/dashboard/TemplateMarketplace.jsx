@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import {
   Palette, Check, Loader2, Eye, Search, Tag, Sparkles,
-  Smartphone, Monitor, ChevronRight, Star, Zap, Info
+  Smartphone, Monitor, ChevronRight, Star, Zap, Info, Camera
 } from 'lucide-react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, getTemplatesByCategory, suggestTemplateFromDescription } from '@/templates/index';
 import toast from 'react-hot-toast';

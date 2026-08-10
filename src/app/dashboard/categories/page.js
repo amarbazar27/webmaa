@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getCategories, addCategory, deleteCategory } from '@/lib/firestore';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Tag, Plus, Trash2, Search, Loader2, LayoutGrid } from 'lucide-react';
+import { Tag, Plus, Trash2, Search, Loader2, LayoutGrid, Sparkles } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
 
