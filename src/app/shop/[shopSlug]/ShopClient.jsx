@@ -2638,7 +2638,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           </div>
         </div>
 
-        {/* ── Dynamic Template Category Switcher ── */}
+        {/* ── Clean Category Strip ── */}
         {(() => {
           const activeTId = shop?.templateId || 'grocery-fresh-bazaar';
           const activeTConfig = TEMPLATES[activeTId] || TEMPLATES['grocery-fresh-bazaar'];
@@ -2650,84 +2650,77 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             activeTId.startsWith('sports') ? 'sports' : 'grocery'
           );
 
-          const presetCats = {
-            grocery: [
-              { name: 'Fresh Produce', icon: 'local_florist', color: '#2E7D32' },
-              { name: 'Dairy & Eggs', icon: 'egg', color: '#785a1a' },
-              { name: 'Bakery', icon: 'bakery_dining', color: '#5d4201' },
-              { name: 'Meat & Seafood', icon: 'kebab_dining', color: '#ba1a1a' },
-              { name: 'Pantry', icon: 'kitchen', color: '#15803d' },
-            ],
-            luxury: [
-              { name: 'Timepieces', icon: 'watch', color: '#C9A84C' },
-              { name: 'Leather', icon: 'shopping_bag', color: '#C9A84C' },
-              { name: 'Couture', icon: 'checkroom', color: '#C9A84C' },
-              { name: 'Jewelry', icon: 'diamond', color: '#C9A84C' },
-            ],
-            electronics: [
-              { name: 'Phones', icon: 'smartphone', color: '#00E5FF' },
-              { name: 'Laptops', icon: 'laptop_mac', color: '#00E5FF' },
-              { name: 'Audio', icon: 'headphones', color: '#00E5FF' },
-              { name: 'Wearables', icon: 'watch', color: '#00E5FF' },
-              { name: 'Smart Home', icon: 'router', color: '#00E5FF' },
-              { name: 'Gaming', icon: 'videogame_asset', color: '#00E5FF' },
-            ],
-            beauty: [
-              { name: 'Skincare', icon: 'water_drop', color: '#B76E79' },
-              { name: 'Makeup', icon: 'brush', color: '#B76E79' },
-              { name: 'Fragrances', icon: 'spa', color: '#B76E79' },
-              { name: 'Organic', icon: 'eco', color: '#B76E79' },
-            ],
-            home: [
-              { name: 'Furniture', icon: 'chair', color: '#CC5500' },
-              { name: 'Lighting', icon: 'light', color: '#CC5500' },
-              { name: 'Decor', icon: 'potted_plant', color: '#CC5500' },
-              { name: 'Bedding', icon: 'bed', color: '#CC5500' },
-            ],
-            sports: [
-              { name: 'Activewear', icon: 'directions_run', color: '#FF5722' },
-              { name: 'Equipment', icon: 'fitness_center', color: '#FF5722' },
-              { name: 'Outdoor', icon: 'hiking', color: '#FF5722' },
-              { name: 'Court Sports', icon: 'sports_tennis', color: '#FF5722' },
-              { name: 'Swim', icon: 'pool', color: '#FF5722' },
-            ],
-          }[cat];
+          // For custom theme templates (Beauty, Tech, Luxury, Home, Sports), render clean category boxes matching design screenshots
+          if (['beauty', 'electronics', 'luxury', 'home', 'sports'].includes(cat)) {
+            const templatePresetBoxes = {
+              beauty: [
+                { name: 'Skincare', img: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=120&auto=format&fit=crop&q=80' },
+                { name: 'Makeup', img: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=120&auto=format&fit=crop&q=80' },
+                { name: 'Fragrances', img: 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=120&auto=format&fit=crop&q=80' },
+                { name: 'Organic', img: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=120&auto=format&fit=crop&q=80' },
+              ],
+              electronics: [
+                { name: 'Phones', label: '📱' },
+                { name: 'Laptops', label: '💻' },
+                { name: 'Audio', label: '🎧' },
+                { name: 'Wearables', label: '⌚' },
+                { name: 'Smart Home', label: '📡' },
+                { name: 'Gaming', label: '🎮' },
+              ],
+              luxury: [
+                { name: 'Timepieces', label: '⌚' },
+                { name: 'Leather', label: '👜' },
+                { name: 'Couture', label: '👗' },
+                { name: 'Jewelry', label: '💎' },
+              ],
+              home: [
+                { name: 'Furniture', label: '🪑' },
+                { name: 'Lighting', label: '💡' },
+                { name: 'Decor', label: '🪴' },
+                { name: 'Bedding', label: '🛏️' },
+              ],
+              sports: [
+                { name: 'Activewear', label: '🏃' },
+                { name: 'Equipment', label: '🏋️' },
+                { name: 'Outdoor', label: '🧗' },
+                { name: 'Court Sports', label: '🎾' },
+              ]
+            }[cat];
 
-          if (presetCats && presetCats.length > 0) {
             return (
-              <div className="w-full overflow-x-auto py-2 scrollbar-hide">
-                <div className="flex items-center gap-6 min-w-max px-2">
+              <div className="w-full overflow-x-auto py-3 scrollbar-hide">
+                <div className="flex items-center gap-4 min-w-max px-1">
                   <button
                     onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
-                    className={`flex flex-col items-center gap-1.5 group shrink-0 ${activeCategory === 'All' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
+                    className={`flex flex-col items-center gap-2 group shrink-0 ${activeCategory === 'All' ? 'opacity-100 scale-105' : 'opacity-70 hover:opacity-100'}`}
                   >
-                    <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
-                      activeCategory === 'All'
-                        ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all ${
+                      activeCategory === 'All' ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md' : 'border-slate-200 bg-white text-slate-700'
                     }`}>
-                      <span className="text-xl">🏪</span>
+                      <span className="text-xl font-bold">🏪</span>
                     </div>
-                    <span className="text-xs font-black text-slate-800">সব পণ্য</span>
+                    <span className="text-xs font-bold text-slate-800">All</span>
                   </button>
 
-                  {presetCats.map((item, idx) => {
-                    const isSelected = activeCategory === item.name;
+                  {templatePresetBoxes.map((box, idx) => {
+                    const isSelected = activeCategory === box.name;
                     return (
                       <button
                         key={idx}
-                        onClick={() => { setActiveCategory(item.name); setActiveSubcategory(''); }}
-                        className={`flex flex-col items-center gap-1.5 group shrink-0 transition-transform ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
+                        onClick={() => { setActiveCategory(box.name); setActiveSubcategory(''); }}
+                        className={`flex flex-col items-center gap-2 group shrink-0 transition-all ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
                       >
-                        <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
-                          isSelected
-                            ? 'border-current bg-purple-50 shadow-lg'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`} style={{ color: item.color, borderColor: isSelected ? item.color : undefined }}>
-                          <span className="material-symbols-outlined text-2xl">{item.icon}</span>
+                        <div className={`w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center border-2 transition-all ${
+                          isSelected ? 'border-slate-900 shadow-md' : 'border-slate-200 bg-slate-50'
+                        }`}>
+                          {box.img ? (
+                            <img src={box.img} alt={box.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-2xl">{box.label}</span>
+                          )}
                         </div>
-                        <span className="text-xs font-bold text-slate-800" style={{ color: isSelected ? item.color : undefined }}>
-                          {item.name}
+                        <span className={`text-xs font-bold ${isSelected ? 'text-slate-900 font-black' : 'text-slate-600'}`}>
+                          {box.name}
                         </span>
                       </button>
                     );
@@ -2739,14 +2732,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <button
                         key={c.id}
                         onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
-                        className={`flex flex-col items-center gap-1.5 group shrink-0 transition-transform ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
+                        className={`flex flex-col items-center gap-2 group shrink-0 transition-all ${isSelected ? 'scale-105 opacity-100' : 'opacity-75 hover:opacity-100'}`}
                       >
-                        <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
-                          isSelected ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border-2 transition-all ${
+                          isSelected ? 'border-purple-600 bg-purple-50 text-purple-600 shadow-md' : 'border-slate-200 bg-white text-slate-700'
                         }`}>
                           <span className="text-xs font-black uppercase">{c.name.slice(0, 3)}</span>
                         </div>
-                        <span className={`text-xs font-bold ${isSelected ? 'text-purple-600 font-black' : 'text-slate-700'}`}>
+                        <span className={`text-xs font-bold ${isSelected ? 'text-purple-600 font-black' : 'text-slate-600'}`}>
                           {c.name}
                         </span>
                       </button>
@@ -2757,17 +2750,23 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             );
           }
 
+          // Standard Clean Category Pills for Grocery and Default Shops (e.g. MesserBazar)
           return (
             categories.length > 0 && (
-              <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide pb-1">
+              <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide py-1">
                 <button
                   onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
-                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === 'All' ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
+                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${
+                    activeCategory === 'All' ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
+                  }`}
                 >🏪 সব</button>
                 {categories.map(c => (
-                  <button key={c.id}
+                  <button
+                    key={c.id}
                     onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
-                    className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${activeCategory === c.name ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'}`}
+                    className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-black transition-all duration-200 border ${
+                      activeCategory === c.name ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20' : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
+                    }`}
                   >{c.name}</button>
                 ))}
               </div>
@@ -2847,180 +2846,381 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           );
         })()}
 
-        {/* ── Product Grid ── */}
+        {/* ── Product Showcase Section (Dynamic per Active Template Category) ── */}
         {filteredProducts.length === 0 ? (
           <div id="product-section" className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-300">
             <Package size={64} className="mx-auto mb-4 text-slate-300" strokeWidth={1.5} />
             <h3 className="text-2xl font-black text-slate-800">কোনো পণ্য পাওয়া যায়নি। 🥺</h3>
             <p className="text-slate-500 text-sm mt-3 font-semibold">অন্য ক্যাটাগরিতে খুঁজে দেখুন।</p>
           </div>
-        ) : (
-          <div id="product-section" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-3 sm:gap-4">
-            {filteredProducts.map((product, index) => {
-              const cartItem = cart.find(i => i.id === product.id);
+        ) : (() => {
+          const activeTId = shop?.templateId || 'grocery-fresh-bazaar';
+          const activeTConfig = TEMPLATES[activeTId] || TEMPLATES['grocery-fresh-bazaar'];
+          const catStyle = activeTConfig?.category || (
+            activeTId.startsWith('luxury') ? 'luxury' :
+            activeTId.startsWith('tech') ? 'electronics' :
+            activeTId.startsWith('beauty') ? 'beauty' :
+            activeTId.startsWith('home') ? 'home' :
+            activeTId.startsWith('sports') ? 'sports' : 'grocery'
+          );
 
-              const activeTId = shop?.templateId || 'grocery-fresh-bazaar';
-              const activeTConfig = TEMPLATES[activeTId] || TEMPLATES['grocery-fresh-bazaar'];
-              const catStyle = activeTConfig?.category || (
-                activeTId.startsWith('luxury') ? 'luxury' :
-                activeTId.startsWith('tech') ? 'electronics' :
-                activeTId.startsWith('beauty') ? 'beauty' :
-                activeTId.startsWith('home') ? 'home' :
-                activeTId.startsWith('sports') ? 'sports' : 'grocery'
-              );
+          const renderSingleProductCard = (product, index) => {
+            const cartItem = cart.find(i => i.id === product.id);
+            const btnStyleMap = {
+              luxury: 'bg-[#C9A84C] hover:bg-amber-400 text-black font-serif uppercase tracking-wider',
+              electronics: 'bg-[#1565C0] hover:bg-blue-700 text-white shadow-[0_0_12px_rgba(21,101,192,0.4)]',
+              beauty: 'bg-[#B76E79] hover:bg-rose-700 text-white rounded-full',
+              home: 'bg-[#CC5500] hover:bg-orange-700 text-white',
+              sports: 'bg-[#FF5722] hover:bg-orange-600 text-white shadow-md shadow-orange-500/20',
+              grocery: 'bg-[#2E7D32] hover:bg-emerald-700 text-white rounded-full',
+            };
+            const priceColorMap = {
+              luxury: 'text-[#C9A84C] font-serif',
+              electronics: 'text-[#00E5FF] font-mono',
+              beauty: 'text-[#B76E79]',
+              home: 'text-[#CC5500]',
+              sports: 'text-[#FF5722]',
+              grocery: 'text-[#2E7D32]',
+            };
+            const cardBtnClass = btnStyleMap[catStyle] || 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white';
+            const priceClass = priceColorMap[catStyle] || 'text-slate-900';
 
-              const btnStyleMap = {
-                luxury: 'bg-[#C9A84C] hover:bg-amber-400 text-black font-serif uppercase tracking-wider',
-                electronics: 'bg-[#1565C0] hover:bg-blue-700 text-white shadow-[0_0_12px_rgba(21,101,192,0.4)]',
-                beauty: 'bg-[#B76E79] hover:bg-rose-700 text-white rounded-full',
-                home: 'bg-[#CC5500] hover:bg-orange-700 text-white',
-                sports: 'bg-[#FF5722] hover:bg-orange-600 text-white shadow-md shadow-orange-500/20',
-                grocery: 'bg-[#2E7D32] hover:bg-emerald-700 text-white rounded-full',
-              };
+            return (
+              <div key={product.id} className={`sf-product-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border flex flex-col ${
+                catStyle === 'luxury' ? 'bg-[#111111] text-white border-amber-900/30 hover:border-[#C9A84C]' :
+                catStyle === 'electronics' ? 'bg-[#0A192F] text-white border-blue-900/40 hover:border-[#00E5FF]' :
+                'bg-white text-slate-900 border-slate-200'
+              }`}>
+                <div 
+                  className="relative h-40 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
+                  onClick={() => {
+                    trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
+                    setSelectedProductForModal(product);
+                  }}
+                >
+                  {(product.images?.[0] || product.imageUrl) ? (
+                    <Image 
+                      src={product.images?.[0] || product.imageUrl} 
+                      alt={product.name} 
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      priority={index < 4}
+                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
+                    />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center p-4 text-center ${getFallbackColor(product.name)}`}>
+                      <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-md leading-tight">{product.name}</h3>
+                    </div>
+                  )}
+                  {product.allowCustomize && (
+                    <div className="absolute top-2.5 left-2.5 bg-purple-600/90 text-white px-2 py-1 rounded-lg text-[10px] font-black backdrop-blur-sm flex items-center gap-1">
+                      <Sparkles size={10} /> কাস্টম
+                    </div>
+                  )}
+                </div>
 
-              const priceColorMap = {
-                luxury: 'text-[#C9A84C] font-serif',
-                electronics: 'text-[#00E5FF] font-mono',
-                beauty: 'text-[#B76E79]',
-                home: 'text-[#CC5500]',
-                sports: 'text-[#FF5722]',
-                grocery: 'text-[#2E7D32]',
-              };
-
-              const cardBtnClass = btnStyleMap[catStyle] || 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white';
-              const priceClass = priceColorMap[catStyle] || 'text-slate-900';
-
-              return (
-                <div key={product.id} className={`sf-product-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group border flex flex-col ${
-                  catStyle === 'luxury' ? 'bg-[#111111] text-white border-amber-900/30 hover:border-[#C9A84C]' :
-                  catStyle === 'electronics' ? 'bg-[#0A192F] text-white border-blue-900/40 hover:border-[#00E5FF]' :
-                  'bg-white text-slate-900 border-slate-200'
+                <div className={`p-3.5 sm:p-4 flex flex-col flex-1 ${
+                  catStyle === 'luxury' ? 'bg-[#111111]' :
+                  catStyle === 'electronics' ? 'bg-[#0A192F]' :
+                  'bg-white'
                 }`}>
-                  {/* Image — clickable to detail page */}
-                  <div 
-                    className="relative h-40 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
+                  <h3 
                     onClick={() => {
                       trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
                       setSelectedProductForModal(product);
                     }}
+                    className={`font-extrabold text-[14px] leading-tight transition-colors line-clamp-2 mb-3 cursor-pointer ${
+                      catStyle === 'luxury' ? 'text-white group-hover:text-[#C9A84C]' :
+                      catStyle === 'electronics' ? 'text-white group-hover:text-[#00E5FF]' :
+                      'text-slate-900 group-hover:text-purple-700'
+                    }`}
                   >
-                    {(product.images?.[0] || product.imageUrl) ? (
-                      <Image 
-                        src={product.images?.[0] || product.imageUrl} 
-                        alt={product.name} 
-                        fill
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        priority={index < 4}
-                        className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                      />
-                    ) : (
-                      <div className={`w-full h-full flex items-center justify-center p-4 text-center ${getFallbackColor(product.name)}`}>
-                        <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-md leading-tight">{product.name}</h3>
-                      </div>
-                    )}
-                    {product.allowCustomize && (
-                      <div className="absolute top-2.5 left-2.5 bg-purple-600/90 text-white px-2 py-1 rounded-lg text-[10px] font-black backdrop-blur-sm flex items-center gap-1">
-                        <Sparkles size={10} /> কাস্টম
-                      </div>
+                    {product.name}
+                  </h3>
+
+                  <div className="mb-3 flex items-baseline gap-1">
+                    <span className={`text-lg font-black ${priceClass}`}>৳{product.price}</span>
+                    {product.unit && (
+                      <span className="text-[11px] font-bold text-slate-400">/ {product.unit}</span>
                     )}
                   </div>
 
-                  {/* Info + Actions */}
-                  <div className={`p-3.5 sm:p-4 flex flex-col flex-1 ${
-                    catStyle === 'luxury' ? 'bg-[#111111]' :
-                    catStyle === 'electronics' ? 'bg-[#0A192F]' :
-                    'bg-white'
-                  }`}>
-                    <h3 
-                      onClick={() => {
-                        trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
-                        setSelectedProductForModal(product);
-                      }}
-                      className={`font-extrabold text-[14px] leading-tight transition-colors line-clamp-2 mb-3 cursor-pointer ${
-                        catStyle === 'luxury' ? 'text-white group-hover:text-[#C9A84C]' :
-                        catStyle === 'electronics' ? 'text-white group-hover:text-[#00E5FF]' :
-                        'text-slate-900 group-hover:text-purple-700'
-                      }`}
-                    >
-                      {product.name}
-                    </h3>
-
-                    {/* Price and Unit right above Cart Controls */}
-                    <div className="mb-3 flex items-baseline gap-1">
-                      <span className={`text-lg font-black ${priceClass}`}>৳{product.price}</span>
-                      {product.unit && (
-                        <span className="text-[11px] font-bold text-slate-400">/ {product.unit}</span>
-                      )}
-                    </div>
-
-                    {/* Cart Controls */}
-                    <div className="mt-auto space-y-2">
-                      {product.stock === 0 ? (
-                        product.allowRequest ? (
-                          cartItem ? (
-                            <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
-                              <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm font-black border border-slate-200 shrink-0">
-                                <Minus size={14} strokeWidth={2.5} />
-                              </button>
-                              <input
-                                type="number"
-                                min="1"
-                                value={cartItem.quantity}
-                                onChange={e => setQuantityDirect(product.id, e.target.value)}
-                                className="font-black text-purple-700 text-sm w-full text-center bg-transparent outline-none border-none"
-                              />
-                              <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0">
-                                <Plus size={14} strokeWidth={2.5} />
-                              </button>
-                            </div>
-                          ) : (
-                            <button onClick={() => addToCart(product)} className="w-full py-2.5 rounded-xl font-black text-xs bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center justify-center gap-1.5 shadow-sm">
-                              📬 অনুরোধ করুন (Request)
+                  <div className="mt-auto space-y-2">
+                    {product.stock === 0 ? (
+                      product.allowRequest ? (
+                        cartItem ? (
+                          <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
+                            <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm font-black border border-slate-200 shrink-0">
+                              <Minus size={14} strokeWidth={2.5} />
                             </button>
-                          )
-                        ) : (
-                          <div className="w-full py-2.5 rounded-xl font-black text-sm bg-red-50 text-red-500 border border-red-200 flex flex-col items-center justify-center gap-1 cursor-not-allowed">
-                            <div className="flex items-center gap-1.5"><span className="text-base">🚫</span> স্টক আউট</div>
-                            <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Frozen — অর্ডার বন্ধ</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={cartItem.quantity}
+                              onChange={e => setQuantityDirect(product.id, e.target.value)}
+                              className="font-black text-purple-700 text-sm w-full text-center bg-transparent outline-none border-none"
+                            />
+                            <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0">
+                              <Plus size={14} strokeWidth={2.5} />
+                            </button>
                           </div>
-                        )
-                      ) : cartItem ? (
-                        <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
-                          <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm font-black border border-slate-200 shrink-0">
-                            <Minus size={14} strokeWidth={2.5} />
+                        ) : (
+                          <button onClick={() => addToCart(product)} className="w-full py-2.5 rounded-xl font-black text-xs bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                            📬 অনুরোধ করুন (Request)
                           </button>
-                          {/* Editable quantity box */}
-                          <input
-                            type="number"
-                            min="1"
-                            value={cartItem.quantity}
-                            onChange={e => setQuantityDirect(product.id, e.target.value)}
-                            className="font-black text-purple-700 text-sm w-full text-center bg-transparent outline-none border-none"
-                          />
-                          <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0">
-                            <Plus size={14} strokeWidth={2.5} />
+                        )
+                      ) : (
+                        <div className="w-full py-2.5 rounded-xl font-black text-sm bg-red-50 text-red-500 border border-red-200 flex flex-col items-center justify-center gap-1 cursor-not-allowed">
+                          <div className="flex items-center gap-1.5"><span className="text-base">🚫</span> স্টক আউট</div>
+                          <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Frozen — অর্ডার বন্ধ</span>
+                        </div>
+                      )
+                    ) : cartItem ? (
+                      <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
+                        <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm font-black border border-slate-200 shrink-0">
+                          <Minus size={14} strokeWidth={2.5} />
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={cartItem.quantity}
+                          onChange={e => setQuantityDirect(product.id, e.target.value)}
+                          className="font-black text-purple-700 text-sm w-full text-center bg-transparent outline-none border-none"
+                        />
+                        <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0">
+                          <Plus size={14} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => addToCart(product)} className={`w-full py-2.5 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-md active:scale-95 ${cardBtnClass}`}>
+                        <Plus size={15} strokeWidth={2.5} /> কার্টে যোগ করুন
+                      </button>
+                    )}
+                    {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
+                      <button
+                        onClick={() => setSelectedProductForModal(product)}
+                        className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        <Sparkles size={13} /> কাস্টমাইজ
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          };
+
+          const p0 = filteredProducts[0];
+          const p1 = filteredProducts[1];
+          const p2 = filteredProducts[2];
+          const p3 = filteredProducts[3];
+          const restProducts = filteredProducts.slice(catStyle === 'electronics' ? 4 : 3);
+
+          if (catStyle === 'beauty' && filteredProducts.length >= 3) {
+            return (
+              <div id="product-section" className="space-y-6">
+                <div className="flex items-center justify-between border-b border-rose-100 pb-3">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Essential Skincare</h2>
+                    <p className="text-sm text-slate-500 font-medium">The foundation of every radiant look.</p>
+                  </div>
+                  <span className="text-xs font-bold text-[#B76E79] uppercase tracking-wider cursor-pointer">View All →</span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div 
+                    onClick={() => setSelectedProductForModal(p0)}
+                    className="lg:col-span-7 relative h-[400px] md:h-[460px] rounded-3xl overflow-hidden shadow-lg group cursor-pointer bg-stone-100"
+                  >
+                    {(p0.images?.[0] || p0.imageUrl) ? (
+                      <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                    ) : (
+                      <div className="w-full h-full bg-rose-100 flex items-center justify-center p-6 text-center font-bold text-slate-700 text-2xl">{p0.name}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-slate-900 px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Bestseller</div>
+                    <div className="absolute bottom-6 left-6 right-6 text-white">
+                      <h3 className="text-2xl md:text-3xl font-bold mb-1 leading-tight drop-shadow-md">{p0.name}</h3>
+                      <p className="text-lg font-black text-rose-200 mb-4">৳{p0.price}</p>
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="bg-white hover:bg-rose-50 text-slate-900 px-6 py-2.5 rounded-full text-xs font-black shadow-md transition-all">
+                        Add to Bag
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-5 flex flex-col gap-4 justify-between">
+                    {[p1, p2].map((prod, idx) => (
+                      prod && (
+                        <div key={prod.id || idx} onClick={() => setSelectedProductForModal(prod)} className="flex items-center gap-4 p-4 rounded-3xl bg-white shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer flex-1">
+                          <div className="relative w-32 h-28 rounded-2xl overflow-hidden shrink-0 bg-rose-50">
+                            {(prod.images?.[0] || prod.imageUrl) ? (
+                              <Image src={prod.images?.[0] || prod.imageUrl} alt={prod.name} fill className="object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-slate-500 text-xs">{prod.name}</div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-slate-900 text-base line-clamp-1 mb-1">{prod.name}</h4>
+                            <p className="text-sm font-black text-[#B76E79]">৳{prod.price}</p>
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(prod); }} className="w-9 h-9 rounded-full bg-slate-100 hover:bg-[#B76E79] hover:text-white text-slate-700 flex items-center justify-center font-bold text-lg transition-colors shrink-0">
+                            +
                           </button>
                         </div>
-                      ) : (
-                        <button onClick={() => addToCart(product)} className={`w-full py-2.5 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 shadow-md active:scale-95 ${cardBtnClass}`}>
-                          <Plus size={15} strokeWidth={2.5} /> কার্টে যোগ করুন
-                        </button>
-                      )}
-                      {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
-                        <button
-                          onClick={() => setSelectedProductForModal(product)}
-                          className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"
-                        >
-                          <Sparkles size={13} /> কাস্টমাইজ
-                        </button>
-                      )}
+                      )
+                    ))}
+                  </div>
+                </div>
+
+                {restProducts.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 pt-4">
+                    {restProducts.map(renderSingleProductCard)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (catStyle === 'electronics' && filteredProducts.length >= 3) {
+            return (
+              <div id="product-section" className="space-y-6">
+                <div className="flex items-center justify-between border-b border-blue-900/30 pb-3">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Flagship Devices</h2>
+                    <p className="text-sm text-slate-500 font-medium">Power in the palm of your hand.</p>
+                  </div>
+                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider cursor-pointer">View All →</span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div onClick={() => setSelectedProductForModal(p0)} className="lg:col-span-6 relative h-[400px] md:h-[460px] rounded-3xl overflow-hidden shadow-xl group cursor-pointer bg-[#0A192F]">
+                    {(p0.images?.[0] || p0.imageUrl) ? (
+                      <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" />
+                    ) : (
+                      <div className="w-full h-full bg-[#0A192F] flex items-center justify-center p-6 text-center font-bold text-white text-2xl">{p0.name}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A192F] via-[#0A192F]/40 to-transparent" />
+                    <div className="absolute top-4 left-4 bg-[#1565C0] text-white px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md">Just Released</div>
+                    <div className="absolute bottom-6 left-6 right-20 text-white">
+                      <h3 className="text-2xl md:text-3xl font-black mb-1 drop-shadow-md">{p0.name}</h3>
+                      <p className="text-[#00E5FF] text-xl font-black">৳{p0.price}</p>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="absolute bottom-6 right-6 w-12 h-12 rounded-full bg-white hover:bg-blue-600 hover:text-white text-slate-900 flex items-center justify-center shadow-lg transition-all active:scale-95">
+                      <ShoppingCart size={20} strokeWidth={2.5} />
+                    </button>
+                  </div>
+
+                  <div className="lg:col-span-6 flex flex-col gap-4">
+                    {p1 && (
+                      <div onClick={() => setSelectedProductForModal(p1)} className="flex items-center gap-4 p-4 rounded-3xl bg-white shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-pointer">
+                        <div className="relative w-36 h-28 rounded-2xl overflow-hidden shrink-0 bg-slate-100">
+                          {(p1.images?.[0] || p1.imageUrl) ? (
+                            <Image src={p1.images?.[0] || p1.imageUrl} alt={p1.name} fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center font-bold text-slate-500 text-xs">{p1.name}</div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-black text-slate-900 text-lg line-clamp-1 mb-1">{p1.name}</h4>
+                          <p className="text-sm font-black text-blue-600 mb-3">৳{p1.price}</p>
+                          <button onClick={(e) => { e.stopPropagation(); addToCart(p1); }} className="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-800 text-xs font-bold transition-colors">Add to Cart</button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4 flex-1">
+                      {[p2, p3].map((prod, idx) => (
+                        prod && (
+                          <div key={prod.id || idx} onClick={() => setSelectedProductForModal(prod)} className="p-3.5 rounded-3xl bg-white shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-pointer flex flex-col">
+                            <div className="relative h-28 rounded-2xl overflow-hidden bg-slate-100 mb-2">
+                              {(prod.images?.[0] || prod.imageUrl) ? (
+                                <Image src={prod.images?.[0] || prod.imageUrl} alt={prod.name} fill className="object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center font-bold text-slate-500 text-xs">{prod.name}</div>
+                              )}
+                            </div>
+                            <h4 className="font-bold text-slate-900 text-sm line-clamp-1">{prod.name}</h4>
+                            <p className="text-xs font-black text-blue-600 mt-auto">৳{prod.price}</p>
+                          </div>
+                        )
+                      ))}
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {restProducts.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 pt-4">
+                    {restProducts.map(renderSingleProductCard)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (catStyle === 'luxury' && filteredProducts.length >= 3) {
+            return (
+              <div id="product-section" className="space-y-6">
+                <div className="flex items-center justify-between border-b border-amber-900/20 pb-3">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-serif text-slate-900 tracking-tight">Signature Collection</h2>
+                    <p className="text-sm text-slate-500 font-light">Crafted with precision, designed for eternity.</p>
+                  </div>
+                  <span className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest cursor-pointer">View All →</span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  <div onClick={() => setSelectedProductForModal(p0)} className="lg:col-span-7 relative h-[400px] md:h-[460px] rounded-2xl overflow-hidden shadow-xl group cursor-pointer bg-black">
+                    {(p0.images?.[0] || p0.imageUrl) ? (
+                      <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-85" />
+                    ) : (
+                      <div className="w-full h-full bg-black flex items-center justify-center p-6 text-center font-serif text-white text-2xl">{p0.name}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                    <div className="absolute top-4 left-4 bg-[#C9A84C] text-black px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest">Icon Collection</div>
+                    <div className="absolute bottom-6 left-6 right-6 text-white">
+                      <h3 className="font-serif text-2xl md:text-3xl font-normal mb-1 drop-shadow-md">{p0.name}</h3>
+                      <p className="text-[#C9A84C] text-xl font-serif font-bold mb-3">৳{p0.price}</p>
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="bg-[#C9A84C] hover:bg-amber-400 text-black px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all">Add to Bag</button>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-5 flex flex-col gap-4">
+                    {[p1, p2].map((prod, idx) => (
+                      prod && (
+                        <div key={prod.id || idx} onClick={() => setSelectedProductForModal(prod)} className="flex items-center gap-4 p-4 rounded-xl bg-white shadow-sm border border-slate-200 hover:border-[#C9A84C] transition-all cursor-pointer flex-1">
+                          <div className="relative w-32 h-28 rounded-lg overflow-hidden shrink-0 bg-slate-100">
+                            {(prod.images?.[0] || prod.imageUrl) ? (
+                              <Image src={prod.images?.[0] || prod.imageUrl} alt={prod.name} fill className="object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center font-bold text-slate-500 text-xs">{prod.name}</div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-serif font-bold text-slate-900 text-base line-clamp-1 mb-1">{prod.name}</h4>
+                            <p className="text-sm font-serif font-bold text-[#C9A84C]">৳{prod.price}</p>
+                          </div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+
+                {restProducts.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 pt-4">
+                    {restProducts.map(renderSingleProductCard)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Standard Product Grid for Grocery / MesserBazar & Default Shops
+          return (
+            <div id="product-section" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-3 sm:gap-4">
+              {filteredProducts.map(renderSingleProductCard)}
+            </div>
+          );
+        })()}
       </main>
 
       {/* ── PREMIUM FOOTER — INLINE STYLES, CSS-PROOF ── */}
