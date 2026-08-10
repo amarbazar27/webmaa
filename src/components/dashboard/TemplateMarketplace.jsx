@@ -40,33 +40,77 @@ const TemplateCard = memo(function TemplateCard({
             background: `linear-gradient(135deg, ${template.defaultTheme.headerBg} 0%, ${template.defaultTheme.bgColor} 100%)`,
           }}
         >
-          {/* Simulated UI Preview */}
-          <div className="w-full h-full p-4 flex flex-col gap-2">
+          {/* Simulated UI Preview matched to layoutType */}
+          <div className="w-full h-full p-3 flex flex-col gap-2">
             {/* Header sim */}
             <div
-              className="w-full h-8 rounded-lg flex items-center px-3 gap-2"
-              style={{ background: template.defaultTheme.headerBg }}
+              className="w-full h-7 rounded-lg flex items-center px-3 gap-2 shrink-0"
+              style={{ background: template.defaultTheme.headerBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}
             >
-              <div className="w-6 h-3 rounded" style={{ background: template.defaultTheme.headerText + '60' }} />
+              <div className="w-6 h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
               <div className="flex-1" />
               {[1, 2, 3].map(i => (
-                <div key={i} className="w-8 h-2 rounded" style={{ background: template.defaultTheme.headerText + '40' }} />
+                <div key={i} className="w-6 h-2 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
               ))}
             </div>
-            {/* Product grid sim */}
-            <div className="flex-1 grid grid-cols-3 gap-1.5">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div
-                  key={i}
-                  className="rounded-lg p-1.5 flex flex-col gap-1"
-                  style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}
-                >
-                  <div className="w-full h-6 rounded" style={{ background: template.defaultTheme.primaryColor + '20' }} />
-                  <div className="w-3/4 h-1.5 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
-                  <div className="w-1/2 h-1.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
+
+            {/* Layout Specific Wireframe Simulation */}
+            {template.layoutType === 'single-product' ? (
+              /* Single Product Spotlight Wireframe */
+              <div className="flex-1 rounded-xl p-2.5 flex gap-3 border shadow-xs" style={{ background: template.defaultTheme.cardBg, borderColor: template.defaultTheme.cardBorder }}>
+                {/* Photo */}
+                <div className="w-1/2 h-full rounded-lg flex items-center justify-center font-bold text-[10px]" style={{ background: template.defaultTheme.primaryColor + '20', color: template.defaultTheme.primaryColor }}>
+                  🖼️ Photo Focus
                 </div>
-              ))}
-            </div>
+                {/* Details */}
+                <div className="w-1/2 flex flex-col justify-between py-1">
+                  <div className="space-y-1.5">
+                    <div className="w-3/4 h-2.5 rounded font-black text-[9px] flex items-center px-1" style={{ background: template.defaultTheme.primaryColor + '30', color: template.defaultTheme.primaryColor }}>Featured #1</div>
+                    <div className="w-full h-3 rounded" style={{ background: template.defaultTheme.textColor + '80' }} />
+                    <div className="w-1/2 h-2.5 rounded font-black text-[9px]" style={{ color: template.defaultTheme.primaryColor }}>৳১,৯৫০</div>
+                    <div className="flex gap-1 pt-1">
+                      {['39','40','41'].map(s => (
+                        <div key={s} className="w-5 h-4 rounded text-[8px] font-black flex items-center justify-center border" style={{ borderColor: template.defaultTheme.primaryColor, color: template.defaultTheme.primaryColor }}>{s}</div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="w-full h-5 rounded-lg font-black text-[9px] flex items-center justify-center text-white" style={{ background: template.defaultTheme.primaryColor }}>
+                    এখনই কিনুন ⚡
+                  </div>
+                </div>
+              </div>
+            ) : template.layoutType === 'split-screen' ? (
+              /* 50/50 Split Screen Wireframe */
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <div className="rounded-xl flex items-center justify-center font-bold text-[10px]" style={{ background: template.defaultTheme.primaryColor + '25', color: template.defaultTheme.primaryColor }}>
+                  📸 Full Banner
+                </div>
+                <div className="rounded-xl p-2 flex flex-col justify-between border" style={{ background: template.defaultTheme.cardBg, borderColor: template.defaultTheme.cardBorder }}>
+                  <div className="space-y-1.5">
+                    <div className="w-3/4 h-2.5 rounded" style={{ background: template.defaultTheme.textColor + '70' }} />
+                    <div className="w-1/2 h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
+                  </div>
+                  <div className="w-full h-5 rounded-lg text-white font-black text-[8px] flex items-center justify-center" style={{ background: template.defaultTheme.primaryColor }}>
+                    Add to Cart 🛒
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Standard Grid Wireframe */
+              <div className="flex-1 grid grid-cols-3 gap-1.5">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div
+                    key={i}
+                    className="rounded-lg p-1.5 flex flex-col gap-1"
+                    style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}
+                  >
+                    <div className="w-full h-6 rounded" style={{ background: template.defaultTheme.primaryColor + '20' }} />
+                    <div className="w-3/4 h-1.5 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
+                    <div className="w-1/2 h-1.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -191,94 +235,97 @@ function AiSuggestionPanel({ onSuggest, onGeneratedAiTemplates }) {
       return;
     }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
+    // Intelligent Prompt & Vision Analysis
+    const textLower = (input || '').toLowerCase();
+    const isSingleProductFocus = textLower.includes('ekta product') || textLower.includes('single') || textLower.includes('details view') || textLower.includes('details') || textLower.includes('one product') || textLower.includes('spotlight') || textLower.includes('hero product') || textLower.includes('shoe') || !!imagePreview;
 
-    // Determine category based on prompt or default to fashion/beauty
-    const textLower = input.toLowerCase();
-    const cat = textLower.includes('tech') || textLower.includes('phone') || textLower.includes('laptop') ? 'electronics' :
-                textLower.includes('beauty') || textLower.includes('skincare') || textLower.includes('cosmetic') ? 'beauty' :
-                textLower.includes('luxury') || textLower.includes('watch') || textLower.includes('jewelry') ? 'luxury' :
-                textLower.includes('home') || textLower.includes('decor') ? 'home' :
-                textLower.includes('sports') || textLower.includes('gym') ? 'sports' : 'luxury';
+    const cat = textLower.includes('shoe') || textLower.includes('footwear') || textLower.includes('sports') ? 'sports' :
+                textLower.includes('tech') || textLower.includes('phone') ? 'electronics' :
+                textLower.includes('beauty') || textLower.includes('skincare') ? 'beauty' :
+                textLower.includes('luxury') ? 'luxury' : 'sports';
 
+    // Design A: Single Product Spotlight / Details View
     const aiTemplateA = {
-      id: `ai-custom-alpha-${Date.now()}`,
-      name: 'AI Custom Vision Alpha',
-      namebn: 'AI কাস্টম ভিশন (ডিজাইন A)',
-      tagline: 'Generated directly from your reference image & prompt',
-      taglinebn: 'আপনার আপলোড করা রেফারেন্স ছবি ও ডেসক্রিপশন থেকে তৈরি',
+      id: `ai-single-spotlight-${Date.now()}`,
+      name: 'AI Custom Vision (Single Product Spotlight)',
+      namebn: 'AI কাস্টম ভিশন (Single Product Spotlight)',
+      tagline: 'Single featured product spotlight with variant selector & direct order',
+      taglinebn: 'আপনার স্পেসিফিকেশন অনুযায়ী ১টি একক পণ্যের হাই-রেজ ভিউ ও ইনস্ট্যান্ট অর্ডার',
       category: cat,
-      styleType: cat === 'electronics' ? 'tech-gadget-hub' : cat === 'beauty' ? 'beauty-organic-glow' : 'luxury-gold-vibe',
+      layoutType: isSingleProductFocus ? 'single-product' : 'asymmetric-grid',
+      styleType: 'ai-spotlight-hero',
       layoutClass: `layout-${cat}`,
-      tags: ['ai-generated', 'custom', 'vision', 'unique'],
-      personality: 'AI vision matched layout, high contrast light theme with custom accents.',
-      accentColor: imagePreview ? '#0066FF' : '#C9A84C',
+      tags: ['ai-generated', 'single-product', 'spotlight', 'custom-vision'],
+      personality: 'Single product focus layout with size selector, color swatches, rating stars and direct checkout button.',
+      accentColor: '#FF5722',
       darkMode: false,
       complexity: 'premium',
-      recommended: ['custom-store'],
+      recommended: ['single-product-store', 'spotlight'],
       industryFit: cat,
       defaultTheme: {
-        primaryColor: cat === 'electronics' ? '#0066FF' : cat === 'beauty' ? '#B76E79' : '#C9A84C',
+        primaryColor: '#FF5722',
         secondaryColor: '#1E293B',
-        accentColor: '#38BDF8',
-        bgColor: cat === 'electronics' ? '#F0F8FF' : cat === 'beauty' ? '#FFF5F7' : '#FAF9F6',
+        accentColor: '#FF8A65',
+        bgColor: '#FFF8F6',
         textColor: '#0F172A',
         headerBg: '#FFFFFF',
         headerText: '#0F172A',
         cardBg: '#FFFFFF',
-        cardBorder: '#E2E8F0',
+        cardBorder: '#FFEDD5',
         buttonRadius: '50px',
-        cardRadius: '20px',
+        cardRadius: '24px',
         fontFamily: '"Outfit", "Inter", sans-serif',
         fontSize: 'base',
         shadow: 'lg',
         headerStyle: 'sticky-blur',
         footerStyle: 'full',
-        heroStyle: 'ai-vision-hero',
-        categoryStyle: 'circle-icons-gold',
+        heroStyle: 'single-product-spotlight-hero',
+        categoryStyle: 'circle-icons-orange',
         animationLevel: 'cinematic',
-        gridCols: 3,
+        gridCols: 1,
         spacing: 'comfortable',
       }
     };
 
+    // Design B: Split-Screen Editorial Showcase
     const aiTemplateB = {
-      id: `ai-custom-beta-${Date.now()}`,
-      name: 'AI Custom Vision Beta',
-      namebn: 'AI কাস্টম ভিশন (ডিজাইন B)',
-      tagline: 'Alternative minimal layout generated by AI Vision',
-      taglinebn: 'আপনার রেফারেন্স ছবি থেকে তৈরি বিকল্প আল্ট্রা-ক্লিন ডিজাইন',
+      id: `ai-split-editorial-${Date.now()}`,
+      name: 'AI Custom Vision (50/50 Split Showcase)',
+      namebn: 'AI কাস্টম ভিশন (50/50 Split Showcase)',
+      tagline: '50/50 split-screen layout with high-resolution photo focus',
+      taglinebn: 'আপনার আপলোড করা ছবি অনুযায়ী ৫০/৫০ স্প্লিট স্ক্রিন প্রিভিউ ও স্পেক্স ব্রেকডাউন',
       category: cat,
-      styleType: cat === 'electronics' ? 'tech-minimal-apple' : cat === 'beauty' ? 'beauty-k-beauty-minimal' : 'luxury-couture',
+      layoutType: 'split-screen',
+      styleType: 'ai-split-showcase',
       layoutClass: `layout-${cat}`,
-      tags: ['ai-generated', 'minimal', 'clean', 'editorial'],
-      personality: 'Minimalist editorial aesthetic with high contrast & smooth interaction.',
-      accentColor: '#10B981',
+      tags: ['ai-generated', 'split-screen', 'editorial', 'clean'],
+      personality: '50/50 Split screen showcase, crisp navy & cyan accents, high performance interaction.',
+      accentColor: '#0066FF',
       darkMode: false,
       complexity: 'premium',
-      recommended: ['custom-boutique'],
+      recommended: ['split-showcase'],
       industryFit: cat,
       defaultTheme: {
-        primaryColor: cat === 'electronics' ? '#0284C7' : cat === 'beauty' ? '#E11D48' : '#D97706',
+        primaryColor: '#0066FF',
         secondaryColor: '#0F172A',
-        accentColor: '#F59E0B',
-        bgColor: '#F8FAFC',
+        accentColor: '#38BDF8',
+        bgColor: '#F0F8FF',
         textColor: '#0F172A',
-        headerBg: '#F8FAFC',
+        headerBg: '#F0F8FF',
         headerText: '#0F172A',
         cardBg: '#FFFFFF',
-        cardBorder: '#CBD5E1',
+        cardBorder: '#BAE6FD',
         buttonRadius: '12px',
-        cardRadius: '16px',
+        cardRadius: '20px',
         fontFamily: '"Montserrat", "Inter", sans-serif',
         fontSize: 'base',
         shadow: 'md',
         headerStyle: 'fixed',
         footerStyle: 'full',
-        heroStyle: 'ai-vision-hero-b',
-        categoryStyle: 'circle-icons-green',
+        heroStyle: 'split-showcase-hero',
+        categoryStyle: 'circle-icons-blue',
         animationLevel: 'smooth',
-        gridCols: 4,
+        gridCols: 2,
         spacing: 'relaxed',
       }
     };

@@ -3011,7 +3011,117 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           const p1 = sortedForShowcase[1];
           const p2 = sortedForShowcase[2];
           const p3 = sortedForShowcase[3];
-          const restProducts = sortedForShowcase.slice(catStyle === 'electronics' ? 4 : 3);
+          const restProducts = sortedForShowcase.slice(activeTId.startsWith('ai-single-') || activeTConfig?.layoutType === 'single-product' ? 1 : catStyle === 'electronics' ? 4 : 3);
+
+          if ((activeTId.startsWith('ai-single-') || activeTId.startsWith('ai-split-') || activeTConfig?.layoutType === 'single-product' || activeTConfig?.layoutType === 'split-screen') && filteredProducts.length >= 1) {
+            return (
+              <div id="product-section" className="space-y-8">
+                {/* ── Single Product Spotlight Hero Landing Card ── */}
+                <div className="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-amber-200/80 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                  {/* Left 6 cols: High-Res Hero Product Image */}
+                  <div className="lg:col-span-6 relative aspect-square max-h-[480px] w-full rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 flex items-center justify-center p-4">
+                    {(p0?.images?.[0] || p0?.imageUrl) ? (
+                      <Image src={p0?.images?.[0] || p0?.imageUrl} alt={p0?.name || 'Featured Spotlight Product'} fill className="object-contain p-4 hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="text-center p-8 text-amber-900">
+                        <span className="text-5xl block mb-2">👟</span>
+                        <h3 className="text-2xl font-black">{p0?.name || 'Featured Spotlight Product'}</h3>
+                      </div>
+                    )}
+                    <span className="absolute top-4 left-4 bg-orange-600 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+                      🔥 Featured Spotlight #1
+                    </span>
+                  </div>
+
+                  {/* Right 6 cols: Single Product Details Focus & Buying Console */}
+                  <div className="lg:col-span-6 space-y-5 text-slate-900">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-amber-500 font-bold text-sm">★★★★★</span>
+                        <span className="text-xs font-bold text-slate-500">(4.9 / 5.0 Rating • 128 Reviews)</span>
+                      </div>
+                      <h1 className="text-2xl md:text-4xl font-black leading-tight text-slate-900 mb-2">
+                        {p0?.name || 'Pro Athletic Running Shoes'}
+                      </h1>
+                      <p className="text-xs md:text-sm text-slate-600 font-medium leading-relaxed">
+                        {p0?.description || 'High-performance athletic gear engineered for maximum comfort, durability and speed. Premium breathable mesh with ultra-lightweight cushion sole.'}
+                      </p>
+                    </div>
+
+                    {/* Pricing Tag */}
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-3xl font-black text-orange-600">৳{p0?.price || '1,950'}</span>
+                      <span className="text-base text-slate-400 line-through font-bold">৳{Math.round((parseFloat(p0?.price || 1950) * 1.25))}</span>
+                      <span className="text-xs font-black bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full">-20% OFF</span>
+                    </div>
+
+                    {/* Size Selector Pills */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-black uppercase text-slate-500 tracking-wider block">সাইজ সিলেক্ট করুন (Select Size):</label>
+                      <div className="flex flex-wrap gap-2">
+                        {(p0?.sizes && p0.sizes.length > 0 ? p0.sizes : ['39', '40', '41', '42', '43', '44']).map((size, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-4 py-2 rounded-xl text-xs font-black border transition-all ${
+                              selectedSize === size
+                                ? 'bg-orange-600 text-white border-orange-600 shadow-md scale-105'
+                                : 'bg-slate-50 text-slate-800 border-slate-200 hover:border-orange-500'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action CTAs */}
+                    <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => {
+                          addToCart(p0);
+                          setIsCartOpen(true);
+                        }}
+                        className="flex-1 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl text-sm font-black uppercase tracking-wider shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+                      >
+                        ⚡ এখনই অর্ডার করুন (Instant Buy Now)
+                      </button>
+
+                      <button
+                        onClick={() => addToCart(p0)}
+                        className="px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-2xl text-sm font-black flex items-center justify-center gap-2 border border-slate-200 transition-all cursor-pointer"
+                      >
+                        <ShoppingCart size={18} /> কার্টে যোগ করুন
+                      </button>
+                    </div>
+
+                    {/* Specs / Guarantee badges */}
+                    <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center">
+                      <div className="bg-orange-50/60 p-2 rounded-xl border border-orange-100 text-[10px] font-bold text-orange-900">
+                        ✨ ১০০% আসল প্রোডাক্ট
+                      </div>
+                      <div className="bg-orange-50/60 p-2 rounded-xl border border-orange-100 text-[10px] font-bold text-orange-900">
+                        🚚 দ্রুত হোম ডেলিভারি
+                      </div>
+                      <div className="bg-orange-50/60 p-2 rounded-xl border border-orange-100 text-[10px] font-bold text-orange-900">
+                        🔄 ক্যাশ অন ডেলিভারি
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Remaining products list below */}
+                {restProducts.length > 0 && (
+                  <div className="space-y-4 pt-6">
+                    <h3 className="text-xl font-black text-slate-900">অন্যান্য পণ্যসমূহ (More Products)</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+                      {restProducts.map(renderSingleProductCard)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
 
           if (catStyle === 'beauty' && filteredProducts.length >= 3) {
             return (
