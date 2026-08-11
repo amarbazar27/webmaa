@@ -7,7 +7,8 @@ import {
   X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
-  Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag, User
+  Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag, User,
+  ShieldCheck, Truck, Clock
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -1388,21 +1389,20 @@ export default function Home() {
       <div className="fixed top-[-15%] right-[-5%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] animate-blob animation-delay-2000" />
       <div className="fixed bottom-[-15%] left-[10%] w-[600px] h-[600px] bg-pink-600/800 opacity-[0.05] rounded-full blur-[140px] animate-blob animation-delay-4000" />
 
-      {/* ── Neomorphic Navigation Header ── */}
-      <header className="sticky top-0 z-50 px-4 py-4 bg-[#e8eaf0] border-b border-black/5 shadow-sm neo-raised rounded-none transition-all duration-300">
-        <div className="max-w-screen-xl mx-auto flex justify-between items-center gap-4">
-          {/* Left Area: Mobile Login/Workspace, Stores Button, and Logo */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Mobile Workspace/Login (On the LEFT so it is fully visible & clickable on mobile) */}
+      {/* ── Sleek Floating Glass Navigation Header ── */}
+      <header className="sticky top-0 z-50 px-4 py-3 bg-slate-950/85 backdrop-blur-xl border-b border-white/10 shadow-2xl transition-all duration-300">
+        <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
+          {/* Left Area: Mobile Login/Workspace, Stores Drawer, and Brand Logo */}
+          <div className="flex items-center gap-3">
             <div className="md:hidden">
               {user ? (
                 <div>
                   {getDashboardHref() ? (
-                    <Link href={getDashboardHref()} className="neo-button px-2.5 py-1.5 bg-indigo-600 text-white font-extrabold text-[10px] active:scale-95 transition-all flex items-center gap-1 shrink-0">
-                      <Briefcase size={10} /> Workspace
+                    <Link href={getDashboardHref()} className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all flex items-center gap-1.5 shadow-lg shadow-purple-900/30">
+                      <Briefcase size={12} /> Workspace
                     </Link>
                   ) : (
-                    <button onClick={() => setIsProfileOpen(true)} className="neo-button px-2.5 py-1.5 text-indigo-600 font-extrabold text-[10px] active:scale-95 transition-all shrink-0">
+                    <button onClick={() => setIsProfileOpen(true)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-purple-300 font-extrabold text-[11px] rounded-xl active:scale-95 transition-all">
                       Profile
                     </button>
                   )}
@@ -1411,44 +1411,45 @@ export default function Home() {
                 <button 
                   onClick={handleSmartLogin} 
                   disabled={loggingIn} 
-                  className="neo-button px-3 py-1.5 bg-indigo-600 text-white font-extrabold text-[10px] active:scale-95 transition-all shrink-0"
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md shadow-purple-900/30"
                 >
                   {loggingIn ? "..." : "Login"}
                 </button>
               )}
             </div>
 
-            {/* Stores trigger */}
+            {/* Stores Drawer Trigger */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="neo-button px-3 py-1.5 text-xs font-black text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer shadow-sm shrink-0"
+              className="px-3.5 py-2 bg-white/5 hover:bg-purple-600/30 border border-white/10 hover:border-purple-500/40 text-xs font-black text-purple-300 hover:text-white flex items-center gap-2 rounded-xl active:scale-95 transition-all cursor-pointer shadow-sm shrink-0"
             >
-              <Menu size={13} className="shrink-0" />
-              <span className="hidden xs:inline">Stores</span>
+              <Menu size={15} className="text-purple-400 shrink-0" />
+              <span className="hidden xs:inline font-mono tracking-wider">STORES</span>
             </button>
             
             {/* Logo */}
             <div 
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-              className="flex items-center gap-2.5 group cursor-pointer select-none"
+              className="flex items-center gap-3 group cursor-pointer select-none"
             >
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
-                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-7 sm:h-9 object-contain" alt="Logo" />
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-10 object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.4)]" alt="Logo" />
               ) : (
-                <div className="w-8 h-8 neo-raised flex items-center justify-center text-indigo-600 font-black text-xs rounded-xl">BD</div>
+                <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs rounded-xl shadow-lg shadow-purple-900/40">BD</div>
               )}
-              <span className="text-lg sm:text-xl font-black text-slate-800 tracking-tight whitespace-nowrap hidden sm:block">
+              <span className="text-lg sm:text-xl font-black text-white tracking-tight whitespace-nowrap hidden sm:block">
                 {globalConfig?.brandName || 'BDRetailers'}
               </span>
             </div>
           </div>
 
           {/* Center Links (Desktop only) */}
-          <nav className="hidden md:flex items-center gap-8 font-bold text-xs uppercase tracking-wider">
-            <a href="#marketplace" className="text-indigo-600 border-b-2 border-indigo-600 pb-1">Marketplace</a>
-            <button onClick={() => { if(user) setIsProfileOpen(true); else handleSmartLogin(); }} className="text-slate-500 hover:text-indigo-600 transition-colors">Orders</button>
+          <nav className="hidden md:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-white/70">
+            <a href="#marketplace" className="text-purple-400 border-b-2 border-purple-500 pb-1 flex items-center gap-1.5"><ShoppingBag size={13} /> Marketplace</a>
+            <a href="#featured-models" className="hover:text-purple-300 transition-colors flex items-center gap-1.5"><Sparkles size={13} /> Featured Models</a>
+            <button onClick={() => { if(user) setIsProfileOpen(true); else handleSmartLogin(); }} className="hover:text-purple-300 transition-colors flex items-center gap-1.5"><Package size={13} /> My Orders</button>
             {getDashboardHref() && (
-              <Link href={getDashboardHref()} className="text-slate-500 hover:text-indigo-600 transition-colors">Workspace</Link>
+              <Link href={getDashboardHref()} className="hover:text-purple-300 transition-colors flex items-center gap-1.5"><Briefcase size={13} /> Merchant Hub</Link>
             )}
           </nav>
 
@@ -1458,7 +1459,7 @@ export default function Home() {
             {!pwaInstalled && (
               <button 
                 onClick={handleAppDownload}
-                className="neo-button px-3 py-2 text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-700 cursor-pointer hidden xs:flex items-center gap-1"
+                className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-[10px] font-black uppercase tracking-wider text-purple-300 hover:text-purple-200 rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
               >
                 <Download size={12} /> App
               </button>
@@ -1470,53 +1471,53 @@ export default function Home() {
                 href={mainShopData.howToOrderVideo} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="neo-button px-3 py-2 text-[10px] font-black uppercase tracking-wider text-red-500 hover:text-red-600 flex items-center gap-1"
+                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-[10px] font-black uppercase tracking-wider text-red-400 hover:text-red-300 rounded-xl flex items-center gap-1.5 transition-all"
               >
                 <PlayCircle size={12} /> Video
               </a>
             )}
 
-            {/* Cart Icon */}
+            {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="neo-button p-2 text-indigo-600 flex items-center justify-center active:scale-95 transition-all relative cursor-pointer"
+              className="p-2.5 bg-white/5 hover:bg-purple-600/30 border border-white/10 hover:border-purple-500/40 text-purple-300 hover:text-white rounded-xl flex items-center justify-center active:scale-95 transition-all relative cursor-pointer shadow-lg"
             >
-              <ShoppingCart size={15} />
+              <ShoppingCart size={17} />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 bg-indigo-600 text-white text-[8px] font-black rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-purple-900/50 animate-bounce">
                   {cartItemCount}
                 </span>
               )}
             </button>
 
-            {/* Desktop Actions Block (Hidden on mobile) */}
+            {/* Desktop User Profile / Login */}
             <div className="hidden md:flex items-center gap-3">
-              <div className="w-[1px] h-4 bg-black/10 mx-0.5" />
+              <div className="w-[1px] h-5 bg-white/10 mx-0.5" />
               {user ? (
                 <div className="flex items-center gap-3 shrink-0">
                   <button
                     onClick={() => setIsProfileOpen(true)}
-                    className="neo-button px-3.5 py-1.5 text-xs font-bold text-indigo-600 flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                    className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white rounded-xl flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
                   >
-                    <div className="w-5 h-5 rounded-full overflow-hidden border border-black/10 flex items-center justify-center bg-indigo-600 font-bold text-white text-[9px] shrink-0">
+                    <div className="w-5 h-5 rounded-full overflow-hidden border border-white/20 flex items-center justify-center bg-purple-600 font-bold text-white text-[9px] shrink-0">
                       {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || 'U'}
                     </div>
-                    <span className="hidden sm:inline">Orders</span>
+                    <span className="hidden sm:inline">My Orders</span>
                   </button>
 
                   {getDashboardHref() && (
-                    <Link href={getDashboardHref()} className="neo-button px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-extrabold text-xs active:scale-95 transition-all shrink-0 flex items-center gap-1.5 shadow-sm">
-                      <Briefcase size={12} className="shrink-0" /> Workspace
+                    <Link href={getDashboardHref()} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl active:scale-95 transition-all shrink-0 flex items-center gap-1.5 shadow-lg shadow-purple-900/40">
+                      <Briefcase size={13} className="shrink-0" /> Merchant Portal
                     </Link>
                   )}
 
-                  <button onClick={logoutUser} className="text-[10px] font-black text-red-500 hover:text-red-600 transition-colors uppercase cursor-pointer flex items-center gap-1"><LogOut size={12} /> Sign Out</button>
+                  <button onClick={logoutUser} className="text-[10px] font-black text-red-400 hover:text-red-300 transition-colors uppercase cursor-pointer flex items-center gap-1"><LogOut size={12} /> Exit</button>
                 </div>
               ) : (
                 <button 
                   onClick={handleSmartLogin} 
                   disabled={loggingIn} 
-                  className="neo-button px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 font-extrabold text-xs active:scale-95 transition-all shrink-0 cursor-pointer shadow-sm"
+                  className="px-4.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl active:scale-95 transition-all shrink-0 cursor-pointer shadow-lg shadow-purple-900/40"
                 >
                   {loggingIn ? "Connecting..." : "Portal Login"}
                 </button>
@@ -1526,11 +1527,124 @@ export default function Home() {
         </div>
       </header>
 
+      {/* ── Luxury Hero Section & Interactive Models Showcase ── */}
+      <section className="relative z-20 pt-8 pb-12 overflow-hidden border-b border-white/5 bg-slate-950/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Headline & Content */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/25 shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-purple-300">
+                  VERIFIED BD RETAILERS & WHOLESALE HUB
+                </span>
+              </div>
+              
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
+                বাংলাদেশের সবচেয়ে গতিশীল{' '}
+                <span className="gradient-shimmer-text">ই-কমার্স ইকোসিস্টেম</span>
+              </h1>
+              
+              <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed max-w-2xl">
+                সরাসরি ভেরিফাইড মার্চেন্ট নেটওয়ার্ক থেকে সেরা মানের পণ্য, কাস্টম প্রডাক্ট অর্ডারিং, 
+                গ্যারান্টেড দ্রুত ডেলিভারি ও রিয়েল-টাইম এআই অ্যাসিস্ট্যান্ট সহযোগে কেনাকাটা করুন।
+              </p>
+
+              <div className="flex flex-wrap gap-4 pt-2">
+                <a 
+                  href="#marketplace" 
+                  className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-xl shadow-purple-900/40 hover:-translate-y-0.5 flex items-center gap-2"
+                >
+                  <ShoppingBag size={16} /> পণ্যসমূহ এক্সপ্লোর করুন
+                </a>
+                <Link 
+                  href="/become-retailer" 
+                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/15 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all hover:-translate-y-0.5 flex items-center gap-2"
+                >
+                  <Store size={16} className="text-purple-400" /> মার্চেন্ট অ্যাকাউন্ট খুলুন
+                </Link>
+              </div>
+
+              {/* Stats pill row */}
+              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/10">
+                <div>
+                  <p className="text-xl sm:text-2xl font-black text-white font-mono tabular-nums">{allShops.length}+</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Stores</p>
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-black text-purple-400 font-mono tabular-nums">{products.length}+</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Products Live</p>
+                </div>
+                <div>
+                  <p className="text-xl sm:text-2xl font-black text-emerald-400 font-mono tabular-nums">99.8%</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Satisfaction Rate</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Interactive Featured Model Showcase Card */}
+            <div className="lg:col-span-5 relative">
+              <div className="spotlight-card p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4">
+                  <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[9px] uppercase tracking-widest rounded-full shadow-lg flex items-center gap-1">
+                    <Sparkles size={10} /> HOT MODEL
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-black">
+                    <Tag size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-white">প্রিমিয়াম স্পেক্স & কাস্টম মডেলস</h3>
+                    <p className="text-[10px] text-slate-400 font-bold">লাইভ ভ্যারিয়েন্ট ও এআই ক্যালকুলেটর সমর্থিত</p>
+                  </div>
+                </div>
+
+                {products.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-950/80 border border-white/10">
+                      <img 
+                        src={products[0]?.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80'} 
+                        alt={products[0]?.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent p-4">
+                        <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">{products[0]?.category || 'Featured'}</span>
+                        <h4 className="text-base font-black text-white truncate">{products[0]?.name}</h4>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-lg font-black text-emerald-400 font-mono tabular-nums">৳ {Number(products[0]?.price || 0).toLocaleString()}</span>
+                          <span className="text-[10px] font-bold text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-full">🏪 {products[0]?.shopName}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => {
+                        setSelectedProduct(products[0]);
+                        setCustomizationNote('');
+                      }}
+                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Sparkles size={14} /> মডেল ডিটেইলস & কাস্টমাইজ করুন
+                    </button>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-slate-500 text-xs font-bold">
+                    প্রোডাক্ট লোড হচ্ছে...
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Marketplace Section ── */}
-      <section id="marketplace" className="relative z-20 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-2 sm:px-6 py-2 md:py-6 scroll-mt-24">
+      <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 scroll-mt-24">
         
         {/* ── Main Site Description Box (Editable via Superadmin) ── */}
-        <div className="mb-4 py-3 px-5 rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-md relative shadow-md">
+        <div className="mb-6 py-4 px-6 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md relative shadow-xl">
           <p className="text-xs sm:text-sm font-bold text-white/80 leading-relaxed">
             ✨ <strong className="text-purple-400 font-black">{globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম:</strong>{' '}
             {renderClickableText(globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক।')}
@@ -1568,17 +1682,17 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Neomorphic Search & Filters Card ── */}
-        <div className="neo-raised p-4 mb-4 flex flex-col gap-3">
+        {/* ── Glassmorphic Search & Filters Card ── */}
+        <div className="glass-panel bg-slate-900/80 backdrop-blur-xl border border-white/10 p-4 sm:p-5 mb-8 rounded-3xl shadow-2xl flex flex-col gap-4">
           <div className="flex flex-col md:flex-row gap-3">
             {/* Search bar inset */}
-            <div className="flex-grow neo-inset flex items-center px-4 py-2">
-              <Search className="text-slate-400 mr-3 shrink-0" size={16} />
+            <div className="flex-grow bg-slate-950/80 border border-white/10 rounded-2xl flex items-center px-4 py-2.5 shadow-inner focus-within:border-purple-500/50 transition-all">
+              <Search className="text-purple-400 mr-3 shrink-0" size={18} />
               <input
                 id="search-input-field"
                 type="text"
-                placeholder="Search products..."
-                className="bg-transparent border-none focus:ring-0 w-full text-xs font-bold text-slate-800 placeholder-slate-400 p-0 outline-none h-full font-body animate-none"
+                placeholder="খুঁজুন (Search products by name, category, or English/Bangla transliteration...)"
+                className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-white placeholder-slate-400 p-0 outline-none h-full animate-none"
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
               />
@@ -1586,7 +1700,7 @@ export default function Home() {
 
             <div className="flex gap-3 shrink-0">
               {/* Store select */}
-              <div className="relative neo-button px-4 py-2 flex items-center justify-between min-w-[140px] cursor-pointer">
+              <div className="relative bg-slate-950/80 hover:bg-slate-950 border border-white/10 hover:border-purple-500/40 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[150px] cursor-pointer transition-all">
                 <select
                   value={activeShopFilter}
                   onChange={e => {
@@ -1601,12 +1715,12 @@ export default function Home() {
                     <option key={shopName} value={shopName}>{shopName}</option>
                   ))}
                 </select>
-                <span className="text-xs font-bold text-slate-700 truncate pr-4">🏪 {activeShopFilter === 'All' ? 'All Stores' : activeShopFilter}</span>
+                <span className="text-xs font-black text-purple-300 truncate pr-4">🏪 {activeShopFilter === 'All' ? 'All Stores' : activeShopFilter}</span>
                 <span className="text-[10px] text-slate-400">▼</span>
               </div>
 
               {/* Sort Options */}
-              <div className="relative neo-button px-4 py-2 flex items-center justify-between min-w-[130px] cursor-pointer">
+              <div className="relative bg-slate-950/80 hover:bg-slate-950 border border-white/10 hover:border-purple-500/40 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer transition-all">
                 <select
                   value={sortOption}
                   onChange={e => setSortOption(e.target.value)}
@@ -1836,36 +1950,41 @@ export default function Home() {
                       return (
                         <div
                           key={product.id}
-                          className="group glass-panel border-white/5 rounded-3xl overflow-hidden hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between bg-slate-950/20"
+                          className="group spotlight-card border border-white/10 rounded-3xl overflow-hidden hover:border-purple-500/40 hover:shadow-2xl hover:shadow-purple-950/40 transition-all duration-300 flex flex-col justify-between bg-slate-900/60"
                         >
                           <div 
                             onClick={() => {
                               setSelectedProduct(product);
                               setCustomizationNote('');
                             }}
-                            className="relative aspect-square overflow-hidden bg-slate-950/40 border-b border-white/5 cursor-pointer"
+                            className="relative aspect-square overflow-hidden bg-slate-950/80 border-b border-white/5 cursor-pointer"
                           >
                             <img
                               src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
                               alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 opacity-95 group-hover:opacity-100"
                             />
                             {(product.shopSlug === 'daripallah-store' || product.shopSlug === 'webmaa-store') && (
-                              <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
+                              <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-[8px] font-black text-slate-950 uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
                                 👑 Primary Store
+                              </span>
+                            )}
+                            {product.stock !== 0 && (
+                              <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 text-[8px] font-extrabold rounded-full flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> In Stock
                               </span>
                             )}
                           </div>
 
-                          <div className="p-4 flex-1 flex flex-col justify-between">
-                            <div className="space-y-1 mb-4">
+                          <div className="p-3.5 flex-1 flex flex-col justify-between">
+                            <div className="space-y-1 mb-3">
                               <div className="flex justify-between items-center gap-2">
                                 <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
                                 <a 
                                   href={storeLinkOfProduct} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="text-[9px] font-black text-white/40 hover:text-purple-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                                  className="text-[9px] font-black text-slate-400 hover:text-purple-300 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
                                 >
                                   🏪 {product.shopName} <ArrowUpRight size={8} />
                                 </a>
@@ -1875,27 +1994,27 @@ export default function Home() {
                                   setSelectedProduct(product);
                                   setCustomizationNote('');
                                 }}
-                                className="font-extrabold text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2rem] cursor-pointer hover:text-purple-400 transition-colors"
+                                className="font-extrabold text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-purple-300 transition-colors"
                               >
                                 {product.name}
                               </h3>
                             </div>
 
-                            <div className="space-y-3 pt-3 border-t border-white/5">
+                            <div className="space-y-2.5 pt-2.5 border-t border-white/10">
                               <div className="flex justify-between items-center">
-                                <span className="text-white/40 text-[9px] font-bold">দাম (Price)</span>
-                                <span className="text-white font-black text-xs">৳ {Number(product.price).toLocaleString()}</span>
+                                <span className="text-slate-400 text-[9px] font-bold">দাম (Price)</span>
+                                <span className="text-emerald-400 font-mono tabular-nums font-black text-sm">৳ {Number(product.price).toLocaleString()}</span>
                               </div>
 
                               {product.stock === 0 ? (
-                                <div className="w-full py-2.5 rounded-2xl font-black text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center gap-1.5 cursor-not-allowed">
-                                  🚫 স্টক শেষ (Stock Out)
+                                <div className="w-full py-2 rounded-xl font-black text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
+                                  🚫 স্টক শেষ (Out of Stock)
                                 </div>
                               ) : (
                                 cartItem ? (
-                                  <div className="flex items-center justify-between bg-purple-900/40 rounded-2xl p-1 border border-purple-500/30">
-                                    <button onClick={() => updateCartQty(product.id, -1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
-                                      <Minus size={12} strokeWidth={2.5} />
+                                  <div className="flex items-center justify-between bg-purple-950/80 rounded-xl p-1 border border-purple-500/40">
+                                    <button onClick={() => updateCartQty(product.id, -1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-500 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                      <Minus size={11} strokeWidth={2.5} />
                                     </button>
                                     <input
                                       type="number"
@@ -1903,18 +2022,18 @@ export default function Home() {
                                       step="any"
                                       value={cartItem.quantity}
                                       onChange={e => setCartQtyDirect(product.id, e.target.value)}
-                                      className="font-black text-white text-xs w-full text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="font-mono tabular-nums font-black text-white text-xs w-full text-center bg-transparent outline-none border-none"
                                     />
-                                    <button onClick={() => updateCartQty(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
-                                      <Plus size={12} strokeWidth={2.5} />
+                                    <button onClick={() => updateCartQty(product.id, 1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-500 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                      <Plus size={11} strokeWidth={2.5} />
                                     </button>
                                   </div>
                                 ) : (
                                   <button
                                     onClick={() => handleAddToCart(product)}
-                                    className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
+                                    className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95"
                                   >
-                                    <ShoppingCart size={11} /> Add to Cart
+                                    <ShoppingCart size={12} /> Add to Cart
                                   </button>
                                 )
                               )}
@@ -1925,9 +2044,9 @@ export default function Home() {
                                     setSelectedProduct(product);
                                     setCustomizationNote('');
                                   }}
-                                  className="w-full py-2 rounded-2xl font-black text-[9px] border border-purple-500/20 hover:border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                                  >
-                                  <Sparkles size={11} /> কাস্টমাইজ (Customize)
+                                  className="w-full py-1.5 rounded-xl font-extrabold text-[9px] border border-purple-500/30 hover:border-purple-400 text-purple-300 hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                >
+                                  <Sparkles size={10} /> Specs / Customize
                                 </button>
                               )}
                             </div>
@@ -2089,6 +2208,82 @@ export default function Home() {
             )}
           </>
         ))}
+        </div>
+      </section>
+
+      {/* ── Featured Models & Specs Breakdown Showcase ── */}
+      <section id="featured-models" className="relative z-20 py-16 bg-slate-950/80 border-y border-white/10 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div className="text-left space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-[10px] font-black uppercase tracking-[0.25em] text-purple-300">
+                <Sparkles size={12} className="text-purple-400" /> TOP-TIER SELECTION
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                ফিচার্ড মডেলস & <span className="gradient-shimmer-text">কাস্টম স্পেসিফিকেশন</span>
+              </h2>
+            </div>
+            <p className="text-xs text-slate-400 font-medium max-w-md">
+              প্রতিটি প্রডাক্ট মডেলের নিখুঁত ভ্যারিয়েন্ট, স্পেক্স, এবং রিয়েল-টাইম এআই প্রাইস ক্যালকুলেটর সাপোর্ট দেখুন।
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {products.slice(0, 3).map((featProduct, idx) => (
+              <div 
+                key={featProduct.id || idx} 
+                className="spotlight-card p-6 bg-slate-900/90 border border-white/10 rounded-[2rem] flex flex-col justify-between hover:border-purple-500/50 transition-all duration-300 shadow-2xl"
+              >
+                <div className="space-y-4">
+                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-950 border border-white/5">
+                    <img 
+                      src={featProduct.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} 
+                      alt={featProduct.name} 
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute top-3 right-3 px-2.5 py-1 bg-slate-950/80 backdrop-blur-md border border-purple-500/30 text-[9px] font-mono tabular-nums font-black text-emerald-400 rounded-full">
+                      MODEL #{idx + 1}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
+                    <h3 className="text-lg font-black text-white truncate">{featProduct.name}</h3>
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed font-medium">
+                      {featProduct.description || 'উচ্চমানের অরিজিনাল কাঁচামাল এবং সুনির্দিষ্ট কোয়ালিটি চেকে প্রস্তুতকৃত নির্ভরযোগ্য মডেল।'}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 text-[10px] font-bold text-slate-300 border-t border-white/10">
+                    <div className="bg-white/5 p-2 rounded-xl flex items-center gap-1.5">
+                      <ShieldCheck size={14} className="text-purple-400 shrink-0" />
+                      <span>গ্যারান্টেড কোয়ালিটি</span>
+                    </div>
+                    <div className="bg-white/5 p-2 rounded-xl flex items-center gap-1.5">
+                      <Truck size={14} className="text-emerald-400 shrink-0" />
+                      <span>দ্রুত ক্যাশ অন ডেলিভারি</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 flex items-center justify-between border-t border-white/10 mt-6">
+                  <div>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Model Price</span>
+                    <span className="text-xl font-mono tabular-nums font-black text-emerald-400">৳ {Number(featProduct.price || 0).toLocaleString()}</span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setSelectedProduct(featProduct);
+                      setCustomizationNote('');
+                    }}
+                    className="px-4 py-2 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 hover:border-purple-500 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    স্পেক্স দেখুন →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -2325,10 +2520,50 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Footer (Dynamic contacts with platform safety fallbacks) ── */}
-      <footer id="contact" className="relative z-20 border-t border-white/5 pt-20 pb-12 bg-[#030612]">
-        <div className="max-w-[96%] xl:max-w-[98%] mx-auto px-6">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
+      {/* ── Footer ── */}
+      <footer id="contact" className="relative z-20 border-t border-white/10 pt-16 pb-12 bg-slate-950 text-slate-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Trust Badges Banner */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 rounded-3xl bg-slate-900/80 border border-white/10 mb-12 backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-black shrink-0">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-white">ভেরিফাইড মার্চেন্টস</h4>
+                <p className="text-[10px] text-slate-400 font-medium">১০০% গ্যারান্টেড সেলার</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black shrink-0">
+                <Truck size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-white">ইনস্ট্যান্ট ডেলিভারি</h4>
+                <p className="text-[10px] text-slate-400 font-medium">সমগ্র বাংলাদেশে সার্ভিস</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-600/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black shrink-0">
+                <Package size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-white">সুরক্ষিত পেমেন্ট</h4>
+                <p className="text-[10px] text-slate-400 font-medium">ক্যাশ অন ডেলিভারি</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black shrink-0">
+                <Clock size={20} />
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-white">২৪/৭ সাপোর্ট</h4>
+                <p className="text-[10px] text-slate-400 font-medium">সরাসরি হোয়াটসঅ্যাপ সাহায্য</p>
+              </div>
+            </div>
+          </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
               
               {/* Brand Description Footer */}
               <div className="space-y-4">
