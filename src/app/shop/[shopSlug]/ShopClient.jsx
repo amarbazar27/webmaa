@@ -3097,6 +3097,255 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             );
           }
 
+          // ═══════════════════════════════════════════════════════
+          // LAYOUT-TYPE BASED RENDERING — matches TemplateMarketplace previews exactly
+          // ═══════════════════════════════════════════════════════
+
+          const layoutType = activeTConfig?.layoutType;
+
+          // ── MASONRY GRID — Pinterest-style staggered 3 columns ──
+          if (layoutType === 'masonry-grid' && filteredProducts.length >= 3) {
+            const col1 = [], col2 = [], col3 = [];
+            filteredProducts.forEach((p, i) => {
+              if (i % 3 === 0) col1.push(p);
+              else if (i % 3 === 1) col2.push(p);
+              else col3.push(p);
+            });
+            return (
+              <div id="product-section" className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4" style={{alignItems: 'start'}}>
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  {col1.map((p, i) => (
+                    <div key={p.id} style={{paddingTop: i % 2 === 0 ? '0' : '12px'}}>
+                      {renderSingleProductCard(p)}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-3 sm:gap-4" style={{paddingTop: '20px'}}>
+                  {col2.map(p => (
+                    <div key={p.id}>{renderSingleProductCard(p)}</div>
+                  ))}
+                </div>
+                <div className="hidden md:flex flex-col gap-3 sm:gap-4" style={{paddingTop: '8px'}}>
+                  {col3.map(p => (
+                    <div key={p.id}>{renderSingleProductCard(p)}</div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+
+          // ── BENTO GRID — Dashboard style: 1 large featured + smaller items ──
+          if (layoutType === 'bento-grid' && filteredProducts.length >= 3) {
+            return (
+              <div id="product-section" className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4" style={{gridAutoRows: 'auto'}}>
+                  {/* Large featured product spanning 2 rows */}
+                  <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden border shadow-lg cursor-pointer group" 
+                    style={{minHeight: '380px', background: themeVars['--sp-card'] || '#fff', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}
+                    onClick={() => setSelectedProductForModal(p0)}
+                  >
+                    {(p0?.images?.[0] || p0?.imageUrl) ? (
+                      <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-2xl font-black" style={{color: themeVars['--sp-text'] || '#0f172a'}}>{p0.name}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] font-black text-white" style={{background: themeVars['--sp-primary']}}>🏆 Featured</div>
+                    <div className="absolute bottom-4 left-4 right-4 text-white">
+                      <h3 className="text-xl md:text-2xl font-black mb-1 drop-shadow-md">{p0.name}</h3>
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-black">৳{Number(p0.price || 0).toLocaleString()}</span>
+                        <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="px-4 py-2 rounded-xl text-xs font-black text-white transition-all" style={{background: themeVars['--sp-primary']}}>কার্টে যোগ করুন</button>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Smaller items */}
+                  {filteredProducts.slice(1, 3).map(p => (
+                    <div key={p.id}>{renderSingleProductCard(p)}</div>
+                  ))}
+                </div>
+                {filteredProducts.length > 3 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                    {filteredProducts.slice(3).map(renderSingleProductCard)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // ── EDITORIAL SIDEBAR — Left sidebar categories + right product grid ──
+          if (layoutType === 'editorial-sidebar' && filteredProducts.length >= 2) {
+            return (
+              <div id="product-section" className="flex gap-4 md:gap-6">
+                {/* Sidebar */}
+                <div className="hidden md:flex flex-col gap-2 w-48 lg:w-56 shrink-0 sticky top-24 self-start">
+                  <h3 className="text-xs font-black uppercase tracking-wider mb-2" style={{color: themeVars['--sp-primary']}}>ক্যাটাগরি</h3>
+                  <button
+                    onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
+                    className="text-left px-3 py-2 rounded-xl text-sm font-bold transition-all"
+                    style={activeCategory === 'All' ? {background: themeVars['--sp-primary'], color: '#fff'} : {background: themeVars['--sp-card'] || '#f8fafc', color: themeVars['--sp-text'] || '#334155', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}}
+                  >সব পণ্য</button>
+                  {categories.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
+                      className="text-left px-3 py-2 rounded-xl text-sm font-bold transition-all"
+                      style={activeCategory === c.name ? {background: themeVars['--sp-primary'], color: '#fff'} : {background: themeVars['--sp-card'] || '#f8fafc', color: themeVars['--sp-text'] || '#334155', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}}
+                    >{c.name}</button>
+                  ))}
+                </div>
+                {/* Main grid */}
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {filteredProducts.map(renderSingleProductCard)}
+                </div>
+              </div>
+            );
+          }
+
+          // ── HORIZONTAL SCROLL — Horizontally scrollable product rows ──
+          if (layoutType === 'horizontal-scroll' && filteredProducts.length >= 2) {
+            // Group products by category
+            const groupedByCategory = {};
+            filteredProducts.forEach(p => {
+              const cat = p.category || 'সব পণ্য';
+              if (!groupedByCategory[cat]) groupedByCategory[cat] = [];
+              groupedByCategory[cat].push(p);
+            });
+            const categoryGroups = Object.entries(groupedByCategory);
+            
+            return (
+              <div id="product-section" className="space-y-8">
+                {categoryGroups.length > 1 ? categoryGroups.map(([catName, catProducts]) => (
+                  <div key={catName}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-black" style={{color: themeVars['--sp-text'] || '#0f172a'}}>{catName}</h3>
+                      <span className="text-xs font-bold cursor-pointer" style={{color: themeVars['--sp-primary']}}>সব দেখুন →</span>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x">
+                      {catProducts.map(p => (
+                        <div key={p.id} className="shrink-0 w-[160px] sm:w-[200px] snap-start">
+                          {renderSingleProductCard(p)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 snap-x flex-wrap" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '12px'}}>
+                    {filteredProducts.map(renderSingleProductCard)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // ── HERO BANNER — Full-width featured hero + grid below ──
+          if (layoutType === 'hero-banner' && filteredProducts.length >= 2) {
+            return (
+              <div id="product-section" className="space-y-6">
+                {/* Hero featured product */}
+                <div className="relative rounded-2xl overflow-hidden shadow-xl cursor-pointer group" style={{minHeight: '280px', maxHeight: '400px'}}
+                  onClick={() => setSelectedProductForModal(p0)}
+                >
+                  {(p0?.images?.[0] || p0?.imageUrl) ? (
+                    <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-[300px] flex items-center justify-center text-3xl font-black" style={{background: `linear-gradient(135deg, ${themeVars['--sp-primary']}30, ${themeVars['--sp-accent'] || themeVars['--sp-primary']}30)`, color: themeVars['--sp-text']}}>{p0.name}</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6 text-white">
+                    <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black mb-2" style={{background: themeVars['--sp-primary']}}>🎯 FEATURED</span>
+                    <h2 className="text-2xl md:text-4xl font-black mb-1 drop-shadow-lg">{p0.name}</h2>
+                    <p className="text-sm text-white/80 font-medium mb-3 max-w-lg line-clamp-2">{p0.description || ''}</p>
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl font-black">৳{Number(p0.price || 0).toLocaleString()}</span>
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="px-6 py-2.5 rounded-xl text-xs font-black text-white shadow-lg transition-all" style={{background: themeVars['--sp-primary']}}>এখনই কিনুন</button>
+                    </div>
+                  </div>
+                </div>
+                {/* Product grid below */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                  {filteredProducts.slice(1).map(renderSingleProductCard)}
+                </div>
+              </div>
+            );
+          }
+
+          // ── LIST VIEW — Horizontal rows: thumbnail + details + button ──
+          if (layoutType === 'list-view' && filteredProducts.length >= 1) {
+            return (
+              <div id="product-section" className="space-y-3">
+                {filteredProducts.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all hover:shadow-md cursor-pointer"
+                    style={{background: themeVars['--sp-card'] || '#fff', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}
+                    onClick={() => setSelectedProductForModal(p)}
+                  >
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0" style={{background: themeVars['--sp-bg'] || '#f8fafc'}}>
+                      {(p.images?.[0] || p.imageUrl) ? (
+                        <Image src={p.images?.[0] || p.imageUrl} alt={p.name} fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{color: themeVars['--sp-text']}}>{p.name?.slice(0,10)}</div>
+                      )}
+                      {p.isFeatured && <div className="absolute top-1 left-1 w-2 h-2 rounded-full" style={{background: themeVars['--sp-primary']}} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-sm sm:text-base truncate" style={{color: themeVars['--sp-text'] || '#0f172a'}}>{p.name}</h3>
+                      <p className="text-xs line-clamp-1 mt-0.5 font-medium" style={{color: (themeVars['--sp-text'] || '#64748b') + '99'}}>{p.description || p.category || ''}</p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-base font-black" style={{color: themeVars['--sp-primary']}}>৳{Number(p.price || 0).toLocaleString()}</span>
+                        {p.stock <= 0 && <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full">স্টক শেষ</span>}
+                      </div>
+                    </div>
+                    <button onClick={(e) => { e.stopPropagation(); addToCart(p); }} className="shrink-0 px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black text-white transition-all" style={{background: themeVars['--sp-primary']}}>
+                      কার্টে +
+                    </button>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+
+          // ── ASYMMETRIC GRID — 1 large + 2 small stacked + grid below ──
+          if (layoutType === 'asymmetric-grid' && filteredProducts.length >= 3) {
+            return (
+              <div id="product-section" className="space-y-4">
+                <div className="grid grid-cols-3 gap-3 sm:gap-4" style={{gridTemplateRows: 'auto auto'}}>
+                  {/* Large product spanning 2 columns */}
+                  <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden border shadow-lg cursor-pointer group"
+                    style={{minHeight: '320px', background: themeVars['--sp-card'] || '#fff', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}
+                    onClick={() => setSelectedProductForModal(p0)}
+                  >
+                    {(p0?.images?.[0] || p0?.imageUrl) ? (
+                      <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xl font-black" style={{color: themeVars['--sp-text']}}>{p0.name}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4 text-white">
+                      <h3 className="text-lg md:text-xl font-black mb-1">{p0.name}</h3>
+                      <span className="text-base font-black">৳{Number(p0.price || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  {/* 2 smaller stacked products */}
+                  {filteredProducts.slice(1, 3).map(p => (
+                    <div key={p.id}>{renderSingleProductCard(p)}</div>
+                  ))}
+                </div>
+                {filteredProducts.length > 3 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                    {filteredProducts.slice(3).map(renderSingleProductCard)}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // ── CATEGORY FIRST GRID — Category icons + standard grid ──
+          // (This is handled by the default grid + existing category strip above, so no special rendering needed)
+
+          // ═══════════════════════════════════════════════════════
+          // CATEGORY-SPECIFIC FALLBACK LAYOUTS (when no layoutType match)
+          // ═══════════════════════════════════════════════════════
+
           if (catStyle === 'beauty' && filteredProducts.length >= 3) {
             return (
               <div id="product-section" className="space-y-6">
