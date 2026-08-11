@@ -1223,134 +1223,88 @@ export default function Home() {
     <div className="neo-root font-sans overflow-x-hidden pb-20 lg:pb-10">
       <style jsx global>{`
         body {
-          background-color: #e8eaf0 !important;
-          color: #2e3040 !important;
+          background-color: #0b0f19 !important;
+          color: #f8fafc !important;
         }
         .neo-root {
-          --bg-color: #e8eaf0 !important;
-          --text-color: #2e3040 !important;
-          --surface: #e8eaf0 !important;
-          --surface-2: #dcdee4 !important;
-          --surface-3: #d6d8de !important;
-          --panel-bg: #e8eaf0 !important;
-          --border-color: rgba(0, 0, 0, 0.08) !important;
+          --bg-color: #0b0f19 !important;
+          --text-color: #f8fafc !important;
+          --surface: #111827 !important;
+          --surface-2: #1e293b !important;
+          --surface-3: #334155 !important;
+          --panel-bg: #111827 !important;
+          --border-color: rgba(255, 255, 255, 0.1) !important;
           
-          /* Custom variables used in components */
-          --neo-text: #2e3040 !important;
-          --neo-text-2: #4a4d66 !important;
-          --neo-text-3: #6b6f8a !important;
-          --neo-border: rgba(0, 0, 0, 0.08) !important;
-          --neo-bg-dark: #dcdee4 !important;
-          --neo-accent: #4f46e5 !important;
-          --neo-shadow-light: #ffffff !important;
-          --neo-shadow-dark: rgba(165,170,190,0.5) !important;
+          --neo-text: #f8fafc !important;
+          --neo-text-2: #cbd5e1 !important;
+          --neo-text-3: #94a3b8 !important;
+          --neo-border: rgba(255, 255, 255, 0.1) !important;
+          --neo-bg-dark: #0f172a !important;
+          --neo-accent: #a855f7 !important;
           
-          background-color: #e8eaf0 !important;
-          color: #2e3040 !important;
+          background-color: #0b0f19 !important;
+          color: #f8fafc !important;
           min-height: 100vh;
         }
         .neo-raised {
-          background: #e8eaf0 !important;
-          box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -6px -6px 12px rgba(255,255,255,0.6) !important;
-          border: 1px solid rgba(255,255,255,0.4) !important;
+          background: rgba(17, 24, 39, 0.8) !important;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
           border-radius: 1.5rem;
         }
         .neo-inset {
-          background: #e8eaf0 !important;
-          box-shadow: inset 4px 4px 8px rgba(0,0,0,0.06), inset -4px -4px 8px rgba(255,255,255,0.5) !important;
-          border: 1px solid rgba(255,255,255,0.2) !important;
+          background: rgba(15, 23, 42, 0.9) !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
           border-radius: 1.0rem;
         }
         .neo-button {
-          background: #e8eaf0 !important;
-          box-shadow: 4px 4px 8px rgba(0,0,0,0.08), -4px -4px 8px rgba(255,255,255,0.6) !important;
-          border: 1px solid rgba(255,255,255,0.3) !important;
+          background: rgba(30, 41, 59, 0.8) !important;
+          border: 1px solid rgba(255, 255, 255, 0.12) !important;
           border-radius: 0.75rem;
+          color: #f8fafc !important;
           transition: all 0.2s ease-in-out;
         }
+        .neo-button:hover {
+          background: rgba(51, 65, 85, 0.9) !important;
+          border-color: rgba(168, 85, 247, 0.4) !important;
+        }
         .neo-button:active, .neo-button-active {
-          box-shadow: inset 3px 3px 6px rgba(0,0,0,0.06), inset -3px -3px 6px rgba(255,255,255,0.5) !important;
           transform: scale(0.98);
         }
-        .neo-product-card {
-          background: #e8eaf0 !important;
-          box-shadow: 6px 6px 12px rgba(0,0,0,0.08), -6px -6px 12px rgba(255,255,255,0.6) !important;
-          border: 1px solid rgba(255,255,255,0.4) !important;
-          border-radius: 1.25rem;
-          overflow: hidden;
-          transition: all 0.3s ease;
-          display: flex;
-          flex-direction: column;
-        }
-        .neo-product-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 8px 8px 16px rgba(0,0,0,0.1), -8px -8px 16px rgba(255,255,255,0.7) !important;
-        }
-        
-        /* Dynamic neomorphic inputs override */
-        .neo-search {
-          background: transparent !important;
-          border: none !important;
-          outline: none !important;
-          box-shadow: none !important;
-          color: #2e3040 !important;
-        }
-        .neo-select {
-          background: transparent !important;
-          border: none !important;
-          outline: none !important;
-          box-shadow: none !important;
-          color: #2e3040 !important;
-          appearance: none;
-          cursor: pointer;
-          font-weight: 700;
-        }
-        .neo-select option {
-          background-color: #e8eaf0 !important;
-          color: #2e3040 !important;
-        }
 
-        /* ── Readability overrides for text overlays inside product image boxes ── */
-        .bg-gradient-to-t.from-black\\/80.via-black\\/40 p {
+        /* ── High Contrast Text Rules ── */
+        h1, h2, h3, h4, h5, h6 {
           color: #ffffff !important;
         }
-        .bg-gradient-to-t.from-black\\/80.via-black\\/40 .text-purple-400 {
-          color: #fcd34d !important; /* Vibrant high-contrast amber yellow for price tags */
-          font-weight: 900 !important;
+        p {
+          color: #cbd5e1;
         }
         
-        /* ── Premium High-contrast Neomorphic Footer overrides ── */
+        /* ── High-contrast Footer Overrides ── */
         footer#contact {
-          background-color: #dcdee4 !important;
-          color: #2e3040 !important;
-          border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
-          box-shadow: inset 0 6px 12px rgba(0,0,0,0.03) !important;
+          background-color: #030712 !important;
+          color: #f8fafc !important;
+          border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
         footer#contact h4 {
-          color: #1e1b4b !important;
+          color: #ffffff !important;
           font-weight: 900 !important;
         }
         footer#contact p {
-          color: #2e3040 !important;
-          font-weight: 700 !important;
+          color: #cbd5e1 !important;
+          font-weight: 500 !important;
         }
         footer#contact a, footer#contact span {
-          color: #4a4d66 !important;
-          font-weight: 700 !important;
+          color: #94a3b8 !important;
+          font-weight: 600 !important;
         }
         footer#contact a:hover {
-          color: #4f46e5 !important;
+          color: #c084fc !important;
         }
         footer#contact .bg-white\\/5 {
-          background-color: rgba(0, 0, 0, 0.05) !important;
-          border-color: rgba(0, 0, 0, 0.08) !important;
-          color: #4f46e5 !important;
-        }
-        footer#contact .text-purple-400 {
-          color: #4f46e5 !important;
-        }
-        footer#contact svg {
-          stroke: #4f46e5 !important;
+          background-color: rgba(255, 255, 255, 0.06) !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          color: #c084fc !important;
         }
       `}</style>
       
