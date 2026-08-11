@@ -452,6 +452,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
             shopName: freshShop.shopName ?? prev.shopName,
             logoUrl: freshShop.logoUrl ?? prev.logoUrl,
             slogan: freshShop.slogan ?? prev.slogan,
+            templateId: freshShop.templateId ?? prev.templateId,
+            themeOverrides: freshShop.themeOverrides ?? prev.themeOverrides,
+            designPreset: freshShop.designPreset ?? prev.designPreset,
+            designOverrides: freshShop.designOverrides ?? prev.designOverrides,
           }));
         }
         const freshProducts = await lib.getShopProducts(initialShop.id);
@@ -462,6 +466,36 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         console.error('Failed to sync real-time configurations:', err);
       }
     });
+  }, [initialShop.id]);
+
+  // ── Real-time template & theme listener — triggers instant UI update when retailer applies a template ──
+  useEffect(() => {
+    let unsubscribe = null;
+    import('@/lib/firestore').then(async (lib) => {
+      try {
+        // Use onSnapshot if available (Firestore real-time), otherwise poll every 5s
+        if (lib.onShopSnapshot) {
+          unsubscribe = lib.onShopSnapshot(initialShop.id, (freshShop) => {
+            if (freshShop) {
+              setShop(prev => {
+                const templateChanged = freshShop.templateId !== prev.templateId;
+                if (!templateChanged && freshShop.themeOverrides === prev.themeOverrides) return prev;
+                return {
+                  ...prev,
+                  templateId: freshShop.templateId ?? prev.templateId,
+                  themeOverrides: freshShop.themeOverrides ?? prev.themeOverrides,
+                  designPreset: freshShop.designPreset ?? prev.designPreset,
+                  designOverrides: freshShop.designOverrides ?? prev.designOverrides,
+                };
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('[Theme] Real-time template listener failed (non-critical):', err);
+      }
+    });
+    return () => { if (unsubscribe) unsubscribe(); };
   }, [initialShop.id]);
 
   useEffect(() => {
@@ -2131,27 +2165,55 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       className="min-h-screen font-sans pb-24 retailer-storefront bg-slate-50 text-slate-900"
       style={{ 
         ...themeVars, 
-        backgroundColor: (themeVars['--sp-bg'] && !themeVars['--sp-bg'].startsWith('#0') && !themeVars['--sp-bg'].startsWith('#1') && themeVars['--sp-bg'] !== '#000000' && themeVars['--sp-bg'] !== 'black') ? themeVars['--sp-bg'] : '#F8FAFC',
-        color: '#0F172A'
+        backgroundColor: themeVars['--sp-bg'] || '#F8FAFC',
+        color: themeVars['--sp-text'] || '#0F172A',
+        fontFamily: themeVars['--sp-font'] ? themeVars['--sp-font'] + ', sans-serif' : undefined,
       }}
     >
-      {/* ── Dynamic Theme Styles ── */}
+      {/* ── Dynamic Theme Styles — Applied via CSS custom properties ── */}
       <style dangerouslySetInnerHTML={{__html: `
         :root {
-          --sp-primary-light: color-mix(in srgb, var(--sp-primary) 20%, transparent);
+          --sp-primary-light: ${themeVars['--sp-primary']}22;
+          --sp-primary-mid: ${themeVars['--sp-primary']}55;
         }
-        .bg-purple-600 { background-color: var(--sp-primary) !important; }
-        .text-purple-600 { color: var(--sp-primary) !important; }
-        .bg-purple-50 { background-color: var(--sp-primary-light) !important; }
-        .text-purple-700 { color: var(--sp-primary) !important; }
-        .border-purple-200 { border-color: var(--sp-primary-light) !important; }
-        .from-purple-600 { --tw-gradient-from: var(--sp-primary) !important; }
-        .to-indigo-600 { --tw-gradient-to: var(--sp-accent) !important; }
-        .shadow-purple-500\\/20 { box-shadow: 0 4px 14px 0 var(--sp-primary-light) !important; }
-        .rounded-2xl { border-radius: var(--sp-radius) !important; }
-        .rounded-xl { border-radius: calc(var(--sp-radius) * 0.75) !important; }
-        body { font-family: var(--sp-font), sans-serif !important; }
-        [data-sf-style] .sf-hero,
+        /* ── Primary color overrides ── */
+        .retailer-storefront .bg-purple-600,
+        .retailer-storefront .bg-indigo-600 { background-color: var(--sp-primary) !important; }
+        .retailer-storefront .text-purple-600,
+        .retailer-storefront .text-indigo-600 { color: var(--sp-primary) !important; }
+        .retailer-storefront .bg-purple-50,
+        .retailer-storefront .bg-indigo-50 { background-color: var(--sp-primary-light) !important; }
+        .retailer-storefront .text-purple-700,
+        .retailer-storefront .text-indigo-700 { color: var(--sp-primary) !important; }
+        .retailer-storefront .border-purple-200,
+        .retailer-storefront .border-indigo-200 { border-color: var(--sp-primary-mid) !important; }
+        .retailer-storefront .border-purple-600,
+        .retailer-storefront .border-indigo-600 { border-color: var(--sp-primary) !important; }
+        .retailer-storefront .from-purple-600,
+        .retailer-storefront .from-indigo-600 { --tw-gradient-from: var(--sp-primary) !important; }
+        .retailer-storefront .to-indigo-600,
+        .retailer-storefront .to-purple-600 { --tw-gradient-to: var(--sp-accent) !important; }
+        .retailer-storefront .ring-purple-500,
+        .retailer-storefront .ring-indigo-500 { --tw-ring-color: var(--sp-primary) !important; }
+        .retailer-storefront .focus\\:ring-purple-500:focus,
+        .retailer-storefront .focus\\:ring-indigo-500:focus { --tw-ring-color: var(--sp-primary) !important; }
+        /* ── Header ── */
+        .retailer-storefront .shop-header { background: var(--sp-header-bg) !important; color: var(--sp-header-text) !important; }
+        /* ── Cards ── */
+        .retailer-storefront .product-card,
+        .retailer-storefront .sf-card { background-color: var(--sp-card) !important; border-color: var(--sp-border) !important; }
+        /* ── Search bar ── */
+        .retailer-storefront input[type="text"],
+        .retailer-storefront input[type="search"] { background-color: var(--sp-card) !important; border-color: var(--sp-border) !important; color: var(--sp-text) !important; }
+        /* ── Border radius ── */
+        .retailer-storefront .rounded-2xl { border-radius: var(--sp-radius) !important; }
+        .retailer-storefront .rounded-xl { border-radius: calc(var(--sp-radius) * 0.75) !important; }
+        .retailer-storefront .rounded-3xl { border-radius: calc(var(--sp-radius) * 1.25) !important; }
+        /* ── Font ── */
+        .retailer-storefront { font-family: var(--sp-font), 'Inter', sans-serif !important; }
+        /* ── Active category pill ── */
+        .retailer-storefront .category-pill-active { background-color: var(--sp-primary) !important; color: white !important; }
+        /* ── Hero responsive ── */
         .sf-hero {
           aspect-ratio: 16/9 !important;
           width: 100% !important;
@@ -2160,7 +2222,6 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           max-height: none !important;
         }
         @media (min-width: 1024px) {
-          [data-sf-style] .sf-hero,
           .sf-hero {
             aspect-ratio: 2.8/1 !important;
             height: auto !important;
@@ -2168,6 +2229,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           }
         }
       `}} />
+
 
       {/* ── Splash Loading Screen (350ms, with shop branding) ── */}
       {showSplash && <LoadingScreen visible={showSplash} shop={shop} products={products} minDuration={350} />}
@@ -2287,26 +2349,27 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Header ── */}
-      <header className="border-b sticky top-0 z-40 shadow-sm" style={{background:'var(--surface)',borderColor:'var(--border-color)'}}>
+      <header className="shop-header border-b sticky top-0 z-40 shadow-sm" style={{background: themeVars['--sp-header-bg'] || 'white', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}>
         <div className="max-w-[98%] mx-auto px-2 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Logo/Brand (Left Side) */}
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setIsCategoryMenuOpen(true)} 
-              className="flex items-center justify-center p-1.5 rounded-xl hover:bg-slate-100 transition-colors text-slate-700"
+              style={{color: themeVars['--sp-header-text'] || '#0f172a'}}
+              className="flex items-center justify-center p-1.5 rounded-xl hover:opacity-80 transition-opacity"
             >
               <Menu size={20} strokeWidth={2.5} />
             </button>
             {/* Static logo - no href to prevent 'No store found' navigation */}
             <div className="flex items-center gap-1.5 select-none cursor-default">
               {shop.logoUrl ? (
-                <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain border border-slate-100" alt={shop.shopName} />
+                <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain border border-white/20" alt={shop.shopName} />
               ) : (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-md">
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-md" style={{background: themeVars['--sp-primary'] || '#4f46e5', color: '#ffffff'}}>
                   {shop.shopName?.[0] || 'S'}
                 </div>
               )}
-              <span className="font-black text-slate-900 text-sm sm:text-[17px] leading-tight truncate max-w-[70px] sm:max-w-none">{shop.shopName || 'Shop'}</span>
+              <span className="font-black text-sm sm:text-[17px] leading-tight truncate max-w-[70px] sm:max-w-none" style={{color: themeVars['--sp-header-text'] || '#0f172a'}}>{shop.shopName || 'Shop'}</span>
             </div>
           </div>
 
@@ -2606,20 +2669,21 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         )}
 
         {/* ── Search & Sort ── */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-1.5 flex items-center gap-2">
+        <div className="rounded-xl shadow-sm border p-1.5 flex items-center gap-2" style={{background: themeVars['--sp-card'] || 'white', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}>
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3.5 top-3 text-slate-500" size={15} strokeWidth={2.5} />
             <input
               type="text"
               placeholder="পণ্য খুঁজুন..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-bold outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all text-sm placeholder:font-medium placeholder:text-slate-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl font-bold outline-none transition-all text-sm placeholder:font-medium placeholder:text-slate-400"
+              style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="relative shrink-0">
             <ArrowUpDown size={13} className="absolute left-3 top-3.5 text-slate-500" strokeWidth={2.5} />
-            <select className="pl-8 pr-5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 appearance-none cursor-pointer hover:bg-slate-200 transition-colors" value={sortOption} onChange={e => setSortOption(e.target.value)}>
+            <select className="pl-8 pr-5 py-2.5 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer transition-colors" style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}} value={sortOption} onChange={e => setSortOption(e.target.value)}>
               <option value="newest">সবচেয়ে নতুন</option>
               <option value="price_asc">কম মূল্য প্রথমে</option>
               <option value="price_desc">বেশি মূল্য প্রথমে</option>
@@ -2648,11 +2712,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide py-2">
                 <button
                   onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
-                  className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-xs font-black transition-all border ${
-                    activeCategory === 'All'
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20 scale-105'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
-                  }`}
+                  className="shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-xs font-black transition-all border"
+                  style={activeCategory === 'All'
+                    ? {background: themeVars['--sp-primary'], color: '#ffffff', borderColor: themeVars['--sp-primary'], transform: 'scale(1.05)'}
+                    : {background: themeVars['--sp-card'] || 'white', color: themeVars['--sp-text'] || '#334155', borderColor: themeVars['--sp-border'] || '#e2e8f0'}
+                  }
                 >🏪 All</button>
                 {categories.map(c => {
                   const isSelected = activeCategory === c.name;
@@ -2660,11 +2724,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <button
                       key={c.id}
                       onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); }}
-                      className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-xs font-black transition-all border ${
-                        isSelected
-                          ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20 scale-105'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700'
-                      }`}
+                      className="shrink-0 whitespace-nowrap px-4 py-2 rounded-2xl text-xs font-black transition-all border"
+                      style={isSelected
+                        ? {background: themeVars['--sp-primary'], color: '#ffffff', borderColor: themeVars['--sp-primary'], transform: 'scale(1.05)'}
+                        : {background: themeVars['--sp-card'] || 'white', color: themeVars['--sp-text'] || '#334155', borderColor: themeVars['--sp-border'] || '#e2e8f0'}
+                      }
                     >
                       {c.name}
                     </button>

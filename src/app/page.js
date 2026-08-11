@@ -2157,14 +2157,14 @@ export default function Home() {
       </section>
 
       {/* ── Featured Models & Specs Breakdown Showcase ── */}
-      <section id="featured-models" className="relative z-20 py-16 bg-slate-950/80 border-y border-white/10 overflow-hidden">
+      <section id="featured-models" className="relative z-20 py-16 bg-gradient-to-br from-indigo-50 via-white to-violet-50 border-y border-indigo-100 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div className="text-left space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-[10px] font-black uppercase tracking-[0.25em] text-purple-300">
-                <Sparkles size={12} className="text-purple-400" /> TOP-TIER SELECTION
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 border border-indigo-200 text-[10px] font-black uppercase tracking-[0.25em] text-indigo-700">
+                <Sparkles size={12} className="text-indigo-500" /> TOP-TIER SELECTION
               </div>
-              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
                 ফিচার্ড মডেলস & <span className="gradient-shimmer-text">কাস্টম স্পেসিফিকেশন</span>
               </h2>
             </div>
@@ -2177,29 +2177,29 @@ export default function Home() {
             {products.slice(0, 3).map((featProduct, idx) => (
               <div 
                 key={featProduct.id || idx} 
-                className="spotlight-card p-6 bg-slate-900/90 border border-white/10 rounded-[2rem] flex flex-col justify-between hover:border-purple-500/50 transition-all duration-300 shadow-2xl"
+                className="bg-white border border-slate-200 rounded-[2rem] p-6 flex flex-col justify-between hover:border-indigo-300 hover:shadow-xl transition-all duration-300 shadow-md"
               >
                 <div className="space-y-4">
-                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-950 border border-white/5">
+                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
                     <img 
                       src={featProduct.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} 
                       alt={featProduct.name} 
                       className="w-full h-full object-cover"
                     />
-                    <span className="absolute top-3 right-3 px-2.5 py-1 bg-slate-950/80 backdrop-blur-md border border-purple-500/30 text-[9px] font-mono tabular-nums font-black text-emerald-400 rounded-full">
+                    <span className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 backdrop-blur-md border border-indigo-200 text-[9px] font-mono tabular-nums font-black text-indigo-600 rounded-full">
                       MODEL #{idx + 1}
                     </span>
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
-                    <h3 className="text-lg font-black text-white truncate">{featProduct.name}</h3>
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed font-medium">
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
+                    <h3 className="text-lg font-black text-slate-900 truncate">{featProduct.name}</h3>
+                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium">
                       {featProduct.description || 'উচ্চমানের অরিজিনাল কাঁচামাল এবং সুনির্দিষ্ট কোয়ালিটি চেকে প্রস্তুতকৃত নির্ভরযোগ্য মডেল।'}
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-2 text-[10px] font-bold text-slate-300 border-t border-white/10">
+                  <div className="grid grid-cols-2 gap-2 pt-2 text-[10px] font-bold text-slate-600 border-t border-slate-100">
                     <div className="bg-white/5 p-2 rounded-xl flex items-center gap-1.5">
                       <ShieldCheck size={14} className="text-purple-400 shrink-0" />
                       <span>গ্যারান্টেড কোয়ালিটি</span>
@@ -2211,9 +2211,9 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="pt-6 flex items-center justify-between border-t border-white/10 mt-6">
+                <div className="pt-6 flex items-center justify-between border-t border-slate-100 mt-6">
                   <div>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Model Price</span>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">MODEL PRICE</span>
                     <span className="text-xl font-mono tabular-nums font-black text-emerald-400">৳ {Number(featProduct.price || 0).toLocaleString()}</span>
                   </div>
                   <button 
@@ -2221,7 +2221,7 @@ export default function Home() {
                       setSelectedProduct(featProduct);
                       setCustomizationNote('');
                     }}
-                    className="px-4 py-2 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 hover:border-purple-500 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 shadow-md"
                   >
                     স্পেক্স দেখুন →
                   </button>

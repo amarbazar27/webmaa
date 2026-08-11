@@ -36,6 +36,19 @@ export const updateShop = async (shopId, data) => {
   return updateDoc(shopDocRef, { ...data, updatedAt: serverTimestamp() });
 };
 
+// Real-time listener on shop doc — used by ShopClient to instantly apply template changes
+export const onShopSnapshot = (shopId, callback) => {
+  const shopDocRef = doc(db, 'shops', shopId);
+  return onSnapshot(shopDocRef, (snap) => {
+    if (snap.exists()) {
+      callback({ id: snap.id, ...snap.data() });
+    }
+  }, (err) => {
+    console.warn('[onShopSnapshot] error:', err);
+  });
+};
+
+
 // Super admin: স্টোর পজ করা (isActive = false)
 export const pauseShop = async (shopId) => {
   return updateDoc(doc(db, 'shops', shopId), { isActive: false, pausedAt: serverTimestamp() });
