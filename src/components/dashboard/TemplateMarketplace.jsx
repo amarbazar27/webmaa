@@ -397,6 +397,109 @@ function PreviewModal({ template, onClose, onApply, isApplying }) {
 
   const cat = template.category || 'grocery';
   const theme = template.defaultTheme;
+  const layout = template.layoutType || 'standard';
+
+  // Category specific realistic mockup data
+  const categoryMockups = {
+    sports: {
+      tag: 'OUTDOOR & SPORTS',
+      title: 'Conquer Every Summit & Defy Limits',
+      sub: 'উচ্চমানের হাইকিং গিয়ার, ক্যাম্পিং সামগ্রী ও অ্যাক্টিভওয়্যার কলেকশন।',
+      pills: ['হাইকিং বুট', 'ট্রেকিং ব্যাগ', 'ক্যাম্পিং তাবু', 'স্পোর্টস গিয়ার'],
+      heroProduct: { name: 'Waterproof Pro Hiking Boots', price: '৳ ৪,৫০০', badge: 'Outdoor Top Pick' },
+      items: [
+        { name: 'Ultra-Light 4P Camping Tent', price: '৳ ৮,৯০০' },
+        { name: 'Trekking Backpack 65L', price: '৳ ৩,২০০' }
+      ]
+    },
+    outdoor: {
+      tag: 'SUMMIT & TREKKING',
+      title: 'Built for Extreme Endurance',
+      sub: 'দুঃসাহসিক ট্র্যাকিং ও ক্লাইম্বিং এর সব প্রফেশনাল সরঞ্জাম।',
+      pills: ['হাইকিং বুট', 'ট্রেকিং ব্যাগ', 'ক্যাম্পিং তাবু', 'স্পোর্টস গিয়ার'],
+      heroProduct: { name: 'Summit Waterproof Boots', price: '৳ ৫,২০০', badge: 'Pro Edition' },
+      items: [
+        { name: 'All-Weather Expedition Tent', price: '৳ ১২,৫০০' },
+        { name: 'Aluminum Trekking Poles', price: '৳ ১,৮০০' }
+      ]
+    },
+    beauty: {
+      tag: 'SKINCARE & BEAUTY',
+      title: 'Glow from Within Naturally',
+      sub: 'প্রাকৃতিক ও কেমিক্যাল-মুক্ত অর্গানিক স্কিনকেয়ার ও মেকআপ সংগ্রহ।',
+      pills: ['স্কিনকেয়ার', 'অর্গানিক মেকআপ', 'অ্যারোমা অয়েল', 'হেয়ারকেয়ার'],
+      heroProduct: { name: 'Botanical Facial Glow Oil 30ml', price: '৳ ১,৮৫০', badge: 'Radiant Choice' },
+      items: [
+        { name: 'Organic Rose Water Toner', price: '৳ ৮৫০' },
+        { name: 'Vitamin C Brightening Serum', price: '৳ ১,৪৫০' }
+      ]
+    },
+    electronics: {
+      tag: 'NEXT-GEN TECH',
+      title: 'Future Devices at Your Fingertips',
+      sub: 'সর্বাধুনিক ফ্ল্যাগশিপ গেজেট, স্মার্টওয়াচ ও প্রফেশনাল সাউন্ড সিস্টেম।',
+      pills: ['স্মার্টফোন', 'ওয়্যারলেস অডিও', 'স্মার্টওয়াচ', 'গেমিং'],
+      heroProduct: { name: 'Ultra Pro Smartphone 256GB', price: '৳ ৫৪,৯০০', badge: 'Flagship Launch' },
+      items: [
+        { name: 'Active Noise Cancelling Earbuds', price: '৳ ৪,২০০' },
+        { name: 'AMOLED Smartwatch Series 8', price: '৳ ৩,৮০০' }
+      ]
+    },
+    tech: {
+      tag: 'NEXT-GEN TECH',
+      title: 'Future Devices at Your Fingertips',
+      sub: 'সর্বাধুনিক ফ্ল্যাগশিপ গেজেট, স্মার্টওয়াচ ও প্রফেশনাল সাউন্ড সিস্টেম।',
+      pills: ['স্মার্টফোন', 'ওয়্যারলেস অডিও', 'স্মার্টওয়াচ', 'গেমিং'],
+      heroProduct: { name: 'Ultra Pro Smartphone 256GB', price: '৳ ৫৪,৯০০', badge: 'Flagship Launch' },
+      items: [
+        { name: 'Active Noise Cancelling Earbuds', price: '৳ ৪,২০০' },
+        { name: 'AMOLED Smartwatch Series 8', price: '৳ ৩,৮০০' }
+      ]
+    },
+    luxury: {
+      tag: 'HAUTE COUTURE & LUXURY',
+      title: 'The Art of Minimalist Elegance',
+      sub: 'অভিজাত লাক্সারি ঘড়ি, প্রিমিয়াম ডায়মন্ড জুয়েলারি ও চামড়ার ব্যাগ।',
+      pills: ['লাক্সারি ঘড়ি', 'হ্যান্ডব্যাগ', 'ডায়মন্ড জুয়েলারি', 'সিল্ক ড্রেস'],
+      heroProduct: { name: 'Automatic Gold Chronograph Watch', price: '৳ ২১,৫০০', badge: 'Luxury Signature' },
+      items: [
+        { name: 'Handcrafted Italian Leather Tote', price: '৳ ১২,০০০' },
+        { name: 'Solitaire Diamond Ring', price: '৳ ৪৫,০০০' }
+      ]
+    },
+    home: {
+      tag: 'MODERN LIVING',
+      title: 'Revitalize Your Living Space',
+      sub: 'নান্দনিক সিরামিক সাজসজ্জা, কাঠ ও মিনিমালিস্ট ফার্নিচার কালেকশন।',
+      pills: ['ফার্নিচার', 'সিরামিক সজ্জা', 'লাইটিং', 'বেডিং'],
+      heroProduct: { name: 'Handcrafted Ceramic Vase Set', price: '৳ ২,৮০০', badge: 'Artisanal Decor' },
+      items: [
+        { name: 'Minimalist Lounge Chair', price: '৳ ১৪,৫০০' },
+        { name: 'Earthy Woven Throw Blanket', price: '৳ ১,৬৫০' }
+      ]
+    },
+    grocery: {
+      tag: 'FARM FRESH MARKET',
+      title: 'Fresh Produce Direct to You',
+      sub: 'ফার্ম ফ্রেশ ফলমূল, অর্গানিক শাকসবজি ও খাঁটি পারিবারিক মুদি বাজার।',
+      pills: ['কাঁচাবাজার', 'তাজা ফলমূল', 'শাকসবজি', 'মুদি দোকান'],
+      heroProduct: { name: 'Organic Fresh Harvest Basket', price: '৳ ১,২৫০', badge: 'Farm Fresh' },
+      items: [
+        { name: 'Sundarban Pure Mustard Honey', price: '৳ ৮৫০' },
+        { name: 'Farm Dairy Milk 5 Litre', price: '৳ ৪৫০' }
+      ]
+    }
+  }[cat] || {
+    tag: 'PREMIUM STOREFRONT',
+    title: template.taglinebn || template.tagline || 'Discover Unique Quality Products',
+    sub: 'সেরা মানের পণ্যসামগ্রী এবং গ্যারান্টেড দ্রুত ডেলিভারি সেবাসমূহ।',
+    pills: ['নিউ অ্যারাইভাল', 'বেস্টসেলার', 'ডিসকাউন্ট ডিল', 'প্রিমিয়াম'],
+    heroProduct: { name: 'Signature Premium Collection Item', price: '৳ ১,৯৫০', badge: 'Top Rated' },
+    items: [
+      { name: 'Essential Highlight Item #1', price: '৳ ৭৫০' },
+      { name: 'Essential Highlight Item #2', price: '৳ ৯৫০' }
+    ]
+  };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
@@ -436,69 +539,67 @@ function PreviewModal({ template, onClose, onApply, isApplying }) {
             style={{ background: theme.bgColor, color: theme.textColor, fontFamily: theme.fontFamily }}
           >
             {/* Header */}
-            <div style={{ background: theme.headerBg, color: theme.headerText }} className="px-5 py-3 flex items-center justify-between border-b border-slate-200">
-              <div className="font-black text-base flex items-center gap-2">🛍️ <span>আপনার স্টোর</span></div>
+            <div style={{ background: theme.headerBg, color: theme.headerText }} className="px-5 py-3 flex items-center justify-between border-b border-slate-200/50 shadow-xs">
+              <div className="font-black text-base flex items-center gap-2">🛍️ <span>{template.namebn}</span></div>
               <div className="flex items-center gap-3 text-xs font-bold opacity-90">
                 <span>পণ্য</span><span>অর্ডার</span><span>কার্ট 🛒</span>
               </div>
             </div>
 
-            {/* Dynamic Hero Banner for Category */}
-            <div className="p-6 text-center relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.bgColor} 0%, ${theme.accentColor}25 100%)` }}>
-              <span className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mb-2" style={{ background: theme.primaryColor + '20', color: theme.primaryColor }}>
-                {cat === 'beauty' ? 'Essential Skincare' : cat === 'electronics' ? 'Flagship Devices' : cat === 'luxury' ? 'Signature Collection' : 'Farm Harvest'}
+            {/* Dynamic Hero Banner matching category */}
+            <div className="p-6 text-center relative overflow-hidden border-b border-slate-200/40" style={{ background: `linear-gradient(135deg, ${theme.bgColor} 0%, ${theme.accentColor}25 100%)` }}>
+              <span className="inline-block px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider mb-2" style={{ background: theme.primaryColor + '20', color: theme.primaryColor }}>
+                {categoryMockups.tag}
               </span>
               <h1 className="text-xl md:text-3xl font-black mb-2" style={{ color: theme.textColor }}>
-                {cat === 'beauty' ? 'Glow from Within' : cat === 'electronics' ? 'Next-Gen Gadgets.' : cat === 'luxury' ? 'The Art of Minimalist Elegance' : 'Fresh produce direct to you'}
+                {categoryMockups.title}
               </h1>
-              <p className="text-xs font-medium opacity-80 mb-4 max-w-md mx-auto">{template.taglinebn || template.tagline}</p>
+              <p className="text-xs font-medium opacity-80 mb-4 max-w-md mx-auto">{categoryMockups.sub}</p>
               <button style={{ background: theme.primaryColor, color: '#ffffff', borderRadius: theme.buttonRadius }} className="px-6 py-2 text-xs font-black uppercase tracking-wider shadow-md">
                 Shop Collection
               </button>
             </div>
 
             {/* Category Pills Preview */}
-            <div className="px-5 py-3 border-y border-slate-200/60 bg-white/50 flex gap-2 overflow-x-auto">
-              {(cat === 'beauty' ? ['Skincare', 'Makeup', 'Fragrance', 'Organic'] :
-                cat === 'electronics' ? ['Phones', 'Laptops', 'Audio', 'Gaming'] :
-                cat === 'luxury' ? ['Couture', 'Jewelry', 'Watches', 'Leather'] :
-                ['কাঁচাবাজার', 'ফলমূল', 'শাকসবজি', 'মুদি দোকান']
-              ).map((name, i) => (
-                <span key={i} className="px-3 py-1 rounded-full text-[11px] font-bold border border-slate-200 bg-white whitespace-nowrap shadow-xs" style={{ color: theme.textColor }}>
+            <div className="px-5 py-3 border-b border-slate-200/60 bg-white/40 flex gap-2 overflow-x-auto">
+              {categoryMockups.pills.map((name, i) => (
+                <span key={i} className="px-3.5 py-1 rounded-full text-[11px] font-bold border border-slate-200 bg-white whitespace-nowrap shadow-xs" style={{ color: theme.textColor }}>
                   {name}
                 </span>
               ))}
             </div>
 
-            {/* Asymmetric Product Showcase Preview Grid */}
+            {/* Category Specific Layout Grid */}
             <div className="p-4 md:p-6 space-y-4">
               <h2 className="text-sm font-black uppercase tracking-wider" style={{ color: theme.primaryColor }}>
-                {cat === 'beauty' ? 'Essential Skincare' : cat === 'electronics' ? 'Flagship Devices' : cat === 'luxury' ? 'Signature Collection' : 'Featured Products'}
+                {template.namebn} — Featured Catalog
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {/* 1st Large Hero Card */}
+                {/* Hero Card */}
                 <div className="md:col-span-2 rounded-2xl p-4 flex flex-col justify-between min-h-[160px] border shadow-xs" style={{ background: theme.cardBg, borderColor: theme.cardBorder, borderRadius: theme.cardRadius }}>
                   <div className="w-full h-24 rounded-xl mb-3 flex items-center justify-center font-bold text-xs" style={{ background: theme.primaryColor + '15', color: theme.primaryColor }}>
-                    🖼️ [Large Hero Product Image]
+                    📸 [{categoryMockups.heroProduct.name}]
                   </div>
                   <div>
-                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded" style={{ background: theme.primaryColor, color: '#fff' }}>Bestseller #1</span>
-                    <h3 className="font-black text-sm mt-1">{cat === 'beauty' ? 'Hydrating Serum 50ml' : cat === 'electronics' ? 'Pro Smartphone 256GB' : 'Luxury Chronograph Watch'}</h3>
-                    <p className="font-black text-sm mt-1" style={{ color: theme.primaryColor }}>৳১,৯৫০</p>
+                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded" style={{ background: theme.primaryColor, color: '#fff' }}>
+                      {categoryMockups.heroProduct.badge}
+                    </span>
+                    <h3 className="font-black text-sm mt-1">{categoryMockups.heroProduct.name}</h3>
+                    <p className="font-black text-sm mt-1" style={{ color: theme.primaryColor }}>{categoryMockups.heroProduct.price}</p>
                   </div>
                 </div>
 
-                {/* Stacked Right Side Cards */}
+                {/* Stacked Side Cards */}
                 <div className="space-y-3 flex flex-col justify-between">
-                  {[1, 2].map(i => (
+                  {categoryMockups.items.map((item, i) => (
                     <div key={i} className="rounded-2xl p-3 flex items-center gap-3 border shadow-xs" style={{ background: theme.cardBg, borderColor: theme.cardBorder, borderRadius: theme.cardRadius }}>
                       <div className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center font-bold text-[10px]" style={{ background: theme.accentColor + '25', color: theme.primaryColor }}>
-                        Product #{i+1}
+                        Item #{i+2}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-black text-xs truncate">Highlight Item #{i+1}</h4>
-                        <p className="font-bold text-xs" style={{ color: theme.primaryColor }}>৳৭৫০</p>
+                        <h4 className="font-black text-xs truncate">{item.name}</h4>
+                        <p className="font-bold text-xs" style={{ color: theme.primaryColor }}>{item.price}</p>
                       </div>
                     </div>
                   ))}
@@ -519,7 +620,7 @@ function PreviewModal({ template, onClose, onApply, isApplying }) {
             </div>
             <div>
               <p className="text-xs font-black text-slate-900">{template.namebn}</p>
-              <p className="text-[10px] font-bold text-emerald-600">১০০% লাইট থিম & হাই কন্ট্রাস্ট</p>
+              <p className="text-[10px] font-bold text-emerald-600">১০০% কাস্টমাইজড লেআউট & কালার থিম</p>
             </div>
           </div>
           <button

@@ -1223,88 +1223,83 @@ export default function Home() {
     <div className="neo-root font-sans overflow-x-hidden pb-20 lg:pb-10">
       <style jsx global>{`
         body {
-          background-color: #0b0f19 !important;
-          color: #f8fafc !important;
+          background-color: #F8FAFC !important;
+          color: #0F172A !important;
         }
         .neo-root {
-          --bg-color: #0b0f19 !important;
-          --text-color: #f8fafc !important;
-          --surface: #111827 !important;
-          --surface-2: #1e293b !important;
-          --surface-3: #334155 !important;
-          --panel-bg: #111827 !important;
-          --border-color: rgba(255, 255, 255, 0.1) !important;
+          --bg-color: #F8FAFC !important;
+          --text-color: #0F172A !important;
+          --surface: #FFFFFF !important;
+          --surface-2: #F1F5F9 !important;
+          --surface-3: #E2E8F0 !important;
+          --panel-bg: #FFFFFF !important;
+          --border-color: #E2E8F0 !important;
           
-          --neo-text: #f8fafc !important;
-          --neo-text-2: #cbd5e1 !important;
-          --neo-text-3: #94a3b8 !important;
-          --neo-border: rgba(255, 255, 255, 0.1) !important;
-          --neo-bg-dark: #0f172a !important;
-          --neo-accent: #a855f7 !important;
+          --neo-text: #0F172A !important;
+          --neo-text-2: #334155 !important;
+          --neo-text-3: #64748B !important;
+          --neo-border: #E2E8F0 !important;
+          --neo-bg-dark: #F8FAFC !important;
+          --neo-accent: #6C47FF !important;
           
-          background-color: #0b0f19 !important;
-          color: #f8fafc !important;
+          background-color: #F8FAFC !important;
+          color: #0F172A !important;
           min-height: 100vh;
         }
         .neo-raised {
-          background: rgba(17, 24, 39, 0.8) !important;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
-          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          background: #FFFFFF !important;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+          border: 1px solid #E2E8F0 !important;
           border-radius: 1.5rem;
         }
         .neo-inset {
-          background: rgba(15, 23, 42, 0.9) !important;
-          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          background: #F1F5F9 !important;
+          border: 1px solid #E2E8F0 !important;
           border-radius: 1.0rem;
         }
         .neo-button {
-          background: rgba(30, 41, 59, 0.8) !important;
-          border: 1px solid rgba(255, 255, 255, 0.12) !important;
+          background: #FFFFFF !important;
+          border: 1px solid #CBD5E1 !important;
           border-radius: 0.75rem;
-          color: #f8fafc !important;
+          color: #0F172A !important;
           transition: all 0.2s ease-in-out;
         }
         .neo-button:hover {
-          background: rgba(51, 65, 85, 0.9) !important;
-          border-color: rgba(168, 85, 247, 0.4) !important;
+          background: #F8FAFC !important;
+          border-color: #6C47FF !important;
         }
         .neo-button:active, .neo-button-active {
           transform: scale(0.98);
         }
 
-        /* ── High Contrast Text Rules ── */
+        /* ── Ultra High Contrast Text Rules ── */
         h1, h2, h3, h4, h5, h6 {
-          color: #ffffff !important;
+          color: #0F172A !important;
         }
         p {
-          color: #cbd5e1;
+          color: #334155;
         }
         
         /* ── High-contrast Footer Overrides ── */
         footer#contact {
-          background-color: #030712 !important;
-          color: #f8fafc !important;
+          background-color: #0F172A !important;
+          color: #F8FAFC !important;
           border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
         footer#contact h4 {
-          color: #ffffff !important;
+          color: #FFFFFF !important;
           font-weight: 900 !important;
         }
         footer#contact p {
-          color: #cbd5e1 !important;
+          color: #94A3B8 !important;
           font-weight: 500 !important;
         }
         footer#contact a, footer#contact span {
-          color: #94a3b8 !important;
+          color: #CBD5E1 !important;
           font-weight: 600 !important;
         }
         footer#contact a:hover {
-          color: #c084fc !important;
-        }
-        footer#contact .bg-white\\/5 {
-          background-color: rgba(255, 255, 255, 0.06) !important;
-          border-color: rgba(255, 255, 255, 0.12) !important;
-          color: #c084fc !important;
+          color: #C084FC !important;
         }
       `}</style>
       
@@ -1320,31 +1315,27 @@ export default function Home() {
         .animation-delay-2000 { animation-delay: 2.5s; }
         .animation-delay-4000 { animation-delay: 5s; }
         .glass-panel {
-          background: rgba(255, 255, 255, 0.02);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .hero-gradient {
-          background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 60%);
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
       `}} />
 
-      {/* ── Dynamic Cursor Glow ── */}
+      {/* ── Dynamic Light Gradient Glow ── */}
       <div 
         className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
         style={{
-          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(139, 92, 246, 0.04), transparent 40%)`
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(108, 71, 255, 0.03), transparent 40%)`
         }}
       />
 
-      {/* ── Background Blobs ── */}
-      <div className="fixed inset-0 -z-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.08] mix-blend-overlay" />
-      <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px] animate-blob" />
-      <div className="fixed top-[-15%] right-[-5%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] animate-blob animation-delay-2000" />
-      <div className="fixed bottom-[-15%] left-[10%] w-[600px] h-[600px] bg-pink-600/800 opacity-[0.05] rounded-full blur-[140px] animate-blob animation-delay-4000" />
+      {/* ── Background Soft Blobs ── */}
+      <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-200/40 rounded-full blur-[140px] animate-blob" />
+      <div className="fixed top-[-15%] right-[-5%] w-[600px] h-[600px] bg-indigo-200/40 rounded-full blur-[140px] animate-blob animation-delay-2000" />
+      <div className="fixed bottom-[-15%] left-[10%] w-[600px] h-[600px] bg-pink-200/30 rounded-full blur-[140px] animate-blob animation-delay-4000" />
 
       {/* ── Sleek Floating Glass Navigation Header ── */}
-      <header className="sticky top-0 z-50 px-4 py-3 bg-slate-950/85 backdrop-blur-xl border-b border-white/10 shadow-2xl transition-all duration-300">
+      <header className="sticky top-0 z-50 px-4 py-3 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
           {/* Left Area: Mobile Login/Workspace, Stores Drawer, and Brand Logo */}
           <div className="flex items-center gap-3">
@@ -1352,11 +1343,11 @@ export default function Home() {
               {user ? (
                 <div>
                   {getDashboardHref() ? (
-                    <Link href={getDashboardHref()} className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all flex items-center gap-1.5 shadow-lg shadow-purple-900/30">
+                    <Link href={getDashboardHref()} className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all flex items-center gap-1.5 shadow-md">
                       <Briefcase size={12} /> Workspace
                     </Link>
                   ) : (
-                    <button onClick={() => setIsProfileOpen(true)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-purple-300 font-extrabold text-[11px] rounded-xl active:scale-95 transition-all">
+                    <button onClick={() => setIsProfileOpen(true)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-purple-700 font-extrabold text-[11px] rounded-xl active:scale-95 transition-all">
                       Profile
                     </button>
                   )}
@@ -1365,7 +1356,7 @@ export default function Home() {
                 <button 
                   onClick={handleSmartLogin} 
                   disabled={loggingIn} 
-                  className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md shadow-purple-900/30"
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md"
                 >
                   {loggingIn ? "..." : "Login"}
                 </button>
@@ -1375,9 +1366,9 @@ export default function Home() {
             {/* Stores Drawer Trigger */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="px-3.5 py-2 bg-white/5 hover:bg-purple-600/30 border border-white/10 hover:border-purple-500/40 text-xs font-black text-purple-300 hover:text-white flex items-center gap-2 rounded-xl active:scale-95 transition-all cursor-pointer shadow-sm shrink-0"
+              className="px-3.5 py-2 bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-xs font-black text-slate-800 hover:text-purple-700 flex items-center gap-2 rounded-xl active:scale-95 transition-all cursor-pointer shadow-xs shrink-0"
             >
-              <Menu size={15} className="text-purple-400 shrink-0" />
+              <Menu size={15} className="text-purple-600 shrink-0" />
               <span className="hidden xs:inline font-mono tracking-wider">STORES</span>
             </button>
             
@@ -1387,23 +1378,23 @@ export default function Home() {
               className="flex items-center gap-3 group cursor-pointer select-none"
             >
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
-                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-10 object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.4)]" alt="Logo" />
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-10 object-contain" alt="Logo" />
               ) : (
-                <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs rounded-xl shadow-lg shadow-purple-900/40">BD</div>
+                <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs rounded-xl shadow-md">BD</div>
               )}
-              <span className="text-lg sm:text-xl font-black text-white tracking-tight whitespace-nowrap hidden sm:block">
+              <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight whitespace-nowrap hidden sm:block">
                 {globalConfig?.brandName || 'BDRetailers'}
               </span>
             </div>
           </div>
 
           {/* Center Links (Desktop only) */}
-          <nav className="hidden md:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-white/70">
-            <a href="#marketplace" className="text-purple-400 border-b-2 border-purple-500 pb-1 flex items-center gap-1.5"><ShoppingBag size={13} /> Marketplace</a>
-            <a href="#featured-models" className="hover:text-purple-300 transition-colors flex items-center gap-1.5"><Sparkles size={13} /> Featured Models</a>
-            <button onClick={() => { if(user) setIsProfileOpen(true); else handleSmartLogin(); }} className="hover:text-purple-300 transition-colors flex items-center gap-1.5"><Package size={13} /> My Orders</button>
+          <nav className="hidden md:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-slate-700">
+            <a href="#marketplace" className="text-purple-600 border-b-2 border-purple-600 pb-1 flex items-center gap-1.5"><ShoppingBag size={13} /> Marketplace</a>
+            <a href="#featured-models" className="hover:text-purple-600 transition-colors flex items-center gap-1.5"><Sparkles size={13} /> Featured Models</a>
+            <button onClick={() => { if(user) setIsProfileOpen(true); else handleSmartLogin(); }} className="hover:text-purple-600 transition-colors flex items-center gap-1.5"><Package size={13} /> My Orders</button>
             {getDashboardHref() && (
-              <Link href={getDashboardHref()} className="hover:text-purple-300 transition-colors flex items-center gap-1.5"><Briefcase size={13} /> Merchant Hub</Link>
+              <Link href={getDashboardHref()} className="hover:text-purple-600 transition-colors flex items-center gap-1.5"><Briefcase size={13} /> Merchant Hub</Link>
             )}
           </nav>
 
@@ -1413,7 +1404,7 @@ export default function Home() {
             {!pwaInstalled && (
               <button 
                 onClick={handleAppDownload}
-                className="px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-[10px] font-black uppercase tracking-wider text-purple-300 hover:text-purple-200 rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
+                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-[10px] font-black uppercase tracking-wider text-purple-700 rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
               >
                 <Download size={12} /> App
               </button>
@@ -1482,24 +1473,24 @@ export default function Home() {
       </header>
 
       {/* ── Luxury Hero Section & Interactive Models Showcase ── */}
-      <section className="relative z-20 pt-8 pb-12 overflow-hidden border-b border-white/5 bg-slate-950/60">
+      <section className="relative z-20 pt-8 pb-12 overflow-hidden border-b border-slate-200/80 bg-gradient-to-b from-purple-50/80 via-white to-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Headline & Content */}
             <div className="lg:col-span-7 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/25 shadow-lg">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-purple-300">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-300 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-purple-800">
                   VERIFIED BD RETAILERS & WHOLESALE HUB
                 </span>
               </div>
               
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
                 বাংলাদেশের সবচেয়ে গতিশীল{' '}
-                <span className="gradient-shimmer-text">ই-কমার্স ইকোসিস্টেম</span>
+                <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-pink-600 bg-clip-text text-transparent">ই-কমার্স ইকোসিস্টেম</span>
               </h1>
               
-              <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-base text-slate-700 font-medium leading-relaxed max-w-2xl">
                 সরাসরি ভেরিফাইড মার্চেন্ট নেটওয়ার্ক থেকে সেরা মানের পণ্য, কাস্টম প্রডাক্ট অর্ডারিং, 
                 গ্যারান্টেড দ্রুত ডেলিভারি ও রিয়েল-টাইম এআই অ্যাসিস্ট্যান্ট সহযোগে কেনাকাটা করুন।
               </p>
@@ -1507,68 +1498,68 @@ export default function Home() {
               <div className="flex flex-wrap gap-4 pt-2">
                 <a 
                   href="#marketplace" 
-                  className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-xl shadow-purple-900/40 hover:-translate-y-0.5 flex items-center gap-2"
+                  className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-purple-500/20 hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   <ShoppingBag size={16} /> পণ্যসমূহ এক্সপ্লোর করুন
                 </a>
                 <Link 
                   href="/become-retailer" 
-                  className="px-6 py-3.5 bg-white/5 hover:bg-white/10 border border-white/15 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all hover:-translate-y-0.5 flex items-center gap-2"
+                  className="px-6 py-3.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-black text-xs uppercase tracking-wider rounded-2xl transition-all hover:-translate-y-0.5 flex items-center gap-2 shadow-xs"
                 >
-                  <Store size={16} className="text-purple-400" /> মার্চেন্ট অ্যাকাউন্ট খুলুন
+                  <Store size={16} className="text-purple-600" /> মার্চেন্ট অ্যাকাউন্ট খুলুন
                 </Link>
               </div>
 
               {/* Stats pill row */}
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/10">
+              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-200">
                 <div>
-                  <p className="text-xl sm:text-2xl font-black text-white font-mono tabular-nums">{allShops.length}+</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Stores</p>
+                  <p className="text-xl sm:text-2xl font-black text-slate-900 font-mono tabular-nums">{allShops.length}+</p>
+                  <p className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider">Active Stores</p>
                 </div>
                 <div>
-                  <p className="text-xl sm:text-2xl font-black text-purple-400 font-mono tabular-nums">{products.length}+</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Products Live</p>
+                  <p className="text-xl sm:text-2xl font-black text-purple-700 font-mono tabular-nums">{products.length}+</p>
+                  <p className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider">Products Live</p>
                 </div>
                 <div>
-                  <p className="text-xl sm:text-2xl font-black text-emerald-400 font-mono tabular-nums">99.8%</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Satisfaction Rate</p>
+                  <p className="text-xl sm:text-2xl font-black text-emerald-600 font-mono tabular-nums">99.8%</p>
+                  <p className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider">Satisfaction Rate</p>
                 </div>
               </div>
             </div>
 
             {/* Right Interactive Featured Model Showcase Card */}
             <div className="lg:col-span-5 relative">
-              <div className="spotlight-card p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+              <div className="p-6 bg-white border border-purple-200 rounded-[2.5rem] shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4">
-                  <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[9px] uppercase tracking-widest rounded-full shadow-lg flex items-center gap-1">
+                  <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-black text-[9px] uppercase tracking-widest rounded-full shadow-sm flex items-center gap-1">
                     <Sparkles size={10} /> HOT MODEL
                   </span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 font-black">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-100 border border-purple-300 flex items-center justify-center text-purple-700 font-black">
                     <Tag size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-white">প্রিমিয়াম স্পেক্স & কাস্টম মডেলস</h3>
-                    <p className="text-[10px] text-slate-400 font-bold">লাইভ ভ্যারিয়েন্ট ও এআই ক্যালকুলেটর সমর্থিত</p>
+                    <h3 className="text-sm font-black text-slate-900">প্রিমিয়াম স্পেক্স & কাস্টম মডেলস</h3>
+                    <p className="text-[10px] text-slate-600 font-bold">লাইভ ভ্যারিয়েন্ট ও এআই ক্যালকুলেটর সমর্থিত</p>
                   </div>
                 </div>
 
                 {products.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-950/80 border border-white/10">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
                       <img 
                         src={products[0]?.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80'} 
                         alt={products[0]?.name}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent p-4">
-                        <span className="text-[10px] font-black text-purple-400 uppercase tracking-wider">{products[0]?.category || 'Featured'}</span>
+                        <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider">{products[0]?.category || 'Featured'}</span>
                         <h4 className="text-base font-black text-white truncate">{products[0]?.name}</h4>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-lg font-black text-emerald-400 font-mono tabular-nums">৳ {Number(products[0]?.price || 0).toLocaleString()}</span>
-                          <span className="text-[10px] font-bold text-slate-300 bg-white/10 px-2.5 py-0.5 rounded-full">🏪 {products[0]?.shopName}</span>
+                          <span className="text-[10px] font-bold text-white bg-white/20 px-2.5 py-0.5 rounded-full">🏪 {products[0]?.shopName}</span>
                         </div>
                       </div>
                     </div>
@@ -1578,13 +1569,13 @@ export default function Home() {
                         setSelectedProduct(products[0]);
                         setCustomizationNote('');
                       }}
-                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Sparkles size={14} /> মডেল ডিটেইলস & কাস্টমাইজ করুন
                     </button>
                   </div>
                 ) : (
-                  <div className="py-12 text-center text-slate-500 text-xs font-bold">
+                  <div className="py-12 text-center text-slate-400 text-xs font-bold">
                     প্রোডাক্ট লোড হচ্ছে...
                   </div>
                 )}
@@ -1598,13 +1589,13 @@ export default function Home() {
       <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 scroll-mt-24">
         
         {/* ── Main Site Description Box (Editable via Superadmin) ── */}
-        <div className="mb-6 py-4 px-6 rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md relative shadow-xl">
-          <p className="text-xs sm:text-sm font-bold text-white/80 leading-relaxed">
-            ✨ <strong className="text-purple-400 font-black">{globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম:</strong>{' '}
+        <div className="mb-6 py-4 px-6 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50/80 via-white to-indigo-50/80 relative shadow-sm">
+          <p className="text-xs sm:text-sm font-bold text-slate-800 leading-relaxed">
+            ✨ <strong className="text-purple-700 font-black">{globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম:</strong>{' '}
             {renderClickableText(globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক।')}
             <Link 
               href="/become-retailer"
-              className="inline-flex items-center gap-1 ml-2 text-purple-400 hover:text-purple-300 hover:underline font-black whitespace-nowrap"
+              className="inline-flex items-center gap-1 ml-2 text-purple-700 hover:text-purple-900 hover:underline font-black whitespace-nowrap"
             >
               🤝 মার্চেন্ট বা রিটেইলার হোন →
             </Link>
