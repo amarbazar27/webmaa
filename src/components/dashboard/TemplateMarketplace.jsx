@@ -50,60 +50,187 @@ const TemplateCard = memo(function TemplateCard({
               <div className="w-6 h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
               <div className="flex-1" />
               {[1, 2, 3].map(i => (
-                <div key={i} className="w-6 h-2 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
+                <div key={i} className="w-5 h-1.5 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
               ))}
             </div>
 
-            {/* Layout Specific Wireframe Simulation */}
+            {/* Layout Specific Wireframe Simulation — 10 unique layout types */}
             {template.layoutType === 'single-product' ? (
               /* Single Product Spotlight Wireframe */
               <div className="flex-1 rounded-xl p-2.5 flex gap-3 border shadow-xs" style={{ background: template.defaultTheme.cardBg, borderColor: template.defaultTheme.cardBorder }}>
-                {/* Photo */}
                 <div className="w-1/2 h-full rounded-lg flex items-center justify-center font-bold text-[10px]" style={{ background: template.defaultTheme.primaryColor + '20', color: template.defaultTheme.primaryColor }}>
-                  🖼️ Photo Focus
+                  🖼️
                 </div>
-                {/* Details */}
                 <div className="w-1/2 flex flex-col justify-between py-1">
                   <div className="space-y-1.5">
-                    <div className="w-3/4 h-2.5 rounded font-black text-[9px] flex items-center px-1" style={{ background: template.defaultTheme.primaryColor + '30', color: template.defaultTheme.primaryColor }}>Featured #1</div>
-                    <div className="w-full h-3 rounded" style={{ background: template.defaultTheme.textColor + '80' }} />
-                    <div className="w-1/2 h-2.5 rounded font-black text-[9px]" style={{ color: template.defaultTheme.primaryColor }}>৳১,৯৫০</div>
+                    <div className="w-3/4 h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor + '40' }} />
+                    <div className="w-full h-2 rounded" style={{ background: template.defaultTheme.textColor + '60' }} />
+                    <div className="w-1/2 h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
                     <div className="flex gap-1 pt-1">
-                      {['39','40','41'].map(s => (
-                        <div key={s} className="w-5 h-4 rounded text-[8px] font-black flex items-center justify-center border" style={{ borderColor: template.defaultTheme.primaryColor, color: template.defaultTheme.primaryColor }}>{s}</div>
+                      {[1,2,3].map(s => (
+                        <div key={s} className="w-5 h-4 rounded border" style={{ borderColor: template.defaultTheme.primaryColor }} />
                       ))}
                     </div>
                   </div>
-                  <div className="w-full h-5 rounded-lg font-black text-[9px] flex items-center justify-center text-white" style={{ background: template.defaultTheme.primaryColor }}>
-                    এখনই কিনুন ⚡
+                  <div className="w-full h-5 rounded-lg text-white font-black text-[8px] flex items-center justify-center" style={{ background: template.defaultTheme.primaryColor }}>
+                    কিনুন ⚡
                   </div>
                 </div>
               </div>
             ) : template.layoutType === 'split-screen' ? (
-              /* 50/50 Split Screen Wireframe */
+              /* 50/50 Split Screen */
               <div className="flex-1 grid grid-cols-2 gap-2">
-                <div className="rounded-xl flex items-center justify-center font-bold text-[10px]" style={{ background: template.defaultTheme.primaryColor + '25', color: template.defaultTheme.primaryColor }}>
-                  📸 Full Banner
-                </div>
+                <div className="rounded-xl flex items-center justify-center text-xl" style={{ background: template.defaultTheme.primaryColor + '25' }}>📸</div>
                 <div className="rounded-xl p-2 flex flex-col justify-between border" style={{ background: template.defaultTheme.cardBg, borderColor: template.defaultTheme.cardBorder }}>
                   <div className="space-y-1.5">
                     <div className="w-3/4 h-2.5 rounded" style={{ background: template.defaultTheme.textColor + '70' }} />
-                    <div className="w-1/2 h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
+                    <div className="w-1/2 h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor + '60' }} />
+                    <div className="w-full h-2 rounded" style={{ background: template.defaultTheme.textColor + '30' }} />
                   </div>
                   <div className="w-full h-5 rounded-lg text-white font-black text-[8px] flex items-center justify-center" style={{ background: template.defaultTheme.primaryColor }}>
-                    Add to Cart 🛒
+                    🛒 Cart
                   </div>
                 </div>
               </div>
+            ) : template.layoutType === 'hero-banner' ? (
+              /* Full-width Hero + Product Grid */
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className="rounded-xl h-12 flex items-center justify-center font-black text-[9px] text-white" style={{ background: `linear-gradient(135deg, ${template.defaultTheme.primaryColor}, ${template.defaultTheme.accentColor})` }}>
+                  🎯 HERO BANNER
+                </div>
+                <div className="flex-1 grid grid-cols-4 gap-1">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="rounded-lg p-1 flex flex-col gap-0.5" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}>
+                      <div className="w-full h-5 rounded" style={{ background: template.defaultTheme.primaryColor + '20' }} />
+                      <div className="w-3/4 h-1.5 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : template.layoutType === 'masonry-grid' ? (
+              /* Pinterest Masonry Grid */
+              <div className="flex-1 grid grid-cols-3 gap-1.5">
+                <div className="flex flex-col gap-1.5">
+                  <div className="rounded-lg" style={{ height: '52px', background: template.defaultTheme.primaryColor + '30' }} />
+                  <div className="rounded-lg" style={{ height: '28px', background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="rounded-lg" style={{ height: '28px', background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }} />
+                  <div className="rounded-lg" style={{ height: '52px', background: template.defaultTheme.accentColor + '40' }} />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="rounded-lg" style={{ height: '40px', background: template.defaultTheme.primaryColor + '25' }} />
+                  <div className="rounded-lg" style={{ height: '40px', background: template.defaultTheme.primaryColor + '15' }} />
+                </div>
+              </div>
+            ) : template.layoutType === 'editorial-sidebar' ? (
+              /* Sidebar + Main Content */
+              <div className="flex-1 flex gap-2">
+                <div className="w-1/4 flex flex-col gap-1.5">
+                  <div className="h-2.5 rounded" style={{ background: template.defaultTheme.primaryColor + '60' }} />
+                  {[1,2,3,4,5].map(i => (
+                    <div key={i} className="h-2 rounded" style={{ background: template.defaultTheme.textColor + '20' }} />
+                  ))}
+                </div>
+                <div className="flex-1 grid grid-cols-2 gap-1.5">
+                  <div className="col-span-2 rounded-xl h-8" style={{ background: template.defaultTheme.primaryColor + '15' }} />
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="rounded-lg p-1.5 flex flex-col gap-1" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}>
+                      <div className="w-full h-5 rounded" style={{ background: template.defaultTheme.primaryColor + '20' }} />
+                      <div className="w-3/4 h-1.5 rounded" style={{ background: template.defaultTheme.textColor + '30' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : template.layoutType === 'bento-grid' ? (
+              /* Bento Dashboard Grid */
+              <div className="flex-1 grid grid-cols-3 grid-rows-2 gap-1.5">
+                <div className="col-span-2 row-span-2 rounded-xl flex items-center justify-center text-2xl" style={{ background: `linear-gradient(135deg, ${template.defaultTheme.primaryColor}30, ${template.defaultTheme.accentColor}30)`, border: `1.5px solid ${template.defaultTheme.primaryColor}40` }}>
+                  🏆
+                </div>
+                <div className="rounded-xl" style={{ background: template.defaultTheme.accentColor + '30' }} />
+                <div className="rounded-xl" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }} />
+              </div>
+            ) : template.layoutType === 'horizontal-scroll' ? (
+              /* Horizontal Category Scroll + Grid */
+              <div className="flex-1 flex flex-col gap-2">
+                <div className="flex gap-1.5 overflow-hidden">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="shrink-0 px-2 h-5 rounded-full text-[8px] font-black flex items-center justify-center" style={{ background: i === 1 ? template.defaultTheme.primaryColor : template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}`, color: i === 1 ? '#fff' : template.defaultTheme.textColor }}>
+                      Cat {i}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-1 flex gap-1.5 overflow-hidden">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="shrink-0 w-20 rounded-xl p-1.5 flex flex-col gap-1" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}>
+                      <div className="w-full h-9 rounded-lg" style={{ background: template.defaultTheme.primaryColor + '20' }} />
+                      <div className="w-3/4 h-1.5 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
+                      <div className="w-1/2 h-1.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : template.layoutType === 'category-first-grid' ? (
+              /* Category Icons Row + Product Grid */
+              <div className="flex-1 flex flex-col gap-2">
+                <div className="flex justify-around">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="flex flex-col items-center gap-0.5">
+                      <div className="w-6 h-6 rounded-full" style={{ background: template.defaultTheme.primaryColor + '30', border: `1.5px solid ${template.defaultTheme.primaryColor}60` }} />
+                      <div className="w-4 h-1 rounded" style={{ background: template.defaultTheme.textColor + '30' }} />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex-1 grid grid-cols-3 gap-1.5">
+                  {[1,2,3,4,5,6].map(i => (
+                    <div key={i} className="rounded-lg p-1 flex flex-col gap-0.5" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}>
+                      <div className="w-full h-5 rounded" style={{ background: template.defaultTheme.primaryColor + '20' }} />
+                      <div className="w-3/4 h-1 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : template.layoutType === 'list-view' ? (
+              /* Horizontal List View Rows */
+              <div className="flex-1 flex flex-col gap-1.5">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex gap-2 rounded-xl p-1.5 items-center" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}>
+                    <div className="w-10 h-9 rounded-lg shrink-0" style={{ background: template.defaultTheme.primaryColor + '20' }} />
+                    <div className="flex-1 space-y-1">
+                      <div className="w-4/5 h-2 rounded" style={{ background: template.defaultTheme.textColor + '60' }} />
+                      <div className="w-2/5 h-1.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
+                    </div>
+                    <div className="w-8 h-5 rounded-lg text-white text-[7px] flex items-center justify-center shrink-0" style={{ background: template.defaultTheme.primaryColor }}>
+                      কিনুন
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : template.layoutType === 'asymmetric-grid' ? (
+              /* Asymmetric — 1 Large + 2 Small + Grid */
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className="flex gap-1.5 h-14">
+                  <div className="w-2/3 rounded-xl" style={{ background: `linear-gradient(135deg, ${template.defaultTheme.primaryColor}30, ${template.defaultTheme.accentColor}30)` }} />
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <div className="flex-1 rounded-lg" style={{ background: template.defaultTheme.accentColor + '30' }} />
+                    <div className="flex-1 rounded-lg" style={{ background: template.defaultTheme.primaryColor + '15' }} />
+                  </div>
+                </div>
+                <div className="flex-1 grid grid-cols-4 gap-1">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="rounded-lg p-1 flex flex-col gap-0.5" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}>
+                      <div className="w-full h-4 rounded" style={{ background: template.defaultTheme.primaryColor + '20' }} />
+                      <div className="w-3/4 h-1 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : (
-              /* Standard Grid Wireframe */
+              /* Standard 3-Col Grid (default) */
               <div className="flex-1 grid grid-cols-3 gap-1.5">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div
-                    key={i}
-                    className="rounded-lg p-1.5 flex flex-col gap-1"
-                    style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}
-                  >
+                  <div key={i} className="rounded-lg p-1.5 flex flex-col gap-1" style={{ background: template.defaultTheme.cardBg, border: `1px solid ${template.defaultTheme.cardBorder}` }}>
                     <div className="w-full h-6 rounded" style={{ background: template.defaultTheme.primaryColor + '20' }} />
                     <div className="w-3/4 h-1.5 rounded" style={{ background: template.defaultTheme.textColor + '40' }} />
                     <div className="w-1/2 h-1.5 rounded" style={{ background: template.defaultTheme.primaryColor }} />
@@ -157,6 +284,22 @@ const TemplateCard = memo(function TemplateCard({
             )}
           </div>
           <p className="text-[11px] text-slate-500 font-medium mt-0.5">{template.tagline}</p>
+          {template.layoutType && (
+            <span className="inline-flex items-center gap-1 mt-1.5 text-[9px] px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-full font-black uppercase tracking-wider">
+              ⊞ {{
+                'category-first-grid': 'Category Grid',
+                'horizontal-scroll': 'Scroll Shop',
+                'masonry-grid': 'Masonry',
+                'editorial-sidebar': 'Sidebar',
+                'bento-grid': 'Bento',
+                'single-product': 'Spotlight',
+                'split-screen': 'Split Screen',
+                'hero-banner': 'Hero Banner',
+                'asymmetric-grid': 'Asymmetric',
+                'list-view': 'List View',
+              }[template.layoutType] || template.layoutType}
+            </span>
+          )}
         </div>
 
         {/* Color dots */}
