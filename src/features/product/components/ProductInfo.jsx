@@ -40,37 +40,37 @@ export default function ProductInfo({ product, currentPrice }) {
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-850 dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm space-y-4">
       <div>
-        <h2 className="text-2xl font-black text-slate-900">{product.name}</h2>
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white">{product.name}</h2>
         {product.description && (
-          <p className="text-sm text-slate-600 font-medium mt-2 leading-relaxed">{product.description}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300 font-medium mt-2 leading-relaxed">{product.description}</p>
         )}
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-xl border border-purple-100">
-          <Tag size={16} className="text-purple-600" />
-          <span className="font-black text-purple-700 text-lg">৳{currentPrice}</span>
-          {product.unit && <span className="text-xs text-purple-500 font-bold">/{product.unit}</span>}
+        <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-950/40 px-4 py-2 rounded-xl border border-purple-100 dark:border-purple-800/50">
+          <Tag size={16} className="text-purple-600 dark:text-purple-400" />
+          <span className="font-black text-purple-700 dark:text-purple-300 text-lg">৳{currentPrice}</span>
+          {product.unit && <span className="text-xs text-purple-500 dark:text-purple-400 font-bold">/{product.unit}</span>}
         </div>
         
         <StockIndicator stock={product.stock} />
       </div>
 
       {/* Premium Share Section */}
-      <div className="border-t border-slate-100 pt-4 flex items-center justify-between gap-4">
-        <span className="text-xs text-slate-400 font-bold">পণ্যটি শেয়ার করুন:</span>
+      <div className="border-t border-slate-100 dark:border-slate-700/60 pt-4 flex items-center justify-between gap-4">
+        <span className="text-xs text-slate-400 dark:text-slate-400 font-bold">পণ্যটি শেয়ার করুন:</span>
         <div className="flex gap-2">
           <button
             onClick={handleShareProduct}
-            className="flex items-center gap-1.5 px-4 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-xl text-xs font-black text-purple-700 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/60 border border-purple-100 dark:border-purple-800/60 rounded-xl text-xs font-black text-purple-700 dark:text-purple-300 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-sm"
           >
             <Share2 size={14} /> সোশ্যাল মিডিয়া (Share)
           </button>
           <button
             onClick={handleCopyLink}
-            className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-slate-600 hover:text-slate-900 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="p-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-200 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             title="লিংক কপি করুন"
           >
             <Copy size={14} />

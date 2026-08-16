@@ -23,23 +23,16 @@ const ThemeContext = createContext({
 export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
   const STORAGE_KEY = shopId ? `wm_theme_${shopId}` : 'wm_theme_global';
 
-  // Resolve initial theme: user pref → shop setting → system setting → light
+  // Resolve initial theme: user pref → shop setting → system setting → OS / light
   const getInitialTheme = () => {
     if (typeof window === 'undefined') return 'light';
 
-    // Force light theme on storefronts / general public pages to prevent broken dark mode styling
-    const isDashboardOrAdmin = window.location.pathname.startsWith('/dashboard') || 
-                               window.location.pathname.startsWith('/superadmin');
-    if (!isDashboardOrAdmin) {
-      return 'light';
-    }
-
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('theme') || localStorage.getItem('wm_theme_global');
     if (saved === 'dark' || saved === 'light') return saved;
     if (shopTheme === 'dark' || shopTheme === 'light') return shopTheme;
     const systemSaved = localStorage.getItem('wm_system_theme');
     if (systemSaved === 'dark' || systemSaved === 'light') return systemSaved;
-    // Respect OS preference as final fallback
+    // Respect OS preference as fallback
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   };
 
@@ -48,15 +41,20 @@ export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setThemeState(getInitialTheme());
+    const init = getInitialTheme();
+    setThemeState(init);
     const sys = localStorage.getItem('wm_system_theme') || 'light';
     setSystemDefaultState(sys);
     setMounted(true);
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.classList.add(init);
+    }
   }, [shopId, shopTheme]);
 
   // Apply class to <html>
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || typeof document === 'undefined') return;
     const root = document.documentElement;
     root.classList.remove('dark', 'light');
     root.classList.add(theme);
@@ -66,6 +64,13 @@ export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
     setThemeState(newTheme);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, newTheme);
+      localStorage.setItem('theme', newTheme);
+      localStorage.setItem('wm_theme_global', newTheme);
+    }
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      root.classList.remove('dark', 'light');
+      root.classList.add(newTheme);
     }
   }, [STORAGE_KEY]);
 

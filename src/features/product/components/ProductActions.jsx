@@ -11,16 +11,16 @@ export default function ProductActions({
   return (
     <div className="space-y-4">
       {product.allowNote && (
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm space-y-4">
            <div className="flex items-center gap-3">
-             <MessageSquare size={18} className="text-slate-600" />
-             <h3 className="font-black text-slate-900">বিশেষ নির্দেশনা</h3>
+             <MessageSquare size={18} className="text-slate-600 dark:text-slate-400" />
+             <h3 className="font-black text-slate-900 dark:text-white">বিশেষ নির্দেশনা</h3>
            </div>
            <textarea
              rows={2}
              maxLength={40}
              placeholder='যেকোনো বিশেষ অনুরোধ লিখুন...'
-             className="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all resize-none"
+             className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-purple-600 focus:bg-white dark:focus:bg-slate-900 transition-all resize-none placeholder:text-slate-400"
              value={customerNote}
              onChange={e => setCustomerNote(e.target.value)}
            />

@@ -8,7 +8,7 @@ import {
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
   Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag, User,
-  ShieldCheck, Truck, Clock
+  ShieldCheck, Truck, Clock, Maximize2, Minimize2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -16,6 +16,7 @@ import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug, getAll
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
+import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
@@ -1223,50 +1224,92 @@ export default function Home() {
     <div className="neo-root font-sans overflow-x-hidden pb-20 lg:pb-10">
       <style jsx global>{`
         body {
-          background-color: #F8FAFC !important;
-          color: #0F172A !important;
+          background-color: var(--bg-color, #F8FAFC);
+          color: var(--text-color, #0F172A);
+          transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .dark body {
+          background-color: #0B0F19 !important;
+          color: #F8FAFC !important;
         }
         .neo-root {
-          --bg-color: #F8FAFC !important;
-          --text-color: #0F172A !important;
-          --surface: #FFFFFF !important;
-          --surface-2: #F1F5F9 !important;
-          --surface-3: #E2E8F0 !important;
-          --panel-bg: #FFFFFF !important;
-          --border-color: #E2E8F0 !important;
+          --bg-color: #F8FAFC;
+          --text-color: #0F172A;
+          --surface: #FFFFFF;
+          --surface-2: #F1F5F9;
+          --surface-3: #E2E8F0;
+          --panel-bg: #FFFFFF;
+          --border-color: #E2E8F0;
           
-          --neo-text: #0F172A !important;
-          --neo-text-2: #334155 !important;
-          --neo-text-3: #64748B !important;
-          --neo-border: #E2E8F0 !important;
-          --neo-bg-dark: #F8FAFC !important;
-          --neo-accent: #6C47FF !important;
+          --neo-text: #0F172A;
+          --neo-text-2: #334155;
+          --neo-text-3: #64748B;
+          --neo-border: #E2E8F0;
+          --neo-bg-dark: #F8FAFC;
+          --neo-accent: #6C47FF;
           
-          background-color: #F8FAFC !important;
-          color: #0F172A !important;
+          background-color: #F8FAFC;
+          color: #0F172A;
           min-height: 100vh;
         }
+        .dark .neo-root {
+          --bg-color: #0B0F19 !important;
+          --text-color: #F8FAFC !important;
+          --surface: #131B2E !important;
+          --surface-2: #1E293B !important;
+          --surface-3: #334155 !important;
+          --panel-bg: #131B2E !important;
+          --border-color: rgba(255, 255, 255, 0.08) !important;
+          
+          --neo-text: #F8FAFC !important;
+          --neo-text-2: #CBD5E1 !important;
+          --neo-text-3: #94A3B8 !important;
+          --neo-border: rgba(255, 255, 255, 0.1) !important;
+          --neo-bg-dark: #0B0F19 !important;
+          --neo-accent: #8B5CF6 !important;
+          
+          background-color: #0B0F19 !important;
+          color: #F8FAFC !important;
+        }
         .neo-raised {
-          background: #FFFFFF !important;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
-          border: 1px solid #E2E8F0 !important;
+          background: #FFFFFF;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          border: 1px solid #E2E8F0;
           border-radius: 1.5rem;
         }
+        .dark .neo-raised {
+          background: #131B2E !important;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
         .neo-inset {
-          background: #F1F5F9 !important;
-          border: 1px solid #E2E8F0 !important;
+          background: #F1F5F9;
+          border: 1px solid #E2E8F0;
           border-radius: 1.0rem;
         }
+        .dark .neo-inset {
+          background: #0F172A !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
         .neo-button {
-          background: #FFFFFF !important;
-          border: 1px solid #CBD5E1 !important;
+          background: #FFFFFF;
+          border: 1px solid #CBD5E1;
           border-radius: 0.75rem;
-          color: #0F172A !important;
+          color: #0F172A;
           transition: all 0.2s ease-in-out;
         }
+        .dark .neo-button {
+          background: #1E293B !important;
+          border: 1px solid rgba(255, 255, 255, 0.12) !important;
+          color: #F8FAFC !important;
+        }
         .neo-button:hover {
-          background: #F8FAFC !important;
-          border-color: #6C47FF !important;
+          background: #F8FAFC;
+          border-color: #6C47FF;
+        }
+        .dark .neo-button:hover {
+          background: #283548 !important;
+          border-color: #8B5CF6 !important;
         }
         .neo-button:active, .neo-button-active {
           transform: scale(0.98);
@@ -1274,32 +1317,63 @@ export default function Home() {
 
         /* ── Ultra High Contrast Text Rules ── */
         h1, h2, h3, h4, h5, h6 {
-          color: #0F172A !important;
+          color: #0F172A;
+        }
+        .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+          color: #F8FAFC !important;
         }
         p {
           color: #334155;
         }
+        .dark p {
+          color: #CBD5E1 !important;
+        }
         
-        /* ── Light Modern Footer Overrides ── */
+        /* ── Modern Footer Overrides ── */
         footer#contact {
-          background: linear-gradient(135deg, #F0F4FF 0%, #FAF5FF 50%, #F0F9FF 100%) !important;
-          color: #0F172A !important;
-          border-top: 2px solid #E2E8F0 !important;
+          background: linear-gradient(135deg, #F0F4FF 0%, #FAF5FF 50%, #F0F9FF 100%);
+          color: #0F172A;
+          border-top: 2px solid #E2E8F0;
+        }
+        .dark footer#contact {
+          background: linear-gradient(135deg, #0B0F19 0%, #131B2E 50%, #0F172A 100%) !important;
+          color: #F8FAFC !important;
+          border-top: 2px solid rgba(255, 255, 255, 0.08) !important;
         }
         footer#contact h4 {
-          color: #1E293B !important;
-          font-weight: 900 !important;
+          color: #1E293B;
+          font-weight: 900;
+        }
+        .dark footer#contact h4 {
+          color: #F8FAFC !important;
         }
         footer#contact p {
-          color: #475569 !important;
-          font-weight: 500 !important;
+          color: #475569;
+          font-weight: 500;
+        }
+        .dark footer#contact p {
+          color: #94A3B8 !important;
         }
         footer#contact a, footer#contact span {
-          color: #475569 !important;
-          font-weight: 600 !important;
+          color: #475569;
+          font-weight: 600;
+        }
+        .dark footer#contact a, .dark footer#contact span {
+          color: #CBD5E1 !important;
         }
         footer#contact a:hover {
-          color: #7C3AED !important;
+          color: #7C3AED;
+        }
+        .dark footer#contact a:hover {
+          color: #C084FC !important;
+        }
+        .dark .glass-panel {
+          background: #131B2E !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+        .dark header.sticky {
+          background: rgba(11, 15, 25, 0.9) !important;
+          border-color: rgba(255, 255, 255, 0.08) !important;
         }
       `}</style>
       
@@ -1399,7 +1473,10 @@ export default function Home() {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Swipable Light/Dark Theme Switch */}
+            <ThemeToggleButton size="sm" />
+
             {/* PWA App Download */}
             {!pwaInstalled && (
               <button 
@@ -2973,6 +3050,7 @@ export default function Home() {
 function LandingProductDetailModal({ product, onClose, cart, setCart }) {
   const [shop, setShop] = useState(null);
   const [loadingShop, setLoadingShop] = useState(true);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -3001,16 +3079,32 @@ function LandingProductDetailModal({ product, onClose, cart, setCart }) {
   return (
     <div 
       onClick={handleBackdropClick} 
-      className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fade-in"
+      className={`fixed inset-0 z-[150] flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-3 sm:p-4'} bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fade-in`}
     >
-      <div className="relative w-full max-w-2xl bg-slate-50 border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-2xl p-6 sm:p-8 flex flex-col gap-6 animate-scale-in my-8 max-h-[90vh] overflow-y-auto scrollbar-thin text-slate-900">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all cursor-pointer z-10"
-        >
-          <X size={20} />
-        </button>
+      <div className={`relative w-full ${isFullScreen ? 'h-full max-h-screen rounded-none max-w-none p-4 sm:p-8 md:p-10 my-0' : 'max-w-2xl rounded-[2.5rem] p-6 sm:p-8 max-h-[90vh] my-8'} bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl flex flex-col gap-6 animate-scale-in overflow-y-auto scrollbar-thin text-slate-900 dark:text-slate-100 transition-all duration-300`}>
+        
+        {/* Top Action Controls: Fullscreen + Close */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+          <button
+            type="button"
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            title={isFullScreen ? 'সাধারণ ভিউ (Exit Fullscreen)' : 'ফুল স্ক্রিন করুন (Full Screen)'}
+            aria-label={isFullScreen ? 'Exit Fullscreen' : 'Full Screen'}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-sm active:scale-90 flex items-center justify-center"
+          >
+            {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            title="বন্ধ করুন"
+            aria-label="Close modal"
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-sm active:scale-90 flex items-center justify-center"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         {loadingShop ? (
           <div className="py-20 flex items-center justify-center">
@@ -3023,6 +3117,7 @@ function LandingProductDetailModal({ product, onClose, cart, setCart }) {
             onClose={onClose}
             cart={cart}
             setCart={setCart}
+            isFullScreen={isFullScreen}
           />
         )}
       </div>
@@ -3030,7 +3125,7 @@ function LandingProductDetailModal({ product, onClose, cart, setCart }) {
   );
 }
 
-function LandingProductDetailInner({ shop, product, onClose, cart, setCart }) {
+function LandingProductDetailInner({ shop, product, onClose, cart, setCart, isFullScreen = false }) {
   const { product: safeProduct, shop: safeShop } = sanitizeProductData(product, shop);
   const logic = useProductLogic(safeShop, safeProduct);
   
@@ -3135,42 +3230,48 @@ function LandingProductDetailInner({ shop, product, onClose, cart, setCart }) {
   };
 
   return (
-    <div className="space-y-6 text-slate-900 pr-1 scrollbar-thin">
-      <div className="flex justify-between items-center border-b pb-4">
+    <div className={`space-y-6 text-slate-900 dark:text-slate-100 pr-1 scrollbar-thin ${isFullScreen ? 'max-w-7xl mx-auto w-full' : ''}`}>
+      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="font-black text-xl text-slate-900 truncate">{safeProduct.name}</h1>
-          <p className="text-xs text-slate-500 font-bold">🏪 {safeShop.shopName}</p>
+          <h1 className="font-black text-xl sm:text-2xl text-slate-900 dark:text-white truncate">{safeProduct.name}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">🏪 {safeShop.shopName}</p>
         </div>
       </div>
       
-      <div className="space-y-6 pb-6 text-left">
-        <Suspense fallback={<div className="h-72 bg-slate-200 animate-pulse rounded-3xl w-full"></div>}>
-          <ProductImage product={safeProduct} currentPrice={safeBasePrice} />
-        </Suspense>
+      <div className={isFullScreen ? "grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start pb-6 text-left" : "space-y-6 pb-6 text-left"}>
+        {/* Product Media Column */}
+        <div className={isFullScreen ? "sticky top-4 space-y-4" : "space-y-6"}>
+          <Suspense fallback={<div className="h-72 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-3xl w-full"></div>}>
+            <ProductImage product={safeProduct} currentPrice={safeBasePrice} />
+          </Suspense>
+        </div>
         
-        <ProductInfo product={safeProduct} currentPrice={safeBasePrice} />
-        
-        <ProductVariants variants={logic.variants} selectedVariants={logic.selectedVariants} setSelectedVariants={logic.setSelectedVariants} onResetAi={() => logic.setAiPrice(null)} />
-        <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
-        
-        <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
-        
-        {(safeShop?.aiConfig?.smartCalcEnabled || safeProduct?.smartCalc?.enabled) ? (
-          <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
-        ) : safeProduct?.allowCustomize ? (
-          <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
-        ) : null}
-        
-        <ProductActions 
-          product={safeProduct} 
-          customerNote={logic.customerNote} 
-          setCustomerNote={logic.setCustomerNote} 
-          totalPrice={totalPrice} 
-          onAddToCart={handleLandingAddToCart} 
-        />
-        <ReviewSection shopId={safeShop?.id} />
-
+        {/* Product Details & Purchase Actions Column */}
+        <div className="space-y-6">
+          <ProductInfo product={safeProduct} currentPrice={safeBasePrice} />
+          
+          <ProductVariants variants={logic.variants} selectedVariants={logic.selectedVariants} setSelectedVariants={logic.setSelectedVariants} onResetAi={() => logic.setAiPrice(null)} />
+          <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
+          
+          <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
+          
+          {(safeShop?.aiConfig?.smartCalcEnabled || safeProduct?.smartCalc?.enabled) ? (
+            <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
+          ) : safeProduct?.allowCustomize ? (
+            <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
+          ) : null}
+          
+          <ProductActions 
+            product={safeProduct} 
+            customerNote={logic.customerNote} 
+            setCustomerNote={logic.setCustomerNote} 
+            totalPrice={totalPrice} 
+            onAddToCart={handleLandingAddToCart} 
+          />
+          <ReviewSection shopId={safeShop?.id} />
+        </div>
       </div>
     </div>
   );
 }
+

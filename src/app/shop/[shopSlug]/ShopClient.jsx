@@ -9,7 +9,7 @@ import { ShoppingBag, Search, X, Plus, Minus, Phone, MapPin,
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings, Trash2,
   ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
-  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle } from 'lucide-react';
+  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle, Maximize2, Minimize2 } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -2373,9 +2373,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             </div>
           </div>
 
-          {/* Actions (Left side of the brand) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 flex-wrap justify-end">
+          {/* Actions (Right side of the brand) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-wrap justify-end">
             <NotificationInbox shopId={shop.id} isDashboard={false} />
+
+            {/* Swipable Light/Dark Theme Switch */}
+            <ThemeToggleButton size="sm" />
 
             {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'admin' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
               <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-all shadow-lg">
@@ -4951,6 +4954,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
 // ── Shop Product Details Modal Component ──
 function ShopProductDetailModal({ product, shop, onClose, cart, setCart, addToCart }) {
+  const [isFullScreen, setIsFullScreen] = useState(false);
   if (!product) return null;
 
   const handleBackdropClick = (e) => {
@@ -4962,16 +4966,32 @@ function ShopProductDetailModal({ product, shop, onClose, cart, setCart, addToCa
   return (
     <div 
       onClick={handleBackdropClick} 
-      className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-fade-in"
+      className={`fixed inset-0 z-[150] flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-3 sm:p-4'} bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fade-in`}
     >
-      <div className="relative w-full md:w-3/4 max-w-5xl md:h-[75vh] bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden shadow-2xl p-6 sm:p-8 flex flex-col gap-6 animate-scale-in my-8 max-h-[90vh] overflow-y-auto scrollbar-thin text-slate-900">
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all cursor-pointer z-10 animate-fade-in"
-        >
-          <X size={20} />
-        </button>
+      <div className={`relative w-full ${isFullScreen ? 'h-full max-h-screen rounded-none max-w-none p-4 sm:p-8 md:p-10 my-0' : 'md:w-3/4 max-w-5xl md:h-[75vh] rounded-3xl p-6 sm:p-8 max-h-[90vh] my-8'} bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl flex flex-col gap-6 animate-scale-in overflow-y-auto scrollbar-thin text-slate-900 dark:text-slate-100 transition-all duration-300`}>
+        
+        {/* Top Control Buttons (Fullscreen + Close) */}
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+          <button
+            type="button"
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            title={isFullScreen ? 'সাধারণ ভিউ (Exit Fullscreen)' : 'ফুল স্ক্রিন করুন (Full Screen)'}
+            aria-label={isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-sm active:scale-90 flex items-center justify-center"
+          >
+            {isFullScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+
+          <button
+            type="button"
+            onClick={onClose}
+            title="বন্ধ করুন"
+            aria-label="Close modal"
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-sm active:scale-90 flex items-center justify-center"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         <ShopProductDetailInner 
           shop={shop} 
@@ -4980,13 +5000,14 @@ function ShopProductDetailModal({ product, shop, onClose, cart, setCart, addToCa
           cart={cart}
           setCart={setCart}
           addToCart={addToCart}
+          isFullScreen={isFullScreen}
         />
       </div>
     </div>
   );
 }
 
-function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCart }) {
+function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCart, isFullScreen = false }) {
   const { product: safeProduct, shop: safeShop } = sanitizeProductData(product, shop);
   const logic = useProductLogic(safeShop, safeProduct);
   
@@ -5061,40 +5082,46 @@ function ShopProductDetailInner({ shop, product, onClose, cart, setCart, addToCa
   };
 
   return (
-    <div className="space-y-6 text-slate-900 pr-1 scrollbar-thin overflow-y-auto flex-1">
-      <div className="flex justify-between items-center border-b pb-4">
+    <div className={`space-y-6 text-slate-900 dark:text-slate-100 pr-1 scrollbar-thin overflow-y-auto flex-1 ${isFullScreen ? 'max-w-7xl mx-auto w-full' : ''}`}>
+      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="font-black text-xl text-slate-900 truncate">{safeProduct.name}</h1>
-          <p className="text-xs text-slate-500 font-bold">🏪 {safeShop.shopName}</p>
+          <h1 className="font-black text-xl sm:text-2xl text-slate-900 dark:text-white truncate">{safeProduct.name}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">🏪 {safeShop.shopName}</p>
         </div>
       </div>
       
-      <div className="space-y-6 pb-6 text-left">
-        <Suspense fallback={<div className="h-72 bg-slate-200 animate-pulse rounded-3xl w-full"></div>}>
-          <ProductImage product={safeProduct} currentPrice={safeBasePrice} />
-        </Suspense>
+      <div className={isFullScreen ? "grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start pb-6 text-left" : "space-y-6 pb-6 text-left"}>
+        {/* Left / Media Column */}
+        <div className={isFullScreen ? "sticky top-4 space-y-4" : "space-y-6"}>
+          <Suspense fallback={<div className="h-72 bg-slate-200 dark:bg-slate-800 animate-pulse rounded-3xl w-full"></div>}>
+            <ProductImage product={safeProduct} currentPrice={safeBasePrice} />
+          </Suspense>
+        </div>
         
-        <ProductInfo product={safeProduct} currentPrice={safeBasePrice} />
-        
-        <ProductVariants variants={logic.variants} selectedVariants={logic.selectedVariants} setSelectedVariants={logic.setSelectedVariants} onResetAi={() => logic.setAiPrice(null)} />
-        <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
-        
-        <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
-        
-        {(safeShop?.aiConfig?.smartCalcEnabled || safeProduct?.smartCalc?.enabled) ? (
-          <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
-        ) : safeProduct?.allowCustomize ? (
-          <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
-        ) : null}
-        
-        <ProductActions 
-          product={safeProduct} 
-          customerNote={logic.customerNote} 
-          setCustomerNote={logic.setCustomerNote} 
-          totalPrice={totalPrice} 
-          onAddToCart={handleModalAddToCart} 
-        />
-        <ReviewSection shopId={safeShop?.id} />
+        {/* Right / Options & Actions Column */}
+        <div className="space-y-6">
+          <ProductInfo product={safeProduct} currentPrice={safeBasePrice} />
+          
+          <ProductVariants variants={logic.variants} selectedVariants={logic.selectedVariants} setSelectedVariants={logic.setSelectedVariants} onResetAi={() => logic.setAiPrice(null)} />
+          <LegacySizes sizes={logic.sizes} selectedSize={logic.selectedSize} setSelectedSize={logic.setSelectedSize} onResetAi={() => logic.setAiPrice(null)} />
+          
+          <ProductQuantity qty={logic.qty} setQty={logic.setQty} onQtyChange={logic.handleQtyChange} basePrice={safeBasePrice} />
+          
+          {(safeShop?.aiConfig?.smartCalcEnabled || safeProduct?.smartCalc?.enabled) ? (
+            <SmartCalculator product={safeProduct} setCustomInput={logic.setCustomInput} setAiPrice={logic.setAiPrice} />
+          ) : safeProduct?.allowCustomize ? (
+            <AiCustomization product={safeProduct} shop={safeShop} customInput={logic.customInput} setCustomInput={logic.setCustomInput} aiResult={logic.aiResult} aiPrice={logic.aiPrice} aiLoading={logic.aiLoading} onCalculate={() => handleAiCalculate({...logic, shop: safeShop, product: safeProduct, basePrice: safeBasePrice})} />
+          ) : null}
+          
+          <ProductActions 
+            product={safeProduct} 
+            customerNote={logic.customerNote} 
+            setCustomerNote={logic.setCustomerNote} 
+            totalPrice={totalPrice} 
+            onAddToCart={handleModalAddToCart} 
+          />
+          <ReviewSection shopId={safeShop?.id} />
+        </div>
       </div>
     </div>
   );

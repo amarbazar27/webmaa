@@ -91,46 +91,46 @@ export default function SmartCalculator({ product, setCustomInput, setAiPrice })
   };
 
   return (
-    <div className="bg-white rounded-3xl border-2 border-slate-100 p-6 shadow-sm space-y-5">
+    <div className="bg-white dark:bg-slate-800 rounded-3xl border-2 border-slate-100 dark:border-slate-700 p-6 shadow-sm space-y-5">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
+        <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-950/60 flex items-center justify-center text-purple-600 dark:text-purple-400">
           <Calculator size={16} />
         </div>
         <div>
-          <h3 className="font-black text-slate-900 leading-tight">স্মার্ট ক্যালকুলেটর</h3>
+          <h3 className="font-black text-slate-900 dark:text-white leading-tight">স্মার্ট ক্যালকুলেটর</h3>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{baseQuantity} {baseUnit} = ৳{basePrice}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-black text-slate-500 uppercase mb-1.5">যতটুকু ({baseUnit})</label>
+          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase mb-1.5">যতটুকু ({baseUnit})</label>
           <input 
             type="number" 
             inputMode="decimal"
             placeholder={`যেমন: ${baseQuantity}`}
             value={quantityInput}
             onChange={e => handleQuantityChange(e.target.value)}
-            className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 font-black text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all text-center"
+            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-700 rounded-xl px-4 py-3 font-black text-slate-900 dark:text-white outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-center"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-black text-slate-500 uppercase mb-1.5">যত টাকার (৳)</label>
+          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase mb-1.5">যত টাকার (৳)</label>
           <input 
             type="number" 
             inputMode="decimal"
             placeholder={`যেমন: ${basePrice}`}
             value={tkInput}
             onChange={e => handleTkChange(e.target.value)}
-            className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-3 font-black text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all text-center"
+            className="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-700 rounded-xl px-4 py-3 font-black text-slate-900 dark:text-white outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-center"
           />
         </div>
       </div>
 
       {tkInput && Number(tkInput) > 0 && (
-        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center animate-fade-in">
-          <p className="text-sm font-black text-emerald-800">
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/60 rounded-xl p-3 text-center animate-fade-in">
+          <p className="text-sm font-black text-emerald-800 dark:text-emerald-300">
             {quantityInput} {baseUnit} = ৳{Number(tkInput).toFixed(0)}
           </p>
         </div>
