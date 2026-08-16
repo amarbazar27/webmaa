@@ -1019,3 +1019,67 @@ section#marketplace { background: var(--neo-bg) !important; }
 ::-webkit-scrollbar-track { background: var(--neo-bg-dark); }
 ::-webkit-scrollbar-thumb { background: rgba(160,165,185,0.6); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(108,71,255,0.5); }
+
+/* ════════════════════════════════════════════════════════════════
+   HOMEPAGE BUILDER — Section Utilities
+   ════════════════════════════════════════════════════════════════ */
+
+/* Hide scrollbar but keep scrollable */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Brand Marquee infinite scroll */
+@keyframes marquee-infinite {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee-infinite {
+  animation: marquee-infinite 18s linear infinite;
+  will-change: transform;
+}
+.animate-marquee-infinite:hover {
+  animation-play-state: paused;
+}
+
+/* Storefront Section — subtle entrance animation */
+@keyframes sf-section-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.sf-section {
+  animation: sf-section-in 0.4s ease forwards;
+}
+
+/* Flash sale countdown number flip */
+@keyframes flip-in {
+  from { transform: rotateX(-90deg); opacity: 0; }
+  to   { transform: rotateX(0deg); opacity: 1; }
+}
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Product card hover lift */
+.product-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.product-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.10);
+}
+
+/* Homepage Builder drag-over indicator */
+.section-drag-over {
+  border-top: 2px solid #7C3AED;
+  background: rgba(124,58,237,0.03);
+}
+
+/* Builder preview phone frame */
+.builder-phone-frame {
+  box-shadow: 0 40px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1) inset;
+}

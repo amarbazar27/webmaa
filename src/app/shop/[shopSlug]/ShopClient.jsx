@@ -34,6 +34,7 @@ const AiVoicePanel = dynamic(() => import('@/components/shop/AiVoicePanel'), { s
 const SmartMealEngine = dynamic(() => import('@/components/shop/SmartMealEngine'), { ssr: false });
 const ReviewSection = dynamic(() => import('@/components/shop/ReviewSection'), { ssr: false });
 const MapModal = dynamic(() => import('@/components/shop/MapModal'), { ssr: false });
+const SectionRenderer = dynamic(() => import('@/components/storefront/sections/SectionRenderer'), { ssr: false });
 
 // Product detail modal component imports
 import ProductImage from '@/features/product/components/ProductImage';
@@ -741,6 +742,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [touchEnd, setTouchEnd] = useState(null);
   const [isFaqOpen, setIsFaqOpen] = useState(false);
 
+  // ── Homepage Builder Config ───────────────────────────
+  const [homepageConfig, setHomepageConfig] = useState(null);
+  const [homepageConfigLoaded, setHomepageConfigLoaded] = useState(false);
+
   const normalizedBanners = (shop?.banners || []).map(b => {
     if (typeof b === 'string') {
       return { url: b, title: '', description: '', linkUrl: '', buttonText: '' };
@@ -958,6 +963,18 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }, interval * 1000);
     return () => clearInterval(timer);
   }, [normalizedBanners.length, shop.bannerInterval]);
+
+  // ── Homepage Builder Config Fetch ────────────────
+  useEffect(() => {
+    if (!shop?.id) return;
+    fetch(`/api/homepage-config?shopId=${shop.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(config => {
+        if (config?.sections?.length) setHomepageConfig(config);
+      })
+      .catch(() => {})
+      .finally(() => setHomepageConfigLoaded(true));
+  }, [shop?.id]);
 
   // ── Fetch User Orders ───────────────────────────
   useEffect(() => {
@@ -2607,6 +2624,48 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           </div>
         </div>
       )}
+
+      {/* ── 🏠 Homepage Builder Dynamic Sections ── */}
+      {homepageConfig?.sections && (() => {
+        const hbTheme = {
+          primaryColor: homepageConfig.theme?.primaryColor || shop?.primaryColor || '#6D28D9',
+          font: homepageConfig.theme?.font || 'Hind Siliguri',
+        };
+        const hbCallbacks = {
+          onAddToCart: addToCart,
+          onCategoryClick: (label) => {
+            setSearchTerm(label);
+            setTimeout(() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
+          },
+          onConcernClick: (tag) => {
+            setSearchTerm(tag);
+            setTimeout(() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
+          },
+          onTierClick: () => {
+            setTimeout(() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
+          },
+          onAddBundle: (bundle) => {
+            if (bundle.price) addToCart({ id: `bundle-${Date.now()}`, name: bundle.title, price: bundle.price, imageUrl: bundle.imageUrl });
+          },
+        };
+        const hbSections = [...homepageConfig.sections]
+          .sort((a, b) => a.order - b.order)
+          .filter(s => s.enabled && s.type !== 'hero_carousel');
+        if (!hbSections.length) return null;
+        return (
+          <div className="sf-section">
+            {hbSections.map(section => (
+              <SectionRenderer
+                key={section.id}
+                section={section}
+                products={products}
+                themeVars={hbTheme}
+                callbacks={hbCallbacks}
+              />
+            ))}
+          </div>
+        );
+      })()}
 
       <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 w-full space-y-4 md:space-y-5">
         
