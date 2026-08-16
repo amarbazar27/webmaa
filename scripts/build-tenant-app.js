@@ -244,6 +244,8 @@ async function build() {
         actualShopId = shopDoc.id;
         const shopData = shopDoc.data();
         appConfig = shopData.appConfig || {};
+        appConfig.versionCode = shopData.appBuildVersionCode || appConfig.versionCode;
+        appConfig.versionName = shopData.appBuildVersionName || appConfig.versionName;
         shopName = appConfig.appName || shopData.shopName || shopName;
         primaryColor = shopData.designOverrides?.primaryColor || primaryColor;
         logoUrl = appConfig.logoUrl || shopData.logoUrl || null;
@@ -348,7 +350,10 @@ async function build() {
     } catch (_) {}
   }
 
-  const previousVersionCode = appVersions[shopSlug] || appConfig.versionCode || (shopSlug === 'messerbazar' ? 3 : 1);
+  const firestoreVersion = Number(appConfig.versionCode || 0);
+  const fileVersion = Number(appVersions[shopSlug] || 0);
+  const minimumFloor = (shopSlug === 'messerbazar') ? 4 : (shopSlug === 'main' ? 2 : 1);
+  const previousVersionCode = Math.max(firestoreVersion, fileVersion, minimumFloor);
   const targetVersionCode = customVersionCode || (previousVersionCode + 1);
   const targetVersionName = appConfig.versionName || `1.0.${targetVersionCode - 1}`;
 
@@ -356,7 +361,7 @@ async function build() {
   appVersions[shopSlug] = targetVersionCode;
   try {
     fs.writeFileSync(versionsFilePath, JSON.stringify(appVersions, null, 2));
-    console.log(`  📌 Auto-incremented version code for [${shopSlug}]: ${previousVersionCode} ➔ ${targetVersionCode}`);
+    console.log(`  📌 Auto-incremented version code for [${shopSlug}]: ${previousVersionCode} ➔ ${targetVersionCode} (v${targetVersionName})`);
   } catch (err) {
     console.warn(`  ⚠️ Could not update app-versions.json: ${err.message}`);
   }
@@ -492,6 +497,10 @@ class MainActivity: FlutterActivity() {
       status: 'completed',
       apkUrl: `/builds/${shopSlug}/app-release.apk`,
       aabUrl: `/builds/${shopSlug}/app-release.aab`,
+      packageName,
+      targetVersionCode,
+      targetVersionName,
+      actualShopId,
     };
   }
 
@@ -581,30 +590,50 @@ class MainActivity: FlutterActivity() {
     apkUrl,
     aabUrl,
     packageName,
+    targetVersionCode,
+    targetVersionName,
+    actualShopId,
   };
 }
 
 // Execute wrapper
 build()
   .then(async (result) => {
-    console.log('🏆 App Build Completed Successfully.');
+    console.log(`🏆 App Build Completed Successfully (Version Code: ${result.targetVersionCode}, Version Name: ${result.targetVersionName}).`);
     
     // Update build record in Firestore if available
     if (db && !isDryRun) {
       try {
         console.log(`💾 Updating Firestore build status for ${shopSlug}...`);
-        const shopQuery = await db.collection('shops').where('subdomainSlug', '==', shopSlug).limit(1).get();
-        if (!shopQuery.empty) {
-          const shopId = shopQuery.docs[0].id;
-          await db.collection('shops').doc(shopId).update({
+        let shopDocRef = null;
+        if (result.actualShopId && result.actualShopId !== shopSlug) {
+          shopDocRef = db.collection('shops').doc(result.actualShopId);
+        } else {
+          let snap = await db.collection('shops').where('subdomainSlug', '==', shopSlug).limit(1).get();
+          if (snap.empty) {
+            snap = await db.collection('shops').where('shopSlug', '==', shopSlug).limit(1).get();
+          }
+          if (!snap.empty) {
+            shopDocRef = snap.docs[0].ref;
+          } else {
+            shopDocRef = db.collection('shops').doc(shopSlug);
+          }
+        }
+
+        if (shopDocRef) {
+          await shopDocRef.update({
             appBuildStatus: 'completed',
             appBuildApkUrl: result.apkUrl,
             appBuildAabUrl: result.aabUrl,
             appBuildPackageName: packageName,
+            appBuildVersionCode: result.targetVersionCode,
+            appBuildVersionName: result.targetVersionName,
+            'appConfig.versionCode': result.targetVersionCode,
+            'appConfig.versionName': result.targetVersionName,
             appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
             appBuildError: null
           });
-          console.log('✅ Firestore updated successfully.');
+          console.log(`✅ Firestore updated successfully with Version Code: ${result.targetVersionCode}.`);
         }
       } catch (err) {
         console.error('❌ Failed to update Firestore with build urls:', err.message);
@@ -618,10 +647,12 @@ build()
     // Log error inside Firestore
     if (db && !isDryRun) {
       try {
-        const shopQuery = await db.collection('shops').where('subdomainSlug', '==', shopSlug).limit(1).get();
-        if (!shopQuery.empty) {
-          const shopId = shopQuery.docs[0].id;
-          await db.collection('shops').doc(shopId).update({
+        let snap = await db.collection('shops').where('subdomainSlug', '==', shopSlug).limit(1).get();
+        if (snap.empty) {
+          snap = await db.collection('shops').where('shopSlug', '==', shopSlug).limit(1).get();
+        }
+        if (!snap.empty) {
+          await snap.docs[0].ref.update({
             appBuildStatus: 'failed',
             appBuildError: err.message || err.toString(),
             appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp()

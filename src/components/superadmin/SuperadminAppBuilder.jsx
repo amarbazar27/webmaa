@@ -258,9 +258,14 @@ export default function SuperadminAppBuilder() {
                         </div>
                       )}
                       {status === 'completed' && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <CheckCircle2 size={11} /> Compiled
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 w-max">
+                            <CheckCircle2 size={11} /> Compiled
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-600 font-mono">
+                            v{shop.appBuildVersionName || shop.appConfig?.versionName || '1.0.0'} (Code: {shop.appBuildVersionCode || shop.appConfig?.versionCode || 1})
+                          </span>
+                        </div>
                       )}
                       {status === 'failed' && (
                         <div className="flex flex-col gap-1">
@@ -354,37 +359,66 @@ export default function SuperadminAppBuilder() {
             </button>
 
             {/* Title */}
-            <div className="flex items-center gap-3 border-b pb-5 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <FileText size={22} />
+            <div className="flex items-center justify-between border-b pb-5 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <FileText size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Google Play Submission Kit</h3>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{selectedShop.shopName}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-black text-slate-900">Google Play Submission Kit</h3>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{selectedShop.shopName}</p>
+              <div className="bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-xl text-right">
+                <p className="text-[9px] font-black uppercase text-purple-600">Current App Build</p>
+                <p className="text-xs font-mono font-black text-purple-900">
+                  v{selectedShop.appBuildVersionName || selectedShop.appConfig?.versionName || '1.0.0'} (Code: {selectedShop.appBuildVersionCode || selectedShop.appConfig?.versionCode || 1})
+                </p>
               </div>
             </div>
 
             {/* Content body */}
             <div className="space-y-6 text-slate-800 text-xs font-medium">
               
-              {/* 1. Keystore Command */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
-                <p className="text-xs font-black text-slate-900 mb-2 flex items-center justify-between">
-                  <span>১. Keystore জেনারেট করার কমান্ড (Android App Signing)</span>
-                  <button 
-                    onClick={() => handleCopy(`keytool -genkey -v -keystore ${selectedShop.subdomainSlug || selectedShop.shopSlug}-upload-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ${selectedShop.subdomainSlug || selectedShop.shopSlug}-key`, 'key')}
-                    className="flex items-center gap-1 text-[10px] text-purple-600 font-bold hover:underline"
-                  >
-                    {copiedText === 'key' ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                    কপি করুন
-                  </button>
-                </p>
-                <p className="text-[10px] text-slate-500 leading-relaxed mb-3">
-                  গুগল প্লে স্টোরে আপলোড করার জন্য প্রথমে একটি কীস্টোর ফাইল তৈরি করতে হবে। আপনার টার্মিনালে নিচের কোডটি রান করুন:
-                </p>
-                <pre className="bg-slate-900 text-slate-100 font-mono text-[10px] p-3 rounded-xl overflow-x-auto whitespace-pre-wrap select-all leading-relaxed">
-                  keytool -genkey -v -keystore {(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-upload-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias {(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-key
-                </pre>
+              {/* 1. Keystore & Signing Command */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                <div>
+                  <p className="text-xs font-black text-slate-900 mb-1.5 flex items-center justify-between">
+                    <span>১. (A) Keystore তৈরি করার কমান্ড (একবার মাত্র করতে হয়)</span>
+                    <button 
+                      onClick={() => handleCopy(`keytool -genkey -v -keystore ${(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-upload-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias ${(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-key`, 'key')}
+                      className="flex items-center gap-1 text-[10px] text-purple-600 font-bold hover:underline"
+                    >
+                      {copiedText === 'key' ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                      কপি করুন
+                    </button>
+                  </p>
+                  <p className="text-[10px] text-slate-500 leading-relaxed mb-2">
+                    প্রথমবার কীস্টোর তৈরি করতে আপনার কম্পিউটারের টার্মিনালে নিচের কোডটি রান করুন:
+                  </p>
+                  <pre className="bg-slate-900 text-slate-100 font-mono text-[10px] p-3 rounded-xl overflow-x-auto whitespace-pre-wrap select-all leading-relaxed">
+                    keytool -genkey -v -keystore {(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-upload-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias {(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-key
+                  </pre>
+                </div>
+
+                <div className="border-t border-slate-200 pt-3">
+                  <p className="text-xs font-black text-slate-900 mb-1.5 flex items-center justify-between">
+                    <span>১. (B) ডাউনলোড করা AAB ফাইল Sign করার কমান্ড (প্রতিবার আপলোডের আগে)</span>
+                    <button 
+                      onClick={() => handleCopy(`jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore ${(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-upload-key.jks ${(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop')}-app-release.aab ${(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-key`, 'sign')}
+                      className="flex items-center gap-1 text-[10px] text-purple-600 font-bold hover:underline"
+                    >
+                      {copiedText === 'sign' ? <CheckCircle2 size={12} className="text-emerald-500" /> : <Copy size={12} />}
+                      কপি করুন
+                    </button>
+                  </p>
+                  <p className="text-[10px] text-slate-500 leading-relaxed mb-2">
+                    ডাউনলোড করা AAB ফাইলের ফোল্ডারে টার্মিনাল খুলে এই কমান্ডটি দিন:
+                  </p>
+                  <pre className="bg-slate-900 text-purple-300 font-mono text-[10px] p-3 rounded-xl overflow-x-auto whitespace-pre-wrap select-all leading-relaxed">
+                    jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore {(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-upload-key.jks {(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop')}-app-release.aab {(selectedShop.subdomainSlug || selectedShop.shopSlug || 'shop').toLowerCase().replace(/[^a-z0-9]/g, '')}-key
+                  </pre>
+                </div>
               </div>
 
               {/* 2. Metadata details */}

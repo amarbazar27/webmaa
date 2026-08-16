@@ -61,7 +61,12 @@ jobs:
       run: yes | flutter doctor --android-licenses || true
 
     - name: Run Build Tenant App Script
-      run: node scripts/build-tenant-app.js ${{ github.event.client_payload.shopSlug }} --github-actions
+      run: |
+        VERSION_ARG=""
+        if [ -n "${{ github.event.client_payload.versionCode }}" ]; then
+          VERSION_ARG="--version-code=${{ github.event.client_payload.versionCode }}"
+        fi
+        node scripts/build-tenant-app.js ${{ github.event.client_payload.shopSlug }} --github-actions $VERSION_ARG
       env:
         FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
@@ -71,3 +76,12 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_OWNER: ${{ github.repository_owner }}
         GITHUB_REPO: webmaa
+
+    - name: Commit & Push Version Code Updates
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add scripts/app-versions.json
+        git diff-index --quiet HEAD || (git commit -m "chore: auto-increment app version code [skip ci]" && git push)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

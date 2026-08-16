@@ -46,7 +46,7 @@ export async function POST(request) {
 
     // 2. Parse request payload
     const body = await request.json();
-    const { shopId } = body;
+    const { shopId, versionCode } = body;
 
     if (!shopId) {
       return NextResponse.json({ error: 'শপ আইডি প্রয়োজন।' }, { status: 400 });
@@ -72,7 +72,7 @@ export async function POST(request) {
       appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    console.log(`[Build App] Starting compilation request for ${shopSlug} (ID: ${shopId})`);
+    console.log(`[Build App] Starting compilation request for ${shopSlug} (ID: ${shopId}, VersionCode: ${versionCode || 'auto'})`);
 
     // 4. Determine compilation runner context
     const githubPat = process.env.GITHUB_PAT;
@@ -85,8 +85,13 @@ export async function POST(request) {
       // Obfuscate path string to prevent Turbopack static tracing during build
       const scriptPath = 'scr' + 'ipts/' + 'build-te' + 'nant-ap' + 'p.js';
 
+      const runnerArgs = [scriptPath, shopSlug];
+      if (versionCode) {
+        runnerArgs.push(`--version-code=${versionCode}`);
+      }
+
       // Spawns detached node build script
-      const child = spawn('node', [scriptPath, shopSlug], {
+      const child = spawn('node', runnerArgs, {
         detached: true,
         stdio: 'ignore'
       });
@@ -118,6 +123,7 @@ export async function POST(request) {
           client_payload: {
             shopId,
             shopSlug,
+            versionCode: versionCode ? parseInt(versionCode, 10) : undefined,
           }
         }),
       });
