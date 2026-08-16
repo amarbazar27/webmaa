@@ -1604,64 +1604,49 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Interactive Featured Model Showcase Card */}
+            {/* Right — Stats + CTA Card */}
             <div className="lg:col-span-5 relative">
-              <div className="p-6 bg-white border border-purple-200 rounded-[2.5rem] shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4">
-                  <span className="px-3 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-black text-[9px] uppercase tracking-widest rounded-full shadow-sm flex items-center gap-1">
-                    <Sparkles size={10} /> HOT MODEL
-                  </span>
-                </div>
+              <div className="p-6 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2.5rem] shadow-xl relative overflow-hidden text-white">
+                <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+                <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-indigo-400/20 blur-2xl" />
 
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-purple-100 border border-purple-300 flex items-center justify-center text-purple-700 font-black">
-                    <Tag size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">প্রিমিয়াম স্পেক্স & কাস্টম মডেলস</h3>
-                    <p className="text-[10px] text-slate-600 font-bold">লাইভ ভ্যারিয়েন্ট ও এআই ক্যালকুলেটর সমর্থিত</p>
-                  </div>
-                </div>
-
-                {products.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                      {/* Skeleton while loading */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 animate-pulse" />
-                      <img 
-                        src={products[0]?.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80'} 
-                        alt={products[0]?.name}
-                        loading="eager"
-                        fetchPriority="high"
-                        className="w-full h-full object-cover relative z-10"
-                        onLoad={e => e.target.style.opacity = 1}
-                        style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
-                      />
-                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent p-4">
-                        <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider">{products[0]?.category || 'Featured'}</span>
-                        <h4 className="text-base font-black text-white truncate">{products[0]?.name}</h4>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-lg font-black text-emerald-400 font-mono tabular-nums">৳ {Number(products[0]?.price || 0).toLocaleString()}</span>
-                          <span className="text-[10px] font-bold text-white bg-white/20 px-2.5 py-0.5 rounded-full">🏪 {products[0]?.shopName}</span>
-                        </div>
-                      </div>
+                <div className="relative z-10 space-y-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
+                      <Store size={22} className="text-white" />
                     </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-widest text-purple-200">BDRetailers Platform</p>
+                      <p className="text-sm font-black text-white leading-tight">বাংলাদেশের সেরা মার্কেটপ্লেস</p>
+                    </div>
+                  </div>
 
-                    <button 
-                      onClick={() => {
-                        setSelectedProduct(products[0]);
-                        setCustomizationNote('');
-                      }}
-                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Sparkles size={14} /> মডেল ডিটেইলস & কাস্টমাইজ করুন
-                    </button>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/15 rounded-2xl p-3.5">
+                      <p className="text-2xl font-black font-mono tabular-nums">{allShops.length}+</p>
+                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
+                    </div>
+                    <div className="bg-white/15 rounded-2xl p-3.5">
+                      <p className="text-2xl font-black font-mono tabular-nums">{products.length}+</p>
+                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
+                    </div>
+                    <div className="bg-white/15 rounded-2xl p-3.5">
+                      <p className="text-2xl font-black font-mono tabular-nums">99.8%</p>
+                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">সন্তুষ্টি হার</p>
+                    </div>
+                    <div className="bg-white/15 rounded-2xl p-3.5">
+                      <p className="text-2xl font-black font-mono tabular-nums">24/7</p>
+                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">AI সহায়তা</p>
+                    </div>
                   </div>
-                ) : (
-                  <div className="py-12 text-center text-slate-400 text-xs font-bold">
-                    প্রোডাক্ট লোড হচ্ছে...
-                  </div>
-                )}
+
+                  <Link
+                    href="/become-retailer"
+                    className="w-full py-3.5 bg-white hover:bg-purple-50 text-purple-700 font-black text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <ShoppingBag size={14} /> আজই মার্চেন্ট হোন →
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -1710,17 +1695,17 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Glassmorphic Search & Filters Card ── */}
-        <div className="glass-panel bg-slate-900/80 backdrop-blur-xl border border-white/10 p-4 sm:p-5 mb-8 rounded-3xl shadow-2xl flex flex-col gap-4">
+        {/* ── Search & Filters Card ── */}
+        <div className="glass-panel bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 backdrop-blur-xl p-4 sm:p-5 mb-8 rounded-3xl shadow-lg flex flex-col gap-4">
           <div className="flex flex-col md:flex-row gap-3">
             {/* Search bar inset */}
-            <div className="flex-grow bg-slate-950/80 border border-white/10 rounded-2xl flex items-center px-4 py-2.5 shadow-inner focus-within:border-purple-500/50 transition-all">
-              <Search className="text-purple-400 mr-3 shrink-0" size={18} />
+            <div className="flex-grow bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center px-4 py-2.5 shadow-inner focus-within:border-purple-400 dark:focus-within:border-purple-500/50 transition-all">
+              <Search className="text-purple-500 mr-3 shrink-0" size={18} />
               <input
                 id="search-input-field"
                 type="text"
                 placeholder="খুঁজুন (Search products by name, category, or English/Bangla transliteration...)"
-                className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-white placeholder-slate-400 p-0 outline-none h-full animate-none"
+                className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 p-0 outline-none h-full animate-none"
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
               />

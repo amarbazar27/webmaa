@@ -81,9 +81,18 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
 
   const isStaff = userData?.role === 'staff';
   const isAdmin = userData?.role === 'admin';
-  const visibleNavItems = isStaff && !isAdmin 
-    ? navItems.filter(item => item.staffAllowed !== false) 
-    : navItems;
+
+  const isMesserBazar =
+    shop?.subdomainSlug === 'messerbazar' ||
+    shop?.shopSlug === 'messerbazar' ||
+    shop?.customDomain === 'messerbazar.com' ||
+    shop?.shopName === 'Messer Bazar' ||
+    shop?.shopName === 'মেসের বাজার';
+
+  const visibleNavItems = (isStaff && !isAdmin
+    ? navItems.filter(item => item.staffAllowed !== false)
+    : navItems
+  ).filter(item => item.href === '/dashboard/smart-inventory' ? isMesserBazar : true);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -105,7 +114,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
               </div>
             )}
             <div className="overflow-hidden">
-              <span className="font-black text-lg tracking-tight text-slate-900 block leading-none truncate">{shop?.shopName || 'Daripallah'}</span>
+          <span className="font-black text-lg tracking-tight block leading-none truncate" style={{ color: 'var(--text-color)' }}>{shop?.shopName || 'Daripallah'}</span>
               <span className="text-[10px] text-purple-600 font-black uppercase tracking-[0.1em] mt-1 block">Dashboard</span>
             </div>
           </div>
@@ -128,23 +137,20 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
 
           if (isLocked) {
             return (
-              <button
+              <Link
                 key={href}
-                type="button"
-                onClick={() => {
-                  if (onClose) onClose();
-                  setIsLockModalOpen(true);
-                }}
-                className="w-full group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 text-slate-400 hover:text-slate-700 hover:bg-amber-50/50 cursor-pointer"
+                href={href}
+                onClick={onClose}
+                className="w-full group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 text-slate-400 hover:text-blue-700 hover:bg-blue-50/50"
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className="text-slate-400 group-hover:text-amber-600 transition-colors" />
+                  <Icon size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
                   <span>{label}</span>
                 </div>
-                <div className="flex items-center gap-1 bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  <Lock size={10} /> Locked
+                <div className="flex items-center gap-1 bg-blue-100 text-blue-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  <Lock size={10} /> View Only
                 </div>
-              </button>
+              </Link>
             );
           }
 

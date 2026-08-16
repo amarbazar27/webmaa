@@ -14,6 +14,7 @@ import {
   Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
 import DesignThemeSelector from '@/components/dashboard/DesignThemeSelector';
@@ -100,6 +101,7 @@ const getCityWards = (district) => {
 
 export default function SettingsPage() {
   const { user, userData, activeShopId, isImpersonating } = useAuth();
+  const router = useRouter();
   const [shop, setShop] = useState({ 
     shopName: '', 
     slogan: '', 
@@ -392,6 +394,9 @@ export default function SettingsPage() {
     });
   }, []);
 
+  const isSubActive = checkIsSubscriptionActive(shop, userData, globalConfig);
+  const isReadOnly = !loading && !isSubActive;
+
   // ── Geo: load districts when division changes ────────────────────────────
   useEffect(() => {
     if (!geoSelections.division) return;
@@ -461,33 +466,6 @@ export default function SettingsPage() {
      return <div className="p-20 text-center font-black text-slate-400">Settings restricted to Store Owner.</div>;
   }
 
-  const isSubActive = checkIsSubscriptionActive(shop, userData, globalConfig);
-
-  if (!loading && !isSubActive) {
-    return (
-      <div className="max-w-2xl mx-auto py-16 px-6 text-center space-y-6 animate-scale-in">
-        <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-xl shadow-amber-500/10">
-          <Lock size={40} />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-            স্টোর সেটিংস ও প্রেফারেন্স লক করা রয়েছে 🔒
-          </h2>
-          <p className="text-sm text-slate-500 font-medium max-w-lg mx-auto leading-relaxed">
-            আপনার নতুন অ্যাকাউন্ট ১ মাসের ফ্রি ট্রায়াল অফার ক্লেইম করুন অথবা সাবস্ক্রিপশন নবায়ন করুন! স্টোর ব্র্যান্ডিং, লোগো, ব্যানার, ডোমেইন ও সেটিংস অপশন আনলক করতে বিলিং পেজে যান।
-          </p>
-        </div>
-        <div className="pt-4">
-          <Link
-            href="/dashboard/billing"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-xl shadow-purple-500/20 active:scale-95"
-          >
-            <span>বিলিং পেজে গিয়ে ১ মাসের ফ্রি ট্রায়াল ক্লেইম / রিনিউ করুন →</span>
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
@@ -513,6 +491,11 @@ export default function SettingsPage() {
   };
 
   const handleSlugSave = async () => {
+    if (isReadOnly) {
+      toast.error('সেটিংস পরিবর্তন করতে সাবস্ক্রিপশন নবায়ন করুন!');
+      router.push('/dashboard/billing');
+      return;
+    }
     const err = validateSlug(slugInput);
     if (err) { setSlugError(err); return; }
     setSlugError('');
@@ -794,6 +777,11 @@ export default function SettingsPage() {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (isReadOnly) {
+      toast.error('সেটিংস পরিবর্তন করতে সাবস্ক্রিপশন নবায়ন করুন!');
+      router.push('/dashboard/billing');
+      return;
+    }
     if (!user || !shop) return;
     setSaving(true);
     try {
@@ -886,6 +874,26 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-slide-in pb-12">
+
+      {/* ── View-Only Mode Banner ── */}
+      {isReadOnly && (
+        <div className="flex items-center justify-between gap-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-4 rounded-2xl shadow-lg shadow-amber-500/20">
+          <div className="flex items-center gap-3">
+            <Lock size={18} className="shrink-0" />
+            <div>
+              <p className="text-sm font-black leading-tight">ভিউ-অনলি মোড — সাবস্ক্রিপশন মেয়াদ শেষ 🔒</p>
+              <p className="text-[11px] font-medium opacity-90">সেটিংস দেখতে পারবেন কিন্তু পরিবর্তন করতে বা সেভ করতে সাবস্ক্রিপশন নবায়ন করুন।</p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/billing"
+            className="shrink-0 px-4 py-2 bg-white text-amber-700 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-amber-50 transition-all"
+          >
+            নবায়ন করুন →
+          </Link>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">স্টোর কাস্টমাইজার</h1>

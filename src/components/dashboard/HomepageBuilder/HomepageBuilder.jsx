@@ -36,7 +36,7 @@ const CATEGORY_TEMPLATES = {
   fashion: {
     label: '👗 লাক্সারি ফ্যাশন',
     desc: 'Sailor, Aarong স্টাইলে',
-    theme: { primaryColor: '#1E293B', font: 'Playfair Display' },
+    theme: { primaryColor: '#7C3AED', font: 'Playfair Display' },
     enabled: ['hero', 'categories', 'banner_row', 'product_grid', 'video_reels', 'instagram_feed', 'photo_reviews'],
   },
   tech: {
@@ -238,7 +238,7 @@ export default function HomepageBuilder() {
           {/* Category Template Quick Setup */}
           <div className="mx-4 md:mx-0 mb-3">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 px-1">⚡ টেমপ্লেট থেকে শুরু করুন</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="grid grid-cols-2 gap-2">
               {Object.entries(CATEGORY_TEMPLATES).map(([key, tpl]) => (
                 <button
                   key={key}
@@ -256,10 +256,18 @@ export default function HomepageBuilder() {
                     setHasChanges(true);
                     toast.success(`${tpl.label} টেমপ্লেট সেট হয়েছে!`);
                   }}
-                  className="shrink-0 px-3 py-2 bg-white border border-slate-200 hover:border-purple-300 rounded-xl text-left transition-all hover:shadow-md group"
+                  className={`px-3 py-2.5 rounded-xl text-left transition-all hover:shadow-lg hover:scale-[1.03] active:scale-95 ${
+                    key === 'grocery'
+                      ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white'
+                      : key === 'fashion'
+                      ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
+                      : key === 'tech'
+                      ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
+                      : 'bg-gradient-to-br from-rose-500 to-pink-600 text-white'
+                  }`}
                 >
-                  <span className="text-xs font-black text-slate-700 block whitespace-nowrap">{tpl.label}</span>
-                  <span className="text-[9px] text-slate-400 font-medium block">{tpl.desc}</span>
+                  <span className="text-xs font-black block">{tpl.label}</span>
+                  <span className="text-[9px] font-medium block opacity-80">{tpl.desc}</span>
                 </button>
               ))}
             </div>

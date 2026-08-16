@@ -926,20 +926,20 @@ section.relative.z-20.pt-\[60px\] { background: transparent !important; }
 /* ── Marketplace section ── */
 section#marketplace { background: var(--neo-bg) !important; }
 
-/* ── Description box (dark glass → neo card) ── */
-.bg-slate-900\/50 { background: var(--neo-surface-card) !important; box-shadow: var(--neo-shadow-raised) !important; }
-.bg-slate-900\/70 { background: var(--neo-surface-card) !important; }
-.bg-slate-900\/80 { background: var(--neo-surface-card) !important; }
+/* ── Description box (dark glass → neo card, scoped to main page) ── */
+section#marketplace .bg-slate-900\/50 { background: var(--neo-surface-card) !important; box-shadow: var(--neo-shadow-raised) !important; }
+section#marketplace .bg-slate-900\/70 { background: var(--neo-surface-card) !important; }
+section#marketplace .bg-slate-900\/80 { background: var(--neo-surface-card) !important; }
 
-/* ── Text color fixes ── */
-.text-white\/80 { color: var(--neo-text-2) !important; }
-.text-white\/60 { color: var(--neo-text-2) !important; }
-.text-white\/50 { color: var(--neo-text-3) !important; }
-.text-white\/40 { color: var(--neo-text-3) !important; }
-.text-white\/30 { color: var(--neo-text-3) !important; }
-.text-slate-300 { color: var(--neo-text-2) !important; }
-.text-slate-400 { color: var(--neo-text-3) !important; }
-.text-white { color: var(--neo-text) !important; }
+/* ── Text color fixes (scoped to main site only, not dashboard/retailer) ── */
+:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/80 { color: var(--neo-text-2) !important; }
+:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/60 { color: var(--neo-text-2) !important; }
+:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/50 { color: var(--neo-text-3) !important; }
+:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/40 { color: var(--neo-text-3) !important; }
+:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/30 { color: var(--neo-text-3) !important; }
+section#marketplace .text-slate-300 { color: var(--neo-text-2) !important; }
+section#marketplace .text-slate-400 { color: var(--neo-text-3) !important; }
+section#marketplace .text-white { color: var(--neo-text) !important; }
 
 /* Keep accent colors */
 .text-purple-400 { color: var(--neo-accent) !important; }
