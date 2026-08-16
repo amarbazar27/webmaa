@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
   GripVertical, Eye, EyeOff, ChevronDown, ChevronUp,
   Image as ImageIcon, Layers, Zap, Grid, Video,
-  LayoutGrid, Sparkles, Star, Package, Camera, Tag, Share2
+  LayoutGrid, Sparkles, Star, Package, Camera, Tag, Share2, Megaphone
 } from 'lucide-react';
 import SectionEditor from './SectionEditor';
 
@@ -20,6 +20,7 @@ const SECTION_META = {
   photo_reviews:    { label: 'Photo Reviews', icon: Camera, color: '#7C3AED', desc: 'Customer photo testimonials' },
   price_tier_store: { label: 'Price Tier Store', icon: Tag, color: '#0891B2', desc: 'Under ৳299 / ৳599 / ৳999' },
   instagram_feed:   { label: 'Instagram Feed', icon: Share2, color: '#E1306C', desc: 'Embedded social feed' },
+  popup_banner:     { label: 'Popup Banner', icon: Megaphone, color: '#F97316', desc: 'ওয়েবসাইটে ঢুকলেই floating popup' },
 };
 
 export default function SectionList({ sections, onChange, theme }) {

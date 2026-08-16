@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import SectionList from './SectionList';
 import ThemeEditor from './ThemeEditor';
 import HomepagePreview from './HomepagePreview';
-import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartphone, Monitor } from 'lucide-react';
+import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartphone, Monitor, Wand2 } from 'lucide-react';
 
 const DEFAULT_SECTIONS = [
   { id: 'hero', type: 'hero_carousel', enabled: true, order: 0, data: { slides: [] } },
@@ -22,7 +22,36 @@ const DEFAULT_SECTIONS = [
   { id: 'photo_reviews', type: 'photo_reviews', enabled: false, order: 9, data: { reviews: [] } },
   { id: 'instagram_feed', type: 'instagram_feed', enabled: false, order: 10, data: { embedUrl: '' } },
   { id: 'price_tier_store', type: 'price_tier_store', enabled: false, order: 11, data: { tiers: [299, 599, 999] } },
+  { id: 'popup_banner', type: 'popup_banner', enabled: false, order: 12, data: { imageUrl: '', linkUrl: '', buttonText: '', delay: 3 } },
 ];
+
+// ── Category Template Presets ──
+const CATEGORY_TEMPLATES = {
+  grocery: {
+    label: '🛒 গ্রোসারি (Grocery)',
+    desc: 'Chaldal, Shwapno স্টাইলে',
+    theme: { primaryColor: '#059669', font: 'Hind Siliguri' },
+    enabled: ['hero', 'categories', 'flash_sale', 'product_grid', 'bundle_section', 'price_tier_store'],
+  },
+  fashion: {
+    label: '👗 লাক্সারি ফ্যাশন',
+    desc: 'Sailor, Aarong স্টাইলে',
+    theme: { primaryColor: '#1E293B', font: 'Playfair Display' },
+    enabled: ['hero', 'categories', 'banner_row', 'product_grid', 'video_reels', 'instagram_feed', 'photo_reviews'],
+  },
+  tech: {
+    label: '💻 টেক ও ইলেকট্রনিক্স',
+    desc: 'Star Tech, Pickaboo স্টাইলে',
+    theme: { primaryColor: '#2563EB', font: 'Inter' },
+    enabled: ['hero', 'categories', 'flash_sale', 'product_grid', 'brand_marquee', 'banner_row', 'price_tier_store'],
+  },
+  beauty: {
+    label: '💄 বিউটি ও কসমেটিক্স',
+    desc: 'BanglaShoppers, Ogerio স্টাইলে',
+    theme: { primaryColor: '#DB2777', font: 'Hind Siliguri' },
+    enabled: ['hero', 'categories', 'concern_grid', 'flash_sale', 'product_grid', 'brand_marquee', 'bundle_section', 'photo_reviews', 'popup_banner'],
+  },
+};
 
 const DEFAULT_THEME = {
   primaryColor: '#6D28D9',
@@ -204,6 +233,36 @@ export default function HomepageBuilder() {
             >
               <Palette size={13} /> Theme
             </button>
+          </div>
+
+          {/* Category Template Quick Setup */}
+          <div className="mx-4 md:mx-0 mb-3">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 px-1">⚡ টেমপ্লেট থেকে শুরু করুন</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {Object.entries(CATEGORY_TEMPLATES).map(([key, tpl]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    const newSections = DEFAULT_SECTIONS.map(s => ({
+                      ...s,
+                      enabled: tpl.enabled.includes(s.id),
+                    }));
+                    // Add popup_banner if not in DEFAULT
+                    if (tpl.enabled.includes('popup_banner') && !newSections.find(s => s.id === 'popup_banner')) {
+                      newSections.push({ id: 'popup_banner', type: 'popup_banner', enabled: true, order: 12, data: { imageUrl: '', linkUrl: '', delay: 3 } });
+                    }
+                    setSections(newSections);
+                    setTheme(prev => ({ ...prev, ...tpl.theme }));
+                    setHasChanges(true);
+                    toast.success(`${tpl.label} টেমপ্লেট সেট হয়েছে!`);
+                  }}
+                  className="shrink-0 px-3 py-2 bg-white border border-slate-200 hover:border-purple-300 rounded-xl text-left transition-all hover:shadow-md group"
+                >
+                  <span className="text-xs font-black text-slate-700 block whitespace-nowrap">{tpl.label}</span>
+                  <span className="text-[9px] text-slate-400 font-medium block">{tpl.desc}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mx-4 md:mx-0">

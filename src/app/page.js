@@ -1626,10 +1626,16 @@ export default function Home() {
                 {products.length > 0 ? (
                   <div className="space-y-4">
                     <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+                      {/* Skeleton while loading */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 animate-pulse" />
                       <img 
                         src={products[0]?.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80'} 
                         alt={products[0]?.name}
-                        className="w-full h-full object-cover"
+                        loading="eager"
+                        fetchPriority="high"
+                        className="w-full h-full object-cover relative z-10"
+                        onLoad={e => e.target.style.opacity = 1}
+                        style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
                       />
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent p-4">
                         <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider">{products[0]?.category || 'Featured'}</span>
@@ -1722,7 +1728,7 @@ export default function Home() {
 
             <div className="flex gap-3 shrink-0">
               {/* Store select */}
-              <div className="relative bg-slate-950/80 hover:bg-slate-950 border border-white/10 hover:border-purple-500/40 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[150px] cursor-pointer transition-all">
+              <div className="relative bg-white/90 hover:bg-white border border-purple-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[150px] cursor-pointer transition-all shadow-sm hover:shadow-md">
                 <select
                   value={activeShopFilter}
                   onChange={e => {
@@ -1737,12 +1743,12 @@ export default function Home() {
                     <option key={shopName} value={shopName}>{shopName}</option>
                   ))}
                 </select>
-                <span className="text-xs font-black text-purple-300 truncate pr-4">🏪 {activeShopFilter === 'All' ? 'All Stores' : activeShopFilter}</span>
-                <span className="text-[10px] text-slate-400">▼</span>
+                <span className="text-xs font-black text-purple-700 truncate pr-4">🏪 {activeShopFilter === 'All' ? 'All Stores' : activeShopFilter}</span>
+                <span className="text-[10px] text-purple-400">▼</span>
               </div>
 
               {/* Sort Options */}
-              <div className="relative bg-slate-950/80 hover:bg-slate-950 border border-white/10 hover:border-purple-500/40 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer transition-all">
+              <div className="relative bg-white/90 hover:bg-white border border-slate-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer transition-all shadow-sm hover:shadow-md">
                 <select
                   value={sortOption}
                   onChange={e => setSortOption(e.target.value)}

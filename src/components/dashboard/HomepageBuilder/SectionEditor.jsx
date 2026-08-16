@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Plus, Trash2, Link, Image as ImageIcon, Type, Clock } from 'lucide-react';
+import { Plus, Trash2, Link, Image as ImageIcon, Type, Clock, Upload } from 'lucide-react';
 
 function Field({ label, children }) {
   return (
@@ -38,7 +38,7 @@ function HeroCarouselEditor({ data, onChange }) {
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Slide {i + 1}</span>
             <button onClick={() => removeSlide(i)} className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"><Trash2 size={12} /></button>
           </div>
-          <Field label="Image URL"><Input value={slide.url} onChange={v => updateSlide(i, 'url', v)} placeholder="https://..." /></Field>
+          <ImageUploadField label="Image" value={slide.url} onChange={v => updateSlide(i, 'url', v)} placeholder="https://... অথবা আপলোড করুন" />
           <Field label="Title"><Input value={slide.title} onChange={v => updateSlide(i, 'title', v)} placeholder="ব্যানার টাইটেল" /></Field>
           <Field label="Description"><Input value={slide.description} onChange={v => updateSlide(i, 'description', v)} placeholder="সংক্ষিপ্ত বিবরণ" /></Field>
           <div className="grid grid-cols-2 gap-2">
@@ -194,7 +194,7 @@ function BannerRowEditor({ data, onChange }) {
             <span className="text-[10px] font-black text-slate-400">Banner {i + 1}</span>
             <button onClick={() => remove(i)} className="text-red-400"><Trash2 size={12} /></button>
           </div>
-          <Field label="Image URL"><Input value={b.imageUrl} onChange={v => update(i, 'imageUrl', v)} placeholder="https://..." /></Field>
+          <ImageUploadField label="Image" value={b.imageUrl} onChange={v => update(i, 'imageUrl', v)} />
           <Field label="Link URL"><Input value={b.linkUrl} onChange={v => update(i, 'linkUrl', v)} placeholder="https://..." /></Field>
         </div>
       ))}
@@ -290,6 +290,136 @@ function PriceTierEditor({ data, onChange }) {
   );
 }
 
+// ── Image Upload Field (Firebase Storage + URL fallback) ──
+function ImageUploadField({ label, value, onChange, placeholder }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'homepage-builder');
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      if (res.ok) {
+        const result = await res.json();
+        onChange(result.url || result.downloadURL);
+      } else {
+        alert('আপলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।');
+      }
+    } catch {
+      alert('আপলোড ব্যর্থ হয়েছে।');
+    }
+    setUploading(false);
+  };
+
+  return (
+    <Field label={label}>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Input value={value} onChange={onChange} placeholder={placeholder || 'https://...'} />
+          <label className={`shrink-0 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1.5 ${uploading ? 'bg-slate-100 text-slate-400' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'}`}>
+            <Upload size={12} />
+            {uploading ? 'আপলোড...' : 'আপলোড'}
+            <input type="file" accept="image/*" onChange={handleUpload} className="hidden" disabled={uploading} />
+          </label>
+        </div>
+        {value && (
+          <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+            <img src={value} alt="preview" className="w-full h-full object-cover" />
+          </div>
+        )}
+      </div>
+    </Field>
+  );
+}
+
+// ── Bundle Section Editor ──
+function BundleSectionEditor({ data, onChange }) {
+  const bundles = data.bundles || [];
+  const addBundle = () => onChange({ ...data, bundles: [...bundles, { title: '', price: '', originalPrice: '', imageUrl: '', items: '' }] });
+  const removeBundle = (i) => onChange({ ...data, bundles: bundles.filter((_, idx) => idx !== i) });
+  const updateBundle = (i, key, val) => onChange({ ...data, bundles: bundles.map((b, idx) => idx === i ? { ...b, [key]: val } : b) });
+
+  return (
+    <div className="space-y-4">
+      <Field label="Section Title"><Input value={data.title} onChange={v => onChange({ ...data, title: v })} placeholder="Bundle Deals / কম্বো অফার" /></Field>
+      {bundles.map((b, i) => (
+        <div key={i} className="bg-white rounded-xl border border-slate-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Bundle {i + 1}</span>
+            <button onClick={() => removeBundle(i)} className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"><Trash2 size={12} /></button>
+          </div>
+          <Field label="Bundle Name"><Input value={b.title} onChange={v => updateBundle(i, 'title', v)} placeholder="কম্বো প্যাক — ৩টি পণ্য" /></Field>
+          <ImageUploadField label="Image" value={b.imageUrl} onChange={v => updateBundle(i, 'imageUrl', v)} />
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Bundle Price (৳)"><Input value={b.price} onChange={v => updateBundle(i, 'price', v)} placeholder="999" type="number" /></Field>
+            <Field label="Original Price (৳)"><Input value={b.originalPrice} onChange={v => updateBundle(i, 'originalPrice', v)} placeholder="1499" type="number" /></Field>
+          </div>
+          <Field label="Items (কমা দিয়ে আলাদা করুন)"><Input value={b.items} onChange={v => updateBundle(i, 'items', v)} placeholder="ফেসওয়াশ, টোনার, ময়েশ্চারাইজার" /></Field>
+        </div>
+      ))}
+      <button onClick={addBundle} className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-xs font-black text-slate-400 hover:border-purple-300 hover:text-purple-600 transition-colors flex items-center justify-center gap-2">
+        <Plus size={14} /> Bundle যোগ করুন
+      </button>
+    </div>
+  );
+}
+
+// ── Photo Reviews Editor ──
+function PhotoReviewsEditor({ data, onChange }) {
+  const reviews = data.reviews || [];
+  const addReview = () => onChange({ ...data, reviews: [...reviews, { name: '', text: '', imageUrl: '', rating: 5 }] });
+  const removeReview = (i) => onChange({ ...data, reviews: reviews.filter((_, idx) => idx !== i) });
+  const updateReview = (i, key, val) => onChange({ ...data, reviews: reviews.map((r, idx) => idx === i ? { ...r, [key]: val } : r) });
+
+  return (
+    <div className="space-y-4">
+      <Field label="Section Title"><Input value={data.title} onChange={v => onChange({ ...data, title: v })} placeholder="Customer Reviews / রিভিউ" /></Field>
+      {reviews.map((r, i) => (
+        <div key={i} className="bg-white rounded-xl border border-slate-200 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Review {i + 1}</span>
+            <button onClick={() => removeReview(i)} className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"><Trash2 size={12} /></button>
+          </div>
+          <Field label="Customer Name"><Input value={r.name} onChange={v => updateReview(i, 'name', v)} placeholder="রাহিমা বেগম" /></Field>
+          <Field label="Review Text"><Input value={r.text} onChange={v => updateReview(i, 'text', v)} placeholder="পণ্যটি খুবই ভালো!" /></Field>
+          <ImageUploadField label="Photo" value={r.imageUrl} onChange={v => updateReview(i, 'imageUrl', v)} />
+          <Field label="Rating (1-5)">
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map(star => (
+                <button key={star} onClick={() => updateReview(i, 'rating', star)}
+                  className={`text-lg ${star <= (r.rating || 5) ? 'text-amber-400' : 'text-slate-200'}`}>★</button>
+              ))}
+            </div>
+          </Field>
+        </div>
+      ))}
+      <button onClick={addReview} className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-xs font-black text-slate-400 hover:border-purple-300 hover:text-purple-600 transition-colors flex items-center justify-center gap-2">
+        <Plus size={14} /> Review যোগ করুন
+      </button>
+    </div>
+  );
+}
+
+// ── Popup Banner Editor ──
+function PopupBannerEditor({ data, onChange }) {
+  return (
+    <div className="space-y-3">
+      <Field label="Section Title"><Input value={data.title} onChange={v => onChange({ ...data, title: v })} placeholder="Special Offer Popup" /></Field>
+      <ImageUploadField label="Popup Image" value={data.imageUrl} onChange={v => onChange({ ...data, imageUrl: v })} />
+      <Field label="Link URL"><Input value={data.linkUrl} onChange={v => onChange({ ...data, linkUrl: v })} placeholder="https://..." /></Field>
+      <Field label="Button Text"><Input value={data.buttonText} onChange={v => onChange({ ...data, buttonText: v })} placeholder="অর্ডার করুন" /></Field>
+      <Field label="Show Delay (seconds)">
+        <Input value={data.delay} onChange={v => onChange({ ...data, delay: v })} placeholder="2" type="number" />
+      </Field>
+      <p className="text-[10px] text-slate-400 font-medium">ওয়েবসাইটে ঢোকার কত সেকেন্ড পর popup দেখাবে সেটি সেট করুন</p>
+    </div>
+  );
+}
+
 // ── Main Router ──
 export default function SectionEditor({ section, onChange, theme }) {
   const EDITORS = {
@@ -303,6 +433,9 @@ export default function SectionEditor({ section, onChange, theme }) {
     brand_marquee:     BrandMarqueeEditor,
     instagram_feed:    InstagramFeedEditor,
     price_tier_store:  PriceTierEditor,
+    bundle_section:    BundleSectionEditor,
+    photo_reviews:     PhotoReviewsEditor,
+    popup_banner:      PopupBannerEditor,
   };
 
   const Editor = EDITORS[section.type];

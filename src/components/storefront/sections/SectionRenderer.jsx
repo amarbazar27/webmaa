@@ -11,6 +11,7 @@ import BundleSection from './BundleSection';
 import PhotoReviews from './PhotoReviews';
 import PriceTierStore from './PriceTierStore';
 import InstagramFeed from './InstagramFeed';
+import PopupBanner from './PopupBanner';
 
 export default function SectionRenderer({ section, products, themeVars, callbacks }) {
   if (!section?.enabled) return null;
@@ -29,6 +30,7 @@ export default function SectionRenderer({ section, products, themeVars, callback
     case 'photo_reviews':    return <PhotoReviews {...props} />;
     case 'price_tier_store': return <PriceTierStore {...props} />;
     case 'instagram_feed':   return <InstagramFeed {...props} />;
+    case 'popup_banner':      return <PopupBanner {...props} />;
     default: return null;
   }
 }
