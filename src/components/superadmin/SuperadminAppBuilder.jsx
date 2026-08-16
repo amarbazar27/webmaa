@@ -27,6 +27,7 @@ export default function SuperadminAppBuilder() {
   // Modal State for Play Console Assets
   const [selectedShop, setSelectedShop] = useState(null);
   const [copiedText, setCopiedText] = useState('');
+  const [customVersionCodes, setCustomVersionCodes] = useState({});
 
   // 1. Real-time Firestore Listener for Shops
   useEffect(() => {
@@ -53,8 +54,9 @@ export default function SuperadminAppBuilder() {
       return;
     }
 
+    const customCode = customVersionCodes[shopId];
     setBuildingId(shopId);
-    const loadingToast = toast.loading(`${shopSlug}-এর জন্য অ্যান্ড্রয়েড বিল্ড প্রসেস শুরু হচ্ছে...`);
+    const loadingToast = toast.loading(`${shopSlug}-এর জন্য অ্যান্ড্রয়েড বিল্ড প্রসেস শুরু হচ্ছে (Version Code: ${customCode || 'Auto'})...`);
 
     try {
       const token = await user.getIdToken();
@@ -64,7 +66,10 @@ export default function SuperadminAppBuilder() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ shopId })
+        body: JSON.stringify({ 
+          shopId,
+          versionCode: customCode ? parseInt(customCode, 10) : undefined
+        })
       });
 
       const data = await response.json();
@@ -283,6 +288,25 @@ export default function SuperadminAppBuilder() {
                     <td className="p-4 rounded-r-2xl border-y border-r border-slate-100 text-right">
                       <div className="flex items-center justify-end gap-2.5">
                         
+                        {/* Version Code Input */}
+                        <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl" title="পরবর্তী বিল্ডের জন্য Version Code (প্রয়োজনে পরিবর্তন করতে পারেন)">
+                          <span className="text-[9px] font-black uppercase text-slate-400">Next Code:</span>
+                          <input
+                            type="number"
+                            min="1"
+                            value={
+                              customVersionCodes[shop.id] !== undefined 
+                                ? customVersionCodes[shop.id] 
+                                : Math.max(
+                                    Number(shop.appBuildVersionCode || shop.appConfig?.versionCode || ((slug === 'messerbazar') ? 5 : (slug === 'main' ? 2 : 1))),
+                                    ((slug === 'messerbazar') ? 5 : (slug === 'main' ? 2 : 1))
+                                  ) + 1
+                            }
+                            onChange={(e) => setCustomVersionCodes({ ...customVersionCodes, [shop.id]: e.target.value })}
+                            className="w-12 bg-white border border-slate-200 rounded-lg px-1 py-0.5 text-xs font-mono font-black text-purple-700 text-center outline-none focus:border-purple-600 shadow-sm"
+                          />
+                        </div>
+
                         {/* Play Store submission assets package */}
                         {status === 'completed' && (
                           <button

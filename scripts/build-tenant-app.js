@@ -352,7 +352,7 @@ async function build() {
 
   const firestoreVersion = Number(appConfig.versionCode || 0);
   const fileVersion = Number(appVersions[shopSlug] || 0);
-  const minimumFloor = (shopSlug === 'messerbazar') ? 4 : (shopSlug === 'main' ? 2 : 1);
+  const minimumFloor = (shopSlug === 'messerbazar') ? 5 : (shopSlug === 'main' ? 2 : 1);
   const previousVersionCode = Math.max(firestoreVersion, fileVersion, minimumFloor);
   const targetVersionCode = customVersionCode || (previousVersionCode + 1);
   const targetVersionName = appConfig.versionName || `1.0.${targetVersionCode - 1}`;
