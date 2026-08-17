@@ -48,15 +48,19 @@ export default function HeroCarousel({ data, themeVars }) {
             }`}
           >
             {slide.url && (
-              <>
-
+              <div className="w-full h-full relative flex items-center justify-center bg-slate-950 overflow-hidden">
+                {/* Ambient blurred backdrop */}
+                <div 
+                  className="absolute inset-0 w-full h-full bg-cover bg-center blur-3xl scale-125 opacity-40 select-none pointer-events-none" 
+                  style={{ backgroundImage: `url(${slide.url})` }} 
+                />
                 <img
                   src={slide.url}
                   alt={slide.title || `Slide ${i + 1}`}
                   loading={i === 0 ? 'eager' : 'lazy'}
-                  className="absolute inset-0 w-full h-full object-cover object-top z-10"
+                  className="relative w-full h-full object-contain z-10"
                 />
-              </>
+              </div>
             )}
             {(slide.title || slide.description) && (
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent z-20 flex flex-col justify-end p-5 md:p-12">

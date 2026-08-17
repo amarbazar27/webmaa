@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getShop, getOrders, getProducts, getGlobalConfig } from '@/lib/firestore';
-import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap, Heart, X } from 'lucide-react';
+import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap, Heart, X, Clock, CheckCircle } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -73,26 +73,8 @@ export default function DashboardPage() {
   const totalOrdersCount = shop?.orderCount !== undefined ? shop.orderCount : orders.length;
   const shopUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/shop/${shop?.shopSlug || ''}`;
   
-  const estimatedVisitors = totalOrdersCount > 0 ? (totalOrdersCount * 7) + 32 : 14;
-  const activeNow = totalOrdersCount > 0 ? Math.min(Math.floor(totalOrdersCount / 2) + 1, 8) : 0;
-
-  const getVisitorStats = () => {
-    const now = new Date();
-    const oneDay = 24 * 60 * 60 * 1000;
-    
-    const ordersToday = orders.filter(o => (now - new Date(o.createdAt)) < oneDay).length;
-    const ordersThisWeek = orders.filter(o => (now - new Date(o.createdAt)) < (7 * oneDay)).length;
-    const ordersThisMonth = orders.filter(o => (now - new Date(o.createdAt)) < (30 * oneDay)).length;
-
-    const daily = ordersToday > 0 ? (ordersToday * 8) + 5 : 5 + (shop?.id?.charCodeAt(0) % 7 || 3);
-    const weekly = ordersThisWeek > 0 ? (ordersThisWeek * 8) + 32 : 32 + (shop?.id?.charCodeAt(0) % 25 || 12);
-    const monthly = ordersThisMonth > 0 ? (ordersThisMonth * 7) + 120 : 120 + (shop?.id?.charCodeAt(0) % 95 || 48);
-    const yearly = totalOrdersCount > 0 ? (totalOrdersCount * 7.2) + 320 : 320 + (shop?.id?.charCodeAt(0) % 195 || 96);
-
-    return { daily, weekly, monthly, yearly };
-  };
-
-  const visitorStats = getVisitorStats();
+  const completedOrdersCount = orders.filter(o => o.status === 'completed').length;
+  const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
 
   const getSubscriptionExpiryTime = (expiresAt) => {
     if (!expiresAt) return 0;
@@ -208,16 +190,16 @@ export default function DashboardPage() {
             className="border-l-4 border-l-purple-500 shadow-sm" 
          />
          <Card 
-            title={estimatedVisitors.toLocaleString()} 
-            subtitle="Store Visitors" 
-            icon={Eye} 
-            className="border-l-4 border-l-orange-500 shadow-sm" 
+            title={pendingOrdersCount} 
+            subtitle="Pending Orders" 
+            icon={Clock} 
+            className="border-l-4 border-l-amber-500 shadow-sm" 
          />
          <Card 
-            title={`${((orders.length / estimatedVisitors) * 100).toFixed(1)}%`} 
-            subtitle="Conversion Rate" 
-            icon={Zap} 
-            className="border-l-4 border-l-yellow-500 shadow-sm" 
+            title={completedOrdersCount} 
+            subtitle="Completed Orders" 
+            icon={CheckCircle} 
+            className="border-l-4 border-l-emerald-500 shadow-sm" 
          />
       </div>
 

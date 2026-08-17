@@ -1046,13 +1046,13 @@ section#marketplace .text-white { color: var(--neo-text) !important; }
   animation-play-state: paused;
 }
 
-/* Storefront Section — subtle entrance animation */
+/* Storefront Section — subtle entrance animation (opacity only to preserve fixed overlays) */
 @keyframes sf-section-in {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .sf-section {
-  animation: sf-section-in 0.4s ease forwards;
+  animation: sf-section-in 0.3s ease forwards;
 }
 
 /* Flash sale countdown number flip */

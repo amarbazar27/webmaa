@@ -2466,14 +2466,19 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     : 'absolute inset-0 z-0 opacity-0 scale-95 pointer-events-none'
                 }`}
               >
-                {/* Actual banner — filled to cover container width and height */}
-                <div className="w-full h-full relative">
-
+                {/* Actual banner — filled with ambient backdrop, 100% full view, never cut */}
+                <div className="w-full h-full relative flex items-center justify-center bg-slate-950 overflow-hidden">
+                  {/* Ambient blurred backdrop */}
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-cover bg-center blur-3xl scale-125 opacity-40 select-none pointer-events-none" 
+                    style={{ backgroundImage: `url(${banner.url})` }} 
+                  />
+                  {/* Main Banner Image — Full display, 0% cropped */}
                   <img
                     src={banner.url}
                     loading={i === 0 ? "eager" : "lazy"}
                     alt={banner.title || `Banner ${i+1}`}
-                    className="absolute inset-0 w-full h-full object-cover object-top z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
+                    className="relative w-full h-full object-contain z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
                   />
                 </div>
                 {/* Premium Text Overlay if defined */}
