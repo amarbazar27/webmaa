@@ -1586,23 +1586,8 @@ export default function Home() {
                   <Store size={16} className="text-purple-600" /> মার্চেন্ট অ্যাকাউন্ট খুলুন
                 </Link>
               </div>
-
-              {/* Stats pill row */}
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-200">
-                <div>
-                  <p className="text-xl sm:text-2xl font-black text-slate-900 font-mono tabular-nums">{allShops.length}+</p>
-                  <p className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider">Active Stores</p>
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-black text-purple-700 font-mono tabular-nums">{products.length}+</p>
-                  <p className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider">Products Live</p>
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-black text-emerald-600 font-mono tabular-nums">99.8%</p>
-                  <p className="text-[10px] text-slate-600 font-extrabold uppercase tracking-wider">Satisfaction Rate</p>
-                </div>
-              </div>
             </div>
+
 
             {/* Right — Stats + CTA Card */}
             <div className="lg:col-span-5 relative">

@@ -14,7 +14,7 @@ const DEFAULT_SECTIONS = [
   { id: 'categories', type: 'category_scroller', enabled: true, order: 1, data: { items: [] } },
   { id: 'banner_row', type: 'banner_row', enabled: false, order: 2, data: { banners: [] } },
   { id: 'flash_sale', type: 'flash_sale', enabled: false, order: 3, data: { endTime: null, productIds: [] } },
-  { id: 'product_grid', type: 'product_grid', enabled: true, order: 4, data: { title: 'আমাদের পণ্যসমূহ', tabs: ['trending', 'new', 'bestseller'], maxProducts: 12 } },
+  { id: 'product_grid', type: 'product_grid', enabled: true, order: 4, data: { title: 'আমাদের পণ্যসমূহ', tabs: ['all'], maxProducts: 12 } },
   { id: 'concern_grid', type: 'concern_grid', enabled: false, order: 5, data: { items: [] } },
   { id: 'video_reels', type: 'video_reels', enabled: false, order: 6, data: { urls: [] } },
   { id: 'brand_marquee', type: 'brand_marquee', enabled: false, order: 7, data: { brands: [] } },

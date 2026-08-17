@@ -7,7 +7,7 @@ const DEFAULT_SECTIONS = [
   { id: 'categories', type: 'category_scroller', enabled: true, order: 1, data: { items: [] } },
   { id: 'banner_row', type: 'banner_row', enabled: false, order: 2, data: { banners: [] } },
   { id: 'flash_sale', type: 'flash_sale', enabled: false, order: 3, data: { endTime: null, productIds: [] } },
-  { id: 'product_grid', type: 'product_grid', enabled: true, order: 4, data: { tabs: ['trending', 'new', 'bestseller'], maxProducts: 12 } },
+  { id: 'product_grid', type: 'product_grid', enabled: true, order: 4, data: { title: 'আমাদের পণ্যসমূহ', tabs: ['all'], maxProducts: 12 } },
   { id: 'concern_grid', type: 'concern_grid', enabled: false, order: 5, data: { items: [] } },
   { id: 'video_reels', type: 'video_reels', enabled: false, order: 6, data: { urls: [] } },
   { id: 'brand_marquee', type: 'brand_marquee', enabled: false, order: 7, data: { brands: [] } },
@@ -59,7 +59,25 @@ export async function GET(request) {
       });
     }
 
-    return NextResponse.json(snap.data());
+    const data = snap.data();
+
+    // ── Sanitize: strip sort-only filter tabs from product_grid (backward compat) ──
+    // Shops that had ['trending','new','bestseller'] auto-get reset to ['all']
+    // so filter tabs don't appear without explicit retailer configuration.
+    if (Array.isArray(data.sections)) {
+      const SORT_ONLY_TABS = new Set(['trending', 'new', 'bestseller']);
+      data.sections = data.sections.map(s => {
+        if (s.type === 'product_grid' && Array.isArray(s.data?.tabs)) {
+          const hasMeaningfulTab = s.data.tabs.some(t => !SORT_ONLY_TABS.has(t));
+          if (!hasMeaningfulTab) {
+            return { ...s, data: { ...s.data, tabs: ['all'] } };
+          }
+        }
+        return s;
+      });
+    }
+
+    return NextResponse.json(data);
   } catch (err) {
     console.error('[homepage-config GET]', err);
     return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });
