@@ -275,7 +275,7 @@ export default function DashboardPage() {
       {orders.length > 0 && <AnalyticsCharts orders={orders} />}
 
       {/* AI Insights */}
-      <AiInsightsPanel orders={orders} products={products} shopName={shop?.shopName} />
+      <AiInsightsPanel orders={orders} products={products} shopName={shop?.shopName} activeShopId={activeShopId} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Sales Feed */}

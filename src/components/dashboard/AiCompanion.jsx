@@ -5,7 +5,7 @@ import { getProducts, subscribeOrders } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
 
-export default function AiCompanion({ shop, isMobile }) {
+export default function AiCompanion({ shop, isMobile, compact = false }) {
   const { activeShopId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -136,7 +136,16 @@ export default function AiCompanion({ shop, isMobile }) {
 
   return (
     <>
-      {isMobile ? (
+      {compact ? (
+        /* Compact mode: small icon button beside Sign Out */
+        <button
+          onClick={() => setIsOpen(true)}
+          title="AI Companion"
+          className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-700 text-white flex items-center justify-center shadow-md hover:scale-105 transition-all shrink-0"
+        >
+          <Bot size={16} />
+        </button>
+      ) : isMobile ? (
         <button 
           onClick={() => setIsOpen(true)}
           className="fixed bottom-20 right-4 z-50 w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-full text-white shadow-[0_5px_20px_-5px_rgba(147,51,234,0.6)] hover:scale-105 transition-all flex items-center justify-center lg:hidden"
