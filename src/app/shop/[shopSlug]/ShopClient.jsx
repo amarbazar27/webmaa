@@ -2449,7 +2449,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
-      <div className="sf-hero relative w-full bg-black overflow-hidden border-b border-slate-900/20 group/banner h-[45vh] min-h-[240px] max-h-[520px]">
+      <div className="sf-hero relative w-full bg-black overflow-hidden border-b border-slate-900/20 group/banner h-[50vh] md:h-[60vh] min-h-[260px] max-h-[600px]">
         {normalizedBanners.length > 0 ? (
           <div 
             className="relative w-full h-full overflow-hidden"
@@ -2473,7 +2473,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     src={banner.url}
                     loading={i === 0 ? "eager" : "lazy"}
                     alt={banner.title || `Banner ${i+1}`}
-                    className="absolute inset-0 w-full h-full object-cover z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
+                    className="absolute inset-0 w-full h-full object-cover object-top z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
                   />
                 </div>
                 {/* Premium Text Overlay if defined */}

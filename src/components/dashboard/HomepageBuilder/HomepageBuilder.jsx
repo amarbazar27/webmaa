@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import SectionList from './SectionList';
 import ThemeEditor from './ThemeEditor';
 import HomepagePreview from './HomepagePreview';
-import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartphone, Monitor, Wand2 } from 'lucide-react';
+import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartphone, Monitor, Sparkles } from 'lucide-react';
 
 const DEFAULT_SECTIONS = [
   { id: 'hero', type: 'hero_carousel', enabled: true, order: 0, data: { slides: [] } },
@@ -65,7 +65,7 @@ export default function HomepageBuilder() {
   const [shop, setShop] = useState(null);
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [theme, setTheme] = useState(DEFAULT_THEME);
-  const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'theme'
+  const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'template' | 'theme'
   const [previewMode, setPreviewMode] = useState('mobile'); // 'mobile' | 'desktop'
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -156,6 +156,28 @@ export default function HomepageBuilder() {
     setHasChanges(true);
   };
 
+  const applyTemplate = (key, tpl) => {
+    const newSections = DEFAULT_SECTIONS.map(s => ({
+      ...s,
+      enabled: tpl.enabled.includes(s.id),
+    }));
+    // Add popup_banner if not in DEFAULT
+    if (tpl.enabled.includes('popup_banner') && !newSections.find(s => s.id === 'popup_banner')) {
+      newSections.push({ id: 'popup_banner', type: 'popup_banner', enabled: true, order: 12, data: { imageUrl: '', linkUrl: '', delay: 3 } });
+    }
+    setSections(newSections);
+    setTheme(prev => ({ ...prev, ...tpl.theme }));
+    setHasChanges(true);
+    toast.success(`${tpl.label} টেমপ্লেট সেট হয়েছে!`);
+  };
+
+  const TEMPLATE_GRADIENTS = {
+    grocery: 'from-emerald-500 to-green-600',
+    fashion: 'from-purple-500 to-pink-500',
+    tech: 'from-blue-500 to-cyan-500',
+    beauty: 'from-rose-500 to-pink-600',
+  };
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-color)' }}>
       {/* Top Bar */}
@@ -219,67 +241,95 @@ export default function HomepageBuilder() {
           <div className="flex bg-slate-100 rounded-2xl p-1 m-4 md:m-0 md:mb-4">
             <button
               onClick={() => setActiveTab('sections')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black transition-all ${
                 activeTab === 'sections' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              <LayoutDashboard size={13} /> Sections
+              <LayoutDashboard size={12} /> Sections
+            </button>
+            <button
+              onClick={() => setActiveTab('template')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black transition-all ${
+                activeTab === 'template' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <Sparkles size={12} /> Template
             </button>
             <button
               onClick={() => setActiveTab('theme')}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-black transition-all ${
                 activeTab === 'theme' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              <Palette size={13} /> Theme
+              <Palette size={13} /> Customize
             </button>
           </div>
 
-          {/* Category Template Quick Setup */}
-          <div className="mx-4 md:mx-0 mb-3">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 px-1">⚡ টেমপ্লেট থেকে শুরু করুন</p>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(CATEGORY_TEMPLATES).map(([key, tpl]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    const newSections = DEFAULT_SECTIONS.map(s => ({
-                      ...s,
-                      enabled: tpl.enabled.includes(s.id),
-                    }));
-                    // Add popup_banner if not in DEFAULT
-                    if (tpl.enabled.includes('popup_banner') && !newSections.find(s => s.id === 'popup_banner')) {
-                      newSections.push({ id: 'popup_banner', type: 'popup_banner', enabled: true, order: 12, data: { imageUrl: '', linkUrl: '', delay: 3 } });
-                    }
-                    setSections(newSections);
-                    setTheme(prev => ({ ...prev, ...tpl.theme }));
-                    setHasChanges(true);
-                    toast.success(`${tpl.label} টেমপ্লেট সেট হয়েছে!`);
-                  }}
-                  className={`px-3 py-2.5 rounded-xl text-left transition-all hover:shadow-lg hover:scale-[1.03] active:scale-95 ${
-                    key === 'grocery'
-                      ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white'
-                      : key === 'fashion'
-                      ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
-                      : key === 'tech'
-                      ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
-                      : 'bg-gradient-to-br from-rose-500 to-pink-600 text-white'
-                  }`}
-                >
-                  <span className="text-xs font-black block">{tpl.label}</span>
-                  <span className="text-[9px] font-medium block opacity-80">{tpl.desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Template Tab Content */}
+          {activeTab === 'template' && (
+            <div className="mx-4 md:mx-0 mb-3 space-y-3">
+              {/* Quick Setup Bar */}
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 px-1">⚡ টেমপ্লেট থেকে শুরু করুন</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(CATEGORY_TEMPLATES).map(([key, tpl]) => (
+                    <button
+                      key={key}
+                      onClick={() => applyTemplate(key, tpl)}
+                      className={`px-3 py-2.5 rounded-xl text-left transition-all hover:shadow-lg hover:scale-[1.03] active:scale-95 bg-gradient-to-br ${TEMPLATE_GRADIENTS[key]} text-white`}
+                    >
+                      <span className="text-xs font-black block">{tpl.label}</span>
+                      <span className="text-[9px] font-medium block opacity-80">{tpl.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mx-4 md:mx-0">
-            {activeTab === 'sections' ? (
-              <SectionList sections={sections} onChange={updateSections} theme={theme} shopId={activeShopId} />
-            ) : (
-              <ThemeEditor theme={theme} onChange={updateTheme} shop={shop} />
-            )}
-          </div>
+              {/* Template Cards Grid */}
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2 px-1">📋 টেমপ্লেট বিস্তারিত</p>
+                <div className="grid grid-cols-1 gap-3">
+                  {Object.entries(CATEGORY_TEMPLATES).map(([key, tpl]) => (
+                    <div
+                      key={key}
+                      className={`rounded-2xl bg-gradient-to-br ${TEMPLATE_GRADIENTS[key]} p-4 text-white shadow-md`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black leading-snug">{tpl.label}</p>
+                          <p className="text-[10px] font-medium opacity-80 mt-0.5">{tpl.desc}</p>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {tpl.enabled.map(sId => (
+                              <span key={sId} className="px-1.5 py-0.5 bg-white/20 rounded text-[8px] font-bold uppercase tracking-wide">
+                                {sId.replace(/_/g, ' ')}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => applyTemplate(key, tpl)}
+                          className="shrink-0 mt-0.5 px-3 py-1.5 bg-white/25 hover:bg-white/40 rounded-xl text-[11px] font-black transition-all active:scale-95 backdrop-blur-sm"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sections / Theme Panel */}
+          {activeTab !== 'template' && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mx-4 md:mx-0">
+              {activeTab === 'sections' ? (
+                <SectionList sections={sections} onChange={updateSections} theme={theme} shopId={activeShopId} />
+              ) : (
+                <ThemeEditor theme={theme} onChange={updateTheme} shop={shop} />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right Panel — Live Preview */}

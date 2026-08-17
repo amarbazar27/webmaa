@@ -298,7 +298,7 @@ export default function BroadcastPanel({ shopId }) {
 
       {/* History */}
       <div>
-        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">সাম্প্রতিক ব্রডকাস্ট</h4>
+        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">প্রেরিত বার্তা (Sent History)</h4>
         {loadingHistory ? (
           <div className="py-8 text-center"><Loader2 size={16} className="animate-spin mx-auto text-slate-300" /></div>
         ) : history.length === 0 ? (

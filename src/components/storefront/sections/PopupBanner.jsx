@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 export default function PopupBanner({ data, themeVars }) {
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const delay = parseInt(data?.delay) || 3;
+  const delay = parseInt(data?.delay) || 1;
   const primary = themeVars?.primaryColor || '#6D28D9';
 
   useEffect(() => {
@@ -30,10 +30,10 @@ export default function PopupBanner({ data, themeVars }) {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={dismiss}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      
+
       {/* Modal */}
       <div
-        className="relative max-w-md w-full rounded-3xl overflow-hidden shadow-2xl bg-white"
+        className="relative max-w-xl w-full rounded-3xl overflow-hidden shadow-2xl bg-white"
         onClick={e => e.stopPropagation()}
         style={{ animation: 'sf-section-in 0.4s ease forwards' }}
       >
@@ -51,9 +51,16 @@ export default function PopupBanner({ data, themeVars }) {
             src={data.imageUrl}
             alt={data.title || 'Special Offer'}
             className="w-full object-cover"
-            style={{ maxHeight: '400px' }}
+            style={{ maxHeight: '520px' }}
           />
         </a>
+
+        {/* Title */}
+        {data.title && (
+          <div className="px-5 pt-4 pb-1">
+            <h3 className="text-base font-black text-slate-900 text-center">{data.title}</h3>
+          </div>
+        )}
 
         {/* Button */}
         {data.buttonText && data.linkUrl && (

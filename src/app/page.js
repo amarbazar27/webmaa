@@ -1447,9 +1447,9 @@ export default function Home() {
             </button>
             
             {/* Logo */}
-            <div 
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-              className="flex items-center gap-3 group cursor-pointer select-none"
+            <Link 
+              href="/"
+              className="flex items-center gap-3 group select-none"
             >
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
                 <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-10 object-contain" alt="Logo" />
@@ -1459,17 +1459,12 @@ export default function Home() {
               <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight whitespace-nowrap hidden sm:block">
                 {globalConfig?.brandName || 'BDRetailers'}
               </span>
-            </div>
+            </Link>
           </div>
 
           {/* Center Links (Desktop only) */}
           <nav className="hidden md:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-slate-700">
             <a href="#marketplace" className="text-purple-600 border-b-2 border-purple-600 pb-1 flex items-center gap-1.5"><ShoppingBag size={13} /> Marketplace</a>
-            <a href="#featured-models" className="hover:text-purple-600 transition-colors flex items-center gap-1.5"><Sparkles size={13} /> Featured Models</a>
-            <button onClick={() => { if(user) setIsProfileOpen(true); else handleSmartLogin(); }} className="hover:text-purple-600 transition-colors flex items-center gap-1.5"><Package size={13} /> My Orders</button>
-            {getDashboardHref() && (
-              <Link href={getDashboardHref()} className="hover:text-purple-600 transition-colors flex items-center gap-1.5"><Briefcase size={13} /> Merchant Hub</Link>
-            )}
           </nav>
 
           {/* Right Actions */}
@@ -1601,27 +1596,27 @@ export default function Home() {
                       <Store size={22} className="text-white" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-purple-200">BDRetailers Platform</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-white/80">BDRetailers Platform</p>
                       <p className="text-sm font-black text-white leading-tight">বাংলাদেশের সেরা মার্কেটপ্লেস</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums">{allShops.length}+</p>
-                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
+                      <p className="text-2xl font-black font-mono tabular-nums text-white">{allShops.length}+</p>
+                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
                     </div>
                     <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums">{products.length}+</p>
-                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
+                      <p className="text-2xl font-black font-mono tabular-nums text-white">{products.length}+</p>
+                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
                     </div>
                     <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums">99.8%</p>
-                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">সন্তুষ্টি হার</p>
+                      <p className="text-2xl font-black font-mono tabular-nums text-white">99.8%</p>
+                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">সন্তুষ্টি হার</p>
                     </div>
                     <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums">24/7</p>
-                      <p className="text-[10px] font-bold text-purple-200 uppercase tracking-wider mt-0.5">AI সহায়তা</p>
+                      <p className="text-2xl font-black font-mono tabular-nums text-white">24/7</p>
+                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">AI সহায়তা</p>
                     </div>
                   </div>
 

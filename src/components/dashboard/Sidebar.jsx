@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
-  Settings, LogOut, Store, ShieldCheck, Download, Menu, X, Crown, Lock, Paintbrush, Radio
+  Settings, LogOut, ShieldCheck, Menu, X, Crown, Lock, Paintbrush, Radio
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -13,7 +13,6 @@ import { getShop, subscribeGlobalConfig } from '@/lib/firestore';
 import { checkIsSubscriptionActive } from '@/lib/subscription';
 import clsx from 'clsx';
 import AiCompanion from './AiCompanion';
-import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import NotificationInbox from '@/components/shared/NotificationInbox';
 
 const navItems = [
@@ -37,8 +36,6 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-
   useEffect(() => {
     if (activeShopId) {
       getShop(activeShopId).then(setShop);
@@ -46,15 +43,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     const unsub = subscribeGlobalConfig((config) => {
       setGlobalConfig(config);
     });
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => {
-      unsub();
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
+    return () => { unsub(); };
   }, [activeShopId]);
 
   useEffect(() => {
@@ -68,14 +57,6 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
       manifestLink.href = `/api/manifest?shop=${shop.subdomainSlug}`;
     }
   }, [shop?.subdomainSlug]);
-
-  const handleAppDownload = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') setDeferredPrompt(null);
-    }
-  };
 
   const isStaff = userData?.role === 'staff';
   const isAdmin = userData?.role === 'admin';
@@ -198,36 +179,23 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         )}
       </nav>
 
-      {(!isStaff || isAdmin) && <AiCompanion shop={shop} />}
-
+      {/* Bottom actions */}
       <div className="p-4 mt-auto">
-        {deferredPrompt ? (
-           <button
-              onClick={handleAppDownload}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-3 px-4 rounded-xl shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 mb-4 animate-pulse"
-           >
-              <Download size={16} /> Install App
-           </button>
-        ) : (
-           <div className="w-full bg-slate-50 border border-slate-200 text-slate-400 font-black text-[10px] py-3 px-4 rounded-xl flex items-center justify-center gap-2 mb-4 opacity-60">
-              <ShieldCheck size={14} /> Verified
-           </div>
-        )}
-
-        <div className="flex items-center justify-between px-4 py-3 border-t" style={{borderColor:'var(--border-color)'}}>
-          <span className="text-[10px] font-black uppercase tracking-widest" style={{color:'var(--text-3)'}}>
-            {false ? 'Dark' : ''}
-          </span>
-          <ThemeToggleButton size="sm" showLabel />
+        {/* Sign Out + AI Companion row */}
+        <div className="flex items-center gap-2 px-1">
+          <button
+            onClick={handleLogout}
+            className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-black text-red-500 hover:bg-red-50 transition-all group"
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
+          {(!isStaff || isAdmin) && (
+            <div className="shrink-0">
+              <AiCompanion shop={shop} compact />
+            </div>
+          )}
         </div>
-
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black text-red-500 hover:bg-red-50 w-full transition-all group mx-4 mb-2" style={{width:'calc(100% - 2rem)'}}
-        >
-          <LogOut size={18} />
-          Sign Out
-        </button>
       </div>
     </>
   );
