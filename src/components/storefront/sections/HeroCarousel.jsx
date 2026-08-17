@@ -33,7 +33,7 @@ export default function HeroCarousel({ data, themeVars }) {
   if (!slides.length) return null;
 
   return (
-    <div className="sf-hero relative w-full overflow-hidden bg-slate-100 group/banner" style={{ height: 'clamp(220px, 45vw, 500px)' }}>
+    <div className="sf-hero relative w-full overflow-hidden bg-black group/banner" style={{ height: 'clamp(220px, 45vw, 500px)' }}>
       <div
         className="w-full h-full"
         onTouchStart={onTouchStart}
@@ -49,12 +49,12 @@ export default function HeroCarousel({ data, themeVars }) {
           >
             {slide.url && (
               <>
-                <div className="absolute inset-0 bg-cover bg-center blur-2xl scale-110 opacity-30" style={{ backgroundImage: `url(${slide.url})` }} />
+
                 <img
                   src={slide.url}
                   alt={slide.title || `Slide ${i + 1}`}
                   loading={i === 0 ? 'eager' : 'lazy'}
-                  className="absolute inset-0 w-full h-full object-contain z-10"
+                  className="absolute inset-0 w-full h-full object-cover z-10"
                 />
               </>
             )}

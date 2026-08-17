@@ -23,7 +23,7 @@ const SECTION_META = {
   popup_banner:     { label: 'Popup Banner', icon: Megaphone, color: '#F97316', desc: 'ওয়েবসাইটে ঢুকলেই floating popup' },
 };
 
-export default function SectionList({ sections, onChange, theme }) {
+export default function SectionList({ sections, onChange, theme, shopId }) {
   const [expandedId, setExpandedId] = useState(null);
   const [dragging, setDragging] = useState(null);
   const [dragOver, setDragOver] = useState(null);
@@ -124,6 +124,7 @@ export default function SectionList({ sections, onChange, theme }) {
                   section={section}
                   onChange={(newData) => updateSectionData(section.id, newData)}
                   theme={theme}
+                  shopId={shopId}
                 />
               </div>
             )}

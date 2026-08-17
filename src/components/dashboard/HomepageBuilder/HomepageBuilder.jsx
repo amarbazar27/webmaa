@@ -275,7 +275,7 @@ export default function HomepageBuilder() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mx-4 md:mx-0">
             {activeTab === 'sections' ? (
-              <SectionList sections={sections} onChange={updateSections} theme={theme} />
+              <SectionList sections={sections} onChange={updateSections} theme={theme} shopId={activeShopId} />
             ) : (
               <ThemeEditor theme={theme} onChange={updateTheme} shop={shop} />
             )}

@@ -24,7 +24,7 @@ function Input({ value, onChange, placeholder, type = 'text' }) {
 }
 
 // ── Hero Carousel Editor ──
-function HeroCarouselEditor({ data, onChange }) {
+function HeroCarouselEditor({ data, onChange, shopId }) {
   const slides = data.slides || [];
   const addSlide = () => onChange({ slides: [...slides, { url: '', title: '', description: '', linkUrl: '', buttonText: '' }] });
   const removeSlide = (i) => onChange({ slides: slides.filter((_, idx) => idx !== i) });
@@ -38,7 +38,7 @@ function HeroCarouselEditor({ data, onChange }) {
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Slide {i + 1}</span>
             <button onClick={() => removeSlide(i)} className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"><Trash2 size={12} /></button>
           </div>
-          <ImageUploadField label="Image" value={slide.url} onChange={v => updateSlide(i, 'url', v)} placeholder="https://... অথবা আপলোড করুন" />
+          <ImageUploadField label="Image" value={slide.url} onChange={v => updateSlide(i, 'url', v)} placeholder="https://... অথবা আপলোড করুন" shopId={shopId} />
           <Field label="Title"><Input value={slide.title} onChange={v => updateSlide(i, 'title', v)} placeholder="ব্যানার টাইটেল" /></Field>
           <Field label="Description"><Input value={slide.description} onChange={v => updateSlide(i, 'description', v)} placeholder="সংক্ষিপ্ত বিবরণ" /></Field>
           <div className="grid grid-cols-2 gap-2">
@@ -181,7 +181,7 @@ function ProductGridEditor({ data, onChange }) {
 }
 
 // ── Generic editors for simpler sections ──
-function BannerRowEditor({ data, onChange }) {
+function BannerRowEditor({ data, onChange, shopId }) {
   const banners = data.banners || [];
   const addBanner = () => onChange({ banners: [...banners, { imageUrl: '', linkUrl: '', title: '' }] });
   const remove = (i) => onChange({ banners: banners.filter((_, idx) => idx !== i) });
@@ -194,7 +194,7 @@ function BannerRowEditor({ data, onChange }) {
             <span className="text-[10px] font-black text-slate-400">Banner {i + 1}</span>
             <button onClick={() => remove(i)} className="text-red-400"><Trash2 size={12} /></button>
           </div>
-          <ImageUploadField label="Image" value={b.imageUrl} onChange={v => update(i, 'imageUrl', v)} />
+          <ImageUploadField label="Image" value={b.imageUrl} onChange={v => update(i, 'imageUrl', v)} shopId={shopId} />
           <Field label="Link URL"><Input value={b.linkUrl} onChange={v => update(i, 'linkUrl', v)} placeholder="https://..." /></Field>
         </div>
       ))}
@@ -290,27 +290,30 @@ function PriceTierEditor({ data, onChange }) {
   );
 }
 
-// ── Image Upload Field (Firebase Storage + URL fallback) ──
-function ImageUploadField({ label, value, onChange, placeholder }) {
+// ── Image Upload Field — Cloudinary upload via /api/upload ──
+function ImageUploadField({ label, value, onChange, placeholder, shopId }) {
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setError('');
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', 'homepage-builder');
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (res.ok) {
-        const result = await res.json();
-        onChange(result.url || result.downloadURL);
+      const url = shopId ? `/api/upload?shopId=${shopId}` : '/api/upload';
+      const res = await fetch(url, { method: 'POST', body: formData });
+      const result = await res.json();
+      if (res.ok && result.url) {
+        onChange(result.url);
       } else {
-        alert('আপলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।');
+        setError(result.error || 'আপলোড ব্যর্থ হয়েছে।');
       }
-    } catch {
-      alert('আপলোড ব্যর্থ হয়েছে।');
+    } catch (err) {
+      setError('আপলোড ব্যর্থ হয়েছে।');
     }
     setUploading(false);
   };
@@ -319,15 +322,24 @@ function ImageUploadField({ label, value, onChange, placeholder }) {
     <Field label={label}>
       <div className="space-y-2">
         <div className="flex gap-2">
-          <Input value={value} onChange={onChange} placeholder={placeholder || 'https://...'} />
-          <label className={`shrink-0 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1.5 ${uploading ? 'bg-slate-100 text-slate-400' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'}`}>
+          <input
+            type="text"
+            value={value || ''}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder || 'https://... অথবা ফাইল আপলোড করুন'}
+            className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-purple-400 focus:bg-white transition-all"
+          />
+          <label className={`shrink-0 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1.5 ${
+            uploading ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 active:scale-95'
+          }`}>
             <Upload size={12} />
-            {uploading ? 'আপলোড...' : 'আপলোড'}
-            <input type="file" accept="image/*" onChange={handleUpload} className="hidden" disabled={uploading} />
+            {uploading ? 'হচ্ছে...' : 'আপলোড'}
+            <input type="file" accept="image/*,video/*" onChange={handleUpload} className="hidden" disabled={uploading} />
           </label>
         </div>
+        {error && <p className="text-[10px] text-red-500 font-medium">{error}</p>}
         {value && (
-          <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+          <div className="relative w-full h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
             <img src={value} alt="preview" className="w-full h-full object-cover" />
           </div>
         )}
@@ -337,7 +349,7 @@ function ImageUploadField({ label, value, onChange, placeholder }) {
 }
 
 // ── Bundle Section Editor ──
-function BundleSectionEditor({ data, onChange }) {
+function BundleSectionEditor({ data, onChange, shopId }) {
   const bundles = data.bundles || [];
   const addBundle = () => onChange({ ...data, bundles: [...bundles, { title: '', price: '', originalPrice: '', imageUrl: '', items: '' }] });
   const removeBundle = (i) => onChange({ ...data, bundles: bundles.filter((_, idx) => idx !== i) });
@@ -353,7 +365,7 @@ function BundleSectionEditor({ data, onChange }) {
             <button onClick={() => removeBundle(i)} className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"><Trash2 size={12} /></button>
           </div>
           <Field label="Bundle Name"><Input value={b.title} onChange={v => updateBundle(i, 'title', v)} placeholder="কম্বো প্যাক — ৩টি পণ্য" /></Field>
-          <ImageUploadField label="Image" value={b.imageUrl} onChange={v => updateBundle(i, 'imageUrl', v)} />
+          <ImageUploadField label="Image" value={b.imageUrl} onChange={v => updateBundle(i, 'imageUrl', v)} shopId={shopId} />
           <div className="grid grid-cols-2 gap-2">
             <Field label="Bundle Price (৳)"><Input value={b.price} onChange={v => updateBundle(i, 'price', v)} placeholder="999" type="number" /></Field>
             <Field label="Original Price (৳)"><Input value={b.originalPrice} onChange={v => updateBundle(i, 'originalPrice', v)} placeholder="1499" type="number" /></Field>
@@ -369,7 +381,7 @@ function BundleSectionEditor({ data, onChange }) {
 }
 
 // ── Photo Reviews Editor ──
-function PhotoReviewsEditor({ data, onChange }) {
+function PhotoReviewsEditor({ data, onChange, shopId }) {
   const reviews = data.reviews || [];
   const addReview = () => onChange({ ...data, reviews: [...reviews, { name: '', text: '', imageUrl: '', rating: 5 }] });
   const removeReview = (i) => onChange({ ...data, reviews: reviews.filter((_, idx) => idx !== i) });
@@ -386,7 +398,7 @@ function PhotoReviewsEditor({ data, onChange }) {
           </div>
           <Field label="Customer Name"><Input value={r.name} onChange={v => updateReview(i, 'name', v)} placeholder="রাহিমা বেগম" /></Field>
           <Field label="Review Text"><Input value={r.text} onChange={v => updateReview(i, 'text', v)} placeholder="পণ্যটি খুবই ভালো!" /></Field>
-          <ImageUploadField label="Photo" value={r.imageUrl} onChange={v => updateReview(i, 'imageUrl', v)} />
+          <ImageUploadField label="Photo" value={r.imageUrl} onChange={v => updateReview(i, 'imageUrl', v)} shopId={shopId} />
           <Field label="Rating (1-5)">
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map(star => (
@@ -405,11 +417,11 @@ function PhotoReviewsEditor({ data, onChange }) {
 }
 
 // ── Popup Banner Editor ──
-function PopupBannerEditor({ data, onChange }) {
+function PopupBannerEditor({ data, onChange, shopId }) {
   return (
     <div className="space-y-3">
       <Field label="Section Title"><Input value={data.title} onChange={v => onChange({ ...data, title: v })} placeholder="Special Offer Popup" /></Field>
-      <ImageUploadField label="Popup Image" value={data.imageUrl} onChange={v => onChange({ ...data, imageUrl: v })} />
+      <ImageUploadField label="Popup Image" value={data.imageUrl} onChange={v => onChange({ ...data, imageUrl: v })} shopId={shopId} />
       <Field label="Link URL"><Input value={data.linkUrl} onChange={v => onChange({ ...data, linkUrl: v })} placeholder="https://..." /></Field>
       <Field label="Button Text"><Input value={data.buttonText} onChange={v => onChange({ ...data, buttonText: v })} placeholder="অর্ডার করুন" /></Field>
       <Field label="Show Delay (seconds)">
@@ -421,7 +433,7 @@ function PopupBannerEditor({ data, onChange }) {
 }
 
 // ── Main Router ──
-export default function SectionEditor({ section, onChange, theme }) {
+export default function SectionEditor({ section, onChange, theme, shopId }) {
   const EDITORS = {
     hero_carousel:     HeroCarouselEditor,
     category_scroller: CategoryScrollerEditor,
@@ -443,7 +455,7 @@ export default function SectionEditor({ section, onChange, theme }) {
   return (
     <div className="p-4">
       {Editor ? (
-        <Editor data={section.data || {}} onChange={onChange} theme={theme} />
+        <Editor data={section.data || {}} onChange={onChange} theme={theme} shopId={shopId} />
       ) : (
         <p className="text-xs text-slate-400 font-medium text-center py-4">এই section-এর জন্য editor এখনও তৈরি হয়নি।</p>
       )}
