@@ -2449,7 +2449,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
-      <div className="sf-hero relative w-full bg-black overflow-hidden border-b border-slate-900/20 group/banner h-[50vh] md:h-[60vh] min-h-[260px] max-h-[600px]">
+      <div className={`sf-hero relative w-full overflow-hidden border-b border-slate-900/20 group/banner ${normalizedBanners.length > 0 ? 'bg-black h-[50vh] md:h-[60vh] min-h-[260px] max-h-[600px]' : 'bg-transparent'}`}>
         {normalizedBanners.length > 0 ? (
           <div 
             className="relative w-full h-full overflow-hidden"
