@@ -66,6 +66,7 @@ export default function SuperAdminPage() {
     uddoktapayApiKey: '',
     uddoktapayCommissionPercent: 0,
     subscriptionsEnabled: false,
+    subStarterPercent: 5,
     subPriceMonthly: 500,
     subPriceQuarterly: 1350,
     subPriceYearly: 5000,
@@ -264,6 +265,7 @@ export default function SuperAdminPage() {
         uddoktapayApiKey: configData?.uddoktapayApiKey || '',
         uddoktapayCommissionPercent: configData?.uddoktapayCommissionPercent || 0,
         subscriptionsEnabled: configData?.subscriptionsEnabled ?? false,
+        subStarterPercent: configData?.subStarterPercent ?? 5,
         subPriceMonthly: configData?.subPriceMonthly || 500,
         subPriceQuarterly: configData?.subPriceQuarterly || 1350,
         subPriceYearly: configData?.subPriceYearly || 5000,
@@ -2605,7 +2607,17 @@ export default function SuperAdminPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest pl-1">স্টার্টার বিক্রয় শেয়ার (%) *</label>
+                    <Input
+                      type="number"
+                      placeholder="যেমন: ৫"
+                      value={globalConfig.subStarterPercent ?? 5}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subStarterPercent: Number(e.target.value) })}
+                    />
+                    <p className="text-[10px] text-slate-400 font-bold mt-1">০৳ স্টার্টার প্ল্যানে প্রতি বিক্রিতে শতকরা শেয়ার</p>
+                  </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">মাসিক প্যাকেজ ফি (৳) *</label>
                     <Input

@@ -32,7 +32,7 @@ export async function POST(req) {
       }
     }
 
-    if (!['monthly', 'quarterly', 'yearly'].includes(packageType)) {
+    if (!['starter', 'monthly', 'quarterly', 'yearly'].includes(packageType)) {
       return NextResponse.json({ error: 'Invalid package type' }, { status: 400 });
     }
 
@@ -49,6 +49,23 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
     }
     const shopData = shopSnap.data();
+
+    // 1.1 Handle Starter Plan (Revenue Share) instant free activation
+    if (packageType === 'starter') {
+      await adminDb.collection('shops').doc(shopId).update({
+        subscriptionStatus: 'active',
+        subscriptionPackage: 'starter',
+        subscriptionExpiresAt: null,
+        subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
+        subscriptionPendingPackage: admin.firestore.FieldValue.delete()
+      });
+
+      return NextResponse.json({ 
+        success: true, 
+        isFree: true, 
+        message: 'অভিনন্দন! আপনার স্টার্টার রেভিনিউ শেয়ার প্ল্যান সফলভাবে সক্রিয় হয়েছে! 🎉' 
+      });
+    }
 
     // Fetch owner user profile to get real email & phone number
     const userSnap = await adminDb.collection('users').doc(shopId).get();
