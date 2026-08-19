@@ -8,6 +8,13 @@
     "start": "next start",
     "lint": "eslint"
   },
+  "allowScripts": {
+    "@firebase/util": true,
+    "core-js": true,
+    "protobufjs": true,
+    "sharp": true,
+    "unrs-resolver": true
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "bd-geodata": "^1.0.7",
