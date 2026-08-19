@@ -32,8 +32,8 @@ export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
     if (shopTheme === 'dark' || shopTheme === 'light') return shopTheme;
     const systemSaved = localStorage.getItem('wm_system_theme');
     if (systemSaved === 'dark' || systemSaved === 'light') return systemSaved;
-    // Respect OS preference as fallback
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Always default to light mode unless explicitly enabled by user
+    return 'light';
   };
 
   const [theme, setThemeState] = useState('light');

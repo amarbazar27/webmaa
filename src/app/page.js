@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
+import PricingSection from '@/components/home/PricingSection';
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
@@ -1411,17 +1412,17 @@ export default function Home() {
       {/* ── Sleek Floating Glass Navigation Header ── */}
       <header className="sticky top-0 z-50 px-4 py-3 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
-          {/* Left Area: Mobile Login/Workspace, Stores Drawer, and Brand Logo */}
-          <div className="flex items-center gap-3">
-            <div className="md:hidden">
+          {/* Left Area: Mobile Login/Workspace, Mobile Pricing, Stores Drawer, and Brand Logo */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="md:hidden flex items-center gap-1.5">
               {user ? (
                 <div>
                   {getDashboardHref() ? (
-                    <Link href={getDashboardHref()} className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all flex items-center gap-1.5 shadow-md">
+                    <Link href={getDashboardHref()} className="px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all flex items-center gap-1 shadow-md">
                       <Briefcase size={12} /> Workspace
                     </Link>
                   ) : (
-                    <button onClick={() => setIsProfileOpen(true)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-purple-700 font-extrabold text-[11px] rounded-xl active:scale-95 transition-all">
+                    <button onClick={() => setIsProfileOpen(true)} className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-purple-700 font-extrabold text-[11px] rounded-xl active:scale-95 transition-all">
                       Profile
                     </button>
                   )}
@@ -1430,17 +1431,25 @@ export default function Home() {
                 <button 
                   onClick={handleSmartLogin} 
                   disabled={loggingIn} 
-                  className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md"
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md"
                 >
                   {loggingIn ? "..." : "Login"}
                 </button>
               )}
+
+              {/* Mobile Pricing Button */}
+              <a 
+                href="#pricing" 
+                className="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center gap-1 shrink-0"
+              >
+                <Sparkles size={11} /> প্যাকেজ
+              </a>
             </div>
 
             {/* Stores Drawer Trigger */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="px-3.5 py-2 bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-xs font-black text-slate-800 hover:text-purple-700 flex items-center gap-2 rounded-xl active:scale-95 transition-all cursor-pointer shadow-xs shrink-0"
+              className="px-3 py-2 bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-xs font-black text-slate-800 hover:text-purple-700 flex items-center gap-1.5 rounded-xl active:scale-95 transition-all cursor-pointer shadow-xs shrink-0"
             >
               <Menu size={15} className="text-purple-600 shrink-0" />
               <span className="hidden xs:inline font-mono tracking-wider">STORES</span>
@@ -1463,8 +1472,13 @@ export default function Home() {
           </div>
 
           {/* Center Links (Desktop only) */}
-          <nav className="hidden md:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-slate-700">
-            <a href="#marketplace" className="text-purple-600 border-b-2 border-purple-600 pb-1 flex items-center gap-1.5"><ShoppingBag size={13} /> Marketplace</a>
+          <nav className="hidden md:flex items-center gap-6 font-extrabold text-xs uppercase tracking-wider text-slate-700">
+            <a href="#marketplace" className="text-purple-600 hover:text-purple-700 pb-1 flex items-center gap-1.5 transition-colors">
+              <ShoppingBag size={13} /> Marketplace
+            </a>
+            <a href="#pricing" className="text-slate-700 hover:text-purple-600 pb-1 flex items-center gap-1.5 transition-colors">
+              <Sparkles size={13} className="text-amber-500" /> প্যাকেজ ও মূল্য (Pricing)
+            </a>
           </nav>
 
           {/* Right Actions */}
@@ -1567,18 +1581,24 @@ export default function Home() {
                 গ্যারান্টেড দ্রুত ডেলিভারি ও রিয়েল-টাইম এআই অ্যাসিস্ট্যান্ট সহযোগে কেনাকাটা করুন।
               </p>
 
-              <div className="flex flex-wrap gap-4 pt-2">
+              <div className="flex flex-wrap gap-3 sm:gap-4 pt-2">
                 <a 
                   href="#marketplace" 
-                  className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-purple-500/20 hover:-translate-y-0.5 flex items-center gap-2"
+                  className="px-5 sm:px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-purple-500/20 hover:-translate-y-0.5 flex items-center gap-2"
                 >
                   <ShoppingBag size={16} /> পণ্যসমূহ এক্সপ্লোর করুন
                 </a>
+                <a 
+                  href="#pricing" 
+                  className="px-5 sm:px-6 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 flex items-center gap-2"
+                >
+                  <Sparkles size={16} /> প্যাকেজ ও মূল্য (০৳ শুরু)
+                </a>
                 <Link 
                   href="/become-retailer" 
-                  className="px-6 py-3.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-black text-xs uppercase tracking-wider rounded-2xl transition-all hover:-translate-y-0.5 flex items-center gap-2 shadow-xs"
+                  className="px-5 sm:px-6 py-3.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-black text-xs uppercase tracking-wider rounded-2xl transition-all hover:-translate-y-0.5 flex items-center gap-2 shadow-xs"
                 >
-                  <Store size={16} className="text-purple-600" /> মার্চেন্ট অ্যাকাউন্ট খুলুন
+                  <Store size={16} className="text-purple-600" /> মার্চেন্ট অ্যাকাউন্ট
                 </Link>
               </div>
             </div>
@@ -2318,9 +2338,11 @@ export default function Home() {
         </section>
       )}
 
-      
+      {/* ── Public 4-Column Pricing & Subscription Section ── */}
+      <PricingSection globalConfig={globalConfig} />
+
       {/* ── Bottom Navigation Bar (Mobile Only) ── */}
-      <nav className="neo-raised fixed bottom-0 w-full z-50 lg:hidden flex justify-around items-center h-16 px-4 border-t border-black/5 bg-[#e8eaf0] shadow-[0_-6px_12px_rgba(0,0,0,0.08)]">
+      <nav className="neo-raised fixed bottom-0 w-full z-50 lg:hidden flex justify-around items-center h-16 px-2 border-t border-black/5 bg-[#e8eaf0] shadow-[0_-6px_12px_rgba(0,0,0,0.08)]">
         <button 
           onClick={() => {
             setActiveShopFilter('All');
@@ -2328,20 +2350,29 @@ export default function Home() {
             setActiveSubcategory('');
             document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="flex flex-col items-center justify-center text-indigo-600 rounded-full p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-indigo-600 rounded-full p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
         >
-          <ShoppingBag size={18} />
-          <span className="text-[9px] font-semibold mt-1">Marketplace</span>
+          <ShoppingBag size={17} />
+          <span className="text-[9px] font-semibold mt-0.5">Marketplace</span>
+        </button>
+        <button 
+          onClick={() => {
+            document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="flex flex-col items-center justify-center text-amber-600 hover:text-amber-700 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
+        >
+          <Sparkles size={17} className="text-amber-500" />
+          <span className="text-[9px] font-black mt-0.5 text-amber-700">প্যাকেজ</span>
         </button>
         <button 
           onClick={() => {
             document.getElementById('search-input-field')?.focus();
             document.getElementById('search-input-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }}
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
         >
-          <Search size={18} />
-          <span className="text-[9px] font-semibold mt-1">Search</span>
+          <Search size={17} />
+          <span className="text-[9px] font-semibold mt-0.5">Search</span>
         </button>
         <button 
           onClick={() => {
@@ -2351,10 +2382,10 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
         >
-          <Package size={18} />
-          <span className="text-[9px] font-semibold mt-1">My Orders</span>
+          <Package size={17} />
+          <span className="text-[9px] font-semibold mt-0.5">My Orders</span>
         </button>
         <button 
           onClick={() => {
@@ -2369,10 +2400,10 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-2 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
         >
-          <User size={18} />
-          <span className="text-[9px] font-semibold mt-1">
+          <User size={17} />
+          <span className="text-[9px] font-semibold mt-0.5">
             {user ? 'Workspace' : 'Login'}
           </span>
         </button>
@@ -2383,13 +2414,26 @@ export default function Home() {
         <div className={`absolute top-0 left-0 h-full w-72 bg-slate-900 border-r border-white/10 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isStoresMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="p-5 border-b border-white/10 flex items-center justify-between bg-slate-950/50">
             <h2 className="text-sm font-black text-white flex items-center gap-2">
-              <Store size={16} className="text-purple-400" /> আমাদের স্টোরসমূহ (Stores)
+              <Store size={16} className="text-purple-400" /> মেনু ও স্টোরসমূহ
             </h2>
             <button onClick={() => setIsStoresMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer">
               <X size={16} strokeWidth={3} />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+            {/* Pricing Section Link inside Stores Drawer */}
+            <a
+              href="#pricing"
+              onClick={() => setIsStoresMenuOpen(false)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 rounded-xl text-amber-300 font-black text-xs transition-all shadow-sm mb-3"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-amber-400" />
+                <span>প্যাকেজ ও মূল্য (Pricing Plans)</span>
+              </div>
+              <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full">০৳ শুরু</span>
+            </a>
+
             <button
               onClick={() => {
                 setActiveShopFilter('All');

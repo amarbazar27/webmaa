@@ -118,9 +118,24 @@ export default function BecomeRetailerPage() {
   const [existingStatus, setExistingStatus] = useState(null); // 'pending' | 'approved' | 'denied' | null
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // Check if user has already submitted a request
+  // Check if user has already submitted a request or is already a retailer
+  const [selectedPlanParam, setSelectedPlanParam] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const plan = urlParams.get('plan');
+      if (plan) setSelectedPlanParam(plan);
+    }
+  }, []);
+
   useEffect(() => {
     if (user) {
+      if (userData?.role === 'retailer' || userData?.role === 'superadmin') {
+        router.push(selectedPlanParam ? `/dashboard/billing?package=${selectedPlanParam}` : '/dashboard/billing');
+        return;
+      }
+
       setCheckingExisting(true);
       getRetailerRequests()
         .then(reqs => {
@@ -144,7 +159,7 @@ export default function BecomeRetailerPage() {
     } else {
       setExistingStatus(null);
     }
-  }, [user]);
+  }, [user, userData, selectedPlanParam]);
 
   const handleGoogleLogin = () => {
     router.push('/login');
@@ -303,6 +318,12 @@ export default function BecomeRetailerPage() {
                 <p className="text-xs text-slate-600 mt-3 font-bold leading-relaxed">
                   BDRetailers প্ল্যাটফর্মে আপনার দোকান লিস্টিং করে রিটেইলার হিসেবে পণ্য বিক্রি শুরু করুন।
                 </p>
+                {selectedPlanParam && (
+                  <div className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-full text-xs font-black">
+                    <Sparkles size={13} className="text-amber-600" />
+                    প্যাকেজ: <span className="uppercase text-amber-700 font-extrabold">{selectedPlanParam} Plan</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6">
