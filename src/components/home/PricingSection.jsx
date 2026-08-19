@@ -114,12 +114,13 @@ export default function PricingSection({ globalConfig = null }) {
               </div>
 
               {/* Persuasive copy */}
-              <div className="p-3.5 bg-amber-50/80 rounded-2xl border border-amber-100 text-xs text-amber-950 font-medium leading-relaxed space-y-1.5">
-                <p className="font-black text-amber-900 flex items-center gap-1.5">
-                  💡 আপনি কি ব্যবসায় নতুন? মাসিক সাবস্ক্রিপশন কিনতে ভয় পাচ্ছেন?
-                </p>
-                <p className="text-slate-600 font-semibold text-[11px]">
-                  কোনো অগ্রিম বা ফিক্সড ফি ছাড়াই আজই আপনার ই-কমার্স ব্যবসা শুরু করুন। শুধুমাত্র পণ্য বিক্রি হলেই সামান্য {starterPercent}% শেয়ার প্রযোজ্য হবে। পরবর্তীতে যেকোনো সময় ফিক্সড প্ল্যানে যেতে পারবেন।
+              <div className="p-3.5 bg-amber-50/80 rounded-2xl border border-amber-100 text-xs text-amber-950 font-medium leading-relaxed space-y-2">
+                <div className="font-black text-amber-900 text-[11.5px] space-y-0.5">
+                  <p>ব্যবসা একদম নতুন?</p>
+                  <p>মাসিক সাবস্ক্রিপশন নিতে এখনো দ্বিধায় আছেন?</p>
+                </div>
+                <p className="text-slate-700 font-semibold text-[11px] leading-normal">
+                  তাহলে শুরু করুন ঝুঁকি কমিয়ে! মাসিক ফি নয়—<span className="text-amber-800 font-black">আপনার বিক্রয়ের মাত্র {starterPercent}% শেয়ার করেই</span> ব্যবসা শুরু করুন। ব্যবসা যখন একটু দাঁড়িয়ে যাবে, তখন যেকোনো সময় নিয়মিত সাবস্ক্রিপশন প্ল্যানে চলে যেতে পারবেন।
                 </p>
               </div>
 
@@ -154,7 +155,7 @@ export default function PricingSection({ globalConfig = null }) {
                 }}
                 className="w-full py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
-                <span>🚀 বিনামূল্যে স্টোর চালু করুন</span>
+                <span>🚀 শেয়ার করে শুরু করুন</span>
                 <ArrowRight size={14} />
               </button>
             </div>

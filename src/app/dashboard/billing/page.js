@@ -393,12 +393,13 @@ export default function BillingPage() {
                   </div>
 
                   {/* Persuasive copy */}
-                  <div className="p-3 bg-amber-50/70 rounded-2xl border border-amber-100/90 text-[11px] text-amber-950 font-medium leading-relaxed space-y-1">
-                    <p className="font-black text-amber-900">
-                      💡 আপনি কি ব্যবসায় একদম নতুন? মাসিক সাবস্ক্রিপশন কিনতে ভয় পাচ্ছেন?
-                    </p>
+                  <div className="p-3 bg-amber-50/70 rounded-2xl border border-amber-100/90 text-[11px] text-amber-950 font-medium leading-relaxed space-y-1.5">
+                    <div className="font-black text-amber-900 text-[11px] space-y-0.5">
+                      <p>ব্যবসা একদম নতুন?</p>
+                      <p>মাসিক সাবস্ক্রিপশন নিতে এখনো দ্বিধায় আছেন?</p>
+                    </div>
                     <p className="text-slate-600 font-semibold text-[10.5px]">
-                      তাহলে আপনার জন্যই এই স্পেশাল সুযোগ! কোনো অগ্রিম বা ফিক্সড ফি ছাড়াই নিজের অনলাইন ব্যবসা শুরু করুন। শুধুমাত্র পণ্য বিক্রি হলেই সামান্য {starterPercent}% শেয়ার প্রযোজ্য হবে। পরবর্তীতে যখন ইচ্ছা রেগুলার সাবস্ক্রিপশনে আসতে পারবেন।
+                      তাহলে শুরু করুন ঝুঁকি কমিয়ে! মাসিক ফি নয়—<span className="text-amber-800 font-black">আপনার বিক্রয়ের মাত্র {starterPercent}% শেয়ার করেই</span> ব্যবসা শুরু করুন। ব্যবসা যখন একটু দাঁড়িয়ে যাবে, তখন যেকোনো সময় নিয়মিত সাবস্ক্রিপশন প্ল্যানে চলে যেতে পারবেন।
                     </p>
                   </div>
 
@@ -838,66 +839,6 @@ export default function BillingPage() {
               </div>
             </>
           )}
-        </form>
-      )}
-    </div>
-  );
-}
-    <p className="text-sm font-black text-purple-700 font-mono">{globalConfig.bkashNumber}</p>
-                    </div>
-                  )}
-                  {globalConfig?.nagadNumber && (
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl text-center space-y-1.5 shadow-sm">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">নগদ (Send Money)</p>
-                      <p className="text-sm font-black text-orange-600 font-mono">{globalConfig.nagadNumber}</p>
-                    </div>
-                  )}
-                  {globalConfig?.rocketNumber && (
-                    <div className="p-4 bg-white border border-slate-200 rounded-2xl text-center space-y-1.5 shadow-sm">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">রকেট (Send Money)</p>
-                      <p className="text-sm font-black text-blue-700 font-mono">{globalConfig.rocketNumber}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-200">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">আপনার প্রেরক নম্বর *</label>
-                    <Input
-                      type="text"
-                      placeholder="যে নম্বর থেকে টাকা পাঠিয়েছেন..."
-                      value={senderNumber}
-                      onChange={(e) => setSenderNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                      className="bg-white border border-slate-200 rounded-xl"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Transaction ID (TxnID) *</label>
-                    <Input
-                      type="text"
-                      placeholder="পেমেন্ট স্লিপের ট্রানজেকশন আইডি..."
-                      value={transactionId}
-                      onChange={(e) => setTransactionId(e.target.value)}
-                      className="bg-white border border-slate-200 rounded-xl"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-purple-500/10 transition-all cursor-pointer"
-            >
-              {submitting ? (
-                <><RefreshCw className="animate-spin" size={16} /> অনুরোধ প্রসেস হচ্ছে...</>
-              ) : (
-                <>নিশ্চিত করুন ({getFinalAmount() === 0 ? 'Activate for Free' : `Pay ৳${getFinalAmount()}`})</>
-              )}
-            </Button>
-          </div>
         </form>
       )}
     </div>

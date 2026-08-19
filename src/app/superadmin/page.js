@@ -621,7 +621,14 @@ export default function SuperAdminPage() {
     e.preventDefault();
     setSavingConfig(true);
     try {
-      await updateGlobalConfig(globalConfig);
+      const sanitizedConfig = {
+        ...globalConfig,
+        subStarterPercent: Math.max(0, Math.min(50, Number(globalConfig?.subStarterPercent) >= 0 ? Number(globalConfig.subStarterPercent) : 5)),
+        subPriceMonthly: Math.max(0, Number(globalConfig?.subPriceMonthly) || 0),
+        subPriceQuarterly: Math.max(0, Number(globalConfig?.subPriceQuarterly) || 0),
+        subPriceYearly: Math.max(0, Number(globalConfig?.subPriceYearly) || 0),
+      };
+      await updateGlobalConfig(sanitizedConfig);
       toast.success('Global Configuration updated!');
     } catch (err) {
       toast.error('Failed to update global config');
@@ -2612,9 +2619,12 @@ export default function SuperAdminPage() {
                     <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest pl-1">স্টার্টার বিক্রয় শেয়ার (%) *</label>
                     <Input
                       type="number"
+                      min={0}
+                      max={50}
+                      step="any"
                       placeholder="যেমন: ৫"
                       value={globalConfig.subStarterPercent ?? 5}
-                      onChange={e => setGlobalConfig({ ...globalConfig, subStarterPercent: Number(e.target.value) })}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subStarterPercent: Math.max(0, Math.min(50, Number(e.target.value))) })}
                     />
                     <p className="text-[10px] text-slate-400 font-bold mt-1">০৳ স্টার্টার প্ল্যানে প্রতি বিক্রিতে শতকরা শেয়ার</p>
                   </div>

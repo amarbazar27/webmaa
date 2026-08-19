@@ -81,9 +81,8 @@ export async function POST(request) {
     if (!isProductionBuild) {
       // Local development context: spawn child process runner in background
       console.log('[Build App] Triggering LOCAL build process in background...');
-      const { spawn } = require('child_process');
-      // Obfuscate path string to prevent Turbopack static tracing during build
-      const scriptPath = 'scr' + 'ipts/' + 'build-te' + 'nant-ap' + 'p.js';
+      const cp = eval("require('child_process')");
+      const scriptPath = 'scripts/build-tenant-app.js';
 
       const runnerArgs = [scriptPath, shopSlug];
       if (versionCode) {
@@ -91,7 +90,7 @@ export async function POST(request) {
       }
 
       // Spawns detached node build script
-      const child = spawn('node', runnerArgs, {
+      const child = cp.spawn(process.execPath || 'node', runnerArgs, {
         detached: true,
         stdio: 'ignore'
       });
