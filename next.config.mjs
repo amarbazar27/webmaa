@@ -19,6 +19,19 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
 
+  // ⚡ Server external packages for Turbopack & Next 16
+  serverExternalPackages: [
+    'firebase-admin',
+    'nodemailer',
+    'bcryptjs',
+    'express',
+    'helmet',
+    'jspdf',
+    'html2canvas',
+    'sharp',
+    'protobufjs'
+  ],
+
   // ⚡ Performance - Bundle Optimization (tree-shaking heavy packages)
   experimental: {
     optimizePackageImports: [
