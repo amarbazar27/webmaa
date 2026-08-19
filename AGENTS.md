@@ -12,5 +12,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Git Deployment & Vercel Push Rules
 - ALWAYS perform a `git add .`, `git commit -m "..."`, and `git push` after completing any update, fix, or feature request from the user.
 - This ensures Vercel automatically deploys the latest version for live viewing without needing user intervention.
+- ALWAYS place the successful GitHub push commit hash number (e.g. `Commit Hash: ...`) at the VERY FIRST LINE of the response before any other text or description.
 
 
