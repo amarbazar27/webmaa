@@ -66,7 +66,7 @@ export default function SuperAdminPage() {
     uddoktapayApiKey: '',
     uddoktapayCommissionPercent: 0,
     subscriptionsEnabled: false,
-    subStarterPercent: 5,
+    subStarterPercent: 2.5,
     subPriceMonthly: 500,
     subPriceQuarterly: 1350,
     subPriceYearly: 5000,
@@ -105,6 +105,9 @@ export default function SuperAdminPage() {
   const [historyModal, setHistoryModal] = useState({ isOpen: false, shop: null });
   const [sharedHistoryModal, setSharedHistoryModal] = useState({ isOpen: false, shop: null });
   const [sharedSearchQuery, setSharedSearchQuery] = useState('');
+  const [sharedNoticeTarget, setSharedNoticeTarget] = useState('all');
+  const [sharedNoticeText, setSharedNoticeText] = useState('');
+  const [sendingNotice, setSendingNotice] = useState(false);
 
   const { theme, setSystemDefault, systemDefault } = useTheme();
   const { loginAsRetailer, user } = useAuth();
@@ -182,7 +185,7 @@ export default function SuperAdminPage() {
 
 
   // ── Helper: Calculate time-based sales metrics from orders ─────────
-  const calculateSalesMetrics = (orders = [], percent = 5) => {
+  const calculateSalesMetrics = (orders = [], percent = 2.5) => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const startOfWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).getTime();
@@ -230,7 +233,8 @@ export default function SuperAdminPage() {
       }
     });
 
-    const rate = (Number(percent) || 5) / 100;
+    const numPercent = Number(percent);
+    const rate = (!isNaN(numPercent) && numPercent >= 0) ? (numPercent / 100) : 0.025;
     return {
       today: { count: todayCount, revenue: todayRevenue, commission: Math.round(todayRevenue * rate) },
       week: { count: weekCount, revenue: weekRevenue, commission: Math.round(weekRevenue * rate) },
@@ -262,7 +266,9 @@ export default function SuperAdminPage() {
           const owner = requestsData.find(r => r.id === shop.id);
           const user = usersData.find(u => u.id === shop.id || u.id === shop.ownerId);
 
-          const effectivePercent = shop.customRevenuePercent ?? globalConfig?.subStarterPercent ?? 5;
+          const effectivePercent = shop.customRevenuePercent !== undefined && shop.customRevenuePercent !== null
+            ? Number(shop.customRevenuePercent)
+            : Number(globalConfig?.subStarterPercent ?? 2.5);
           const salesMetrics = calculateSalesMetrics(orders, effectivePercent);
           
           return {
@@ -276,7 +282,7 @@ export default function SuperAdminPage() {
             orderCount: orders.length
           };
         } catch (e) {
-          return { ...shop, totalSales: 0, totalRevenue: 0, ownerEmail: 'Error', ownerPhone: 'N/A', salesMetrics: calculateSalesMetrics([], 5), orders: [] };
+          return { ...shop, totalSales: 0, totalRevenue: 0, ownerEmail: 'Error', ownerPhone: 'N/A', salesMetrics: calculateSalesMetrics([], 2.5), orders: [] };
         }
       }));
 
@@ -337,7 +343,7 @@ export default function SuperAdminPage() {
         uddoktapayApiKey: configData?.uddoktapayApiKey || '',
         uddoktapayCommissionPercent: configData?.uddoktapayCommissionPercent || 0,
         subscriptionsEnabled: configData?.subscriptionsEnabled ?? false,
-        subStarterPercent: configData?.subStarterPercent ?? 5,
+        subStarterPercent: configData?.subStarterPercent ?? 2.5,
         subPriceMonthly: configData?.subPriceMonthly || 500,
         subPriceQuarterly: configData?.subPriceQuarterly || 1350,
         subPriceYearly: configData?.subPriceYearly || 5000,
@@ -602,10 +608,16 @@ export default function SuperAdminPage() {
 
     setDeleteModal(prev => ({ ...prev, loading: true }));
     try {
+      const token = user ? await user.getIdToken() : '';
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+
       // 1. Verify password via API
       const res = await fetch('/api/admin/verify-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({ action: 'verify', password })
       });
       const data = await res.json();
@@ -613,10 +625,9 @@ export default function SuperAdminPage() {
       if (!data.success) {
         if (data.error === 'NO_PASSWORD_SET') {
           // If no password set, we can allow them to set it.
-          // For now, let's just use the set action
           const setRes = await fetch('/api/admin/verify-password', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders,
             body: JSON.stringify({ action: 'set', password })
           });
           const setData = await setRes.json();
@@ -646,9 +657,15 @@ export default function SuperAdminPage() {
   const handleForgotPassword = async () => {
     setDeleteModal(prev => ({ ...prev, loading: true }));
     try {
+      const token = user ? await user.getIdToken() : '';
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+
       const res = await fetch('/api/admin/verify-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({ action: 'forgot' })
       });
       const data = await res.json();
@@ -670,9 +687,15 @@ export default function SuperAdminPage() {
     if (!password || !otp) { toast.error('OTP এবং নতুন পাসওয়ার্ড দিন'); return; }
     setDeleteModal(prev => ({ ...prev, loading: true }));
     try {
+      const token = user ? await user.getIdToken() : '';
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+
       const res = await fetch('/api/admin/verify-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({ action: 'set', password, otp })
       });
       const data = await res.json();
@@ -695,7 +718,7 @@ export default function SuperAdminPage() {
     try {
       const sanitizedConfig = {
         ...globalConfig,
-        subStarterPercent: Math.max(0, Math.min(50, Number(globalConfig?.subStarterPercent) >= 0 ? Number(globalConfig.subStarterPercent) : 5)),
+        subStarterPercent: Math.max(0, Math.min(50, !isNaN(Number(globalConfig?.subStarterPercent)) && Number(globalConfig?.subStarterPercent) >= 0 ? Number(globalConfig.subStarterPercent) : 2.5)),
         subPriceMonthly: Math.max(0, Number(globalConfig?.subPriceMonthly) || 0),
         subPriceQuarterly: Math.max(0, Number(globalConfig?.subPriceQuarterly) || 0),
         subPriceYearly: Math.max(0, Number(globalConfig?.subPriceYearly) || 0),
@@ -760,6 +783,59 @@ export default function SuperAdminPage() {
       console.error(err);
       toast.error('পেমেন্ট রেকর্ড ব্যর্থ হয়েছে', { id: toastId });
       setSharedPaymentModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleSendSharedNotice = async () => {
+    if (!sharedNoticeText.trim()) {
+      toast.error('দয়া করে নোটিশের বার্তা লিখুন');
+      return;
+    }
+
+    setSendingNotice(true);
+    const toastId = toast.loading('নোটিশ পাঠানো হচ্ছে...');
+    try {
+      const noticePayload = {
+        text: sharedNoticeText.trim(),
+        active: true,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.email || 'superadmin'
+      };
+
+      if (sharedNoticeTarget === 'all') {
+        await updateGlobalConfig({
+          ...globalConfig,
+          sharedNotice: noticePayload
+        });
+        setGlobalConfig(prev => ({ ...prev, sharedNotice: noticePayload }));
+        toast.success('সকল শেয়ার্ড মার্চেন্টের জন্য নোটিশ পোস্ট করা হয়েছে! 📢', { id: toastId });
+      } else {
+        await updateShop(sharedNoticeTarget, {
+          sharedNotice: noticePayload
+        });
+        setShops(prev => prev.map(s => s.id === sharedNoticeTarget ? { ...s, sharedNotice: noticePayload } : s));
+        toast.success('নির্দিষ্ট মার্চেন্টের ড্যাশবোর্ডে নোটিশ পাঠানো হয়েছে! 📢', { id: toastId });
+      }
+      setSharedNoticeText('');
+    } catch (err) {
+      console.error(err);
+      toast.error('নোটিশ পাঠাতে ব্যর্থ হয়েছে: ' + err.message, { id: toastId });
+    } finally {
+      setSendingNotice(false);
+    }
+  };
+
+  const handleClearGlobalSharedNotice = async () => {
+    if (!confirm('আপনি কি গ্লোবাল শেয়ার্ড নোটিশ মুছে ফেলতে চান?')) return;
+    try {
+      await updateGlobalConfig({
+        ...globalConfig,
+        sharedNotice: { text: '', active: false, createdAt: null }
+      });
+      setGlobalConfig(prev => ({ ...prev, sharedNotice: { text: '', active: false, createdAt: null } }));
+      toast.success('গ্লোবাল নোটিশ সফলভাবে মুছে ফেলা হয়েছে');
+    } catch (err) {
+      toast.error('নোটিশ মুছতে সমস্যা হয়েছে');
     }
   };
 
@@ -2789,9 +2865,9 @@ export default function SuperAdminPage() {
                       min={0}
                       max={50}
                       step="any"
-                      placeholder="যেমন: ৫"
-                      value={globalConfig.subStarterPercent ?? 5}
-                      onChange={e => setGlobalConfig({ ...globalConfig, subStarterPercent: Math.max(0, Math.min(50, Number(e.target.value))) })}
+                      placeholder="যেমন: ২.৫"
+                      value={globalConfig.subStarterPercent !== undefined ? globalConfig.subStarterPercent : 2.5}
+                      onChange={e => setGlobalConfig({ ...globalConfig, subStarterPercent: e.target.value === '' ? '' : Number(e.target.value) })}
                     />
                     <p className="text-[10px] text-slate-400 font-bold mt-1">০৳ স্টার্টার প্ল্যানে প্রতি বিক্রিতে শতকরা শেয়ার</p>
                   </div>
@@ -3119,7 +3195,10 @@ export default function SuperAdminPage() {
               let totalPaidAdmin = 0;
 
               sharedShops.forEach(shop => {
-                const metrics = shop.salesMetrics || calculateSalesMetrics(shop.orders || [], shop.customRevenuePercent ?? globalConfig?.subStarterPercent ?? 5);
+                const effectivePercent = shop.customRevenuePercent !== undefined && shop.customRevenuePercent !== null
+                  ? Number(shop.customRevenuePercent)
+                  : Number(globalConfig?.subStarterPercent ?? 2.5);
+                const metrics = calculateSalesMetrics(shop.orders || [], effectivePercent);
                 totalTodayRev += metrics.today.revenue;
                 totalTodayCount += metrics.today.count;
                 totalTodayAdmin += metrics.today.commission;
@@ -3184,6 +3263,84 @@ export default function SuperAdminPage() {
               );
             })()}
 
+            {/* 📢 Notice Board for Shared Plan Merchants */}
+            <Card
+              title="শেয়ার্ড মার্চেন্টদের নোটিশ পাঠান (Notice Board)"
+              subtitle="রিটেইলার ড্যাশবোর্ডের ওভারভিউতে সরাসরি বোল্ড নোটিশ প্রদর্শন করুন"
+              icon={Bell}
+              className="border-2 border-amber-300/70 bg-gradient-to-br from-amber-50/40 via-orange-50/20 to-amber-50/10"
+            >
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 pl-1">
+                      প্রাপক নির্বাচন করুন (Target Merchant)
+                    </label>
+                    <select
+                      value={sharedNoticeTarget}
+                      onChange={e => setSharedNoticeTarget(e.target.value)}
+                      className="w-full mt-1.5 p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-amber-500"
+                    >
+                      <option value="all">📢 সকল শেয়ার্ড মার্চেন্ট (All Shared Plan Stores)</option>
+                      {shops.filter(s => s.subscriptionPackage === 'starter' || s.isRevenueShare).map(s => (
+                        <option key={s.id} value={s.id}>
+                          🏬 {s.shopName} ({s.ownerEmail})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 pl-1">
+                      গ্লোবাল নোটিশ স্ট্যাটাস
+                    </label>
+                    <div className="mt-1.5 p-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        {globalConfig?.sharedNotice?.active ? (
+                          <><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> গ্লোবাল নোটিশ সক্রিয় আছে</>
+                        ) : (
+                          <><span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span> কোনো গ্লোবাল নোটিশ সক্রিয় নেই</>
+                        )}
+                      </span>
+                      {globalConfig?.sharedNotice?.active && (
+                        <button
+                          type="button"
+                          onClick={handleClearGlobalSharedNotice}
+                          className="text-[11px] text-red-600 hover:text-red-700 font-black uppercase tracking-wider underline cursor-pointer"
+                        >
+                          মুছে ফেলুন
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 pl-1">
+                    নোটিশ বার্তা / টেক্সট (Bold Notice Message)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="যেমন: সম্মানিত মার্চেন্ট, আপনার বিগত সপ্তাহের বকেয়া কমিশন ২৫ তারিখের মধ্যে পরিশোধ করার অনুরোধ করা হচ্ছে..."
+                    value={sharedNoticeText}
+                    onChange={e => setSharedNoticeText(e.target.value)}
+                    className="w-full mt-1.5 p-3.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 transition-all resize-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-1">
+                  <Button
+                    type="button"
+                    onClick={handleSendSharedNotice}
+                    loading={sendingNotice}
+                    className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs font-black uppercase tracking-wider px-6 py-3 rounded-xl shadow-md cursor-pointer"
+                  >
+                    🚀 নোটিশ পোস্ট করুন (Publish Notice)
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
             {/* Shared Stores Table */}
             <Card
               title="শেয়ার্ড রেভিনিউ স্টোর তালিকা"
@@ -3209,17 +3366,17 @@ export default function SuperAdminPage() {
               </div>
 
               <div className="overflow-x-auto w-full">
-                <table className="w-full min-w-[1100px] text-left border-separate border-spacing-y-2.5">
+                <table className="w-full text-left border-separate border-spacing-y-2 text-xs">
                   <thead>
                     <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      <th className="pb-2 px-4">স্টোর বিবরণ</th>
-                      <th className="pb-2 px-3 text-center">শেয়ার (%)</th>
-                      <th className="pb-2 px-3">আজকের সেলস</th>
-                      <th className="pb-2 px-3">এই সপ্তাহের সেলস</th>
-                      <th className="pb-2 px-3">এই মাসের সেলস</th>
-                      <th className="pb-2 px-3">সর্বমোট সেলস</th>
-                      <th className="pb-2 px-3 text-center">কমিশন ও বকেয়া</th>
-                      <th className="pb-2 px-4 text-right">অ্যাকশন</th>
+                      <th className="pb-2 px-3">স্টোর বিবরণ</th>
+                      <th className="pb-2 px-2 text-center">শেয়ার</th>
+                      <th className="pb-2 px-2">আজকের সেলস</th>
+                      <th className="pb-2 px-2">সাপ্তাহিক</th>
+                      <th className="pb-2 px-2">মাসিক</th>
+                      <th className="pb-2 px-2">মোট সেলস</th>
+                      <th className="pb-2 px-2 text-center">কমিশন ও বকেয়া</th>
+                      <th className="pb-2 px-3 text-right">অ্যাকশন</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -3249,8 +3406,10 @@ export default function SuperAdminPage() {
                       }
 
                       return filtered.map((shopItem) => {
-                        const effectivePercent = shopItem.customRevenuePercent ?? globalConfig?.subStarterPercent ?? 5;
-                        const metrics = shopItem.salesMetrics || calculateSalesMetrics(shopItem.orders || [], effectivePercent);
+                        const effectivePercent = shopItem.customRevenuePercent !== undefined && shopItem.customRevenuePercent !== null
+                          ? Number(shopItem.customRevenuePercent)
+                          : Number(globalConfig?.subStarterPercent ?? 2.5);
+                        const metrics = calculateSalesMetrics(shopItem.orders || [], effectivePercent);
                         const paid = Number(shopItem.sharedRevenuePaid) || 0;
                         const totalComm = metrics.total.commission;
                         const due = Math.max(0, totalComm - paid);
@@ -3258,72 +3417,72 @@ export default function SuperAdminPage() {
                         return (
                           <tr key={shopItem.id} className="bg-slate-50 hover:bg-amber-50/20 transition-all border border-slate-100 rounded-2xl group">
                             {/* Store Info */}
-                            <td className="py-4 px-4 rounded-l-2xl">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-amber-100 text-amber-800 font-black text-sm rounded-xl flex items-center justify-center shrink-0">
+                            <td className="py-3 px-3 rounded-l-2xl">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 bg-amber-100 text-amber-800 font-black text-xs rounded-xl flex items-center justify-center shrink-0">
                                   {shopItem.shopName?.[0] || 'S'}
                                 </div>
-                                <div>
-                                  <span className="text-xs font-black text-slate-900 block">{shopItem.shopName}</span>
-                                  <span className="text-[9px] text-slate-400 font-bold font-mono block tracking-wider">
+                                <div className="min-w-0">
+                                  <span className="text-xs font-black text-slate-900 block truncate">{shopItem.shopName}</span>
+                                  <span className="text-[9px] text-slate-400 font-bold font-mono block tracking-wider truncate">
                                     {shopItem.subdomainSlug || shopItem.shopSlug}.bdretailers.com
                                   </span>
-                                  <span className="text-[10px] text-slate-500 font-bold block mt-0.5">
-                                    {shopItem.ownerEmail} {shopItem.ownerPhone !== 'N/A' && `• ${shopItem.ownerPhone}`}
+                                  <span className="text-[10px] text-slate-500 font-bold block truncate">
+                                    {shopItem.ownerEmail}
                                   </span>
                                 </div>
                               </div>
                             </td>
 
                             {/* Share % */}
-                            <td className="py-4 px-3 text-center">
-                              <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
+                            <td className="py-3 px-2 text-center">
+                              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-black text-[11px]">
                                 {effectivePercent}%
                               </span>
                             </td>
 
                             {/* Today's Sales */}
-                            <td className="py-4 px-3">
+                            <td className="py-3 px-2">
                               <p className="text-xs font-black text-slate-900">৳{metrics.today.revenue.toLocaleString()}</p>
-                              <p className="text-[10px] text-slate-400 font-bold">{metrics.today.count} অর্ডার • এডমিন: ৳{metrics.today.commission}</p>
+                              <p className="text-[9px] text-slate-400 font-bold">{metrics.today.count} অর্ডার • এডমিন: ৳{metrics.today.commission}</p>
                             </td>
 
                             {/* Weekly Sales */}
-                            <td className="py-4 px-3">
+                            <td className="py-3 px-2">
                               <p className="text-xs font-black text-slate-900">৳{metrics.week.revenue.toLocaleString()}</p>
-                              <p className="text-[10px] text-slate-400 font-bold">{metrics.week.count} অর্ডার • এডমিন: ৳{metrics.week.commission}</p>
+                              <p className="text-[9px] text-slate-400 font-bold">{metrics.week.count} অর্ডার • এডমিন: ৳{metrics.week.commission}</p>
                             </td>
 
                             {/* Monthly Sales */}
-                            <td className="py-4 px-3">
+                            <td className="py-3 px-2">
                               <p className="text-xs font-black text-slate-900">৳{metrics.month.revenue.toLocaleString()}</p>
-                              <p className="text-[10px] text-slate-400 font-bold">{metrics.month.count} অর্ডার • এডমিন: ৳{metrics.month.commission}</p>
+                              <p className="text-[9px] text-slate-400 font-bold">{metrics.month.count} অর্ডার • এডমিন: ৳{metrics.month.commission}</p>
                             </td>
 
                             {/* Lifetime Sales */}
-                            <td className="py-4 px-3">
+                            <td className="py-3 px-2">
                               <p className="text-xs font-black text-slate-900">৳{metrics.total.revenue.toLocaleString()}</p>
-                              <p className="text-[10px] text-slate-400 font-bold">{metrics.total.count} অর্ডার • মোট কমিশন: ৳{totalComm.toLocaleString()}</p>
+                              <p className="text-[9px] text-slate-400 font-bold">{metrics.total.count} অর্ডার • মোট কমিশন: ৳{totalComm.toLocaleString()}</p>
                             </td>
 
                             {/* Status & Due Box */}
-                            <td className="py-4 px-3 text-center">
+                            <td className="py-3 px-2 text-center">
                               {due === 0 ? (
-                                <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200 font-black text-[11px] shadow-xs">
-                                  <CheckCircle size={14} /> ✓ Full Paid
+                                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200 font-black text-[10px] shadow-xs">
+                                  <CheckCircle size={12} /> Full Paid
                                 </div>
                               ) : (
-                                <div className="inline-block p-2 bg-amber-100/90 border border-amber-300 rounded-xl text-center shadow-xs">
-                                  <p className="text-[9px] font-black uppercase text-amber-800">বকেয়া (Due)</p>
+                                <div className="inline-block p-1.5 bg-amber-100/90 border border-amber-300 rounded-xl text-center shadow-xs">
+                                  <p className="text-[8px] font-black uppercase text-amber-800">বকেয়া (Due)</p>
                                   <p className="text-xs font-black text-amber-950 font-mono">৳{due.toLocaleString()}</p>
-                                  <p className="text-[9px] text-slate-500 font-bold">আদায়: ৳{paid.toLocaleString()}</p>
+                                  <p className="text-[8px] text-slate-500 font-bold">আদায়: ৳{paid.toLocaleString()}</p>
                                 </div>
                               )}
                             </td>
 
                             {/* Actions */}
-                            <td className="py-4 px-4 rounded-r-2xl text-right">
-                              <div className="flex gap-2 justify-end items-center flex-wrap">
+                            <td className="py-3 px-3 rounded-r-2xl text-right">
+                              <div className="flex gap-1.5 justify-end items-center">
                                 <button
                                   type="button"
                                   onClick={() => setSharedPaymentModal({
@@ -3334,16 +3493,16 @@ export default function SuperAdminPage() {
                                     note: '',
                                     loading: false
                                   })}
-                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1 shrink-0"
                                 >
                                   <DollarSign size={12} />
-                                  <span>টাকা গ্রহণ (Paid)</span>
+                                  <span>টাকা গ্রহণ</span>
                                 </button>
 
                                 <button
                                   type="button"
                                   onClick={() => setSharedHistoryModal({ isOpen: true, shop: shopItem })}
-                                  className="px-2.5 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1"
+                                  className="px-2 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 shrink-0"
                                 >
                                   <History size={12} />
                                   <span>হিস্ট্রি</span>

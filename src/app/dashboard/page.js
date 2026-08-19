@@ -169,6 +169,44 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* 📢 Superadmin Notice for Shared Plan Retailers or Targeted Retailer */}
+      {(() => {
+        const notice = shop?.sharedNotice || (shop?.subscriptionPackage === 'starter' && globalConfig?.sharedNotice);
+        if (!notice || !notice.active || !notice.text) return null;
+
+        return (
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 md:p-7 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 border-2 border-amber-300/40 relative overflow-hidden">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 shadow-inner">
+                <Zap size={24} className="fill-current text-yellow-300" />
+              </div>
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/25 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-sm">
+                  📢 সুপারএডমিন জরুরি নোটিশ
+                </div>
+                <div className="text-sm md:text-base font-black tracking-tight text-white leading-snug whitespace-pre-line">
+                  {notice.text}
+                </div>
+                {notice.createdAt && (
+                  <p className="text-[10px] font-bold text-amber-100">
+                    প্রকাশের তারিখ: {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+              </div>
+            </div>
+            {shop?.subscriptionPackage === 'starter' && (
+              <Link
+                href="/dashboard/billing"
+                className="px-5 py-3 bg-white hover:bg-amber-50 text-amber-900 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shrink-0 flex items-center gap-1.5 hover:scale-105 active:scale-95"
+              >
+                <span>বিলিং পেজ</span>
+                <ArrowUpRight size={15} />
+              </Link>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
          <Card 

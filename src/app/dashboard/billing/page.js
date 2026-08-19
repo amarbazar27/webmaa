@@ -43,6 +43,13 @@ export default function BillingPage() {
   const [couponDiscountType, setCouponDiscountType] = useState('percent');
   const [couponError, setCouponError] = useState('');
 
+  // Due Payment States
+  const [payingDue, setPayingDue] = useState(false);
+  const [duePaymentMethod, setDuePaymentMethod] = useState('automated');
+  const [dueSenderNumber, setDueSenderNumber] = useState('');
+  const [dueTransactionId, setDueTransactionId] = useState('');
+  const [dueSubmitting, setDueSubmitting] = useState(false);
+
   useEffect(() => {
     if (!activeShopId) return;
 
@@ -249,6 +256,66 @@ export default function BillingPage() {
     }
   };
 
+  const handlePayDue = async (e) => {
+    e?.preventDefault();
+    if (!activeShopId) return;
+
+    if (duePaymentMethod === 'manual') {
+      if (!dueSenderNumber.trim() || !dueTransactionId.trim()) {
+        toast.error('দয়া করে প্রেরক নম্বর এবং ট্রানজেকশন আইডি দিন');
+        return;
+      }
+      const cleanedNumber = dueSenderNumber.trim();
+      const numberRegex = /^01\d{9}$/;
+      if (!numberRegex.test(cleanedNumber)) {
+        toast.error('আপনার প্রেরক নম্বরটি অবশ্যই ১১ ডিজিটের হতে হবে (যেমন: 01xxxxxxxxx)');
+        return;
+      }
+    }
+
+    setDueSubmitting(true);
+    const loadingToast = toast.loading('বকেয়া পেমেন্ট প্রসেস হচ্ছে...');
+    try {
+      const token = user ? await user.getIdToken() : '';
+      const res = await fetch('/api/payments/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          shopId: activeShopId,
+          packageType: 'commission_due',
+          amount: dueCommission,
+          paymentMethod: duePaymentMethod,
+          senderNumber: dueSenderNumber.trim(),
+          transactionId: dueTransactionId.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'পেমেন্ট সম্পন্ন করা সম্ভব হয়নি');
+      }
+
+      if (duePaymentMethod === 'automated' && data.payment_url) {
+        toast.success('পেমেন্ট গেটওয়েতে নিয়ে যাওয়া হচ্ছে...', { id: loadingToast });
+        window.location.href = data.payment_url;
+      } else {
+        toast.success(data.message || 'বকেয়া পেমেন্টের তথ্য সফলভাবে জমা দেওয়া হয়েছে! 🎉', { id: loadingToast });
+        getShop(activeShopId).then(setShop);
+        setPayingDue(false);
+        setDueSenderNumber('');
+        setDueTransactionId('');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'পেমেন্টে ত্রুটি হয়েছে', { id: loadingToast });
+    } finally {
+      setDueSubmitting(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-slide-in pb-12">
       <div>
@@ -322,14 +389,24 @@ export default function BillingPage() {
                 আপনার স্টোরের সফল বিক্রয় থেকে নির্ধারিত {retailerPercent}% কমিশন হিসাব নিচে প্রদর্শিত হলো:
               </p>
             </div>
-            <div className="shrink-0">
+            <div className="shrink-0 flex items-center gap-3">
               {dueCommission === 0 ? (
                 <div className="px-5 py-2.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-2xl flex items-center gap-2 font-black text-xs shadow-xs">
                   <CheckCircle size={16} /> ✓ সম্পূর্ণ পরিশোধিত (Full Paid)
                 </div>
               ) : (
-                <div className="px-5 py-3 bg-amber-500 text-white rounded-2xl flex items-center gap-2 font-black text-sm shadow-lg shadow-amber-500/20">
-                  <AlertCircle size={16} /> বকেয়া কমিশন: ৳{dueCommission.toLocaleString()}
+                <div className="flex items-center gap-3">
+                  <div className="px-5 py-3 bg-amber-500 text-white rounded-2xl flex items-center gap-2 font-black text-sm shadow-lg shadow-amber-500/20">
+                    <AlertCircle size={16} /> বকেয়া কমিশন: ৳{dueCommission.toLocaleString()}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPayingDue(!payingDue)}
+                    className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                  >
+                    <CreditCard size={15} />
+                    <span>{payingDue ? 'ফর্ম বন্ধ করুন' : '💳 বকেয়া পরিশোধ করুন'}</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -365,11 +442,159 @@ export default function BillingPage() {
             </div>
           </div>
 
-          {dueCommission > 0 && (
+          {/* Pending Due Payment Notification */}
+          {shop?.sharedRevenuePendingTxn && (
+            <div className="p-4 bg-amber-100/80 border border-amber-300 rounded-2xl flex items-start gap-3">
+              <Clock className="text-amber-700 shrink-0 mt-0.5" size={18} />
+              <div>
+                <h4 className="text-xs font-black text-amber-950 uppercase tracking-wider">বকেয়া পেমেন্ট ভেরিফিকেশন পেন্ডিং</h4>
+                <p className="text-xs text-amber-800 font-bold mt-0.5">
+                  আপনার জমা দেওয়া বকেয়া পেমেন্ট স্লিপটি যাচাই প্রক্রিয়াধীন রয়েছে। অ্যাডমিন নিশ্চিত করলে স্বয়ংক্রিয়ভাবে বকেয়া আপডেট হবে।
+                </p>
+                <p className="text-[10px] font-mono text-amber-700 font-bold mt-1 bg-white/80 border border-amber-200 p-1.5 rounded-lg inline-block">
+                  {shop.sharedRevenuePendingTxn}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 💳 Interactive Due Payment Form */}
+          {dueCommission > 0 && payingDue && (
+            <form onSubmit={handlePayDue} className="p-6 bg-white border-2 border-emerald-300 rounded-3xl shadow-md space-y-5 animate-slide-in">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black">
+                    💳
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">বকেয়া কমিশন পরিশোধ ফরম (৳{dueCommission.toLocaleString()})</h3>
+                    <p className="text-xs text-slate-500 font-bold">পেমেন্ট মেথড নির্বাচন করে বকেয়া পরিশোধ সম্পন্ন করুন</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPayingDue(false)}
+                  className="text-xs font-black text-slate-400 hover:text-slate-600"
+                >
+                  ✕ বন্ধ করুন
+                </button>
+              </div>
+
+              {/* Method Selector */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDuePaymentMethod('automated')}
+                  className={`flex-1 py-3.5 border-2 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    duePaymentMethod === 'automated'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                  }`}
+                >
+                  <CreditCard size={16} />
+                  অটোমেটিক গেটওয়ে (বিকাশ / নগদ)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDuePaymentMethod('manual')}
+                  className={`flex-1 py-3.5 border-2 rounded-2xl font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    duePaymentMethod === 'manual'
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 shadow-xs'
+                      : 'border-slate-200 hover:border-slate-300 text-slate-600 bg-white'
+                  }`}
+                >
+                  <Send size={16} />
+                  ম্যানুয়াল সেন্ড মানি (TxnID)
+                </button>
+              </div>
+
+              {duePaymentMethod === 'automated' ? (
+                <div className="p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-xs font-bold text-emerald-800 space-y-1">
+                  <p>💡 অটো পেমেন্ট সফল হওয়ার সাথে সাথে আপনার বকেয়া স্বয়ংক্রিয়ভাবে ০৳ হয়ে যাবে।</p>
+                  <p>💡 বিকাশ/নগদ/কার্ডের অফিশিয়াল সুরক্ষিত গেটওয়ে পেজে রিডাইরেক্ট করা হবে।</p>
+                </div>
+              ) : (
+                <div className="space-y-4 border border-slate-200 p-5 rounded-2xl bg-slate-50/60">
+                  <h4 className="text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                    নিচের যেকোনো নম্বরে ৳{dueCommission.toLocaleString()} সেন্ড মানি করুন:
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {globalConfig?.bkashNumber && (
+                      <div className="p-3 bg-white border border-slate-200 rounded-xl text-center shadow-xs">
+                        <p className="text-[9px] font-black text-purple-700 uppercase">বিকাশ</p>
+                        <p className="text-xs font-black text-purple-900 font-mono mt-0.5">{globalConfig.bkashNumber}</p>
+                      </div>
+                    )}
+                    {globalConfig?.nagadNumber && (
+                      <div className="p-3 bg-white border border-slate-200 rounded-xl text-center shadow-xs">
+                        <p className="text-[9px] font-black text-orange-700 uppercase">নগদ</p>
+                        <p className="text-xs font-black text-orange-900 font-mono mt-0.5">{globalConfig.nagadNumber}</p>
+                      </div>
+                    )}
+                    {globalConfig?.rocketNumber && (
+                      <div className="p-3 bg-white border border-slate-200 rounded-xl text-center shadow-xs">
+                        <p className="text-[9px] font-black text-blue-700 uppercase">রকেট</p>
+                        <p className="text-xs font-black text-blue-900 font-mono mt-0.5">{globalConfig.rocketNumber}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">আপনার প্রেরক নম্বর *</label>
+                      <Input
+                        type="text"
+                        placeholder="যে নম্বর থেকে টাকা পাঠিয়েছেন..."
+                        value={dueSenderNumber}
+                        onChange={(e) => setDueSenderNumber(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                        className="bg-white border border-slate-200 rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Transaction ID (TxnID) *</label>
+                      <Input
+                        type="text"
+                        placeholder="পেমেন্ট স্লিপের ট্রানজেকশন আইডি..."
+                        value={dueTransactionId}
+                        onChange={(e) => setDueTransactionId(e.target.value)}
+                        className="bg-white border border-slate-200 rounded-xl"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={dueSubmitting}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/20 transition-all cursor-pointer"
+              >
+                {dueSubmitting ? (
+                  <><RefreshCw className="animate-spin" size={16} /> অনুরোধ প্রসেস হচ্ছে...</>
+                ) : (
+                  <>নিশ্চিত করুন (Pay ৳{dueCommission.toLocaleString()})</>
+                )}
+              </Button>
+            </form>
+          )}
+
+          {dueCommission > 0 && !payingDue && (
             <div className="p-5 bg-white rounded-2xl border border-amber-200 shadow-xs space-y-3">
-              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                💳 বকেয়া কমিশন পরিশোধের জন্য সুপারএডমিন পেমেন্ট নম্বর:
-              </h4>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  💳 বকেয়া কমিশন পরিশোধের জন্য সুপারএডমিন পেমেন্ট নম্বর:
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setPayingDue(true)}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer inline-flex items-center gap-1"
+                >
+                  <CreditCard size={14} /> সরাসরি পরিশোধ করুন
+                </button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {globalConfig?.bkashNumber && (
                   <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 text-center">
@@ -391,7 +616,7 @@ export default function BillingPage() {
                 )}
               </div>
               <p className="text-[11px] text-slate-600 font-bold leading-relaxed">
-                📌 টাকা পাঠানোর পর আপনার স্টোর নাম ({shop.shopName}) এবং ট্রানজেকশন আইডি দিয়ে প্ল্যাটফর্ম অ্যাডমিনের সাথে যোগাযোগ করুন। অ্যাডমিন পেমেন্ট কনফার্ম করলে স্বয়ংক্রিয়ভাবে এখানে বকেয়া ক্লিয়ার হয়ে যাবে।
+                📌 টাকা পাঠানোর পর আপনার স্টোর নাম ({shop.shopName}) এবং ট্রানজেকশন আইডি দিয়ে প্ল্যাটফর্ম অ্যাডমিনের সাথে যোগাযোগ করুন অথবা ওপরের "সরাসরি পরিশোধ করুন" বাটনে ক্লিক করে ট্রানজেকশন সাবমিট করুন।
               </p>
             </div>
           )}

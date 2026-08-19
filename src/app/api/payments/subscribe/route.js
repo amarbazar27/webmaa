@@ -32,7 +32,7 @@ export async function POST(req) {
       }
     }
 
-    if (!['starter', 'monthly', 'quarterly', 'yearly'].includes(packageType)) {
+    if (!['starter', 'monthly', 'quarterly', 'yearly', 'commission_due'].includes(packageType)) {
       return NextResponse.json({ error: 'Invalid package type' }, { status: 400 });
     }
 
@@ -61,7 +61,7 @@ export async function POST(req) {
         status: 'active',
         createdAt: new Date().toISOString(),
         expiresAt: null,
-        note: `Starter Revenue Share Plan Activated (${globalData?.subStarterPercent ?? 5}% cut per sale)`
+        note: `Starter Revenue Share Plan Activated (${globalData?.subStarterPercent ?? 2.5}% cut per sale)`
       };
 
       await adminDb.collection('shops').doc(shopId).update({
@@ -85,6 +85,121 @@ export async function POST(req) {
     const userData = userSnap.exists ? userSnap.data() : {};
     const ownerEmail = userData.email || shopData.ownerEmail || '';
     const ownerPhone = userData.phone || shopData.phone || '';
+
+    // Determine current domain
+    const host = req.headers.get('host') || 'localhost:3000';
+    const protocol = host.startsWith('localhost') ? 'http' : 'https';
+    const domainUrl = `${protocol}://${host}`;
+
+    // 1.2 Handle Commission Due Payout (Revenue Share settlement)
+    if (packageType === 'commission_due') {
+      const dueAmount = Number(body.amount) || 0;
+      if (dueAmount <= 0) {
+        return NextResponse.json({ error: 'Invalid due payment amount' }, { status: 400 });
+      }
+
+      if (paymentMethod === 'manual') {
+        if (!senderNumber || !transactionId) {
+          return NextResponse.json({ error: 'Sender number and Transaction ID are required for manual payment' }, { status: 400 });
+        }
+        const cleanedNumber = senderNumber.trim();
+        const numberRegex = /^01\d{9}$/;
+        if (!numberRegex.test(cleanedNumber)) {
+          return NextResponse.json({ error: 'আপনার প্রেরক নম্বরটি অবশ্যই ১১ ডিজিটের হতে হবে এবং শুধুমাত্র সংখ্যা (যেমন: 01xxxxxxxxx) হতে হবে।' }, { status: 400 });
+        }
+
+        const historyItem = {
+          id: `pay_req_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+          amount: dueAmount,
+          paymentMethod: 'manual',
+          transactionId: transactionId.trim(),
+          senderNumber: cleanedNumber,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          note: `Manual Due Payment Submitted via ${cleanedNumber} (Txn: ${transactionId.trim()})`,
+          recordedBy: authUser.email || 'retailer'
+        };
+
+        await adminDb.collection('shops').doc(shopId).update({
+          sharedRevenuePendingTxn: `Method: manual, Sender: ${cleanedNumber}, Txn: ${transactionId.trim()}, Amount: ৳${dueAmount}`,
+          sharedRevenueHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+        });
+
+        return NextResponse.json({ 
+          success: true, 
+          message: 'বকেয়া পেমেন্টের তথ্য সফলভাবে জমা দেওয়া হয়েছে! সুপারএডমিন যাচাই করে দ্রুত ক্লিয়ার করবেন।' 
+        });
+      }
+
+      // Automated Payment via UddoktaPay
+      let utUrl = globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
+      let utApiKey = globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
+
+      if (utUrl) {
+        utUrl = utUrl.replace(/\/$/, '');
+        if (utUrl.endsWith('/api')) {
+          utUrl = utUrl.substring(0, utUrl.length - 4);
+        }
+        if (!utUrl.startsWith('http://') && !utUrl.startsWith('https://')) {
+          utUrl = 'https://' + utUrl;
+        }
+      }
+
+      if (!utUrl || !utApiKey) {
+        return NextResponse.json({ error: 'Superadmin has not configured automated payment keys yet. Please contact support or use Manual Payment.' }, { status: 400 });
+      }
+
+      const res = await fetch(`${utUrl}/api/checkout-v2`, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+          'RT-UDDOKTAPAY-API-KEY': utApiKey
+        },
+        body: JSON.stringify({
+          full_name: shopData.shopName || userData.name || 'Retailer',
+          email: (() => {
+            let email = ownerEmail || shopData.deliveryConfig?.contactEmail?.split(',')[0]?.trim() || '';
+            if (!email.includes('@') || !email.includes('.')) {
+              return `retailer-${shopId.toLowerCase()}@bdretailers.com`;
+            }
+            return email.toLowerCase();
+          })(),
+          phone: (() => {
+            let p = ownerPhone || shopData.deliveryConfig?.contactPhone || '01700000000';
+            p = p.replace(/\D/g, '');
+            if (p.length !== 11 || !p.startsWith('01')) {
+              return '01700000000';
+            }
+            return p;
+          })(),
+          amount: dueAmount.toString(),
+          currency: 'BDT',
+          metadata: {
+            type: 'commission_due',
+            shopId: shopId,
+            amount: dueAmount
+          },
+          redirect_url: `${domainUrl}/dashboard/billing?status=success&due_paid=1`,
+          cancel_url: `${domainUrl}/dashboard/billing?status=cancel`,
+          webhook_url: `${domainUrl}/api/payments/uddoktapay-webhook`
+        })
+      });
+
+      if (res.ok) {
+        const utData = await res.json();
+        const isSuccess = utData.status === true || utData.status === 'true';
+        const payUrl = utData.payment_url;
+        if (isSuccess && payUrl) {
+          return NextResponse.json({ success: true, payment_url: payUrl });
+        } else {
+          return NextResponse.json({ error: `Gateway failed to initialize: ${utData.message || 'Unknown'}` }, { status: 400 });
+        }
+      } else {
+        const errText = await res.text();
+        return NextResponse.json({ error: `Gateway returned error: ${errText}` }, { status: 400 });
+      }
+    }
 
     // Price mappings
     const priceMap = {
@@ -142,11 +257,6 @@ export async function POST(req) {
       
       return NextResponse.json({ success: true, isFree: true, message: 'Subscription activated for free using coupon code! 🎉' });
     }
-
-    // Determine current domain
-    const host = req.headers.get('host') || 'localhost:3000';
-    const protocol = host.startsWith('localhost') ? 'http' : 'https';
-    const domainUrl = `${protocol}://${host}`;
 
     // 2. Handle manual subscription request
     if (paymentMethod === 'manual') {

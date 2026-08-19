@@ -23,10 +23,11 @@ export async function POST(req) {
     const shopId = metadata?.shopId;
     const dbOrderId = metadata?.dbOrderId;
     const isSubscription = metadata?.type === 'subscription';
+    const isDuePayment = metadata?.type === 'commission_due' || metadata?.type === 'due_payment';
 
-    if (isSubscription) {
+    if (isSubscription || isDuePayment) {
       if (!invoiceId || !shopId) {
-        return NextResponse.json({ error: 'Invalid payload: missing invoiceId or shopId for subscription' }, { status: 400 });
+        return NextResponse.json({ error: 'Invalid payload: missing invoiceId or shopId' }, { status: 400 });
       }
     } else {
       if (!invoiceId || !shopId || !dbOrderId) {
@@ -53,7 +54,7 @@ export async function POST(req) {
     let utUrl = shopData?.uddoktapayUrl?.trim() || globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
     let utApiKey = shopData?.uddoktapayApiKey?.trim() || globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
 
-    if (isSubscription) {
+    if (isSubscription || isDuePayment) {
       utUrl = globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
       utApiKey = globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
     }
@@ -95,6 +96,28 @@ export async function POST(req) {
     const isPaid = verifyData.status === 'COMPLETED' || verifyData.status === 'completed';
     if (!isPaid) {
       return NextResponse.json({ error: `Payment not completed. Status: ${verifyData.status}` }, { status: 400 });
+    }
+
+    if (isDuePayment) {
+      const paidAmt = Number(verifyData.amount) || Number(metadata.amount) || 0;
+      const historyItem = {
+        id: `pay_uddokta_${Date.now()}`,
+        amount: paidAmt,
+        paymentMethod: 'automated_uddoktapay',
+        transactionId: verifyData.transaction_id || invoiceId,
+        note: `Automated Commission Payout (${verifyData.payment_method || 'bKash/Nagad'})`,
+        recordedBy: 'automated_system',
+        createdAt: new Date().toISOString()
+      };
+
+      await adminDb.collection('shops').doc(shopId).update({
+        sharedRevenuePaid: admin.firestore.FieldValue.increment(paidAmt),
+        sharedRevenuePendingTxn: admin.firestore.FieldValue.delete(),
+        sharedRevenueHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+      });
+
+      console.log(`[UddoktaPay Webhook] Commission due paid ৳${paidAmt} for shop ${shopId}`);
+      return NextResponse.json({ success: true, verified: true, due_payment: true });
     }
 
     if (isSubscription) {
