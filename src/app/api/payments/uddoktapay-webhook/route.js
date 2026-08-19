@@ -114,12 +114,25 @@ export async function POST(req) {
         }
       }
 
+      const historyItem = {
+        id: `sub_uddokta_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        package: packageType,
+        amount: Number(verifyData.amount) || (packageType === 'monthly' ? 500 : packageType === 'quarterly' ? 1350 : 5000),
+        paymentMethod: 'automated_uddoktapay',
+        transactionId: verifyData.transaction_id || invoiceId,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(newExpiry).toISOString(),
+        note: `Automated UddoktaPay Payment (${verifyData.payment_method || 'bKash/Nagad'})`
+      };
+
       await adminDb.collection('shops').doc(shopId).update({
         subscriptionStatus: 'active',
         subscriptionPackage: packageType,
         subscriptionExpiresAt: new Date(newExpiry),
         subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-        subscriptionPendingPackage: admin.firestore.FieldValue.delete()
+        subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
+        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
       });
 
       console.log(`[UddoktaPay Webhook] Subscription updated for shop ${shopId} to ${packageType} package (expires ${new Date(newExpiry).toISOString()})`);

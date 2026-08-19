@@ -7,7 +7,7 @@ import {
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
   getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop, getShopBySlug,
-  getAllMarketplaceProducts, updateProduct, updateShop, getAllUsers
+  getAllMarketplaceProducts, updateProduct, updateShop, getAllUsers, recordSharedRevenuePayment, addSubscriptionHistory
 } from '@/lib/firestore';
 import dynamic from 'next/dynamic';
 // Phase 1.3: Dynamic import — SuperadminBroadcastPanel is 34KB
@@ -17,7 +17,7 @@ import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
-  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy
+  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy, TrendingUp, Percent, DollarSign, Receipt, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -99,6 +99,13 @@ export default function SuperAdminPage() {
   const [showMapsKey, setShowMapsKey] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, shop: null, password: '', loading: false, otpSent: false, otp: '' });
   const [copyingCloudinaryShopId, setCopyingCloudinaryShopId] = useState(null);
+  
+  // ── Shared Business & Subscription History States ──
+  const [sharedPaymentModal, setSharedPaymentModal] = useState({ isOpen: false, shop: null, amount: '', method: 'bkash', note: '', loading: false });
+  const [historyModal, setHistoryModal] = useState({ isOpen: false, shop: null });
+  const [sharedHistoryModal, setSharedHistoryModal] = useState({ isOpen: false, shop: null });
+  const [sharedSearchQuery, setSharedSearchQuery] = useState('');
+
   const { theme, setSystemDefault, systemDefault } = useTheme();
   const { loginAsRetailer, user } = useAuth();
 
@@ -174,6 +181,65 @@ export default function SuperAdminPage() {
 
 
 
+  // ── Helper: Calculate time-based sales metrics from orders ─────────
+  const calculateSalesMetrics = (orders = [], percent = 5) => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).getTime();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+
+    let todayCount = 0, todayRevenue = 0;
+    let weekCount = 0, weekRevenue = 0;
+    let monthCount = 0, monthRevenue = 0;
+    let yearCount = 0, yearRevenue = 0;
+    let totalCount = 0, totalRevenue = 0;
+
+    (orders || []).forEach(order => {
+      if (order.status === 'cancelled') return;
+      const amount = Number(order.total) || 0;
+      let orderTime = 0;
+      if (order.createdAt?.toDate) {
+        orderTime = order.createdAt.toDate().getTime();
+      } else if (order.createdAt?.seconds) {
+        orderTime = order.createdAt.seconds * 1000;
+      } else if (order.createdAt?._seconds) {
+        orderTime = order.createdAt._seconds * 1000;
+      } else if (order.createdAt) {
+        orderTime = new Date(order.createdAt).getTime();
+      }
+
+      totalCount++;
+      totalRevenue += amount;
+
+      if (orderTime >= startOfToday) {
+        todayCount++;
+        todayRevenue += amount;
+      }
+      if (orderTime >= startOfWeek) {
+        weekCount++;
+        weekRevenue += amount;
+      }
+      if (orderTime >= startOfMonth) {
+        monthCount++;
+        monthRevenue += amount;
+      }
+      if (orderTime >= startOfYear) {
+        yearCount++;
+        yearRevenue += amount;
+      }
+    });
+
+    const rate = (Number(percent) || 5) / 100;
+    return {
+      today: { count: todayCount, revenue: todayRevenue, commission: Math.round(todayRevenue * rate) },
+      week: { count: weekCount, revenue: weekRevenue, commission: Math.round(weekRevenue * rate) },
+      month: { count: monthCount, revenue: monthRevenue, commission: Math.round(monthRevenue * rate) },
+      year: { count: yearCount, revenue: yearRevenue, commission: Math.round(yearRevenue * rate) },
+      total: { count: totalCount, revenue: totalRevenue, commission: Math.round(totalRevenue * rate) }
+    };
+  };
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -192,19 +258,25 @@ export default function SuperAdminPage() {
           const totalSales = completedOrders.length;
           const totalRevenue = completedOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
           
-          // Match owner email from requests & users
+          // Match owner email & phone from requests & users
           const owner = requestsData.find(r => r.id === shop.id);
           const user = usersData.find(u => u.id === shop.id || u.id === shop.ownerId);
+
+          const effectivePercent = shop.customRevenuePercent ?? globalConfig?.subStarterPercent ?? 5;
+          const salesMetrics = calculateSalesMetrics(orders, effectivePercent);
           
           return {
             ...shop,
             totalSales,
             totalRevenue,
+            salesMetrics,
+            orders,
             ownerEmail: owner?.email || user?.email || shop.ownerEmail || 'Unknown',
+            ownerPhone: owner?.phone || user?.phone || shop.phone || 'N/A',
             orderCount: orders.length
           };
         } catch (e) {
-          return { ...shop, totalSales: 0, totalRevenue: 0, ownerEmail: 'Error' };
+          return { ...shop, totalSales: 0, totalRevenue: 0, ownerEmail: 'Error', ownerPhone: 'N/A', salesMetrics: calculateSalesMetrics([], 5), orders: [] };
         }
       }));
 
@@ -636,6 +708,61 @@ export default function SuperAdminPage() {
     setSavingConfig(false);
   };
 
+  // ── Record Shared Revenue Payment ──────────────────────────────────
+  const handleRecordSharedPayment = async (e) => {
+    e?.preventDefault();
+    if (!sharedPaymentModal.shop) return;
+    const shopId = sharedPaymentModal.shop.id;
+    const amount = Number(sharedPaymentModal.amount);
+    if (!amount || amount <= 0) {
+      toast.error('সঠিক পেমেন্ট পরিমাণ লিখুন');
+      return;
+    }
+
+    setSharedPaymentModal(prev => ({ ...prev, loading: true }));
+    const toastId = toast.loading('পেমেন্ট রেকর্ড করা হচ্ছে...');
+    try {
+      await recordSharedRevenuePayment(shopId, {
+        amount,
+        paymentMethod: sharedPaymentModal.method,
+        note: sharedPaymentModal.note,
+        recordedBy: user?.email || 'superadmin'
+      });
+
+      toast.success(`৳${amount.toLocaleString()} পেমেন্ট সফলভাবে রেকর্ড করা হয়েছে! 🎉`, { id: toastId });
+      
+      // Update local state
+      setShops(prev => prev.map(s => {
+        if (s.id === shopId) {
+          const newPaid = (Number(s.sharedRevenuePaid) || 0) + amount;
+          const newHistory = [
+            ...(s.sharedRevenueHistory || []),
+            {
+              id: `pay_${Date.now()}`,
+              amount,
+              paymentMethod: sharedPaymentModal.method,
+              note: sharedPaymentModal.note,
+              recordedBy: user?.email || 'superadmin',
+              createdAt: new Date().toISOString()
+            }
+          ];
+          return {
+            ...s,
+            sharedRevenuePaid: newPaid,
+            sharedRevenueHistory: newHistory
+          };
+        }
+        return s;
+      }));
+
+      setSharedPaymentModal({ isOpen: false, shop: null, amount: '', method: 'bkash', note: '', loading: false });
+    } catch (err) {
+      console.error(err);
+      toast.error('পেমেন্ট রেকর্ড ব্যর্থ হয়েছে', { id: toastId });
+      setSharedPaymentModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
   const handleApproveSubscription = async (shopId, packageType) => {
     const loadingToast = toast.loading('সাবস্ক্রিপশন অনুমোদন করা হচ্ছে...');
     try {
@@ -656,15 +783,28 @@ export default function SuperAdminPage() {
         }
       }
 
+      const historyItem = {
+        id: `sub_admin_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        package: packageType,
+        amount: packageType === 'monthly' ? Number(globalConfig?.subPriceMonthly || 500) : packageType === 'quarterly' ? Number(globalConfig?.subPriceQuarterly || 1350) : Number(globalConfig?.subPriceYearly || 5000),
+        paymentMethod: targetShop?.subscriptionPendingTxn?.includes('manual') ? 'manual' : 'admin_approved',
+        transactionId: targetShop?.subscriptionPendingTxn || 'ADMIN_APPROVAL',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(newExpiry).toISOString(),
+        note: 'Approved / Extended by SuperAdmin'
+      };
+
       const { db } = await import('@/lib/firebase');
-      const { doc, updateDoc, deleteField } = await import('firebase/firestore');
+      const { doc, updateDoc, deleteField, arrayUnion } = await import('firebase/firestore');
 
       await updateDoc(doc(db, 'shops', shopId), {
         subscriptionStatus: 'active',
         subscriptionPackage: packageType,
         subscriptionExpiresAt: new Date(newExpiry),
         subscriptionPendingTxn: deleteField(),
-        subscriptionPendingPackage: deleteField()
+        subscriptionPendingPackage: deleteField(),
+        subscriptionHistory: arrayUnion(historyItem)
       });
 
       toast.success('সাবস্ক্রিপশন সফলভাবে সক্রিয় করা হয়েছে! 🎉', { id: loadingToast });
@@ -677,7 +817,8 @@ export default function SuperAdminPage() {
             subscriptionPackage: packageType,
             subscriptionExpiresAt: { toDate: () => new Date(newExpiry) },
             subscriptionPendingTxn: null,
-            subscriptionPendingPackage: null
+            subscriptionPendingPackage: null,
+            subscriptionHistory: [...(s.subscriptionHistory || []), historyItem]
           };
         }
         return s;
@@ -694,14 +835,27 @@ export default function SuperAdminPage() {
     const loadingToast = toast.loading('সাবস্ক্রিপশন বাতিল করা হচ্ছে...');
     try {
       const { db } = await import('@/lib/firebase');
-      const { doc, updateDoc, deleteField } = await import('firebase/firestore');
+      const { doc, updateDoc, deleteField, arrayUnion } = await import('firebase/firestore');
+
+      const historyItem = {
+        id: `sub_cancel_${Date.now()}`,
+        package: 'cancelled',
+        amount: 0,
+        paymentMethod: 'admin_action',
+        transactionId: 'CANCELLED_BY_ADMIN',
+        status: 'cancelled',
+        createdAt: new Date().toISOString(),
+        expiresAt: null,
+        note: 'Cancelled by SuperAdmin'
+      };
 
       await updateDoc(doc(db, 'shops', shopId), {
         subscriptionStatus: 'none',
         subscriptionPackage: 'none',
         subscriptionExpiresAt: deleteField(),
         subscriptionPendingTxn: deleteField(),
-        subscriptionPendingPackage: deleteField()
+        subscriptionPendingPackage: deleteField(),
+        subscriptionHistory: arrayUnion(historyItem)
       });
 
       toast.success('সাবস্ক্রিপশন সফলভাবে বাতিল করা হয়েছে।', { id: loadingToast });
@@ -714,7 +868,8 @@ export default function SuperAdminPage() {
             subscriptionPackage: 'none',
             subscriptionExpiresAt: null,
             subscriptionPendingTxn: null,
-            subscriptionPendingPackage: null
+            subscriptionPendingPackage: null,
+            subscriptionHistory: [...(s.subscriptionHistory || []), historyItem]
           };
         }
         return s;
@@ -853,6 +1008,18 @@ export default function SuperAdminPage() {
             >
               <Crown size={16} />
               <span>সাবস্ক্রিপশন ও বিলিং</span>
+            </button>
+
+            <button
+              onClick={() => setSuperadminTab('shared_business')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'shared_business'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <TrendingUp size={16} />
+              <span>শেয়ার্ড বিজনেস (Revenue Share)</span>
             </button>
           </div>
         </div>
@@ -2885,6 +3052,15 @@ export default function SuperAdminPage() {
                                 Extend
                               </button>
 
+                              <button
+                                type="button"
+                                onClick={() => setHistoryModal({ isOpen: true, shop: shopItem })}
+                                className="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <History size={12} />
+                                <span>হিস্ট্রি</span>
+                              </button>
+
                               {shopItem.subscriptionStatus === 'active' && (
                                 <button
                                   type="button"
@@ -2907,8 +3083,515 @@ export default function SuperAdminPage() {
         </div>
       </>)}
 
+      {/* ── SHARED BUSINESS (REVENUE SHARE) TAB ────────────────── */}
+      {superadminTab === 'shared_business' && (<>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Header Summary Statistics */}
+          <div className="lg:col-span-12 space-y-6">
+            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-sm">
+                  <Percent size={12} /> রেভিনিউ শেয়ার ম্যানেজমেন্ট
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+                  শেয়ার্ড বিজনেস ড্যাশবোর্ড (Shared Revenue Stores)
+                </h2>
+                <p className="text-xs text-amber-100 font-medium max-w-2xl leading-relaxed">
+                  যেসব মার্চেন্ট ০৳ অগ্রিম ফিতে রেভিনিউ শেয়ার প্ল্যানে আছেন তাদের প্রতিদিন, সপ্তাহ, মাস ও বছরের বিক্রয় এবং সুপারএডমিন প্রাপ্য কমিশন ও বকেয়া হিসাব পর্যবেক্ষণ করুন।
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-center">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-amber-200">মোট শেয়ার্ড স্টোর</p>
+                  <p className="text-2xl font-black">{shops.filter(s => s.subscriptionPackage === 'starter' || s.isRevenueShare).length}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Aggregated Platform Sales Overview */}
+            {(() => {
+              const sharedShops = shops.filter(s => s.subscriptionPackage === 'starter' || s.isRevenueShare);
+              let totalTodayRev = 0, totalTodayCount = 0, totalTodayAdmin = 0;
+              let totalWeekRev = 0, totalWeekCount = 0, totalWeekAdmin = 0;
+              let totalMonthRev = 0, totalMonthCount = 0, totalMonthAdmin = 0;
+              let totalLifetimeRev = 0, totalLifetimeCount = 0, totalLifetimeAdmin = 0;
+              let totalPaidAdmin = 0;
+
+              sharedShops.forEach(shop => {
+                const metrics = shop.salesMetrics || calculateSalesMetrics(shop.orders || [], shop.customRevenuePercent ?? globalConfig?.subStarterPercent ?? 5);
+                totalTodayRev += metrics.today.revenue;
+                totalTodayCount += metrics.today.count;
+                totalTodayAdmin += metrics.today.commission;
+
+                totalWeekRev += metrics.week.revenue;
+                totalWeekCount += metrics.week.count;
+                totalWeekAdmin += metrics.week.commission;
+
+                totalMonthRev += metrics.month.revenue;
+                totalMonthCount += metrics.month.count;
+                totalMonthAdmin += metrics.month.commission;
+
+                totalLifetimeRev += metrics.total.revenue;
+                totalLifetimeCount += metrics.total.count;
+                totalLifetimeAdmin += metrics.total.commission;
+
+                totalPaidAdmin += (Number(shop.sharedRevenuePaid) || 0);
+              });
+
+              const totalDueAdmin = Math.max(0, totalLifetimeAdmin - totalPaidAdmin);
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="bg-white border border-slate-200 p-5 rounded-3xl shadow-sm space-y-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">আজকের বিক্রয় (Daily)</p>
+                    <p className="text-xl font-black text-slate-900">৳{totalTodayRev.toLocaleString()}</p>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-amber-700 pt-1 border-t border-slate-100">
+                      <span>{totalTodayCount} টি অর্ডার</span>
+                      <span>এডমিন শেয়ার: ৳{totalTodayAdmin.toLocaleString()}</span>
+                    </div>
+                  </Card>
+
+                  <Card className="bg-white border border-slate-200 p-5 rounded-3xl shadow-sm space-y-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">এই সপ্তাহের বিক্রয় (Weekly)</p>
+                    <p className="text-xl font-black text-slate-900">৳{totalWeekRev.toLocaleString()}</p>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-amber-700 pt-1 border-t border-slate-100">
+                      <span>{totalWeekCount} টি অর্ডার</span>
+                      <span>এডমিন শেয়ার: ৳{totalWeekAdmin.toLocaleString()}</span>
+                    </div>
+                  </Card>
+
+                  <Card className="bg-white border border-slate-200 p-5 rounded-3xl shadow-sm space-y-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">এই মাসের বিক্রয় (Monthly)</p>
+                    <p className="text-xl font-black text-slate-900">৳{totalMonthRev.toLocaleString()}</p>
+                    <div className="flex items-center justify-between text-[11px] font-bold text-amber-700 pt-1 border-t border-slate-100">
+                      <span>{totalMonthCount} টি অর্ডার</span>
+                      <span>এডমিন শেয়ার: ৳{totalMonthAdmin.toLocaleString()}</span>
+                    </div>
+                  </Card>
+
+                  <Card className={`p-5 rounded-3xl shadow-sm space-y-1 border-2 ${totalDueAdmin > 0 ? 'bg-amber-50/50 border-amber-300' : 'bg-emerald-50/50 border-emerald-300'}`}>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">মোট বকেয়া কমিশন (Total Due)</p>
+                    <p className={`text-2xl font-black font-mono ${totalDueAdmin > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                      ৳{totalDueAdmin.toLocaleString()}
+                    </p>
+                    <div className="flex items-center justify-between text-[11px] font-bold pt-1 border-t border-slate-200/60">
+                      <span className="text-slate-600">আদায়: ৳{totalPaidAdmin.toLocaleString()}</span>
+                      <span className="text-slate-900">মোট কমিশন: ৳{totalLifetimeAdmin.toLocaleString()}</span>
+                    </div>
+                  </Card>
+                </div>
+              );
+            })()}
+
+            {/* Shared Stores Table */}
+            <Card
+              title="শেয়ার্ড রেভিনিউ স্টোর তালিকা"
+              subtitle="স্টোরভিত্তিক দৈনিক, সাপ্তাহিক, মাসিক ও বার্ষিক বিক্রয় এবং কমিশন আদায় পরিচালনা করুন"
+              icon={TrendingUp}
+              className="border border-slate-200"
+            >
+              {/* Search filter */}
+              <div className="mb-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="relative w-full sm:w-80">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="স্টোর নাম, ডোমেন বা ইমেইল দিয়ে খুঁজুন..."
+                    value={sharedSearchQuery}
+                    onChange={e => setSharedSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 transition-all"
+                  />
+                </div>
+                <div className="text-xs font-bold text-slate-500">
+                  মোট শেয়ার্ড স্টোর: {shops.filter(s => (s.subscriptionPackage === 'starter' || s.isRevenueShare)).length} টি
+                </div>
+              </div>
+
+              <div className="overflow-x-auto w-full">
+                <table className="w-full min-w-[1100px] text-left border-separate border-spacing-y-2.5">
+                  <thead>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <th className="pb-2 px-4">স্টোর বিবরণ</th>
+                      <th className="pb-2 px-3 text-center">শেয়ার (%)</th>
+                      <th className="pb-2 px-3">আজকের সেলস</th>
+                      <th className="pb-2 px-3">এই সপ্তাহের সেলস</th>
+                      <th className="pb-2 px-3">এই মাসের সেলস</th>
+                      <th className="pb-2 px-3">সর্বমোট সেলস</th>
+                      <th className="pb-2 px-3 text-center">কমিশন ও বকেয়া</th>
+                      <th className="pb-2 px-4 text-right">অ্যাকশন</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const filtered = shops
+                        .filter(s => (s.subscriptionPackage === 'starter' || s.isRevenueShare))
+                        .filter(s => {
+                          if (!sharedSearchQuery.trim()) return true;
+                          const q = sharedSearchQuery.toLowerCase().trim();
+                          return (
+                            s.shopName?.toLowerCase().includes(q) ||
+                            s.shopSlug?.toLowerCase().includes(q) ||
+                            s.subdomainSlug?.toLowerCase().includes(q) ||
+                            s.ownerEmail?.toLowerCase().includes(q) ||
+                            s.ownerPhone?.includes(q)
+                          );
+                        });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={8} className="text-center py-12 text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl">
+                              কোনো শেয়ার্ড বিজনেস স্টোর পাওয়া যায়নি।
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return filtered.map((shopItem) => {
+                        const effectivePercent = shopItem.customRevenuePercent ?? globalConfig?.subStarterPercent ?? 5;
+                        const metrics = shopItem.salesMetrics || calculateSalesMetrics(shopItem.orders || [], effectivePercent);
+                        const paid = Number(shopItem.sharedRevenuePaid) || 0;
+                        const totalComm = metrics.total.commission;
+                        const due = Math.max(0, totalComm - paid);
+
+                        return (
+                          <tr key={shopItem.id} className="bg-slate-50 hover:bg-amber-50/20 transition-all border border-slate-100 rounded-2xl group">
+                            {/* Store Info */}
+                            <td className="py-4 px-4 rounded-l-2xl">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-amber-100 text-amber-800 font-black text-sm rounded-xl flex items-center justify-center shrink-0">
+                                  {shopItem.shopName?.[0] || 'S'}
+                                </div>
+                                <div>
+                                  <span className="text-xs font-black text-slate-900 block">{shopItem.shopName}</span>
+                                  <span className="text-[9px] text-slate-400 font-bold font-mono block tracking-wider">
+                                    {shopItem.subdomainSlug || shopItem.shopSlug}.bdretailers.com
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 font-bold block mt-0.5">
+                                    {shopItem.ownerEmail} {shopItem.ownerPhone !== 'N/A' && `• ${shopItem.ownerPhone}`}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Share % */}
+                            <td className="py-4 px-3 text-center">
+                              <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-black text-xs">
+                                {effectivePercent}%
+                              </span>
+                            </td>
+
+                            {/* Today's Sales */}
+                            <td className="py-4 px-3">
+                              <p className="text-xs font-black text-slate-900">৳{metrics.today.revenue.toLocaleString()}</p>
+                              <p className="text-[10px] text-slate-400 font-bold">{metrics.today.count} অর্ডার • এডমিন: ৳{metrics.today.commission}</p>
+                            </td>
+
+                            {/* Weekly Sales */}
+                            <td className="py-4 px-3">
+                              <p className="text-xs font-black text-slate-900">৳{metrics.week.revenue.toLocaleString()}</p>
+                              <p className="text-[10px] text-slate-400 font-bold">{metrics.week.count} অর্ডার • এডমিন: ৳{metrics.week.commission}</p>
+                            </td>
+
+                            {/* Monthly Sales */}
+                            <td className="py-4 px-3">
+                              <p className="text-xs font-black text-slate-900">৳{metrics.month.revenue.toLocaleString()}</p>
+                              <p className="text-[10px] text-slate-400 font-bold">{metrics.month.count} অর্ডার • এডমিন: ৳{metrics.month.commission}</p>
+                            </td>
+
+                            {/* Lifetime Sales */}
+                            <td className="py-4 px-3">
+                              <p className="text-xs font-black text-slate-900">৳{metrics.total.revenue.toLocaleString()}</p>
+                              <p className="text-[10px] text-slate-400 font-bold">{metrics.total.count} অর্ডার • মোট কমিশন: ৳{totalComm.toLocaleString()}</p>
+                            </td>
+
+                            {/* Status & Due Box */}
+                            <td className="py-4 px-3 text-center">
+                              {due === 0 ? (
+                                <div className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200 font-black text-[11px] shadow-xs">
+                                  <CheckCircle size={14} /> ✓ Full Paid
+                                </div>
+                              ) : (
+                                <div className="inline-block p-2 bg-amber-100/90 border border-amber-300 rounded-xl text-center shadow-xs">
+                                  <p className="text-[9px] font-black uppercase text-amber-800">বকেয়া (Due)</p>
+                                  <p className="text-xs font-black text-amber-950 font-mono">৳{due.toLocaleString()}</p>
+                                  <p className="text-[9px] text-slate-500 font-bold">আদায়: ৳{paid.toLocaleString()}</p>
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Actions */}
+                            <td className="py-4 px-4 rounded-r-2xl text-right">
+                              <div className="flex gap-2 justify-end items-center flex-wrap">
+                                <button
+                                  type="button"
+                                  onClick={() => setSharedPaymentModal({
+                                    isOpen: true,
+                                    shop: shopItem,
+                                    amount: due > 0 ? due : '',
+                                    method: 'bkash',
+                                    note: '',
+                                    loading: false
+                                  })}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                                >
+                                  <DollarSign size={12} />
+                                  <span>টাকা গ্রহণ (Paid)</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setSharedHistoryModal({ isOpen: true, shop: shopItem })}
+                                  className="px-2.5 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1"
+                                >
+                                  <History size={12} />
+                                  <span>হিস্ট্রি</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </>)}
+
         </div>
       </div>
+
+      {/* ── Modal: Record Shared Revenue Payment ─────────────────── */}
+      {sharedPaymentModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-md w-full relative shadow-2xl animate-slide-in overflow-hidden">
+            <button
+              onClick={() => setSharedPaymentModal({ isOpen: false, shop: null, amount: '', method: 'bkash', note: '', loading: false })}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors z-10"
+            >
+              <XCircle size={18} className="stroke-[3]" />
+            </button>
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-500/20">
+              <DollarSign size={28} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-1">রেভিনিউ শেয়ার পেমেন্ট রেকর্ড</h3>
+            <p className="text-slate-500 text-xs font-bold mb-5">
+              স্টোর: <span className="text-slate-900">{sharedPaymentModal.shop?.shopName}</span>
+            </p>
+
+            <form onSubmit={handleRecordSharedPayment} className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">পরিশোধিত পরিমাণ (৳) *</label>
+                <Input
+                  type="number"
+                  placeholder="যেমন: ৫০০"
+                  value={sharedPaymentModal.amount}
+                  onChange={e => setSharedPaymentModal(prev => ({ ...prev, amount: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">পেমেন্ট মাধ্যম *</label>
+                <select
+                  value={sharedPaymentModal.method}
+                  onChange={e => setSharedPaymentModal(prev => ({ ...prev, method: e.target.value }))}
+                  className="w-full mt-1.5 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-500 transition-all cursor-pointer"
+                >
+                  <option value="bkash">বিকাশ (bKash)</option>
+                  <option value="nagad">নগদ (Nagad)</option>
+                  <option value="rocket">রকেট (Rocket)</option>
+                  <option value="bank">ব্যাংক ট্রান্সফার (Bank)</option>
+                  <option value="cash">নগদ গ্রহণ (Cash)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">নোট / ট্রানজেকশন রেফারেন্স</label>
+                <Input
+                  type="text"
+                  placeholder="যেমন: Txn ID বা মাসের বিবরণ"
+                  value={sharedPaymentModal.note}
+                  onChange={e => setSharedPaymentModal(prev => ({ ...prev, note: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setSharedPaymentModal({ isOpen: false, shop: null, amount: '', method: 'bkash', note: '', loading: false })}
+                  className="flex-1"
+                >
+                  বাতিল
+                </Button>
+                <Button
+                  type="submit"
+                  loading={sharedPaymentModal.loading}
+                  variant="primary"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                >
+                  পেমেন্ট নিশ্চিত করুন
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Shared Revenue Payment History ────────────────── */}
+      {sharedHistoryModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-2xl w-full relative shadow-2xl animate-slide-in overflow-hidden max-h-[85vh] flex flex-col">
+            <button
+              onClick={() => setSharedHistoryModal({ isOpen: false, shop: null })}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors z-10"
+            >
+              <XCircle size={18} className="stroke-[3]" />
+            </button>
+            
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center">
+                <History size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900">কমিশন পেমেন্ট ইতিহাস</h3>
+                <p className="text-slate-500 text-xs font-bold">স্টোর: {sharedHistoryModal.shop?.shopName}</p>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 pr-1">
+              {(!sharedHistoryModal.shop?.sharedRevenueHistory || sharedHistoryModal.shop.sharedRevenueHistory.length === 0) ? (
+                <div className="text-center py-12 text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl">
+                  এখনো কোনো কমিশন পেমেন্ট রেকর্ড নেই।
+                </div>
+              ) : (
+                <table className="w-full text-left border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <th className="pb-2 px-3">তারিখ</th>
+                      <th className="pb-2 px-3">পরিমাণ</th>
+                      <th className="pb-2 px-3">পদ্ধতি</th>
+                      <th className="pb-2 px-3">নোট / রেফারেন্স</th>
+                      <th className="pb-2 px-3">রেকর্ড করেছেন</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs">
+                    {sharedHistoryModal.shop.sharedRevenueHistory.map((hist, idx) => (
+                      <tr key={hist.id || idx} className="bg-slate-50 border border-slate-100 rounded-xl">
+                        <td className="py-3 px-3 rounded-l-xl font-bold text-slate-700">
+                          {hist.createdAt ? new Date(hist.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                        </td>
+                        <td className="py-3 px-3 font-black text-emerald-700 font-mono">
+                          ৳{hist.amount?.toLocaleString()}
+                        </td>
+                        <td className="py-3 px-3 capitalize font-bold text-slate-600">
+                          {hist.paymentMethod || 'Manual'}
+                        </td>
+                        <td className="py-3 px-3 text-[11px] text-slate-500">
+                          {hist.note || 'None'}
+                        </td>
+                        <td className="py-3 px-3 rounded-r-xl text-[10px] text-slate-400 font-mono">
+                          {hist.recordedBy || 'Admin'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Subscription Purchase History ─────────────────── */}
+      {historyModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] p-6 md:p-8 max-w-3xl w-full relative shadow-2xl animate-slide-in overflow-hidden max-h-[85vh] flex flex-col">
+            <button
+              onClick={() => setHistoryModal({ isOpen: false, shop: null })}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-colors z-10"
+            >
+              <XCircle size={18} className="stroke-[3]" />
+            </button>
+            
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center">
+                <Crown size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900">সাবস্ক্রিপশন ক্রয় ও রিনিউ ইতিহাস</h3>
+                <p className="text-slate-500 text-xs font-bold">স্টোর: {historyModal.shop?.shopName} ({historyModal.shop?.subscriptionPackage || 'No Package'})</p>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 pr-1">
+              {(!historyModal.shop?.subscriptionHistory || historyModal.shop.subscriptionHistory.length === 0) ? (
+                <div className="text-center py-12 text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl">
+                  {historyModal.shop?.subscriptionStatus === 'active' ? (
+                    <div>
+                      <p className="text-slate-700 font-black text-sm mb-1">চলতি প্যাকেজ: {historyModal.shop?.subscriptionPackage?.toUpperCase()}</p>
+                      <p className="text-slate-500">পূর্ববর্তী কোনো আর্কাইভ হিস্ট্রি পাওয়া যায়নি। বর্তমান সাবস্ক্রিপশন সক্রিয় রয়েছে।</p>
+                    </div>
+                  ) : (
+                    'এখনো কোনো পূর্ববর্তী সাবস্ক্রিপশন হিস্ট্রি রেকর্ড নেই।'
+                  )}
+                </div>
+              ) : (
+                <table className="w-full text-left border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                      <th className="pb-2 px-3">তারিখ ও সময়</th>
+                      <th className="pb-2 px-3">প্যাকেজ</th>
+                      <th className="pb-2 px-3">পরিশোধিত ফি</th>
+                      <th className="pb-2 px-3">পদ্ধতি</th>
+                      <th className="pb-2 px-3">রেফারেন্স / TxnID</th>
+                      <th className="pb-2 px-3">মেয়াদ শেষ</th>
+                      <th className="pb-2 px-3">স্ট্যাটাস</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs">
+                    {historyModal.shop.subscriptionHistory.map((hist, idx) => (
+                      <tr key={hist.id || idx} className="bg-slate-50 border border-slate-100 rounded-xl">
+                        <td className="py-3 px-3 rounded-l-xl font-bold text-slate-700">
+                          {hist.createdAt ? new Date(hist.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                        </td>
+                        <td className="py-3 px-3 font-black uppercase text-purple-700">
+                          {hist.package || 'Subscription'}
+                        </td>
+                        <td className="py-3 px-3 font-black text-slate-900 font-mono">
+                          ৳{hist.amount || 0}
+                        </td>
+                        <td className="py-3 px-3 capitalize font-bold text-slate-600">
+                          {hist.paymentMethod || 'Manual'}
+                        </td>
+                        <td className="py-3 px-3 text-[10px] font-mono text-slate-500 max-w-[150px] truncate" title={hist.transactionId || hist.note}>
+                          {hist.transactionId || hist.note || 'None'}
+                        </td>
+                        <td className="py-3 px-3 text-slate-600 font-bold">
+                          {hist.expiresAt ? new Date(hist.expiresAt).toLocaleDateString('en-GB') : (hist.package === 'starter' ? 'আজীবন' : 'N/A')}
+                        </td>
+                        <td className="py-3 px-3 rounded-r-xl">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                            hist.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
+                            hist.status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'
+                          }`}>
+                            {hist.status || 'Active'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Modal */}
       {deleteModal.isOpen && (

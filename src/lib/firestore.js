@@ -1,6 +1,6 @@
 import { 
   collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc,
-  query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction
+  query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction, arrayUnion
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -972,4 +972,53 @@ export const reportCustomerFraud = async (phone, reportData) => {
     transaction.set(profileRef, updatedProfile, { merge: true });
   });
 };
+
+// ── REVENUE SHARE & SUBSCRIPTION HELPERS ───────────
+
+/**
+ * Super Admin: রেকর্ড করুন রিটেইলারের দেওয়া রেভিনিউ শেয়ার পেমেন্ট
+ */
+export const recordSharedRevenuePayment = async (shopId, paymentData) => {
+  const shopDocRef = doc(db, 'shops', shopId);
+  const amount = Math.max(0, Number(paymentData.amount) || 0);
+  const paymentEntry = {
+    id: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+    amount,
+    paymentMethod: paymentData.paymentMethod || 'manual',
+    note: paymentData.note || '',
+    recordedBy: paymentData.recordedBy || 'superadmin',
+    createdAt: new Date().toISOString()
+  };
+
+  return updateDoc(shopDocRef, {
+    sharedRevenuePaid: increment(amount),
+    sharedRevenueLastPaidAt: serverTimestamp(),
+    sharedRevenueHistory: arrayUnion(paymentEntry),
+    updatedAt: serverTimestamp()
+  });
+};
+
+/**
+ * স্টোরের সাবস্ক্রিপশন হিস্ট্রি রেকর্ড সংরক্ষণ
+ */
+export const addSubscriptionHistory = async (shopId, historyData) => {
+  const shopDocRef = doc(db, 'shops', shopId);
+  const historyEntry = {
+    id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+    package: historyData.package || 'monthly',
+    amount: Number(historyData.amount) || 0,
+    paymentMethod: historyData.paymentMethod || 'manual',
+    transactionId: historyData.transactionId || null,
+    status: historyData.status || 'active',
+    createdAt: new Date().toISOString(),
+    expiresAt: historyData.expiresAt ? new Date(historyData.expiresAt).toISOString() : null,
+    note: historyData.note || ''
+  };
+
+  return updateDoc(shopDocRef, {
+    subscriptionHistory: arrayUnion(historyEntry),
+    updatedAt: serverTimestamp()
+  });
+};
+
 

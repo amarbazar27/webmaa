@@ -52,12 +52,25 @@ export async function POST(req) {
 
     // 1.1 Handle Starter Plan (Revenue Share) instant free activation
     if (packageType === 'starter') {
+      const historyItem = {
+        id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        package: 'starter',
+        amount: 0,
+        paymentMethod: 'revenue_share',
+        transactionId: 'REVENUE_SHARE_COMMITMENT',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        expiresAt: null,
+        note: `Starter Revenue Share Plan Activated (${globalData?.subStarterPercent ?? 5}% cut per sale)`
+      };
+
       await adminDb.collection('shops').doc(shopId).update({
         subscriptionStatus: 'active',
         subscriptionPackage: 'starter',
         subscriptionExpiresAt: null,
         subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-        subscriptionPendingPackage: admin.firestore.FieldValue.delete()
+        subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
+        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
       });
 
       return NextResponse.json({ 
@@ -106,12 +119,25 @@ export async function POST(req) {
       const days = durationDaysMap[packageType];
       const newExpiry = Date.now() + days * 24 * 60 * 60 * 1000;
       
+      const historyItem = {
+        id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        package: packageType,
+        amount: 0,
+        paymentMethod: 'coupon_free',
+        transactionId: couponCode || 'COUPON_FREE',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(newExpiry).toISOString(),
+        note: `Coupon ${couponCode} applied (100% OFF Free Activation)`
+      };
+
       await adminDb.collection('shops').doc(shopId).update({
         subscriptionStatus: 'active',
         subscriptionPackage: packageType,
         subscriptionExpiresAt: new Date(newExpiry),
         subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-        subscriptionPendingPackage: admin.firestore.FieldValue.delete()
+        subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
+        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
       });
       
       return NextResponse.json({ success: true, isFree: true, message: 'Subscription activated for free using coupon code! 🎉' });
@@ -134,10 +160,24 @@ export async function POST(req) {
         return NextResponse.json({ error: 'আপনার প্রেরক নম্বরটি অবশ্যই ১১ ডিজিটের হতে হবে এবং শুধুমাত্র সংখ্যা (যেমন: 01xxxxxxxxx) হতে হবে।' }, { status: 400 });
       }
 
+      const historyItem = {
+        id: `sub_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        package: packageType,
+        amount: finalAmount,
+        paymentMethod: 'manual',
+        transactionId: transactionId.trim(),
+        senderNumber: cleanedNumber,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        expiresAt: null,
+        note: `Manual payment submitted via ${cleanedNumber} (Txn: ${transactionId.trim()})`
+      };
+
       await adminDb.collection('shops').doc(shopId).update({
         subscriptionStatus: 'pending',
         subscriptionPendingPackage: packageType,
-        subscriptionPendingTxn: `Method: manual, Sender: ${cleanedNumber}, Txn: ${transactionId.trim()}`
+        subscriptionPendingTxn: `Method: manual, Sender: ${cleanedNumber}, Txn: ${transactionId.trim()}`,
+        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
       });
 
       return NextResponse.json({ success: true, message: 'Subscription request submitted for approval!' });

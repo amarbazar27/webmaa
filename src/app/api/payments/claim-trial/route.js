@@ -72,13 +72,26 @@ export async function POST(req) {
     const durationMs = trialDays * 24 * 60 * 60 * 1000;
     const newExpiry = Date.now() + durationMs;
 
+    const historyItem = {
+      id: `sub_trial_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      package: packageType,
+      amount: 0,
+      paymentMethod: 'free_trial',
+      transactionId: 'TRIAL_CLAIMED',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(newExpiry).toISOString(),
+      note: `${trialDays} Days Free Trial Activation`
+    };
+
     await shopRef.update({
       subscriptionStatus: 'active',
       subscriptionPackage: packageType,
       subscriptionExpiresAt: new Date(newExpiry),
       trialClaimed: true,
       subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-      subscriptionPendingPackage: admin.firestore.FieldValue.delete()
+      subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
+      subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
     });
 
     console.log(`[Trial API] Shop ${shopId} claimed free trial for ${packageType} (${trialDays} days)`);

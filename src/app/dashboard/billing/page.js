@@ -14,12 +14,17 @@ import {
   CheckCircle, 
   Clock, 
   Sparkles, 
-  Check 
+  Check,
+  Percent,
+  History,
+  DollarSign,
+  TrendingUp,
+  Receipt
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function BillingPage() {
-  const { activeShopId } = useAuth();
+  const { activeShopId, user } = useAuth();
   const [shop, setShop] = useState(null);
   const [globalConfig, setGlobalConfig] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,6 +72,12 @@ export default function BillingPage() {
   }
 
   const starterPercent = globalConfig?.subStarterPercent ?? 5;
+  const isStarter = shop?.subscriptionPackage === 'starter';
+  const retailerPercent = shop?.customRevenuePercent ?? starterPercent;
+  const grossSales = Number(shop?.totalRevenue) || 0;
+  const totalCommission = Math.round((grossSales * retailerPercent) / 100);
+  const paidCommission = Number(shop?.sharedRevenuePaid) || 0;
+  const dueCommission = Math.max(0, totalCommission - paidCommission);
 
   // Price configurations
   const priceMap = {
@@ -108,9 +119,13 @@ export default function BillingPage() {
     setSubmitting(true);
     const loadingToast = toast.loading('ফ্রি ট্রায়াল সক্রিয় করা হচ্ছে...');
     try {
+      const token = user ? await user.getIdToken() : '';
       const res = await fetch('/api/payments/claim-trial', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ shopId: activeShopId, packageType })
       });
       const data = await res.json();
@@ -196,9 +211,13 @@ export default function BillingPage() {
         payload.transactionId = transactionId.trim();
       }
 
+      const token = user ? await user.getIdToken() : '';
       const res = await fetch('/api/payments/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload)
       });
 
@@ -286,6 +305,98 @@ export default function BillingPage() {
           </div>
         </Card>
       </div>
+
+      {/* 📊 Revenue Share Commission Ledger (For Starter Plan) */}
+      {isStarter && (
+        <Card className="border-2 border-amber-300 bg-amber-50/30 p-6 md:p-8 rounded-3xl shadow-sm space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-200 pb-5">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-200 text-amber-900 text-[10px] font-black uppercase tracking-wider mb-2">
+                <Percent size={12} /> রেভিনিউ শেয়ার হিসাব (Starter Plan)
+              </div>
+              <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                <TrendingUp className="text-amber-600" size={22} />
+                সুপারএডমিন রেভিনিউ শেয়ার ও বকেয়া কমিশন
+              </h2>
+              <p className="text-xs text-slate-600 font-bold mt-1">
+                আপনার স্টোরের সফল বিক্রয় থেকে নির্ধারিত {retailerPercent}% কমিশন হিসাব নিচে প্রদর্শিত হলো:
+              </p>
+            </div>
+            <div className="shrink-0">
+              {dueCommission === 0 ? (
+                <div className="px-5 py-2.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-2xl flex items-center gap-2 font-black text-xs shadow-xs">
+                  <CheckCircle size={16} /> ✓ সম্পূর্ণ পরিশোধিত (Full Paid)
+                </div>
+              ) : (
+                <div className="px-5 py-3 bg-amber-500 text-white rounded-2xl flex items-center gap-2 font-black text-sm shadow-lg shadow-amber-500/20">
+                  <AlertCircle size={16} /> বকেয়া কমিশন: ৳{dueCommission.toLocaleString()}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-white rounded-2xl border border-amber-100 shadow-xs space-y-1">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">মোট স্টোর বিক্রয়</p>
+              <p className="text-xl font-black text-slate-900">৳{grossSales.toLocaleString()}</p>
+              <p className="text-[10px] text-slate-500 font-bold">{shop?.orderCount || 0} টি অর্ডার</p>
+            </div>
+
+            <div className="p-4 bg-white rounded-2xl border border-amber-100 shadow-xs space-y-1">
+              <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">প্ল্যাটফর্ম শেয়ার ({retailerPercent}%)</p>
+              <p className="text-xl font-black text-amber-700">৳{totalCommission.toLocaleString()}</p>
+              <p className="text-[10px] text-amber-600 font-bold">মোট প্রযোজ্য কমিশন</p>
+            </div>
+
+            <div className="p-4 bg-white rounded-2xl border border-emerald-100 shadow-xs space-y-1">
+              <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">পরিশোধিত কমিশন</p>
+              <p className="text-xl font-black text-emerald-700">৳{paidCommission.toLocaleString()}</p>
+              <p className="text-[10px] text-emerald-600 font-bold">সুপারএডমিন কর্তৃক স্বীকৃত</p>
+            </div>
+
+            <div className={`p-4 bg-white rounded-2xl border-2 shadow-xs space-y-1 ${dueCommission > 0 ? 'border-amber-400 bg-amber-50/50' : 'border-emerald-200'}`}>
+              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">বর্তমান বকেয়া (Due)</p>
+              <p className={`text-2xl font-black font-mono ${dueCommission > 0 ? 'text-amber-600' : 'text-emerald-700'}`}>
+                ৳{dueCommission.toLocaleString()}
+              </p>
+              <p className="text-[10px] font-bold text-slate-500">
+                {dueCommission > 0 ? 'অনতিবিলম্বে পরিশোধযোগ্য' : 'কোনো বকেয়া নেই'}
+              </p>
+            </div>
+          </div>
+
+          {dueCommission > 0 && (
+            <div className="p-5 bg-white rounded-2xl border border-amber-200 shadow-xs space-y-3">
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                💳 বকেয়া কমিশন পরিশোধের জন্য সুপারএডমিন পেমেন্ট নম্বর:
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {globalConfig?.bkashNumber && (
+                  <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 text-center">
+                    <p className="text-[10px] font-black text-purple-700 uppercase">বিকাশ (Send Money)</p>
+                    <p className="text-xs font-black text-purple-900 font-mono mt-0.5">{globalConfig.bkashNumber}</p>
+                  </div>
+                )}
+                {globalConfig?.nagadNumber && (
+                  <div className="p-3 bg-orange-50 rounded-xl border border-orange-100 text-center">
+                    <p className="text-[10px] font-black text-orange-700 uppercase">নগদ (Send Money)</p>
+                    <p className="text-xs font-black text-orange-900 font-mono mt-0.5">{globalConfig.nagadNumber}</p>
+                  </div>
+                )}
+                {globalConfig?.rocketNumber && (
+                  <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-center">
+                    <p className="text-[10px] font-black text-blue-700 uppercase">রকেট (Send Money)</p>
+                    <p className="text-xs font-black text-blue-900 font-mono mt-0.5">{globalConfig.rocketNumber}</p>
+                  </div>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-600 font-bold leading-relaxed">
+                📌 টাকা পাঠানোর পর আপনার স্টোর নাম ({shop.shopName}) এবং ট্রানজেকশন আইডি দিয়ে প্ল্যাটফর্ম অ্যাডমিনের সাথে যোগাযোগ করুন। অ্যাডমিন পেমেন্ট কনফার্ম করলে স্বয়ংক্রিয়ভাবে এখানে বকেয়া ক্লিয়ার হয়ে যাবে।
+              </p>
+            </div>
+          )}
+        </Card>
+      )}
 
       {shop?.subscriptionStatus === 'pending' && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
@@ -840,6 +951,94 @@ export default function BillingPage() {
             </>
           )}
         </form>
+      )}
+
+      {/* 📜 Subscription & Payment History */}
+      {((shop?.subscriptionHistory && shop.subscriptionHistory.length > 0) || (shop?.sharedRevenueHistory && shop.sharedRevenueHistory.length > 0)) && (
+        <Card className="border border-slate-200 bg-white p-6 md:p-8 rounded-3xl shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <History className="text-purple-600" size={20} />
+                পূর্ববর্তী সাবস্ক্রিপশন ও পেমেন্ট ইতিহাস (History)
+              </h2>
+              <p className="text-xs text-slate-500 font-bold mt-0.5">
+                আপনার স্টোরের সকল সাবস্ক্রিপশন ক্রয়, ট্রায়াল ও কমিশন পেমেন্টের বিবরণ
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-separate border-spacing-y-2">
+              <thead>
+                <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                  <th className="pb-2 px-3">তারিখ ও সময়</th>
+                  <th className="pb-2 px-3">বিবরণ / প্যাকেজ</th>
+                  <th className="pb-2 px-3">পরিশোধিত ফি</th>
+                  <th className="pb-2 px-3">পদ্ধতি</th>
+                  <th className="pb-2 px-3">রেফারেন্স / ট্রানজেকশন</th>
+                  <th className="pb-2 px-3">স্ট্যাটাস</th>
+                </tr>
+              </thead>
+              <tbody className="text-xs">
+                {/* Subscription history entries */}
+                {(shop?.subscriptionHistory || []).map((hist, idx) => (
+                  <tr key={hist.id || idx} className="bg-slate-50 border border-slate-100 rounded-xl">
+                    <td className="py-3 px-3 rounded-l-xl font-bold text-slate-700">
+                      {hist.createdAt ? new Date(hist.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                    </td>
+                    <td className="py-3 px-3 font-black uppercase text-purple-700">
+                      {hist.package || 'Subscription'}
+                    </td>
+                    <td className="py-3 px-3 font-black text-slate-900 font-mono">
+                      ৳{hist.amount || 0}
+                    </td>
+                    <td className="py-3 px-3 text-[11px] font-bold text-slate-600 capitalize">
+                      {hist.paymentMethod || 'Manual'}
+                    </td>
+                    <td className="py-3 px-3 text-[10px] font-mono text-slate-500 max-w-[180px] truncate" title={hist.transactionId || hist.note}>
+                      {hist.transactionId || hist.note || 'None'}
+                    </td>
+                    <td className="py-3 px-3 rounded-r-xl">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                        hist.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
+                        hist.status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'
+                      }`}>
+                        {hist.status || 'Active'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+
+                {/* Revenue share commission payment entries */}
+                {(shop?.sharedRevenueHistory || []).map((pay, idx) => (
+                  <tr key={pay.id || idx} className="bg-amber-50/50 border border-amber-100 rounded-xl">
+                    <td className="py-3 px-3 rounded-l-xl font-bold text-slate-700">
+                      {pay.createdAt ? new Date(pay.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                    </td>
+                    <td className="py-3 px-3 font-black text-amber-800">
+                      Commission Payout
+                    </td>
+                    <td className="py-3 px-3 font-black text-amber-900 font-mono">
+                      ৳{pay.amount || 0}
+                    </td>
+                    <td className="py-3 px-3 text-[11px] font-bold text-slate-600 capitalize">
+                      {pay.paymentMethod || 'Manual'}
+                    </td>
+                    <td className="py-3 px-3 text-[10px] font-mono text-slate-500 max-w-[180px] truncate" title={pay.note}>
+                      {pay.note || 'Recorded by Admin'}
+                    </td>
+                    <td className="py-3 px-3 rounded-r-xl">
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
+                        Paid
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   );
