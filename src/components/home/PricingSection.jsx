@@ -312,7 +312,7 @@ export default function PricingSection({ globalConfig = null }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle size={15} className="text-purple-500 shrink-0" />
-                  <span>🔔 ইনস্ট্যান্ট SMS ও ইমেইল অর্ডার অ্যালার্ট</span>
+                  <span>🔔 ইনস্ট্যান্ট ইমেইল ও ড্যাশবোর্ড অর্ডার অ্যালার্ট</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle size={15} className="text-purple-500 shrink-0" />
@@ -403,7 +403,7 @@ export default function PricingSection({ globalConfig = null }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle size={15} className="text-emerald-500 shrink-0" />
-                  <span>🔔 আনলিমিটেড SMS ও ইমেইল নোটিফিকেশন</span>
+                  <span>⚡ লাইভ অর্ডার ট্র্যাকিং ও স্মার্ট নোটিফিকেশন</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle size={15} className="text-emerald-500 shrink-0" />
