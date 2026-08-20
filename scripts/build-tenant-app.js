@@ -230,7 +230,19 @@ async function build() {
 
   if (db && !isDryRun) {
     try {
-      console.log(`🔍 Fetching shop document from Firestore for: ${shopSlug}...`);
+      console.log(`🔍 Fetching configuration from Firestore for: ${shopSlug}...`);
+      
+      // If building for main platform, first read globalConfig
+      let globalConfig = {};
+      try {
+        const globalSnap = await db.collection('config').doc('global').get();
+        if (globalSnap.exists) {
+          globalConfig = globalSnap.data() || {};
+        }
+      } catch (gErr) {
+        console.warn('⚠️ Could not fetch globalConfig:', gErr.message);
+      }
+
       let snap = await db.collection('shops').where('subdomainSlug', '==', shopSlug).limit(1).get();
       if (snap.empty) {
         snap = await db.collection('shops').where('shopSlug', '==', shopSlug).limit(1).get();
@@ -239,7 +251,26 @@ async function build() {
         snap = await db.collection('shops').doc(shopSlug).get();
       }
 
-      if (!snap.empty) {
+      if (shopSlug === 'main') {
+        shopName = globalConfig.brandName || "BDRetailers Platform";
+        targetUrl = `https://bdretailers.com`;
+        primaryColor = globalConfig.primaryColor || globalConfig.themeColor || "#9333ea";
+        logoUrl = globalConfig.logoUrl || null;
+        packageName = "com.bdretailers";
+
+        if (!snap.empty) {
+          const shopDoc = snap.docs ? snap.docs[0] : snap;
+          actualShopId = shopDoc.id;
+          const shopData = shopDoc.data();
+          appConfig = shopData.appConfig || {};
+          appConfig.versionCode = shopData.appBuildVersionCode || appConfig.versionCode;
+          appConfig.versionName = shopData.appBuildVersionName || appConfig.versionName;
+          shopName = appConfig.appName || globalConfig.brandName || shopData.shopName || shopName;
+          primaryColor = shopData.designOverrides?.primaryColor || primaryColor;
+          logoUrl = appConfig.logoUrl || globalConfig.logoUrl || shopData.logoUrl || logoUrl;
+        }
+        console.log(`✅ Loaded main platform metadata: ${shopName} | Package: ${packageName} | Color: ${primaryColor} | Logo: ${logoUrl || 'default'}`);
+      } else if (!snap.empty) {
         const shopDoc = snap.docs ? snap.docs[0] : snap;
         actualShopId = shopDoc.id;
         const shopData = shopDoc.data();
@@ -255,9 +286,7 @@ async function build() {
           packageName = appConfig.packageName.trim();
         }
         
-        if (shopSlug === 'main') {
-          targetUrl = `https://bdretailers.com`;
-        } else if (customDomain && shopData.domainStatus === 'active') {
+        if (customDomain && shopData.domainStatus === 'active') {
           targetUrl = `https://${customDomain}`;
         } else {
           targetUrl = `https://bdretailers.com/${shopSlug}`;
@@ -285,16 +314,37 @@ async function build() {
   console.log(`📂 Copying template from ${templatePath} to ${appWorkspace}`);
   fs.cpSync(templatePath, appWorkspace, { recursive: true });
 
-  // 3. Download Logo Icon
+  // 3. Setup Logo Icon
   const iconDest = path.join(appWorkspace, 'assets/icon.png');
+  const defaultPublicLogo = path.join(rootDir, 'public/logo.png');
+
   if (logoUrl) {
-    try {
-      console.log(`📥 Downloading branding logo from: ${logoUrl}`);
-      await downloadFile(logoUrl, iconDest);
-      console.log(`✅ Logo saved to: ${iconDest}`);
-    } catch (err) {
-      console.error(`❌ Failed to download logo: ${err.message}. Using default placeholder.`);
+    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://')) {
+      try {
+        console.log(`📥 Downloading branding logo from: ${logoUrl}`);
+        await downloadFile(logoUrl, iconDest);
+        console.log(`✅ Remote logo saved to: ${iconDest}`);
+      } catch (err) {
+        console.error(`❌ Failed to download logo: ${err.message}. Using public logo fallback.`);
+        if (fs.existsSync(defaultPublicLogo)) {
+          fs.copyFileSync(defaultPublicLogo, iconDest);
+        }
+      }
+    } else {
+      // Local relative path (e.g. /logo.png or logo.png)
+      const cleanRelPath = logoUrl.startsWith('/') ? logoUrl.slice(1) : logoUrl;
+      const localLogoPath = path.join(rootDir, 'public', cleanRelPath);
+      if (fs.existsSync(localLogoPath)) {
+        fs.copyFileSync(localLogoPath, iconDest);
+        console.log(`✅ Copied local logo from ${localLogoPath} to: ${iconDest}`);
+      } else if (fs.existsSync(defaultPublicLogo)) {
+        fs.copyFileSync(defaultPublicLogo, iconDest);
+        console.log(`✅ Copied fallback public logo to: ${iconDest}`);
+      }
     }
+  } else if (fs.existsSync(defaultPublicLogo)) {
+    fs.copyFileSync(defaultPublicLogo, iconDest);
+    console.log(`✅ Using official public logo as default icon: ${iconDest}`);
   }
 
   // Ensure logo icon has Android Adaptive Icon safe-zone padding (prevents edge cropping)
@@ -621,20 +671,42 @@ build()
         }
 
         if (shopDocRef) {
-          await shopDocRef.update({
-            appBuildStatus: 'completed',
-            appBuildApkUrl: result.apkUrl,
-            appBuildAabUrl: result.aabUrl,
-            appBuildPackageName: packageName,
-            appBuildVersionCode: result.targetVersionCode,
-            appBuildVersionName: result.targetVersionName,
-            'appConfig.versionCode': result.targetVersionCode,
-            'appConfig.versionName': result.targetVersionName,
-            appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            appBuildError: null
-          });
-          console.log(`✅ Firestore updated successfully with Version Code: ${result.targetVersionCode}.`);
+          try {
+            await shopDocRef.set({
+              appBuildStatus: 'completed',
+              appBuildApkUrl: result.apkUrl,
+              appBuildAabUrl: result.aabUrl,
+              appBuildPackageName: packageName,
+              appBuildVersionCode: result.targetVersionCode,
+              appBuildVersionName: result.targetVersionName,
+              'appConfig.versionCode': result.targetVersionCode,
+              'appConfig.versionName': result.targetVersionName,
+              appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              appBuildError: null
+            }, { merge: true });
+          } catch (e) {
+            console.warn('⚠️ Shop doc set warning:', e.message);
+          }
         }
+
+        if (shopSlug === 'main') {
+          try {
+            await db.collection('config').doc('global').set({
+              appBuildStatus: 'completed',
+              appBuildApkUrl: result.apkUrl,
+              appBuildAabUrl: result.aabUrl,
+              appBuildPackageName: packageName,
+              appBuildVersionCode: result.targetVersionCode,
+              appBuildVersionName: result.targetVersionName,
+              appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              appBuildError: null
+            }, { merge: true });
+            console.log(`✅ Global config updated with main app build info.`);
+          } catch (gErr) {
+            console.warn('⚠️ Global config update warning:', gErr.message);
+          }
+        }
+        console.log(`✅ Firestore updated successfully with Version Code: ${result.targetVersionCode}.`);
       } catch (err) {
         console.error('❌ Failed to update Firestore with build urls:', err.message);
       }

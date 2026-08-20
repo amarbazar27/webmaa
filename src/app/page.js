@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import {
   ShoppingBag, Search, Star, ArrowRight, Phone, Store,
-  X, Loader2, CheckCircle, Sparkles, Package, ChevronRight,
+  X, Loader2, CheckCircle, Sparkles, Package, ChevronRight, ChevronLeft,
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
   Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag, User,
@@ -466,15 +466,19 @@ export default function Home() {
     }
   }, [user, allShops]);
 
+  const bannersList = (globalConfig?.banners && globalConfig.banners.length > 0)
+    ? globalConfig.banners
+    : (mainShopData?.banners || []);
+
   // Custom banner slider interval timer
   useEffect(() => {
-    if (!mainShopData?.banners || mainShopData.banners.length <= 1) return;
-    const intervalTime = (mainShopData.bannerInterval || 4) * 1000;
+    if (!bannersList || bannersList.length <= 1) return;
+    const intervalTime = (mainShopData?.bannerInterval || 4) * 1000;
     const timer = setInterval(() => {
-      setActiveBanner(prev => (prev + 1) % mainShopData.banners.length);
+      setActiveBanner(prev => (prev + 1) % bannersList.length);
     }, intervalTime);
     return () => clearInterval(timer);
-  }, [mainShopData?.banners, mainShopData?.bannerInterval]);
+  }, [bannersList, mainShopData?.bannerInterval]);
 
   // Update mouse position for glowing cursor effect
   useEffect(() => {
@@ -1024,16 +1028,16 @@ export default function Home() {
   };
 
   const onTouchEnd = () => {
-    if (!touchStart || !touchEnd || !mainShopData?.banners) return;
+    if (!touchStart || !touchEnd || bannersList.length === 0) return;
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
     
     if (isLeftSwipe) {
-      setActiveBanner(prev => (prev === mainShopData.banners.length - 1 ? 0 : prev + 1));
+      setActiveBanner(prev => (prev === bannersList.length - 1 ? 0 : prev + 1));
     }
     if (isRightSwipe) {
-      setActiveBanner(prev => (prev === 0 ? mainShopData.banners.length - 1 : prev - 1));
+      setActiveBanner(prev => (prev === 0 ? bannersList.length - 1 : prev - 1));
     }
   };
 
@@ -1656,6 +1660,97 @@ export default function Home() {
       {/* ── Marketplace Section ── */}
       <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 scroll-mt-24">
         
+        {/* ── Main Site Banners Carousel ── */}
+        {bannersList.length > 0 && (
+          <div className="mb-8 relative rounded-3xl overflow-hidden shadow-2xl border border-purple-100 dark:border-white/10 bg-slate-900 group">
+            <div 
+              className="relative w-full h-[220px] sm:h-[340px] md:h-[420px] flex transition-transform duration-700 ease-out"
+              style={{ transform: `translateX(-${activeBanner * 100}%)` }}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+            >
+              {bannersList.map((banner, idx) => (
+                <div key={idx} className="w-full h-full shrink-0 relative flex items-center">
+                  {banner.url ? (
+                    <img 
+                      src={banner.url} 
+                      alt={banner.title || "Banner"} 
+                      className="absolute inset-0 w-full h-full object-cover object-center brightness-90 group-hover:scale-105 transition-transform duration-700"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900" />
+                  )}
+                  
+                  {/* Gradient Overlay for high readability */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent md:bg-gradient-to-r md:from-black/85 md:via-black/50 md:to-transparent" />
+                  
+                  {/* Banner Content */}
+                  {(banner.title || banner.description || banner.buttonText) && (
+                    <div className="relative z-10 p-6 sm:p-10 md:p-14 max-w-2xl text-white space-y-2 sm:space-y-4">
+                      {banner.title && (
+                        <h2 className="text-xl sm:text-3xl md:text-4xl font-black tracking-tight leading-tight drop-shadow-lg text-white">
+                          {banner.title}
+                        </h2>
+                      )}
+                      {banner.description && (
+                        <p className="text-xs sm:text-sm md:text-base text-slate-200 font-medium line-clamp-2 sm:line-clamp-3 drop-shadow">
+                          {banner.description}
+                        </p>
+                      )}
+                      {banner.buttonText && (
+                        <div className="pt-2">
+                          <a
+                            href={banner.linkUrl || "#marketplace"}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-purple-900/50 hover:scale-105 active:scale-95 transition-all"
+                          >
+                            <span>{banner.buttonText}</span>
+                            <ArrowRight size={15} />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Navigation Arrows */}
+            {bannersList.length > 1 && (
+              <>
+                <button
+                  onClick={() => setActiveBanner(prev => (prev === 0 ? bannersList.length - 1 : prev - 1))}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/40 hover:bg-black/70 backdrop-blur-md text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg"
+                  aria-label="Previous Slide"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  onClick={() => setActiveBanner(prev => (prev === bannersList.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/40 hover:bg-black/70 backdrop-blur-md text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 z-20 cursor-pointer shadow-lg"
+                  aria-label="Next Slide"
+                >
+                  <ChevronRight size={22} />
+                </button>
+
+                {/* Dot Indicators */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full">
+                  {bannersList.map((_, dotIdx) => (
+                    <button
+                      key={dotIdx}
+                      onClick={() => setActiveBanner(dotIdx)}
+                      className={`h-2 rounded-full transition-all cursor-pointer ${
+                        activeBanner === dotIdx ? 'w-6 bg-purple-500' : 'w-2 bg-white/50 hover:bg-white'
+                      }`}
+                      aria-label={`Go to slide ${dotIdx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* ── Main Site Description Box (Editable via Superadmin) ── */}
         <div className="mb-6 py-4 px-6 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50/80 via-white to-indigo-50/80 relative shadow-sm">
           <p className="text-xs sm:text-sm font-bold text-slate-800 leading-relaxed">

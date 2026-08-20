@@ -304,18 +304,21 @@ export default function SuperAdminPage() {
   }, [user]);
 
   useEffect(() => {
-    if (superadminShop) {
-      setBanners(superadminShop.banners || []);
+    if (superadminShop?.banners && superadminShop.banners.length > 0 && banners.length === 0) {
+      setBanners(superadminShop.banners);
     }
   }, [superadminShop]);
 
   const handleSaveBanners = async () => {
-    if (!superadminShop?.id) return;
     setSavingBanners(true);
     const toastId = toast.loading('ব্যানার সংরক্ষণ হচ্ছে...');
     try {
-      await updateShop(superadminShop.id, { banners });
-      setSuperadminShop(prev => ({ ...prev, banners }));
+      await updateGlobalConfig({ banners });
+      if (superadminShop?.id) {
+        await updateShop(superadminShop.id, { banners });
+        setSuperadminShop(prev => ({ ...prev, banners }));
+      }
+      setGlobalConfig(prev => ({ ...prev, banners }));
       toast.success('ব্যানারসমূহ সফলভাবে সংরক্ষিত হয়েছে! 🎉', { id: toastId });
     } catch (err) {
       toast.error('ব্যানার সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message, { id: toastId });
@@ -326,6 +329,9 @@ export default function SuperAdminPage() {
   useEffect(() => { 
     loadData(); 
     const unsubscribe = subscribeGlobalConfig((configData) => {
+      if (configData?.banners) {
+        setBanners(configData.banners);
+      }
       setGlobalConfig({
         geminiApiKey: configData?.geminiApiKey || '',
         googleMapsApiKey: configData?.googleMapsApiKey || '',
@@ -357,6 +363,7 @@ export default function SuperAdminPage() {
         subCouponEnabled: configData?.subCouponEnabled ?? false,
         brandName: configData?.brandName || '',
         logoUrl: configData?.logoUrl || '',
+        banners: configData?.banners || [],
         platformDescription: configData?.platformDescription || '',
         whatsapp: configData?.whatsapp || '',
         contactEmail: configData?.contactEmail || '',

@@ -20,11 +20,52 @@ export async function GET(request) {
     ]
   };
 
-  if (!shopSlug || !adminDb) {
+  if (!adminDb) {
     return NextResponse.json(defaultManifest);
   }
 
   try {
+    // If no shopSlug, load global platform configuration for real-time manifest branding
+    if (!shopSlug || shopSlug === 'main') {
+      try {
+        const globalSnap = await adminDb.collection('config').doc('global').get();
+        if (globalSnap.exists) {
+          const globalData = globalSnap.data() || {};
+          const brandName = globalData.brandName || "BDRetailers";
+          const logo = globalData.logoUrl || "/logo.png";
+          const desc = globalData.platformDescription || "বাংলাদেশের সবচেয়ে আধুনিক ও প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস ও ই-কমার্স সলিউশন।";
+          
+          return NextResponse.json({
+            name: `${brandName} — আপনার ব্যবসার ডিজিটাল পার্টনার`,
+            short_name: brandName,
+            description: desc,
+            start_url: "/",
+            display: "standalone",
+            background_color: "#ffffff",
+            theme_color: globalData.primaryColor || globalData.themeColor || "#9333ea",
+            orientation: "portrait-primary",
+            icons: [
+              {
+                src: logo,
+                sizes: "192x192",
+                type: "image/png",
+                purpose: "any maskable"
+              },
+              {
+                src: logo,
+                sizes: "512x512",
+                type: "image/png",
+                purpose: "any maskable"
+              }
+            ]
+          });
+        }
+      } catch (gErr) {
+        console.warn("Global Manifest Error:", gErr);
+      }
+      return NextResponse.json(defaultManifest);
+    }
+
     const shopsRef = adminDb.collection('shops');
     let snap = await shopsRef.where('subdomainSlug', '==', shopSlug).limit(1).get();
     if (snap.empty) {

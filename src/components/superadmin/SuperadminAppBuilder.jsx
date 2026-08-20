@@ -28,10 +28,11 @@ export default function SuperadminAppBuilder() {
   const [selectedShop, setSelectedShop] = useState(null);
   const [copiedText, setCopiedText] = useState('');
   const [customVersionCodes, setCustomVersionCodes] = useState({});
+  const [globalConfig, setGlobalConfig] = useState(null);
 
-  // 1. Real-time Firestore Listener for Shops
+  // 1. Real-time Firestore Listener for Shops & Global Config
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'shops'), (snapshot) => {
+    const unsubscribeShops = onSnapshot(collection(db, 'shops'), (snapshot) => {
       const shopList = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -44,7 +45,16 @@ export default function SuperadminAppBuilder() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const unsubscribeGlobal = onSnapshot(doc(db, 'config', 'global'), (docSnap) => {
+      if (docSnap.exists()) {
+        setGlobalConfig(docSnap.data());
+      }
+    });
+
+    return () => {
+      unsubscribeShops();
+      unsubscribeGlobal();
+    };
   }, []);
 
   // 2. Trigger API Build Request
@@ -109,8 +119,31 @@ export default function SuperadminAppBuilder() {
     setTimeout(() => setCopiedText(''), 2000);
   };
 
+  // Combine shops with main platform
+  const combinedShops = React.useMemo(() => {
+    const hasMain = shops.some(s => s.id === 'main' || s.subdomainSlug === 'main' || s.shopSlug === 'main');
+    if (hasMain) return shops;
+
+    const mainEntry = {
+      id: 'main',
+      shopName: globalConfig?.brandName || 'BDRetailers Platform',
+      subdomainSlug: 'main',
+      shopSlug: 'main',
+      ownerEmail: 'rafiqunnabi07@gmail.com',
+      logoUrl: globalConfig?.logoUrl || '/logo.png',
+      appBuildStatus: globalConfig?.appBuildStatus || 'not_generated',
+      appBuildApkUrl: globalConfig?.appBuildApkUrl || null,
+      appBuildAabUrl: globalConfig?.appBuildAabUrl || null,
+      appBuildVersionCode: globalConfig?.appBuildVersionCode || 4,
+      appBuildVersionName: globalConfig?.appBuildVersionName || '1.0.4',
+      appBuildPackageName: 'com.bdretailers',
+      designOverrides: { primaryColor: globalConfig?.primaryColor || '#9333ea' }
+    };
+    return [mainEntry, ...shops];
+  }, [shops, globalConfig]);
+
   // Filter shops
-  const filteredShops = shops.filter(shop => {
+  const filteredShops = combinedShops.filter(shop => {
     const name = (shop.shopName || '').toLowerCase();
     const slug = (shop.subdomainSlug || shop.shopSlug || '').toLowerCase();
     const email = (shop.ownerEmail || '').toLowerCase();
@@ -184,8 +217,12 @@ export default function SuperadminAppBuilder() {
                     {/* Store Identity */}
                     <td className="p-4 rounded-l-2xl border-y border-l border-slate-100">
                       <div className="flex items-center gap-3">
-                        {shop.logoUrl ? (
-                          <img src={shop.logoUrl} className="w-10 h-10 rounded-xl object-cover border border-slate-200" alt="" />
+                        {(shop.logoUrl || (slug === 'main' ? (globalConfig?.logoUrl || '/logo.png') : null)) ? (
+                          <img 
+                            src={shop.logoUrl || (slug === 'main' ? (globalConfig?.logoUrl || '/logo.png') : '/logo.png')} 
+                            className="w-10 h-10 rounded-xl object-contain border border-slate-200 bg-white p-0.5" 
+                            alt="" 
+                          />
                         ) : (
                           <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center font-black text-purple-600 text-sm">
                             {shop.shopName?.[0]?.toUpperCase() || 'S'}

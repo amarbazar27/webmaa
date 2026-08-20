@@ -53,24 +53,40 @@ export async function POST(request) {
     }
 
     // Fetch shop details
+    let shopSlug = '';
+    let shopData = {};
     const shopDoc = await adminDb.collection('shops').doc(shopId).get();
     if (!shopDoc.exists) {
-      return NextResponse.json({ error: 'শপটি পাওয়া যায়নি।' }, { status: 404 });
+      if (shopId === 'main') {
+        shopSlug = 'main';
+      } else {
+        return NextResponse.json({ error: 'শপটি পাওয়া যায়নি।' }, { status: 404 });
+      }
+    } else {
+      shopData = shopDoc.data();
+      shopSlug = shopData.subdomainSlug || shopData.shopSlug || (shopId === 'main' ? 'main' : '');
     }
-
-    const shopData = shopDoc.data();
-    const shopSlug = shopData.subdomainSlug || shopData.shopSlug;
 
     if (!shopSlug) {
       return NextResponse.json({ error: 'শপের স্ল্যাগ (subdomainSlug) নেই।' }, { status: 400 });
     }
 
     // 3. Initialize build state in database
-    await adminDb.collection('shops').doc(shopId).update({
+    await adminDb.collection('shops').doc(shopId).set({
       appBuildStatus: 'building',
       appBuildError: null,
       appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    }, { merge: true });
+
+    if (shopSlug === 'main') {
+      try {
+        await adminDb.collection('config').doc('global').set({
+          appBuildStatus: 'building',
+          appBuildError: null,
+          appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+      } catch (e) {}
+    }
 
     console.log(`[Build App] Starting compilation request for ${shopSlug} (ID: ${shopId}, VersionCode: ${versionCode || 'auto'})`);
 

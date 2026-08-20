@@ -22,7 +22,7 @@ export const metadata = {
   authors: [{ name: 'BDRetailers', url: BASE_URL }],
   creator: 'BDRetailers',
   publisher: 'BDRetailers',
-  manifest: '/manifest.json',
+  manifest: '/api/manifest',
   icons: {
     icon: [
       { url: '/favicon.ico' },
