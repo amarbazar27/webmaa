@@ -2634,8 +2634,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         };
         const hbCallbacks = {
           onAddToCart: addToCart,
+          onProductClick: (product) => {
+            if (product) setSelectedProductForModal(product);
+          },
           onCategoryClick: (label) => {
             setSearchTerm(label);
+            setTimeout(() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
+          },
+          onMoodClick: (tag) => {
+            setSearchTerm(tag);
             setTimeout(() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
           },
           onConcernClick: (tag) => {

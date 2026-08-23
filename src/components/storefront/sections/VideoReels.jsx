@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Play, X } from 'lucide-react';
+import { resolveSectionData } from '@/lib/homepageDemoData';
 
 function getEmbedUrl(url) {
   if (!url) return null;
@@ -33,44 +34,53 @@ function getEmbedUrl(url) {
 }
 
 export default function VideoReels({ data, themeVars }) {
+  const d = resolveSectionData('video_reels', data);
   const [activeVideo, setActiveVideo] = useState(null);
   const primary = themeVars?.primaryColor || '#6D28D9';
-  const reels = (data?.urls || []).filter(r => r.url);
+  const reels = d?.urls || [];
 
   if (!reels.length) return null;
 
   return (
-    <div className="px-4 py-5">
-      <h2 className="text-base font-black text-slate-900 mb-1">{data?.title || '🎬 Video Reels'}</h2>
-      <p className="text-xs text-slate-500 font-medium mb-4">দেখুন এবং কিনুন</p>
+    <div className="px-4 py-6 md:py-8 max-w-[1400px] mx-auto">
+      <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-1 tracking-tight">
+        {d?.title || '🎬 Video Reels'}
+      </h2>
+      <p className="text-xs text-slate-500 font-medium mb-4">ভিডিও দেখে জেনে নিন পণ্যের বিস্তারিত</p>
 
-      <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-none">
         {reels.map((reel, i) => (
           <button
             key={i}
             onClick={() => setActiveVideo(reel)}
-            className="flex-shrink-0 w-32 md:w-40 rounded-2xl overflow-hidden relative group cursor-pointer shadow-md"
-            style={{ aspectRatio: '9/16' }}
+            className="flex-shrink-0 w-36 sm:w-44 md:w-52 rounded-3xl overflow-hidden relative group cursor-pointer shadow-md bg-slate-950 aspect-[9/16]"
           >
             {/* Thumbnail */}
-            <div className="w-full h-full bg-slate-900">
+            <div className="w-full h-full">
               {reel.thumbnail ? (
-                <img src={reel.thumbnail} alt={reel.title || `Reel ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80" />
+                <img
+                  src={reel.thumbnail}
+                  alt={reel.title || `Reel ${i + 1}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-85"
+                  loading="lazy"
+                />
               ) : (
-                <div className="w-full h-full flex items-center justify-center" style={{ background: primary + '20' }}>
+                <div className="w-full h-full flex items-center justify-center" style={{ background: `${primary}20` }}>
                   <Play size={32} style={{ color: primary }} />
                 </div>
               )}
             </div>
+
             {/* Play overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-              <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/35 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
                 <Play size={18} fill={primary} style={{ color: primary, marginLeft: 2 }} />
               </div>
             </div>
+
             {reel.title && (
-              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-white text-[10px] font-bold line-clamp-2 text-left">{reel.title}</p>
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+                <p className="text-white text-xs font-bold line-clamp-2 text-left leading-snug">{reel.title}</p>
               </div>
             )}
           </button>
@@ -79,14 +89,20 @@ export default function VideoReels({ data, themeVars }) {
 
       {/* Video Modal */}
       {activeVideo && (
-        <div className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4" onClick={() => setActiveVideo(null)}>
-          <div className="relative w-full max-w-sm" style={{ aspectRatio: '9/16' }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setActiveVideo(null)} className="absolute -top-10 right-0 text-white hover:text-slate-300 transition-colors">
+        <div 
+          className="fixed inset-0 z-[999999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4" 
+          onClick={() => setActiveVideo(null)}
+        >
+          <div className="relative w-full max-w-sm aspect-[9/16]" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setActiveVideo(null)} 
+              className="absolute -top-10 right-0 text-white hover:text-slate-300 transition-colors p-2"
+            >
               <X size={24} />
             </button>
             <iframe
               src={getEmbedUrl(activeVideo.url)}
-              className="w-full h-full rounded-2xl"
+              className="w-full h-full rounded-3xl"
               allow="autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
             />
