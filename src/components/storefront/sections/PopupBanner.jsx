@@ -36,6 +36,18 @@ export default function PopupBanner({ data, themeVars, isPreview = false, onDism
     }
   };
 
+  const handleOverlayClick = () => {
+    // In preview mode: always auto dismiss on outside click
+    if (isPreview) {
+      dismiss();
+      return;
+    }
+    // On live store: respect retailer choice (default is true)
+    if (d?.closeOnOutsideClick !== false) {
+      dismiss();
+    }
+  };
+
   if (!mounted || !d?.imageUrl || !show || dismissed) return null;
 
   const content = (
@@ -48,7 +60,7 @@ export default function PopupBanner({ data, themeVars, isPreview = false, onDism
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
       }}
-      onClick={dismiss}
+      onClick={handleOverlayClick}
     >
       {/* Modal Card */}
       <div

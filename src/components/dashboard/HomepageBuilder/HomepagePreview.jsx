@@ -10,6 +10,8 @@ import { DEMO_PRODUCTS } from '@/lib/homepageDemoData';
 export default function HomepagePreview({
   sections = [],
   theme = {},
+  headerConfig = {},
+  footerConfig = {},
   shop = null,
   mode = 'mobile', // 'mobile' | 'desktop'
   onModeChange,
@@ -67,13 +69,27 @@ export default function HomepagePreview({
     font: theme?.font || 'Hind Siliguri',
   };
 
+  const hStyle = headerConfig?.style || 'classic';
+  const fStyle = footerConfig?.style || 'modern_columns';
+  const btnStyle = headerConfig?.buttonStyle || 'contrast_pill';
+
+  const headerBtnClass = btnStyle === 'white_pill'
+    ? 'p-2 rounded-xl bg-white text-slate-800 shadow-sm border border-slate-200'
+    : 'p-2 rounded-xl bg-slate-100/90 text-slate-700 hover:bg-slate-200 shadow-2xs';
+
   const renderStorefrontContent = (isModal = false) => (
     <div className="w-full bg-slate-50 relative min-h-full">
       {/* Simulated Storefront Top Header */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3 shadow-xs">
-        <div className="flex items-center justify-between gap-3 max-w-[1400px] mx-auto">
+      <header className={`sticky top-0 z-30 transition-all ${
+        hStyle === 'floating'
+          ? 'mx-2 my-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 px-3.5 py-2.5 shadow-md'
+          : hStyle === 'dark_contrast'
+          ? 'bg-slate-950 text-white border-b border-slate-800 px-4 py-3 shadow-lg'
+          : 'bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3 shadow-xs'
+      }`}>
+        <div className="flex items-center justify-between gap-2 max-w-[1400px] mx-auto">
           {/* Logo & Brand Name */}
-          <div className="flex items-center gap-2.5">
+          <div className={`flex items-center gap-2.5 ${hStyle === 'centered' ? 'order-2 mx-auto' : ''}`}>
             {shop?.logoUrl ? (
               <img src={shop.logoUrl} alt="Logo" className="w-8 h-8 rounded-xl object-contain" />
             ) : (
@@ -85,28 +101,44 @@ export default function HomepagePreview({
               </div>
             )}
             <div>
-              <span className="text-sm font-black text-slate-900 leading-none block">
+              <span className={`text-sm font-black leading-none block ${hStyle === 'dark_contrast' ? 'text-white' : 'text-slate-900'}`}>
                 {shop?.shopName || 'BDRetailers Store'}
               </span>
-              <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">● Online Store</span>
+              <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">● Online</span>
             </div>
           </div>
 
           {/* Search Simulation */}
-          <div className="hidden sm:flex flex-1 max-w-xs mx-4">
-            <div className="w-full flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-xl text-xs text-slate-400 font-medium border border-slate-200/60">
-              <Search size={14} />
-              <span>পণ্য খুঁজুন...</span>
+          {headerConfig.showSearch !== false && (
+            <div className={`hidden sm:flex flex-1 max-w-xs mx-3 ${hStyle === 'centered' ? 'order-1 max-w-[120px]' : ''}`}>
+              <div className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border ${
+                hStyle === 'dark_contrast' ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200/60 text-slate-400'
+              }`}>
+                <Search size={13} />
+                <span className="truncate">পণ্য খুঁজুন...</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
+          {/* Action Buttons */}
+          <div className={`flex items-center gap-1.5 ${hStyle === 'centered' ? 'order-3' : ''}`}>
+            {headerConfig.showNotifications !== false && (
+              <div className={headerBtnClass} title="Notifications">
+                <Bell size={15} />
+              </div>
+            )}
+
+            {headerConfig.showFaqBtn !== false && (
+              <div className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-amber-500 text-white text-[10px] font-black shadow-xs">
+                FAQ
+              </div>
+            )}
+
             <button 
-              className="relative p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              className={`relative ${headerBtnClass}`}
               aria-label="Cart"
             >
-              <ShoppingBag size={16} />
+              <ShoppingBag size={15} />
               {cartCount > 0 && (
                 <span 
                   className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[9px] font-black flex items-center justify-center shadow"
@@ -181,19 +213,35 @@ export default function HomepagePreview({
           </div>
         )}
 
-        {/* Storefront Footer preview */}
-        <footer className="mt-8 bg-slate-900 text-white rounded-t-3xl p-6 sm:p-8">
-          <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
-            <div>
-              <p className="text-sm font-black">{shop?.shopName || 'BDRetailers Store'}</p>
-              <p className="text-xs text-slate-400 mt-0.5">বিশ্বস্ত ও নির্ভরযোগ্য অনলাইন কেনাকাটা</p>
+        {/* Storefront Dynamic Footer Preview */}
+        {fStyle === 'minimal_bar' ? (
+          <footer className="mt-8 bg-slate-900 text-white p-4 text-center">
+            <p className="text-xs font-black">© {new Date().getFullYear()} {shop?.shopName || 'Store'} — সর্বস্বত্ত্ব সংরক্ষিত।</p>
+          </footer>
+        ) : fStyle === 'centered_brand' ? (
+          <footer className="mt-8 bg-white border-t border-slate-100 p-6 text-center space-y-2">
+            <h3 className="text-base font-black text-slate-900">{shop?.shopName || 'Store'}</h3>
+            <p className="text-xs text-slate-500 italic">"{footerConfig.customTagline || shop?.slogan || 'বিশ্বস্ত অনলাইন সেবা'}"</p>
+            <p className="text-[10px] text-slate-400">© {new Date().getFullYear()} All Rights Reserved</p>
+          </footer>
+        ) : (
+          <footer className={`mt-8 rounded-t-3xl p-6 sm:p-8 ${
+            fStyle === 'dark_luxury' ? 'bg-slate-950 text-white' : 'bg-slate-900 text-white'
+          }`}>
+            <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+              <div>
+                <p className="text-sm font-black">{shop?.shopName || 'BDRetailers Store'}</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {footerConfig.customTagline || shop?.slogan || 'বিশ্বস্ত ও নির্ভরযোগ্য অনলাইন কেনাকাটা'}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
+                <span>Powered by</span>
+                <span className="text-white font-black">BDRetailers.com</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
-              <span>Powered by</span>
-              <span className="text-white font-black">BDRetailers.com</span>
-            </div>
-          </div>
-        </footer>
+          </footer>
+        )}
       </div>
     </div>
   );

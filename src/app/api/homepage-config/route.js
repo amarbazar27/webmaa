@@ -40,6 +40,26 @@ const DEFAULT_THEME = {
   language: 'bn',
 };
 
+const DEFAULT_HEADER = {
+  style: 'classic',
+  showSearch: true,
+  showNotifications: true,
+  showThemeToggle: true,
+  showDashboardBtn: true,
+  showFaqBtn: true,
+  buttonStyle: 'contrast_pill',
+};
+
+const DEFAULT_FOOTER = {
+  style: 'modern_columns',
+  showCategories: true,
+  showContact: true,
+  showSocials: true,
+  showCopyright: true,
+  showPrivacy: true,
+  customTagline: '',
+};
+
 async function verifyAuth(request) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -72,6 +92,8 @@ export async function GET(request) {
       return NextResponse.json({
         sections: DEFAULT_SECTIONS,
         theme: DEFAULT_THEME,
+        header: DEFAULT_HEADER,
+        footer: DEFAULT_FOOTER,
         publishedAt: null,
       });
     }
@@ -94,6 +116,9 @@ export async function GET(request) {
       });
     }
 
+    if (!data.header) data.header = DEFAULT_HEADER;
+    if (!data.footer) data.footer = DEFAULT_FOOTER;
+
     return NextResponse.json(data);
   } catch (err) {
     console.error('[homepage-config GET]', err);
@@ -108,7 +133,7 @@ export async function POST(request) {
 
   try {
     const body = await request.json();
-    const { shopId, sections, theme } = body;
+    const { shopId, sections, theme, header, footer } = body;
 
     if (!shopId) return NextResponse.json({ error: 'shopId required' }, { status: 400 });
 
@@ -128,6 +153,8 @@ export async function POST(request) {
     await draftRef.set({
       sections: sections || DEFAULT_SECTIONS,
       theme: theme || DEFAULT_THEME,
+      header: header || DEFAULT_HEADER,
+      footer: footer || DEFAULT_FOOTER,
       updatedAt: new Date().toISOString(),
       updatedBy: user.uid,
     }, { merge: false });
@@ -146,7 +173,7 @@ export async function PUT(request) {
 
   try {
     const body = await request.json();
-    const { shopId, sections, theme } = body;
+    const { shopId, sections, theme, header, footer } = body;
 
     if (!shopId) return NextResponse.json({ error: 'shopId required' }, { status: 400 });
 
@@ -164,6 +191,8 @@ export async function PUT(request) {
     const configData = {
       sections: sections || DEFAULT_SECTIONS,
       theme: theme || DEFAULT_THEME,
+      header: header || DEFAULT_HEADER,
+      footer: footer || DEFAULT_FOOTER,
       publishedAt: new Date().toISOString(),
       publishedBy: user.uid,
     };

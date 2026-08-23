@@ -433,10 +433,48 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [activeSubcategory, setActiveSubcategory] = useState('');
   const [selectedSize, setSelectedSize] = useState('39');
   const [searchTerm, setSearchTerm] = useState('');
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOption, setSortOption] = useState('name_asc');
   const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
+
+  // Load and manage recent search history
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`shop_recent_searches_${shop?.id || 'store'}`);
+      if (stored) setRecentSearches(JSON.parse(stored));
+    } catch {}
+  }, [shop?.id]);
+
+  const saveRecentSearch = (term) => {
+    const trimmed = (term || '').trim();
+    if (!trimmed || trimmed.length < 2) return;
+    try {
+      const updated = [trimmed, ...recentSearches.filter(s => s.toLowerCase() !== trimmed.toLowerCase())].slice(0, 8);
+      setRecentSearches(updated);
+      localStorage.setItem(`shop_recent_searches_${shop?.id || 'store'}`, JSON.stringify(updated));
+    } catch {}
+  };
+
+  const deleteRecentSearch = (termToDelete, e) => {
+    e?.stopPropagation?.();
+    try {
+      const updated = recentSearches.filter(s => s !== termToDelete);
+      setRecentSearches(updated);
+      localStorage.setItem(`shop_recent_searches_${shop?.id || 'store'}`, JSON.stringify(updated));
+    } catch {}
+  };
+
+  const clearAllRecentSearches = (e) => {
+    e?.stopPropagation?.();
+    try {
+      setRecentSearches([]);
+      localStorage.removeItem(`shop_recent_searches_${shop?.id || 'store'}`);
+    } catch {}
+  };
+
   useEffect(() => { const t = setTimeout(() => setShowSplash(false), 1500); return () => clearTimeout(t); }, []);
 
   useEffect(() => {
@@ -2365,71 +2403,210 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       )}
 
-      {/* ── Header ── */}
-      <header className="shop-header border-b sticky top-0 z-40 shadow-sm" style={{background: themeVars['--sp-header-bg'] || 'white', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}>
-        <div className="max-w-[98%] mx-auto px-2 sm:px-6 lg:px-8 py-3 flex justify-between items-center gap-2 flex-wrap sm:flex-nowrap">
-          {/* Logo/Brand (Left Side) */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setIsCategoryMenuOpen(true)} 
-              style={{color: themeVars['--sp-header-text'] || '#0f172a'}}
-              className="flex items-center justify-center p-1.5 rounded-xl hover:opacity-80 transition-opacity"
-            >
-              <Menu size={20} strokeWidth={2.5} />
-            </button>
-            {/* Static logo - no href to prevent 'No store found' navigation */}
-            <div className="flex items-center gap-1.5 select-none cursor-default">
-              {shop.logoUrl ? (
-                <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain border border-white/20" alt={shop.shopName} />
-              ) : (
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-md" style={{background: themeVars['--sp-primary'] || '#4f46e5', color: '#ffffff'}}>
-                  {shop.shopName?.[0] || 'S'}
+      {/* ── Dynamic Header ── */}
+      {(() => {
+        const headerConfig = homepageConfig?.header || {
+          style: 'classic',
+          showSearch: true,
+          showNotifications: true,
+          showThemeToggle: true,
+          showDashboardBtn: true,
+          showFaqBtn: true,
+          buttonStyle: 'contrast_pill',
+        };
+
+        const hStyle = headerConfig.style || 'classic';
+        const isWhitePill = headerConfig.buttonStyle === 'white_pill';
+
+        // High contrast button class for sharp visibility against any background color
+        const headerBtnClass = isWhitePill
+          ? "flex items-center justify-center p-2 rounded-xl bg-white text-slate-800 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all font-bold cursor-pointer"
+          : "flex items-center justify-center p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/25 shadow-xs transition-all font-bold cursor-pointer";
+
+        const headerWrapperClass = hStyle === 'floating'
+          ? "sticky top-2 z-40 max-w-7xl mx-auto px-2 sm:px-4 my-2"
+          : "sticky top-0 z-40";
+
+        const headerInnerClass = hStyle === 'floating'
+          ? "rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md px-3 sm:px-6 py-2.5"
+          : hStyle === 'dark_contrast'
+          ? "bg-slate-950 text-white border-b border-slate-800 shadow-lg px-2 sm:px-6 lg:px-8 py-3"
+          : "shop-header border-b shadow-sm px-2 sm:px-6 lg:px-8 py-3";
+
+        const headerStyle = (hStyle !== 'dark_contrast' && hStyle !== 'floating') ? {
+          background: themeVars['--sp-header-bg'] || 'white',
+          borderColor: themeVars['--sp-border'] || '#e2e8f0'
+        } : {};
+
+        return (
+          <div className={headerWrapperClass}>
+            <header className={headerInnerClass} style={headerStyle}>
+              <div className={`max-w-[98%] mx-auto flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap ${hStyle === 'centered' ? 'relative' : ''}`}>
+                
+                {/* Logo/Brand (Left Side or Centered) */}
+                <div className={`flex items-center gap-2 ${hStyle === 'centered' ? 'order-2 mx-auto' : ''}`}>
+                  <button 
+                    onClick={() => setIsCategoryMenuOpen(true)} 
+                    style={{ color: hStyle === 'dark_contrast' ? '#ffffff' : (themeVars['--sp-header-text'] || '#0f172a') }}
+                    className="flex items-center justify-center p-1.5 rounded-xl hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    <Menu size={20} strokeWidth={2.5} />
+                  </button>
+
+                  <div className="flex items-center gap-1.5 select-none cursor-default">
+                    {shop.logoUrl ? (
+                      <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain border border-white/20 shadow-xs" alt={shop.shopName} />
+                    ) : (
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-md shadow-xs" style={{background: themeVars['--sp-primary'] || '#4f46e5', color: '#ffffff'}}>
+                        {shop.shopName?.[0] || 'S'}
+                      </div>
+                    )}
+                    <span className="font-black text-sm sm:text-[17px] leading-tight truncate max-w-[90px] sm:max-w-none" style={{color: hStyle === 'dark_contrast' ? '#ffffff' : (themeVars['--sp-header-text'] || '#0f172a')}}>
+                      {shop.shopName || 'Shop'}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <span className="font-black text-sm sm:text-[17px] leading-tight truncate max-w-[70px] sm:max-w-none" style={{color: themeVars['--sp-header-text'] || '#0f172a'}}>{shop.shopName || 'Shop'}</span>
-            </div>
+
+                {/* ── Search Bar with Recent Searches Dropdown (Desktop/Tablet) ── */}
+                {headerConfig.showSearch !== false && (
+                  <div className={`relative flex-1 max-w-sm sm:max-w-md mx-2 hidden md:block ${hStyle === 'centered' ? 'order-1 max-w-[200px]' : ''}`}>
+                    <div className="relative flex items-center">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} strokeWidth={2.5} />
+                      <input
+                        type="text"
+                        placeholder="পণ্য খুঁজুন..."
+                        className="w-full pl-10 pr-8 py-2 rounded-xl font-bold outline-none transition-all text-xs sm:text-sm placeholder:font-medium placeholder:text-slate-400 bg-white/95 text-slate-800 border border-slate-200/80 shadow-xs focus:ring-2 focus:ring-purple-400"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        onFocus={() => setIsSearchFocused(true)}
+                        onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            saveRecentSearch(searchTerm);
+                            setIsSearchFocused(false);
+                          }
+                        }}
+                      />
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchTerm('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Recent Searches Dropdown Popup */}
+                    {isSearchFocused && recentSearches.length > 0 && (
+                      <div 
+                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 p-3 z-50 animate-in fade-in zoom-in-95 duration-150"
+                        onMouseDown={e => e.preventDefault()}
+                      >
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                          <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+                            <Clock size={13} className="text-purple-600" />
+                            <span>সাম্প্রতিক অনুসন্ধান (Recent Searches)</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={clearAllRecentSearches}
+                            className="text-[10px] font-bold text-red-500 hover:text-red-700 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 size={11} /> সব মুছুন
+                          </button>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5">
+                          {recentSearches.map((term, i) => (
+                            <div
+                              key={i}
+                              onClick={() => {
+                                setSearchTerm(term);
+                                saveRecentSearch(term);
+                                setIsSearchFocused(false);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-700 text-xs font-bold transition-all cursor-pointer group"
+                            >
+                              <Search size={11} className="text-slate-400 group-hover:text-purple-600" />
+                              <span>{term}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => deleteRecentSearch(term, e)}
+                                title="হিস্ট্রি থেকে মুছুন"
+                                className="ml-1 p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              >
+                                <X size={11} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions (Right side of the brand) */}
+                <div className={`flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end ${hStyle === 'centered' ? 'order-3' : ''}`}>
+                  {headerConfig.showNotifications !== false && (
+                    <NotificationInbox 
+                      shopId={shop.id} 
+                      isDashboard={false} 
+                      triggerClassName={headerBtnClass}
+                      iconClassName="text-current"
+                    />
+                  )}
+
+                  {/* Swipable Light/Dark Theme Switch */}
+                  {headerConfig.showThemeToggle !== false && (
+                    <ThemeToggleButton size="sm" />
+                  )}
+
+                  {/* Merchant Go To Panel Button */}
+                  {headerConfig.showDashboardBtn !== false && ((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'admin' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
+                    <button 
+                      onClick={() => router.push('/dashboard')} 
+                      className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-all shadow-md border border-white/20 cursor-pointer"
+                    >
+                      <Settings size={14} className="text-white" /> <span className="hidden sm:inline">প্যানেলে যান</span>
+                    </button>
+                  )}
+
+                  {/* How to Order Video */}
+                  {shop.howToOrderVideo && (
+                    <a href={shop.howToOrderVideo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm whitespace-nowrap">
+                      <PlayCircle size={14} /> <span>কিভাবে অর্ডার করবেন?</span>
+                    </a>
+                  )}
+
+                  {/* FAQ Button */}
+                  {headerConfig.showFaqBtn !== false && (
+                    <button 
+                      onClick={() => setIsFaqOpen(true)} 
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-pink-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-md border border-white/20 cursor-pointer"
+                    >
+                      <HelpCircle size={14} className="text-white" /> <span>FAQ</span>
+                    </button>
+                  )}
+
+                  {/* Profile Button */}
+                  <button 
+                    onClick={() => setIsProfileOpen(true)} 
+                    className="w-8 h-8 sm:w-9 sm:h-9 aspect-square bg-white text-purple-700 hover:bg-purple-50 rounded-xl transition-colors shadow-sm border border-slate-200 overflow-hidden flex items-center justify-center cursor-pointer"
+                  >
+                    {user?.photoURL ? (
+                      <img src={user.photoURL} className="w-full h-full object-cover aspect-square" alt="Profile" />
+                    ) : (
+                      <User size={18} className="font-bold" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </header>
           </div>
-
-          {/* Actions (Right side of the brand) */}
-          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-wrap justify-end">
-            <NotificationInbox shopId={shop.id} isDashboard={false} />
-
-            {/* Swipable Light/Dark Theme Switch */}
-            <ThemeToggleButton size="sm" />
-
-            {((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'admin' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
-              <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-all shadow-lg">
-                <Settings size={14} /> <span className="hidden sm:inline">প্যানেলে যান</span>
-              </button>
-            )}
-
-            {/* How to Order Video */}
-            {shop.howToOrderVideo && (
-              <a href={shop.howToOrderVideo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm whitespace-nowrap">
-                <PlayCircle size={14} /> <span>কিভাবে অর্ডার করবেন?</span>
-              </a>
-            )}
-
-            {/* FAQ Button */}
-            <button 
-              onClick={() => setIsFaqOpen(true)} 
-              className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 !text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-lg"
-              style={{ color: '#ffffff' }}
-            >
-              <HelpCircle size={14} style={{ color: '#ffffff' }} /> <span>FAQ</span>
-            </button>
-
-            {/* Profile */}
-            <button onClick={() => setIsProfileOpen(true)} className="w-8 h-8 sm:w-10 sm:h-10 aspect-square bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-xl transition-colors shadow-sm border border-purple-200 overflow-hidden flex items-center justify-center">
-              {user?.photoURL ? (
-                <img src={user.photoURL} className="w-full h-full object-cover aspect-square" alt="Profile" />
-              ) : (
-                <User size={20} className="font-bold" />
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+        );
+      })()}
 
       {/* ── Top Premium Location Bar Removed ── */}
 
@@ -2747,31 +2924,97 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               </button>
             )}
 
-            {/* ── Search & Sort ── */}
+            {/* ── Search & Sort with Recent Searches Dropdown ── */}
             {basicSectionConfig?.data?.showSearch !== false && (
-              <div className="rounded-xl shadow-sm border p-1.5 flex items-center gap-2" style={{background: themeVars['--sp-card'] || 'white', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}>
-                <div className="relative flex-1 min-w-0">
-                  <Search className="absolute left-3.5 top-3 text-slate-500" size={15} strokeWidth={2.5} />
-                  <input
-                    type="text"
-                    placeholder="পণ্য খুঁজুন..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl font-bold outline-none transition-all text-sm placeholder:font-medium placeholder:text-slate-400"
-                    style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}}
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                  />
+              <div className="relative">
+                <div className="rounded-xl shadow-sm border p-1.5 flex items-center gap-2" style={{background: themeVars['--sp-card'] || 'white', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}>
+                  <div className="relative flex-1 min-w-0">
+                    <Search className="absolute left-3.5 top-3 text-slate-500" size={15} strokeWidth={2.5} />
+                    <input
+                      type="text"
+                      placeholder="পণ্য খুঁজুন..."
+                      className="w-full pl-10 pr-8 py-2.5 rounded-xl font-bold outline-none transition-all text-sm placeholder:font-medium placeholder:text-slate-400"
+                      style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}}
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      onFocus={() => setIsSearchFocused(true)}
+                      onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          saveRecentSearch(searchTerm);
+                          setIsSearchFocused(false);
+                        }
+                      }}
+                    />
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative shrink-0">
+                    <ArrowUpDown size={13} className="absolute left-3 top-3.5 text-slate-500" strokeWidth={2.5} />
+                    <select className="pl-8 pr-5 py-2.5 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer transition-colors" style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}} value={sortOption} onChange={e => setSortOption(e.target.value)}>
+                      <option value="newest">সবচেয়ে নতুন</option>
+                      <option value="price_asc">কম মূল্য প্রথমে</option>
+                      <option value="price_desc">বেশি মূল্য প্রথমে</option>
+                      <option value="name_asc">নাম (A-Z)</option>
+                      <option value="name_desc">নাম (Z-A)</option>
+                      <option value="stock_desc">স্টক উপলব্ধ প্রথমে</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="relative shrink-0">
-                  <ArrowUpDown size={13} className="absolute left-3 top-3.5 text-slate-500" strokeWidth={2.5} />
-                  <select className="pl-8 pr-5 py-2.5 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer transition-colors" style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}} value={sortOption} onChange={e => setSortOption(e.target.value)}>
-                    <option value="newest">সবচেয়ে নতুন</option>
-                    <option value="price_asc">কম মূল্য প্রথমে</option>
-                    <option value="price_desc">বেশি মূল্য প্রথমে</option>
-                    <option value="name_asc">নাম (A-Z)</option>
-                    <option value="name_desc">নাম (Z-A)</option>
-                    <option value="stock_desc">স্টক উপলব্ধ প্রথমে</option>
-                  </select>
-                </div>
+
+                {/* Recent Searches Popup Dropdown */}
+                {isSearchFocused && recentSearches.length > 0 && (
+                  <div 
+                    className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 p-3.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                    onMouseDown={e => e.preventDefault()}
+                  >
+                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                      <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+                        <Clock size={13} className="text-purple-600" />
+                        <span>সাম্প্রতিক অনুসন্ধান (Recent Searches)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearAllRecentSearches}
+                        className="text-[10px] font-bold text-red-500 hover:text-red-700 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 size={11} /> সব মুছুন
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {recentSearches.map((term, i) => (
+                        <div
+                          key={i}
+                          onClick={() => {
+                            setSearchTerm(term);
+                            saveRecentSearch(term);
+                            setIsSearchFocused(false);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-700 text-xs font-bold transition-all cursor-pointer group"
+                        >
+                          <Search size={11} className="text-slate-400 group-hover:text-purple-600" />
+                          <span>{term}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => deleteRecentSearch(term, e)}
+                            title="হিস্ট্রি থেকে মুছুন"
+                            className="ml-1 p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                          >
+                            <X size={11} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -3636,127 +3879,213 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     );
   })()}
 
-      {/* ── PREMIUM FOOTER — INLINE STYLES, CSS-PROOF ── */}
-      <footer style={{ position: 'relative', marginTop: 'auto', overflow: 'hidden', background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 60%, #faf5ff 100%)', color: '#1e1b4b', borderTop: '1px solid rgba(99,102,241,0.12)' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 60%, #faf5ff 100%)', zIndex: 0 }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '1px', background: 'linear-gradient(to right, transparent, rgba(124,58,237,0.3), transparent)' }} />
-        <div style={{ position: 'absolute', top: '-160px', right: '-160px', width: '384px', height: '384px', background: 'rgba(124,58,237,0.05)', borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-80px', left: '-80px', width: '288px', height: '288px', background: 'rgba(79,70,229,0.04)', borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '1400px', margin: '0 auto', padding: '64px 24px 32px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '40px', marginBottom: '48px' }}>
-            {/* Brand Column */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {shop.logoUrl ? (
-                  <img loading="lazy" src={shop.logoUrl} style={{ width: '48px', height: '48px', borderRadius: '16px', border: '2px solid rgba(124,58,237,0.4)', objectFit: 'cover', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }} alt="Logo" />
-                ) : (
-                  <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '20px', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>{shop.shopName?.[0]}</div>
+      {/* ── Dynamic Footer ── */}
+      {(() => {
+        const footerConfig = homepageConfig?.footer || {
+          style: 'modern_columns',
+          showCategories: true,
+          showContact: true,
+          showSocials: true,
+          showCopyright: true,
+          showPrivacy: true,
+          customTagline: '',
+        };
+
+        const fStyle = footerConfig.style || 'modern_columns';
+        const customTagline = footerConfig.customTagline || shop.slogan || '';
+
+        // Minimal Bar Preset
+        if (fStyle === 'minimal_bar') {
+          return (
+            <footer className="mt-auto bg-slate-900 text-white border-t border-slate-800 py-6 px-4">
+              <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                <div className="flex items-center gap-3">
+                  {shop.logoUrl ? (
+                    <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain" alt="Logo" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center font-black text-sm text-white">
+                      {shop.shopName?.[0]}
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-black text-sm text-white">{shop.shopName}</h3>
+                    {customTagline && <p className="text-[11px] text-slate-400 font-medium">{customTagline}</p>}
+                  </div>
+                </div>
+
+                {footerConfig.showCopyright !== false && (
+                  <p className="text-xs text-slate-400 font-bold">
+                    © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
+                  </p>
                 )}
-                <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', margin: 0 }}>{shop.shopName}</h2>
-              </div>
-              {shop.slogan && (
-                <p style={{ color: '#64748b', fontSize: '13px', fontWeight: 500, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>"{shop.slogan}"</p>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  {[1,2,3,4,5].map(i => <Star key={i} size={14} style={{ color: '#fbbf24', fill: '#fbbf24' }} />)}
-                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, marginLeft: '4px' }}>বিশ্বস্ত সেবা</span>
-                </div>
-                <a href="https://bdretailers.com/reviews" target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 800, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  Platform Reviews <ExternalLink size={10} />
-                </a>
-              </div>
-            </div>
-            {/* Quick Links */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>দ্রুত নেভিগেশন</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {categories.slice(0, 5).map(c => (
-                  <button key={c.id} onClick={() => { setActiveCategory(c.name); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', fontSize: '14px', fontWeight: 700, color: '#475569', cursor: 'pointer' }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#6d28d9'}
-                    onMouseLeave={e => e.currentTarget.style.color = '#475569'}
+
+                {footerConfig.showPrivacy !== false && (
+                  <a
+                    href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-purple-400 hover:text-purple-300 font-bold underline"
                   >
-                    → {c.name}
-                  </button>
-                ))}
+                    Privacy Policy
+                  </a>
+                )}
               </div>
-            </div>
-            {/* Social & Contact */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>যোগাযোগ করুন</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {(() => {
-                  const rawEmail = shop.deliveryConfig?.contactEmail || shop.ownerEmail || '';
-                  const hasEmailPlaceholder = rawEmail.toLowerCase().includes('no contact') || rawEmail.toLowerCase().includes('registered') || rawEmail.toLowerCase().includes('endpoint');
-                  const finalEmail = hasEmailPlaceholder ? 'bdretailers26@gmail.com' : rawEmail || 'bdretailers26@gmail.com';
-                  const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
-                  const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
-                  const finalWa = hasWaPlaceholder ? '8801734763306' : rawWa || '8801734763306';
-                  const cleanWa = finalWa.replace(/[^0-9]/g, '');
-                  const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
-                  return (
-                    <>
-                      <a href={`mailto:${finalEmail}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
-                        onMouseEnter={e => { e.currentTarget.style.color = '#6d28d9'; }} onMouseLeave={e => { e.currentTarget.style.color = '#475569'; }}>
-                        <Bot size={14} /><span>{finalEmail}</span>
-                      </a>
-                      <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
-                        onMouseEnter={e => { e.currentTarget.style.color = '#059669'; }} onMouseLeave={e => { e.currentTarget.style.color = '#475569'; }}>
-                        <Phone size={14} /><span>{finalWa.startsWith('+') || finalWa.startsWith('88') ? finalWa : `+88${finalWa.replace(/^0+/, '')}`}</span>
-                      </a>
-                    </>
-                  );
-                })()}
+            </footer>
+          );
+        }
+
+        // Centered Brand Preset
+        if (fStyle === 'centered_brand') {
+          return (
+            <footer className="mt-auto bg-white border-t border-slate-200 py-10 px-4 text-center">
+              <div className="max-w-3xl mx-auto space-y-4">
+                {shop.logoUrl ? (
+                  <img loading="lazy" src={shop.logoUrl} className="w-14 h-14 rounded-2xl object-contain mx-auto border-2 border-slate-100 shadow-md" alt="Logo" />
+                ) : (
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-black text-2xl mx-auto shadow-md">
+                    {shop.shopName?.[0]}
+                  </div>
+                )}
+                <h2 className="text-2xl font-black text-slate-900">{shop.shopName}</h2>
+                {customTagline && (
+                  <p className="text-sm text-slate-500 font-medium italic">"{customTagline}"</p>
+                )}
+
+                {footerConfig.showSocials !== false && (
+                  <div className="flex justify-center gap-3 pt-2">
+                    {shop.socialLinks?.fb && (<a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-blue-600 hover:text-white transition-all"><svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>)}
+                    {shop.socialLinks?.wa && (<a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-emerald-600 hover:text-white transition-all"><svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>)}
+                  </div>
+                )}
+
+                {footerConfig.showCopyright !== false && (
+                  <p className="text-xs text-slate-400 font-bold pt-4 border-t border-slate-100">
+                    © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
+                  </p>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '8px' }}>
-                {shop.socialLinks?.fb && (<a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#1d4ed8'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.06)'; e.currentTarget.style.color = '#6366f1'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.15)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>)}
-                {shop.socialLinks?.insta && (<a href={shop.socialLinks.insta} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg,#db2777,#ea580c)'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#db2777'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.06)'; e.currentTarget.style.color = '#6366f1'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.15)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>)}
-                {shop.socialLinks?.yt && (<a href={shop.socialLinks.yt} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#dc2626'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#dc2626'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.06)'; e.currentTarget.style.color = '#6366f1'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.15)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg></a>)}
-                {shop.socialLinks?.wa && (<a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#059669'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#059669'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.06)'; e.currentTarget.style.color = '#6366f1'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.15)'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>)}
-                {shop.socialLinks?.linkedin && (<a href={shop.socialLinks.linkedin} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#1d4ed8'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>)}
-                {shop.socialLinks?.tiktok && (<a href={shop.socialLinks.tiktok} target="_blank" rel="noreferrer" style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }} onMouseEnter={e => { e.currentTarget.style.background = '#1e293b'; e.currentTarget.style.color = '#fff'; }} onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = '#94a3b8'; }}><svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px', fill: 'currentColor' }}><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>)}
-              </div>
-              {hasFreeDelivery && (
-                <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Gift size={16} style={{ color: '#fbbf24', flexShrink: 0 }} />
-                  <p style={{ color: '#fcd34d', fontSize: '12px', fontWeight: 900, margin: 0 }}>আপনার আজকে ফ্রি ডেলিভারি আছে! 🎁</p>
+            </footer>
+          );
+        }
+
+        // Modern 4-Column & Dark Luxury Presets
+        return (
+          <footer style={{ position: 'relative', marginTop: 'auto', overflow: 'hidden', background: fStyle === 'dark_luxury' ? 'linear-gradient(135deg, #090d16 0%, #0f172a 60%, #1e1b4b 100%)' : 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 60%, #faf5ff 100%)', color: fStyle === 'dark_luxury' ? '#ffffff' : '#1e1b4b', borderTop: '1px solid rgba(99,102,241,0.12)' }}>
+            <div style={{ position: 'relative', zIndex: 1, maxWidth: '1400px', margin: '0 auto', padding: '64px 24px 32px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '40px', marginBottom: '48px' }}>
+                {/* Brand Column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {shop.logoUrl ? (
+                      <img loading="lazy" src={shop.logoUrl} style={{ width: '48px', height: '48px', borderRadius: '16px', border: '2px solid rgba(124,58,237,0.4)', objectFit: 'cover', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }} alt="Logo" />
+                    ) : (
+                      <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '20px', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>{shop.shopName?.[0]}</div>
+                    )}
+                    <h2 style={{ fontSize: '22px', fontWeight: 900, color: fStyle === 'dark_luxury' ? '#ffffff' : '#0f172a', margin: 0 }}>{shop.shopName}</h2>
+                  </div>
+                  {customTagline && (
+                    <p style={{ color: fStyle === 'dark_luxury' ? '#94a3b8' : '#64748b', fontSize: '13px', fontWeight: 500, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>"{customTagline}"</p>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {[1,2,3,4,5].map(i => <Star key={i} size={14} style={{ color: '#fbbf24', fill: '#fbbf24' }} />)}
+                      <span style={{ fontSize: '11px', color: fStyle === 'dark_luxury' ? '#94a3b8' : '#64748b', fontWeight: 700, marginLeft: '4px' }}>বিশ্বস্ত সেবা</span>
+                    </div>
+                    <a href="https://bdretailers.com/reviews" target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 800, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      Platform Reviews <ExternalLink size={10} />
+                    </a>
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-          {/* Bottom bar */}
-          <div style={{ borderTop: '1px solid rgba(99,102,241,0.12)', paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-              <p style={{ fontSize: '11px', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>
-                © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669' }} />
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>
-                  বানানো হয়েছে{' '}<a href="https://bdretailers.com" target="_blank" rel="noreferrer" style={{ color: '#6366f1', textDecoration: 'underline', fontWeight: 900 }}>bdretailers.com</a> দিয়ে
-                </span>
+
+                {/* Quick Links */}
+                {footerConfig.showCategories !== false && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>দ্রুত নেভিগেশন</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {categories.slice(0, 5).map(c => (
+                        <button key={c.id} onClick={() => { setActiveCategory(c.name); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', fontSize: '14px', fontWeight: 700, color: fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569', cursor: 'pointer' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#a78bfa'}
+                          onMouseLeave={e => e.currentTarget.style.color = fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569'}
+                        >
+                          → {c.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Social & Contact */}
+                {footerConfig.showContact !== false && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>যোগাযোগ করুন</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {(() => {
+                        const rawEmail = shop.deliveryConfig?.contactEmail || shop.ownerEmail || '';
+                        const hasEmailPlaceholder = rawEmail.toLowerCase().includes('no contact') || rawEmail.toLowerCase().includes('registered') || rawEmail.toLowerCase().includes('endpoint');
+                        const finalEmail = hasEmailPlaceholder ? 'bdretailers26@gmail.com' : rawEmail || 'bdretailers26@gmail.com';
+                        const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
+                        const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
+                        const finalWa = hasWaPlaceholder ? '8801734763306' : rawWa || '8801734763306';
+                        const cleanWa = finalWa.replace(/[^0-9]/g, '');
+                        const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
+                        return (
+                          <>
+                            <a href={`mailto:${finalEmail}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
+                              onMouseEnter={e => { e.currentTarget.style.color = '#a78bfa'; }} onMouseLeave={e => { e.currentTarget.style.color = fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569'; }}>
+                              <Bot size={14} /><span>{finalEmail}</span>
+                            </a>
+                            <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
+                              onMouseEnter={e => { e.currentTarget.style.color = '#34d399'; }} onMouseLeave={e => { e.currentTarget.style.color = fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569'; }}>
+                              <Phone size={14} /><span>{finalWa.startsWith('+') || finalWa.startsWith('88') ? finalWa : `+88${finalWa.replace(/^0+/, '')}`}</span>
+                            </a>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    {footerConfig.showSocials !== false && (
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '8px' }}>
+                        {shop.socialLinks?.fb && (<a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }}><svg viewBox="0 0 24 24" style={{ width: '18px', height: '18px', fill: 'currentColor' }}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>)}
+                        {shop.socialLinks?.wa && (<a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', textDecoration: 'none' }}><svg viewBox="0 0 24 24" style={{ width: '18px', height: '18px', fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom bar */}
+              <div style={{ borderTop: '1px solid rgba(99,102,241,0.12)', paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  {footerConfig.showCopyright !== false && (
+                    <p style={{ fontSize: '11px', fontWeight: 900, color: fStyle === 'dark_luxury' ? '#94a3b8' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>
+                      © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669' }} />
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>
+                      বানানো হয়েছে{' '}<a href="https://bdretailers.com" target="_blank" rel="noreferrer" style={{ color: '#6366f1', textDecoration: 'underline', fontWeight: 900 }}>bdretailers.com</a> দিয়ে
+                    </span>
+                  </div>
+                </div>
+                {footerConfig.showPrivacy !== false && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', paddingBottom: '8px' }}>
+                    <a
+                      href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '20px', padding: '6px 16px', fontSize: '12px', fontWeight: 800, color: '#4f46e5', textDecoration: 'none' }}
+                    >
+                      🔒 Privacy Policy
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', paddingBottom: '8px' }}>
-              <span style={{ fontSize: '12px', color: '#6d28d9', fontWeight: 700 }}>
-                🚀 Want to launch your own store?{' '}
-                <a href="https://bdretailers.com/become-retailer" target="_blank" rel="noreferrer" style={{ color: '#4f46e5', textDecoration: 'underline', fontWeight: 900 }}>Start Free Trial now!</a>
-              </span>
-              <a
-                href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`}
-                target="_blank"
-                rel="noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '20px', padding: '6px 16px', fontSize: '12px', fontWeight: 800, color: '#4f46e5', textDecoration: 'none' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.2)'; e.currentTarget.style.color = '#312e81'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.1)'; e.currentTarget.style.color = '#4f46e5'; }}
-              >
-                🔒 Privacy Policy
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+          </footer>
+        );
+      })()}
 
       {/* ── Scroll To Top / Bottom Buttons ── */}
       <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8">

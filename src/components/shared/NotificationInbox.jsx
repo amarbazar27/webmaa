@@ -20,7 +20,13 @@ const TYPE_CONFIG = {
   promo: { icon: Sparkles, bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', iconColor: 'text-purple-500' },
 };
 
-export default function NotificationInbox({ shopId = null, isDashboard = false }) {
+export default function NotificationInbox({ 
+  shopId = null, 
+  isDashboard = false,
+  triggerClassName = null,
+  iconClassName = null,
+  buttonStyle = null 
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [deletedIds, setDeletedIds] = useState([]);
@@ -117,9 +123,10 @@ export default function NotificationInbox({ shopId = null, isDashboard = false }
     <>
       <button 
         onClick={handleOpen}
-        className="relative p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+        style={buttonStyle}
+        className={triggerClassName || "relative p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"}
       >
-        <Bell size={20} strokeWidth={2.5} />
+        <Bell size={18} strokeWidth={2.5} className={iconClassName || ''} />
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>

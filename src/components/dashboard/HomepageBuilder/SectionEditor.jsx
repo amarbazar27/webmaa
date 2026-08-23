@@ -488,6 +488,34 @@ function PopupBannerEditor({ data, onChange, shopId }) {
       <Field label="বাটন টেক্সট"><Input value={data.buttonText} onChange={v => onChange({ ...data, buttonText: v })} placeholder="অর্ডার করুন" /></Field>
       <Field label="লিংক"><Input value={data.linkUrl} onChange={v => onChange({ ...data, linkUrl: v })} placeholder="https://..." /></Field>
       <Field label="ডিলে (সেকেন্ড)"><Input value={data.delay} onChange={v => onChange({ ...data, delay: Number(v) })} placeholder="2" type="number" /></Field>
+
+      {/* Dismissal Mode */}
+      <Field label="পপআপ বন্ধ করার নিয়ম (Dismissal Mode)">
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => onChange({ ...data, closeOnOutsideClick: true })}
+            className={`p-2.5 rounded-xl border text-xs font-black transition-all ${
+              data.closeOnOutsideClick !== false
+                ? 'border-purple-600 bg-purple-50 text-purple-800 shadow-2xs'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            👆 বাইরে ক্লিক করলে বন্ধ হবে
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ ...data, closeOnOutsideClick: false })}
+            className={`p-2.5 rounded-xl border text-xs font-black transition-all ${
+              data.closeOnOutsideClick === false
+                ? 'border-purple-600 bg-purple-50 text-purple-800 shadow-2xs'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            ❌ শুধুমাত্র ক্রসে (✕) ক্লিক করলে
+          </button>
+        </div>
+      </Field>
     </div>
   );
 }

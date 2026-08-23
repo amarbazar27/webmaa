@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import SectionList from './SectionList';
 import ThemeEditor from './ThemeEditor';
+import HeaderFooterEditor from './HeaderFooterEditor';
 import HomepagePreview from './HomepagePreview';
-import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartphone, Monitor, Sparkles } from 'lucide-react';
+import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartphone, Monitor, Sparkles, Sliders } from 'lucide-react';
 import { DEMO_PRODUCTS } from '@/lib/homepageDemoData';
 
 const DEFAULT_SECTIONS = [
@@ -76,6 +77,26 @@ const DEFAULT_THEME = {
   language: 'bn',
 };
 
+const DEFAULT_HEADER = {
+  style: 'classic',
+  showSearch: true,
+  showNotifications: true,
+  showThemeToggle: true,
+  showDashboardBtn: true,
+  showFaqBtn: true,
+  buttonStyle: 'contrast_pill',
+};
+
+const DEFAULT_FOOTER = {
+  style: 'modern_columns',
+  showCategories: true,
+  showContact: true,
+  showSocials: true,
+  showCopyright: true,
+  showPrivacy: true,
+  customTagline: '',
+};
+
 export default function HomepageBuilder() {
   const { user, userData, activeShopId } = useAuth();
   const router = useRouter();
@@ -83,7 +104,9 @@ export default function HomepageBuilder() {
   const [products, setProducts] = useState([]);
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [theme, setTheme] = useState(DEFAULT_THEME);
-  const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'template' | 'theme'
+  const [headerConfig, setHeaderConfig] = useState(DEFAULT_HEADER);
+  const [footerConfig, setFooterConfig] = useState(DEFAULT_FOOTER);
+  const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'header_footer' | 'template' | 'theme'
   const [previewMode, setPreviewMode] = useState('mobile'); // 'mobile' | 'desktop'
   const [highlightSectionId, setHighlightSectionId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -142,6 +165,8 @@ export default function HomepageBuilder() {
           setSections(merged);
         }
         if (config.theme) setTheme(config.theme);
+        if (config.header) setHeaderConfig(config.header);
+        if (config.footer) setFooterConfig(config.footer);
       })
       .catch(() => {});
   }, [activeShopId]);
@@ -159,7 +184,13 @@ export default function HomepageBuilder() {
       const res = await fetch('/api/homepage-config', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ shopId: activeShopId, sections, theme }),
+        body: JSON.stringify({ 
+          shopId: activeShopId, 
+          sections, 
+          theme, 
+          header: headerConfig, 
+          footer: footerConfig 
+        }),
       });
       if (!res.ok) throw new Error('Save failed');
       setHasChanges(false);
@@ -180,7 +211,13 @@ export default function HomepageBuilder() {
       const res = await fetch('/api/homepage-config', {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ shopId: activeShopId, sections, theme }),
+        body: JSON.stringify({ 
+          shopId: activeShopId, 
+          sections, 
+          theme, 
+          header: headerConfig, 
+          footer: footerConfig 
+        }),
       });
       if (!res.ok) throw new Error('Publish failed');
       setHasChanges(false);
@@ -284,15 +321,23 @@ export default function HomepageBuilder() {
           <div className="flex bg-slate-200/70 rounded-2xl p-1 mb-4 shadow-2xs">
             <button
               onClick={() => setActiveTab('sections')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === 'sections' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
               }`}
             >
               <LayoutDashboard size={13} /> Sections
             </button>
             <button
+              onClick={() => setActiveTab('header_footer')}
+              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'header_footer' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              <Sliders size={13} /> Header/Footer
+            </button>
+            <button
               onClick={() => setActiveTab('template')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === 'template' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
               }`}
             >
@@ -300,7 +345,7 @@ export default function HomepageBuilder() {
             </button>
             <button
               onClick={() => setActiveTab('theme')}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 activeTab === 'theme' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
               }`}
             >
@@ -352,10 +397,10 @@ export default function HomepageBuilder() {
             </div>
           )}
 
-          {/* Sections / Theme Panel */}
+          {/* Sections / Header-Footer / Theme Panel */}
           {activeTab !== 'template' && (
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
-              {activeTab === 'sections' ? (
+              {activeTab === 'sections' && (
                 <SectionList 
                   sections={sections} 
                   onChange={updateSections} 
@@ -363,7 +408,18 @@ export default function HomepageBuilder() {
                   shopId={activeShopId} 
                   onFocusSection={handleFocusSection}
                 />
-              ) : (
+              )}
+              {activeTab === 'header_footer' && (
+                <HeaderFooterEditor
+                  headerConfig={headerConfig}
+                  footerConfig={footerConfig}
+                  onHeaderChange={(newH) => { setHeaderConfig(newH); setHasChanges(true); }}
+                  onFooterChange={(newF) => { setFooterConfig(newF); setHasChanges(true); }}
+                  shop={shop}
+                  theme={theme}
+                />
+              )}
+              {activeTab === 'theme' && (
                 <ThemeEditor theme={theme} onChange={updateTheme} shop={shop} />
               )}
             </div>
@@ -375,6 +431,8 @@ export default function HomepageBuilder() {
           <HomepagePreview
             sections={sections}
             theme={theme}
+            headerConfig={headerConfig}
+            footerConfig={footerConfig}
             shop={shop}
             mode={previewMode}
             onModeChange={setPreviewMode}

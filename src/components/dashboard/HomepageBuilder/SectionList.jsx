@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import {
-  GripVertical, Eye, EyeOff, ChevronDown, Plus, Trash2,
+  GripVertical, Eye, EyeOff, ChevronDown, ChevronUp, Plus, Trash2,
   Sparkles, Layers, Zap, Grid, Video, LayoutGrid, Star,
   Package, Camera, Tag, Share2, Megaphone, LayoutTemplate,
   Columns, Image as ImageIcon, Flame, ShoppingBag, Pin, Lock, Unlock
@@ -338,25 +338,56 @@ export default function SectionList({
                   onFocusSection?.(section.id);
                 }}
               >
-                {/* Drag Handle */}
-                <div 
-                  className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 flex-shrink-0 p-0.5" 
-                  onClick={e => e.stopPropagation()}
-                >
-                  <GripVertical size={16} />
+                {/* Drag & Up/Down Sort Controls */}
+                <div className="flex items-center gap-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                  {/* Up/Down Quick Move Buttons */}
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => moveDynamicSection(idx, idx - 1)}
+                      title="উপরে তুলুন (Move Up)"
+                      className="w-4 h-3.5 flex items-center justify-center rounded bg-slate-100 hover:bg-purple-100 text-slate-500 hover:text-purple-700 disabled:opacity-25 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    >
+                      <ChevronUp size={11} strokeWidth={3} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === filteredDynamicSections.length - 1}
+                      onClick={() => moveDynamicSection(idx, idx + 1)}
+                      title="নিচে নামান (Move Down)"
+                      className="w-4 h-3.5 flex items-center justify-center rounded bg-slate-100 hover:bg-purple-100 text-slate-500 hover:text-purple-700 disabled:opacity-25 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    >
+                      <ChevronDown size={11} strokeWidth={3} />
+                    </button>
+                  </div>
+
+                  {/* Drag Handle */}
+                  <div 
+                    className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-0.5" 
+                    title="ড্র্যাগ করে স্থান পরিবর্তন করুন"
+                  >
+                    <GripVertical size={15} />
+                  </div>
                 </div>
 
-                {/* Mini Layout Thumbnail */}
-                <div 
-                  className="w-10 h-8 rounded-xl flex items-center justify-center text-[10px] font-black flex-shrink-0 border shadow-xs text-center px-0.5 select-none"
-                  style={{ 
-                    background: `${meta.color}10`, 
-                    borderColor: `${meta.color}25`, 
-                    color: meta.color 
-                  }}
-                  title={meta.label}
-                >
-                  {meta.thumbnail}
+                {/* Mini Layout Thumbnail with Serial Badge */}
+                <div className="relative flex-shrink-0">
+                  <div 
+                    className="w-10 h-8 rounded-xl flex items-center justify-center text-[10px] font-black border shadow-xs text-center px-0.5 select-none"
+                    style={{ 
+                      background: `${meta.color}10`, 
+                      borderColor: `${meta.color}25`, 
+                      color: meta.color 
+                    }}
+                    title={meta.label}
+                  >
+                    {meta.thumbnail}
+                  </div>
+                  {/* Serial Number Badge */}
+                  <span className="absolute -top-1.5 -left-1.5 px-1 py-0.2 bg-slate-900 text-white text-[8px] font-black rounded-md shadow-xs border border-white">
+                    #{idx + 1}
+                  </span>
                 </div>
 
                 {/* Info */}
