@@ -124,6 +124,17 @@ export default function HomepagePreview({
       <div className="space-y-2 pb-12">
         {enabledSections.map((section) => {
           const isHighlighted = highlightId === section.id;
+          const sectionToRender = section.type === 'basic_storefront' ? {
+            ...section,
+            data: {
+              shopName: shop?.shopName,
+              slogan: shop?.slogan,
+              description: shop?.bannerDescription || shop?.description,
+              shopInitial: shop?.shopName?.[0] || '🏪',
+              ...section.data,
+            }
+          } : section;
+
           return (
             <div
               key={section.id}
@@ -133,7 +144,7 @@ export default function HomepagePreview({
               }`}
             >
               <SectionRenderer
-                section={section}
+                section={sectionToRender}
                 products={previewProducts}
                 themeVars={themeVars}
                 callbacks={previewCallbacks}

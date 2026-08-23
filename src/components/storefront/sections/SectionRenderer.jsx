@@ -30,12 +30,15 @@ import CustomerUgc from './CustomerUgc';
 import DealOfTheDay from './DealOfTheDay';
 import PriceLadder from './PriceLadder';
 
+import BasicStorefront from './BasicStorefront';
+
 export default function SectionRenderer({ section, products, themeVars, callbacks, isPreview = false }) {
   if (!section?.enabled) return null;
   const props = { data: section.data, themeVars, products, isPreview, ...callbacks };
 
   switch (section.type) {
     // Core & Existing
+    case 'basic_storefront':  return <BasicStorefront {...props} />;
     case 'hero_carousel':     return <HeroCarousel {...props} />;
     case 'category_scroller':  return <CategoryScroller {...props} />;
     case 'flash_sale':        return <FlashSale {...props} />;

@@ -3,7 +3,8 @@ import { adminDb as db, adminAuth } from '@/lib/firebase-admin';
 
 // Default homepage config template
 const DEFAULT_SECTIONS = [
-  { id: 'hero', type: 'hero_carousel', enabled: true, order: 0, data: { slides: [] } },
+  { id: 'basic_storefront', type: 'basic_storefront', enabled: true, order: 0, isPinned: true, data: { showDesc: true, showSearch: true, showCategories: true, showProducts: true } },
+  { id: 'hero', type: 'hero_carousel', enabled: true, order: 1, data: { slides: [] } },
   { id: 'trust_strip', type: 'trust_strip', enabled: true, order: 1, data: {} },
   { id: 'categories', type: 'category_scroller', enabled: true, order: 2, data: { items: [] } },
   { id: 'split_showcase', type: 'split_showcase', enabled: true, order: 3, data: {} },

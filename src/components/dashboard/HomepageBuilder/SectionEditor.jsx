@@ -649,6 +649,72 @@ function PhotoReviewsEditor({ data, onChange, shopId }) {
   );
 }
 
+// ── 0. Basic Storefront Editor (Pinned Core Layout) ──
+function BasicStorefrontEditor({ data, onChange }) {
+  const showDesc = data.showDesc !== false;
+  const showSearch = data.showSearch !== false;
+  const showCategories = data.showCategories !== false;
+  const showProducts = data.showProducts !== false;
+
+  return (
+    <div className="space-y-4">
+      <div className="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200/70 flex items-start gap-3">
+        <span className="text-base shrink-0 mt-0.5">📌</span>
+        <div>
+          <p className="text-xs font-black text-emerald-950">পিন করা মূল স্টোরফ্রন্ট (Pinned Core Layout)</p>
+          <p className="text-[11px] text-emerald-800 font-medium mt-0.5 leading-relaxed">
+            এটি আপনার স্টোরের মূল বেসিক লেআউট (ডেসক্রিপশন বক্স, সার্চবার, ক্যাটাগরি পিলস ও রেসপনসিভ প্রোডাক্ট গ্রিড)। এটি সবার উপরে পিন করা থাকে এবং স্থান পরিবর্তন হবে না। স্টোর থেকে পুরোপুরি বন্ধ করতে চাইলে ডানপাশের টগল আইকন দিয়ে অফ করে দিন।
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-3.5 space-y-2.5 shadow-2xs">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">উপাদান দৃশ্যমানতা নিয়ন্ত্রণ (Visibility)</p>
+        
+        <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-100">
+          <span className="text-xs font-black text-slate-800">স্টোর ডেসক্রিপশন ব্যানার</span>
+          <input
+            type="checkbox"
+            checked={showDesc}
+            onChange={e => onChange({ ...data, showDesc: e.target.checked })}
+            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+          />
+        </label>
+
+        <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-100">
+          <span className="text-xs font-black text-slate-800">সার্চ বার ও সর্ট ফিল্টার</span>
+          <input
+            type="checkbox"
+            checked={showSearch}
+            onChange={e => onChange({ ...data, showSearch: e.target.checked })}
+            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+          />
+        </label>
+
+        <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-100">
+          <span className="text-xs font-black text-slate-800">ক্যাটাগরি বাটন স্ট্রিপ</span>
+          <input
+            type="checkbox"
+            checked={showCategories}
+            onChange={e => onChange({ ...data, showCategories: e.target.checked })}
+            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+          />
+        </label>
+
+        <label className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer border border-slate-100">
+          <span className="text-xs font-black text-slate-800">বেসিক প্রোডাক্ট গ্রিড / তালিকা</span>
+          <input
+            type="checkbox"
+            checked={showProducts}
+            onChange={e => onChange({ ...data, showProducts: e.target.checked })}
+            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer"
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 // ── Generic Fallback Editor ──
 function GenericEditor({ data, onChange }) {
   return (
@@ -662,6 +728,7 @@ function GenericEditor({ data, onChange }) {
 // ── Main Section Editor Router ──
 export default function SectionEditor({ section, onChange, theme, shopId, onRemove }) {
   const EDITORS = {
+    basic_storefront:  BasicStorefrontEditor,
     hero_carousel:     HeroCarouselEditor,
     category_scroller: CategoryScrollerEditor,
     flash_sale:        FlashSaleEditor,
@@ -687,13 +754,14 @@ export default function SectionEditor({ section, onChange, theme, shopId, onRemo
   };
 
   const Editor = EDITORS[section.type] || GenericEditor;
+  const isPinned = section.type === 'basic_storefront' || section.isPinned;
 
   return (
     <div className="p-4 space-y-4">
       <Editor data={section.data || {}} onChange={onChange} theme={theme} shopId={shopId} />
 
-      {/* Delete / Remove Section Action */}
-      {onRemove && (
+      {/* Delete / Remove Section Action (hidden for pinned basic storefront) */}
+      {onRemove && !isPinned && (
         <div className="pt-3 border-t border-slate-200/80 flex justify-end">
           <button
             onClick={onRemove}

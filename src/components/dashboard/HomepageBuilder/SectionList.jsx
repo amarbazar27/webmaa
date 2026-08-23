@@ -4,11 +4,14 @@ import {
   GripVertical, Eye, EyeOff, ChevronDown, Plus, Trash2,
   Sparkles, Layers, Zap, Grid, Video, LayoutGrid, Star,
   Package, Camera, Tag, Share2, Megaphone, LayoutTemplate,
-  Columns, Image as ImageIcon, Flame, ShoppingBag
+  Columns, Image as ImageIcon, Flame, ShoppingBag, Pin, Lock, Unlock
 } from 'lucide-react';
 import SectionEditor from './SectionEditor';
 
 export const SECTION_METADATA = {
+  // Pinned Core Layout
+  basic_storefront:  { label: 'Basic Storefront (মূল লেআউট)', icon: ShoppingBag, color: '#059669', category: 'core', desc: 'ডেসক্রিপশন বক্স, সার্চবার ও প্রোডাক্ট গ্রিড', thumbnail: '🏪 Basic', isPinned: true },
+
   // Core
   hero_carousel:     { label: 'Hero Banner Carousel', icon: ImageIcon, color: '#6D28D9', category: 'core', desc: 'ফুল-উইডথ স্লাইডিং ব্যানার', thumbnail: '🖼️ 100%' },
   category_scroller: { label: 'Category Scroller', icon: Layers, color: '#0284C7', category: 'core', desc: 'গোলাকার ক্যাটাগরি আইকন স্ক্রলার', thumbnail: '🔵 ⚪ 🔵' },
@@ -58,33 +61,66 @@ export default function SectionList({
   const [dragOver, setDragOver] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [freezeDuplicates, setFreezeDuplicates] = useState(true);
 
-  const sorted = [...sections].sort((a, b) => a.order - b.order);
-
-  const toggleEnabled = (id) => {
-    onChange(sections.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  // Extract pinned basic section
+  const pinnedSection = sections.find(s => s.type === 'basic_storefront' || s.isPinned) || {
+    id: 'basic_storefront',
+    type: 'basic_storefront',
+    enabled: true,
+    order: -1,
+    isPinned: true,
+    data: { showDesc: true, showSearch: true, showCategories: true, showProducts: true },
   };
 
-  const moveSection = (fromIdx, toIdx) => {
+  // Sort dynamic sections
+  const sorted = [...sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const dynamicSections = sorted.filter(s => s.type !== 'basic_storefront' && !s.isPinned);
+
+  const toggleEnabled = (id) => {
+    if (id === pinnedSection.id || id === 'basic_storefront') {
+      const hasPinned = sections.some(s => s.id === id || s.type === 'basic_storefront');
+      if (hasPinned) {
+        onChange(sections.map(s => (s.id === id || s.type === 'basic_storefront') ? { ...s, enabled: !s.enabled } : s));
+      } else {
+        onChange([{ ...pinnedSection, enabled: !pinnedSection.enabled }, ...sections]);
+      }
+    } else {
+      onChange(sections.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+    }
+  };
+
+  const moveDynamicSection = (fromIdx, toIdx) => {
     if (fromIdx === toIdx) return;
-    const reordered = [...sorted];
+    const reordered = [...dynamicSections];
     const [moved] = reordered.splice(fromIdx, 1);
     reordered.splice(toIdx, 0, moved);
-    onChange(reordered.map((s, i) => ({ ...s, order: i })));
+    
+    // Ensure pinned section remains at start, then dynamic sections renumbered
+    const hasPinned = sections.some(s => s.type === 'basic_storefront' || s.isPinned);
+    const fullList = [
+      hasPinned ? pinnedSection : { ...pinnedSection, order: 0 },
+      ...reordered.map((s, i) => ({ ...s, order: i + 1 }))
+    ];
+    onChange(fullList);
   };
 
   const updateSectionData = (id, newData) => {
-    onChange(sections.map(s => s.id === id ? { ...s, data: { ...s.data, ...newData } } : s));
+    const exists = sections.some(s => s.id === id || (id === 'basic_storefront' && s.type === 'basic_storefront'));
+    if (exists) {
+      onChange(sections.map(s => (s.id === id || (id === 'basic_storefront' && s.type === 'basic_storefront')) ? { ...s, data: { ...s.data, ...newData } } : s));
+    } else {
+      onChange([{ ...pinnedSection, data: { ...pinnedSection.data, ...newData } }, ...sections]);
+    }
   };
 
   const addSection = (type) => {
-    const meta = SECTION_METADATA[type];
     const newId = `${type}_${Date.now()}`;
     const newSection = {
       id: newId,
       type,
       enabled: true,
-      order: sections.length,
+      order: sections.length + 1,
       data: {},
     };
     onChange([...sections, newSection]);
@@ -98,10 +134,10 @@ export default function SectionList({
     onChange(sections.filter(s => s.id !== id));
   };
 
-  // Drag handlers
+  // Drag handlers for dynamic sections
   const onDragStart = (e, idx) => { setDragging(idx); e.dataTransfer.effectAllowed = 'move'; };
   const onDragOver = (e, idx) => { e.preventDefault(); setDragOver(idx); };
-  const onDrop = (e, idx) => { e.preventDefault(); if (dragging !== null) moveSection(dragging, idx); setDragging(null); setDragOver(null); };
+  const onDrop = (e, idx) => { e.preventDefault(); if (dragging !== null) moveDynamicSection(dragging, idx); setDragging(null); setDragOver(null); };
   const onDragEnd = () => { setDragging(null); setDragOver(null); };
 
   const CATEGORY_TABS = [
@@ -112,9 +148,14 @@ export default function SectionList({
     { id: 'social', label: 'Social & Trust' },
   ];
 
-  const filteredSections = filterCategory === 'all' 
-    ? sorted 
-    : sorted.filter(s => SECTION_METADATA[s.type]?.category === filterCategory);
+  const filteredDynamicSections = filterCategory === 'all' 
+    ? dynamicSections 
+    : dynamicSections.filter(s => SECTION_METADATA[s.type]?.category === filterCategory);
+
+  // Set of section types already added in builder
+  const existingTypes = new Set(sections.map(s => s.type));
+
+  const isPinnedExpanded = expandedId === pinnedSection.id || expandedId === 'basic_storefront';
 
   return (
     <div className="flex flex-col divide-y divide-slate-100">
@@ -155,9 +196,114 @@ export default function SectionList({
         </div>
       </div>
 
-      {/* Sections List */}
-      <div className="divide-y divide-slate-50 max-h-[calc(100vh-280px)] overflow-y-auto">
-        {filteredSections.map((section, idx) => {
+      {/* ── 📌 PINNED SECTION: Basic Storefront (Fixed at top, non-draggable) ── */}
+      <div className="p-2.5 bg-slate-100/50">
+        <div className="flex items-center justify-between px-2 pb-1.5">
+          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+            <Pin size={11} className="text-emerald-600 rotate-45" /> পিন করা মূল লেআউট (Pinned Core)
+          </span>
+          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
+            pinnedSection.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-700'
+          }`}>
+            {pinnedSection.enabled ? '🟢 স্টোরে চালু' : '🔴 বন্ধ (Hidden)'}
+          </span>
+        </div>
+
+        <div className={`rounded-2xl border transition-all ${
+          pinnedSection.enabled ? 'bg-white border-emerald-300 shadow-xs' : 'bg-slate-50/80 border-slate-200 opacity-60'
+        }`}>
+          <div
+            className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-slate-50/80 cursor-pointer transition-colors rounded-2xl"
+            onClick={() => {
+              setExpandedId(isPinnedExpanded ? null : (pinnedSection.id || 'basic_storefront'));
+              onFocusSection?.(pinnedSection.id || 'basic_storefront');
+            }}
+          >
+            {/* Pinned Icon (Non-draggable) */}
+            <div 
+              className="text-emerald-600 flex-shrink-0 p-1 bg-emerald-50 rounded-lg"
+              title="এই সেকশনটি সবার উপরে স্থায়ীভাবে পিন করা"
+            >
+              <Pin size={14} className="rotate-45" />
+            </div>
+
+            {/* Thumbnail */}
+            <div 
+              className="w-10 h-8 rounded-xl flex items-center justify-center text-[10px] font-black flex-shrink-0 border shadow-2xs text-center px-0.5 select-none"
+              style={{ background: '#05966915', borderColor: '#05966930', color: '#059669' }}
+            >
+              🏪 Basic
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-black text-slate-900 leading-tight truncate">
+                  Basic Storefront (মূল লেআউট)
+                </p>
+              </div>
+              <p className="text-[10px] text-slate-400 font-bold truncate mt-0.5">
+                ডেসক্রিপশন বক্স, সার্চবার ও প্রোডাক্ট গ্রিড
+              </p>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Preview Eye */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFocusSection?.(pinnedSection.id || 'basic_storefront');
+                }}
+                title="প্রিভিউতে দেখুন"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+              >
+                <Eye size={13} />
+              </button>
+
+              {/* Toggle Enable */}
+              <button
+                onClick={e => { e.stopPropagation(); toggleEnabled(pinnedSection.id || 'basic_storefront'); }}
+                title={pinnedSection.enabled ? 'স্টোর থেকে হাইড করতে ক্লিক করুন' : 'স্টোরে চালু করতে ক্লিক করুন'}
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                  pinnedSection.enabled 
+                    ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100' 
+                    : 'text-slate-400 bg-slate-100 hover:bg-slate-200'
+                }`}
+              >
+                {pinnedSection.enabled ? <Eye size={13} /> : <EyeOff size={13} />}
+              </button>
+
+              {/* Expand Chevron */}
+              <div className={`p-1 rounded-lg text-slate-400 transition-transform ${isPinnedExpanded ? 'rotate-180 text-emerald-600' : ''}`}>
+                <ChevronDown size={13} />
+              </div>
+            </div>
+          </div>
+
+          {/* Expanded Basic Editor */}
+          {isPinnedExpanded && (
+            <div className="border-t border-slate-100 bg-slate-50/70 animate-in fade-in duration-200 rounded-b-2xl">
+              <SectionEditor
+                section={pinnedSection}
+                onChange={(newData) => updateSectionData(pinnedSection.id || 'basic_storefront', newData)}
+                theme={theme}
+                shopId={shopId}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Dynamic Reorderable Sections List ── */}
+      <div className="divide-y divide-slate-50 max-h-[calc(100vh-340px)] overflow-y-auto">
+        <div className="px-4 py-2 bg-slate-50/40">
+          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+            ডাইনামিক সেকশনসমূহ (Dynamic Drag & Drop)
+          </p>
+        </div>
+
+        {filteredDynamicSections.map((section, idx) => {
           const meta = SECTION_METADATA[section.type] || { 
             label: section.type, 
             icon: Grid, 
@@ -165,7 +311,6 @@ export default function SectionList({
             desc: '', 
             thumbnail: '📦' 
           };
-          const Icon = meta.icon;
           const isExpanded = expandedId === section.id;
           const isDragging = dragging === idx;
           const isOver = dragOver === idx;
@@ -276,50 +421,100 @@ export default function SectionList({
         })}
       </div>
 
-      {/* ── Add Section Modal ── */}
+      {/* ── Add Section Modal with Duplicate Freeze Controller ── */}
       {showAddModal && (
         <div className="fixed inset-0 z-[9999999] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0 bg-slate-50/70">
               <div>
                 <h3 className="text-base font-black text-slate-900">হোমপেজে নতুন সেকশন যোগ করুন</h3>
                 <p className="text-xs text-slate-400 font-bold mt-0.5">যেকোনো সেকশনে ক্লিক করে তাৎক্ষণিক যোগ করুন</p>
               </div>
-              <button 
-                onClick={() => setShowAddModal(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"
-              >
-                ✕
-              </button>
+
+              <div className="flex items-center justify-between sm:justify-end gap-2.5">
+                {/* Freeze Duplicates Controller */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-[11px] font-black text-slate-700 select-none">
+                    {freezeDuplicates ? '🔒 ডুপ্লিকেট লক (Freeze)' : '🔓 ডুপ্লিকেট অনুমতি (Allow)'}
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={freezeDuplicates}
+                    onClick={() => setFreezeDuplicates(!freezeDuplicates)}
+                    className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                      freezeDuplicates ? 'bg-purple-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <div
+                      className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${
+                        freezeDuplicates ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <button 
+                  onClick={() => setShowAddModal(false)}
+                  className="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 flex items-center justify-center text-slate-700 cursor-pointer transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Modal List */}
             <div className="p-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {Object.entries(SECTION_METADATA).map(([type, meta]) => {
-                const Icon = meta.icon;
-                return (
-                  <button
-                    key={type}
-                    onClick={() => addSection(type)}
-                    className="p-4 rounded-2xl border border-slate-200/80 hover:border-purple-400 hover:bg-purple-50/40 text-left transition-all group flex items-start gap-3.5 shadow-2xs hover:shadow-md cursor-pointer"
-                  >
-                    <div 
-                      className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xs group-hover:scale-105 transition-transform text-sm font-black"
-                      style={{ background: `${meta.color}15`, color: meta.color }}
+              {Object.entries(SECTION_METADATA)
+                .filter(([type]) => type !== 'basic_storefront') // basic_storefront is permanently pinned
+                .map(([type, meta]) => {
+                  const isAlreadyAdded = existingTypes.has(type);
+                  const isFrozen = freezeDuplicates && isAlreadyAdded;
+
+                  return (
+                    <button
+                      key={type}
+                      disabled={isFrozen}
+                      onClick={() => {
+                        if (isFrozen) return;
+                        addSection(type);
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all group flex items-start gap-3.5 shadow-2xs ${
+                        isFrozen
+                          ? 'opacity-40 bg-slate-100/80 border-slate-200 cursor-not-allowed select-none'
+                          : 'border-slate-200/80 hover:border-purple-400 hover:bg-purple-50/40 hover:shadow-md cursor-pointer'
+                      }`}
                     >
-                      {meta.thumbnail}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-black text-slate-900 group-hover:text-purple-700 transition-colors leading-tight">
-                        {meta.label}
-                      </p>
-                      <p className="text-[10px] text-slate-400 font-medium mt-1 leading-snug">
-                        {meta.desc}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
+                      <div 
+                        className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xs text-sm font-black transition-transform ${
+                          isFrozen ? 'opacity-50' : 'group-hover:scale-105'
+                        }`}
+                        style={{ background: `${meta.color}15`, color: meta.color }}
+                      >
+                        {meta.thumbnail}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                          <p className={`text-xs font-black leading-tight ${isFrozen ? 'text-slate-500' : 'text-slate-900 group-hover:text-purple-700'}`}>
+                            {meta.label}
+                          </p>
+                          {isAlreadyAdded && (
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                              isFrozen 
+                                ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                                : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {isFrozen ? '🔒 যুক্ত আছে' : '+ আরেকটি যোগ করুন'}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1 leading-snug">
+                          {meta.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
             </div>
           </div>
         </div>

@@ -2658,7 +2658,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         };
         const hbSections = [...homepageConfig.sections]
           .sort((a, b) => a.order - b.order)
-          .filter(s => s.enabled && s.type !== 'hero_carousel');
+          .filter(s => s.enabled && s.type !== 'hero_carousel' && s.type !== 'basic_storefront');
         if (!hbSections.length) return null;
         return (
           <div className="sf-section">
@@ -2675,97 +2675,108 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         );
       })()}
 
-      <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 w-full space-y-4 md:space-y-5">
-        
-        {/* ── Banner Description Box (SEO/AEO/GEO Optimized & Narrow) ── */}
-        <div
-          className="rounded-xl border overflow-hidden p-3"
-          style={{
-            borderColor: shop?.descBoxBorderColor || 'var(--sp-border, #e2e8f0)',
-            background: shop?.descBoxBg || 'var(--sp-card, #ffffff)',
-          }}
-          itemScope
-          itemType="https://schema.org/Store"
-        >
-          <meta itemprop="url" content={shop?.customDomain ? `https://${shop.customDomain}` : `https://bdretailers.com/shop/${shop.shopSlug}`} />
-          {shop?.logoUrl && <meta itemprop="image" content={shop.logoUrl} />}
-          
-          <div className="flex items-center gap-3">
-            {shop?.logoUrl && (
-              <img itemprop="logo" src={shop.logoUrl} alt={shop.shopName} className="w-10 h-10 object-contain rounded-lg border border-slate-200 shrink-0" />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 itemprop="name" className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-none">
-                  {shop?.shopName || ''}
-                </h1>
-                {shop?.slogan && (
-                  <span itemprop="slogan" className="text-[10px] sm:text-xs text-slate-500 font-bold border-l pl-2 border-slate-200 leading-none">
-                    {shop.slogan}
-                  </span>
-                )}
+      {/* ── Basic Storefront Layout (Description Box, Search Bar, Categories & Products) ── */}
+      {(() => {
+        const basicSectionConfig = homepageConfig?.sections?.find(s => s.type === 'basic_storefront');
+        const isBasicStorefrontEnabled = homepageConfig?.sections ? (basicSectionConfig ? basicSectionConfig.enabled !== false : true) : true;
+        if (!isBasicStorefrontEnabled) return null;
+
+        return (
+          <main className="flex-1 max-w-[96%] xl:max-w-[98%] 2xl:max-w-[99%] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 w-full space-y-4 md:space-y-5">
+            
+            {/* ── Banner Description Box (SEO/AEO/GEO Optimized & Narrow) ── */}
+            {basicSectionConfig?.data?.showDesc !== false && (
+              <div
+                className="rounded-xl border overflow-hidden p-3"
+                style={{
+                  borderColor: shop?.descBoxBorderColor || 'var(--sp-border, #e2e8f0)',
+                  background: shop?.descBoxBg || 'var(--sp-card, #ffffff)',
+                }}
+                itemScope
+                itemType="https://schema.org/Store"
+              >
+                <meta itemprop="url" content={shop?.customDomain ? `https://${shop.customDomain}` : `https://bdretailers.com/shop/${shop.shopSlug}`} />
+                {shop?.logoUrl && <meta itemprop="image" content={shop.logoUrl} />}
+                
+                <div className="flex items-center gap-3">
+                  {shop?.logoUrl && (
+                    <img itemprop="logo" src={shop.logoUrl} alt={shop.shopName} className="w-10 h-10 object-contain rounded-lg border border-slate-200 shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h1 itemprop="name" className="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-none">
+                        {shop?.shopName || ''}
+                      </h1>
+                      {shop?.slogan && (
+                        <span itemprop="slogan" className="text-[10px] sm:text-xs text-slate-500 font-bold border-l pl-2 border-slate-200 leading-none">
+                          {shop.slogan}
+                        </span>
+                      )}
+                    </div>
+                    <p itemprop="description" className="text-xs sm:text-sm font-medium text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                      {shop?.bannerDescription || shop?.description || shop?.slogan || ''}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <p itemprop="description" className="text-xs sm:text-sm font-medium text-slate-600 mt-1 line-clamp-2 leading-relaxed">
-                {shop?.bannerDescription || shop?.description || shop?.slogan || ''}
-              </p>
-            </div>
-          </div>
-        </div>
+            )}
 
-        {/* ── AI Shopping List (Vision Component) ── */}
-        {(shop.aiConfig?.enableAiShoppingList !== false || shop.settings?.enableAiShoppingList !== false) && (
-          <AiShoppingList 
-            shop={shop} 
-            products={products} 
-            onAddToCart={(items) => {
-              if (Array.isArray(items)) {
-                items.forEach(item => addToCart(item));
-              } else {
-                addToCart(items);
-              }
-            }} 
-            onDirectOrder={handleDirectOrderFromAi}
-          />
-        )}
+            {/* ── AI Shopping List (Vision Component) ── */}
+            {(shop.aiConfig?.enableAiShoppingList !== false || shop.settings?.enableAiShoppingList !== false) && (
+              <AiShoppingList 
+                shop={shop} 
+                products={products} 
+                onAddToCart={(items) => {
+                  if (Array.isArray(items)) {
+                    items.forEach(item => addToCart(item));
+                  } else {
+                    addToCart(items);
+                  }
+                }} 
+                onDirectOrder={handleDirectOrderFromAi}
+              />
+            )}
 
-        {/* ── Common Order Sheet Button ── */}
-        {shop.enableCommonOrder && (
-          <button
-            onClick={() => setIsCommonOrderOpen(true)}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-sm uppercase tracking-wider cursor-pointer"
-          >
-            📋 কমন অর্ডার শিট (Common Order Sheet)
-          </button>
-        )}
+            {/* ── Common Order Sheet Button ── */}
+            {shop.enableCommonOrder && (
+              <button
+                onClick={() => setIsCommonOrderOpen(true)}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-sm uppercase tracking-wider cursor-pointer"
+              >
+                📋 কমন অর্ডার শিট (Common Order Sheet)
+              </button>
+            )}
 
-        {/* ── Search & Sort ── */}
-        <div className="rounded-xl shadow-sm border p-1.5 flex items-center gap-2" style={{background: themeVars['--sp-card'] || 'white', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}>
-          <div className="relative flex-1 min-w-0">
-            <Search className="absolute left-3.5 top-3 text-slate-500" size={15} strokeWidth={2.5} />
-            <input
-              type="text"
-              placeholder="পণ্য খুঁজুন..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl font-bold outline-none transition-all text-sm placeholder:font-medium placeholder:text-slate-400"
-              style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}}
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="relative shrink-0">
-            <ArrowUpDown size={13} className="absolute left-3 top-3.5 text-slate-500" strokeWidth={2.5} />
-            <select className="pl-8 pr-5 py-2.5 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer transition-colors" style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}} value={sortOption} onChange={e => setSortOption(e.target.value)}>
-              <option value="newest">সবচেয়ে নতুন</option>
-              <option value="price_asc">কম মূল্য প্রথমে</option>
-              <option value="price_desc">বেশি মূল্য প্রথমে</option>
-              <option value="name_asc">নাম (A-Z)</option>
-              <option value="name_desc">নাম (Z-A)</option>
-              <option value="stock_desc">স্টক উপলব্ধ প্রথমে</option>
-            </select>
-          </div>
-        </div>
+            {/* ── Search & Sort ── */}
+            {basicSectionConfig?.data?.showSearch !== false && (
+              <div className="rounded-xl shadow-sm border p-1.5 flex items-center gap-2" style={{background: themeVars['--sp-card'] || 'white', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}>
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-3.5 top-3 text-slate-500" size={15} strokeWidth={2.5} />
+                  <input
+                    type="text"
+                    placeholder="পণ্য খুঁজুন..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl font-bold outline-none transition-all text-sm placeholder:font-medium placeholder:text-slate-400"
+                    style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="relative shrink-0">
+                  <ArrowUpDown size={13} className="absolute left-3 top-3.5 text-slate-500" strokeWidth={2.5} />
+                  <select className="pl-8 pr-5 py-2.5 rounded-xl text-sm font-bold outline-none appearance-none cursor-pointer transition-colors" style={{background: themeVars['--sp-bg'] || '#f8fafc', borderColor: themeVars['--sp-border'] || '#e2e8f0', color: themeVars['--sp-text'] || '#0f172a', border: `1px solid ${themeVars['--sp-border'] || '#e2e8f0'}`}} value={sortOption} onChange={e => setSortOption(e.target.value)}>
+                    <option value="newest">সবচেয়ে নতুন</option>
+                    <option value="price_asc">কম মূল্য প্রথমে</option>
+                    <option value="price_desc">বেশি মূল্য প্রথমে</option>
+                    <option value="name_asc">নাম (A-Z)</option>
+                    <option value="name_desc">নাম (Z-A)</option>
+                    <option value="stock_desc">স্টক উপলব্ধ প্রথমে</option>
+                  </select>
+                </div>
+              </div>
+            )}
 
         {/* ── Clean Category Strip ── */}
-        {(() => {
+        {basicSectionConfig?.data?.showCategories !== false && (() => {
           const activeTId = shop?.templateId || 'grocery-fresh-bazaar';
           const activeTConfig = TEMPLATES[activeTId] || TEMPLATES['grocery-fresh-bazaar'];
           const cat = activeTConfig?.category || (
@@ -2810,7 +2821,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         })()}
 
         {/* ── Desktop Subcategory Strip ── */}
-        {activeCategory !== 'All' && (() => {
+        {basicSectionConfig?.data?.showCategories !== false && activeCategory !== 'All' && (() => {
           const activeCat = categories.find(c => c.name === activeCategory);
           if (!activeCat?.subcategories?.length) return null;
           return (
@@ -2832,7 +2843,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
 
         {/* ── Mobile Subcategory Strip ── */}
-        {activeCategory !== 'All' && (() => {
+        {basicSectionConfig?.data?.showCategories !== false && activeCategory !== 'All' && (() => {
           const activeCat = categories.find(c => c.name === activeCategory);
           if (!activeCat?.subcategories?.length) return null;
           return (
@@ -2882,7 +2893,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         })()}
 
         {/* ── Product Showcase Section (Dynamic per Active Template Category) ── */}
-        {filteredProducts.length === 0 ? (
+        {basicSectionConfig?.data?.showProducts !== false && (filteredProducts.length === 0 ? (
           <div id="product-section" className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-300">
             <Package size={64} className="mx-auto mb-4 text-slate-300" strokeWidth={1.5} />
             <h3 className="text-2xl font-black text-slate-800">কোনো পণ্য পাওয়া যায়নি। 🥺</h3>
@@ -3620,8 +3631,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               {filteredProducts.map(renderSingleProductCard)}
             </div>
           );
-        })()}
+        })())}
       </main>
+    );
+  })()}
 
       {/* ── PREMIUM FOOTER — INLINE STYLES, CSS-PROOF ── */}
       <footer style={{ position: 'relative', marginTop: 'auto', overflow: 'hidden', background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 60%, #faf5ff 100%)', color: '#1e1b4b', borderTop: '1px solid rgba(99,102,241,0.12)' }}>

@@ -11,34 +11,35 @@ import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartph
 import { DEMO_PRODUCTS } from '@/lib/homepageDemoData';
 
 const DEFAULT_SECTIONS = [
-  { id: 'hero', type: 'hero_carousel', enabled: true, order: 0, data: { slides: [] } },
-  { id: 'trust_strip', type: 'trust_strip', enabled: true, order: 1, data: {} },
-  { id: 'categories', type: 'category_scroller', enabled: true, order: 2, data: { items: [] } },
-  { id: 'split_showcase', type: 'split_showcase', enabled: true, order: 3, data: {} },
-  { id: 'flash_sale', type: 'flash_sale', enabled: true, order: 4, data: { endTime: null, productIds: [] } },
-  { id: 'product_grid', type: 'product_grid', enabled: true, order: 5, data: { title: 'আমাদের জনপ্রিয় পণ্যসমূহ', tabs: ['all', 'trending', 'bestseller'], maxProducts: 12 } },
-  { id: 'shop_the_look', type: 'shop_the_look', enabled: false, order: 6, data: {} },
-  { id: 'bento_mosaic', type: 'bento_mosaic', enabled: false, order: 7, data: {} },
-  { id: 'banner_row', type: 'banner_row', enabled: false, order: 8, data: { banners: [] } },
-  { id: 'product_spotlight', type: 'product_spotlight', enabled: false, order: 9, data: {} },
-  { id: 'mood_board', type: 'mood_board', enabled: false, order: 10, data: {} },
-  { id: 'deal_of_the_day', type: 'deal_of_the_day', enabled: false, order: 11, data: {} },
-  { id: 'video_reels', type: 'video_reels', enabled: false, order: 12, data: { urls: [] } },
-  { id: 'shoppable_video', type: 'shoppable_video', enabled: false, order: 13, data: {} },
-  { id: 'bundle_section', type: 'bundle_section', enabled: false, order: 14, data: { bundles: [] } },
-  { id: 'before_after', type: 'before_after', enabled: false, order: 15, data: {} },
-  { id: 'photo_reviews', type: 'photo_reviews', enabled: true, order: 16, data: { reviews: [] } },
-  { id: 'customer_ugc', type: 'customer_ugc', enabled: false, order: 17, data: {} },
-  { id: 'brand_marquee', type: 'brand_marquee', enabled: false, order: 18, data: { brands: [] } },
-  { id: 'price_ladder', type: 'price_ladder', enabled: false, order: 19, data: {} },
-  { id: 'price_tier_store', type: 'price_tier_store', enabled: false, order: 20, data: { tiers: [299, 599, 999] } },
-  { id: 'editorial_story', type: 'editorial_story', enabled: false, order: 21, data: {} },
-  { id: 'lookbook', type: 'lookbook', enabled: false, order: 22, data: {} },
-  { id: 'scroll_story', type: 'scroll_story', enabled: false, order: 23, data: {} },
-  { id: 'tabbed_collection', type: 'tabbed_collection', enabled: false, order: 24, data: {} },
-  { id: 'concern_grid', type: 'concern_grid', enabled: false, order: 25, data: { items: [] } },
-  { id: 'instagram_feed', type: 'instagram_feed', enabled: false, order: 26, data: { embedUrl: '' } },
-  { id: 'popup_banner', type: 'popup_banner', enabled: false, order: 27, data: { imageUrl: '', linkUrl: '', buttonText: '', delay: 2 } },
+  { id: 'basic_storefront', type: 'basic_storefront', enabled: true, order: 0, isPinned: true, data: { showDesc: true, showSearch: true, showCategories: true, showProducts: true } },
+  { id: 'hero', type: 'hero_carousel', enabled: true, order: 1, data: { slides: [] } },
+  { id: 'trust_strip', type: 'trust_strip', enabled: true, order: 2, data: {} },
+  { id: 'categories', type: 'category_scroller', enabled: true, order: 3, data: { items: [] } },
+  { id: 'split_showcase', type: 'split_showcase', enabled: true, order: 4, data: {} },
+  { id: 'flash_sale', type: 'flash_sale', enabled: true, order: 5, data: { endTime: null, productIds: [] } },
+  { id: 'product_grid', type: 'product_grid', enabled: true, order: 6, data: { title: 'আমাদের জনপ্রিয় পণ্যসমূহ', tabs: ['all', 'trending', 'bestseller'], maxProducts: 12 } },
+  { id: 'shop_the_look', type: 'shop_the_look', enabled: false, order: 7, data: {} },
+  { id: 'bento_mosaic', type: 'bento_mosaic', enabled: false, order: 8, data: {} },
+  { id: 'banner_row', type: 'banner_row', enabled: false, order: 9, data: { banners: [] } },
+  { id: 'product_spotlight', type: 'product_spotlight', enabled: false, order: 10, data: {} },
+  { id: 'mood_board', type: 'mood_board', enabled: false, order: 11, data: {} },
+  { id: 'deal_of_the_day', type: 'deal_of_the_day', enabled: false, order: 12, data: {} },
+  { id: 'video_reels', type: 'video_reels', enabled: false, order: 13, data: { urls: [] } },
+  { id: 'shoppable_video', type: 'shoppable_video', enabled: false, order: 14, data: {} },
+  { id: 'bundle_section', type: 'bundle_section', enabled: false, order: 15, data: { bundles: [] } },
+  { id: 'before_after', type: 'before_after', enabled: false, order: 16, data: {} },
+  { id: 'photo_reviews', type: 'photo_reviews', enabled: true, order: 17, data: { reviews: [] } },
+  { id: 'customer_ugc', type: 'customer_ugc', enabled: false, order: 18, data: {} },
+  { id: 'brand_marquee', type: 'brand_marquee', enabled: false, order: 19, data: { brands: [] } },
+  { id: 'price_ladder', type: 'price_ladder', enabled: false, order: 20, data: {} },
+  { id: 'price_tier_store', type: 'price_tier_store', enabled: false, order: 21, data: { tiers: [299, 599, 999] } },
+  { id: 'editorial_story', type: 'editorial_story', enabled: false, order: 22, data: {} },
+  { id: 'lookbook', type: 'lookbook', enabled: false, order: 23, data: {} },
+  { id: 'scroll_story', type: 'scroll_story', enabled: false, order: 24, data: {} },
+  { id: 'tabbed_collection', type: 'tabbed_collection', enabled: false, order: 25, data: {} },
+  { id: 'concern_grid', type: 'concern_grid', enabled: false, order: 26, data: { items: [] } },
+  { id: 'instagram_feed', type: 'instagram_feed', enabled: false, order: 27, data: { embedUrl: '' } },
+  { id: 'popup_banner', type: 'popup_banner', enabled: false, order: 28, data: { imageUrl: '', linkUrl: '', buttonText: '', delay: 2 } },
 ];
 
 // ── Category Template Presets ──
@@ -47,25 +48,25 @@ const CATEGORY_TEMPLATES = {
     label: '🛒 গ্রোসারি ও ডেইলি ফ্রেশ',
     desc: 'Chaldal, Shwapno ও ফ্রেশ মার্কেট স্টাইলে',
     theme: { primaryColor: '#059669', font: 'Hind Siliguri' },
-    enabled: ['hero', 'trust_strip', 'categories', 'flash_sale', 'product_grid', 'bundle_section', 'price_ladder', 'price_tier_store', 'photo_reviews'],
+    enabled: ['basic_storefront', 'hero', 'trust_strip', 'categories', 'flash_sale', 'product_grid', 'bundle_section', 'price_ladder', 'price_tier_store', 'photo_reviews'],
   },
   fashion: {
     label: '👗 লাক্সারি ফ্যাশন & লাইফস্টাইল',
     desc: 'IKEA, Sailor ও Aarong স্টাইলে',
     theme: { primaryColor: '#7C3AED', font: 'Playfair Display' },
-    enabled: ['hero', 'split_showcase', 'categories', 'bento_mosaic', 'product_grid', 'shop_the_look', 'video_reels', 'lookbook', 'photo_reviews', 'instagram_feed'],
+    enabled: ['basic_storefront', 'hero', 'split_showcase', 'categories', 'bento_mosaic', 'product_grid', 'shop_the_look', 'video_reels', 'lookbook', 'photo_reviews', 'instagram_feed'],
   },
   tech: {
     label: '💻 টেক, গ্যাজেটস & ইলেকট্রনিক্স',
     desc: 'Star Tech, Apple ও Pickaboo স্টাইলে',
     theme: { primaryColor: '#2563EB', font: 'Inter' },
-    enabled: ['hero', 'trust_strip', 'split_showcase', 'deal_of_the_day', 'product_grid', 'product_spotlight', 'brand_marquee', 'photo_reviews'],
+    enabled: ['basic_storefront', 'hero', 'trust_strip', 'split_showcase', 'deal_of_the_day', 'product_grid', 'product_spotlight', 'brand_marquee', 'photo_reviews'],
   },
   beauty: {
     label: '💄 বিউটি, স্কিনকেয়ার & কসমেটিক্স',
     desc: 'Sephora, BanglaShoppers স্টাইলে',
     theme: { primaryColor: '#DB2777', font: 'Hind Siliguri' },
-    enabled: ['hero', 'split_showcase', 'categories', 'before_after', 'flash_sale', 'product_grid', 'customer_ugc', 'shoppable_video', 'popup_banner'],
+    enabled: ['basic_storefront', 'hero', 'split_showcase', 'categories', 'before_after', 'flash_sale', 'product_grid', 'customer_ugc', 'shoppable_video', 'popup_banner'],
   },
 };
 
@@ -123,10 +124,18 @@ export default function HomepageBuilder() {
         if (config.sections?.length) {
           // Merge existing saved sections with any new default section types not present yet
           const existingTypeMap = new Map(config.sections.map(s => [s.type, s]));
-          const merged = config.sections.map((s, idx) => ({ ...s, order: idx }));
+          let merged = config.sections.map((s, idx) => ({ ...s, order: idx }));
+
+          // Ensure basic_storefront is present
+          if (!existingTypeMap.has('basic_storefront')) {
+            merged = [
+              { id: 'basic_storefront', type: 'basic_storefront', enabled: true, order: 0, isPinned: true, data: { showDesc: true, showSearch: true, showCategories: true, showProducts: true } },
+              ...merged.map((s, idx) => ({ ...s, order: idx + 1 }))
+            ];
+          }
           
           DEFAULT_SECTIONS.forEach(defSec => {
-            if (!existingTypeMap.has(defSec.type)) {
+            if (defSec.type !== 'basic_storefront' && !existingTypeMap.has(defSec.type)) {
               merged.push({ ...defSec, order: merged.length, enabled: false });
             }
           });
