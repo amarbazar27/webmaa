@@ -6,6 +6,7 @@ import {
   MapPin, Phone, Sparkles, ChevronDown, User,
   HelpCircle, Sun, Moon, Settings, Zap, ArrowRight, ShieldCheck
 } from 'lucide-react';
+import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 
 export const HEADER_PRESETS = [
   {
@@ -91,13 +92,23 @@ export default function StorefrontHeader({
   onSearchChange,
   searchQuery = '',
   isPreview = false,
+  user = null,
+  userData = null,
+  onOpenProfile,
+  onOpenFaq,
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
 
+  const safeCategories = Array.isArray(categories) ? categories : [];
   const hStyle = headerConfig?.style || 'classic';
   const isWhitePill = headerConfig?.buttonStyle === 'white_pill';
   const primary = themeVars?.primaryColor || themeVars?.['--sp-primary'] || shop?.primaryColor || '#6D28D9';
-  const announcementText = headerConfig?.announcementText || shop?.notices || '';
+  const announcementText = String(headerConfig?.announcementText || shop?.notices || '');
+  const shopName = String(shop?.shopName || 'BDRetailers Store');
+  const shopInitial = shopName.charAt(0) || 'B';
+  const slogan = String(shop?.slogan || '');
+  const rawWa = String(shop?.deliveryConfig?.contactWhatsapp || shop?.socialLinks?.wa || '01734763306');
+  const displayWa = rawWa.includes('no contact') ? '+8801734763306' : rawWa;
 
   // Track scroll for sticky / transparent behavior
   useEffect(() => {
@@ -143,7 +154,7 @@ export default function StorefrontHeader({
       {shop?.logoUrl ? (
         <img 
           src={shop.logoUrl} 
-          alt={shop?.shopName || 'Logo'} 
+          alt={shopName} 
           className="w-9 h-9 rounded-xl object-contain border border-slate-200/60 shadow-xs group-hover:scale-105 transition-transform" 
         />
       ) : (
@@ -151,16 +162,16 @@ export default function StorefrontHeader({
           className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-black shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform"
           style={{ background: primary }}
         >
-          {shop?.shopName?.[0] || 'B'}
+          {shopInitial}
         </div>
       )}
       <div>
         <span className={`text-sm sm:text-base font-black leading-tight block truncate max-w-[160px] sm:max-w-xs ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          {shop?.shopName || 'BDRetailers Store'}
+          {shopName}
         </span>
-        {shop?.slogan ? (
+        {slogan ? (
           <span className="text-[10px] text-slate-400 font-bold block truncate max-w-[160px] sm:max-w-xs">
-            {shop.slogan}
+            {slogan}
           </span>
         ) : (
           <span className="text-[10px] text-emerald-600 font-black block flex items-center gap-1">
@@ -171,9 +182,15 @@ export default function StorefrontHeader({
     </Link>
   );
 
-  // Render Common Action Buttons (Notifications, FAQ, Wishlist, Cart)
+  // Render Common Action Buttons
   const renderActionButtons = (isDark = false) => (
     <div className="flex items-center gap-1.5 shrink-0">
+      {headerConfig?.showThemeToggle !== false && (
+        <div className="hidden sm:block">
+          <ThemeToggleButton size="sm" />
+        </div>
+      )}
+
       {headerConfig?.showNotifications !== false && (
         <button
           type="button"
@@ -189,7 +206,7 @@ export default function StorefrontHeader({
       {headerConfig?.showFaqBtn !== false && (
         <button
           type="button"
-          onClick={() => {}}
+          onClick={onOpenFaq}
           className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-amber-500 text-white text-[11px] font-black shadow-xs hover:opacity-90 transition-opacity"
         >
           <HelpCircle size={13} />
@@ -215,6 +232,23 @@ export default function StorefrontHeader({
           </span>
         )}
       </button>
+
+      {/* Profile Button */}
+      {onOpenProfile && (
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          className="w-8 h-8 sm:w-9 sm:h-9 bg-white text-purple-700 hover:bg-purple-50 rounded-xl transition-colors shadow-2xs border border-slate-200 overflow-hidden flex items-center justify-center cursor-pointer"
+          title="প্রোফাইল"
+          aria-label="User Profile"
+        >
+          {user?.photoURL ? (
+            <img src={user.photoURL} className="w-full h-full object-cover" alt="Profile" />
+          ) : (
+            <User size={16} className="font-bold" />
+          )}
+        </button>
+      )}
     </div>
   );
 
@@ -327,15 +361,18 @@ export default function StorefrontHeader({
               <Menu size={13} />
               <span>সকল ক্যাটাগরি</span>
             </button>
-            {categories.slice(0, 8).map(c => (
-              <button
-                key={c.id || c.name}
-                onClick={() => onSearchChange?.(c.name)}
-                className="text-xs font-bold text-slate-600 hover:text-purple-600 hover:bg-white px-2.5 py-1 rounded-md shrink-0 transition-colors"
-              >
-                {c.name}
-              </button>
-            ))}
+            {safeCategories.slice(0, 8).map(c => {
+              const catName = typeof c === 'object' ? (c.name || '') : String(c);
+              return (
+                <button
+                  key={typeof c === 'object' ? (c.id || catName) : catName}
+                  onClick={() => onSearchChange?.(catName)}
+                  className="text-xs font-bold text-slate-600 hover:text-purple-600 hover:bg-white px-2.5 py-1 rounded-md shrink-0 transition-colors"
+                >
+                  {catName}
+                </button>
+              );
+            })}
           </div>
         </div>
       </header>
@@ -367,7 +404,7 @@ export default function StorefrontHeader({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => onSearchChange?.(e.target.value)}
-                placeholder="🔍 দ্রুত যেকোনো পণ্য খুঁজে পেতে লিখুন (যেমন: দুধ, টি-শার্ট, ঘড়ি)..."
+                placeholder="🔍 দ্রুত যেকোনো পণ্য খুঁজে পেতে লিখুন..."
                 className="w-full pl-10 pr-24 py-2.5 bg-slate-50 focus:bg-white text-xs font-black text-slate-800 rounded-2xl border-2 border-purple-200 focus:border-purple-600 focus:ring-4 focus:ring-purple-100 outline-none transition-all shadow-xs"
               />
               <button 
@@ -533,7 +570,7 @@ export default function StorefrontHeader({
           <div className="flex items-center gap-3">
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-950/80 border border-blue-800 text-blue-300 text-xs font-black">
               <Phone size={13} className="text-blue-400" />
-              <span>সহায়তা: {shop?.deliveryConfig?.contactWhatsapp || '01734763306'}</span>
+              <span>সহায়তা: {displayWa}</span>
             </div>
             {renderActionButtons(true)}
           </div>

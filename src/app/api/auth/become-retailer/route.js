@@ -126,6 +126,23 @@ export async function POST(req) {
       requestedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
 
+    // 🔔 Send Superadmin Alert Email asynchronously
+    void (async () => {
+      try {
+        const { sendSuperadminNewRetailerAlert } = await import('@/lib/ruflo');
+        await sendSuperadminNewRetailerAlert({
+          retailerName: displayName,
+          retailerEmail: email,
+          retailerPhone: phone.trim(),
+          shopName: `${displayName || 'My'}'s Premium Store`,
+          shopSlug: email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ''),
+          autoApproved: autoApprove,
+        });
+      } catch (e) {
+        console.warn('[Become Retailer] Failed to send superadmin notification email:', e.message);
+      }
+    })();
+
     return NextResponse.json({ success: true, autoApproved: autoApprove });
   } catch (err) {
     console.error('[Become Retailer API Error]', err);

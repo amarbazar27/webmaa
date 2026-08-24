@@ -158,6 +158,26 @@ export async function POST(req) {
         subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
       });
 
+      // 🔔 Notify Superadmin of paid subscription
+      void (async () => {
+        try {
+          const { sendSuperadminNewSubscriptionAlert } = await import('@/lib/ruflo');
+          await sendSuperadminNewSubscriptionAlert({
+            shopName: shopData.shopName || 'Store',
+            shopSlug: shopData.subdomainSlug || shopData.shopSlug || shopId,
+            ownerEmail: shopData.ownerEmail || '',
+            packageType,
+            amount: Number(verifyData.amount) || historyItem.amount,
+            paymentMethod: verifyData.payment_method || 'UddoktaPay',
+            transactionId: verifyData.transaction_id || invoiceId,
+            isTrial: false,
+            expiresAt: newExpiry,
+          });
+        } catch (e) {
+          console.warn('[UddoktaPay Webhook] Superadmin subscription email failed:', e.message);
+        }
+      })();
+
       console.log(`[UddoktaPay Webhook] Subscription updated for shop ${shopId} to ${packageType} package (expires ${new Date(newExpiry).toISOString()})`);
       return NextResponse.json({ success: true, verified: true, subscription: true });
     }

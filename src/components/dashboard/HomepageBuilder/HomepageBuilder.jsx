@@ -262,6 +262,7 @@ export default function HomepageBuilder() {
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState('all');
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [activeTemplateKey, setActiveTemplateKey] = useState('fashion_editorial');
   const [hasChanges, setHasChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
 
@@ -397,6 +398,7 @@ export default function HomepageBuilder() {
   };
 
   const applyTemplate = (key, tpl) => {
+    setActiveTemplateKey(key);
     const newSections = DEFAULT_SECTIONS.map(s => ({
       ...s,
       enabled: tpl.enabled.includes(s.id) || tpl.enabled.includes(s.type),
@@ -406,7 +408,7 @@ export default function HomepageBuilder() {
     if (tpl.headerStyle) setHeaderConfig(h => ({ ...h, style: tpl.headerStyle }));
     if (tpl.footerStyle) setFooterConfig(f => ({ ...f, style: tpl.footerStyle }));
     setHasChanges(true);
-    toast.success(`${tpl.namebn} টেমপ্লেট অ্যাপ্লাই হয়েছে! 🚀`);
+    toast.success(`${tpl.namebn} টেমপ্লেট লাইভ প্রিভিউতে সিলেক্ট হয়েছে! 🚀`);
   };
 
   const TEMPLATE_FILTER_CATEGORIES = [
@@ -526,16 +528,16 @@ export default function HomepageBuilder() {
                   </p>
                 </div>
 
-                {/* Category Filter Chips */}
-                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {/* Category Filter Chips — Wrapped into 2 clean lines without horizontal swipe */}
+                <div className="flex flex-wrap gap-1.5 pb-2">
                   {TEMPLATE_FILTER_CATEGORIES.map(c => (
                     <button
                       key={c.id}
                       onClick={() => setTemplateCategoryFilter(c.id)}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                         templateCategoryFilter === c.id
-                          ? 'bg-purple-600 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          ? 'bg-purple-600 text-white shadow-xs scale-105'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >
                       {c.label}
@@ -543,39 +545,58 @@ export default function HomepageBuilder() {
                   ))}
                 </div>
 
-                {/* Template Cards Grid */}
+                {/* Template Cards Grid — Click anywhere to select & preview */}
                 <div className="grid grid-cols-1 gap-3 max-h-[600px] overflow-y-auto pr-1">
-                  {filteredTemplates.map(([key, tpl]) => (
-                    <div
-                      key={key}
-                      className={`rounded-2xl bg-gradient-to-br ${tpl.gradient} p-4 text-white shadow-md relative overflow-hidden group`}
-                    >
-                      <div className="flex items-start justify-between gap-3 relative z-10">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-black leading-snug">{tpl.label}</p>
-                          <p className="text-[11px] font-medium opacity-90 mt-0.5 leading-tight">{tpl.desc}</p>
-                          <div className="flex flex-wrap gap-1 mt-2.5">
-                            {tpl.enabled.slice(0, 4).map(sId => (
-                              <span key={sId} className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-wide">
-                                {sId.replace(/_/g, ' ')}
+                  {filteredTemplates.map(([key, tpl]) => {
+                    const isSelected = activeTemplateKey === key;
+                    return (
+                      <div
+                        key={key}
+                        onClick={() => applyTemplate(key, tpl)}
+                        className={`rounded-2xl bg-gradient-to-br ${tpl.gradient} p-4 text-white shadow-md relative overflow-hidden group cursor-pointer transition-all duration-200 ${
+                          isSelected
+                            ? 'ring-4 ring-purple-600 ring-offset-2 scale-[1.01] shadow-xl'
+                            : 'hover:opacity-95 hover:scale-[1.005]'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3 relative z-10">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black leading-snug">{tpl.label}</p>
+                            <p className="text-[11px] font-medium opacity-90 mt-0.5 leading-tight">{tpl.desc}</p>
+                            <div className="flex flex-wrap gap-1 mt-2.5">
+                              {tpl.enabled.slice(0, 4).map(sId => (
+                                <span key={sId} className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-wide">
+                                  {sId.replace(/_/g, ' ')}
+                                </span>
+                              ))}
+                              {tpl.enabled.length > 4 && (
+                                <span className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black">
+                                  +{tpl.enabled.length - 4}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-1.5 shrink-0 mt-0.5">
+                            {isSelected ? (
+                              <span className="px-3 py-1.5 bg-white text-purple-900 rounded-xl text-xs font-black flex items-center gap-1 shadow-md animate-in fade-in">
+                                <Check size={14} className="text-purple-600 stroke-[3]" />
+                                সক্রিয়
                               </span>
-                            ))}
-                            {tpl.enabled.length > 4 && (
-                              <span className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black">
-                                +{tpl.enabled.length - 4}
-                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); applyTemplate(key, tpl); }}
+                                className="px-4 py-2 bg-white/90 hover:bg-white text-slate-900 rounded-xl text-xs font-black transition-all active:scale-95 shadow cursor-pointer"
+                              >
+                                Apply
+                              </button>
                             )}
                           </div>
                         </div>
-                        <button
-                          onClick={() => applyTemplate(key, tpl)}
-                          className="shrink-0 mt-0.5 px-4 py-2 bg-white text-slate-900 rounded-xl text-xs font-black transition-all active:scale-95 hover:bg-white/90 shadow cursor-pointer"
-                        >
-                          Apply
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

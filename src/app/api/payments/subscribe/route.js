@@ -73,6 +73,26 @@ export async function POST(req) {
         subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
       });
 
+      // 🔔 Notify Superadmin of Starter plan activation
+      void (async () => {
+        try {
+          const { sendSuperadminNewSubscriptionAlert } = await import('@/lib/ruflo');
+          await sendSuperadminNewSubscriptionAlert({
+            shopName: shopData.shopName || 'Store',
+            shopSlug: shopData.subdomainSlug || shopData.shopSlug || shopId,
+            ownerEmail: ownerEmail || '',
+            packageType: `Starter Plan (${globalData?.subStarterPercent ?? 2.5}% Revenue Share)`,
+            amount: 0,
+            paymentMethod: 'revenue_share',
+            transactionId: 'STARTER_ACTIVATED',
+            isTrial: false,
+            expiresAt: null,
+          });
+        } catch (e) {
+          console.warn('[Subscribe API] Starter plan alert failed:', e.message);
+        }
+      })();
+
       return NextResponse.json({ 
         success: true, 
         isFree: true, 
@@ -289,6 +309,26 @@ export async function POST(req) {
         subscriptionPendingTxn: `Method: manual, Sender: ${cleanedNumber}, Txn: ${transactionId.trim()}`,
         subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
       });
+
+      // 🔔 Notify Superadmin of manual payment submission
+      void (async () => {
+        try {
+          const { sendSuperadminNewSubscriptionAlert } = await import('@/lib/ruflo');
+          await sendSuperadminNewSubscriptionAlert({
+            shopName: shopData.shopName || 'Store',
+            shopSlug: shopData.subdomainSlug || shopData.shopSlug || shopId,
+            ownerEmail: ownerEmail || '',
+            packageType: `${packageType} (Manual Verification)`,
+            amount: finalAmount,
+            paymentMethod: `Manual (${cleanedNumber})`,
+            transactionId: transactionId.trim(),
+            isTrial: false,
+            expiresAt: null,
+          });
+        } catch (e) {
+          console.warn('[Subscribe API] Manual payment alert failed:', e.message);
+        }
+      })();
 
       return NextResponse.json({ success: true, message: 'Subscription request submitted for approval!' });
     }

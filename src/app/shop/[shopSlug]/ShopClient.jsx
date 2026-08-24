@@ -34,8 +34,8 @@ const AiVoicePanel = dynamic(() => import('@/components/shop/AiVoicePanel'), { s
 const SmartMealEngine = dynamic(() => import('@/components/shop/SmartMealEngine'), { ssr: false });
 const ReviewSection = dynamic(() => import('@/components/shop/ReviewSection'), { ssr: false });
 const SectionRenderer = dynamic(() => import('@/components/storefront/sections/SectionRenderer'), { ssr: false });
-const StorefrontHeader = dynamic(() => import('@/components/storefront/StorefrontHeader'), { ssr: false });
-const StorefrontFooter = dynamic(() => import('@/components/storefront/StorefrontFooter'), { ssr: false });
+import StorefrontHeader from '@/components/storefront/StorefrontHeader';
+import StorefrontFooter from '@/components/storefront/StorefrontFooter';
 
 // Product detail modal component imports
 import ProductImage from '@/features/product/components/ProductImage';
@@ -2424,6 +2424,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         onSearchChange={setSearchTerm}
         searchQuery={searchTerm}
         isPreview={false}
+        user={user}
+        userData={userData}
+        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenFaq={() => setIsFaqOpen(true)}
       />
 
       {/* ── Top Premium Location Bar Removed ── */}

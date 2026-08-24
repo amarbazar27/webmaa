@@ -91,16 +91,18 @@ export default function StorefrontFooter({
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
+  const safeCategories = Array.isArray(categories) ? categories : [];
   const fStyle = footerConfig?.style || 'classic_4col';
-  const customTagline = footerConfig?.customTagline || shop?.slogan || 'সেরা অনলাইন কেনাকাটার বিশ্বস্ত ঠিকানা';
+  const shopName = String(shop?.shopName || 'BDRetailers Store');
+  const customTagline = String(footerConfig?.customTagline || shop?.slogan || 'সেরা অনলাইন কেনাকাটার বিশ্বস্ত ঠিকানা');
   const primary = themeVars?.primaryColor || themeVars?.['--sp-primary'] || shop?.primaryColor || '#6D28D9';
-  const attributionStyle = footerConfig?.attributionStyle || 'option_a'; // option_a, option_b, option_c, option_d
-  const attributionAlign = footerConfig?.attributionAlign || 'center'; // left, center, right
+  const attributionStyle = footerConfig?.attributionStyle || 'option_a';
+  const attributionAlign = footerConfig?.attributionAlign || 'center';
 
-  const rawEmail = shop?.deliveryConfig?.contactEmail || shop?.ownerEmail || 'bdretailers26@gmail.com';
+  const rawEmail = String(shop?.deliveryConfig?.contactEmail || shop?.ownerEmail || 'bdretailers26@gmail.com');
   const displayEmail = rawEmail.includes('no contact') ? 'bdretailers26@gmail.com' : rawEmail;
-  const rawWa = shop?.deliveryConfig?.contactWhatsapp || shop?.socialLinks?.wa || '01734763306';
-  const cleanWa = rawWa.replace(/[^0-9]/g, '');
+  const rawWa = String(shop?.deliveryConfig?.contactWhatsapp || shop?.socialLinks?.wa || '01734763306');
+  const cleanWa = rawWa.replace(/[^0-9]/g, '') || '01734763306';
   const displayPhone = rawWa.includes('no contact') ? '+8801734763306' : rawWa;
 
   const handleSubscribe = (e) => {
@@ -113,7 +115,6 @@ export default function StorefrontFooter({
 
   // ══════════════════════════════════════════════════════════════════
   // MANDATORY BDRETAILERS BRANDING ATTRIBUTION BADGE
-  // Non-removable — Designed as a premium verified platform emblem
   // ══════════════════════════════════════════════════════════════════
   const renderAttribution = () => {
     let text = "Powered by BDRetailers";
@@ -145,7 +146,6 @@ export default function StorefrontFooter({
           onClick={(e) => { if (isPreview) e.preventDefault(); }}
           className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 backdrop-blur-md transition-all group shadow-sm"
         >
-          {/* Glowing Platform Icon */}
           <div className="w-6 h-6 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white text-xs font-black shadow-sm group-hover:scale-110 transition-transform">
             ⚡
           </div>
@@ -206,7 +206,7 @@ export default function StorefrontFooter({
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
           {/* Col 1: Brand */}
           <div className="space-y-3">
-            <h3 className="text-lg font-black text-white">{shop?.shopName || 'Store'}</h3>
+            <h3 className="text-lg font-black text-white">{shopName}</h3>
             <p className="text-xs text-slate-400 font-medium leading-relaxed">{customTagline}</p>
             {renderSocials()}
           </div>
@@ -216,13 +216,16 @@ export default function StorefrontFooter({
             <div className="space-y-3">
               <h4 className="text-xs font-black text-purple-400 uppercase tracking-wider">জনপ্রিয় ক্যাটাগরি</h4>
               <ul className="space-y-2 text-xs font-bold text-slate-300">
-                {categories.slice(0, 5).map(c => (
-                  <li key={c.id || c.name}>
-                    <button onClick={() => onCategoryClick?.(c.name)} className="hover:text-purple-400 transition-colors">
-                      → {c.name}
-                    </button>
-                  </li>
-                ))}
+                {safeCategories.slice(0, 5).map(c => {
+                  const catName = typeof c === 'object' ? (c.name || '') : String(c);
+                  return (
+                    <li key={typeof c === 'object' ? (c.id || catName) : catName}>
+                      <button onClick={() => onCategoryClick?.(catName)} className="hover:text-purple-400 transition-colors">
+                        → {catName}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
@@ -231,7 +234,7 @@ export default function StorefrontFooter({
           <div className="space-y-3">
             <h4 className="text-xs font-black text-purple-400 uppercase tracking-wider">গ্রাহক সেবা ও নীতি</h4>
             <ul className="space-y-2 text-xs font-bold text-slate-300">
-              <li><Link href={`/shop/${shop?.subdomainSlug || ''}/privacy`} className="hover:text-purple-400">প্রাইভেসি পলিসি</Link></li>
+              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} className="hover:text-purple-400">প্রাইভেসি পলিসি</Link></li>
               <li><span>রিটার্ন ও রিফান্ড নীতি</span></li>
               <li><span>ডেলিভারি ট্র্যাকিং</span></li>
               <li><span>শর্তাবলী ও নিয়ম</span></li>
@@ -254,7 +257,7 @@ export default function StorefrontFooter({
         {/* Bottom Bar with Mandatory Attribution */}
         <div className="max-w-7xl mx-auto border-t border-slate-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400 font-bold text-center md:text-left">
-            © {new Date().getFullYear()} {shop?.shopName || 'Store'} — সর্বস্বত্ব সংরক্ষিত।
+            © {new Date().getFullYear()} {shopName} — সর্বস্বত্ব সংরক্ষিত।
           </p>
           {renderAttribution()}
         </div>
@@ -299,9 +302,16 @@ export default function StorefrontFooter({
             <div className="space-y-3">
               <h4 className="text-xs font-black text-amber-400 uppercase tracking-widest">Departments</h4>
               <ul className="space-y-2 text-xs font-bold text-slate-300">
-                {categories.slice(0, 6).map(c => (
-                  <li key={c.id || c.name}><button onClick={() => onCategoryClick?.(c.name)} className="hover:text-amber-400">→ {c.name}</button></li>
-                ))}
+                {safeCategories.slice(0, 6).map(c => {
+                  const catName = typeof c === 'object' ? (c.name || '') : String(c);
+                  return (
+                    <li key={typeof c === 'object' ? (c.id || catName) : catName}>
+                      <button onClick={() => onCategoryClick?.(catName)} className="hover:text-amber-400">
+                        → {catName}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
             <div className="space-y-3">
@@ -322,7 +332,7 @@ export default function StorefrontFooter({
 
           {/* Attribution */}
           <div className="border-t border-slate-800/80 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-slate-400 font-bold">© {new Date().getFullYear()} {shop?.shopName} • All Rights Reserved</p>
+            <p className="text-xs text-slate-400 font-bold">© {new Date().getFullYear()} {shopName} • All Rights Reserved</p>
             {renderAttribution()}
           </div>
         </div>
@@ -338,21 +348,21 @@ export default function StorefrontFooter({
       <footer className="bg-white border-t border-slate-200 py-6 px-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
-            <span className="font-black text-slate-900 text-sm">{shop?.shopName || 'Store'}</span>
+            <span className="font-black text-slate-900 text-sm">{shopName}</span>
             <span className="text-xs text-slate-400 hidden sm:inline">|</span>
             <span className="text-xs text-slate-500 font-medium truncate max-w-xs">{customTagline}</span>
           </div>
 
           <div className="flex items-center gap-4">
             {renderSocials()}
-            <Link href={`/shop/${shop?.subdomainSlug || ''}/privacy`} className="text-xs font-bold text-slate-500 hover:text-purple-600">
+            <Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} className="text-xs font-bold text-slate-500 hover:text-purple-600">
               Privacy
             </Link>
           </div>
         </div>
 
         <div className="max-w-6xl mx-auto mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-[11px] text-slate-400 font-bold">© {new Date().getFullYear()} {shop?.shopName}</p>
+          <p className="text-[11px] text-slate-400 font-bold">© {new Date().getFullYear()} {shopName}</p>
           {renderAttribution()}
         </div>
       </footer>
@@ -377,7 +387,7 @@ export default function StorefrontFooter({
           <div className="pt-4 flex justify-center">{renderSocials()}</div>
 
           <div className="pt-8 border-t border-stone-800 font-sans flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-stone-400">© {new Date().getFullYear()} {shop?.shopName}</p>
+            <p className="text-xs text-stone-400">© {new Date().getFullYear()} {shopName}</p>
             {renderAttribution()}
           </div>
         </div>
@@ -413,7 +423,7 @@ export default function StorefrontFooter({
           </div>
 
           <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-slate-400 font-bold">© {new Date().getFullYear()} {shop?.shopName} Marketplace</p>
+            <p className="text-xs text-slate-400 font-bold">© {new Date().getFullYear()} {shopName} Marketplace</p>
             {renderAttribution()}
           </div>
         </div>
@@ -429,7 +439,7 @@ export default function StorefrontFooter({
       <footer className="bg-emerald-950 text-white pt-12 pb-6 px-4 border-t-4 border-emerald-500">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
           <div className="space-y-2">
-            <h3 className="text-lg font-black text-emerald-300">🥬 {shop?.shopName || 'Fresh Grocery'}</h3>
+            <h3 className="text-lg font-black text-emerald-300">🥬 {shopName}</h3>
             <p className="text-xs text-emerald-100/80 leading-relaxed font-medium">{customTagline}</p>
             <div className="pt-2">{renderSocials()}</div>
           </div>
@@ -445,7 +455,7 @@ export default function StorefrontFooter({
         </div>
 
         <div className="max-w-7xl mx-auto border-t border-emerald-900 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-emerald-400 font-bold">© {new Date().getFullYear()} {shop?.shopName} Fresh Produce</p>
+          <p className="text-xs text-emerald-400 font-bold">© {new Date().getFullYear()} {shopName} Fresh Produce</p>
           {renderAttribution()}
         </div>
       </footer>
@@ -459,11 +469,11 @@ export default function StorefrontFooter({
     return (
       <footer className="bg-slate-950 text-white py-12 px-4 border-t border-purple-900/40">
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center space-y-6">
-          <h2 className="text-2xl font-black tracking-tight text-white">{shop?.shopName}</h2>
+          <h2 className="text-2xl font-black tracking-tight text-white">{shopName}</h2>
           <p className="text-xs text-slate-400 max-w-md italic">"{customTagline}"</p>
           <div className="flex gap-4">{renderSocials()}</div>
           <div className="border-t border-slate-900 w-full pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-slate-500 font-bold">© {new Date().getFullYear()} {shop?.shopName} Lifestyle</p>
+            <p className="text-xs text-slate-500 font-bold">© {new Date().getFullYear()} {shopName} Lifestyle</p>
             {renderAttribution()}
           </div>
         </div>
@@ -479,7 +489,7 @@ export default function StorefrontFooter({
       <footer className="bg-slate-950 text-slate-200 border-t-2 border-blue-600 pt-12 pb-6 px-4">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
           <div>
-            <h3 className="text-base font-black text-blue-400">{shop?.shopName} Tech Support</h3>
+            <h3 className="text-base font-black text-blue-400">{shopName} Tech Support</h3>
             <p className="text-xs text-slate-400 mt-2 leading-relaxed">{customTagline}</p>
           </div>
           <div>
@@ -493,7 +503,7 @@ export default function StorefrontFooter({
         </div>
 
         <div className="max-w-7xl mx-auto border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-slate-500 font-bold">© {new Date().getFullYear()} {shop?.shopName} Electronics</p>
+          <p className="text-xs text-slate-500 font-bold">© {new Date().getFullYear()} {shopName} Electronics</p>
           {renderAttribution()}
         </div>
       </footer>
@@ -519,7 +529,7 @@ export default function StorefrontFooter({
           </div>
 
           <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-slate-400 font-bold">© {new Date().getFullYear()} {shop?.shopName}</p>
+            <p className="text-xs text-slate-400 font-bold">© {new Date().getFullYear()} {shopName}</p>
             {renderAttribution()}
           </div>
         </div>
@@ -533,27 +543,34 @@ export default function StorefrontFooter({
   return (
     <footer className="bg-slate-900 text-white pt-14 pb-8 px-6 border-t border-slate-800">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
-        {/* Left Side: 5 Cols */}
+        {/* Left Side */}
         <div className="md:col-span-5 space-y-4">
-          <h2 className="text-2xl font-black text-white">{shop?.shopName}</h2>
+          <h2 className="text-2xl font-black text-white">{shopName}</h2>
           <p className="text-xs text-slate-400 leading-relaxed max-w-sm">{customTagline}</p>
           <div className="pt-2">{renderSocials()}</div>
         </div>
 
-        {/* Right Side: 7 Cols */}
+        {/* Right Side */}
         <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6">
           <div className="space-y-2">
             <h4 className="text-xs font-black text-purple-400 uppercase tracking-wider">ক্যাটাগরি</h4>
             <ul className="space-y-1.5 text-xs text-slate-300 font-bold">
-              {categories.slice(0, 5).map(c => (
-                <li key={c.id || c.name}><button onClick={() => onCategoryClick?.(c.name)} className="hover:text-purple-400">→ {c.name}</button></li>
-              ))}
+              {safeCategories.slice(0, 5).map(c => {
+                const catName = typeof c === 'object' ? (c.name || '') : String(c);
+                return (
+                  <li key={typeof c === 'object' ? (c.id || catName) : catName}>
+                    <button onClick={() => onCategoryClick?.(catName)} className="hover:text-purple-400">
+                      → {catName}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </div>
           <div className="space-y-2">
             <h4 className="text-xs font-black text-purple-400 uppercase tracking-wider">নীতি ও সেবা</h4>
             <ul className="space-y-1.5 text-xs text-slate-300 font-bold">
-              <li><Link href={`/shop/${shop?.subdomainSlug || ''}/privacy`}>প্রাইভেসি পলিসি</Link></li>
+              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`}>প্রাইভেসি পলিসি</Link></li>
               <li><span>রিটার্ন নীতি</span></li>
               <li><span>ডেলিভারি শর্তাবলী</span></li>
             </ul>
@@ -567,7 +584,7 @@ export default function StorefrontFooter({
       </div>
 
       <div className="max-w-7xl mx-auto border-t border-slate-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p className="text-xs text-slate-500 font-bold">© {new Date().getFullYear()} {shop?.shopName} • All Rights Reserved</p>
+        <p className="text-xs text-slate-500 font-bold">© {new Date().getFullYear()} {shopName} • All Rights Reserved</p>
         {renderAttribution()}
       </div>
     </footer>

@@ -1,46 +1,67 @@
 /**
- * 🔔 RUFLO — Daripallah Automation Engine
- * Non-blocking, async email system using Nodemailer + Gmail SMTP
+ * 🔔 RUFLO — Daripallah & BDRetailers Automation Engine
+ * Non-blocking, async email system using Nodemailer + Gmail SMTP / Custom SMTP
  *
- * .env.local এ এই variables দরকার:
- *   RUFLO_EMAIL=your.gmail@gmail.com
- *   RUFLO_APP_PASSWORD=xxxx xxxx xxxx xxxx  (Gmail App Password)
- *   RUFLO_FROM_NAME=Daripallah Notification
+ * Environment variables:
+ *   RUFLO_EMAIL / EMAIL_USER / SMTP_USER
+ *   RUFLO_APP_PASSWORD / RUFLO_PASSWORD / EMAIL_PASS / SMTP_PASS
+ *   SUPERADMIN_EMAIL / ADMIN_EMAIL
  */
 
-// nodemailer শুধু server-side কাজ করে, তাই lazy import
 let transporterCache = null;
 
 async function getTransporter() {
   if (transporterCache) return transporterCache;
   const nodemailerPkg = await import('nodemailer');
-  // nodemailer v9 exports createTransport both as default.createTransport and named
   const nodemailer = nodemailerPkg.default || nodemailerPkg;
   const createTransport = nodemailer.createTransport || nodemailerPkg.createTransport;
   
-  transporterCache = createTransport({
-    service: 'gmail',
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    auth: {
-      user: process.env.RUFLO_EMAIL,
-      pass: process.env.RUFLO_APP_PASSWORD,
-    },
-    tls: { rejectUnauthorized: true }
-  });
+  const user = process.env.RUFLO_EMAIL || process.env.EMAIL_USER || process.env.SMTP_USER || process.env.GMAIL_USER;
+  const pass = process.env.RUFLO_APP_PASSWORD || process.env.RUFLO_PASSWORD || process.env.EMAIL_PASS || process.env.SMTP_PASS || process.env.GMAIL_PASS;
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '587');
+
+  if (!user || !pass) {
+    console.warn('[Ruflo] ⚠️ SMTP/RUFLO credentials missing in environment variables.');
+    return null;
+  }
+
+  if (host === 'smtp.gmail.com' || host.includes('gmail')) {
+    transporterCache = createTransport({
+      service: 'gmail',
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false }
+    });
+  } else {
+    transporterCache = createTransport({
+      host,
+      port,
+      secure: port === 465,
+      pool: true,
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false }
+    });
+  }
+
   return transporterCache;
 }
-
 
 // ── Retry Logic ────────────────────────────────
 async function sendWithRetry(mailOptions, maxRetries = 3) {
   let lastError;
+  const transporter = await getTransporter();
+  if (!transporter) {
+    console.warn('[Ruflo] ⚠️ Cannot send email — no transporter configured.');
+    return { success: false, reason: 'no_config' };
+  }
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const transporter = await getTransporter();
       const info = await transporter.sendMail(mailOptions);
-      console.log(`[Ruflo] ✅ Email sent: ${info.messageId} (attempt ${attempt})`);
+      console.log(`[Ruflo] ✅ Email sent: ${info.messageId} (attempt ${attempt}) to ${mailOptions.to}`);
       return { success: true, messageId: info.messageId };
     } catch (err) {
       lastError = err;
@@ -54,7 +75,52 @@ async function sendWithRetry(mailOptions, maxRetries = 3) {
   return { success: false, error: lastError?.message };
 }
 
-// ── HTML Email Template ─────────────────────────
+// ── Helper to resolve superadmin notification email ────
+export async function getSuperadminNotificationEmail() {
+  try {
+    const { adminDb } = await import('./firebase-admin');
+    if (adminDb) {
+      const configDoc = await adminDb.collection('config').doc('global').get();
+      if (configDoc.exists) {
+        const c = configDoc.data();
+        if (c.adminNotificationEmail && c.adminNotificationEmail.includes('@')) return c.adminNotificationEmail;
+        if (c.superadminEmail && c.superadminEmail.includes('@')) return c.superadminEmail;
+        if (c.contactEmail && c.contactEmail.includes('@')) return c.contactEmail;
+      }
+
+      // Check first superadmin user in users collection
+      const superadminsSnap = await adminDb.collection('users').where('role', '==', 'superadmin').limit(1).get();
+      if (!superadminsSnap.empty) {
+        const sEmail = superadminsSnap.docs[0].data()?.email;
+        if (sEmail && sEmail.includes('@')) return sEmail;
+      }
+    }
+  } catch (err) {
+    console.warn('[Ruflo] Could not fetch superadmin email from DB:', err.message);
+  }
+
+  return process.env.SUPERADMIN_EMAIL || process.env.ADMIN_EMAIL || process.env.RUFLO_EMAIL || 'bdretailers26@gmail.com';
+}
+
+// ── Helper to get dynamic, realtime shopName from database ────
+async function getRealtimeShopName(shopId, defaultShopName) {
+  if (!shopId) return defaultShopName || 'Shop';
+  try {
+    const { adminDb } = await import('./firebase-admin');
+    if (adminDb) {
+      const shopSnap = await adminDb.collection('shops').doc(shopId).get();
+      if (shopSnap.exists) {
+        return shopSnap.data().shopName || defaultShopName || 'Shop';
+      }
+    }
+  } catch (err) {
+    console.warn(`[Ruflo] Failed to fetch realtime shopName for ${shopId}:`, err.message);
+  }
+  return defaultShopName || 'Shop';
+}
+
+// ── HTML Templates ──────────────────────────────
+
 function buildOrderEmail({ shopName, customerName, orderId, customerAddress, coordinates, items, total, status = 'pending' }) {
   const taka = '৳';
   const statusLabels = {
@@ -84,14 +150,12 @@ function buildOrderEmail({ shopName, customerName, orderId, customerAddress, coo
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px;">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-        <!-- Header -->
         <tr>
           <td style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 32px 24px;text-align:center;">
             <h1 style="margin:0;color:white;font-size:24px;font-weight:900;letter-spacing:-0.5px;">${shopName}</h1>
             <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Powered by BDRetailers</p>
           </td>
         </tr>
-        <!-- Status Badge -->
         <tr>
           <td style="padding:24px 32px 0;text-align:center;">
             <span style="display:inline-block;background:${s.bg};color:${s.color};font-weight:800;font-size:13px;padding:6px 18px;border-radius:50px;letter-spacing:0.5px;">
@@ -99,7 +163,6 @@ function buildOrderEmail({ shopName, customerName, orderId, customerAddress, coo
             </span>
           </td>
         </tr>
-        <!-- Greeting -->
         <tr>
           <td style="padding:24px 32px 16px;">
             <h2 style="margin:0 0 8px;font-size:20px;color:#0f172a;font-weight:900;">আসসালামু আলাইকুম, ${customerName}!</h2>
@@ -114,7 +177,6 @@ function buildOrderEmail({ shopName, customerName, orderId, customerAddress, coo
             ` : ''}
           </td>
         </tr>
-        <!-- Items Table -->
         <tr>
           <td style="padding:0 32px 24px;">
             <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
@@ -135,7 +197,6 @@ function buildOrderEmail({ shopName, customerName, orderId, customerAddress, coo
             </table>
           </td>
         </tr>
-        <!-- Footer -->
         <tr>
           <td style="padding:20px 32px 32px;text-align:center;border-top:1px solid #f1f5f9;">
             <p style="margin:0;color:#94a3b8;font-size:12px;">এই ইমেইলটি স্বয়ংক্রিয়ভাবে পাঠানো হয়েছে। উত্তর দেবেন না।</p>
@@ -190,7 +251,7 @@ function buildRetailerEmail({ shopName, orderId, customerName, customerPhone, cu
           ${customerAddress ? `<tr><td style="font-size:13px;color:#64748b;padding:4px 0;vertical-align:top;">ঠিকানা</td><td style="text-align:right;font-weight:700;color:#0f172a;font-size:13px;max-width:220px;">${customerAddress}</td></tr>` : ''}
           ${coordinates ? `<tr><td style="font-size:13px;color:#64748b;padding:4px 0;">লোকেশন ম্যাপ</td><td style="text-align:right;font-weight:700;"><a href="https://maps.google.com/?q=${coordinates}" target="_blank" style="color:#4f46e5;text-decoration:underline;font-weight:bold;">গুগল ম্যাপে দেখুন 📍</a></td></tr>` : ''}
           <tr><td colspan="2" style="padding-top:12px;border-top:1px solid #e2e8f0;font-size:14px;color:#0f172a;">
-            <strong>পণ্য:</strong> ${items.map(i => `${i.name} ×${i.quantity}`).join(' | ')}
+            <strong>পণ্য:</strong> ${(items || []).map(i => `${i.name} ×${i.quantity}`).join(' | ')}
           </td></tr>
           <tr><td colspan="2" style="padding-top:10px;text-align:right;font-size:20px;font-weight:900;color:#10b981;">${taka}${total}</td></tr>
         </table>
@@ -201,37 +262,179 @@ function buildRetailerEmail({ shopName, orderId, customerName, customerPhone, cu
 </body></html>`;
 }
 
-// ══════════════════════════════════════════════════
-// Helper to get dynamic, realtime shopName from database
-async function getRealtimeShopName(shopId, defaultShopName) {
-  if (!shopId) return defaultShopName || 'Shop';
-  try {
-    const { adminDb } = await import('./firebase-admin');
-    if (adminDb) {
-      const shopSnap = await adminDb.collection('shops').doc(shopId).get();
-      if (shopSnap.exists) {
-        return shopSnap.data().shopName || defaultShopName || 'Shop';
-      }
-    }
-  } catch (err) {
-    console.warn(`[Ruflo] Failed to fetch realtime shopName for ${shopId}:`, err.message);
-  }
-  return defaultShopName || 'Shop';
+// ── Superadmin Alert: New Retailer Registration ──
+function buildSuperadminRetailerAlertEmail({ retailerName, retailerEmail, retailerPhone, shopName, shopSlug, autoApproved }) {
+  return `<!DOCTYPE html>
+<html lang="bn">
+<body style="margin:0;padding:32px 16px;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+    <table width="560" style="max-width:560px;background:white;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+      <tr><td style="background:linear-gradient(135deg,#6D28D9,#4338CA);padding:32px;text-align:center;">
+        <span style="background:rgba(255,255,255,0.2);color:white;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;">🚀 নতুন রিটেইলার নিবন্ধন</span>
+        <h2 style="margin:12px 0 0;color:white;font-size:24px;font-weight:900;">BDRetailers Admin Alert</h2>
+      </td></tr>
+      <tr><td style="padding:32px;">
+        <div style="background:${autoApproved ? '#ecfdf5' : '#fffbeb'};border:1px solid ${autoApproved ? '#a7f3d0' : '#fde68a'};border-radius:12px;padding:16px;margin-bottom:24px;text-align:center;">
+          <p style="margin:0;color:${autoApproved ? '#065f46' : '#92400e'};font-weight:800;font-size:14px;">
+            ${autoApproved ? '✅ রিটেইলার অটো-অ্যাপ্রুভ হয়েছে এবং স্টোর তৈরি হয়েছে।' : '⏳ নতুন রিটেইলার আবেদন জমা পড়েছে (Pending Review)।'}
+          </p>
+        </div>
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#334155;">
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">রিটেইলার নাম:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#0f172a;text-align:right;">${retailerName || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">ইমেইল:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#6D28D9;text-align:right;">${retailerEmail || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">মোবাইল নম্বর:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#0f172a;text-align:right;">${retailerPhone || 'N/A'}</td>
+          </tr>
+          ${shopName ? `
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">স্টোর নাম:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#0f172a;text-align:right;">${shopName}</td>
+          </tr>
+          ` : ''}
+          ${shopSlug ? `
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">স্টোর লিংক:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#2563EB;text-align:right;">
+              <a href="https://${shopSlug}.bdretailers.com" target="_blank" style="color:#2563EB;text-decoration:underline;">${shopSlug}.bdretailers.com</a>
+            </td>
+          </tr>
+          ` : ''}
+        </table>
+
+        <div style="margin-top:28px;text-align:center;">
+          <a href="https://bdretailers.com/superadmin" target="_blank" style="display:inline-block;padding:12px 28px;background:#6D28D9;color:white;border-radius:12px;font-weight:800;font-size:13px;text-decoration:none;box-shadow:0 4px 12px rgba(109,40,217,0.3);">
+            সুপারঅ্যাডমিন প্যানেলে দেখুন →
+          </a>
+        </div>
+      </td></tr>
+      <tr><td style="background:#f8fafc;padding:20px;text-align:center;border-top:1px solid #e2e8f0;">
+        <p style="margin:0;color:#94a3b8;font-size:11px;">BDRetailers Platform Automation System</p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
 }
 
+// ── Superadmin Alert: New Subscription / Package Purchase ──
+function buildSuperadminSubscriptionAlertEmail({ shopName, shopSlug, ownerEmail, packageType, amount, paymentMethod, transactionId, isTrial, expiresAt }) {
+  const taka = '৳';
+  return `<!DOCTYPE html>
+<html lang="bn">
+<body style="margin:0;padding:32px 16px;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+    <table width="560" style="max-width:560px;background:white;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+      <tr><td style="background:linear-gradient(135deg,#059669,#047857);padding:32px;text-align:center;">
+        <span style="background:rgba(255,255,255,0.2);color:white;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;">
+          ${isTrial ? '🎁 ফ্রি ট্রায়াল সক্রিয়করণ' : '💎 নতুন সাবস্ক্রিপশন পেমেন্ট'}
+        </span>
+        <h2 style="margin:12px 0 0;color:white;font-size:24px;font-weight:900;">সাবস্ক্রিপশন অ্যালার্ট</h2>
+      </td></tr>
+      <tr><td style="padding:32px;">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center;">
+          <p style="margin:0;color:#166534;font-weight:900;font-size:18px;">
+            ${isTrial ? 'ফ্রি ট্রায়াল অ্যাক্টিভেট হয়েছে' : `পেমেন্ট সম্পন্ন: ${taka}${amount}`}
+          </p>
+        </div>
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#334155;">
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">স্টোর নাম:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#0f172a;text-align:right;">${shopName || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">মালিকের ইমেইল:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#059669;text-align:right;">${ownerEmail || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">প্যাকেজ:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#0f172a;text-align:right;text-transform:capitalize;">${packageType || 'Standard'}</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">পেমেন্ট মেথড:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#0f172a;text-align:right;text-transform:uppercase;">${paymentMethod || 'Online'}</td>
+          </tr>
+          ${transactionId ? `
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">ট্রানজেকশন ID:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#64748b;text-align:right;font-family:monospace;">${transactionId}</td>
+          </tr>
+          ` : ''}
+          ${expiresAt ? `
+          <tr>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:600;color:#64748b;">মেয়াদ শেষ:</td>
+            <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-weight:800;color:#0f172a;text-align:right;">${new Date(expiresAt).toLocaleDateString('bn-BD')}</td>
+          </tr>
+          ` : ''}
+        </table>
+
+        <div style="margin-top:28px;text-align:center;">
+          <a href="https://bdretailers.com/superadmin" target="_blank" style="display:inline-block;padding:12px 28px;background:#059669;color:white;border-radius:12px;font-weight:800;font-size:13px;text-decoration:none;box-shadow:0 4px 12px rgba(5,150,105,0.3);">
+            সুপারঅ্যাডমিন প্যানেলে দেখুন →
+          </a>
+        </div>
+      </td></tr>
+      <tr><td style="background:#f8fafc;padding:20px;text-align:center;border-top:1px solid #e2e8f0;">
+        <p style="margin:0;color:#94a3b8;font-size:11px;">BDRetailers Subscription Billing System</p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+</body></html>`;
+}
+
+// ══════════════════════════════════════════════════
 // 📨 PUBLIC RUFLO API FUNCTIONS
 // ══════════════════════════════════════════════════
+
+/**
+ * সুপারঅ্যাডমিনকে নতুন রিটেইলার নিবন্ধনের অ্যালার্ট পাঠান
+ */
+export async function sendSuperadminNewRetailerAlert({ retailerName, retailerEmail, retailerPhone, shopName, shopSlug, autoApproved = false }) {
+  const superadminEmail = await getSuperadminNotificationEmail();
+  const senderEmail = process.env.RUFLO_EMAIL || process.env.EMAIL_USER || 'noreply@bdretailers.com';
+
+  return sendWithRetry({
+    from: `"BDRetailers Platform" <${senderEmail}>`,
+    to: superadminEmail,
+    subject: `🚀 [নতুন রিটেইলার] ${retailerName || 'New User'} (${retailerPhone || 'No Phone'}) নিবন্ধিত হয়েছে`,
+    html: buildSuperadminRetailerAlertEmail({ retailerName, retailerEmail, retailerPhone, shopName, shopSlug, autoApproved }),
+  });
+}
+
+/**
+ * সুপারঅ্যাডমিনকে সাবস্ক্রিপশন / ট্রায়াল অ্যালার্ট পাঠান
+ */
+export async function sendSuperadminNewSubscriptionAlert({ shopName, shopSlug, ownerEmail, packageType, amount = 0, paymentMethod = 'online', transactionId = '', isTrial = false, expiresAt = null }) {
+  const superadminEmail = await getSuperadminNotificationEmail();
+  const senderEmail = process.env.RUFLO_EMAIL || process.env.EMAIL_USER || 'noreply@bdretailers.com';
+
+  const subjectPrefix = isTrial ? '🎁 [ফ্রি ট্রায়াল]' : `💎 [সাবস্ক্রিপশন পেমেন্ট ৳${amount}]`;
+
+  return sendWithRetry({
+    from: `"BDRetailers Billing" <${senderEmail}>`,
+    to: superadminEmail,
+    subject: `${subjectPrefix} ${shopName || 'Store'} (${packageType})`,
+    html: buildSuperadminSubscriptionAlertEmail({ shopName, shopSlug, ownerEmail, packageType, amount, paymentMethod, transactionId, isTrial, expiresAt }),
+  });
+}
 
 /**
  * অর্ডার confirmation email পাঠাও (গ্রাহকের কাছে)
  */
 export async function sendOrderConfirmationEmail({ to, shopId, shopName, customerName, orderId, customerAddress, coordinates, items, total }) {
-  if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
-
+  if (!to) return { success: false, reason: 'no_recipient' };
+  const senderEmail = process.env.RUFLO_EMAIL || process.env.EMAIL_USER || 'noreply@bdretailers.com';
   const activeShopName = await getRealtimeShopName(shopId, shopName);
 
   return sendWithRetry({
-    from: `"${activeShopName}" <${process.env.RUFLO_EMAIL}>`,
+    from: `"${activeShopName}" <${senderEmail}>`,
     to,
     subject: `অর্ডার নিশ্চিত হয়েছে — #${orderId} | ${activeShopName}`,
     html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, customerAddress, coordinates, items, total }),
@@ -242,12 +445,12 @@ export async function sendOrderConfirmationEmail({ to, shopId, shopName, custome
  * নতুন অর্ডারের notification email (রিটেইলারের কাছে)
  */
 export async function sendRetailerNotificationEmail({ to, shopId, shopName, orderId, customerName, customerPhone, customerAddress, coordinates, items, total }) {
-  if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
-
+  if (!to) return { success: false, reason: 'no_recipient' };
+  const senderEmail = process.env.RUFLO_EMAIL || process.env.EMAIL_USER || 'noreply@bdretailers.com';
   const activeShopName = await getRealtimeShopName(shopId, shopName);
 
   return sendWithRetry({
-    from: `"BDRetailers Ruflo" <${process.env.RUFLO_EMAIL}>`,
+    from: `"BDRetailers Ruflo" <${senderEmail}>`,
     to,
     subject: `নতুন অর্ডার #${orderId} — ${activeShopName}`,
     html: buildRetailerEmail({ shopName: activeShopName, orderId, customerName, customerPhone, customerAddress, coordinates, items, total }),
@@ -258,10 +461,11 @@ export async function sendRetailerNotificationEmail({ to, shopId, shopName, orde
  * OTP email পাঠাও
  */
 export async function sendOTPEmail({ to, name, otp, purpose = 'লগইন' }) {
-  if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
+  if (!to) return { success: false, reason: 'no_recipient' };
+  const senderEmail = process.env.RUFLO_EMAIL || process.env.EMAIL_USER || 'noreply@bdretailers.com';
 
   return sendWithRetry({
-    from: `"BDRetailers Security" <${process.env.RUFLO_EMAIL}>`,
+    from: `"BDRetailers Security" <${senderEmail}>`,
     to,
     subject: `BDRetailers Security - আপনার ${purpose} কোড: ${otp}`,
     html: buildOTPEmail({ name, otp, purpose }),
@@ -272,8 +476,8 @@ export async function sendOTPEmail({ to, name, otp, purpose = 'লগইন' }) 
  * Status update email পাঠাও (গ্রাহকের কাছে)
  */
 export async function sendStatusUpdateEmail({ to, shopId, shopName, customerName, orderId, customerAddress, coordinates, items, total, status }) {
-  if (!to || !process.env.RUFLO_EMAIL) return { success: false, reason: 'no_config' };
-
+  if (!to) return { success: false, reason: 'no_recipient' };
+  const senderEmail = process.env.RUFLO_EMAIL || process.env.EMAIL_USER || 'noreply@bdretailers.com';
   const activeShopName = await getRealtimeShopName(shopId, shopName);
 
   const subjectMap = {
@@ -284,7 +488,7 @@ export async function sendStatusUpdateEmail({ to, shopId, shopName, customerName
   const subject = `${subjectMap[status] || 'অর্ডার আপডেট'} — #${orderId}`;
 
   return sendWithRetry({
-    from: `"${activeShopName}" <${process.env.RUFLO_EMAIL}>`,
+    from: `"${activeShopName}" <${senderEmail}>`,
     to,
     subject,
     html: buildOrderEmail({ shopName: activeShopName, customerName, orderId, customerAddress, coordinates, items, total, status }),

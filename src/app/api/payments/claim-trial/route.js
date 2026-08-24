@@ -96,6 +96,26 @@ export async function POST(req) {
 
     console.log(`[Trial API] Shop ${shopId} claimed free trial for ${packageType} (${trialDays} days)`);
 
+    // 🔔 Notify Superadmin via Ruflo email
+    void (async () => {
+      try {
+        const { sendSuperadminNewSubscriptionAlert } = await import('@/lib/ruflo');
+        await sendSuperadminNewSubscriptionAlert({
+          shopName: shopData.shopName || 'Store',
+          shopSlug: shopData.subdomainSlug || shopData.shopSlug || shopId,
+          ownerEmail: shopData.ownerEmail || authUser.email || '',
+          packageType: `${packageType} (${trialDays} Days Free Trial)`,
+          amount: 0,
+          paymentMethod: 'free_trial',
+          transactionId: 'TRIAL_CLAIMED',
+          isTrial: true,
+          expiresAt: newExpiry,
+        });
+      } catch (e) {
+        console.warn('[Trial Claim] Superadmin alert email failed:', e.message);
+      }
+    })();
+
     return NextResponse.json({ 
       success: true, 
       message: `Your ${trialDays}-day free trial has been successfully activated!` 
