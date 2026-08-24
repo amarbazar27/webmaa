@@ -229,10 +229,10 @@ export default function SectionList({
 
             {/* Thumbnail */}
             <div 
-              className="w-10 h-8 rounded-xl flex items-center justify-center text-[10px] font-black flex-shrink-0 border shadow-2xs text-center px-0.5 select-none"
-              style={{ background: '#05966915', borderColor: '#05966930', color: '#059669' }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
+              style={{ background: '#059669', color: '#fff' }}
             >
-              🏪 Basic
+              <ShoppingBag size={16} strokeWidth={2} />
             </div>
 
             {/* Info */}
@@ -314,6 +314,7 @@ export default function SectionList({
           const isExpanded = expandedId === section.id;
           const isDragging = dragging === idx;
           const isOver = dragOver === idx;
+          const IconComp = meta.icon || Grid;
 
           return (
             <div
@@ -323,81 +324,74 @@ export default function SectionList({
               onDragOver={e => onDragOver(e, idx)}
               onDrop={e => onDrop(e, idx)}
               onDragEnd={onDragEnd}
-              className={`transition-all ${
-                isDragging ? 'opacity-50 scale-[0.98]' : ''
-              } ${
-                isOver ? 'border-t-2 border-purple-500' : ''
-              }`}
+              className={`transition-all ${isDragging ? 'opacity-50 scale-[0.98]' : ''} ${isOver ? 'border-t-2 border-purple-500' : ''}`}
             >
               <div
-                className={`flex items-center gap-2.5 px-3.5 py-3 hover:bg-slate-50 cursor-pointer transition-colors ${
-                  !section.enabled ? 'opacity-45 bg-slate-50/40' : ''
+                className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors border-l-[3px] ${
+                  isExpanded
+                    ? 'bg-slate-50 border-l-purple-500'
+                    : section.enabled
+                      ? 'hover:bg-slate-50 border-l-transparent hover:border-l-slate-200'
+                      : 'opacity-50 hover:opacity-70 bg-slate-50/40 border-l-transparent'
                 }`}
                 onClick={() => {
                   setExpandedId(isExpanded ? null : section.id);
                   onFocusSection?.(section.id);
                 }}
               >
-                {/* Drag & Up/Down Sort Controls */}
+                {/* Drag & Sort Controls */}
                 <div className="flex items-center gap-0.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
-                  {/* Up/Down Quick Move Buttons */}
                   <div className="flex flex-col gap-0.5">
                     <button
                       type="button"
                       disabled={idx === 0}
                       onClick={() => moveDynamicSection(idx, idx - 1)}
-                      title="উপরে তুলুন (Move Up)"
-                      className="w-4 h-3.5 flex items-center justify-center rounded bg-slate-100 hover:bg-purple-100 text-slate-500 hover:text-purple-700 disabled:opacity-25 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="উপরে তুলুন"
+                      className="w-4 h-3.5 flex items-center justify-center rounded bg-slate-100 hover:bg-purple-100 text-slate-500 hover:text-purple-700 disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
-                      <ChevronUp size={11} strokeWidth={3} />
+                      <ChevronUp size={10} strokeWidth={3} />
                     </button>
                     <button
                       type="button"
                       disabled={idx === filteredDynamicSections.length - 1}
                       onClick={() => moveDynamicSection(idx, idx + 1)}
-                      title="নিচে নামান (Move Down)"
-                      className="w-4 h-3.5 flex items-center justify-center rounded bg-slate-100 hover:bg-purple-100 text-slate-500 hover:text-purple-700 disabled:opacity-25 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="নিচে নামান"
+                      className="w-4 h-3.5 flex items-center justify-center rounded bg-slate-100 hover:bg-purple-100 text-slate-500 hover:text-purple-700 disabled:opacity-25 disabled:cursor-not-allowed transition-colors cursor-pointer"
                     >
-                      <ChevronDown size={11} strokeWidth={3} />
+                      <ChevronDown size={10} strokeWidth={3} />
                     </button>
                   </div>
-
-                  {/* Drag Handle */}
-                  <div 
-                    className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-0.5" 
-                    title="ড্র্যাগ করে স্থান পরিবর্তন করুন"
-                  >
-                    <GripVertical size={15} />
+                  <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 p-0.5">
+                    <GripVertical size={14} />
                   </div>
                 </div>
 
-                {/* Mini Layout Thumbnail with Serial Badge */}
+                {/* Solid Color Icon Badge */}
                 <div className="relative flex-shrink-0">
-                  <div 
-                    className="w-10 h-8 rounded-xl flex items-center justify-center text-[10px] font-black border shadow-xs text-center px-0.5 select-none"
-                    style={{ 
-                      background: `${meta.color}10`, 
-                      borderColor: `${meta.color}25`, 
-                      color: meta.color 
-                    }}
-                    title={meta.label}
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
+                    style={{ background: meta.color, color: '#fff' }}
                   >
-                    {meta.thumbnail}
+                    <IconComp size={16} strokeWidth={2} />
                   </div>
-                  {/* Serial Number Badge */}
-                  <span className="absolute -top-1.5 -left-1.5 px-1 py-0.2 bg-slate-900 text-white text-[8px] font-black rounded-md shadow-xs border border-white">
-                    #{idx + 1}
+                  <span className="absolute -top-1.5 -left-1.5 min-w-[18px] h-[14px] px-1 bg-slate-900 text-white text-[8px] font-black rounded shadow-xs border border-white flex items-center justify-center leading-none">
+                    {idx + 1}
                   </span>
                 </div>
 
-                {/* Info */}
+                {/* Label & Description */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-xs font-black text-slate-900 leading-tight truncate">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-[11px] font-black text-slate-800 leading-tight truncate">
                       {meta.label}
                     </p>
+                    <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded-full leading-none flex-shrink-0 ${
+                      section.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'
+                    }`}>
+                      {section.enabled ? '● ON' : '○ OFF'}
+                    </span>
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold truncate mt-0.5">
+                  <p className="text-[9.5px] text-slate-400 font-medium truncate mt-0.5 leading-tight">
                     {meta.desc}
                   </p>
                 </div>
