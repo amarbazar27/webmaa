@@ -19,6 +19,9 @@ export default function HomepagePreview({
   onModeChange,
   products = [],
   highlightId = null,
+  previewTemplateName = null,
+  onApplyPreviewTemplate = null,
+  onCancelPreview = null,
 }) {
   const [mobileWidth, setMobileWidth] = useState('390px'); // '360px' | '390px' | '430px'
   const [desktopWidth, setDesktopWidth] = useState('100%'); // '1280px' | '1440px' | '100%'
@@ -89,6 +92,37 @@ export default function HomepagePreview({
       className="w-full bg-slate-50 relative min-h-full flex flex-col justify-between"
       style={{ fontFamily: theme?.font ? `"${theme.font}", sans-serif` : 'inherit' }}
     >
+      {/* ── 0. Preview Mode Top Banner ── */}
+      {previewTemplateName && (
+        <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white px-3 py-2 text-xs font-bold flex items-center justify-between shadow-md z-50 sticky top-0">
+          <div className="flex items-center gap-1.5 truncate">
+            <Sparkles size={13} className="text-amber-300 animate-pulse shrink-0" />
+            <span className="truncate">প্রিভিউ মোড: <strong className="text-amber-200">{previewTemplateName}</strong></span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+            {onApplyPreviewTemplate && (
+              <button
+                type="button"
+                onClick={onApplyPreviewTemplate}
+                className="px-2.5 py-1 bg-white hover:bg-slate-100 text-purple-900 rounded-lg text-[11px] font-black transition-colors shadow-xs cursor-pointer active:scale-95"
+              >
+                ✓ Apply Now
+              </button>
+            )}
+            {onCancelPreview && (
+              <button
+                type="button"
+                onClick={onCancelPreview}
+                className="p-1 rounded-lg hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer"
+                title="প্রিভিউ বন্ধ করুন"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── 1. Unified Shared Storefront Header ── */}
       <StorefrontHeader
         shop={shop}

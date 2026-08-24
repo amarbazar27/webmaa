@@ -80,11 +80,11 @@ function TemplateRenderer({
 }) {
   const wrapperRef = useRef(null);
   const resolvedId = templateId || shop?.templateId || 'bold-commerce';
-  const template = getTemplateById(resolvedId);
+  const template = getTemplateById(resolvedId) || {};
 
   // Merge: template defaults → Firestore themeOverrides → retailer customization
   const mergedTheme = {
-    ...template.defaultTheme,
+    ...(template?.defaultTheme || {}),
     ...(shop?.themeOverrides || {}),
     ...customization,
   };
@@ -100,22 +100,22 @@ function TemplateRenderer({
     <div
       ref={wrapperRef}
       id="sf-root"
-      style={style}
-      {...dataAttrs}
+      style={style || {}}
+      {...(dataAttrs || {})}
       suppressHydrationWarning
     >
       <Suspense fallback={<TemplateSkeleton isDark={isDark} />}>
         <ShopClientComponent
-          initialShop={shop}
-          initialProducts={products}
-          initialCategories={categories}
-          shop={shop}
-          products={products}
-          categories={categories}
+          initialShop={shop || {}}
+          initialProducts={products || []}
+          initialCategories={categories || []}
+          shop={shop || {}}
+          products={products || []}
+          categories={categories || []}
           template={template}
           theme={mergedTheme}
           isDark={isDark}
-          globalConfig={globalConfig}
+          globalConfig={globalConfig || {}}
           {...rest}
         />
       </Suspense>

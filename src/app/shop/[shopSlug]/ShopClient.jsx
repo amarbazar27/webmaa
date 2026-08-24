@@ -23,7 +23,7 @@ import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, lo
 import MessengerButton from '@/components/shop/MessengerButton';
 import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
 import dynamic from 'next/dynamic';
-import { TEMPLATES } from '@/templates/index';
+import { TEMPLATES, getTemplateById } from '@/templates/index';
 import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
@@ -227,25 +227,27 @@ const SHOP_THEME_PRESETS = {
  */
 function buildShopTheme(shop) {
   // If template is set, resolve using template configuration!
-  if (shop?.templateId && TEMPLATES[shop.templateId]) {
-    const template = TEMPLATES[shop.templateId];
-    const base = template.defaultTheme || {};
-    const overrides = shop?.themeOverrides || {};
-    const merged = { ...base, ...overrides };
-    
-    return {
-      primary:    merged.primaryColor || merged.primary,
-      accent:     merged.accentColor || merged.accent,
-      bg:         merged.bgColor || merged.bg,
-      text:       merged.textColor || merged.text,
-      card:       merged.cardBg || merged.card,
-      border:     merged.cardBorder || merged.border,
-      radius:     merged.cardRadius || merged.radius,
-      font:       merged.fontFamily || merged.font,
-      headerBg:   merged.headerBg,
-      headerText: merged.headerText,
-      btnText:    merged.btnText || '#ffffff',
-    };
+  if (shop?.templateId) {
+    const template = getTemplateById(shop.templateId);
+    if (template && template.defaultTheme) {
+      const base = template.defaultTheme;
+      const overrides = shop?.themeOverrides || {};
+      const merged = { ...base, ...overrides };
+      
+      return {
+        primary:    merged.primaryColor || merged.primary || '#6D28D9',
+        accent:     merged.accentColor || merged.accent || '#F59E0B',
+        bg:         merged.bgColor || merged.bg || '#FFFFFF',
+        text:       merged.textColor || merged.text || '#0F172A',
+        card:       merged.cardBg || merged.card || '#FFFFFF',
+        border:     merged.cardBorder || merged.border || '#E2E8F0',
+        radius:     merged.cardRadius || merged.radius || '16px',
+        font:       merged.fontFamily || merged.font || 'Inter',
+        headerBg:   merged.headerBg,
+        headerText: merged.headerText,
+        btnText:    merged.btnText || '#ffffff',
+      };
+    }
   }
 
   const presetKey = shop?.designPreset || 'classic';
@@ -412,22 +414,24 @@ function LiveCountdown({ deliveryETA }) {
 }
 
 
-export default function ShopClient({ initialShop, initialProducts, initialCategories, globalConfig }) {
+export default function ShopClient({ initialShop, initialProducts, initialCategories, globalConfig = {}, ...props }) {
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
-  const [shop, setShop] = useState(initialShop);
-  const [products, setProducts] = useState(initialProducts || []);
+  const safeShop = initialShop || props.shop || {};
+  const [shop, setShop] = useState(safeShop);
+  const [products, setProducts] = useState(initialProducts || props.products || []);
   
   const googleMapsApiKey = shop?.googleMapsApiKey || globalConfig?.googleMapsApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   
-  const isMesserBazar = shop.subdomainSlug === 'messerbazar' || shop.customDomain === 'messerbazar.com' || shop.shopName === 'Messer Bazar' || shop.shopName === 'মেসের বাজার';
+  const isMesserBazar = shop?.subdomainSlug === 'messerbazar' || shop?.customDomain === 'messerbazar.com' || shop?.shopName === 'Messer Bazar' || shop?.shopName === 'মেসের বাজার';
 
   const [categories] = useState(() => {
-    return (initialCategories || []).map(cat => {
-      const sortedSubs = cat.subcategories ? [...cat.subcategories].sort((a, b) => a.localeCompare(b, 'bn')) : [];
+    const rawCats = initialCategories || props.categories || [];
+    return (Array.isArray(rawCats) ? rawCats : []).map(cat => {
+      const sortedSubs = cat?.subcategories ? [...cat.subcategories].sort((a, b) => a.localeCompare(b, 'bn')) : [];
       return { ...cat, subcategories: sortedSubs };
     }).sort((a, b) => {
-      return (a.name || '').localeCompare(b.name || '', 'bn');
+      return (a?.name || '').localeCompare(b?.name || '', 'bn');
     });
   });
   const [activeCategory, setActiveCategory] = useState('All');
@@ -536,27 +540,27 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       }
     });
     return () => { if (unsubscribe) unsubscribe(); };
-  }, [initialShop.id]);
+  }, [safeShop?.id]);
 
   useEffect(() => {
     if (shop) {
       // 1. Real-time update of Document Title (Link Name)
-      document.title = shop.slogan ? `${shop.shopName} – ${shop.slogan}` : shop.shopName;
+      const sName = shop?.shopName || 'Store';
+      document.title = shop?.slogan ? `${sName} – ${shop.slogan}` : sName;
 
       // 2. Real-time update of Favicon
-      const firstLetter = shop.shopName ? shop.shopName.charAt(0).toUpperCase() : 'S';
+      const firstLetter = sName ? sName.charAt(0).toUpperCase() : 'S';
       // Generate consistent color based on shop name
       let hash = 0;
-      const name = shop.shopName || 'Shop';
-      for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      for (let i = 0; i < sName.length; i++) {
+        hash = sName.charCodeAt(i) + ((hash << 5) - hash);
       }
       const hue = Math.abs(hash % 360);
       const color = `hsl(${hue}, 70%, 50%)`;
 
       const svgFavicon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}" rx="8"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-size="18" font-family="system-ui, sans-serif" font-weight="900">${firstLetter}</text></svg>`;
 
-      const faviconUrl = `/favicon.ico?v=${shop.logoUrl ? encodeURIComponent(shop.logoUrl) : 'default'}`;
+      const faviconUrl = `/favicon.ico?v=${shop?.logoUrl ? encodeURIComponent(shop.logoUrl) : 'default'}`;
 
       // Remove all existing icon links to prevent any conflict or caching of the main site icon
       const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");

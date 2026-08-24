@@ -262,7 +262,8 @@ export default function HomepageBuilder() {
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState('all');
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [activeTemplateKey, setActiveTemplateKey] = useState('fashion_editorial');
+  const [previewTemplateKey, setPreviewTemplateKey] = useState(null);
+  const [appliedTemplateKey, setAppliedTemplateKey] = useState('fashion_editorial');
   const [hasChanges, setHasChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
 
@@ -398,7 +399,8 @@ export default function HomepageBuilder() {
   };
 
   const applyTemplate = (key, tpl) => {
-    setActiveTemplateKey(key);
+    setAppliedTemplateKey(key);
+    setPreviewTemplateKey(null);
     const newSections = DEFAULT_SECTIONS.map(s => ({
       ...s,
       enabled: tpl.enabled.includes(s.id) || tpl.enabled.includes(s.type),
@@ -408,7 +410,7 @@ export default function HomepageBuilder() {
     if (tpl.headerStyle) setHeaderConfig(h => ({ ...h, style: tpl.headerStyle }));
     if (tpl.footerStyle) setFooterConfig(f => ({ ...f, style: tpl.footerStyle }));
     setHasChanges(true);
-    toast.success(`${tpl.namebn} টেমপ্লেট লাইভ প্রিভিউতে সিলেক্ট হয়েছে! 🚀`);
+    toast.success(`✅ ${tpl.namebn} টেমপ্লেট ড্রাফটে অ্যাপ্লাই হয়েছে!`);
   };
 
   const TEMPLATE_FILTER_CATEGORIES = [
@@ -426,6 +428,18 @@ export default function HomepageBuilder() {
     if (templateCategoryFilter === 'all') return true;
     return tpl.category === templateCategoryFilter;
   });
+
+  // Compute effective state for live simulator preview
+  const currentPreviewTpl = previewTemplateKey ? CATEGORY_TEMPLATES[previewTemplateKey] : null;
+  const effectiveSections = currentPreviewTpl
+    ? DEFAULT_SECTIONS.map(s => ({
+        ...s,
+        enabled: currentPreviewTpl.enabled.includes(s.id) || currentPreviewTpl.enabled.includes(s.type),
+      }))
+    : sections;
+  const effectiveTheme = currentPreviewTpl ? { ...theme, ...currentPreviewTpl.theme } : theme;
+  const effectiveHeader = currentPreviewTpl && currentPreviewTpl.headerStyle ? { ...headerConfig, style: currentPreviewTpl.headerStyle } : headerConfig;
+  const effectiveFooter = currentPreviewTpl && currentPreviewTpl.footerStyle ? { ...footerConfig, style: currentPreviewTpl.footerStyle } : footerConfig;
 
   return (
     <div className="min-h-screen bg-slate-100/60">
@@ -545,53 +559,81 @@ export default function HomepageBuilder() {
                   ))}
                 </div>
 
-                {/* Template Cards Grid — Click anywhere to select & preview */}
-                <div className="grid grid-cols-1 gap-3 max-h-[600px] overflow-y-auto pr-1">
+                {/* Template Cards Grid — High-contrast & clear preview vs apply */}
+                <div className="grid grid-cols-1 gap-3 max-h-[620px] overflow-y-auto pr-1">
                   {filteredTemplates.map(([key, tpl]) => {
-                    const isSelected = activeTemplateKey === key;
+                    const isPreviewing = previewTemplateKey === key;
+                    const isApplied = appliedTemplateKey === key && !previewTemplateKey;
                     return (
                       <div
                         key={key}
-                        onClick={() => applyTemplate(key, tpl)}
-                        className={`rounded-2xl bg-gradient-to-br ${tpl.gradient} p-4 text-white shadow-md relative overflow-hidden group cursor-pointer transition-all duration-200 ${
-                          isSelected
-                            ? 'ring-4 ring-purple-600 ring-offset-2 scale-[1.01] shadow-xl'
-                            : 'hover:opacity-95 hover:scale-[1.005]'
+                        onClick={() => setPreviewTemplateKey(isPreviewing ? null : key)}
+                        className={`rounded-2xl border-2 p-4 transition-all duration-200 cursor-pointer shadow-xs bg-white ${
+                          isPreviewing
+                            ? 'border-purple-600 ring-2 ring-purple-100 bg-purple-50/30 shadow-md scale-[1.005]'
+                            : isApplied
+                            ? 'border-emerald-600 ring-2 ring-emerald-100 bg-emerald-50/20'
+                            : 'border-slate-200 hover:border-purple-300 hover:shadow-sm'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3 relative z-10">
+                        <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black leading-snug">{tpl.label}</p>
-                            <p className="text-[11px] font-medium opacity-90 mt-0.5 leading-tight">{tpl.desc}</p>
+                            <div className="flex items-center gap-2">
+                              <span 
+                                className="w-3 h-3 rounded-full shrink-0 shadow-xs" 
+                                style={{ background: tpl.theme?.primaryColor || '#6D28D9' }} 
+                              />
+                              <p className="text-sm font-black text-slate-900 leading-snug">{tpl.label}</p>
+                            </div>
+                            <p className="text-xs font-semibold text-slate-500 mt-1 leading-normal">{tpl.desc}</p>
+                            
                             <div className="flex flex-wrap gap-1 mt-2.5">
                               {tpl.enabled.slice(0, 4).map(sId => (
-                                <span key={sId} className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-wide">
+                                <span key={sId} className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md text-[10px] font-bold">
                                   {sId.replace(/_/g, ' ')}
                                 </span>
                               ))}
                               {tpl.enabled.length > 4 && (
-                                <span className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black">
-                                  +{tpl.enabled.length - 4}
+                                <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded-md text-[10px] font-bold">
+                                  +{tpl.enabled.length - 4} সেকশন
                                 </span>
                               )}
                             </div>
                           </div>
-                          
-                          <div className="flex flex-col items-end gap-1.5 shrink-0 mt-0.5">
-                            {isSelected ? (
-                              <span className="px-3 py-1.5 bg-white text-purple-900 rounded-xl text-xs font-black flex items-center gap-1 shadow-md animate-in fade-in">
-                                <Check size={14} className="text-purple-600 stroke-[3]" />
-                                সক্রিয়
+
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            {isApplied ? (
+                              <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-xl text-xs font-black flex items-center gap-1 border border-emerald-300 shadow-2xs">
+                                <Check size={13} className="text-emerald-700 stroke-[3]" />
+                                অ্যাপ্লাইড
                               </span>
                             ) : (
                               <button
                                 type="button"
-                                onClick={(e) => { e.stopPropagation(); applyTemplate(key, tpl); }}
-                                className="px-4 py-2 bg-white/90 hover:bg-white text-slate-900 rounded-xl text-xs font-black transition-all active:scale-95 shadow cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  applyTemplate(key, tpl);
+                                }}
+                                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-xs cursor-pointer active:scale-95"
                               >
                                 Apply
                               </button>
                             )}
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewTemplateKey(isPreviewing ? null : key);
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-colors cursor-pointer ${
+                                isPreviewing 
+                                  ? 'bg-purple-100 text-purple-700 border border-purple-300' 
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              }`}
+                            >
+                              {isPreviewing ? '👁️ প্রিভিউ চালু' : '👁️ প্রিভিউ দেখুন'}
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -634,15 +676,22 @@ export default function HomepageBuilder() {
         {/* Right Panel — Live Preview Simulator */}
         <div className="hidden lg:flex flex-1 flex-col">
           <HomepagePreview
-            sections={sections}
-            theme={theme}
-            headerConfig={headerConfig}
-            footerConfig={footerConfig}
+            sections={effectiveSections}
+            theme={effectiveTheme}
+            headerConfig={effectiveHeader}
+            footerConfig={effectiveFooter}
             shop={shop}
             mode={previewMode}
             onModeChange={setPreviewMode}
             products={products}
             highlightId={highlightSectionId}
+            previewTemplateName={currentPreviewTpl ? currentPreviewTpl.namebn : null}
+            onApplyPreviewTemplate={() => {
+              if (currentPreviewTpl && previewTemplateKey) {
+                applyTemplate(previewTemplateKey, currentPreviewTpl);
+              }
+            }}
+            onCancelPreview={() => setPreviewTemplateKey(null)}
           />
         </div>
       </div>

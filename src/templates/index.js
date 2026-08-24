@@ -1371,8 +1371,34 @@ export const TEMPLATE_CATEGORIES = [
 ];
 
 export const getTemplateById = (id) => {
-  if (!id) return TEMPLATES['grocery-fresh-bazaar'];
+  if (!id) return TEMPLATES['grocery-fresh-bazaar'] || TEMPLATES['bold-commerce'];
   if (TEMPLATES[id]) return TEMPLATES[id];
+
+  const normalized = String(id).toLowerCase().replace(/_/g, '-');
+  if (TEMPLATES[normalized]) return TEMPLATES[normalized];
+
+  const mapToCore = {
+    'fashion-editorial': 'luxury-couture',
+    'modern-streetwear': 'luxury-minimal-editorial',
+    'fresh-grocery': 'grocery-fresh-bazaar',
+    'supermarket-deals': 'grocery-supermarket',
+    'tech-electronics': 'tech-gadget-hub',
+    'minimal-gadgets': 'tech-minimal-apple',
+    'beauty-cosmetics': 'beauty-rose-glow',
+    'organic-skincare': 'beauty-organic-spa',
+    'home-decor': 'home-earthy-sanctuary',
+    'nordic-furniture': 'home-nordic-scandi',
+    'sports-activewear': 'sports-ultra-athlete',
+    'fitness-equipment': 'sports-pro-performance',
+    'b2b-wholesale': 'bold-commerce',
+    'single-product-spotlight': 'sports-ultra-athlete',
+    'classic-commerce': 'bold-commerce',
+  };
+
+  if (mapToCore[normalized] && TEMPLATES[mapToCore[normalized]]) {
+    return TEMPLATES[mapToCore[normalized]];
+  }
+
   if (typeof id === 'string' && (id.startsWith('ai-single-') || id.includes('single') || id.includes('spotlight'))) {
     return {
       id,
@@ -1413,7 +1439,17 @@ export const getTemplateById = (id) => {
       }
     };
   }
-  return TEMPLATES['grocery-fresh-bazaar'] || TEMPLATES['bold-commerce'];
+  return TEMPLATES['grocery-fresh-bazaar'] || TEMPLATES['bold-commerce'] || {
+    id: 'bold-commerce',
+    name: 'Bold Commerce',
+    namebn: 'বোল্ড কমার্স',
+    defaultTheme: {
+      primaryColor: '#6D28D9', secondaryColor: '#4338CA', accentColor: '#F59E0B',
+      bgColor: '#FFFFFF', textColor: '#0F172A', headerBg: '#FFFFFF', headerText: '#0F172A',
+      cardBg: '#FFFFFF', cardBorder: '#E2E8F0', buttonRadius: '12px', cardRadius: '16px',
+      fontFamily: 'Inter, sans-serif', fontSize: 'base', shadow: 'md', gridCols: 3, spacing: 'comfortable', animationLevel: 'smooth'
+    }
+  };
 };
 
 export const getTemplateList = () => Object.values(TEMPLATES);
