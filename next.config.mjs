@@ -34,12 +34,10 @@ const nextConfig = {
   ],
 
   // ⚡ Performance - Bundle Optimization (tree-shaking heavy packages)
+  // NOTE: lucide-react and recharts are already optimized by default in Next.js 16
+  // DO NOT add firebase/@firebase/* here — they break Turbopack builds
   experimental: {
     optimizePackageImports: [
-      'lucide-react',
-      'firebase',
-      '@firebase/firestore',
-      'recharts',
       'react-hot-toast',
       'zod',
     ],
