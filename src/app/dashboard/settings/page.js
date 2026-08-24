@@ -896,104 +896,52 @@ export default function SettingsPage() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">স্টোর কাস্টমাইজার</h1>
-          <p className="text-sm text-slate-500 font-medium">টেমপ্লেট, থিম, AI এবং সব সেটিং এক জায়গায়।</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">স্টোর সেটিংস</h1>
+          <p className="text-sm text-slate-500 font-medium">আপনার স্টোরের সমস্ত কনফিগারেশন এবং প্রেফারেন্স পরিচালনা করুন।</p>
         </div>
       </div>
 
-      {/* ── Tab Navigation ── */}
-      <div className="flex gap-2 overflow-x-auto pb-1 border-b border-slate-200">
-        {SETTINGS_TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setSettingsTab(tab.id)}
-            className={`flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-t-xl text-xs font-black transition-all border-b-2 ${
-              settingsTab === tab.id
-                ? 'border-purple-600 text-purple-700 bg-purple-50'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-            }`}
-          >
-            <tab.icon size={14} />{tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Template Marketplace Tab ── */}
-      {settingsTab === 'templates' && (
-        <TemplateMarketplace
-          shopId={activeShopId}
-          shopSlug={shop?.subdomainSlug}
-          shopDomain={shop?.customDomain}
-          activeTemplateId={shop?.templateId || 'modern-commerce'}
-          onTemplateApplied={(tid) => setShop(s => ({ ...s, templateId: tid }))}
-        />
-      )}
-
-      {/* ── Customization Panel Tab ── */}
-      {settingsTab === 'customizer' && (
-        <div className="max-w-2xl">
-          <StoreCustomizationPanel
-            shopId={activeShopId}
-            shopSlug={shop?.subdomainSlug}
-            shopDomain={shop?.customDomain}
-            templateId={shop?.templateId || 'modern-commerce'}
-            currentOverrides={shop?.themeOverrides || {}}
-            onSave={({ theme }) => setShop(s => ({ ...s, themeOverrides: theme }))}
-          />
-        </div>
-      )}
-
-      {/* ── Theme Tab (existing DesignThemeSelector) ── */}
-      {settingsTab === 'theme' && (
-        <div className="max-w-4xl">
-          <Card title="স্টোর ডিজাইন থিম" subtitle="রঙ প্রিসেট" icon={Palette} className="border-l-4 border-l-purple-500">
-            <DesignThemeSelector shopId={activeShopId} />
-          </Card>
-        </div>
-      )}
-
-      {/* ── General Settings Tab ── */}
-      {settingsTab === 'general' && (<>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Sub-tab Left Sidebar Navigation */}
-          <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
-            <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
-              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি</p>
-               {[
-                  { id: 'store_info', label: 'স্টোর তথ্য ও ডোমেইন', icon: Globe },
-                  { id: 'branding', label: 'ডিজাইন ও লোগো', icon: Palette },
-                  { id: 'access', label: 'কর্মী ও অ্যাক্সেস', icon: ShieldCheck },
-                  { id: 'checkout_payments', label: 'চেকআউট ও পেমেন্ট', icon: Truck },
-                  { id: 'courier_location', label: 'কুরিয়ার ও ম্যাপ', icon: MapPin },
-                  { id: 'marketing', label: 'মার্কেটিং ও কুপন', icon: Gift },
-                  { id: 'ai_companion', label: 'এআই অ্যাসিস্ট্যান্ট', icon: Sparkles },
-                  { id: 'app_faq', label: 'মোবাইল অ্যাপ ও FAQ', icon: Smartphone },
-                  ...(shop?.dataExportEnabled === true ? [{ id: 'data_export', label: 'ডাটা মাইগ্রেশন', icon: Cloud }] : [])
-               ].map(sub => {
-                 const Icon = sub.icon;
-                 return (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => setActiveSubTab(sub.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                        activeSubTab === sub.id
-                          ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                      }`}
-                    >
-                      <Icon size={16} />
-                      <span className="truncate">{sub.label}</span>
-                    </button>
-                 );
-              })}
-            </div>
+      {/* ── Settings Categories & Panels ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        {/* Sub-tab Left Sidebar Navigation */}
+        <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
+          <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি</p>
+             {[
+                { id: 'store_info', label: 'স্টোর তথ্য ও ডোমেইন', icon: Globe },
+                { id: 'branding', label: 'ডিজাইন ও লোগো', icon: Palette },
+                { id: 'access', label: 'কর্মী ও অ্যাক্সেস', icon: ShieldCheck },
+                { id: 'checkout_payments', label: 'চেকআউট ও পেমেন্ট', icon: Truck },
+                { id: 'courier_location', label: 'কুরিয়ার ও ম্যাপ', icon: MapPin },
+                { id: 'marketing', label: 'মার্কেটিং ও কুপন', icon: Gift },
+                { id: 'ai_companion', label: 'এআই অ্যাসিস্ট্যান্ট', icon: Sparkles },
+                { id: 'app_faq', label: 'মোবাইল অ্যাপ ও FAQ', icon: Smartphone },
+                ...(shop?.dataExportEnabled === true ? [{ id: 'data_export', label: 'ডাটা মাইগ্রেশন', icon: Cloud }] : [])
+             ].map(sub => {
+               const Icon = sub.icon;
+               return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setActiveSubTab(sub.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                      activeSubTab === sub.id
+                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <Icon size={16} />
+                    <span className="truncate">{sub.label}</span>
+                  </button>
+               );
+            })}
           </div>
+        </div>
 
-          {/* Details Right Column Panel */}
-          <div className="lg:col-span-9">
-            <form onSubmit={handleSave} className="space-y-8">
+        {/* Details Right Column Panel */}
+        <div className="lg:col-span-9">
+          <form onSubmit={handleSave} className="space-y-8">
               
               {/* Group 1: Store Public URL (store_info) */}
               {activeSubTab === 'store_info' && (
@@ -2903,7 +2851,6 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-      </>)} {/* end general tab */}
     </div>
   );
 }

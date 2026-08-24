@@ -5,6 +5,8 @@ import {
   RotateCcw, Sparkles, ShoppingBag, Search, Menu, Bell
 } from 'lucide-react';
 import SectionRenderer from '@/components/storefront/sections/SectionRenderer';
+import StorefrontHeader from '@/components/storefront/StorefrontHeader';
+import StorefrontFooter from '@/components/storefront/StorefrontFooter';
 import { DEMO_PRODUCTS } from '@/lib/homepageDemoData';
 
 export default function HomepagePreview({
@@ -24,9 +26,9 @@ export default function HomepagePreview({
   const [fullPreviewMode, setFullPreviewMode] = useState(mode);
   const [previewPopupOpen, setPreviewPopupOpen] = useState(false);
   const [cartCount, setCartCount] = useState(2);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const previewContainerRef = useRef(null);
-  const fullPreviewContainerRef = useRef(null);
 
   const isMobile = mode === 'mobile';
   const primary = theme?.primaryColor || shop?.primaryColor || '#6D28D9';
@@ -58,7 +60,7 @@ export default function HomepagePreview({
   const previewCallbacks = {
     onAddToCart: () => setCartCount(c => c + 1),
     onProductClick: () => {},
-    onCategoryClick: () => {},
+    onCategoryClick: (catName) => setSearchQuery(catName),
     onConcernClick: () => {},
     onTierClick: () => {},
     onAddBundle: () => setCartCount(c => c + 1),
@@ -66,94 +68,43 @@ export default function HomepagePreview({
 
   const themeVars = {
     primaryColor: primary,
+    '--sp-primary': primary,
+    '--sp-header-bg': theme?.headerBg || '#ffffff',
+    '--sp-header-text': theme?.headerText || '#0f172a',
     font: theme?.font || 'Hind Siliguri',
   };
 
-  const hStyle = headerConfig?.style || 'classic';
-  const fStyle = footerConfig?.style || 'modern_columns';
-  const btnStyle = headerConfig?.buttonStyle || 'contrast_pill';
-
-  const headerBtnClass = btnStyle === 'white_pill'
-    ? 'p-2 rounded-xl bg-white text-slate-800 shadow-sm border border-slate-200'
-    : 'p-2 rounded-xl bg-slate-100/90 text-slate-700 hover:bg-slate-200 shadow-2xs';
+  // Demo categories for header & footer navigation
+  const demoCategories = [
+    { id: 'cat-1', name: 'নতুন কালেকশন' },
+    { id: 'cat-2', name: 'জনপ্রিয় ডিলস' },
+    { id: 'cat-3', name: 'ফ্যাশন & ক্লথিং' },
+    { id: 'cat-4', name: 'গ্রোসারি বাজার' },
+    { id: 'cat-5', name: 'গেজেটস & টেক' },
+    { id: 'cat-6', name: 'বিউটি কেয়ার' },
+  ];
 
   const renderStorefrontContent = (isModal = false) => (
-    <div className="w-full bg-slate-50 relative min-h-full">
-      {/* Simulated Storefront Top Header */}
-      <header className={`sticky top-0 z-30 transition-all ${
-        hStyle === 'floating'
-          ? 'mx-2 my-2 rounded-2xl bg-white/90 backdrop-blur-md border border-slate-200/80 px-3.5 py-2.5 shadow-md'
-          : hStyle === 'dark_contrast'
-          ? 'bg-slate-950 text-white border-b border-slate-800 px-4 py-3 shadow-lg'
-          : 'bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3 shadow-xs'
-      }`}>
-        <div className="flex items-center justify-between gap-2 max-w-[1400px] mx-auto">
-          {/* Logo & Brand Name */}
-          <div className={`flex items-center gap-2.5 ${hStyle === 'centered' ? 'order-2 mx-auto' : ''}`}>
-            {shop?.logoUrl ? (
-              <img src={shop.logoUrl} alt="Logo" className="w-8 h-8 rounded-xl object-contain" />
-            ) : (
-              <div 
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-sm"
-                style={{ background: primary }}
-              >
-                {shop?.shopName?.[0] || 'B'}
-              </div>
-            )}
-            <div>
-              <span className={`text-sm font-black leading-none block ${hStyle === 'dark_contrast' ? 'text-white' : 'text-slate-900'}`}>
-                {shop?.shopName || 'BDRetailers Store'}
-              </span>
-              <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">● Online</span>
-            </div>
-          </div>
+    <div 
+      className="w-full bg-slate-50 relative min-h-full flex flex-col justify-between"
+      style={{ fontFamily: theme?.font ? `"${theme.font}", sans-serif` : 'inherit' }}
+    >
+      {/* ── 1. Unified Shared Storefront Header ── */}
+      <StorefrontHeader
+        shop={shop}
+        headerConfig={headerConfig}
+        themeVars={themeVars}
+        categories={demoCategories}
+        cartCount={cartCount}
+        onOpenCart={() => {}}
+        onOpenCategories={() => {}}
+        onSearchChange={setSearchQuery}
+        searchQuery={searchQuery}
+        isPreview={true}
+      />
 
-          {/* Search Simulation */}
-          {headerConfig.showSearch !== false && (
-            <div className={`hidden sm:flex flex-1 max-w-xs mx-3 ${hStyle === 'centered' ? 'order-1 max-w-[120px]' : ''}`}>
-              <div className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border ${
-                hStyle === 'dark_contrast' ? 'bg-slate-900 border-slate-700 text-slate-400' : 'bg-slate-100 border-slate-200/60 text-slate-400'
-              }`}>
-                <Search size={13} />
-                <span className="truncate">পণ্য খুঁজুন...</span>
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className={`flex items-center gap-1.5 ${hStyle === 'centered' ? 'order-3' : ''}`}>
-            {headerConfig.showNotifications !== false && (
-              <div className={headerBtnClass} title="Notifications">
-                <Bell size={15} />
-              </div>
-            )}
-
-            {headerConfig.showFaqBtn !== false && (
-              <div className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-amber-500 text-white text-[10px] font-black shadow-xs">
-                FAQ
-              </div>
-            )}
-
-            <button 
-              className={`relative ${headerBtnClass}`}
-              aria-label="Cart"
-            >
-              <ShoppingBag size={15} />
-              {cartCount > 0 && (
-                <span 
-                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-[9px] font-black flex items-center justify-center shadow"
-                  style={{ background: primary }}
-                >
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Rendered Live Sections */}
-      <div className="space-y-2 pb-12">
+      {/* ── 2. Rendered Live Sections ── */}
+      <div className="space-y-2 pb-8 flex-1">
         {enabledSections.map((section) => {
           const isHighlighted = highlightId === section.id;
           const sectionToRender = section.type === 'basic_storefront' ? {
@@ -212,37 +163,17 @@ export default function HomepagePreview({
             </p>
           </div>
         )}
-
-        {/* Storefront Dynamic Footer Preview */}
-        {fStyle === 'minimal_bar' ? (
-          <footer className="mt-8 bg-slate-900 text-white p-4 text-center">
-            <p className="text-xs font-black">© {new Date().getFullYear()} {shop?.shopName || 'Store'} — সর্বস্বত্ত্ব সংরক্ষিত।</p>
-          </footer>
-        ) : fStyle === 'centered_brand' ? (
-          <footer className="mt-8 bg-white border-t border-slate-100 p-6 text-center space-y-2">
-            <h3 className="text-base font-black text-slate-900">{shop?.shopName || 'Store'}</h3>
-            <p className="text-xs text-slate-500 italic">"{footerConfig.customTagline || shop?.slogan || 'বিশ্বস্ত অনলাইন সেবা'}"</p>
-            <p className="text-[10px] text-slate-400">© {new Date().getFullYear()} All Rights Reserved</p>
-          </footer>
-        ) : (
-          <footer className={`mt-8 rounded-t-3xl p-6 sm:p-8 ${
-            fStyle === 'dark_luxury' ? 'bg-slate-950 text-white' : 'bg-slate-900 text-white'
-          }`}>
-            <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
-              <div>
-                <p className="text-sm font-black">{shop?.shopName || 'BDRetailers Store'}</p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {footerConfig.customTagline || shop?.slogan || 'বিশ্বস্ত ও নির্ভরযোগ্য অনলাইন কেনাকাটা'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
-                <span>Powered by</span>
-                <span className="text-white font-black">BDRetailers.com</span>
-              </div>
-            </div>
-          </footer>
-        )}
       </div>
+
+      {/* ── 3. Unified Shared Storefront Footer with Mandatory BDRetailers Branding ── */}
+      <StorefrontFooter
+        shop={shop}
+        footerConfig={footerConfig}
+        themeVars={themeVars}
+        categories={demoCategories}
+        onCategoryClick={(catName) => setSearchQuery(catName)}
+        isPreview={true}
+      />
     </div>
   );
 
@@ -330,7 +261,7 @@ export default function HomepagePreview({
               setFullPreviewMode(mode);
               setShowFullPreview(true);
             }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black text-white bg-slate-900 hover:bg-black transition-all shadow-xs cursor-pointer active:scale-95"
           >
             <Maximize2 size={13} />
             <span>Open Full Preview</span>
@@ -406,10 +337,10 @@ export default function HomepagePreview({
             <div className="flex items-center gap-3">
               <span className="text-sm font-black flex items-center gap-2">
                 <Sparkles size={16} className="text-amber-400" />
-                Full Storefront Simulator (Unpublished Draft)
+                BDRetailers Full Storefront Simulator (Unpublished Draft)
               </span>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-purple-600/30 text-purple-300 border border-purple-500/30 font-bold">
-                Live Interactive Mode
+                100% Identical Store Preview
               </span>
             </div>
 
@@ -418,7 +349,7 @@ export default function HomepagePreview({
               <div className="flex bg-slate-800 rounded-xl p-1 gap-1">
                 <button
                   onClick={() => setFullPreviewMode('mobile')}
-                  className={`p-1.5 px-3 rounded-lg text-xs font-black transition-all ${
+                  className={`p-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer ${
                     fullPreviewMode === 'mobile' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -426,7 +357,7 @@ export default function HomepagePreview({
                 </button>
                 <button
                   onClick={() => setFullPreviewMode('desktop')}
-                  className={`p-1.5 px-3 rounded-lg text-xs font-black transition-all ${
+                  className={`p-1.5 px-3 rounded-lg text-xs font-black transition-all cursor-pointer ${
                     fullPreviewMode === 'desktop' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -436,7 +367,7 @@ export default function HomepagePreview({
 
               <button
                 onClick={() => setShowFullPreview(false)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close"
               >
                 <X size={18} />

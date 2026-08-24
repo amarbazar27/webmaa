@@ -33,8 +33,9 @@ const AiShoppingList = dynamic(() => import('@/components/shop/AiShoppingList'),
 const AiVoicePanel = dynamic(() => import('@/components/shop/AiVoicePanel'), { ssr: false });
 const SmartMealEngine = dynamic(() => import('@/components/shop/SmartMealEngine'), { ssr: false });
 const ReviewSection = dynamic(() => import('@/components/shop/ReviewSection'), { ssr: false });
-const MapModal = dynamic(() => import('@/components/shop/MapModal'), { ssr: false });
 const SectionRenderer = dynamic(() => import('@/components/storefront/sections/SectionRenderer'), { ssr: false });
+const StorefrontHeader = dynamic(() => import('@/components/storefront/StorefrontHeader'), { ssr: false });
+const StorefrontFooter = dynamic(() => import('@/components/storefront/StorefrontFooter'), { ssr: false });
 
 // Product detail modal component imports
 import ProductImage from '@/features/product/components/ProductImage';
@@ -2404,8 +2405,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       )}
 
       {/* ── Dynamic Header ── */}
-      {(() => {
-        const headerConfig = homepageConfig?.header || {
+      <StorefrontHeader
+        shop={shop}
+        headerConfig={homepageConfig?.header || {
           style: 'classic',
           showSearch: true,
           showNotifications: true,
@@ -2413,200 +2415,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           showDashboardBtn: true,
           showFaqBtn: true,
           buttonStyle: 'contrast_pill',
-        };
-
-        const hStyle = headerConfig.style || 'classic';
-        const isWhitePill = headerConfig.buttonStyle === 'white_pill';
-
-        // High contrast button class for sharp visibility against any background color
-        const headerBtnClass = isWhitePill
-          ? "flex items-center justify-center p-2 rounded-xl bg-white text-slate-800 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all font-bold cursor-pointer"
-          : "flex items-center justify-center p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/25 shadow-xs transition-all font-bold cursor-pointer";
-
-        const headerWrapperClass = hStyle === 'floating'
-          ? "sticky top-2 z-40 max-w-7xl mx-auto px-2 sm:px-4 my-2"
-          : "sticky top-0 z-40";
-
-        const headerInnerClass = hStyle === 'floating'
-          ? "rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md px-3 sm:px-6 py-2.5"
-          : hStyle === 'dark_contrast'
-          ? "bg-slate-950 text-white border-b border-slate-800 shadow-lg px-2 sm:px-6 lg:px-8 py-3"
-          : "shop-header border-b shadow-sm px-2 sm:px-6 lg:px-8 py-3";
-
-        const headerStyle = (hStyle !== 'dark_contrast' && hStyle !== 'floating') ? {
-          background: themeVars['--sp-header-bg'] || 'white',
-          borderColor: themeVars['--sp-border'] || '#e2e8f0'
-        } : {};
-
-        return (
-          <div className={headerWrapperClass}>
-            <header className={headerInnerClass} style={headerStyle}>
-              <div className={`max-w-[98%] mx-auto flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap ${hStyle === 'centered' ? 'relative' : ''}`}>
-                
-                {/* Logo/Brand (Left Side or Centered) */}
-                <div className={`flex items-center gap-2 ${hStyle === 'centered' ? 'order-2 mx-auto' : ''}`}>
-                  <button 
-                    onClick={() => setIsCategoryMenuOpen(true)} 
-                    style={{ color: hStyle === 'dark_contrast' ? '#ffffff' : (themeVars['--sp-header-text'] || '#0f172a') }}
-                    className="flex items-center justify-center p-1.5 rounded-xl hover:opacity-80 transition-opacity cursor-pointer"
-                  >
-                    <Menu size={20} strokeWidth={2.5} />
-                  </button>
-
-                  <div className="flex items-center gap-1.5 select-none cursor-default">
-                    {shop.logoUrl ? (
-                      <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain border border-white/20 shadow-xs" alt={shop.shopName} />
-                    ) : (
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-md shadow-xs" style={{background: themeVars['--sp-primary'] || '#4f46e5', color: '#ffffff'}}>
-                        {shop.shopName?.[0] || 'S'}
-                      </div>
-                    )}
-                    <span className="font-black text-sm sm:text-[17px] leading-tight truncate max-w-[90px] sm:max-w-none" style={{color: hStyle === 'dark_contrast' ? '#ffffff' : (themeVars['--sp-header-text'] || '#0f172a')}}>
-                      {shop.shopName || 'Shop'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* ── Search Bar with Recent Searches Dropdown (Desktop/Tablet) ── */}
-                {headerConfig.showSearch !== false && (
-                  <div className={`relative flex-1 max-w-sm sm:max-w-md mx-2 hidden md:block ${hStyle === 'centered' ? 'order-1 max-w-[200px]' : ''}`}>
-                    <div className="relative flex items-center">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} strokeWidth={2.5} />
-                      <input
-                        type="text"
-                        placeholder="পণ্য খুঁজুন..."
-                        className="w-full pl-10 pr-8 py-2 rounded-xl font-bold outline-none transition-all text-xs sm:text-sm placeholder:font-medium placeholder:text-slate-400 bg-white/95 text-slate-800 border border-slate-200/80 shadow-xs focus:ring-2 focus:ring-purple-400"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        onFocus={() => setIsSearchFocused(true)}
-                        onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            saveRecentSearch(searchTerm);
-                            setIsSearchFocused(false);
-                          }
-                        }}
-                      />
-                      {searchTerm && (
-                        <button
-                          type="button"
-                          onClick={() => setSearchTerm('')}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                        >
-                          <X size={14} />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Recent Searches Dropdown Popup */}
-                    {isSearchFocused && recentSearches.length > 0 && (
-                      <div 
-                        className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200/90 p-3 z-50 animate-in fade-in zoom-in-95 duration-150"
-                        onMouseDown={e => e.preventDefault()}
-                      >
-                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
-                          <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
-                            <Clock size={13} className="text-purple-600" />
-                            <span>সাম্প্রতিক অনুসন্ধান (Recent Searches)</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={clearAllRecentSearches}
-                            className="text-[10px] font-bold text-red-500 hover:text-red-700 hover:underline flex items-center gap-1 cursor-pointer"
-                          >
-                            <Trash2 size={11} /> সব মুছুন
-                          </button>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5">
-                          {recentSearches.map((term, i) => (
-                            <div
-                              key={i}
-                              onClick={() => {
-                                setSearchTerm(term);
-                                saveRecentSearch(term);
-                                setIsSearchFocused(false);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-700 text-xs font-bold transition-all cursor-pointer group"
-                            >
-                              <Search size={11} className="text-slate-400 group-hover:text-purple-600" />
-                              <span>{term}</span>
-                              <button
-                                type="button"
-                                onClick={(e) => deleteRecentSearch(term, e)}
-                                title="হিস্ট্রি থেকে মুছুন"
-                                className="ml-1 p-0.5 rounded-full hover:bg-slate-200 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                              >
-                                <X size={11} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Actions (Right side of the brand) */}
-                <div className={`flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end ${hStyle === 'centered' ? 'order-3' : ''}`}>
-                  {headerConfig.showNotifications !== false && (
-                    <NotificationInbox 
-                      shopId={shop.id} 
-                      isDashboard={false} 
-                      triggerClassName={headerBtnClass}
-                      iconClassName="text-current"
-                    />
-                  )}
-
-                  {/* Swipable Light/Dark Theme Switch */}
-                  {headerConfig.showThemeToggle !== false && (
-                    <ThemeToggleButton size="sm" />
-                  )}
-
-                  {/* Merchant Go To Panel Button */}
-                  {headerConfig.showDashboardBtn !== false && ((userData?.role === 'staff' && userData?.accessShopId === shop.id) || (userData?.role === 'admin' && userData?.accessShopId === shop.id) || (userData?.role === 'retailer' && user?.uid === shop.ownerId) || userData?.role === 'superadmin') && (
-                    <button 
-                      onClick={() => router.push('/dashboard')} 
-                      className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-all shadow-md border border-white/20 cursor-pointer"
-                    >
-                      <Settings size={14} className="text-white" /> <span className="hidden sm:inline">প্যানেলে যান</span>
-                    </button>
-                  )}
-
-                  {/* How to Order Video */}
-                  {shop.howToOrderVideo && (
-                    <a href={shop.howToOrderVideo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-sm whitespace-nowrap">
-                      <PlayCircle size={14} /> <span>কিভাবে অর্ডার করবেন?</span>
-                    </a>
-                  )}
-
-                  {/* FAQ Button */}
-                  {headerConfig.showFaqBtn !== false && (
-                    <button 
-                      onClick={() => setIsFaqOpen(true)} 
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-gradient-to-r from-pink-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 text-white rounded-xl text-[10px] sm:text-xs font-black transition-colors shadow-md border border-white/20 cursor-pointer"
-                    >
-                      <HelpCircle size={14} className="text-white" /> <span>FAQ</span>
-                    </button>
-                  )}
-
-                  {/* Profile Button */}
-                  <button 
-                    onClick={() => setIsProfileOpen(true)} 
-                    className="w-8 h-8 sm:w-9 sm:h-9 aspect-square bg-white text-purple-700 hover:bg-purple-50 rounded-xl transition-colors shadow-sm border border-slate-200 overflow-hidden flex items-center justify-center cursor-pointer"
-                  >
-                    {user?.photoURL ? (
-                      <img src={user.photoURL} className="w-full h-full object-cover aspect-square" alt="Profile" />
-                    ) : (
-                      <User size={18} className="font-bold" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </header>
-          </div>
-        );
-      })()}
+        }}
+        themeVars={themeVars}
+        categories={categories}
+        cartCount={cartCount}
+        onOpenCart={() => setIsCartOpen(true)}
+        onOpenCategories={() => setIsCategoryMenuOpen(true)}
+        onSearchChange={setSearchTerm}
+        searchQuery={searchTerm}
+        isPreview={false}
+      />
 
       {/* ── Top Premium Location Bar Removed ── */}
 
@@ -3880,212 +3698,27 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   })()}
 
       {/* ── Dynamic Footer ── */}
-      {(() => {
-        const footerConfig = homepageConfig?.footer || {
-          style: 'modern_columns',
+      <StorefrontFooter
+        shop={shop}
+        footerConfig={homepageConfig?.footer || {
+          style: 'classic_4col',
           showCategories: true,
           showContact: true,
           showSocials: true,
           showCopyright: true,
           showPrivacy: true,
           customTagline: '',
-        };
-
-        const fStyle = footerConfig.style || 'modern_columns';
-        const customTagline = footerConfig.customTagline || shop.slogan || '';
-
-        // Minimal Bar Preset
-        if (fStyle === 'minimal_bar') {
-          return (
-            <footer className="mt-auto bg-slate-900 text-white border-t border-slate-800 py-6 px-4">
-              <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-                <div className="flex items-center gap-3">
-                  {shop.logoUrl ? (
-                    <img loading="lazy" src={shop.logoUrl} className="w-8 h-8 rounded-xl object-contain" alt="Logo" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center font-black text-sm text-white">
-                      {shop.shopName?.[0]}
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-black text-sm text-white">{shop.shopName}</h3>
-                    {customTagline && <p className="text-[11px] text-slate-400 font-medium">{customTagline}</p>}
-                  </div>
-                </div>
-
-                {footerConfig.showCopyright !== false && (
-                  <p className="text-xs text-slate-400 font-bold">
-                    © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
-                  </p>
-                )}
-
-                {footerConfig.showPrivacy !== false && (
-                  <a
-                    href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-purple-400 hover:text-purple-300 font-bold underline"
-                  >
-                    Privacy Policy
-                  </a>
-                )}
-              </div>
-            </footer>
-          );
-        }
-
-        // Centered Brand Preset
-        if (fStyle === 'centered_brand') {
-          return (
-            <footer className="mt-auto bg-white border-t border-slate-200 py-10 px-4 text-center">
-              <div className="max-w-3xl mx-auto space-y-4">
-                {shop.logoUrl ? (
-                  <img loading="lazy" src={shop.logoUrl} className="w-14 h-14 rounded-2xl object-contain mx-auto border-2 border-slate-100 shadow-md" alt="Logo" />
-                ) : (
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-black text-2xl mx-auto shadow-md">
-                    {shop.shopName?.[0]}
-                  </div>
-                )}
-                <h2 className="text-2xl font-black text-slate-900">{shop.shopName}</h2>
-                {customTagline && (
-                  <p className="text-sm text-slate-500 font-medium italic">"{customTagline}"</p>
-                )}
-
-                {footerConfig.showSocials !== false && (
-                  <div className="flex justify-center gap-3 pt-2">
-                    {shop.socialLinks?.fb && (<a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-blue-600 hover:text-white transition-all"><svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>)}
-                    {shop.socialLinks?.wa && (<a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-emerald-600 hover:text-white transition-all"><svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>)}
-                  </div>
-                )}
-
-                {footerConfig.showCopyright !== false && (
-                  <p className="text-xs text-slate-400 font-bold pt-4 border-t border-slate-100">
-                    © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
-                  </p>
-                )}
-              </div>
-            </footer>
-          );
-        }
-
-        // Modern 4-Column & Dark Luxury Presets
-        return (
-          <footer style={{ position: 'relative', marginTop: 'auto', overflow: 'hidden', background: fStyle === 'dark_luxury' ? 'linear-gradient(135deg, #090d16 0%, #0f172a 60%, #1e1b4b 100%)' : 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 60%, #faf5ff 100%)', color: fStyle === 'dark_luxury' ? '#ffffff' : '#1e1b4b', borderTop: '1px solid rgba(99,102,241,0.12)' }}>
-            <div style={{ position: 'relative', zIndex: 1, maxWidth: '1400px', margin: '0 auto', padding: '64px 24px 32px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '40px', marginBottom: '48px' }}>
-                {/* Brand Column */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {shop.logoUrl ? (
-                      <img loading="lazy" src={shop.logoUrl} style={{ width: '48px', height: '48px', borderRadius: '16px', border: '2px solid rgba(124,58,237,0.4)', objectFit: 'cover', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }} alt="Logo" />
-                    ) : (
-                      <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '20px', boxShadow: '0 8px 24px rgba(124,58,237,0.4)' }}>{shop.shopName?.[0]}</div>
-                    )}
-                    <h2 style={{ fontSize: '22px', fontWeight: 900, color: fStyle === 'dark_luxury' ? '#ffffff' : '#0f172a', margin: 0 }}>{shop.shopName}</h2>
-                  </div>
-                  {customTagline && (
-                    <p style={{ color: fStyle === 'dark_luxury' ? '#94a3b8' : '#64748b', fontSize: '13px', fontWeight: 500, lineHeight: 1.7, fontStyle: 'italic', margin: 0 }}>"{customTagline}"</p>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      {[1,2,3,4,5].map(i => <Star key={i} size={14} style={{ color: '#fbbf24', fill: '#fbbf24' }} />)}
-                      <span style={{ fontSize: '11px', color: fStyle === 'dark_luxury' ? '#94a3b8' : '#64748b', fontWeight: 700, marginLeft: '4px' }}>বিশ্বস্ত সেবা</span>
-                    </div>
-                    <a href="https://bdretailers.com/reviews" target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: '#a78bfa', fontWeight: 800, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      Platform Reviews <ExternalLink size={10} />
-                    </a>
-                  </div>
-                </div>
-
-                {/* Quick Links */}
-                {footerConfig.showCategories !== false && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>দ্রুত নেভিগেশন</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {categories.slice(0, 5).map(c => (
-                        <button key={c.id} onClick={() => { setActiveCategory(c.name); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                          style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left', fontSize: '14px', fontWeight: 700, color: fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569', cursor: 'pointer' }}
-                          onMouseEnter={e => e.currentTarget.style.color = '#a78bfa'}
-                          onMouseLeave={e => e.currentTarget.style.color = fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569'}
-                        >
-                          → {c.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Social & Contact */}
-                {footerConfig.showContact !== false && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <h3 style={{ fontSize: '11px', fontWeight: 900, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>যোগাযোগ করুন</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      {(() => {
-                        const rawEmail = shop.deliveryConfig?.contactEmail || shop.ownerEmail || '';
-                        const hasEmailPlaceholder = rawEmail.toLowerCase().includes('no contact') || rawEmail.toLowerCase().includes('registered') || rawEmail.toLowerCase().includes('endpoint');
-                        const finalEmail = hasEmailPlaceholder ? 'bdretailers26@gmail.com' : rawEmail || 'bdretailers26@gmail.com';
-                        const rawWa = shop.deliveryConfig?.contactWhatsapp || shop.socialLinks?.wa || shop.socialLinks?.whatsapp || '';
-                        const hasWaPlaceholder = rawWa.toLowerCase().includes('no contact') || rawWa.toLowerCase().includes('registered') || rawWa.toLowerCase().includes('endpoint');
-                        const finalWa = hasWaPlaceholder ? '8801734763306' : rawWa || '8801734763306';
-                        const cleanWa = finalWa.replace(/[^0-9]/g, '');
-                        const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
-                        return (
-                          <>
-                            <a href={`mailto:${finalEmail}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
-                              onMouseEnter={e => { e.currentTarget.style.color = '#a78bfa'; }} onMouseLeave={e => { e.currentTarget.style.color = fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569'; }}>
-                              <Bot size={14} /><span>{finalEmail}</span>
-                            </a>
-                            <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 700 }}
-                              onMouseEnter={e => { e.currentTarget.style.color = '#34d399'; }} onMouseLeave={e => { e.currentTarget.style.color = fStyle === 'dark_luxury' ? '#cbd5e1' : '#475569'; }}>
-                              <Phone size={14} /><span>{finalWa.startsWith('+') || finalWa.startsWith('88') ? finalWa : `+88${finalWa.replace(/^0+/, '')}`}</span>
-                            </a>
-                          </>
-                        );
-                      })()}
-                    </div>
-
-                    {footerConfig.showSocials !== false && (
-                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', paddingTop: '8px' }}>
-                        {shop.socialLinks?.fb && (<a href={shop.socialLinks.fb} target="_blank" rel="noreferrer" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', textDecoration: 'none' }}><svg viewBox="0 0 24 24" style={{ width: '18px', height: '18px', fill: 'currentColor' }}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>)}
-                        {shop.socialLinks?.wa && (<a href={`https://wa.me/${shop.socialLinks.wa.replace(/[^0-9]/g,'')}`} target="_blank" rel="noreferrer" style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669', textDecoration: 'none' }}><svg viewBox="0 0 24 24" style={{ width: '18px', height: '18px', fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>)}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom bar */}
-              <div style={{ borderTop: '1px solid rgba(99,102,241,0.12)', paddingTop: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                  {footerConfig.showCopyright !== false && (
-                    <p style={{ fontSize: '11px', fontWeight: 900, color: fStyle === 'dark_luxury' ? '#94a3b8' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>
-                      © {new Date().getFullYear()} {shop.shopName} — সর্বস্বত্ত্ব সংরক্ষিত।
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#059669' }} />
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8' }}>
-                      বানানো হয়েছে{' '}<a href="https://bdretailers.com" target="_blank" rel="noreferrer" style={{ color: '#6366f1', textDecoration: 'underline', fontWeight: 900 }}>bdretailers.com</a> দিয়ে
-                    </span>
-                  </div>
-                </div>
-                {footerConfig.showPrivacy !== false && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', paddingBottom: '8px' }}>
-                    <a
-                      href={`/shop/${shop.subdomainSlug || shop.shopSlug}/privacy`}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '20px', padding: '6px 16px', fontSize: '12px', fontWeight: 800, color: '#4f46e5', textDecoration: 'none' }}
-                    >
-                      🔒 Privacy Policy
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          </footer>
-        );
-      })()}
+          attributionStyle: 'option_a',
+          attributionAlign: 'center',
+        }}
+        themeVars={themeVars}
+        categories={categories}
+        onCategoryClick={(catName) => {
+          setActiveCategory(catName);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        isPreview={false}
+      />
 
       {/* ── Scroll To Top / Bottom Buttons ── */}
       <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8">

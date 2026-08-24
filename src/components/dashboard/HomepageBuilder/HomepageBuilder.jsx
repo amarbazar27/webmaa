@@ -5,10 +5,14 @@ import { getShop, getProducts } from '@/lib/firestore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import SectionList from './SectionList';
-import ThemeEditor from './ThemeEditor';
+import ThemeEditor, { THEME_PRESETS } from './ThemeEditor';
 import HeaderFooterEditor from './HeaderFooterEditor';
 import HomepagePreview from './HomepagePreview';
-import { Eye, Save, Globe, Palette, LayoutDashboard, Loader2, ArrowLeft, Smartphone, Monitor, Sparkles, Sliders } from 'lucide-react';
+import { 
+  Eye, Save, Globe, Palette, LayoutDashboard, Loader2, 
+  ArrowLeft, Smartphone, Monitor, Sparkles, Sliders, Check,
+  Layers, ShoppingBag, Zap, ChevronRight, X
+} from 'lucide-react';
 import { DEMO_PRODUCTS } from '@/lib/homepageDemoData';
 
 const DEFAULT_SECTIONS = [
@@ -43,31 +47,175 @@ const DEFAULT_SECTIONS = [
   { id: 'popup_banner', type: 'popup_banner', enabled: false, order: 28, data: { imageUrl: '', linkUrl: '', buttonText: '', delay: 2 } },
 ];
 
-// ── Category Template Presets ──
-const CATEGORY_TEMPLATES = {
-  grocery: {
-    label: '🛒 গ্রোসারি ও ডেইলি ফ্রেশ',
-    desc: 'Chaldal, Shwapno ও ফ্রেশ মার্কেট স্টাইলে',
-    theme: { primaryColor: '#059669', font: 'Hind Siliguri' },
-    enabled: ['basic_storefront', 'hero', 'trust_strip', 'categories', 'flash_sale', 'product_grid', 'bundle_section', 'price_ladder', 'price_tier_store', 'photo_reviews'],
-  },
-  fashion: {
-    label: '👗 লাক্সারি ফ্যাশন & লাইফস্টাইল',
-    desc: 'IKEA, Sailor ও Aarong স্টাইলে',
-    theme: { primaryColor: '#7C3AED', font: 'Playfair Display' },
+// ── 14 Universal & Category-Smart Templates ──
+export const CATEGORY_TEMPLATES = {
+  fashion_editorial: {
+    id: 'fashion_editorial',
+    category: 'fashion',
+    label: '👗 Fashion Editorial & Couture',
+    namebn: 'লাক্সারি ফ্যাশন এডিটোরিয়াল',
+    desc: 'IKEA, Sailor ও Vogue স্টাইল বড় ভিজ্যুয়াল স্পেসিং ও কিউরেটেড লুক',
+    theme: { primaryColor: '#7C3AED', secondaryColor: '#2E1065', font: 'Playfair Display', buttonRadius: '4px' },
+    headerStyle: 'fashion_editorial',
+    footerStyle: 'editorial_story',
     enabled: ['basic_storefront', 'hero', 'split_showcase', 'categories', 'bento_mosaic', 'product_grid', 'shop_the_look', 'video_reels', 'lookbook', 'photo_reviews', 'instagram_feed'],
+    gradient: 'from-purple-600 via-indigo-600 to-pink-500',
   },
-  tech: {
-    label: '💻 টেক, গ্যাজেটস & ইলেকট্রনিক্স',
-    desc: 'Star Tech, Apple ও Pickaboo স্টাইলে',
-    theme: { primaryColor: '#2563EB', font: 'Inter' },
+  modern_streetwear: {
+    id: 'modern_streetwear',
+    category: 'fashion',
+    label: '🧥 Modern Streetwear & Boutique',
+    namebn: 'মডার্ন স্ট্রিটওয়্যার বুটিক',
+    desc: 'তারুণ্যের ট্রেন্ডি লুক, ইনস্টাগ্রাম ভিডিও রিলস ও কাস্টমার রিভিউ',
+    theme: { primaryColor: '#E11D48', secondaryColor: '#4C0519', font: 'Montserrat', buttonRadius: '16px' },
+    headerStyle: 'classic',
+    footerStyle: 'fashion_lifestyle',
+    enabled: ['basic_storefront', 'hero', 'categories', 'flash_sale', 'product_grid', 'video_reels', 'customer_ugc', 'photo_reviews', 'instagram_feed'],
+    gradient: 'from-rose-500 to-pink-600',
+  },
+  fresh_grocery: {
+    id: 'fresh_grocery',
+    category: 'grocery',
+    label: '🥦 Fresh Grocery & Organic',
+    namebn: 'গ্রোসারি ও ফ্রেশ অর্গানিক বাজার',
+    desc: 'Chaldal, Shwapno ও ফার্ম ফ্রেশ ডেইলি মার্কেট স্টাইল',
+    theme: { primaryColor: '#059669', secondaryColor: '#064E3B', font: 'Hind Siliguri', buttonRadius: '12px' },
+    headerStyle: 'grocery_quick',
+    footerStyle: 'grocery_fresh',
+    enabled: ['basic_storefront', 'hero', 'trust_strip', 'categories', 'flash_sale', 'product_grid', 'bundle_section', 'price_ladder', 'price_tier_store', 'photo_reviews'],
+    gradient: 'from-emerald-600 to-teal-700',
+  },
+  supermarket_deals: {
+    id: 'supermarket_deals',
+    category: 'grocery',
+    label: '🛒 Supermarket & Daily Deals',
+    namebn: 'মেগা সুপারমার্কেট ডিলস',
+    desc: 'হাজারো পণ্যের ইনস্ট্যান্ট সার্চ, ডিল অফ দ্য ডে ও ভলিউম সেভিংস',
+    theme: { primaryColor: '#16A34A', secondaryColor: '#14532D', font: 'Inter', buttonRadius: '50px' },
+    headerStyle: 'search_first',
+    footerStyle: 'classic_4col',
+    enabled: ['basic_storefront', 'hero', 'trust_strip', 'deal_of_the_day', 'categories', 'flash_sale', 'product_grid', 'price_tier_store', 'brand_marquee'],
+    gradient: 'from-green-600 to-emerald-800',
+  },
+  tech_electronics: {
+    id: 'tech_electronics',
+    category: 'tech',
+    label: '💻 Tech & Next-Gen Electronics',
+    namebn: 'নেক্সট-জেন টেক ও গ্যাজেটস',
+    desc: 'Star Tech ও Apple স্টাইল শার্প স্পেসিফিকেশন ও ফ্ল্যাগশিপ শোকেস',
+    theme: { primaryColor: '#2563EB', secondaryColor: '#0F172A', font: 'Inter', buttonRadius: '8px' },
+    headerStyle: 'electronics',
+    footerStyle: 'electronics_tech',
     enabled: ['basic_storefront', 'hero', 'trust_strip', 'split_showcase', 'deal_of_the_day', 'product_grid', 'product_spotlight', 'brand_marquee', 'photo_reviews'],
+    gradient: 'from-blue-600 via-indigo-700 to-slate-900',
   },
-  beauty: {
-    label: '💄 বিউটি, স্কিনকেয়ার & কসমেটিক্স',
-    desc: 'Sephora, BanglaShoppers স্টাইলে',
-    theme: { primaryColor: '#DB2777', font: 'Hind Siliguri' },
+  gadgets_audio: {
+    id: 'gadgets_audio',
+    category: 'tech',
+    label: '⚡ Smart Gadgets & Audio Gear',
+    namebn: 'স্মার্ট অডিও ও সাইবার গ্যাজেটস',
+    desc: 'শপেবল ভিডিও, বিফোর-আফটার ও ডার্ক হাই-টেক ভাইব',
+    theme: { primaryColor: '#06B6D4', secondaryColor: '#0F172A', font: 'Outfit', buttonRadius: '14px' },
+    headerStyle: 'electronics',
+    footerStyle: 'electronics_tech',
+    enabled: ['basic_storefront', 'hero', 'split_showcase', 'shoppable_video', 'product_grid', 'video_reels', 'photo_reviews', 'deal_of_the_day'],
+    gradient: 'from-cyan-600 to-blue-700',
+  },
+  luxury_beauty: {
+    id: 'luxury_beauty',
+    category: 'beauty',
+    label: '💄 Luxury Beauty & Skincare',
+    namebn: 'রেডিয়েন্স স্কিনকেয়ার ও বিউটি',
+    desc: 'Sephora স্টাইল সফট রোজ আভা, ফলাফল কম্প্যারিজম ও রিভিউ',
+    theme: { primaryColor: '#DB2777', secondaryColor: '#831843', font: 'Hind Siliguri', buttonRadius: '50px' },
+    headerStyle: 'fashion_editorial',
+    footerStyle: 'fashion_lifestyle',
     enabled: ['basic_storefront', 'hero', 'split_showcase', 'categories', 'before_after', 'flash_sale', 'product_grid', 'customer_ugc', 'shoppable_video', 'popup_banner'],
+    gradient: 'from-pink-500 to-rose-600',
+  },
+  home_living: {
+    id: 'home_living',
+    category: 'home',
+    label: '🛋️ Modern Living & Furniture',
+    namebn: 'হোম ডেকোর ও ফার্নিচার কালেকশন',
+    desc: 'IKEA অনুপ্রাণিত ৫০/৫০ স্প্লিট শোকেস ও লিভিং স্পেস মোজাইক',
+    theme: { primaryColor: '#CC5500', secondaryColor: '#7C2D12', font: 'Montserrat', buttonRadius: '12px' },
+    headerStyle: 'classic',
+    footerStyle: 'modern_split',
+    enabled: ['basic_storefront', 'hero', 'split_showcase', 'categories', 'bento_mosaic', 'product_grid', 'mood_board', 'editorial_story', 'photo_reviews'],
+    gradient: 'from-amber-600 to-orange-700',
+  },
+  sports_fitness: {
+    id: 'sports_fitness',
+    category: 'sports',
+    label: '👟 High-Performance Sports & Gym',
+    namebn: 'স্পোর্টস গিয়ার ও ফিটনেস অ্যাথলিট',
+    desc: 'Nike স্টাইল পাওয়ারফুল হিরো, ডায়নামিক প্রোডাক্ট গ্রিড ও ভিডিও',
+    theme: { primaryColor: '#EA580C', secondaryColor: '#18181B', font: 'Outfit', buttonRadius: '50px' },
+    headerStyle: 'classic',
+    footerStyle: 'classic_4col',
+    enabled: ['basic_storefront', 'hero', 'trust_strip', 'categories', 'product_spotlight', 'product_grid', 'video_reels', 'photo_reviews'],
+    gradient: 'from-orange-600 to-red-600',
+  },
+  restaurant_food: {
+    id: 'restaurant_food',
+    category: 'food',
+    label: '🍕 Restaurant & Food Express',
+    namebn: 'ফুড ডেলিভারি ও রেস্টুরেন্ট মেনু',
+    desc: 'স্পিডি ফুড মেনু গ্রিড, হটলাইন ও ইনস্ট্যান্ট কম্বো প্যাক',
+    theme: { primaryColor: '#DC2626', secondaryColor: '#450A0A', font: 'Hind Siliguri', buttonRadius: '20px' },
+    headerStyle: 'search_first',
+    footerStyle: 'grocery_fresh',
+    enabled: ['basic_storefront', 'hero', 'categories', 'bundle_section', 'flash_sale', 'product_grid', 'deal_of_the_day', 'photo_reviews'],
+    gradient: 'from-red-600 to-rose-700',
+  },
+  jewelry_gold: {
+    id: 'jewelry_gold',
+    category: 'luxury',
+    label: '💎 Obsidian 24K Fine Jewelry',
+    namebn: 'অবসিডিয়ান গোল্ড ও লাক্সারি জুয়েলারি',
+    desc: 'অভিজাত ডার্ক অবসিডিয়ান ব্যাকড্রপ ও ২৪কে গোল্ড ফ্রেম লুকবুক',
+    theme: { primaryColor: '#D4AF37', secondaryColor: '#18181B', font: 'Playfair Display', buttonRadius: '4px' },
+    headerStyle: 'fashion_editorial',
+    footerStyle: 'editorial_story',
+    enabled: ['basic_storefront', 'hero', 'product_spotlight', 'lookbook', 'product_grid', 'editorial_story', 'photo_reviews'],
+    gradient: 'from-amber-500 via-yellow-600 to-stone-900',
+  },
+  books_stationery: {
+    id: 'books_stationery',
+    category: 'general',
+    label: '📚 Books, Library & Stationery',
+    namebn: 'বইঘর, লাইব্রেরি ও স্টেশনারি',
+    desc: 'বইপ্রেমীদের জন্য কিউরেটেড ট্যাবড কালেকশন ও ক্যাটাগরি স্ক্রলার',
+    theme: { primaryColor: '#4338CA', secondaryColor: '#1E1B4B', font: 'Hind Siliguri', buttonRadius: '8px' },
+    headerStyle: 'mega_nav',
+    footerStyle: 'classic_4col',
+    enabled: ['basic_storefront', 'hero', 'categories', 'tabbed_collection', 'product_grid', 'brand_marquee', 'photo_reviews'],
+    gradient: 'from-indigo-600 to-purple-800',
+  },
+  health_pharmacy: {
+    id: 'health_pharmacy',
+    category: 'general',
+    label: '💊 Health, Wellness & Pharmacy',
+    namebn: 'স্বাস্থ্যসেবা, ফার্মেসি ও ওয়েলনেস',
+    desc: 'প্রয়োজনীয় স্বাস্থ্যপণ্য, কনসার্ন গ্রিড ও বিশ্বস্ত ডেলিভারি স্ট্রিপ',
+    theme: { primaryColor: '#0284C7', secondaryColor: '#082F49', font: 'Inter', buttonRadius: '12px' },
+    headerStyle: 'search_first',
+    footerStyle: 'trust_badge',
+    enabled: ['basic_storefront', 'hero', 'trust_strip', 'concern_grid', 'product_grid', 'price_tier_store', 'photo_reviews'],
+    gradient: 'from-sky-600 to-blue-800',
+  },
+  wholesale_b2b: {
+    id: 'wholesale_b2b',
+    category: 'b2b',
+    label: '🏢 B2B & Bulk Wholesale',
+    namebn: 'হোলসেল ও বালক বিটুবি মার্কেট',
+    desc: 'বালক ডিসকাউন্ট প্রাইস ল্যাডার, ভলিউম টিয়ার ও রিয়েলটাইম কোট',
+    theme: { primaryColor: '#1E3A8A', secondaryColor: '#0F172A', font: 'Inter', buttonRadius: '8px' },
+    headerStyle: 'marketplace',
+    footerStyle: 'marketplace',
+    enabled: ['basic_storefront', 'hero', 'trust_strip', 'price_ladder', 'product_grid', 'price_tier_store', 'deal_of_the_day', 'brand_marquee'],
+    gradient: 'from-slate-800 via-blue-900 to-slate-900',
   },
 };
 
@@ -88,13 +236,15 @@ const DEFAULT_HEADER = {
 };
 
 const DEFAULT_FOOTER = {
-  style: 'modern_columns',
+  style: 'classic_4col',
   showCategories: true,
   showContact: true,
   showSocials: true,
   showCopyright: true,
   showPrivacy: true,
   customTagline: '',
+  attributionStyle: 'option_a',
+  attributionAlign: 'center',
 };
 
 export default function HomepageBuilder() {
@@ -109,6 +259,7 @@ export default function HomepageBuilder() {
   const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'header_footer' | 'template' | 'theme'
   const [previewMode, setPreviewMode] = useState('mobile'); // 'mobile' | 'desktop'
   const [highlightSectionId, setHighlightSectionId] = useState(null);
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState('all');
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -145,11 +296,9 @@ export default function HomepageBuilder() {
       .then(r => r.json())
       .then(config => {
         if (config.sections?.length) {
-          // Merge existing saved sections with any new default section types not present yet
           const existingTypeMap = new Map(config.sections.map(s => [s.type, s]));
           let merged = config.sections.map((s, idx) => ({ ...s, order: idx }));
 
-          // Ensure basic_storefront is present
           if (!existingTypeMap.has('basic_storefront')) {
             merged = [
               { id: 'basic_storefront', type: 'basic_storefront', enabled: true, order: 0, isPinned: true, data: { showDesc: true, showSearch: true, showCategories: true, showProducts: true } },
@@ -254,16 +403,27 @@ export default function HomepageBuilder() {
     }));
     setSections(newSections);
     setTheme(prev => ({ ...prev, ...tpl.theme }));
+    if (tpl.headerStyle) setHeaderConfig(h => ({ ...h, style: tpl.headerStyle }));
+    if (tpl.footerStyle) setFooterConfig(f => ({ ...f, style: tpl.footerStyle }));
     setHasChanges(true);
-    toast.success(`${tpl.label} টেমপ্লেট অ্যাপ্লাই হয়েছে!`);
+    toast.success(`${tpl.namebn} টেমপ্লেট অ্যাপ্লাই হয়েছে! 🚀`);
   };
 
-  const TEMPLATE_GRADIENTS = {
-    grocery: 'from-emerald-500 to-green-600',
-    fashion: 'from-purple-500 to-pink-500',
-    tech: 'from-blue-500 to-cyan-500',
-    beauty: 'from-rose-500 to-pink-600',
-  };
+  const TEMPLATE_FILTER_CATEGORIES = [
+    { id: 'all', label: 'সব টেমপ্লেট' },
+    { id: 'fashion', label: 'ফ্যাশন' },
+    { id: 'grocery', label: 'গ্রোসারি' },
+    { id: 'tech', label: 'টেক ও গেজেট' },
+    { id: 'beauty', label: 'বিউটি' },
+    { id: 'home', label: 'হোম ডেকোর' },
+    { id: 'sports', label: 'স্পোর্টস' },
+    { id: 'b2b', label: 'B2B' },
+  ];
+
+  const filteredTemplates = Object.entries(CATEGORY_TEMPLATES).filter(([_, tpl]) => {
+    if (templateCategoryFilter === 'all') return true;
+    return tpl.category === templateCategoryFilter;
+  });
 
   return (
     <div className="min-h-screen bg-slate-100/60">
@@ -280,13 +440,13 @@ export default function HomepageBuilder() {
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-black text-slate-900 leading-none">BDRetailers Homepage Builder</h1>
+                <h1 className="text-sm font-black text-slate-900 leading-none">BDRetailers Visual Store Designer</h1>
                 <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-black uppercase">
-                  Pro Engine
+                  Universal Builder
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 font-bold mt-1">
-                {lastSaved ? `সর্বশেষ সেভ: ${lastSaved.toLocaleTimeString('bn-BD')}` : 'ভিজ্যুয়ালি সাজান ও সরাসরি লাইভ প্রিভিউ দেখুন'}
+                {lastSaved ? `সর্বশেষ সেভ: ${lastSaved.toLocaleTimeString('bn-BD')}` : 'ভিজ্যুয়ালি সাজান ও তাৎক্ষণিক লাইভ প্রিভিউ দেখুন'}
               </p>
             </div>
           </div>
@@ -353,32 +513,56 @@ export default function HomepageBuilder() {
             </button>
           </div>
 
-          {/* Template Tab Content */}
+          {/* Template Tab Content — 14 Universal Templates */}
           {activeTab === 'template' && (
             <div className="space-y-3">
               <div className="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider px-1">
-                  ⚡ প্রিমিয়াম টেমপ্লেট নির্বাচন করুন
-                </p>
-                <div className="grid grid-cols-1 gap-3">
-                  {Object.entries(CATEGORY_TEMPLATES).map(([key, tpl]) => (
+                <div>
+                  <p className="text-[11px] font-black text-slate-800 uppercase tracking-wider">
+                    ⚡ ইউনিভার্সাল টেমপ্লেট লাইব্রেরি (১৪টি ডিজাইন)
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                    যেকোনো টেমপ্লেট আপনার দোকানের জন্য ক্লিক করে অ্যাপ্লাই করুন
+                  </p>
+                </div>
+
+                {/* Category Filter Chips */}
+                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {TEMPLATE_FILTER_CATEGORIES.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => setTemplateCategoryFilter(c.id)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black whitespace-nowrap transition-all cursor-pointer ${
+                        templateCategoryFilter === c.id
+                          ? 'bg-purple-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Template Cards Grid */}
+                <div className="grid grid-cols-1 gap-3 max-h-[600px] overflow-y-auto pr-1">
+                  {filteredTemplates.map(([key, tpl]) => (
                     <div
                       key={key}
-                      className={`rounded-2xl bg-gradient-to-br ${TEMPLATE_GRADIENTS[key]} p-4 text-white shadow-md relative overflow-hidden group`}
+                      className={`rounded-2xl bg-gradient-to-br ${tpl.gradient} p-4 text-white shadow-md relative overflow-hidden group`}
                     >
                       <div className="flex items-start justify-between gap-3 relative z-10">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-black leading-snug">{tpl.label}</p>
-                          <p className="text-[11px] font-medium opacity-85 mt-0.5 leading-tight">{tpl.desc}</p>
+                          <p className="text-[11px] font-medium opacity-90 mt-0.5 leading-tight">{tpl.desc}</p>
                           <div className="flex flex-wrap gap-1 mt-2.5">
-                            {tpl.enabled.slice(0, 5).map(sId => (
+                            {tpl.enabled.slice(0, 4).map(sId => (
                               <span key={sId} className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black uppercase tracking-wide">
                                 {sId.replace(/_/g, ' ')}
                               </span>
                             ))}
-                            {tpl.enabled.length > 5 && (
+                            {tpl.enabled.length > 4 && (
                               <span className="px-2 py-0.5 bg-white/20 rounded-md text-[9px] font-black">
-                                +{tpl.enabled.length - 5}
+                                +{tpl.enabled.length - 4}
                               </span>
                             )}
                           </div>
