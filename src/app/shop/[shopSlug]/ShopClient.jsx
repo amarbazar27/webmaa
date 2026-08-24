@@ -418,6 +418,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const router = useRouter();
   const { user, userData, loading: authLoading } = useAuth();
   const safeShop = initialShop || props.shop || {};
+  const safeShopId = safeShop?.id || props.shop?.id || '';
   const [shop, setShop] = useState(safeShop);
   const [products, setProducts] = useState(initialProducts || props.products || []);
   
@@ -448,10 +449,10 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   // Load and manage recent search history
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(`shop_recent_searches_${shop?.id || 'store'}`);
+      const stored = localStorage.getItem(`shop_recent_searches_${safeShopId || 'store'}`);
       if (stored) setRecentSearches(JSON.parse(stored));
     } catch {}
-  }, [shop?.id]);
+  }, [safeShopId]);
 
   const saveRecentSearch = (term) => {
     const trimmed = (term || '').trim();
@@ -459,7 +460,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     try {
       const updated = [trimmed, ...recentSearches.filter(s => s.toLowerCase() !== trimmed.toLowerCase())].slice(0, 8);
       setRecentSearches(updated);
-      localStorage.setItem(`shop_recent_searches_${shop?.id || 'store'}`, JSON.stringify(updated));
+      localStorage.setItem(`shop_recent_searches_${safeShopId || 'store'}`, JSON.stringify(updated));
     } catch {}
   };
 
@@ -468,7 +469,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     try {
       const updated = recentSearches.filter(s => s !== termToDelete);
       setRecentSearches(updated);
-      localStorage.setItem(`shop_recent_searches_${shop?.id || 'store'}`, JSON.stringify(updated));
+      localStorage.setItem(`shop_recent_searches_${safeShopId || 'store'}`, JSON.stringify(updated));
     } catch {}
   };
 
@@ -476,17 +477,18 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     e?.stopPropagation?.();
     try {
       setRecentSearches([]);
-      localStorage.removeItem(`shop_recent_searches_${shop?.id || 'store'}`);
+      localStorage.removeItem(`shop_recent_searches_${safeShopId || 'store'}`);
     } catch {}
   };
 
   useEffect(() => { const t = setTimeout(() => setShowSplash(false), 1500); return () => clearTimeout(t); }, []);
 
   useEffect(() => {
+    if (!safeShopId) return;
     // Sync fresh shop and products configurations from Firestore to bypass Next.js ISR cache latency
     import('@/lib/firestore').then(async (lib) => {
       try {
-        const freshShop = await lib.getShop(initialShop.id);
+        const freshShop = await lib.getShop(safeShopId);
         if (freshShop) {
           setShop(prev => ({
             ...prev,
@@ -502,7 +504,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
             designOverrides: freshShop.designOverrides ?? prev.designOverrides,
           }));
         }
-        const freshProducts = await lib.getShopProducts(initialShop.id);
+        const freshProducts = await lib.getShopProducts(safeShopId);
         if (freshProducts && freshProducts.length > 0) {
           setProducts(freshProducts);
         }
@@ -510,16 +512,16 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         console.error('Failed to sync real-time configurations:', err);
       }
     });
-  }, [initialShop.id]);
+  }, [safeShopId]);
 
   // ── Real-time template & theme listener — triggers instant UI update when retailer applies a template ──
   useEffect(() => {
+    if (!safeShopId) return;
     let unsubscribe = null;
     import('@/lib/firestore').then(async (lib) => {
       try {
-        // Use onSnapshot if available (Firestore real-time), otherwise poll every 5s
         if (lib.onShopSnapshot) {
-          unsubscribe = lib.onShopSnapshot(initialShop.id, (freshShop) => {
+          unsubscribe = lib.onShopSnapshot(safeShopId, (freshShop) => {
             if (freshShop) {
               setShop(prev => {
                 const templateChanged = freshShop.templateId !== prev.templateId;
@@ -540,7 +542,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       }
     });
     return () => { if (unsubscribe) unsubscribe(); };
-  }, [safeShop?.id]);
+  }, [safeShopId]);
 
   useEffect(() => {
     if (shop) {
@@ -616,7 +618,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     prevOnlineRef.current = isOnline;
   }, [isOnline]);
 
-  const CART_KEY = `cart_${initialShop.id}`;
+  const CART_KEY = `cart_${safeShopId || 'store'}`;
   const [cart, setCart] = useState([]);
   const [selectedProductForModal, setSelectedProductForModal] = useState(null);
 
@@ -669,22 +671,22 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       
       if (initialCart.length > 0) {
         setCart(initialCart);
-      } else {
-        loadCartIDB(initialShop.id).then(items => {
+      } else if (safeShopId) {
+        loadCartIDB(safeShopId).then(items => {
           if (items && items.length > 0) setCart(items);
         });
       }
     }
-  }, [CART_KEY, initialShop.id]);
+  }, [CART_KEY, safeShopId]);
 
   // ── Cart Merge Logic (Guest -> Logged In User) ──
   const hasMergedCart = useRef(false);
   useEffect(() => {
-    if (user?.uid && !hasMergedCart.current) {
+    if (user?.uid && !hasMergedCart.current && safeShopId) {
       hasMergedCart.current = true;
       import('@/lib/firestore').then(async (lib) => {
         try {
-          const remoteCart = await lib.getUserCart(user.uid, shop.id);
+          const remoteCart = await lib.getUserCart(user.uid, safeShopId);
           if (remoteCart && remoteCart.length > 0) {
             setCart(prevCart => {
               if (prevCart.length === 0) return remoteCart;
@@ -705,17 +707,19 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         }
       });
     }
-  }, [user?.uid, shop.id]);
+  }, [user?.uid, safeShopId]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && cart.length > 0) {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
-      saveCartIDB(initialShop.id, cart);
-      if (user?.uid) {
-        import('@/lib/firestore').then(lib => lib.saveUserCart(user.uid, shop.id, cart));
+      if (safeShopId) {
+        saveCartIDB(safeShopId, cart);
+        if (user?.uid) {
+          import('@/lib/firestore').then(lib => lib.saveUserCart(user.uid, safeShopId, cart));
+        }
       }
     }
-  }, [cart, CART_KEY, initialShop.id, user]);
+  }, [cart, CART_KEY, safeShopId, user]);
 
   useEffect(() => {
     if (user && typeof sessionStorage !== 'undefined') {

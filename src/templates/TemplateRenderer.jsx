@@ -6,7 +6,7 @@
  * Renders the correct storefront style based on shop's templateId setting.
  */
 
-import { Suspense, memo, useRef } from 'react';
+import React, { Component, Suspense, memo, useRef } from 'react';
 import { getTemplateById } from './index';
 import { buildStyleEngineOutput } from '@/lib/styleEngine';
 
@@ -58,6 +58,49 @@ export function TemplateErrorFallback({ error, templateId }) {
   );
 }
 
+class StorefrontErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('[StorefrontErrorBoundary] Caught render exception:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-slate-50 font-sans">
+          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm">
+            ⚠️
+          </div>
+          <h2 className="text-xl font-black text-slate-900 mb-2">স্টোরফ্রন্ট লোড করতে সমস্যা হয়েছে</h2>
+          <p className="text-sm text-slate-500 max-w-md mb-6 leading-relaxed">
+            {this.state.error?.message || 'একটি সাময়িক রেন্ডার সমস্যা দেখা দিয়েছে।'}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm shadow-md transition-all cursor-pointer border-0"
+            >
+              🔄 রিলোড করুন (Reload)
+            </button>
+            <a
+              href="/"
+              className="px-6 py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-black text-sm shadow-sm hover:bg-slate-50 transition-all text-decoration-none"
+            >
+              🏠 হোমে যান
+            </a>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /**
  * Main TemplateRenderer
  * Props:
@@ -104,21 +147,23 @@ function TemplateRenderer({
       {...(dataAttrs || {})}
       suppressHydrationWarning
     >
-      <Suspense fallback={<TemplateSkeleton isDark={isDark} />}>
-        <ShopClientComponent
-          initialShop={shop || {}}
-          initialProducts={products || []}
-          initialCategories={categories || []}
-          shop={shop || {}}
-          products={products || []}
-          categories={categories || []}
-          template={template}
-          theme={mergedTheme}
-          isDark={isDark}
-          globalConfig={globalConfig || {}}
-          {...rest}
-        />
-      </Suspense>
+      <StorefrontErrorBoundary>
+        <Suspense fallback={<TemplateSkeleton isDark={isDark} />}>
+          <ShopClientComponent
+            initialShop={shop || {}}
+            initialProducts={products || []}
+            initialCategories={categories || []}
+            shop={shop || {}}
+            products={products || []}
+            categories={categories || []}
+            template={template}
+            theme={mergedTheme}
+            isDark={isDark}
+            globalConfig={globalConfig || {}}
+            {...rest}
+          />
+        </Suspense>
+      </StorefrontErrorBoundary>
     </div>
   );
 }
