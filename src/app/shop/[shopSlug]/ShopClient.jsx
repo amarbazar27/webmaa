@@ -36,6 +36,7 @@ const ReviewSection = dynamic(() => import('@/components/shop/ReviewSection'), {
 const SectionRenderer = dynamic(() => import('@/components/storefront/sections/SectionRenderer'), { ssr: false });
 const StorefrontHeader = dynamic(() => import('@/components/storefront/StorefrontHeader'), { ssr: false });
 const StorefrontFooter = dynamic(() => import('@/components/storefront/StorefrontFooter'), { ssr: false });
+const MapModal = dynamic(() => import('@/components/shop/MapModal'), { ssr: false });
 
 // Product detail modal component imports
 import ProductImage from '@/features/product/components/ProductImage';
