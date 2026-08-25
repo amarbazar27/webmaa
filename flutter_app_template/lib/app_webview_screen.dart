@@ -145,11 +145,11 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     builtInZoomControls: false,
                     displayZoomControls: false,
                     mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
-                    userAgent: "BDRetailersApp/1.0.0 (Android; Mobile; NativeApp)",
+                    applicationNameForUserAgent: "BDRetailersApp/1.0.0",
                     allowFileAccessFromFileURLs: true,
                     allowUniversalAccessFromFileURLs: true,
                     javaScriptCanOpenWindowsAutomatically: true,
-                    supportMultipleWindows: false,
+                    supportMultipleWindows: true,
                     geolocationEnabled: true,
                     cacheEnabled: true,
                     cacheMode: CacheMode.LOAD_DEFAULT,
@@ -162,6 +162,78 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     disableDefaultErrorPage: true,
                     preferredContentMode: UserPreferredContentMode.MOBILE,
                   ),
+                  onCreateWindow: (controller, createWindowAction) async {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (dialogContext) {
+                        return Dialog(
+                          insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          clipBehavior: Clip.antiAlias,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            height: MediaQuery.of(context).size.height * 0.85,
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  color: const Color(0xFFF1F5F9),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(Icons.lock_outline_rounded, size: 16, color: Color(0xFF475569)),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Google Sign In',
+                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+                                          ),
+                                        ],
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF475569)),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () {
+                                          if (Navigator.canPop(dialogContext)) {
+                                            Navigator.pop(dialogContext);
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: InAppWebView(
+                                    windowId: createWindowAction.windowId,
+                                    initialSettings: InAppWebViewSettings(
+                                      javaScriptEnabled: true,
+                                      domStorageEnabled: true,
+                                      databaseEnabled: true,
+                                      thirdPartyCookiesEnabled: true,
+                                      mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
+                                      supportMultipleWindows: false,
+                                      javaScriptCanOpenWindowsAutomatically: true,
+                                      allowsInlineMediaPlayback: true,
+                                      applicationNameForUserAgent: "BDRetailersApp/1.0.0",
+                                    ),
+                                    onCloseWindow: (controller) {
+                                      if (Navigator.canPop(dialogContext)) {
+                                        Navigator.pop(dialogContext);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                    return true;
+                  },
                   onWebViewCreated: (controller) {
                     _webViewController = controller;
                   },

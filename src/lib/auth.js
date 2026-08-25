@@ -132,23 +132,29 @@ export const loginWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     return await handleUserSession(result.user);
   } catch (error) {
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-      await signInWithRedirect(auth, googleProvider);
-    } else {
-      console.error("Google login failed:", error);
-      throw error;
+    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+      // User closed the popup intentionally
+      return null;
     }
+    if (error.code === 'auth/popup-blocked') {
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
+    console.error("Google login failed:", error);
+    throw error;
   }
 };
 
 export const handleLoginRedirect = async () => {
   try {
     const result = await getRedirectResult(auth);
-    if (result) return await handleUserSession(result.user);
+    if (result && result.user) {
+      return await handleUserSession(result.user);
+    }
     return null;
   } catch (error) {
     console.error("Redirect result error:", error);
-    throw error;
+    return null;
   }
 };
 

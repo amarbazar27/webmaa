@@ -1054,9 +1054,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const handleGoogleLogin = async () => {
     try {
       const result = await loginWithGoogle();
-      // result is null when redirect flow started (page will auto-reload after Google login)
       if (result) {
-        toast.success('সফলভাবে লগইন হয়েছে!');
+        toast.success('সফলভাবে লগইন হয়েছে! 🎉');
+        setShowLoginModal(false);
         setIsProfileOpen(false);
         // If returnToCheckout flag set, reopen the order modal
         if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('returnToCheckout') === 'true') {
@@ -1068,6 +1068,8 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       console.error('Login error:', err);
       if (err?.code === 'auth/unauthorized-domain' || err?.message?.includes('unauthorized')) {
         toast.error('ডোমেইনটি ফায়ারবেসে যোগ নেই। শপমালিককে জানান। (Unauthorized Domain)', { duration: 6000 });
+      } else if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        // User closed popup, do nothing
       } else {
         toast.error(`লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন। [${err?.code || err?.message || 'Unknown'}]`, { duration: 6000 });
       }
@@ -1080,17 +1082,26 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     try {
       const { signInWithEmailAndPassword } = await import('firebase/auth');
       const { auth } = await import('@/lib/auth');
-      const userCredential = await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      const userCredential = await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
       
       const { handleUserSession } = await import('@/lib/auth');
       await handleUserSession(userCredential.user);
 
       toast.success('লগইন সফল! 🎉');
       setShowLoginModal(false);
+      setIsProfileOpen(false);
       setLoginEmail(''); setLoginPassword('');
       if (cart.length > 0) setTimeout(() => setIsOrderOpen(true), 300);
     } catch (err) {
-      toast.error(`লগইন ব্যর্থ: ${err?.code === 'auth/wrong-password' ? 'পাসওয়ার্ড ভুল' : err?.code === 'auth/user-not-found' ? 'ইমেইল পাওয়া যায়নি' : err.message}`);
+      let msg = err.message;
+      if (err?.code === 'auth/invalid-credential' || err?.code === 'auth/wrong-password' || err?.code === 'auth/user-not-found') {
+        msg = 'ইমেইল অথবা পাসওয়ার্ড সঠিক নয়। নতুন একাউন্ট হলে "অ্যাকাউন্ট নেই?" বাটনে চাপ দিয়ে নিবন্ধন করুন।';
+      } else if (err?.code === 'auth/invalid-email') {
+        msg = 'সঠিক ইমেইল এড্রেস লিখুন।';
+      } else if (err?.code === 'auth/too-many-requests') {
+        msg = 'অতিরিক্ত চেষ্টার কারণে সাময়িক ব্লক করা হয়েছে। কিছুক্ষণ পর চেষ্টা করুন।';
+      }
+      toast.error(`লগইন ব্যর্থ: ${msg}`);
     } finally {
       setLoginLoading(false);
     }
@@ -1103,19 +1114,28 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     try {
       const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
       const { auth } = await import('@/lib/auth');
-      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, loginPassword);
+      const userCredential = await createUserWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
       if (customerRegName) {
-        await updateProfile(userCredential.user, { displayName: customerRegName });
+        await updateProfile(userCredential.user, { displayName: customerRegName.trim() });
       }
       const { handleUserSession } = await import('@/lib/auth');
       await handleUserSession(userCredential.user);
 
       toast.success('নিবন্ধন সফল এবং লগইন হয়েছে! 🎉');
       setShowLoginModal(false);
+      setIsProfileOpen(false);
       setLoginEmail(''); setLoginPassword(''); setCustomerRegName('');
       if (cart.length > 0) setTimeout(() => setIsOrderOpen(true), 300);
     } catch (err) {
-      toast.error(`নিবন্ধন ব্যর্থ: ${err.message}`);
+      let msg = err.message;
+      if (err?.code === 'auth/email-already-in-use') {
+        msg = 'এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে। "লগইন করুন" বাটনে ক্লিক করে লগইন করুন।';
+      } else if (err?.code === 'auth/weak-password') {
+        msg = 'পাসওয়ার্ড অতি দুর্বল (কমপক্ষে ৬ ডিজিট দিন)।';
+      } else if (err?.code === 'auth/invalid-email') {
+        msg = 'সঠিক ইমেইল এড্রেস প্রদান করুন।';
+      }
+      toast.error(`নিবন্ধন ব্যর্থ: ${msg}`);
     } finally {
       setLoginLoading(false);
     }
