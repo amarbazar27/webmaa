@@ -10,6 +10,16 @@ export default function useMicrophonePermission() {
   const [error, setError] = useState(null);
   const streamRef = useRef(null);
 
+  const stopMicrophone = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log(`[Mic] Track ${track.kind} stopped.`);
+      });
+      streamRef.current = null;
+    }
+  }, []);
+
   // SSR Safe initialization check
   useEffect(() => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') {
@@ -72,17 +82,7 @@ export default function useMicrophonePermission() {
       isMounted = false;
       stopMicrophone(); // Clean up stream if unmounted
     };
-  }, []);
-
-  const stopMicrophone = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-        console.log(`[Mic] Track ${track.kind} stopped.`);
-      });
-      streamRef.current = null;
-    }
-  }, []);
+  }, [stopMicrophone]);
 
   const requestMicrophone = useCallback(async () => {
     console.log('[Mic Audit] Requesting microphone access...');

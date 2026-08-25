@@ -237,6 +237,9 @@ const DEFAULT_HEADER = {
 
 const DEFAULT_FOOTER = {
   style: 'classic_4col',
+  bgColor: '',
+  textColor: '',
+  textColorMode: 'auto',
   showCategories: true,
   showContact: true,
   showSocials: true,

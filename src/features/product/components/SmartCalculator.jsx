@@ -36,6 +36,10 @@ export function detectProductUnit(product) {
 }
 
 export default function SmartCalculator({ product, setCustomInput, setAiPrice }) {
+  // States for user input (Hooks MUST always be called at the top of the component)
+  const [quantityInput, setQuantityInput] = useState('');
+  const [tkInput, setTkInput] = useState('');
+
   if (!product) return null;
 
   // Use product-level calculator configuration if enabled
@@ -54,10 +58,6 @@ export default function SmartCalculator({ product, setCustomInput, setAiPrice })
   const baseQuantity = Number.isNaN(rawBaseQuantity) || rawBaseQuantity <= 0 ? 1 : rawBaseQuantity;
   
   if (basePrice <= 0) return null;
-
-  // States for user input
-  const [quantityInput, setQuantityInput] = useState('');
-  const [tkInput, setTkInput] = useState('');
 
   const pricePerUnit = basePrice / baseQuantity;
 

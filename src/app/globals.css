@@ -108,6 +108,9 @@
     transition: background-color 0.35s ease, color 0.35s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

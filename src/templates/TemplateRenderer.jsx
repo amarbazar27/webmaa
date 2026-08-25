@@ -7,6 +7,7 @@
  */
 
 import React, { Component, Suspense, memo, useRef } from 'react';
+import Link from 'next/link';
 import { getTemplateById } from './index';
 import { buildStyleEngineOutput } from '@/lib/styleEngine';
 
@@ -87,12 +88,12 @@ class StorefrontErrorBoundary extends React.Component {
             >
               🔄 রিলোড করুন (Reload)
             </button>
-            <a
+            <Link
               href="/"
               className="px-6 py-3 bg-white border border-slate-300 text-slate-700 rounded-xl font-black text-sm shadow-sm hover:bg-slate-50 transition-all text-decoration-none"
             >
               🏠 হোমে যান
-            </a>
+            </Link>
           </div>
         </div>
       );

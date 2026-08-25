@@ -51,13 +51,18 @@ const DEFAULT_HEADER = {
 };
 
 const DEFAULT_FOOTER = {
-  style: 'modern_columns',
+  style: 'classic_4col',
+  bgColor: '',
+  textColor: '',
+  textColorMode: 'auto',
   showCategories: true,
   showContact: true,
   showSocials: true,
   showCopyright: true,
   showPrivacy: true,
   customTagline: '',
+  attributionStyle: 'option_a',
+  attributionAlign: 'center',
 };
 
 async function verifyAuth(request) {

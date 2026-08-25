@@ -256,7 +256,7 @@ export default function HeaderFooterEditor({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-2 max-h-[360px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-1">
               {FOOTER_PRESETS.map(preset => {
                 const isSelected = (footerConfig.style || 'classic_4col') === preset.id;
                 return (
@@ -290,6 +290,121 @@ export default function HeaderFooterEditor({
                       </p>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── FOOTER BACKGROUND & COLOR PALETTE ── */}
+          <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Palette size={14} className="text-purple-600" />
+                <label className="text-[11px] font-black text-slate-800 uppercase tracking-wider block">
+                  🎨 ফুটার ব্যাকগ্রাউন্ড কালার (Background Color)
+                </label>
+              </div>
+              <span className="text-[10px] font-bold text-slate-500">
+                {footerConfig.bgColor === 'brand' 
+                  ? 'ব্র্যান্ড কালার' 
+                  : footerConfig.bgColor || 'ডিফল্ট থিম'}
+              </span>
+            </div>
+
+            {/* Quick Swatches */}
+            <div className="grid grid-cols-5 sm:grid-cols-9 gap-1.5">
+              {[
+                { id: 'default', label: 'ডিফল্ট', bg: '#0f172a', border: '#334155' },
+                { id: '#030712', label: 'ব্ল্যাক', bg: '#030712', border: '#1f2937' },
+                { id: '#ffffff', label: 'সাদা', bg: '#ffffff', border: '#e2e8f0', isLight: true },
+                { id: '#f8fafc', label: 'লাইট গ্রে', bg: '#f8fafc', border: '#cbd5e1', isLight: true },
+                { id: 'brand', label: 'ব্র্যান্ড', bg: theme.primaryColor || shop?.primaryColor || '#6D28D9', border: '#a855f7' },
+                { id: '#0b1329', label: 'নেভি', bg: '#0b1329', border: '#1e3a8a' },
+                { id: '#064e3b', label: 'গ্রিন', bg: '#064e3b', border: '#059669' },
+                { id: '#4c0519', label: 'ওয়াইন', bg: '#4c0519', border: '#9f1239' },
+                { id: '#271c19', label: 'মোকা', bg: '#271c19', border: '#78350f' },
+              ].map(sw => {
+                const isSelected = (footerConfig.bgColor || 'default') === sw.id;
+                return (
+                  <button
+                    key={sw.id}
+                    type="button"
+                    onClick={() => updateFooter('bgColor', sw.id === 'default' ? '' : sw.id)}
+                    title={sw.label}
+                    className={`h-9 rounded-xl border flex flex-col items-center justify-center transition-all cursor-pointer relative ${
+                      isSelected ? 'ring-2 ring-purple-600 ring-offset-1 scale-105 shadow-sm' : 'hover:scale-102 opacity-90 hover:opacity-100'
+                    }`}
+                    style={{ backgroundColor: sw.bg, borderColor: sw.border }}
+                  >
+                    {isSelected && (
+                      <Check size={12} className={sw.isLight ? 'text-slate-900 stroke-[3]' : 'text-white stroke-[3]'} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Color Input & Hex Code */}
+            <div className="flex items-center gap-2 pt-1">
+              <div className="relative flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 flex-1">
+                <input
+                  type="color"
+                  value={footerConfig.bgColor && footerConfig.bgColor.startsWith('#') ? footerConfig.bgColor : '#0f172a'}
+                  onChange={e => updateFooter('bgColor', e.target.value)}
+                  className="w-6 h-6 rounded-lg border-0 cursor-pointer p-0 bg-transparent"
+                />
+                <input
+                  type="text"
+                  value={footerConfig.bgColor || ''}
+                  onChange={e => updateFooter('bgColor', e.target.value)}
+                  placeholder="কাস্টম Hex (যেমন: #1E293B)"
+                  className="text-xs font-mono font-bold text-slate-800 outline-none w-full bg-transparent"
+                />
+              </div>
+
+              {footerConfig.bgColor && (
+                <button
+                  type="button"
+                  onClick={() => updateFooter('bgColor', '')}
+                  className="px-2.5 py-2 text-[11px] font-bold text-slate-500 hover:text-red-600 bg-white border border-slate-200 rounded-xl transition-colors cursor-pointer"
+                  title="ডিফল্ট কালারে রিসেট করুন"
+                >
+                  রিসেট
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── FOOTER TEXT CONTRAST & COLOR MODE ── */}
+          <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 space-y-2">
+            <label className="text-[11px] font-black text-slate-800 uppercase tracking-wider block">
+              🔤 ফুটার টেক্সট কালার ও কনট্রাস্ট (Text Contrast)
+            </label>
+            <p className="text-[10px] text-slate-500 leading-tight">
+              সাদা ব্যাকগ্রাউন্ডে ডার্ক টেক্সট এবং কালো ব্যাকগ্রাউন্ডে অটো লাইট টেক্সট সেট হয় যাতে লেখা স্পষ্টভাবে পড়া যায়।
+            </p>
+
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              {[
+                { id: 'auto', label: '🌓 অটো স্মার্ট কনট্রাস্ট' },
+                { id: 'light', label: '⚪ লাইট/সাদা টেক্সট' },
+                { id: 'dark', label: '⚫ ডার্ক/কালো টেক্সট' },
+              ].map(m => {
+                const currentMode = footerConfig.textColorMode || 'auto';
+                const isSelected = currentMode === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => updateFooter('textColorMode', m.id)}
+                    className={`py-2 px-1 rounded-xl border text-[11px] font-black transition-all cursor-pointer text-center ${
+                      isSelected
+                        ? 'border-purple-600 bg-purple-600 text-white shadow-2xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
                 );
               })}
             </div>
