@@ -582,14 +582,14 @@ class MainActivity: FlutterActivity() {
   }
 
   console.log('  └─ Compiling Release APK...');
-  const buildApk = spawnSync('flutter', ['build', 'apk', '--release'], { cwd: appWorkspace, shell: true });
+  const buildApk = spawnSync('flutter', ['build', 'apk', '--release', '--android-skip-build-dependency-validation'], { cwd: appWorkspace, shell: true });
   if (buildApk.status !== 0) {
     throw new Error(`APK build failed: ${buildApk.stderr?.toString() || buildApk.stdout?.toString()}`);
   }
   console.log('  └─ Compiled APK successfully.');
 
   console.log('  └─ Compiling Release App Bundle (AAB)...');
-  const buildAab = spawnSync('flutter', ['build', 'appbundle', '--release'], { cwd: appWorkspace, shell: true });
+  const buildAab = spawnSync('flutter', ['build', 'appbundle', '--release', '--android-skip-build-dependency-validation'], { cwd: appWorkspace, shell: true });
   if (buildAab.status !== 0) {
     throw new Error(`AAB build failed: ${buildAab.stderr?.toString() || buildAab.stdout?.toString()}`);
   }

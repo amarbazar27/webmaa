@@ -273,19 +273,19 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(28),
                                 boxShadow: [
-                                  BoxDecoration(
-                                    color: primaryColor.withValues(alpha: 0.12),
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.12),
                                     blurRadius: 30,
                                     spreadRadius: 4,
-                                  ).boxShadow!.first,
+                                  ),
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.06),
+                                    color: Colors.black.withOpacity(0.06),
                                     blurRadius: 16,
                                     offset: const Offset(0, 4),
                                   ),
                                 ],
                                 border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.15),
+                                  color: Colors.grey.withOpacity(0.15),
                                   width: 1.5,
                                 ),
                               ),
@@ -428,5 +428,15 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
         ),
       ),
     );
+  }
+}
+
+// Local helper for parsing dynamic Hex colors
+class HexColor {
+  static Color fromHex(String hexString) {
+    final buffer = StringBuffer();
+    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+    buffer.write(hexString.replaceFirst('#', ''));
+    return Color(int.parse(buffer.toString(), radix: 16));
   }
 }

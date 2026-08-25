@@ -112,7 +112,7 @@ class MyApp extends StatelessWidget {
 }
 
 // Utility to parse Hex styling variables dynamically
-extension HexColor on Color {
+class HexColor {
   static Color fromHex(String hexString) {
     final buffer = StringBuffer();
     if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
