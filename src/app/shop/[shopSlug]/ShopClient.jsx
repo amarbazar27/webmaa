@@ -1141,6 +1141,32 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!loginEmail || !loginEmail.includes('@')) {
+      toast.error('পাসওয়ার্ড রিসেটের জন্য আপনার সঠিক ইমেইল আইডি দিন।');
+      return;
+    }
+    setLoginLoading(true);
+    try {
+      const { sendPasswordReset } = await import('@/lib/auth');
+      await sendPasswordReset(loginEmail);
+      toast.success('পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে! ইনবক্স অথবা স্প্যাম (Spam) ফোল্ডার চেক করুন।', { duration: 7000 });
+      setLoginMode('login');
+    } catch (err) {
+      let msg = err.message;
+      if (err?.code === 'auth/user-not-found') {
+        msg = 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট খুঁজে পাওয়া যায়নি।';
+      } else if (err?.code === 'auth/invalid-email') {
+        msg = 'সঠিক ইমেইল এড্রেস প্রদান করুন।';
+      } else if (err?.code === 'auth/too-many-requests') {
+        msg = 'অনেকবার চেষ্টা করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।';
+      }
+      toast.error(`পাসওয়ার্ড রিসেট ব্যর্থ: ${msg}`);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
   useEffect(() => {
     let interval = null;
     if (otpSent && otpTimer > 0) {
@@ -3965,10 +3991,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               )}
 
               {shop.authSettings?.emailPasswordAuth && (
-                <div className="space-y-3 pt-2 border-t border-slate-100 text-left">
+                <div className="space-y-3 pt-2 border-t border-slate-100 text-left animate-slide-in">
                   <div className="flex justify-between items-center">
                     <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                      {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
+                      {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
                     </p>
                     <button 
                       type="button"
@@ -3978,6 +4004,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       {loginMode === 'login' ? 'অ্যাকাউন্ট নেই?' : 'লগইন করুন'}
                     </button>
                   </div>
+
+                  {loginMode === 'forgot' && (
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed bg-purple-50 p-2.5 rounded-xl border border-purple-100">
+                      আপনার অ্যাকাউন্টের ইমেইল দিন, পাসওয়ার্ড রিসেট লিংক পাঠিয়ে দেওয়া হবে।
+                    </p>
+                  )}
 
                   {loginMode === 'signup' && (
                     <input 
@@ -3997,21 +4029,47 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     onChange={(e) => setLoginEmail(e.target.value)}
                   />
                   
-                  <input 
-                    type="password" 
-                    placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
-                    value={loginPassword}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                  />
+                  {loginMode !== 'forgot' && (
+                    <input 
+                      type="password" 
+                      placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
+                      value={loginPassword}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                    />
+                  )}
+
+                  {loginMode === 'login' && (
+                    <div className="flex justify-end pt-0.5">
+                      <button 
+                        type="button"
+                        onClick={() => setLoginMode('forgot')}
+                        className="text-[11px] font-extrabold text-purple-600 hover:text-purple-700 hover:underline"
+                      >
+                        পাসওয়ার্ড ভুলে গেছেন?
+                      </button>
+                    </div>
+                  )}
 
                   <button 
-                    onClick={loginMode === 'signup' ? handleEmailSignUp : handleEmailLogin}
+                    onClick={loginMode === 'signup' ? handleEmailSignUp : loginMode === 'forgot' ? handleResetPassword : handleEmailLogin}
                     disabled={loginLoading}
                     className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                   >
-                    {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : 'লগইন করুন')}
+                    {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট লিংক পাঠান' : 'লগইন করুন')}
                   </button>
+
+                  {loginMode === 'forgot' && (
+                    <div className="text-center pt-1">
+                      <button 
+                        type="button"
+                        onClick={() => setLoginMode('login')}
+                        className="text-xs font-bold text-slate-500 hover:text-slate-900 underline"
+                      >
+                        মনে পড়েছে? লগইন করুন
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -4835,7 +4893,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <div className="w-full space-y-3 pt-2 border-t border-slate-100 text-left animate-slide-in">
                       <div className="flex justify-between items-center">
                         <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
-                          {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
+                          {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
                         </p>
                         <button 
                           type="button"
@@ -4845,6 +4903,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           {loginMode === 'login' ? 'অ্যাকাউন্ট নেই?' : 'লগইন করুন'}
                         </button>
                       </div>
+
+                      {loginMode === 'forgot' && (
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed bg-purple-50 p-2.5 rounded-xl border border-purple-100">
+                          আপনার অ্যাকাউন্টের ইমেইল দিন, পাসওয়ার্ড রিসেট লিংক পাঠিয়ে দেওয়া হবে।
+                        </p>
+                      )}
 
                       {loginMode === 'signup' && (
                         <input 
@@ -4864,21 +4928,47 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         onChange={(e) => setLoginEmail(e.target.value)}
                       />
                       
-                      <input 
-                        type="password" 
-                        placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
-                        value={loginPassword}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
-                        onChange={(e) => setLoginPassword(e.target.value)}
-                      />
+                      {loginMode !== 'forgot' && (
+                        <input 
+                          type="password" 
+                          placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
+                          value={loginPassword}
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                        />
+                      )}
+
+                      {loginMode === 'login' && (
+                        <div className="flex justify-end pt-0.5">
+                          <button 
+                            type="button"
+                            onClick={() => setLoginMode('forgot')}
+                            className="text-[11px] font-extrabold text-purple-600 hover:text-purple-700 hover:underline"
+                          >
+                            পাসওয়ার্ড ভুলে গেছেন?
+                          </button>
+                        </div>
+                      )}
 
                       <button 
-                        onClick={loginMode === 'signup' ? handleEmailSignUp : handleEmailLogin}
+                        onClick={loginMode === 'signup' ? handleEmailSignUp : loginMode === 'forgot' ? handleResetPassword : handleEmailLogin}
                         disabled={loginLoading}
                         className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                       >
-                        {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : 'লগইন করুন')}
+                        {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট লিংক পাঠান' : 'লগইন করুন')}
                       </button>
+
+                      {loginMode === 'forgot' && (
+                        <div className="text-center pt-1">
+                          <button 
+                            type="button"
+                            onClick={() => setLoginMode('login')}
+                            className="text-xs font-bold text-slate-500 hover:text-slate-900 underline"
+                          >
+                            মনে পড়েছে? লগইন করুন
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
 

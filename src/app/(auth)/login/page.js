@@ -102,6 +102,30 @@ export default function LoginPage() {
     }
   };
 
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      toast.error('অনুগ্রহ করে আপনার সঠিক ইমেইল প্রদান করুন।');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { sendPasswordReset } = await import('@/lib/auth');
+      await sendPasswordReset(email);
+      toast.success('পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে! ইনবক্স অথবা স্প্যাম ফোল্ডার চেক করুন।', { duration: 7000 });
+      setForgotPasswordMode(false);
+    } catch (err) {
+      let errorMsg = err.message;
+      if (err?.code === 'auth/user-not-found') errorMsg = 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি';
+      else if (err?.code === 'auth/invalid-email') errorMsg = 'সঠিক ইমেইল এড্রেস প্রদান করুন';
+      toast.error('রিসেট ব্যর্থ: ' + errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (authLoading || redirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -159,7 +183,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {globalConfig?.emailPasswordAuth !== false && (
+          {globalConfig?.emailPasswordAuth !== false && !forgotPasswordMode && (
             <form onSubmit={handleEmailLogin} className="space-y-5 text-left">
                <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
@@ -174,7 +198,16 @@ export default function LoginPage() {
                </div>
                
                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                  <div className="flex justify-between items-center ml-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Password</label>
+                    <button 
+                      type="button" 
+                      onClick={() => setForgotPasswordMode(true)}
+                      className="text-[11px] font-extrabold text-purple-600 hover:underline"
+                    >
+                      Forgot?
+                    </button>
+                  </div>
                   <input 
                      type="password" 
                      required
@@ -194,6 +227,46 @@ export default function LoginPage() {
                      <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin"></div>
                   ) : 'Sign In with Email'}
                </button>
+            </form>
+          )}
+
+          {globalConfig?.emailPasswordAuth !== false && forgotPasswordMode && (
+            <form onSubmit={handleResetPassword} className="space-y-5 text-left animate-slide-in">
+               <div className="bg-purple-50 p-3.5 rounded-2xl border border-purple-100 text-xs text-slate-600 font-medium leading-relaxed">
+                  Enter your verified account email to receive a password reset authorization link.
+               </div>
+
+               <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <input 
+                     type="email" 
+                     required
+                     placeholder="name@example.com"
+                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                     value={email}
+                     onChange={e => setEmail(e.target.value)}
+                  />
+               </div>
+
+               <button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60 cursor-pointer"
+               >
+                  {loading ? (
+                     <div className="w-5 h-5 border-2 border-slate-200 border-t-white rounded-full animate-spin"></div>
+                  ) : 'Send Reset Link'}
+               </button>
+
+               <div className="text-center pt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setForgotPasswordMode(false)}
+                    className="text-xs font-black text-slate-500 hover:text-slate-900 underline"
+                  >
+                    Remember Password? Sign In
+                  </button>
+               </div>
             </form>
           )}
 

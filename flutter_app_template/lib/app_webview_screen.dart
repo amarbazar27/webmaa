@@ -26,17 +26,14 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _requestInitialPermissions();
-  }
-
-  Future<void> _requestInitialPermissions() async {
-    try {
-      if (Platform.isAndroid) {
-        await Permission.location.request();
+    // Safety fallback: reveal interface after 1.5s max so user is never stuck waiting on slow networks
+    Timer(const Duration(milliseconds: 1500), () {
+      if (mounted && !_isAppReady) {
+        setState(() {
+          _isAppReady = true;
+        });
       }
-    } catch (e) {
-      debugPrint("Permission request error: $e");
-    }
+    });
   }
 
   Future<bool> _handlePopScope() async {
@@ -247,7 +244,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     }
                   },
                   onProgressChanged: (controller, progress) {
-                    if (progress >= 65 && mounted && !_isAppReady) {
+                    if (progress >= 20 && mounted && !_isAppReady) {
                       _injectNativeAppStyles(controller);
                       setState(() {
                         _isAppReady = true;

@@ -48,31 +48,10 @@ void _showNotification(RemoteMessage message) async {
   }
 }
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Try to initialize Firebase — fully optional, app works without it
-  try {
-    await Firebase.initializeApp();
-    _firebaseInitialized = true;
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    
-    // Set up Android notification channel
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(const AndroidNotificationChannel(
-          'bdretailers_channel',
-          'BDRetailers Notifications',
-          description: 'Notifications for BDRetailers stores',
-          importance: Importance.max,
-        ));
-    debugPrint("Firebase initialized successfully.");
-  } catch (e) {
-    _firebaseInitialized = false;
-    debugPrint("Firebase init failed (non-critical): $e. App will work without push notifications.");
-  }
-
-  // Set system UI layout styling
+  // Set system UI layout styling immediately
   Color primaryColor = HexColor.fromHex(AppConfig.primaryColorHex);
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: primaryColor,
@@ -81,7 +60,7 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
-  // Run application
+  // Run application instantly (Zero Cold Start Delay)
   runApp(
     MultiProvider(
       providers: [
@@ -90,6 +69,29 @@ void main() async {
       child: const MyApp(),
     ),
   );
+
+  // Background initialization of Firebase & Notifications (non-blocking)
+  Future.microtask(() async {
+    try {
+      await Firebase.initializeApp();
+      _firebaseInitialized = true;
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      
+      // Set up Android notification channel
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(const AndroidNotificationChannel(
+            'bdretailers_channel',
+            'BDRetailers Notifications',
+            description: 'Notifications for BDRetailers stores',
+            importance: Importance.max,
+          ));
+      debugPrint("Firebase initialized in background.");
+    } catch (e) {
+      _firebaseInitialized = false;
+      debugPrint("Firebase init failed (non-critical): $e. App will work without push notifications.");
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {

@@ -5,7 +5,8 @@ import {
   signInWithRedirect,
   getRedirectResult,
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, getDocs, collection, query, where, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { app, db } from './firebase';
@@ -163,3 +164,11 @@ export const logoutUser = () => signOut(auth);
 export const onAuthChange = (callback) => {
   return onAuthStateChanged(auth, callback);
 };
+
+export const sendPasswordReset = async (email) => {
+  if (!email || !email.includes('@')) {
+    throw new Error('একটি সঠিক ইমেইল এড্রেস প্রদান করুন।');
+  }
+  return await sendPasswordResetEmail(auth, email.trim());
+};
+
