@@ -30,8 +30,8 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [orderScope, setOrderScope] = useState('today'); // 'today' | 'all' | 'custom_date'
-  const [selectedDate, setSelectedDate] = useState(getTodayString());
+  const [orderScope, setOrderScope] = useState('all'); // 'all' | 'today' | 'custom_date'
+  const [selectedDate, setSelectedDate] = useState('');
   
   // States for advanced edits
   const [customNote, setCustomNote] = useState({});
