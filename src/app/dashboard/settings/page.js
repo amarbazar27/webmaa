@@ -892,7 +892,11 @@ export default function SettingsPage() {
     );
   }
 
-  const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/shop/${shop?.subdomainSlug}`;
+  const primarySubdomainUrl = shop?.subdomainSlug 
+    ? `https://${shop.subdomainSlug}.bdretailers.com` 
+    : `${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/shop/${shop?.shopSlug || ''}`;
+
+  const storeUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}`;
 
   // ── Tabs config (plain object, NOT state — safe to define here) ──
   const SETTINGS_TABS = [
@@ -1047,17 +1051,16 @@ export default function SettingsPage() {
         {/* Sub-tab Left Sidebar Navigation */}
         <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
           <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি</p>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি (Step-by-Step)</p>
              {[
-                { id: 'store_info', label: 'স্টোর তথ্য ও ডোমেইন', icon: Globe },
-                { id: 'branding', label: 'ডিজাইন ও লোগো', icon: Palette },
-                { id: 'access', label: 'কর্মী ও অ্যাক্সেস', icon: ShieldCheck },
-                { id: 'checkout_payments', label: 'চেকআউট ও পেমেন্ট', icon: Truck },
-                { id: 'courier_location', label: 'কুরিয়ার ও ম্যাপ', icon: MapPin },
-                { id: 'marketing', label: 'মার্কেটিং ও কুপন', icon: Gift },
-                { id: 'ai_companion', label: 'এআই অ্যাসিস্ট্যান্ট', icon: Sparkles },
-                { id: 'app_faq', label: 'মোবাইল অ্যাপ ও FAQ', icon: Smartphone },
-                ...(shop?.dataExportEnabled === true ? [{ id: 'data_export', label: 'ডাটা মাইগ্রেশন', icon: Cloud }] : [])
+                { id: 'store_info', label: '১. স্টোর পরিচিতি ও ডোমেইন', icon: Globe },
+                { id: 'branding', label: '২. ডিজাইন, লোগো ও ব্যানার', icon: Palette },
+                { id: 'courier_location', label: '৩. কুরিয়ার ও ডেলিভারি', icon: Truck },
+                { id: 'checkout_payments', label: '৪. পেমেন্ট ও চেকআউট', icon: ShieldCheck },
+                { id: 'access', label: '৫. কর্মী ও সিকিউরিটি পিন', icon: Users },
+                { id: 'marketing', label: '৬. এআই ও মার্কেটিং কুপন', icon: Gift },
+                { id: 'app_faq', label: '৭. মোবাইল অ্যাপ ও FAQ', icon: Smartphone },
+                ...(shop?.dataExportEnabled === true ? [{ id: 'data_export', label: '৮. ডাটা মাইগ্রেশন', icon: Cloud }] : [])
              ].map(sub => {
                const Icon = sub.icon;
                return (
@@ -1086,31 +1089,48 @@ export default function SettingsPage() {
               {/* Group 1: Store Public URL (store_info) */}
               {activeSubTab === 'store_info' && (
                 <div className="space-y-8 animate-slide-in">
-                  <Card title="Store Public URL" subtitle="Your live shop link" icon={Link2} className="border-2 border-slate-100 shadow-xl bg-white">
+                  <Card title="Store Public URL & Subdomain" subtitle="আপনার লাইভ অনলাইন শপের ডোমেইন ও লিংক" icon={Link2} className="border-2 border-slate-100 shadow-xl bg-white">
             <div className="space-y-4">
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner relative">
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-inner relative space-y-3">
                 {slugEditing ? (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">/shop/</span>
-                      <input
-                        type="text"
-                        value={slugInput}
-                        onChange={e => { setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setSlugError(''); }}
-                        className="flex-1 bg-white border-2 border-purple-200 rounded-xl px-3 py-2 text-sm font-black outline-none focus:border-purple-600 transition-all text-slate-900"
-                      />
+                    <div>
+                      <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block mb-1">কাস্টম সাবডোমেইন প্রিফিক্স:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-slate-500 font-mono font-bold">https://</span>
+                        <input
+                          type="text"
+                          value={slugInput}
+                          placeholder="yourshop"
+                          onChange={e => { setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setSlugError(''); }}
+                          className="flex-1 bg-white border-2 border-purple-200 rounded-xl px-3 py-2 text-sm font-black outline-none focus:border-purple-600 transition-all text-slate-900 font-mono"
+                        />
+                        <span className="text-xs text-slate-500 font-mono font-bold">.bdretailers.com</span>
+                      </div>
                     </div>
                     {slugError && <p className="text-[10px] text-red-500 font-bold">{slugError}</p>}
                     <div className="flex gap-2">
-                       <button onClick={handleSlugSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all">Save</button>
-                       <button onClick={() => setSlugEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all">Cancel</button>
+                       <button type="button" onClick={handleSlugSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer">সেভ সাবডোমেইন</button>
+                       <button type="button" onClick={() => setSlugEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all cursor-pointer">বাতিল</button>
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <a href={storeUrl} target="_blank" rel="noreferrer" className="text-sm font-black text-purple-600 hover:text-purple-700 underline truncate block tracking-tight">{storeUrl}</a>
-                    <button onClick={() => setSlugEditing(true)} className="mt-3 w-full py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-purple-700 shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2">
-                       Set Custom Subdomain
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white rounded-xl border border-slate-200">
+                      <div>
+                        <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">🌟 প্রাইমারি সাবডোমেইন লিংক (No /shop/):</p>
+                        <a href={primarySubdomainUrl} target="_blank" rel="noreferrer" className="text-sm font-black font-mono text-purple-600 hover:text-purple-700 underline truncate block tracking-tight mt-0.5">
+                          {primarySubdomainUrl}
+                        </a>
+                      </div>
+                      <a href={primarySubdomainUrl} target="_blank" rel="noreferrer" className="px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-black self-start sm:self-auto transition-colors flex items-center gap-1">
+                        <span>ভিজিট</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
+
+                    <button type="button" onClick={() => setSlugEditing(true)} className="w-full py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-purple-700 shadow-md shadow-purple-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                       সাবডোমেইন পরিবর্তন করুন (Change Subdomain)
                     </button>
                   </div>
                 )}

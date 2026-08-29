@@ -1,134 +1,226 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, BarChart2, Package, Lightbulb, Loader2 } from 'lucide-react';
-import { getProducts, subscribeOrders } from '@/lib/firestore';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { 
+  Bot, X, Send, BarChart2, Package, Lightbulb, Loader2, 
+  Maximize2, Minimize2, Trash2, Sparkles, TrendingUp, AlertTriangle, 
+  ShoppingBag, CheckCircle, ArrowRight, Copy, Check
+} from 'lucide-react';
+import { getProducts, getOrders, getShop } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
 import clsx from 'clsx';
+import toast from 'react-hot-toast';
+
+const DEMO_PROMPTS = [
+  { id: 1, label: '📈 সেলস ও রেভিনিউ রিপোর্ট', text: 'আমার স্টোরের বর্তমান সেলস, রেভিনিউ এবং অর্ডারের সম্পূর্ণ এনালাইসিস দাও।' },
+  { id: 2, label: '⚠️ লো স্টক প্রোডাক্টের তালিকা', text: 'কোন কোন পণ্যের স্টক ফুরিয়ে যাচ্ছে বা শেষ হতে চলেছে তাদের তালিকা ও স্টক পরিমাণ জানাও।' },
+  { id: 3, label: '🚚 পেন্ডিং অর্ডারের সামারি', text: 'বর্তমানে কয়টি অর্ডার পেন্ডিং আছে এবং সেগুলো দ্রুত ডেলিভারি করার জন্য কী করণীয়?' },
+  { id: 4, label: '💡 সেলস দ্বিগুণ করার ৩টি আইডিয়া', text: 'আমার স্টোরের প্রোডাক্টগুলোর ওপর ভিত্তি করে সেলস দ্বিগুণ করার ৩টি বাস্তবধর্মী মার্কেটিং আইডিয়া দাও।' },
+  { id: 5, label: '✍️ ফেসবুক প্রমোশনাল অফার পোস্ট', text: 'আমার দোকানের জন্য ফেসবুকে পোস্ট করার মতো একটি আকর্ষণীয় অফার ও ডিসকাউন্ট ক্যাপশন লিখে দাও।' },
+  { id: 6, label: '🏆 বেস্ট সেলিং প্রোডাক্ট ও টিপস', text: 'কোন প্রোডাক্টগুলো বেশি বিক্রি হচ্ছে এবং সেগুলোর বিজ্ঞাপন কীভাবে বাড়ানো যায়?' },
+];
 
 export default function AiCompanion({ shop, isMobile, compact = false }) {
   const { activeShopId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { id: 1, role: 'bot', text: `আসসালামু আলাইকুম! আমি আপনার স্টোর অ্যাসিস্ট্যান্ট ${shop?.aiConfig?.botName || 'Daripallah AI'}। আপনার আজকের সেলস বা ইনভেন্টরি সম্পর্কে কোনো এনালাইসিস লাগবে?` }
-  ]);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [analyticsData, setAnalyticsData] = useState({ orders: [], products: [] });
+  const [copiedId, setCopiedId] = useState(null);
+  
+  // Real-time Store Analytics Context
+  const [storeContext, setStoreContext] = useState({
+    products: [],
+    orders: [],
+    shopDetails: null,
+    totalRevenue: 0,
+    pendingOrdersCount: 0,
+    completedOrdersCount: 0,
+    lowStockProducts: [],
+    topProducts: []
+  });
 
   const scrollRef = useRef(null);
 
+  // Load chat history from localStorage
   useEffect(() => {
-    if (activeShopId) {
-      import('@/lib/firestore').then(lib => {
-        lib.getProducts(activeShopId).then(products => {
-          lib.subscribeOrders(activeShopId, (orders) => {
-             setAnalyticsData({ orders, products });
-          });
-        });
-      });
+    if (!activeShopId) return;
+    const storageKey = `bd_ai_chat_${activeShopId}`;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not parse saved chat:', e);
     }
-  }, [activeShopId]);
+
+    // Default welcome message
+    const botName = shop?.aiConfig?.botName || 'BDRetailers AI';
+    setMessages([
+      {
+        id: 'welcome',
+        role: 'bot',
+        text: `আসসালামু আলাইকুম! আমি আপনার শপ অ্যানালিটিক্স অ্যাসিস্ট্যান্ট **${botName}**। 🚀\n\nআপনার স্টোরের **লাইভ সেলস, ইনভেন্টরি স্টক, পেন্ডিং অর্ডার বা মার্কেটিং স্ট্র্যাটেজি** নিয়ে যেকোনো প্রশ্ন আমাকে করতে পারেন। নিচের সাজেস্টেড বাটনগুলো ট্রাই করুন অথবা সরাসরি আপনার প্রশ্নটি লিখুন!`
+      }
+    ]);
+  }, [activeShopId, shop?.aiConfig?.botName]);
+
+  // Persist chat history to localStorage
+  useEffect(() => {
+    if (!activeShopId || messages.length === 0) return;
+    const storageKey = `bd_ai_chat_${activeShopId}`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(messages.slice(-30))); // Keep last 30 messages
+    } catch (e) {
+      console.warn('Could not save chat:', e);
+    }
+  }, [messages, activeShopId]);
+
+  // Fetch full live store analytics context
+  const refreshStoreContext = useCallback(async () => {
+    if (!activeShopId) return;
+    try {
+      const [prods, ords, shp] = await Promise.all([
+        getProducts(activeShopId),
+        getOrders(activeShopId),
+        getShop(activeShopId)
+      ]);
+
+      const rev = ords.reduce((acc, o) => acc + (parseFloat(o.total) || 0), 0);
+      const pending = ords.filter(o => o.status === 'pending').length;
+      const completed = ords.filter(o => o.status === 'completed').length;
+      const lowStock = prods.filter(p => (parseInt(p.stock) || 0) <= 5);
+
+      setStoreContext({
+        products: prods || [],
+        orders: ords || [],
+        shopDetails: shp || shop,
+        totalRevenue: rev,
+        pendingOrdersCount: pending,
+        completedOrdersCount: completed,
+        lowStockProducts: lowStock,
+        topProducts: prods.slice(0, 10)
+      });
+    } catch (err) {
+      console.error('Error loading AI store context:', err);
+    }
+  }, [activeShopId, shop]);
+
+  useEffect(() => {
+    if (isOpen) {
+      refreshStoreContext();
+    }
+  }, [isOpen, refreshStoreContext]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  const generateReply = (query) => {
-    const q = query.toLowerCase();
-    const { orders, products } = analyticsData;
-    const botName = shop?.aiConfig?.botName || 'Daripallah AI';
-
-    if (q.includes('salam') || q.includes('আসসালামু') || q.includes('wa-alaikum')) {
-      return `ওয়া আলাইকুম আসসালাম! আমি ${botName}। আমি আপনাকে আপনার দোকানের অর্ডার এবং স্টকের তথ্য দিয়ে সাহায্য করতে পারি। ইনশাআল্লাহ সব ঠিক হয়ে যাবে! 🌙`;
+  const handleClearHistory = () => {
+    if (!confirm('আপনি কি এই চ্যাট হিস্ট্রি মুছে ফেলতে চান?')) return;
+    const botName = shop?.aiConfig?.botName || 'BDRetailers AI';
+    const initialMsg = [
+      {
+        id: Date.now(),
+        role: 'bot',
+        text: `আসসালামু আলাইকুম! আমি **${botName}**। আপনার স্টোরের সেলস, স্টক বা যেকোনো প্রশ্ন করুন, আমি সাহায্য করছি। 📊`
+      }
+    ];
+    setMessages(initialMsg);
+    if (activeShopId) {
+      localStorage.removeItem(`bd_ai_chat_${activeShopId}`);
     }
-
-    if (q.includes('hi') || q.includes('hello') || q.includes('hey')) {
-      return `আসসালামু আলাইকুম! শোরুম অ্যাসিস্ট্যান্ট ${botName} হিসেবে আমি আপনার সেবায় নিয়োজিত। কোনো তথ্য জানতে চান? 😊`;
-    }
-
-    if (q.includes('order') || q.includes('অর্ডার') || q.includes('সেল') || q.includes('analysis')) {
-      const delivered = orders.filter(o => o.status === 'completed').length;
-      const pending = orders.filter(o => o.status === 'pending').length;
-      return `আপনার এই মুহূর্তে মোট ${orders.length}টি অর্ডার আছে। এর মধ্যে ${delivered}টি ডেলিভার হয়েছে এবং ${pending}টি পেন্ডিং। (লোকাল ডাটা থেকে প্রাপ্ত) 📈`;
-    }
-
-    if (q.includes('stock') || q.includes('ইনভেন্টরি') || q.includes('পণ্য')) {
-      const lowStock = products.filter(p => p.stock < 5).length;
-      return `আপনার স্টোরে এখন ${products.length}টি পণ্য আছে। ${lowStock > 0 ? `${lowStock}টি পণ্যের স্টক কম আছে।` : 'সবগুলো প্রডাক্টের স্টক ঠিক আছে।'} 📦`;
-    }
-
-    if (q.includes('marketing') || q.includes('আইডিয়া') || q.includes('বিপণন')) {
-      return `মার্কেটিং আইডিয়া: আপনার ফেইসবুক পেজে "ফ্রি ডেলিভারি" অফার দিয়ে একটি পোস্ট দিতে পারেন। এতে অর্ডার ২০% পর্যন্ত বাড়তে পারে বলে আমাদের রিপোর্ট বলছে! 💡`;
-    }
-
-    return `আসসালামু আলাইকুম! আমি এখনো পুরোপুরি ট্রেনড না, তবে আমি আপনার অর্ডার, স্টক এবং মার্কেটিং আইডিয়া নিয়ে কথা বলতে পারি। নিচের বাটনগুলো ট্রাই করুন অথবা সরাসরি প্রশ্ন করুন! — ${botName} 🤖`;
+    toast.success('চ্যাট হিস্ট্রি রিসেট করা হয়েছে');
   };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const userMsg = { id: Date.now(), role: 'user', text: input };
+  const handleCopyMessage = (text, id) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    toast.success('কপি হয়েছে! 📋');
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSend = async (customPrompt) => {
+    const textToSend = (customPrompt || input).trim();
+    if (!textToSend || isTyping) return;
+
+    const userMsg = { id: Date.now(), role: 'user', text: textToSend };
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
+    if (!customPrompt) setInput('');
     setIsTyping(true);
 
     try {
-      const shopName = shop?.shopName || 'this store';
-      const productList = analyticsData.products.slice(0, 20).map(p => `- ${p.name}: ${p.price} BDT`).join('\n');
+      const shopName = storeContext.shopDetails?.shopName || shop?.shopName || 'আমার অনলাইন স্টোর';
+      const botName = shop?.aiConfig?.botName || 'BDRetailers AI';
       
+      const productSummary = storeContext.products.map(p => 
+        `- ${p.name}: মূল্য ৳${p.price}, স্টক: ${p.stock} টি, ক্যাটাগরি: ${p.category || 'N/A'}`
+      ).slice(0, 30).join('\n');
+
+      const lowStockList = storeContext.lowStockProducts.map(p => 
+        `- ${p.name} (স্টক মাত্র ${p.stock} টি)`
+      ).join('\n');
+
+      const systemPrompt = `You are a high-level eCommerce Business Analytics & Growth Consultant named "${botName}" for the retail brand "${shopName}" in Bangladesh.
+
+STRICT RULES:
+1. Greet with "আসসালামু আলাইকুম" where natural. Always be respectful, enthusiastic, insightful, and professional.
+2. Speak in polished Bengali. Use Markdown formatting (bold, bullet points, numbered steps, summary tables) to make answers visually attractive and easy to read.
+3. Use the following REAL LIVE STORE DATA to give programmatic, concrete, and accurate insights:
+
+── LIVE STORE CONTEXT ──
+• Store Name: ${shopName}
+• Total Products in Inventory: ${storeContext.products.length}
+• Total Orders Received: ${storeContext.orders.length}
+• Total Gross Revenue: ৳${storeContext.totalRevenue.toLocaleString()}
+• Pending Orders: ${storeContext.pendingOrdersCount}
+• Delivered / Completed Orders: ${storeContext.completedOrdersCount}
+• Products with Low Stock (<=5 units): ${storeContext.lowStockProducts.length} items
+${lowStockList ? `Low Stock Items:\n${lowStockList}` : 'All products have healthy stock.'}
+
+• Product Inventory Snapshot:
+${productSummary || 'No products added yet.'}
+
+• Delivery Policy: ৳${storeContext.shopDetails?.deliveryCharge || '60'} BDT | Service Areas: ${(storeContext.shopDetails?.serviceAreas || []).join(', ') || 'সমগ্র বাংলাদেশ'}
+• Payment Methods: Cash on Delivery (COD), bKash / Nagad / Automated Gateway.
+
+── INSTRUCTION ──
+Analyze the merchant's query using the above numbers. If asked about stock, cite the exact product names and counts. If asked about sales or growth, provide concrete actionable steps tailored to Bangladeshi eCommerce. If writing social media posts or captions, make them catchy with emojis, hashtags, and strong Call-to-Actions.`;
+
       const response = await fetch(`/api/ai`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          shopId: shop?.id || activeShopId,
+          shopId: activeShopId,
           model: 'llama-3.3-70b-versatile',
           messages: [
-            {
-              role: 'system',
-              content: `You are a professional retail assistant for "${shopName}" in Bangladesh. 
-              STRICT RULE: Always greet with "Assalamu Alaikum". Never ever use "Nomoskar" or non-Muslim greetings.
-              Speak in Bengali and follow Muslim etiquette.
-              
-              Current Shop Data:
-              - Store Name: ${shopName}
-              - Total Products: ${analyticsData.products.length}
-              - Total Orders: ${analyticsData.orders.length}
-              
-              Service Areas (Locations we deliver to): ${(shop?.serviceAreas || []).join(', ') || 'All over Bangladesh'}
-              
-              Product Price List:
-              ${productList || 'No products listed yet.'}
-              
-              Delivery Info:
-              - Default Delivery Charge: ${shop?.deliveryCharge || 'Calculated at checkout'}
-              - Area: ${shop?.address || 'Bangladesh'}
-              
-              Instruction: If you don't know a specific detail, ask the customer to check the checkout page or contact the shop owner. Never make up data.`
-            },
-            {
-              role: 'user',
-              content: userMsg.text
-            }
+            { role: 'system', content: systemPrompt },
+            ...messages.slice(-6).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
+            { role: 'user', content: textToSend }
           ]
         })
       });
-      
+
       const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.error?.message || 'AI Service Error');
+        throw new Error(data.error?.message || 'AI Response error');
       }
 
-      const botText = data.choices?.[0]?.message?.content;
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: botText || generateReply(userMsg.text) };
+      const botText = data.choices?.[0]?.message?.content || 'দুঃখিত, এই মুহূর্তে উত্তর জেনারেট করা সম্ভব হয়নি।';
+      const botMsg = { id: Date.now() + 1, role: 'bot', text: botText };
       setMessages(prev => [...prev, botMsg]);
+
     } catch (err) {
-      console.error("AI Assistant Error:", err);
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: generateReply(userMsg.text) };
-      setMessages(prev => [...prev, botMsg]);
+      console.error('AI Error:', err);
+      const fallbackText = `**আপনার স্টোরের সারসংক্ষেপ:**\n• মোট প্রোডাক্ট: **${storeContext.products.length} টি**\n• মোট অর্ডার: **${storeContext.orders.length} টি**\n• সর্বমোট সেলস: **৳${storeContext.totalRevenue.toLocaleString()}**\n• পেন্ডিং অর্ডার: **${storeContext.pendingOrdersCount} টি**\n• লো স্টক প্রোডাক্ট: **${storeContext.lowStockProducts.length} টি**\n\nAI সার্ভারে সাময়িক কানেকশন ইস্যু হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।`;
+      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: fallbackText }]);
     } finally {
       setIsTyping(false);
     }
@@ -137,10 +229,9 @@ export default function AiCompanion({ shop, isMobile, compact = false }) {
   return (
     <>
       {compact ? (
-        /* Compact mode: small icon button beside Sign Out */
         <button
           onClick={() => setIsOpen(true)}
-          title="AI Companion"
+          title="AI Business Assistant"
           className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-700 text-white flex items-center justify-center shadow-md hover:scale-105 transition-all shrink-0"
         >
           <Bot size={16} />
@@ -163,8 +254,8 @@ export default function AiCompanion({ shop, isMobile, compact = false }) {
                 <Bot size={20} className="group-hover:rotate-12 transition-transform" />
               </div>
               <div className="text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest text-purple-200 opacity-80">{shop?.aiConfig?.botName || 'AI Assistant'}</p>
-                <p className="text-sm font-black">AI Companion</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-purple-200 opacity-80">{shop?.aiConfig?.botName || 'AI Advisor'}</p>
+                <p className="text-sm font-black">AI Business Analytics</p>
               </div>
             </div>
             <div className="absolute -right-2 -bottom-2 opacity-10 group-hover:scale-125 transition-transform">
@@ -174,83 +265,182 @@ export default function AiCompanion({ shop, isMobile, compact = false }) {
         </div>
       )}
 
+      {/* ── AI Modal / Full-Screen Console ── */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-          <div className="relative w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[70vh] border border-slate-200 animate-slide-in">
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in">
+          <div 
+            className={clsx(
+              "bg-white shadow-2xl flex flex-col transition-all duration-300 border border-slate-200 overflow-hidden",
+              isFullScreen 
+                ? "w-full h-full sm:rounded-none" 
+                : "w-full max-w-2xl h-[90vh] sm:max-h-[780px] rounded-t-3xl sm:rounded-3xl"
+            )}
+          >
             {/* Header */}
-            <div className="bg-slate-900 text-white p-5 flex justify-between items-center border-b-[4px] border-purple-600">
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/20">
-                    <Bot size={22} />
+            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b-4 border-purple-600 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
+                  <Bot size={22} className="text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-base tracking-tight leading-tight text-white">
+                      {shop?.aiConfig?.botName || 'BDRetailers AI'}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-black uppercase tracking-wider">
+                      Live Store Sync
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="font-black text-lg tracking-tight leading-tight">{shop?.aiConfig?.botName || 'Daripallah AI'}</h3>
-                    <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">Shop Analytics Assistant</p>
-                  </div>
-               </div>
-               <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-2 rounded-xl text-slate-400 hover:text-white transition-colors">
-                  <X size={20} strokeWidth={2.5}/>
-               </button>
+                  <p className="text-[10px] uppercase font-bold text-purple-300 tracking-widest mt-0.5">
+                    Real-time Business & Analytics Advisor
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleClearHistory}
+                  className="p-2 text-slate-400 hover:text-rose-400 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                  title="চ্যাট হিস্ট্রি রিসেট করুন"
+                >
+                  <Trash2 size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsFullScreen(!isFullScreen)}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer hidden sm:block"
+                  title={isFullScreen ? "ছোট করুন" : "ফুল স্ক্রিন করুন"}
+                >
+                  {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                  title="বন্ধ করুন"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            {/* Messages */}
-            <div ref={scrollRef} className="flex-1 p-5 bg-slate-50 overflow-y-auto space-y-4">
+            {/* Live Metrics Quick Strip */}
+            <div className="bg-slate-100/80 px-6 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600 overflow-x-auto gap-4 shrink-0">
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <TrendingUp size={14} className="text-purple-600" />
+                <span>সেলস: <strong className="text-slate-900">৳{storeContext.totalRevenue.toLocaleString()}</strong></span>
+              </span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <ShoppingBag size={14} className="text-blue-600" />
+                <span>অর্ডার: <strong className="text-slate-900">{storeContext.orders.length}</strong> (পেন্ডিং {storeContext.pendingOrdersCount})</span>
+              </span>
+              <span className="flex items-center gap-1.5 whitespace-nowrap">
+                <Package size={14} className="text-emerald-600" />
+                <span>পণ্য: <strong className="text-slate-900">{storeContext.products.length} টি</strong></span>
+              </span>
+              {storeContext.lowStockProducts.length > 0 && (
+                <span className="flex items-center gap-1.5 text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg whitespace-nowrap">
+                  <AlertTriangle size={12} />
+                  <span>লো স্টক: {storeContext.lowStockProducts.length} টি</span>
+                </span>
+              )}
+            </div>
+
+            {/* Chat Messages */}
+            <div ref={scrollRef} className="flex-1 p-5 sm:p-6 bg-slate-50 overflow-y-auto space-y-4">
               {messages.map(msg => (
-                <div key={msg.id} className={clsx(
-                  "max-w-[85%] p-4 rounded-2xl text-sm font-bold shadow-sm",
-                  msg.role === 'bot' 
-                    ? "bg-white border border-slate-200 text-slate-800 rounded-tl-none self-start" 
-                    : "bg-purple-600 text-white rounded-tr-none self-end ml-auto"
-                )}>
-                  {msg.text}
+                <div key={msg.id} className={clsx("flex gap-3 group", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                  {msg.role === 'bot' && (
+                    <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm mt-1">
+                      <Bot size={16} />
+                    </div>
+                  )}
+
+                  <div className={clsx(
+                    "max-w-[85%] sm:max-w-[80%] rounded-3xl p-4 sm:p-5 text-sm leading-relaxed shadow-sm relative",
+                    msg.role === 'user'
+                      ? "bg-purple-600 text-white rounded-tr-xs font-medium"
+                      : "bg-white text-slate-800 border border-slate-200/80 rounded-tl-xs"
+                  )}>
+                    <div className="whitespace-pre-wrap font-sans text-xs sm:text-sm">
+                      {msg.text}
+                    </div>
+
+                    {msg.role === 'bot' && (
+                      <div className="flex justify-end pt-2 border-t border-slate-100 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyMessage(msg.text, msg.id)}
+                          className="text-[10px] text-slate-400 hover:text-purple-600 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          {copiedId === msg.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                          <span>{copiedId === msg.id ? 'কপি হয়েছে' : 'কপি করুন'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {msg.role === 'user' && (
+                    <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-black shrink-0 mt-1">
+                      User
+                    </div>
+                  )}
                 </div>
               ))}
+
               {isTyping && (
-                <div className="bg-white border border-slate-200 p-4 rounded-2xl text-slate-400 self-start animate-pulse flex items-center gap-2">
-                  <Loader2 size={16} className="animate-spin" /> Thinking...
+                <div className="flex gap-3 items-center">
+                  <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm">
+                    <Bot size={16} />
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-500 flex items-center gap-2 shadow-xs">
+                    <Loader2 size={14} className="animate-spin text-purple-600" />
+                    <span>আপনার স্টোরের ডেটা বিশ্লেষণ করা হচ্ছে...</span>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Quick Actions */}
-            <div className="px-5 py-3 bg-white border-t border-slate-100 flex gap-2 overflow-x-auto scrollbar-hide">
-              <button 
-                onClick={() => setInput('অর্ডার এনালাইসিস')}
-                className="shrink-0 flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-[11px] font-black text-slate-600 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-all"
-              >
-                <BarChart2 size={14} /> Analysis
-              </button>
-              <button 
-                onClick={() => setInput('স্টক চেক')}
-                className="shrink-0 flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-[11px] font-black text-slate-600 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-all"
-              >
-                <Package size={14} /> Stock Check
-              </button>
-              <button 
-                onClick={() => setInput('মার্কেটিং আইডিয়া')}
-                className="shrink-0 flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-[11px] font-black text-slate-600 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-all"
-              >
-                <Lightbulb size={14} /> Marketing ideas
-              </button>
+            {/* Suggestion Demo Pills */}
+            <div className="px-5 py-2.5 bg-white border-t border-slate-100 flex items-center gap-2 overflow-x-auto shrink-0 pb-2">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap flex items-center gap-1">
+                <Sparkles size={12} className="text-purple-500" /> আইডিয়া:
+              </span>
+              {DEMO_PROMPTS.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleSend(p.text)}
+                  disabled={isTyping}
+                  className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 text-[11px] font-bold whitespace-nowrap transition-all shadow-2xs active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
 
-            {/* Input */}
-            <div className="p-4 bg-white border-t border-slate-200 flex gap-2">
-               <input 
-                  type="text" 
-                  placeholder="Ask anything..." 
-                  className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors"
+            {/* Input Box */}
+            <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+              <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="সেলস, স্টক, ফেসবুক অফার বা যেকোনো প্রশ্ন লিখুন..."
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSend()}
-               />
-               <button 
-                onClick={handleSend}
-                className="bg-purple-600 text-white px-5 rounded-xl flex items-center justify-center hover:bg-indigo-700 transition-colors shadow-lg shadow-purple-500/20"
-               >
+                  disabled={isTyping}
+                  className="flex-1 px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-bold text-slate-800 outline-none focus:border-purple-500 focus:bg-white transition-all placeholder:text-slate-400"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim() || isTyping}
+                  className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white flex items-center justify-center transition-all shadow-md shadow-purple-500/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 shrink-0"
+                >
                   <Send size={18} />
-               </button>
+                </button>
+              </form>
             </div>
           </div>
         </div>

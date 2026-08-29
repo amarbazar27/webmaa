@@ -30,7 +30,8 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [orderScope, setOrderScope] = useState('today'); // 'today' | 'all' | 'custom_date'
+  const [selectedDate, setSelectedDate] = useState(getTodayString());
   
   // States for advanced edits
   const [customNote, setCustomNote] = useState({});
@@ -522,20 +523,30 @@ export default function OrdersPage() {
 
   // Grouping by Phone/Email algorithm on filtered orders
   const getOrderDateString = (order) => {
-    if (!order.createdAt) return '';
-    const dateObj = order.createdAt.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    if (!order?.createdAt) return '';
+    try {
+      const dateObj = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt);
+      if (isNaN(dateObj.getTime())) return '';
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    } catch {
+      return '';
+    }
   };
 
-  const filteredOrders = selectedDate 
-    ? orders.filter(o => getOrderDateString(o) === selectedDate)
-    : orders;
+  const todayStr = getTodayString();
+  const todayOrders = orders.filter(o => getOrderDateString(o) === todayStr);
+
+  const filteredOrders = orderScope === 'today'
+    ? todayOrders
+    : orderScope === 'custom_date' && selectedDate
+      ? orders.filter(o => getOrderDateString(o) === selectedDate)
+      : orders;
 
   const groupedOrders = filteredOrders.reduce((acc, order) => {
-     const identifier = order.customerEmail || order.customerPhone || 'Unknown Customer';
+     const identifier = (order?.customerPhone || order?.customerEmail || 'সম্মানিত কাস্টমার').toString();
      if (!acc[identifier]) acc[identifier] = [];
      acc[identifier].push(order);
      return acc;
@@ -552,23 +563,39 @@ export default function OrdersPage() {
      );
   }
 
-  if (orders.length === 0) {
-      return (
-        <div className="text-center py-32 bg-white rounded-3xl border border-dashed border-slate-200">
-          <ShoppingBag size={64} className="mx-auto mb-6 text-slate-200" />
-          <h3 className="text-xl font-black text-slate-400">কোনো অর্ডার পাওয়া যায়নি</h3>
-          <p className="text-slate-400 text-sm mt-2 font-medium">আপনার স্টোরে যখনই কেউ কিছু অর্ডার করবে, তা এখানে দেখা যাবে।</p>
-        </div>
-      );
-  }
-
   return (
     <>
       <div className="max-w-6xl mx-auto space-y-8 animate-slide-in pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Order Management</h1>
-          <p className="text-sm text-slate-500 font-medium">Verify Transactions, Set Countdowns, and Group by Customer.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">অর্ডার ম্যানেজমেন্ট (Order Hub)</h1>
+          <p className="text-sm text-slate-500 font-medium">আজকের ও পূর্বের সকল কাস্টমার অর্ডার ভেরিফাই ও পরিচালনা করুন।</p>
+        </div>
+
+        {/* Quick Scope Switcher */}
+        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm self-start md:self-auto">
+          <button
+            type="button"
+            onClick={() => { setOrderScope('today'); setSelectedDate(todayStr); }}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              orderScope === 'today'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            📅 আজকের অর্ডার ({todayOrders.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => { setOrderScope('all'); setSelectedDate(''); }}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              orderScope === 'all'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            📋 সব অর্ডার ({orders.length})
+          </button>
         </div>
       </div>
 
@@ -580,7 +607,7 @@ export default function OrdersPage() {
           </div>
           <input
             type="text"
-            placeholder="Search by customer name, phone, or order ID..."
+            placeholder="কাস্টমারের নাম, ফোন বা অর্ডার আইডি দিয়ে খুঁজুন..."
             className="bg-transparent border-none outline-none w-full py-2 text-sm font-bold text-slate-700 placeholder:text-slate-400"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -589,28 +616,24 @@ export default function OrdersPage() {
 
         {/* Date Filter Input */}
         <div className="bg-white border border-slate-200 p-2 rounded-2xl flex items-center gap-2 shadow-sm shrink-0">
-          <span className="pl-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Select Date:</span>
+          <span className="pl-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">তারিখ নির্বাচন:</span>
           <input
             type="date"
             className="bg-transparent border-none outline-none text-xs font-black text-slate-900 py-1 cursor-pointer"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => {
+              setSelectedDate(e.target.value);
+              setOrderScope('custom_date');
+            }}
           />
           {selectedDate ? (
             <button 
-              onClick={() => setSelectedDate('')} 
-              className="text-[9px] font-black text-red-500 bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+              onClick={() => { setOrderScope('all'); setSelectedDate(''); }} 
+              className="text-[9px] font-black text-purple-600 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
             >
-              All Dates
+              সব অর্ডার
             </button>
-          ) : (
-            <button 
-              onClick={() => setSelectedDate(getTodayString())} 
-              className="text-[9px] font-black text-purple-600 bg-purple-50 hover:bg-purple-100 px-2 py-1 rounded-lg transition-colors cursor-pointer"
-            >
-              Today
-            </button>
-          )}
+          ) : null}
         </div>
 
         <div className="flex gap-1.5 flex-wrap">
@@ -618,7 +641,7 @@ export default function OrdersPage() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors border ${
+              className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-colors border cursor-pointer ${
                 filter === s
                   ? 'bg-purple-600 text-white border-purple-600 shadow-md'
                   : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
