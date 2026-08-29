@@ -2,11 +2,19 @@
 import { useState } from 'react';
 import { Truck } from 'lucide-react';
 
-export default function CourierIntegrationCards({ courierConfig, setCourierConfig, activeShopId }) {
+export default function CourierIntegrationCards({ courierConfig = {}, setCourierConfig = () => {}, activeShopId = '' }) {
   const [showSteadfastHelp, setShowSteadfastHelp] = useState(false);
   const [showPathaoHelp, setShowPathaoHelp] = useState(false);
   const [showRedxHelp, setShowRedxHelp] = useState(false);
   const [showPaperflyHelp, setShowPaperflyHelp] = useState(false);
+
+  const cfg = courierConfig || {};
+  const updateField = (key, value) => {
+    setCourierConfig(prev => ({
+      ...(prev || {}),
+      [key]: value
+    }));
+  };
 
   return (
     <div className="space-y-8 animate-slide-in">
@@ -57,24 +65,24 @@ export default function CourierIntegrationCards({ courierConfig, setCourierConfi
               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">অর্ডার অ্যাকশন থেকে ওয়ান-ক্লিক পার্সেল বুকিং করতে এটি অন করুন</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" checked={courierConfig.steadfastEnabled || false} onChange={e => setCourierConfig({...courierConfig, steadfastEnabled: e.target.checked})} />
+              <input type="checkbox" className="sr-only peer" checked={cfg.steadfastEnabled || false} onChange={e => updateField('steadfastEnabled', e.target.checked)} />
               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
             </label>
           </div>
 
-          {courierConfig.steadfastEnabled && (
+          {cfg.steadfastEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-in">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Steadfast API Key</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="API Key" value={courierConfig.steadfastApiKey || ''} onChange={e => setCourierConfig({...courierConfig, steadfastApiKey: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="API Key" value={cfg.steadfastApiKey || ''} onChange={e => updateField('steadfastApiKey', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Steadfast Secret Key</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Secret Key" value={courierConfig.steadfastSecretKey || ''} onChange={e => setCourierConfig({...courierConfig, steadfastSecretKey: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Secret Key" value={cfg.steadfastSecretKey || ''} onChange={e => updateField('steadfastSecretKey', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Steadfast Webhook Token</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Optional token" value={courierConfig.steadfastWebhookToken || ''} onChange={e => setCourierConfig({...courierConfig, steadfastWebhookToken: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Optional token" value={cfg.steadfastWebhookToken || ''} onChange={e => updateField('steadfastWebhookToken', e.target.value)} />
                 <p className="text-[8px] text-slate-400 mt-1 font-bold">
                   Steadfast-এ এই Callback URL ব্যবহার করুন: <br />
                   <span className="font-mono text-purple-600 break-all">https://yourdomain.com/api/courier/steadfast/webhook?shopId={activeShopId}</span>
@@ -132,32 +140,32 @@ export default function CourierIntegrationCards({ courierConfig, setCourierConfi
               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">পাঠাও মার্চেন্ট অ্যাকাউন্টে ওয়ান-ক্লিক পার্সেল বুকিং চালু করুন</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" checked={courierConfig.pathaoEnabled || false} onChange={e => setCourierConfig({...courierConfig, pathaoEnabled: e.target.checked})} />
+              <input type="checkbox" className="sr-only peer" checked={cfg.pathaoEnabled || false} onChange={e => updateField('pathaoEnabled', e.target.checked)} />
               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
             </label>
           </div>
 
-          {courierConfig.pathaoEnabled && (
+          {cfg.pathaoEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slide-in">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pathao Client ID</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Client ID" value={courierConfig.pathaoClientId || ''} onChange={e => setCourierConfig({...courierConfig, pathaoClientId: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Client ID" value={cfg.pathaoClientId || ''} onChange={e => updateField('pathaoClientId', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pathao Client Secret</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Client Secret" value={courierConfig.pathaoClientSecret || ''} onChange={e => setCourierConfig({...courierConfig, pathaoClientSecret: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Client Secret" value={cfg.pathaoClientSecret || ''} onChange={e => updateField('pathaoClientSecret', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pathao Store ID</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Store ID (e.g. 12345)" value={courierConfig.pathaoStoreId || ''} onChange={e => setCourierConfig({...courierConfig, pathaoStoreId: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Store ID (e.g. 12345)" value={cfg.pathaoStoreId || ''} onChange={e => updateField('pathaoStoreId', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pathao Username / Email</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Registered Email" value={courierConfig.pathaoUsername || ''} onChange={e => setCourierConfig({...courierConfig, pathaoUsername: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Registered Email" value={cfg.pathaoUsername || ''} onChange={e => updateField('pathaoUsername', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Pathao API Password</label>
-                <input type="password" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Password" value={courierConfig.pathaoPassword || ''} onChange={e => setCourierConfig({...courierConfig, pathaoPassword: e.target.value})} />
+                <input type="password" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Password" value={cfg.pathaoPassword || ''} onChange={e => updateField('pathaoPassword', e.target.value)} />
               </div>
             </div>
           )}
@@ -211,20 +219,20 @@ export default function CourierIntegrationCards({ courierConfig, setCourierConfi
               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">রেডএক্স এপিআই দিয়ে পার্সেল ক্রিয়েশন চালু করুন</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" checked={courierConfig.redxEnabled || false} onChange={e => setCourierConfig({...courierConfig, redxEnabled: e.target.checked})} />
+              <input type="checkbox" className="sr-only peer" checked={cfg.redxEnabled || false} onChange={e => updateField('redxEnabled', e.target.checked)} />
               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-600"></div>
             </label>
           </div>
 
-          {courierConfig.redxEnabled && (
+          {cfg.redxEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-slide-in">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">RedX API Access Token</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Bearer Token..." value={courierConfig.redxApiKey || ''} onChange={e => setCourierConfig({...courierConfig, redxApiKey: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Bearer Token..." value={cfg.redxApiKey || ''} onChange={e => updateField('redxApiKey', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">RedX Pickup Store ID</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Store / Hub ID" value={courierConfig.redxPickupStoreId || ''} onChange={e => setCourierConfig({...courierConfig, redxPickupStoreId: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Store / Hub ID" value={cfg.redxPickupStoreId || ''} onChange={e => updateField('redxPickupStoreId', e.target.value)} />
               </div>
             </div>
           )}
@@ -275,24 +283,24 @@ export default function CourierIntegrationCards({ courierConfig, setCourierConfi
               <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">পেপারফ্লাই কুরিয়ার পার্সেল বুকিং চালু করুন</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" checked={courierConfig.paperflyEnabled || false} onChange={e => setCourierConfig({...courierConfig, paperflyEnabled: e.target.checked})} />
+              <input type="checkbox" className="sr-only peer" checked={cfg.paperflyEnabled || false} onChange={e => updateField('paperflyEnabled', e.target.checked)} />
               <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
             </label>
           </div>
 
-          {courierConfig.paperflyEnabled && (
+          {cfg.paperflyEnabled && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-slide-in">
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paperfly Username</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Username / Merchant Code" value={courierConfig.paperflyUsername || ''} onChange={e => setCourierConfig({...courierConfig, paperflyUsername: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Username / Merchant Code" value={cfg.paperflyUsername || ''} onChange={e => updateField('paperflyUsername', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paperfly Password</label>
-                <input type="password" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Password" value={courierConfig.paperflyPassword || ''} onChange={e => setCourierConfig({...courierConfig, paperflyPassword: e.target.value})} />
+                <input type="password" className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Password" value={cfg.paperflyPassword || ''} onChange={e => updateField('paperflyPassword', e.target.value)} />
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Paperfly Key</label>
-                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Paperfly API Key" value={courierConfig.paperflyKey || ''} onChange={e => setCourierConfig({...courierConfig, paperflyKey: e.target.value})} />
+                <input className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium" placeholder="Paperfly API Key" value={cfg.paperflyKey || ''} onChange={e => updateField('paperflyKey', e.target.value)} />
               </div>
             </div>
           )}

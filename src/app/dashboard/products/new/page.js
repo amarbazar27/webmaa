@@ -121,6 +121,19 @@ export default function NewProductPage() {
         }
       }
 
+      // Auto-persist custom category to categories subcollection if not already present
+      if (form.category && form.category.trim()) {
+        const catName = form.category.trim();
+        const exists = categories.some(c => c.name?.toLowerCase() === catName.toLowerCase());
+        if (!exists) {
+          try {
+            await addCategory(activeShopId, { name: catName, subcategories: form.subcategory ? [form.subcategory.trim()] : [] });
+          } catch (catErr) {
+            console.warn('Auto add category failed:', catErr);
+          }
+        }
+      }
+
       await addProduct(activeShopId, {
         ...form,
         price: price,

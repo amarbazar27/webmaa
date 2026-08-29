@@ -2,9 +2,15 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getProducts, deleteProduct, updateProduct } from '@/lib/firestore';
+import { getProducts, deleteProduct, updateProduct, getCategories, addCategory, deleteCategory } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
-import { Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff, Inbox } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { 
+  Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, 
+  AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff, 
+  Inbox, Layers, FolderPlus, HelpCircle
+} from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -67,12 +73,21 @@ function EditableCell({ value, onSave, type = 'text', prefix = '', className = '
 
 export default function ProductsPage() {
   const { user, activeShopId } = useAuth();
+  const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories'
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [catLoading, setCatLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name_asc');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [expandedId, setExpandedId] = useState(null);
+  
+  // Category management state
+  const [newCat, setNewCat] = useState('');
+  const [catError, setCatError] = useState('');
+  const [addingCat, setAddingCat] = useState(false);
+  const [newSubcat, setNewSubcat] = useState({});
+  const [isQuickCatModalOpen, setIsQuickCatModalOpen] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     if (!activeShopId) return;
@@ -88,9 +103,23 @@ export default function ProductsPage() {
     }
   }, [activeShopId]);
 
+  const fetchCategoriesData = useCallback(async () => {
+    if (!activeShopId) return;
+    setCatLoading(true);
+    try {
+      const data = await getCategories(activeShopId);
+      setCategories(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCatLoading(false);
+    }
+  }, [activeShopId]);
+
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    fetchCategoriesData();
+  }, [fetchProducts, fetchCategoriesData]);
 
   const handleUpdate = async (productId, field, value) => {
     const parsed = field === 'price' ? parseFloat(value) : field === 'stock' ? parseInt(value) : value;
@@ -130,7 +159,75 @@ export default function ProductsPage() {
     }
   };
 
-  const uniqueCategories = [...new Set(products.map(p => p.category).filter(Boolean))];
+  // Category Actions
+  const handleAddCategorySubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!newCat.trim()) {
+      setCatError('অনুগ্রহ করে ক্যাটাগরির নাম লিখুন!');
+      toast.error('অনুগ্রহ করে ক্যাটাগরির নাম লিখুন!');
+      return;
+    }
+    setCatError('');
+    if (!activeShopId) return;
+
+    setAddingCat(true);
+    try {
+      await addCategory(activeShopId, { name: newCat.trim() });
+      toast.success('ক্যাটাগরি সফলভাবে যুক্ত হয়েছে! ✨');
+      setNewCat('');
+      setIsQuickCatModalOpen(false);
+      await fetchCategoriesData();
+    } catch (err) {
+      console.error(err);
+      toast.error('ক্যাটাগরি সেভ করতে সমস্যা হয়েছে');
+    } finally {
+      setAddingCat(false);
+    }
+  };
+
+  const handleAddSubcat = async (e, catId, existingSubcats = []) => {
+    e.preventDefault();
+    const sub = newSubcat[catId]?.trim();
+    if (!sub) return;
+    try {
+      const catRef = doc(db, 'shops', activeShopId, 'categories', catId);
+      const updatedSubcats = [...(existingSubcats || []), sub];
+      await updateDoc(catRef, { subcategories: updatedSubcats });
+      toast.success('সাবক্যাটাগরি যুক্ত হয়েছে!');
+      setNewSubcat({...newSubcat, [catId]: ''});
+      fetchCategoriesData();
+    } catch (err) {
+      toast.error('ব্যর্থ হয়েছে!');
+    }
+  };
+
+  const handleRemoveSubcat = async (catId, subToRemove, existingSubcats = []) => {
+    try {
+      const catRef = doc(db, 'shops', activeShopId, 'categories', catId);
+      const updatedSubcats = existingSubcats.filter(s => s !== subToRemove);
+      await updateDoc(catRef, { subcategories: updatedSubcats });
+      toast.success('রিমুভ করা হয়েছে!');
+      fetchCategoriesData();
+    } catch (err) {
+      toast.error('ব্যর্থ হয়েছে!');
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!confirm('আপনি কি নিশ্চিতভাবে এই ক্যাটাগরিটি মুছে ফেলতে চান?')) return;
+    try {
+      await deleteCategory(activeShopId, id);
+      toast.success('ক্যাটাগরি ডিলিট করা হয়েছে');
+      fetchCategoriesData();
+    } catch (err) {
+      toast.error('ক্যাটাগরি ডিলিট ব্যর্থ হয়েছে');
+    }
+  };
+
+  const uniqueCategories = [...new Set([
+    ...categories.map(c => c.name),
+    ...products.map(p => p.category).filter(Boolean)
+  ])];
 
   let filteredProducts = products.filter(p =>
     (p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -144,7 +241,6 @@ export default function ProductsPage() {
     if (sortBy === 'oldest') return (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0);
     if (sortBy === 'latest') return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
     if (sortBy === 'name_desc') return b.name.localeCompare(a.name, 'bn');
-    // Default: name_asc (A→Z)
     return a.name.localeCompare(b.name, 'bn');
   });
 
@@ -152,247 +248,351 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-8 animate-slide-in pb-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Header with Title & Action Buttons */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Stock Inventory</h1>
-          <p className="text-sm text-slate-500 font-medium">Click any cell to edit — saves automatically</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">পণ্য ও ক্যাটাগরি ব্যবস্থাপনা (Inventory & Categories)</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">প্রোডাক্ট স্টক, মূল্য ও ক্যাটাগরি একসাথে সহজভাবে পরিচালনা করুন</p>
         </div>
-        <Link href="/dashboard/products/new">
-          <Button variant="primary" icon={Plus} className="px-8 h-12 shadow-lg shadow-purple-500/20">
-            Post New Item
-          </Button>
-        </Link>
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card title={products.length} subtitle="Live Products" icon={Package} className="border-l-4 border-l-purple-500 shadow-sm" />
-        <Card title={products.filter(p => p.stock > 0).length} subtitle="In Stock" icon={BarChart3} className="border-l-4 border-l-blue-500 shadow-sm" />
-        <Card title={`৳${totalValue.toLocaleString()}`} subtitle="Inventory Value" icon={Tag} className="border-l-4 border-l-green-500 shadow-sm" />
-      </div>
-
-      {/* Inline Edit Info Banner */}
-      <div className="bg-purple-50 border border-purple-100 rounded-2xl px-6 py-3 flex items-center gap-3 text-sm text-purple-700 font-medium">
-        <Pencil size={16} className="text-purple-500 shrink-0" />
-        <span>নামের, দামের বা স্টকের ঘরে <strong>ক্লিক করুন</strong> এবং সরাসরি এডিট করুন। ফোকাস সরলেই অটো-সেভ হয়ে যাবে।</span>
-      </div>
-
-      {/* Search & Filter */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="bg-white border border-slate-100 p-2 rounded-2xl flex-1 flex items-center gap-3 shadow-sm">
-          <div className="pl-4 text-slate-400"><Search size={18} /></div>
-          <input
-            type="text"
-            placeholder="Search by name or category..."
-            className="bg-transparent border-none outline-none w-full py-2 text-sm font-bold text-slate-700 placeholder:text-slate-400"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="flex gap-3">
-          <select 
-            value={sortBy} 
-            onChange={e => setSortBy(e.target.value)}
-            className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none cursor-pointer min-w-[140px]"
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsQuickCatModalOpen(true)}
+            className="px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-black rounded-2xl text-xs flex items-center gap-1.5 border border-purple-200 transition-all shadow-xs cursor-pointer active:scale-95"
           >
-            <option value="name_asc">নাম (A→Z)</option>
-            <option value="name_desc">নাম (Z→A)</option>
-            <option value="latest">নতুন আগে</option>
-            <option value="oldest">পুরনো আগে</option>
-            <option value="price_asc">দাম কম থেকে বেশি</option>
-            <option value="price_desc">দাম বেশি থেকে কম</option>
-          </select>
-
-          <select 
-            value={selectedCategory} 
-            onChange={e => setSelectedCategory(e.target.value)}
-            className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 shadow-sm outline-none cursor-pointer min-w-[140px]"
-          >
-            <option value="">All Categories</option>
-            {uniqueCategories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
+            <FolderPlus size={16} />
+            <span>+ দ্রুত ক্যাটাগরি তৈরি</span>
+          </button>
+          <Link href="/dashboard/products/new">
+            <Button variant="primary" icon={Plus} className="px-6 h-12 shadow-lg shadow-purple-500/20 font-black text-xs">
+              + নতুন প্রোডাক্ট যোগ
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {loading ? (
-        <div className="py-20 text-center">
-          <div className="w-10 h-10 border-4 border-slate-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Loading Inventory...</p>
-        </div>
-      ) : filteredProducts.length === 0 ? (
-        <div className="bg-white py-24 text-center border-dashed border-2 border-slate-100 rounded-3xl">
-          <Package size={48} className="mx-auto mb-6 text-slate-200" />
-          <p className="text-xl font-black text-slate-900">No Products Found</p>
-          <p className="text-sm text-slate-500 mt-2 font-medium">Your digital warehouse is empty. Add products to start selling.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {/* Header */}
-          <div className="hidden lg:grid grid-cols-12 px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-            <div className="col-span-3">Product</div>
-            <div className="col-span-2">Category</div>
-            <div className="col-span-1 text-center">Price (৳)</div>
-            <div className="col-span-1 text-center">Stock</div>
-            <div className="col-span-1 text-center">Note</div>
-            <div className="col-span-1 text-center">Custom</div>
-            <div className="col-span-1 text-center">Request</div>
-            <div className="col-span-1 text-center">Hide</div>
-            <div className="col-span-1 text-right">Action</div>
+      {/* ── Unified Tab Switcher ── */}
+      <div className="flex border-b border-slate-200 gap-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab('products')}
+          className={`pb-3.5 px-3 font-black text-sm transition-all border-b-2 flex items-center gap-2 cursor-pointer ${
+            activeTab === 'products'
+              ? 'border-purple-600 text-purple-600'
+              : 'border-transparent text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <Package size={17} />
+          <span>সকল প্রোডাক্ট ইনভেন্টরি ({products.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('categories')}
+          className={`pb-3.5 px-3 font-black text-sm transition-all border-b-2 flex items-center gap-2 cursor-pointer ${
+            activeTab === 'categories'
+              ? 'border-purple-600 text-purple-600'
+              : 'border-transparent text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <Tag size={17} />
+          <span>ক্যাটাগরি ও সাবক্যাটাগরি ({categories.length})</span>
+        </button>
+      </div>
+
+      {/* ── TAB 1: PRODUCTS INVENTORY ── */}
+      {activeTab === 'products' && (
+        <div className="space-y-6">
+          {/* Stats Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <Card title={products.length} subtitle="Live Products" icon={Package} className="border-l-4 border-l-purple-500 shadow-sm" />
+            <Card title={products.filter(p => p.stock > 0).length} subtitle="In Stock" icon={BarChart3} className="border-l-4 border-l-blue-500 shadow-sm" />
+            <Card title={`৳${totalValue.toLocaleString()}`} subtitle="Inventory Value" icon={Tag} className="border-l-4 border-l-green-500 shadow-sm" />
           </div>
 
-          {filteredProducts.map(product => (
-            <div key={product.id} className={`bg-white p-4 lg:grid lg:grid-cols-12 items-center gap-4 rounded-2xl border hover:shadow-lg transition-all group flex flex-col lg:flex-row ${product.isHidden ? 'border-orange-200 bg-orange-50/30 opacity-70' : 'border-slate-100 hover:border-purple-200'}`}>
+          {/* Inline Edit Info Banner */}
+          <div className="bg-purple-50 border border-purple-100 rounded-2xl px-5 py-3 flex items-center gap-3 text-xs sm:text-sm text-purple-700 font-medium">
+            <Pencil size={16} className="text-purple-500 shrink-0" />
+            <span>নামের, দামের বা স্টকের ঘরে <strong>ক্লিক করুন</strong> এবং সরাসরি এডিট করুন। ফোকাস সরলেই অটো-সেভ হয়ে যাবে।</span>
+          </div>
 
-              {/* Product Info */}
-              <div className="col-span-3 flex items-center gap-4 w-full">
-                <div className="relative group/img w-12 aspect-[9/16] rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
-                  {updatingImageId === product.id ? (
-                     <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
-                        <Loader2 className="animate-spin text-purple-600" size={16} />
-                     </div>
-                  ) : (
-                     <>
-                        {product.imageUrl
-                          ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                          : <div className="w-full h-full flex items-center justify-center text-slate-200"><Package size={20} /></div>
-                        }
-                        <label className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-all flex items-center justify-center cursor-pointer">
-                           <Camera size={16} className="text-white" />
-                           <input 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*" 
-                              onChange={(e) => handleImageUpdate(product.id, e.target.files[0])} 
-                           />
-                        </label>
-                     </>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <EditableCell
-                    value={product.name}
-                    onSave={v => handleUpdate(product.id, 'name', v)}
-                    className="text-slate-900 text-sm"
-                  />
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">ID: {product.id.slice(-6).toUpperCase()}</span>
-                    <select
-                      value={product.highlightPosition || 0}
-                      onChange={e => handleUpdate(product.id, 'highlightPosition', parseInt(e.target.value))}
-                      className="text-[10px] font-black bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg px-2 py-0.5 outline-none cursor-pointer shadow-xs transition-colors"
-                      title="হোমপেজ শোকেস গ্রিড পজিশন (১ম লার্জ হিরো, ২য়, ৩য়, ৪র্থ)"
+          {/* Search & Filter */}
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="bg-white border border-slate-100 p-2 rounded-2xl flex-1 flex items-center gap-3 shadow-sm">
+              <div className="pl-4 text-slate-400"><Search size={18} /></div>
+              <input
+                type="text"
+                placeholder="Search by name or category..."
+                className="bg-transparent border-none outline-none w-full py-2 text-sm font-bold text-slate-700 placeholder:text-slate-400"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <select 
+                value={selectedCategory} 
+                onChange={e => setSelectedCategory(e.target.value)}
+                className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold text-slate-700 shadow-sm outline-none cursor-pointer"
+              >
+                <option value="">সকল ক্যাটাগরি</option>
+                {uniqueCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+
+              <select 
+                value={sortBy} 
+                onChange={e => setSortBy(e.target.value)}
+                className="bg-white border border-slate-100 rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold text-slate-700 shadow-sm outline-none cursor-pointer min-w-[130px]"
+              >
+                <option value="name_asc">নাম (A→Z)</option>
+                <option value="name_desc">নাম (Z→A)</option>
+                <option value="price_asc">মূল্য (কম থেকে বেশি)</option>
+                <option value="price_desc">মূল্য (বেশি থেকে কম)</option>
+                <option value="latest">সর্বশেষ যুক্ত</option>
+                <option value="oldest">পুরাতন আগে</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Products Table */}
+          {loading ? (
+            <div className="py-20 text-center">
+              <Loader2 className="w-10 h-10 border-4 border-slate-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-4 text-purple-600" />
+              <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Loading Inventory...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="bg-white py-20 text-center border-dashed border-2 border-slate-100 rounded-3xl">
+              <Package size={48} className="mx-auto mb-4 text-slate-200" />
+              <p className="text-lg font-black text-slate-900">কোনো প্রোডাক্ট পাওয়া যায়নি</p>
+              <p className="text-xs text-slate-400 mt-1 mb-6">নতুন প্রোডাক্ট আপলোড করতে উপরের বাটনে ক্লিক করুন</p>
+              <Link href="/dashboard/products/new">
+                <Button variant="primary" icon={Plus}>+ Add First Product</Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                    <tr>
+                      <th className="px-6 py-4">Product</th>
+                      <th className="px-6 py-4">Category</th>
+                      <th className="px-6 py-4">Price (৳)</th>
+                      <th className="px-6 py-4">Stock</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredProducts.map(p => (
+                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 group">
+                              {p.imageUrl ? (
+                                <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                  <ImageIcon size={18} />
+                                </div>
+                              )}
+                              <label className="absolute inset-0 bg-slate-900/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                <Camera size={14} />
+                                <input type="file" accept="image/*" className="sr-only" onChange={e => handleImageUpdate(p.id, e.target.files?.[0])} />
+                              </label>
+                            </div>
+                            <div className="min-w-0">
+                              <EditableCell
+                                value={p.name}
+                                onSave={(val) => handleUpdate(p.id, 'name', val)}
+                                className="text-slate-900 font-bold"
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold">
+                            {p.category || 'Uncategorized'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <EditableCell
+                            type="number"
+                            prefix="৳"
+                            value={p.price}
+                            onSave={(val) => handleUpdate(p.id, 'price', val)}
+                            className="text-slate-900 font-black text-sm"
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <EditableCell
+                            type="number"
+                            value={p.stock}
+                            onSave={(val) => handleUpdate(p.id, 'stock', val)}
+                            className={`font-black text-sm ${p.stock <= 0 ? 'text-red-500' : 'text-slate-800'}`}
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link href={`/dashboard/products/edit/${p.id}`} className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors">
+                              <Pencil size={15} />
+                            </Link>
+                            <button onClick={() => handleDelete(p.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TAB 2: CATEGORY MANAGEMENT ── */}
+      {activeTab === 'categories' && (
+        <div className="space-y-6">
+          {/* Add Category Card */}
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+              <FolderPlus size={18} className="text-purple-600" />
+              <span>নতুন ক্যাটাগরি যুক্ত করুন (Add New Category)</span>
+            </h3>
+            <form onSubmit={handleAddCategorySubmit} className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  placeholder="যেমন: স্মার্টফোন, শাড়ি, কসমেটিকস..."
+                  value={newCat}
+                  onChange={e => { setNewCat(e.target.value); setCatError(''); }}
+                  className={`w-full px-4 py-3 rounded-2xl border text-sm font-bold text-slate-800 outline-none transition-all ${
+                    catError ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100'
+                  }`}
+                />
+                {catError && <p className="text-xs text-red-500 font-bold mt-1.5">{catError}</p>}
+              </div>
+              <Button type="submit" loading={addingCat} variant="primary" className="px-6 h-12 shadow-md">
+                + সেভ করুন
+              </Button>
+            </form>
+          </div>
+
+          {/* Category List */}
+          {catLoading ? (
+            <div className="py-20 text-center">
+              <Loader2 className="w-8 h-8 border-4 border-purple-600 rounded-full animate-spin mx-auto text-purple-600" />
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="bg-white py-16 text-center border-dashed border-2 border-slate-100 rounded-3xl">
+              <Tag size={40} className="mx-auto mb-3 text-slate-200" />
+              <p className="text-base font-black text-slate-900">এখনো কোনো ক্যাটাগরি তৈরি করা হয়নি</p>
+              <p className="text-xs text-slate-400 mt-1">উপরের বক্সে নাম লিখে ক্যাটাগরি যোগ করুন</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {categories.map(cat => (
+                <div key={cat.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4 hover:border-purple-200 transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-black">
+                        <Tag size={15} />
+                      </div>
+                      <h4 className="font-black text-slate-900 text-sm">{cat.name}</h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                      title="Delete Category"
                     >
-                      <option value={0}>সাধারণ তালিকা</option>
-                      <option value={1}>⭐ পজিশন ১ (লার্জ হিরো)</option>
-                      <option value={2}>⭐ পজিশন ২ (২য় হিরো)</option>
-                      <option value={3}>⭐ পজিশন ৩ (৩য় হিরো)</option>
-                      <option value={4}>⭐ পজিশন ৪ (৪র্থ হিরো)</option>
-                    </select>
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+
+                  {/* Subcategories */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <div className="flex flex-wrap gap-1.5">
+                      {(cat.subcategories || []).map((sub, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors">
+                          <span>{sub}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSubcat(cat.id, sub, cat.subcategories)}
+                            className="text-slate-400 hover:text-red-500"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    <form onSubmit={e => handleAddSubcat(e, cat.id, cat.subcategories)} className="flex gap-2 pt-1">
+                      <input
+                        type="text"
+                        placeholder="+ সাবক্যাটাগরি লিখুন..."
+                        value={newSubcat[cat.id] || ''}
+                        onChange={e => setNewSubcat({...newSubcat, [cat.id]: e.target.value})}
+                        className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-purple-400"
+                      />
+                      <button type="submit" className="px-3 py-1.5 bg-slate-100 hover:bg-purple-600 hover:text-white rounded-xl text-xs font-bold transition-colors">
+                        Add
+                      </button>
+                    </form>
                   </div>
                 </div>
-              </div>
-
-              {/* Category */}
-              <div className="col-span-2">
-                <EditableCell
-                  value={product.category || '—'}
-                  onSave={v => handleUpdate(product.id, 'category', v)}
-                  className="text-[10px] text-purple-600"
-                />
-              </div>
-
-              {/* Price */}
-              <div className="col-span-1 text-center">
-                <EditableCell
-                  value={product.price}
-                  type="number"
-                  prefix="৳"
-                  onSave={v => handleUpdate(product.id, 'price', v)}
-                  className="text-slate-900 text-sm font-black justify-center"
-                />
-              </div>
-
-              {/* Stock */}
-              <div className="col-span-1 text-center">
-                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-black ${(parseInt(product.stock) || 0) > 10 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                  <EditableCell
-                    value={product.stock || 0}
-                    type="number"
-                    onSave={v => handleUpdate(product.id, 'stock', v)}
-                    className=""
-                  />
-                  <span className="text-[9px] font-black uppercase opacity-50">pcs</span>
-                </div>
-              </div>
-
-              {/* Note Toggle */}
-              <div className="col-span-1 text-center">
-                 <button 
-                   onClick={() => handleUpdate(product.id, 'allowNote', !product.allowNote)}
-                   className={`p-2 rounded-xl transition-all ${product.allowNote ? 'bg-purple-100 text-purple-600 ring-2 ring-purple-600/20' : 'bg-slate-50 text-slate-300'}`}
-                   title={product.allowNote ? "Customer Note is ON" : "Customer Note is OFF"}
-                 >
-                    <MessageSquare size={18} strokeWidth={product.allowNote ? 3 : 2} />
-                 </button>
-              </div>
-
-              {/* Customize Toggle */}
-              <div className="col-span-1 text-center">
-                 <button 
-                   onClick={() => handleUpdate(product.id, 'allowCustomize', !product.allowCustomize)}
-                   className={`p-2 rounded-xl transition-all ${product.allowCustomize ? 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-600/20' : 'bg-slate-50 text-slate-300'}`}
-                   title={product.allowCustomize ? "AI Customize is ON" : "AI Customize is OFF"}
-                 >
-                    <Sparkles size={18} strokeWidth={product.allowCustomize ? 3 : 2} />
-                 </button>
-              </div>
-
-              {/* Request Toggle */}
-              <div className="col-span-1 text-center">
-                 <button 
-                   onClick={() => handleUpdate(product.id, 'allowRequest', !product.allowRequest)}
-                   className={`p-2 rounded-xl transition-all ${product.allowRequest ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-600/20' : 'bg-slate-50 text-slate-300 hover:text-slate-500'}`}
-                   title={product.allowRequest ? "Pre-order/Request is ON" : "Pre-order/Request is OFF"}
-                 >
-                    <Inbox size={18} strokeWidth={product.allowRequest ? 3 : 2} />
-                 </button>
-              </div>
-
-              {/* Hide/Show Toggle */}
-              <div className="col-span-1 text-center">
-                 <button 
-                   onClick={() => handleUpdate(product.id, 'isHidden', !product.isHidden)}
-                   className={`p-2 rounded-xl transition-all ${product.isHidden ? 'bg-orange-100 text-orange-600 ring-2 ring-orange-500/30' : 'bg-slate-50 text-slate-300 hover:text-slate-500'}`}
-                   title={product.isHidden ? "Hidden from storefront — click to show" : "Visible in storefront — click to hide"}
-                 >
-                    {product.isHidden ? <EyeOff size={18} strokeWidth={2.5} /> : <Eye size={18} strokeWidth={2} />}
-                 </button>
-              </div>
-
-              {/* Edit / Delete */}
-              <div className="col-span-1 flex justify-end gap-2 w-full lg:w-auto mt-4 lg:mt-0">
-                <Link
-                  href={`/dashboard/products/edit/${product.id}`}
-                  className="p-3 rounded-xl transition-all bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-100 flex items-center justify-center"
-                  title="Edit Product"
-                >
-                  <Pencil size={18} />
-                </Link>
-                <Button
-                  variant="danger"
-                  icon={Trash2}
-                  onClick={() => handleDelete(product.id)}
-                  className="px-3 py-3 rounded-xl opacity-100 transition-all"
-                  title="Delete Product"
-                />
-              </div>
-
-
+              ))}
             </div>
-          ))}
+          )}
+        </div>
+      )}
+
+      {/* ── Quick Category Modal ── */}
+      {isQuickCatModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FolderPlus size={20} className="text-purple-600" />
+                <h3 className="text-lg font-black text-slate-900">দ্রুত ক্যাটাগরি তৈরি</h3>
+              </div>
+              <button onClick={() => setIsQuickCatModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCategorySubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-black text-slate-500 block mb-1.5 uppercase tracking-wider">ক্যাটাগরির নাম</label>
+                <input
+                  type="text"
+                  placeholder="যেমন: ইলেকট্রনিক্স, পাঞ্জাবি, ব্যাগ..."
+                  value={newCat}
+                  onChange={e => { setNewCat(e.target.value); setCatError(''); }}
+                  className={`w-full px-4 py-3 rounded-2xl border text-sm font-bold text-slate-800 outline-none ${
+                    catError ? 'border-red-400 ring-2 ring-red-100' : 'border-slate-200 focus:border-purple-500'
+                  }`}
+                  autoFocus
+                />
+                {catError && <p className="text-xs text-red-500 font-bold mt-1">{catError}</p>}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQuickCatModalOpen(false)}
+                  className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-black hover:bg-slate-200"
+                >
+                  বাতিল
+                </button>
+                <Button type="submit" loading={addingCat} variant="primary" className="px-6">
+                  তৈরি করুন
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

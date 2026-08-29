@@ -2,7 +2,7 @@
 import { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { getProduct, updateProduct, getCategories } from '@/lib/firestore';
+import { getProduct, updateProduct, getCategories, addCategory } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
 import { Camera, ArrowLeft, Loader2, Save, Tag, ChevronDown, Sparkles, Plus, Trash2, MessageSquare, X, ImagePlus } from 'lucide-react';
 import Link from 'next/link';
@@ -193,6 +193,19 @@ export default function EditProductPage({ params }) {
         // No new files — just save the current saved list (user may have removed some)
         updateData.images = savedImages;
         updateData.imageUrl = savedImages[0] || '';
+      }
+
+      // Auto-persist custom category to categories subcollection if not already present
+      if (form.category && form.category.trim()) {
+        const catName = form.category.trim();
+        const exists = categories.some(c => c.name?.toLowerCase() === catName.toLowerCase());
+        if (!exists) {
+          try {
+            await addCategory(activeShopId, { name: catName, subcategories: form.subcategory ? [form.subcategory.trim()] : [] });
+          } catch (catErr) {
+            console.warn('Auto add category failed:', catErr);
+          }
+        }
       }
 
       await updateProduct(activeShopId, productId, updateData);

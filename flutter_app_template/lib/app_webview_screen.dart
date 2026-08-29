@@ -223,6 +223,16 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                         Navigator.pop(dialogContext);
                                       }
                                     },
+                                    onLoadStop: (controller, url) async {
+                                      final urlStr = url?.toString().toLowerCase() ?? '';
+                                      if (urlStr.contains('/api/auth') || urlStr.contains('__/auth/handler') || urlStr.contains('accounts.google.com/rotatecookiespage')) {
+                                        Future.delayed(const Duration(milliseconds: 600), () {
+                                          if (Navigator.canPop(dialogContext)) {
+                                            Navigator.pop(dialogContext);
+                                          }
+                                        });
+                                      }
+                                    },
                                   ),
                                 ),
                               ],

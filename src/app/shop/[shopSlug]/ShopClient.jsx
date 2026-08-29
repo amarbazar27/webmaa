@@ -3781,20 +3781,26 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       />
 
       {/* ── Scroll To Top / Bottom Buttons ── */}
-      <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8">
+      <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8 select-none">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="w-11 h-11 bg-white border border-slate-200 shadow-lg rounded-2xl flex items-center justify-center text-slate-600 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all active:scale-90"
+          className="group flex items-center gap-2 px-3 py-2 bg-slate-900/90 hover:bg-purple-600 border border-white/20 shadow-xl rounded-2xl text-white backdrop-blur-md transition-all active:scale-90"
           title="উপরে যান"
         >
-          <ChevronLeft size={18} style={{transform:'rotate(90deg)'}} strokeWidth={2.5}/>
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
+            <ArrowUp size={14} className="stroke-[3]" />
+          </div>
+          <span className="text-[11px] font-black tracking-tight pr-1">উপরে যান</span>
         </button>
         <button
           onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-          className="w-11 h-11 bg-white border border-slate-200 shadow-lg rounded-2xl flex items-center justify-center text-slate-600 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all active:scale-90"
+          className="group flex items-center gap-2 px-3 py-2 bg-slate-900/90 hover:bg-purple-600 border border-white/20 shadow-xl rounded-2xl text-white backdrop-blur-md transition-all active:scale-90"
           title="নিচে যান"
         >
-          <ChevronRight size={18} style={{transform:'rotate(90deg)'}} strokeWidth={2.5}/>
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
+            <ArrowDown size={14} className="stroke-[3]" />
+          </div>
+          <span className="text-[11px] font-black tracking-tight pr-1">নিচে যান</span>
         </button>
       </div>
 

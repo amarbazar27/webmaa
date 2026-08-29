@@ -3045,21 +3045,27 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── Circular Glassy Scroll Button Group (Bottom-Left) ── */}
-      <div className="fixed bottom-8 left-8 z-[120] flex flex-col gap-2 animate-fade-in">
+      {/* ── High-Contrast Floating Jump to Top/Bottom Group (Bottom-Left) ── */}
+      <div className="fixed bottom-24 sm:bottom-8 left-4 sm:left-8 z-[120] flex flex-col gap-2 animate-fade-in select-none">
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-          className="w-11 h-11 rounded-full bg-white/10 hover:bg-purple-600 border border-white/20 flex items-center justify-center text-white backdrop-blur-md shadow-lg transition-all hover:scale-110 active:scale-95 cursor-pointer"
-          title="Scroll to Top"
+          className="group flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-purple-600 border border-white/20 text-white backdrop-blur-md shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
+          title="উপরে যান (Jump to Top)"
         >
-          <ArrowUp size={16} />
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
+            <ArrowUp size={14} className="stroke-[3]" />
+          </div>
+          <span className="text-[11px] font-black tracking-tight pr-1">উপরে যান</span>
         </button>
         <button 
           onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })} 
-          className="w-11 h-11 rounded-full bg-white/10 hover:bg-purple-600 border border-white/20 flex items-center justify-center text-white backdrop-blur-md shadow-lg transition-all hover:scale-110 active:scale-95 cursor-pointer"
-          title="Scroll to Bottom"
+          className="group flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-purple-600 border border-white/20 text-white backdrop-blur-md shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
+          title="নিচে যান (Jump to Bottom)"
         >
-          <ArrowDown size={16} />
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
+            <ArrowDown size={14} className="stroke-[3]" />
+          </div>
+          <span className="text-[11px] font-black tracking-tight pr-1">নিচে যান</span>
         </button>
       </div>
 

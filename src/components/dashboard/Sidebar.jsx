@@ -18,8 +18,7 @@ import NotificationInbox from '@/components/shared/NotificationInbox';
 const navItems = [
   { href: '/dashboard',              icon: LayoutDashboard, label: 'Overview',         staffAllowed: true  },
   { href: '/dashboard/settings',     icon: Settings,        label: 'Store Settings',   staffAllowed: false, isLockable: true },
-  { href: '/dashboard/categories',   icon: Tag,             label: 'Categories',       staffAllowed: true  },
-  { href: '/dashboard/products',     icon: ShoppingBag,     label: 'Inventory',        staffAllowed: true  },
+  { href: '/dashboard/products',     icon: ShoppingBag,     label: 'Inventory & Categories', staffAllowed: true  },
   { href: '/dashboard/smart-inventory', icon: ShoppingBag,  label: 'Smart Inventory',  staffAllowed: true  },
   { href: '/dashboard/orders',       icon: ShoppingCart,    label: 'Orders',           staffAllowed: true  },
   { href: '/dashboard/customers',    icon: Users,           label: 'Customers',        staffAllowed: false },

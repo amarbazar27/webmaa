@@ -18,7 +18,6 @@ class WebShopView extends StatefulWidget {
 class _WebShopViewState extends State<WebShopView> {
   InAppWebViewController? _webViewController;
   bool _isLoading = true;
-  double _progress = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -49,17 +48,15 @@ class _WebShopViewState extends State<WebShopView> {
               domStorageEnabled: true,
               databaseEnabled: true,
               useWideViewPort: true,
+              userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
+              cacheEnabled: true,
+              cacheMode: CacheMode.LOAD_DEFAULT,
+              hardwareAcceleration: true,
+              thirdPartyCookiesEnabled: true,
+              sharedCookiesEnabled: true,
             ),
             onWebViewCreated: (controller) {
               _webViewController = controller;
-            },
-            onProgressChanged: (controller, progress) {
-              setState(() {
-                _progress = progress / 100;
-                if (progress == 100) {
-                  _isLoading = false;
-                }
-              });
             },
             onLoadStart: (controller, url) {
               setState(() {
@@ -73,10 +70,18 @@ class _WebShopViewState extends State<WebShopView> {
             },
           ),
           if (_isLoading)
-            LinearProgressIndicator(
-              value: _progress > 0 ? _progress : null,
-              backgroundColor: Colors.grey[200],
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF9333EA)),
+            Container(
+              color: Colors.white,
+              child: const Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF9333EA)),
+                  ),
+                ),
+              ),
             ),
         ],
       ),

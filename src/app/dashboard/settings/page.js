@@ -10,7 +10,7 @@ import { db } from '@/lib/firebase';
 import { 
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
-  MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette,
+  MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette, Tag,
   Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock
 } from 'lucide-react';
 import Link from 'next/link';

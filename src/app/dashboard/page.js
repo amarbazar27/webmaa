@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getShop, getOrders, getProducts, getGlobalConfig } from '@/lib/firestore';
-import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap, Heart, X, Clock, CheckCircle } from 'lucide-react';
+import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap, Heart, X, Clock, CheckCircle, Copy, Globe, Check } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -94,6 +94,16 @@ export default function DashboardPage() {
   const isTrialEligible = !shop?.trialClaimed && globalConfig?.trialsEnabled !== false;
   const showTrialOfferBanner = isTrialEligible && (shop?.subscriptionStatus !== 'active' || !shop?.subscriptionStatus);
 
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyLink = () => {
+    if (!shopUrl) return;
+    navigator.clipboard.writeText(shopUrl);
+    setCopiedLink(true);
+    toast.success('শপ লিংক সফলভাবে কপি হয়েছে! 📋');
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
+
   if (loading) {
     return (
       <div className="py-20 text-center">
@@ -106,40 +116,64 @@ export default function DashboardPage() {
   return (
     <>
       <div className="space-y-8 animate-slide-in pb-12">
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Welcome Header & Store Live Link Hub */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-            Welcome back, {user?.displayName?.split(' ')[0] || 'Retailer'} 👋
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Storefront Active
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mt-2">
+            Welcome back, {user?.displayName?.split(' ')[0] || shop?.shopName || 'Retailer'} 👋
           </h1>
-          <p className="text-sm text-slate-500 font-medium mt-2">Here's what's happening with your store today.</p>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1.5">Here's what's happening with your store today.</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {globalConfig?.donationEnabled !== false && (
             <button
               onClick={() => setIsDonateModalOpen(true)}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-rose-500/20"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-md shadow-rose-500/20"
             >
-              <Heart size={16} className="fill-current animate-pulse" />
+              <Heart size={15} className="fill-current animate-pulse" />
               <span>Donate</span>
             </button>
           )}
 
           {shop && (
-            <div className="flex items-center gap-3 p-1.5 pl-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-              <div className="hidden md:block">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Instant Link</p>
-                <p className="text-xs font-bold text-slate-900 truncate max-w-[150px]">{shop.shopName}</p>
+            <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50/50 p-2 pl-4 rounded-2xl border border-purple-200/80 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Globe size={18} className="text-purple-600 shrink-0" />
+                <div className="max-w-[180px] sm:max-w-[240px]">
+                  <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">আপনার অনলাইন স্টোর লিংক</p>
+                  <p className="text-xs font-mono font-bold text-slate-800 truncate" title={shopUrl}>
+                    {shopUrl.replace(/^https?:\/\//, '')}
+                  </p>
+                </div>
               </div>
-              <a 
-                href={shopUrl} 
-                target="_blank" 
-                rel="noreferrer"
-                className="p-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20"
-              >
-                <ExternalLink size={18} />
-              </a>
+
+              <div className="flex items-center gap-1.5 pl-2 border-l border-purple-200">
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="px-3 py-2 bg-white hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-black transition-all border border-purple-200 flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
+                  title="Copy Store URL"
+                >
+                  {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                  <span className="hidden sm:inline">{copiedLink ? 'কপি হয়েছে' : 'কপি'}</span>
+                </button>
+                <a 
+                  href={shopUrl} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-purple-500/20 flex items-center gap-1.5 active:scale-95"
+                >
+                  <span>ভিজিট স্টোর</span>
+                  <ExternalLink size={14} />
+                </a>
+              </div>
             </div>
           )}
         </div>
