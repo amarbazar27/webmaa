@@ -506,51 +506,62 @@ export default function EditProductPage({ params }) {
                         {/* Variant Options */}
                         <div className="pl-4 border-l-2 border-purple-200 space-y-2">
                            {variant.options.map((opt, oIdx) => (
-                              <div key={oIdx} className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  required
-                                  placeholder="Option (e.g. Small, Red)"
-                                  className="flex-1 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
-                                  value={opt.label}
-                                  onChange={(e) => {
+                              <div key={oIdx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-3 sm:p-0 bg-white sm:bg-transparent rounded-xl border sm:border-0 border-slate-200 shadow-xs sm:shadow-none">
+                                <div className="flex items-center gap-2 flex-1">
+                                  <input
+                                    type="text"
+                                    required
+                                    placeholder="Option (যেমন: XL, Red, ৫০০ গ্রাম)"
+                                    className="flex-1 px-3 py-2 text-sm bg-slate-50 sm:bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
+                                    value={opt.label}
+                                    onChange={(e) => {
+                                      const newVariants = [...form.variants];
+                                      newVariants[vIdx].options[oIdx].label = e.target.value;
+                                      setForm({...form, variants: newVariants});
+                                    }}
+                                  />
+                                  <button type="button" onClick={() => {
                                     const newVariants = [...form.variants];
-                                    newVariants[vIdx].options[oIdx].label = e.target.value;
+                                    newVariants[vIdx].options = newVariants[vIdx].options.filter((_, i) => i !== oIdx);
                                     setForm({...form, variants: newVariants});
-                                  }}
-                                />
-                                <div className="relative">
-                                  <span className="absolute left-3 top-2 text-xs font-black text-slate-400">৳</span>
-                                  <input
-                                    type="number"
-                                    placeholder="Price (absolute)"
-                                    className="w-24 pl-8 pr-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-black text-purple-700"
-                                    value={opt.price}
-                                    onChange={(e) => {
-                                      const newVariants = [...form.variants];
-                                      newVariants[vIdx].options[oIdx].price = e.target.value;
-                                      setForm({...form, variants: newVariants});
-                                    }}
-                                  />
+                                  }} className="sm:hidden p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                    <Trash2 size={14} />
+                                  </button>
                                 </div>
-                                <div className="relative">
-                                  <input
-                                    type="number"
-                                    placeholder="Stock"
-                                    className="w-20 px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
-                                    value={opt.stock}
-                                    onChange={(e) => {
-                                      const newVariants = [...form.variants];
-                                      newVariants[vIdx].options[oIdx].stock = e.target.value;
-                                      setForm({...form, variants: newVariants});
-                                    }}
-                                  />
+                                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-2 text-xs font-black text-slate-400">৳</span>
+                                    <input
+                                      type="number"
+                                      placeholder="Price"
+                                      className="w-full sm:w-28 pl-8 pr-3 py-2 text-sm bg-slate-50 sm:bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-black text-purple-700"
+                                      value={opt.price}
+                                      onChange={(e) => {
+                                        const newVariants = [...form.variants];
+                                        newVariants[vIdx].options[oIdx].price = e.target.value;
+                                        setForm({...form, variants: newVariants});
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="relative">
+                                    <input
+                                      type="number"
+                                      placeholder="Stock (মজুত)"
+                                      className="w-full sm:w-24 px-3 py-2 text-sm bg-slate-50 sm:bg-white border border-slate-200 rounded-lg outline-none focus:border-purple-500 font-bold text-slate-700"
+                                      value={opt.stock}
+                                      onChange={(e) => {
+                                        const newVariants = [...form.variants];
+                                        newVariants[vIdx].options[oIdx].stock = e.target.value;
+                                        setForm({...form, variants: newVariants});
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                                 <button type="button" onClick={() => {
                                   const newVariants = [...form.variants];
                                   newVariants[vIdx].options = newVariants[vIdx].options.filter((_, i) => i !== oIdx);
                                   setForm({...form, variants: newVariants});
-                                }} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
+                                }} className="hidden sm:block p-2 text-slate-400 hover:text-red-500 transition-colors">
                                   <Trash2 size={14} />
                                 </button>
                               </div>

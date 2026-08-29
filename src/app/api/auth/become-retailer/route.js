@@ -96,11 +96,22 @@ export async function POST(req) {
       // Initialize store
       const shopRef = adminDb.collection('shops').doc(uid);
       const shopDoc = await shopRef.get();
+      const rawPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || 'shop';
+      const shopSlug = rawPrefix + '-' + Math.floor(Math.random() * 1000);
+
+      let storeName = 'My Store';
+      if (displayName && displayName.trim() && displayName !== 'ব্যবহারকারী' && displayName !== 'User' && displayName !== 'Customer') {
+        const clean = displayName.trim();
+        storeName = clean.endsWith('Store') || clean.endsWith('স্টোর') ? clean : `${clean} Store`;
+      } else if (rawPrefix) {
+        const formattedPrefix = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+        storeName = formattedPrefix.endsWith('Store') ? formattedPrefix : `${formattedPrefix} Store`;
+      }
+
       if (!shopDoc.exists) {
-        const shopSlug = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
         await shopRef.set({
           ownerId: uid,
-          shopName: `${displayName || 'My'}'s Premium Store`,
+          shopName: storeName,
           shopSlug,
           subdomainSlug: shopSlug,
           isActive: true,
@@ -130,12 +141,22 @@ export async function POST(req) {
     void (async () => {
       try {
         const { sendSuperadminNewRetailerAlert } = await import('@/lib/ruflo');
+        const rawPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || 'shop';
+        let alertStoreName = 'My Store';
+        if (displayName && displayName.trim() && displayName !== 'ব্যবহারকারী' && displayName !== 'User' && displayName !== 'Customer') {
+          const clean = displayName.trim();
+          alertStoreName = clean.endsWith('Store') || clean.endsWith('স্টোর') ? clean : `${clean} Store`;
+        } else if (rawPrefix) {
+          const formattedPrefix = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+          alertStoreName = formattedPrefix.endsWith('Store') ? formattedPrefix : `${formattedPrefix} Store`;
+        }
+
         await sendSuperadminNewRetailerAlert({
           retailerName: displayName,
           retailerEmail: email,
           retailerPhone: phone.trim(),
-          shopName: `${displayName || 'My'}'s Premium Store`,
-          shopSlug: email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ''),
+          shopName: alertStoreName,
+          shopSlug: rawPrefix,
           autoApproved: autoApprove,
         });
       } catch (e) {

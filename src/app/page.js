@@ -208,6 +208,7 @@ export default function Home() {
   const [allShops, setAllShops] = useState([]);
   const [pwaInstalled, setPwaInstalled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [userOrders, setUserOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -1416,8 +1417,19 @@ export default function Home() {
       {/* ── Sleek Floating Glass Navigation Header ── */}
       <header className="sticky top-0 z-50 px-4 py-3 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
-          {/* Left Area: Mobile Login/Workspace, Mobile Pricing, Stores Drawer, and Brand Logo */}
+          {/* Left Area: Stores Drawer on Far Left, Mobile Login/Workspace, Mobile Pricing, and Brand Logo */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Stores Drawer Trigger (FAR LEFT on Mobile and Desktop) */}
+            <button 
+              onClick={() => setIsStoresMenuOpen(true)} 
+              className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-xs font-black text-slate-800 hover:text-purple-700 flex items-center gap-1 sm:gap-1.5 rounded-xl active:scale-95 transition-all cursor-pointer shadow-xs shrink-0"
+              title="স্টোর মেনু খুলুন"
+            >
+              <Menu size={16} className="text-purple-600 shrink-0" />
+              <span className="font-mono tracking-wider text-[11px] sm:text-xs">STORES</span>
+            </button>
+
+            {/* Mobile Actions: Login/Workspace & Pricing */}
             <div className="md:hidden flex items-center gap-1.5">
               {user ? (
                 <div>
@@ -1444,32 +1456,23 @@ export default function Home() {
               {/* Mobile Pricing Button */}
               <a 
                 href="#pricing" 
-                className="px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center gap-1 shrink-0"
+                className="px-2 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center gap-1 shrink-0"
               >
                 <Sparkles size={11} /> প্যাকেজ
               </a>
             </div>
-
-            {/* Stores Drawer Trigger */}
-            <button 
-              onClick={() => setIsStoresMenuOpen(true)} 
-              className="px-3 py-2 bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-xs font-black text-slate-800 hover:text-purple-700 flex items-center gap-1.5 rounded-xl active:scale-95 transition-all cursor-pointer shadow-xs shrink-0"
-            >
-              <Menu size={15} className="text-purple-600 shrink-0" />
-              <span className="hidden xs:inline font-mono tracking-wider">STORES</span>
-            </button>
             
             {/* Logo */}
             <Link 
               href="/"
-              className="flex items-center gap-3 group select-none"
+              className="flex items-center gap-2 sm:gap-3 group select-none"
             >
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
-                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-10 object-contain" alt="Logo" />
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-7 sm:h-10 object-contain" alt="Logo" />
               ) : (
-                <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs rounded-xl shadow-md">BD</div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs rounded-xl shadow-md">BD</div>
               )}
-              <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight whitespace-nowrap hidden sm:block">
+              <span className="text-base sm:text-xl font-black text-slate-900 tracking-tight whitespace-nowrap hidden sm:block">
                 {globalConfig?.brandName || 'BDRetailers'}
               </span>
             </Link>
@@ -1546,7 +1549,13 @@ export default function Home() {
                     </Link>
                   )}
 
-                  <button onClick={logoutUser} className="text-[10px] font-black text-red-400 hover:text-red-300 transition-colors uppercase cursor-pointer flex items-center gap-1"><LogOut size={12} /> Exit</button>
+                  <button 
+                    type="button"
+                    onClick={() => setShowLogoutConfirm(true)} 
+                    className="text-[10px] font-black text-red-400 hover:text-red-300 transition-colors uppercase cursor-pointer flex items-center gap-1"
+                  >
+                    <LogOut size={12} /> Exit
+                  </button>
                 </div>
               ) : (
                 <button 
@@ -2437,7 +2446,7 @@ export default function Home() {
       <PricingSection globalConfig={globalConfig} />
 
       {/* ── Bottom Navigation Bar (Mobile Only) ── */}
-      <nav className="neo-raised fixed bottom-0 w-full z-50 lg:hidden flex justify-around items-center h-16 px-2 border-t border-black/5 bg-[#e8eaf0] shadow-[0_-6px_12px_rgba(0,0,0,0.08)]">
+      <nav className="fixed bottom-0 inset-x-0 z-50 lg:hidden flex justify-around items-center h-16 px-3 border-t border-slate-200/80 bg-white/95 backdrop-blur-xl shadow-[0_-8px_20px_rgba(0,0,0,0.06)]">
         <button 
           onClick={() => {
             setActiveShopFilter('All');
@@ -2445,29 +2454,29 @@ export default function Home() {
             setActiveSubcategory('');
             document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="flex flex-col items-center justify-center text-indigo-600 rounded-full p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-purple-700 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
-          <ShoppingBag size={17} />
-          <span className="text-[9px] font-semibold mt-0.5">Marketplace</span>
+          <ShoppingBag size={18} className="stroke-[2.5]" />
+          <span className="text-[10px] mt-0.5 tracking-tight">Marketplace</span>
         </button>
         <button 
           onClick={() => {
             document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="flex flex-col items-center justify-center text-amber-600 hover:text-amber-700 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-amber-600 hover:text-amber-700 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
-          <Sparkles size={17} className="text-amber-500" />
-          <span className="text-[9px] font-black mt-0.5 text-amber-700">প্যাকেজ</span>
+          <Sparkles size={18} className="text-amber-500 stroke-[2.5]" />
+          <span className="text-[10px] mt-0.5 tracking-tight">প্যাকেজ</span>
         </button>
         <button 
           onClick={() => {
             document.getElementById('search-input-field')?.focus();
             document.getElementById('search-input-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }}
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-600 hover:text-purple-600 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
-          <Search size={17} />
-          <span className="text-[9px] font-semibold mt-0.5">Search</span>
+          <Search size={18} className="stroke-[2.5]" />
+          <span className="text-[10px] mt-0.5 tracking-tight">Search</span>
         </button>
         <button 
           onClick={() => {
@@ -2477,10 +2486,10 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-600 hover:text-purple-600 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
-          <Package size={17} />
-          <span className="text-[9px] font-semibold mt-0.5">My Orders</span>
+          <Package size={18} className="stroke-[2.5]" />
+          <span className="text-[10px] mt-0.5 tracking-tight">My Orders</span>
         </button>
         <button 
           onClick={() => {
@@ -2495,10 +2504,10 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-slate-500 hover:text-indigo-600 rounded-lg p-1.5 active:scale-90 transition-transform duration-150 cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-600 hover:text-purple-600 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
-          <User size={17} />
-          <span className="text-[9px] font-semibold mt-0.5">
+          <User size={18} className="stroke-[2.5]" />
+          <span className="text-[10px] mt-0.5 tracking-tight">
             {user ? 'Workspace' : 'Login'}
           </span>
         </button>
@@ -2915,7 +2924,20 @@ export default function Home() {
                 <div className="w-14 h-14 rounded-2xl overflow-hidden border border-purple-500/20 bg-purple-700/20 flex items-center justify-center font-black text-2xl">
                   {user?.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user?.displayName?.[0] || 'U'}
                 </div>
-                <button onClick={() => setIsProfileOpen(false)} className="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/10 transition-colors cursor-pointer shrink-0"><X size={16} /></button>
+                <div className="flex items-center gap-2">
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() => setShowLogoutConfirm(true)}
+                      className="bg-white/10 hover:bg-red-500/80 text-white px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer border border-white/20 active:scale-95"
+                      title="লগআউট নিশ্চিতকরণ"
+                    >
+                      <LogOut size={14} />
+                      <span>লগআউট</span>
+                    </button>
+                  )}
+                  <button onClick={() => setIsProfileOpen(false)} className="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/10 transition-colors cursor-pointer shrink-0"><X size={16} /></button>
+                </div>
               </div>
               <h3 className="text-xl font-black relative z-10 text-white">{user?.displayName || 'সম্মানিত কাস্টমার'}</h3>
               <p className="text-xs text-white/40 font-bold relative z-10 mt-0.5">{user?.email}</p>
@@ -2980,6 +3002,44 @@ export default function Home() {
                 <Trash2 size={12} /> Delete Account
               </Link>
               <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-black">{globalConfig?.brandName || 'BDRetailers'} Customer Profile &bull; 2026</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔴 Global Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#0f172a] border border-white/10 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in text-white">
+            <div className="w-14 h-14 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+              <LogOut size={26} />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-black text-white">লগআউট নিশ্চিতকরণ</h3>
+              <p className="text-xs text-white/60 font-medium leading-relaxed">
+                আপনি কি নিশ্চিত যে অ্যাকাউন্ট থেকে লগআউট করতে চান?
+              </p>
+            </div>
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-xs transition-all cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowLogoutConfirm(false);
+                  setIsProfileOpen(false);
+                  await logoutUser();
+                  window.location.reload();
+                }}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs transition-all shadow-md shadow-red-500/20 cursor-pointer active:scale-95"
+              >
+                হ্যাঁ, লগআউট
+              </button>
             </div>
           </div>
         </div>
@@ -3099,48 +3159,66 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── Circular Glassy AI Companion Trigger (Bottom-Right, shifted for alignment) ── */}
-      <button 
-        onClick={() => {
-          setAiTab('chat');
-          setIsAiOpen(true);
-        }}
-        className="fixed bottom-8 right-40 z-[120] w-15 h-15 bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all border border-white/10 cursor-pointer shadow-purple-500/30 group animate-bounce animation-delay-1000"
-        title="AI Assistant (এআই শপিং অ্যাসিস্ট্যান্ট)"
-      >
-        <span className="text-2xl group-hover:scale-120 transition-transform duration-300 animate-pulse select-none">😊</span>
-        {/* Cute breathing ring */}
-        <span className="absolute inset-0 rounded-full bg-purple-500/40 -z-10 animate-ping opacity-75" />
-      </button>
-
-      {/* ── Floating WhatsApp Chat Button (Bottom-Right, shifted for alignment) ── */}
-      <a
-        href={(() => {
-          const rawWa = globalConfig?.whatsapp || mainShopData?.socialLinks?.wa || '01734763306';
-          const cleanWa = rawWa.replace(/[^0-9]/g, '');
-          const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
-          return `https://wa.me/${formattedWa}`;
-        })()}
-        target="_blank"
-        rel="noreferrer"
-        className="fixed bottom-8 right-24 z-[120] w-14 h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-115 active:scale-95 transition-all border border-emerald-400/30 cursor-pointer shadow-emerald-500/20"
-        title="WhatsApp Support (সরাসরি যোগাযোগ)"
-      >
-        <MessageCircle size={24} />
-      </a>
-
-      {/* Floating Cart Trigger (Bottom-Right) */}
-      <button
-        onClick={() => setIsCartOpen(true)}
-        className="fixed bottom-8 right-8 z-[120] w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/40 hover:scale-115 active:scale-95 transition-all border border-white/10 cursor-pointer"
-      >
-        <ShoppingCart size={24} />
-        {cartItemCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border border-black">
-            {cartItemCount}
+      {/* ── Vertically Stacked Floating Action Buttons (Bottom-Right, safe above mobile nav) ── */}
+      <div className="fixed bottom-24 sm:bottom-8 right-4 sm:right-6 z-[120] flex flex-col items-end gap-3 pointer-events-auto select-none animate-fade-in">
+        {/* 1. AI Companion Trigger */}
+        <div className="flex items-center gap-2 group">
+          <span className="hidden sm:inline-block bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+            AI শপিং বট
           </span>
-        )}
-      </button>
+          <button 
+            onClick={() => {
+              setAiTab('chat');
+              setIsAiOpen(true);
+            }}
+            className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all border border-white/20 cursor-pointer shadow-purple-500/30 relative"
+            title="AI Assistant (এআই শপিং অ্যাসিস্ট্যান্ট)"
+          >
+            <span className="text-xl sm:text-2xl group-hover:scale-125 transition-transform duration-300 select-none">😊</span>
+            <span className="absolute inset-0 rounded-full bg-purple-500/40 -z-10 animate-ping opacity-60 pointer-events-none" />
+          </button>
+        </div>
+
+        {/* 2. Floating WhatsApp Chat Button */}
+        <div className="flex items-center gap-2 group">
+          <span className="hidden sm:inline-block bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+            WhatsApp হেল্পলাইন
+          </span>
+          <a
+            href={(() => {
+              const rawWa = globalConfig?.whatsapp || mainShopData?.socialLinks?.wa || '01734763306';
+              const cleanWa = rawWa.replace(/[^0-9]/g, '');
+              const formattedWa = cleanWa.startsWith('88') ? cleanWa : `88${cleanWa}`;
+              return `https://wa.me/${formattedWa}`;
+            })()}
+            target="_blank"
+            rel="noreferrer"
+            className="w-13 h-13 sm:w-14 sm:h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all border border-emerald-300/40 cursor-pointer shadow-emerald-500/30"
+            title="WhatsApp Support (সরাসরি যোগাযোগ)"
+          >
+            <MessageCircle size={24} />
+          </a>
+        </div>
+
+        {/* 3. Floating Cart Trigger */}
+        <div className="flex items-center gap-2 group">
+          <span className="hidden sm:inline-block bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+            শপিং কার্ট
+          </span>
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-xl shadow-purple-500/40 hover:scale-110 active:scale-95 transition-all border border-white/20 cursor-pointer relative"
+            title="শপিং কার্ট দেখুন"
+          >
+            <ShoppingCart size={23} />
+            {cartItemCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5.5 h-5.5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border-2 border-white">
+                {cartItemCount}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* ── Unified Product Details Modal ── */}
       {selectedProduct && (

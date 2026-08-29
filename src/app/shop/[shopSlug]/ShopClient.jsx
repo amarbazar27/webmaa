@@ -446,6 +446,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Load and manage recent search history
   useEffect(() => {
@@ -4803,7 +4804,20 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="w-16 h-16 aspect-square bg-white text-purple-700 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
                   {user?.photoURL ? <img src={user.photoURL} className="w-full h-full object-cover aspect-square" /> : <p className="text-3xl font-black">{user?.displayName?.[0] || 'U'}</p>}
                 </div>
-                <button onClick={() => setIsProfileOpen(false)} className="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors"><X size={18} strokeWidth={2.5}/></button>
+                <div className="flex items-center gap-2">
+                  {user && (
+                    <button
+                      type="button"
+                      onClick={() => setShowLogoutConfirm(true)}
+                      className="bg-white/10 hover:bg-red-500/80 text-white px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer border border-white/20 active:scale-95"
+                      title="লগআউট নিশ্চিতকরণ"
+                    >
+                      <LogOut size={14} />
+                      <span>লগআউট</span>
+                    </button>
+                  )}
+                  <button onClick={() => setIsProfileOpen(false)} className="bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-colors cursor-pointer"><X size={18} strokeWidth={2.5}/></button>
+                </div>
               </div>
               <h3 className="text-2xl font-black relative z-10">{user ? (user.displayName || 'সম্মানিত কাস্টমার') : 'অতিথি ইউজার'}</h3>
               <div className="flex items-center gap-2 relative z-10 mt-1">
@@ -5086,11 +5100,51 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <Trash2 size={14} /> অ্যাকাউন্ট মুছে ফেলুন (Delete Account)
                 </Link>
                 
-                <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3.5 bg-red-50 text-red-600 font-black text-sm rounded-xl hover:bg-red-600 hover:text-white border border-red-100 transition-all shadow-sm">
-                  <LogOut size={18} strokeWidth={2.5}/> লগ আউট
+                <button 
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(true)} 
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-50 text-red-600 font-black text-xs rounded-xl hover:bg-red-600 hover:text-white border border-red-100 transition-all shadow-sm cursor-pointer"
+                >
+                  <LogOut size={16} strokeWidth={2.5}/> লগআউট করুন
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 🔴 Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-100 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in">
+            <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+              <LogOut size={26} />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-black text-slate-900">লগআউট নিশ্চিতকরণ</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                আপনি কি নিশ্চিত যে আপনার অ্যাকাউন্ট থেকে লগআউট করতে চান?
+              </p>
+            </div>
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-black text-xs transition-all cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowLogoutConfirm(false);
+                  await handleLogout();
+                }}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs transition-all shadow-md shadow-red-500/20 cursor-pointer active:scale-95"
+              >
+                হ্যাঁ, লগআউট
+              </button>
+            </div>
           </div>
         </div>
       )}

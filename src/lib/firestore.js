@@ -535,10 +535,22 @@ export const getAllUsers = async () => {
 export const initializeShop = async (uid, email, displayName) => {
   const shopDoc = await getDoc(doc(db, 'shops', uid));
   if (!shopDoc.exists()) {
-    const shopSlug = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
+    const rawPrefix = (email || '').split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || 'shop';
+    const shopSlug = rawPrefix + '-' + Math.floor(Math.random() * 1000);
+    
+    // Generate clean name based on real name or email prefix (never "ব্যবহারকারী's Premium Store")
+    let storeName = 'My Store';
+    if (displayName && displayName.trim() && displayName !== 'ব্যবহারকারী' && displayName !== 'User' && displayName !== 'Customer') {
+      const clean = displayName.trim();
+      storeName = clean.endsWith('Store') || clean.endsWith('স্টোর') ? clean : `${clean} Store`;
+    } else if (rawPrefix) {
+      const formattedPrefix = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+      storeName = formattedPrefix.endsWith('Store') ? formattedPrefix : `${formattedPrefix} Store`;
+    }
+
     await setDoc(doc(db, 'shops', uid), {
       ownerId: uid,
-      shopName: `${displayName || 'My'}'s Premium Store`,
+      shopName: storeName,
       shopSlug,
       subdomainSlug: shopSlug,
       isActive: true,

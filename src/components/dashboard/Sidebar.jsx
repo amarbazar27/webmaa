@@ -17,15 +17,15 @@ import NotificationInbox from '@/components/shared/NotificationInbox';
 
 const navItems = [
   { href: '/dashboard',              icon: LayoutDashboard, label: 'Overview',         staffAllowed: true  },
+  { href: '/dashboard/settings',     icon: Settings,        label: 'Store Settings',   staffAllowed: false, isLockable: true },
+  { href: '/dashboard/categories',   icon: Tag,             label: 'Categories',       staffAllowed: true  },
   { href: '/dashboard/products',     icon: ShoppingBag,     label: 'Inventory',        staffAllowed: true  },
   { href: '/dashboard/smart-inventory', icon: ShoppingBag,  label: 'Smart Inventory',  staffAllowed: true  },
-  { href: '/dashboard/categories',   icon: Tag,             label: 'Categories',       staffAllowed: true  },
   { href: '/dashboard/orders',       icon: ShoppingCart,    label: 'Orders',           staffAllowed: true  },
   { href: '/dashboard/customers',    icon: Users,           label: 'Customers',        staffAllowed: false },
   { href: '/dashboard/homepage-builder', icon: Paintbrush,  label: 'Homepage Builder', staffAllowed: false },
-  { href: '/dashboard/billing',      icon: ShieldCheck,     label: 'Billing',          staffAllowed: false },
-  { href: '/dashboard/settings',     icon: Settings,        label: 'Preferences',      staffAllowed: false, isLockable: true },
   { href: '/dashboard/broadcast',    icon: Radio,           label: 'Broadcast',        staffAllowed: false },
+  { href: '/dashboard/billing',      icon: ShieldCheck,     label: 'Billing',          staffAllowed: false },
 ];
 
 export default function Sidebar({ isOpen, onClose, onOpen }) {
@@ -33,6 +33,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
   const [shop, setShop] = useState(null);
   const [globalConfig, setGlobalConfig] = useState(null);
   const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -184,8 +185,8 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         {/* Sign Out + AI Companion row */}
         <div className="flex items-center gap-2 px-1">
           <button
-            onClick={handleLogout}
-            className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-black text-red-500 hover:bg-red-50 transition-all group"
+            onClick={() => setShowLogoutConfirm(true)}
+            className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-black text-red-500 hover:bg-red-50 transition-all group cursor-pointer"
           >
             <LogOut size={16} />
             <span>Sign Out</span>
@@ -220,6 +221,42 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
           <SidebarContent />
         </aside>
       </div>
+
+      {/* 🔴 Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border border-slate-100 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in">
+            <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+              <LogOut size={26} />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-black text-slate-900">লগআউট নিশ্চিতকরণ</h3>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                আপনি কি নিশ্চিত যে আপনার রিটেইলার ড্যাশবোর্ড থেকে লগআউট করতে চান?
+              </p>
+            </div>
+            <div className="flex gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-black text-xs transition-all cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setShowLogoutConfirm(false);
+                  await handleLogout();
+                }}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs transition-all shadow-md shadow-red-500/20 cursor-pointer active:scale-95"
+              >
+                হ্যাঁ, লগআউট করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 🔒 Subscription Lock Modal */}
       {isLockModalOpen && (

@@ -110,10 +110,23 @@ export const handleUserSession = async (user) => {
 const initializeShop = async (user) => {
   const shopDoc = await getDoc(doc(db, 'shops', user.uid));
   if (!shopDoc.exists()) {
-    const shopSlug = user.email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + '-' + Math.floor(Math.random() * 1000);
+    const email = user.email || '';
+    const rawPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || 'shop';
+    const shopSlug = rawPrefix + '-' + Math.floor(Math.random() * 1000);
+
+    let storeName = 'My Store';
+    const displayName = user.displayName;
+    if (displayName && displayName.trim() && displayName !== 'ব্যবহারকারী' && displayName !== 'User' && displayName !== 'Customer') {
+      const clean = displayName.trim();
+      storeName = clean.endsWith('Store') || clean.endsWith('স্টোর') ? clean : `${clean} Store`;
+    } else if (rawPrefix) {
+      const formattedPrefix = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+      storeName = formattedPrefix.endsWith('Store') ? formattedPrefix : `${formattedPrefix} Store`;
+    }
+
     await setDoc(doc(db, 'shops', user.uid), {
       ownerId: user.uid,
-      shopName: `${user.displayName || 'My'}'s Premium Store`,
+      shopName: storeName,
       shopSlug,
       subdomainSlug: shopSlug,
       isActive: true,

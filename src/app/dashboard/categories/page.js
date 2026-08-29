@@ -17,6 +17,8 @@ export default function CategoriesPage() {
   const [newCat, setNewCat] = useState('');
   const [newSubcat, setNewSubcat] = useState({});
 
+  const [catError, setCatError] = useState('');
+
   const fetchCategories = async () => {
     if (!activeShopId) return;
     setLoading(true);
@@ -36,7 +38,12 @@ export default function CategoriesPage() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!newCat.trim()) return;
+    if (!newCat.trim()) {
+      setCatError('অনুগ্রহ করে ক্যাটাগরির নাম লিখুন');
+      toast.error('অনুগ্রহ করে ক্যাটাগরির নাম লিখুন!');
+      return;
+    }
+    setCatError('');
     if (!activeShopId) {
       toast.error('শপ আইডি পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করুন।');
       return;
@@ -183,22 +190,34 @@ export default function CategoriesPage() {
       <div className="grid grid-cols-1 gap-8">
         {/* Creation Hub */}
         <Card title="Management Console" subtitle="Define new taxonomy classes" icon={LayoutGrid} className="shadow-sm">
-           <form onSubmit={handleAdd} className="flex flex-col md:flex-row gap-4">
-              <Input 
-                placeholder="e.g. Premium Electronics, Summer Wear..." 
-                value={newCat}
-                onChange={(e) => setNewCat(e.target.value)}
-                className="flex-1"
-                icon={Tag}
-              />
-              <Button 
-                type="submit" 
-                icon={Plus} 
-                loading={adding} 
-                className="md:w-64 h-[52px] shadow-lg shadow-purple-500/20"
-              >
-                Create Category
-              </Button>
+           <form onSubmit={handleAdd} className="space-y-2">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 space-y-1">
+                  <Input 
+                    placeholder="যেমন: শার্ট, প্যান্ট, মুদি মালামাল..." 
+                    value={newCat}
+                    onChange={(e) => {
+                      setNewCat(e.target.value);
+                      if (catError) setCatError('');
+                    }}
+                    className={`w-full ${catError ? 'border-red-500 ring-1 ring-red-500' : ''}`}
+                    icon={Tag}
+                  />
+                  {catError && (
+                    <p className="text-xs font-black text-red-500 animate-slide-in pl-1">
+                      ⚠️ {catError}
+                    </p>
+                  )}
+                </div>
+                <Button 
+                  type="submit" 
+                  icon={Plus} 
+                  loading={adding} 
+                  className="md:w-64 h-[52px] shadow-lg shadow-purple-500/20"
+                >
+                  Create Category
+                </Button>
+              </div>
            </form>
         </Card>
 

@@ -23,6 +23,7 @@ import dynamic from 'next/dynamic';
 // Dynamic imports for heavy components (SSR-safe)
 const TemplateMarketplace = dynamic(() => import('@/components/dashboard/TemplateMarketplace'), { ssr: false, loading: () => <div className="py-12 text-center text-slate-400 text-sm font-bold">টেমপ্লেট লোড হচ্ছে...</div> });
 const StoreCustomizationPanel = dynamic(() => import('@/components/dashboard/StoreCustomizationPanel'), { ssr: false, loading: () => <div className="py-12 text-center text-slate-400 text-sm font-bold">কাস্টমাইজার লোড হচ্ছে...</div> });
+import CourierIntegrationCards from '@/components/dashboard/settings/CourierIntegrationCards';
 
 // Bangladesh Districts (partial list — key ones)
 const BD_DISTRICTS = [
@@ -129,6 +130,9 @@ export default function SettingsPage() {
   const [showCloudinaryHelp, setShowCloudinaryHelp] = useState(false);
   const [showAnalyticsHelp, setShowAnalyticsHelp] = useState(false);
   const [showSteadfastHelp, setShowSteadfastHelp] = useState(false);
+  const [showPathaoHelp, setShowPathaoHelp] = useState(false);
+  const [showRedxHelp, setShowRedxHelp] = useState(false);
+  const [showPaperflyHelp, setShowPaperflyHelp] = useState(false);
   const [showMapsHelp, setShowMapsHelp] = useState(false);
 
   // Handle click outside of Cloudinary help
@@ -188,7 +192,20 @@ export default function SettingsPage() {
     steadfastApiKey: '',
     steadfastSecretKey: '',
     steadfastWebhookToken: '',
-    steadfastEnabled: false
+    steadfastEnabled: false,
+    pathaoClientId: '',
+    pathaoClientSecret: '',
+    pathaoUsername: '',
+    pathaoPassword: '',
+    pathaoStoreId: '',
+    pathaoEnabled: false,
+    redxApiKey: '',
+    redxPickupStoreId: '',
+    redxEnabled: false,
+    paperflyUsername: '',
+    paperflyPassword: '',
+    paperflyKey: '',
+    paperflyEnabled: false,
   });
   const [trackingConfig, setTrackingConfig] = useState({
     ga4Id: '',
@@ -331,7 +348,20 @@ export default function SettingsPage() {
         steadfastApiKey: data?.courierConfig?.steadfastApiKey || '',
         steadfastSecretKey: data?.courierConfig?.steadfastSecretKey || '',
         steadfastWebhookToken: data?.courierConfig?.steadfastWebhookToken || '',
-        steadfastEnabled: data?.courierConfig?.steadfastEnabled || false
+        steadfastEnabled: data?.courierConfig?.steadfastEnabled || false,
+        pathaoClientId: data?.courierConfig?.pathaoClientId || '',
+        pathaoClientSecret: data?.courierConfig?.pathaoClientSecret || '',
+        pathaoUsername: data?.courierConfig?.pathaoUsername || '',
+        pathaoPassword: data?.courierConfig?.pathaoPassword || '',
+        pathaoStoreId: data?.courierConfig?.pathaoStoreId || '',
+        pathaoEnabled: data?.courierConfig?.pathaoEnabled || false,
+        redxApiKey: data?.courierConfig?.redxApiKey || '',
+        redxPickupStoreId: data?.courierConfig?.redxPickupStoreId || '',
+        redxEnabled: data?.courierConfig?.redxEnabled || false,
+        paperflyUsername: data?.courierConfig?.paperflyUsername || '',
+        paperflyPassword: data?.courierConfig?.paperflyPassword || '',
+        paperflyKey: data?.courierConfig?.paperflyKey || '',
+        paperflyEnabled: data?.courierConfig?.paperflyEnabled || false,
       });
 
       setTrackingConfig({
@@ -896,8 +926,118 @@ export default function SettingsPage() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">স্টোর সেটিংস</h1>
-          <p className="text-sm text-slate-500 font-medium">আপনার স্টোরের সমস্ত কনফিগারেশন এবং প্রেফারেন্স পরিচালনা করুন।</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">স্টোর সেটিংস ও সেটআপ গাইড</h1>
+          <p className="text-sm text-slate-500 font-medium">নতুন ও পুরাতন রিটেইলারদের জন্য স্টোর সম্পূর্ণ সাজানোর ও পরিচালনা করার কন্ট্রোল প্যানেল।</p>
+        </div>
+      </div>
+
+      {/* ── 🚀 Step-by-Step Serial Onboarding Roadmap ── */}
+      <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden border border-purple-500/20">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-purple-300 font-black">
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-white">স্টোর রেডি করার ৫টি সহজ ধাপ (Step-by-Step Guide)</h3>
+                <p className="text-xs text-purple-200/70 font-medium">ধারাবাহিকভাবে নিচের ধাপগুলো সম্পূর্ণ করে আপনার অনলাইন শপ লাইভ করুন</p>
+              </div>
+            </div>
+            <span className="self-start sm:self-auto text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full">
+              Full Store Ready
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
+            {/* Step 1 */}
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('store_info')}
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                activeSubTab === 'store_info' 
+                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-black text-purple-300">১. নাম ও লিংক</span>
+                <Globe size={14} className="text-purple-400" />
+              </div>
+              <p className="text-xs font-black text-white">স্টোরের নাম ও ডোমেইন</p>
+              <p className="text-[10px] text-white/50 mt-1">শপের নাম ও সাবডোমেইন লিংক সেট করুন</p>
+            </button>
+
+            {/* Step 2 */}
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('branding')}
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                activeSubTab === 'branding' 
+                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-black text-purple-300">২. ডিজাইন</span>
+                <Palette size={14} className="text-purple-400" />
+              </div>
+              <p className="text-xs font-black text-white">লোগো ও ব্যানার</p>
+              <p className="text-[10px] text-white/50 mt-1">শপ লোগো ও ১৬:৯ ব্যানার আপলোড</p>
+            </button>
+
+            {/* Step 3 */}
+            <Link
+              href="/dashboard/categories"
+              className="p-3.5 rounded-2xl border bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20 text-left transition-all flex flex-col justify-between group"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-black text-purple-300">৩. ইনভেন্টরি</span>
+                <Tag size={14} className="text-purple-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <p className="text-xs font-black text-white flex items-center justify-between">
+                ক্যাটাগরি ও পণ্য <ExternalLink size={11} className="text-white/40" />
+              </p>
+              <p className="text-[10px] text-white/50 mt-1">ক্যাটাগরি বানিয়ে প্রোডাক্ট আপলোড করুন</p>
+            </Link>
+
+            {/* Step 4 */}
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('courier_location')}
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                activeSubTab === 'courier_location' 
+                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-black text-purple-300">৪. ডেলিভারি</span>
+                <Truck size={14} className="text-purple-400" />
+              </div>
+              <p className="text-xs font-black text-white">কুরিয়ার ও লোকেশন</p>
+              <p className="text-[10px] text-white/50 mt-1">স্টেডফাস্ট, পাঠাও ও এরিয়া সেটআপ</p>
+            </button>
+
+            {/* Step 5 */}
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('checkout_payments')}
+              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                activeSubTab === 'checkout_payments' 
+                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
+                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono font-black text-purple-300">৫. চেকআউট</span>
+                <ShieldCheck size={14} className="text-purple-400" />
+              </div>
+              <p className="text-xs font-black text-white">পেমেন্ট ও পাবলিশ</p>
+              <p className="text-[10px] text-white/50 mt-1">বিকাশ, নগদ ও সিওডি চালু করুন</p>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -2474,7 +2614,7 @@ export default function SettingsPage() {
                         <strong className="text-slate-950">Meta (Facebook) Pixel & CAPI:</strong> <a href="https://business.facebook.com/events_manager2/" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-black">Meta Events Manager</a> এ গিয়ে Web Data Source যুক্ত করে আপনার Pixel ID কপি করুন।
                       </li>
                       <li>
-                        <strong className="text-slate-950">Conversion API (CAPI) Token:</strong> ইভেন্টস ম্যানেজারের Settings ট্যাবে গিয়ে নিচে স্ক্রোল করে "Conversions API" সেকশনে "Generate access token" বাটনে ক্লিক করুন। প্রাপ্ত দীর্ঘ টোকেনটি কপি করে এখানে বসান। কাস্টমারদের ব্রাউজার অ্যাড-ব্লকার ব্যবহার করলেও এটি সার্ভার থেকে ফেসবুকে সরাসরি পার্চেজ ডাটা পাঠাবে।
+                        <strong className="text-slate-950">Conversion API (CAPI) Token:</strong> ইভেন্টস ম্যানেজারের Settings ট্যাবে গিয়ে নিচে স্ক্রোল করে "Conversions API" সেকশনে "Generate access token" বাটনে ক্লিক করুন। প্রাপ্ত দীর্ঘ টোকেনটি কপি করে এখানে বসান। কাস্টমারদের ব্রাউজার অ্যাড-ব্লকার ব্যবহার করলেও এটি সার্ভার থেকে ফেসবুকে সরাসরি পার্চেজ ডাটা পাঠাবে.
                       </li>
                       <li>
                         <strong className="text-slate-950">CAPI Test Event Code:</strong> টেস্ট করার সময় মেটা পোর্টালে "Test Events" ট্যাবের সার্ভার সেকশনে দেওয়া টেস্ট কোডটি (যেমন: <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono font-bold">TEST12345</code>) এখানে বসিয়ে অর্ডার দিয়ে চেক করুন। টেস্ট শেষে এটি খালি করে দেবেন।
@@ -2610,66 +2750,12 @@ export default function SettingsPage() {
               {/* Group 5: Courier & Location (courier_location) */}
               {activeSubTab === 'courier_location' && (
                 <div className="space-y-8 animate-slide-in">
-                  {/* Steadfast Courier Settings */}
-                  <Card title="Steadfast Courier API Integration" subtitle="One-tap parcel delivery and tracking number generation" icon={Truck} className="border-2 border-slate-100 shadow-xl bg-white">
-               <div className="space-y-6">
-                  <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                     <span className="text-xs font-black text-slate-500 uppercase tracking-wider">ইন্টিগ্রেশন সেটিংস</span>
-                     <button 
-                       type="button" 
-                       onClick={() => setShowSteadfastHelp(!showSteadfastHelp)} 
-                       className="flex items-center gap-1.5 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-[10px] sm:text-xs font-black transition-all border border-purple-200 cursor-pointer shadow-sm select-none"
-                     >
-                       ❓ Setup Guide (সহায়িকা)
-                     </button>
-                  </div>
-
-                  {showSteadfastHelp && (
-                     <div className="p-5 bg-gradient-to-br from-purple-50/70 to-indigo-50/30 rounded-2xl border border-purple-100 text-[11px] font-bold text-slate-700 space-y-3 animate-slide-in">
-                        <p className="text-xs sm:text-sm font-black text-purple-900 flex items-center gap-1.5 mb-2">🚚 স্টেডফাস্ট কুরিয়ার ইন্টিগ্রেশন গাইড</p>
-                        <ul className="list-decimal pl-5 space-y-2.5 leading-relaxed">
-                           <li>
-                              <strong className="text-slate-950">মার্চেন্ট পোর্টাল লিংক:</strong> সরাসরি অফিসিয়াল <a href="https://steadfast.com.bd/" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-700 underline font-black">Steadfast Courier Portal (steadfast.com.bd)</a> এ গিয়ে আপনার মার্চেন্ট অ্যাকাউন্টে লগইন করুন।
-                           </li>
-                           <li>
-                              <strong className="text-slate-950">এপিআই কী সংগ্রহ:</strong> ড্যাশবোর্ড থেকে <strong className="text-slate-950">Settings &gt; API Information</strong> মেনুতে যান। সেখানে জেনারেট করা <strong className="text-slate-950">API Key</strong> এবং <strong className="text-slate-950">Secret Key</strong> কপি করে এনে নিচের ফিল্ডগুলোতে পেস্ট করুন।
-                           </li>
-                           <li>
-                              <strong className="text-slate-950">অটোমেটিক স্ট্যাটাস আপডেট (Webhook):</strong> স্টেডফাস্ট পোর্টালে Webhook URL হিসেবে নিচে দেখানো Callback URL-টি সেভ করুন। এবং একটি কাস্টম টোকেন লিখে সেটি এখানে বসান। এতে পার্সেল ডেলিভারি বা রিটার্ন হলে আপনার স্টোরের অর্ডার স্ট্যাটাস নিজে নিজেই আপডেট হবে।
-                           </li>
-                        </ul>
-                     </div>
-                  )}
-                  <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
-                     <div>
-                        <p className="text-xs font-black text-slate-900">ইন্টিগ্রেশন সক্রিয় করুন (Enable Steadfast Courier)</p>
-                        <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">অর্ডার অ্যাকশন থেকে ওয়ান-ক্লিক পার্সেল বুকিং করতে এটি অন করুন</p>
-                     </div>
-                     <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" checked={courierConfig.steadfastEnabled || false} onChange={e => setCourierConfig({...courierConfig, steadfastEnabled: e.target.checked})} />
-                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                     </label>
-                  </div>
-
-                  {courierConfig.steadfastEnabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-in">
-                       <div>
-                          <Input label="Steadfast API Key" placeholder="API Key" value={courierConfig.steadfastApiKey} onChange={e => setCourierConfig({...courierConfig, steadfastApiKey: e.target.value})} />
-                       </div>
-                       <div>
-                          <Input label="Steadfast Secret Key" placeholder="Secret Key" value={courierConfig.steadfastSecretKey} onChange={e => setCourierConfig({...courierConfig, steadfastSecretKey: e.target.value})} />
-                       </div>
-                       <div>
-                          <Input label="Steadfast Webhook Token (Security)" placeholder="Optional token" value={courierConfig.steadfastWebhookToken} onChange={e => setCourierConfig({...courierConfig, steadfastWebhookToken: e.target.value})} />
-                          <p className="text-[8px] text-slate-400 mt-1 font-bold">
-                             Steadfast-এ এই Callback URL ব্যবহার করুন: <br />
-                             <span className="font-mono text-purple-600 break-all">https://yourdomain.com/api/courier/steadfast/webhook?shopId={activeShopId}</span>
-                          </p>
-                       </div>
-                    </div>
-                  )}
-               </div>
-            </Card>
+                  {/* Multi-Courier Settings (Steadfast, Pathao, RedX, Paperfly) */}
+                  <CourierIntegrationCards 
+                    courierConfig={courierConfig} 
+                    setCourierConfig={setCourierConfig} 
+                    activeShopId={activeShopId} 
+                  />
 
             {/* Google Maps & Delivery Zone Configuration */}
             <Card title="Google Maps API & Location Settings" subtitle="Official Google Places and delivery zone radius checks" icon={MapPin} className="border-2 border-slate-100 shadow-xl bg-white">
