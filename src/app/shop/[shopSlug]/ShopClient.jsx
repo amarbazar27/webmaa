@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import { ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
-  CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2,
+  CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2, ArrowUp, ArrowDown,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings, Trash2,
   ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
   Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle, Maximize2, Minimize2 } from 'lucide-react';

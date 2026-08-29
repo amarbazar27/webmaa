@@ -936,7 +936,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ── 🚀 Step-by-Step Serial Onboarding Roadmap ── */}
-      <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden border border-purple-500/20">
+      <div className="bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden border border-purple-500/30">
         <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
@@ -945,8 +945,8 @@ export default function SettingsPage() {
                 <Sparkles size={18} />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-white">স্টোর রেডি করার ৫টি সহজ ধাপ (Step-by-Step Guide)</h3>
-                <p className="text-xs text-purple-200/70 font-medium">ধারাবাহিকভাবে নিচের ধাপগুলো সম্পূর্ণ করে আপনার অনলাইন শপ লাইভ করুন</p>
+                <h3 className="text-base sm:text-lg font-black text-white">স্টোর রেডি করার সহজ ধাপসমূহ (Step-by-Step Guide)</h3>
+                <p className="text-xs text-purple-200/80 font-medium">ধারাবাহিকভাবে নিচের ধাপগুলো সম্পূর্ণ করে আপনার অনলাইন শপ সাজিয়ে লাইভ করুন</p>
               </div>
             </div>
             <span className="self-start sm:self-auto text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full">
@@ -954,92 +954,74 @@ export default function SettingsPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
             {/* Step 1 */}
             <button
               type="button"
               onClick={() => setActiveSubTab('store_info')}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between shadow-md ${
                 activeSubTab === 'store_info' 
-                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
-                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                  ? 'bg-white border-2 border-purple-600 text-slate-900 ring-2 ring-purple-400 shadow-xl' 
+                  : 'bg-white/95 border-slate-200 text-slate-800 hover:bg-white hover:border-purple-300'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-black text-purple-300">১. নাম ও লিংক</span>
-                <Globe size={14} className="text-purple-400" />
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">১. পরিচিতি ও ডিজাইন</span>
+                <Palette size={16} className="text-purple-600" />
               </div>
-              <p className="text-xs font-black text-white">স্টোরের নাম ও ডোমেইন</p>
-              <p className="text-[10px] text-white/50 mt-1">শপের নাম ও সাবডোমেইন লিংক সেট করুন</p>
+              <p className="text-xs font-black text-slate-900">নাম, লোগো, ব্যানার ও থিম</p>
+              <p className="text-[10px] text-slate-600 font-bold mt-1">শপের নাম, ডোমেইন, ব্যানার ও কালার সেট করুন</p>
             </button>
 
             {/* Step 2 */}
+            <Link
+              href="/dashboard/products"
+              className="p-4 rounded-2xl border bg-white/95 border-slate-200 text-slate-800 hover:bg-white hover:border-purple-300 text-left transition-all flex flex-col justify-between group shadow-md"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">২. ইনভেন্টরি</span>
+                <Tag size={16} className="text-blue-600 group-hover:scale-110 transition-transform" />
+              </div>
+              <p className="text-xs font-black text-slate-900 flex items-center justify-between">
+                ক্যাটাগরি ও পণ্য <ExternalLink size={12} className="text-slate-400" />
+              </p>
+              <p className="text-[10px] text-slate-600 font-bold mt-1">ক্যাটাগরি বানিয়ে প্রোডাক্ট আপলোড করুন</p>
+            </Link>
+
+            {/* Step 3 */}
             <button
               type="button"
-              onClick={() => setActiveSubTab('branding')}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                activeSubTab === 'branding' 
-                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
-                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+              onClick={() => setActiveSubTab('courier_location')}
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between shadow-md ${
+                activeSubTab === 'courier_location' 
+                  ? 'bg-white border-2 border-purple-600 text-slate-900 ring-2 ring-purple-400 shadow-xl' 
+                  : 'bg-white/95 border-slate-200 text-slate-800 hover:bg-white hover:border-purple-300'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-black text-purple-300">২. ডিজাইন</span>
-                <Palette size={14} className="text-purple-400" />
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">৩. ডেলিভারি</span>
+                <Truck size={16} className="text-emerald-600" />
               </div>
-              <p className="text-xs font-black text-white">লোগো ও ব্যানার</p>
-              <p className="text-[10px] text-white/50 mt-1">শপ লোগো ও ১৬:৯ ব্যানার আপলোড</p>
+              <p className="text-xs font-black text-slate-900">কুরিয়ার ও লোকেশন</p>
+              <p className="text-[10px] text-slate-600 font-bold mt-1">স্টেডফাস্ট, পাঠাও ও ডেলিভারি চার্জ</p>
             </button>
-
-            {/* Step 3 */}
-            <Link
-              href="/dashboard/categories"
-              className="p-3.5 rounded-2xl border bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20 text-left transition-all flex flex-col justify-between group"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-black text-purple-300">৩. ইনভেন্টরি</span>
-                <Tag size={14} className="text-purple-400 group-hover:scale-110 transition-transform" />
-              </div>
-              <p className="text-xs font-black text-white flex items-center justify-between">
-                ক্যাটাগরি ও পণ্য <ExternalLink size={11} className="text-white/40" />
-              </p>
-              <p className="text-[10px] text-white/50 mt-1">ক্যাটাগরি বানিয়ে প্রোডাক্ট আপলোড করুন</p>
-            </Link>
 
             {/* Step 4 */}
             <button
               type="button"
-              onClick={() => setActiveSubTab('courier_location')}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                activeSubTab === 'courier_location' 
-                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
-                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-black text-purple-300">৪. ডেলিভারি</span>
-                <Truck size={14} className="text-purple-400" />
-              </div>
-              <p className="text-xs font-black text-white">কুরিয়ার ও লোকেশন</p>
-              <p className="text-[10px] text-white/50 mt-1">স্টেডফাস্ট, পাঠাও ও এরিয়া সেটআপ</p>
-            </button>
-
-            {/* Step 5 */}
-            <button
-              type="button"
               onClick={() => setActiveSubTab('checkout_payments')}
-              className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between shadow-md ${
                 activeSubTab === 'checkout_payments' 
-                  ? 'bg-purple-600/30 border-purple-400 text-white shadow-lg ring-1 ring-purple-400' 
-                  : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                  ? 'bg-white border-2 border-purple-600 text-slate-900 ring-2 ring-purple-400 shadow-xl' 
+                  : 'bg-white/95 border-slate-200 text-slate-800 hover:bg-white hover:border-purple-300'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-black text-purple-300">৫. চেকআউট</span>
-                <ShieldCheck size={14} className="text-purple-400" />
+                <span className="text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">৪. চেকআউট</span>
+                <ShieldCheck size={16} className="text-amber-600" />
               </div>
-              <p className="text-xs font-black text-white">পেমেন্ট ও পাবলিশ</p>
-              <p className="text-[10px] text-white/50 mt-1">বিকাশ, নগদ ও সিওডি চালু করুন</p>
+              <p className="text-xs font-black text-slate-900">পেমেন্ট ও পাবলিশ</p>
+              <p className="text-[10px] text-slate-600 font-bold mt-1">বিকাশ, নগদ ও সিওডি চালু করুন</p>
             </button>
           </div>
         </div>
@@ -1051,16 +1033,15 @@ export default function SettingsPage() {
         {/* Sub-tab Left Sidebar Navigation */}
         <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
           <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি (Step-by-Step)</p>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি</p>
              {[
-                { id: 'store_info', label: '১. স্টোর পরিচিতি ও ডোমেইন', icon: Globe },
-                { id: 'branding', label: '২. ডিজাইন, লোগো ও ব্যানার', icon: Palette },
-                { id: 'courier_location', label: '৩. কুরিয়ার ও ডেলিভারি', icon: Truck },
-                { id: 'checkout_payments', label: '৪. পেমেন্ট ও চেকআউট', icon: ShieldCheck },
-                { id: 'access', label: '৫. কর্মী ও সিকিউরিটি পিন', icon: Users },
-                { id: 'marketing', label: '৬. এআই ও মার্কেটিং কুপন', icon: Gift },
-                { id: 'app_faq', label: '৭. মোবাইল অ্যাপ ও FAQ', icon: Smartphone },
-                ...(shop?.dataExportEnabled === true ? [{ id: 'data_export', label: '৮. ডাটা মাইগ্রেশন', icon: Cloud }] : [])
+                { id: 'store_info', label: '১. স্টোর পরিচিতি ও ডিজাইন', icon: Palette },
+                { id: 'courier_location', label: '২. কুরিয়ার ও ডেলিভারি', icon: Truck },
+                { id: 'checkout_payments', label: '৩. পেমেন্ট ও চেকআউট', icon: ShieldCheck },
+                { id: 'access', label: '৪. কর্মী ও সিকিউরিটি পিন', icon: Users },
+                { id: 'marketing', label: '৫. এআই ও মার্কেটিং কুপন', icon: Gift },
+                { id: 'app_faq', label: '৬. মোবাইল অ্যাপ ও FAQ', icon: Smartphone },
+                ...(shop?.dataExportEnabled === true ? [{ id: 'data_export', label: '৭. ডাটা মাইগ্রেশন', icon: Cloud }] : [])
              ].map(sub => {
                const Icon = sub.icon;
                return (
@@ -1086,18 +1067,18 @@ export default function SettingsPage() {
         <div className="lg:col-span-9">
           <form onSubmit={handleSave} className="space-y-8">
               
-              {/* Group 1: Store Public URL (store_info) */}
+              {/* Group 1: Store Public URL & Branding (store_info) */}
               {activeSubTab === 'store_info' && (
                 <div className="space-y-8 animate-slide-in">
-                  <Card title="Store Public URL & Subdomain" subtitle="আপনার লাইভ অনলাইন শপের ডোমেইন ও লিংক" icon={Link2} className="border-2 border-slate-100 shadow-xl bg-white">
+                  <Card title="Store Live URL & Subdomain" subtitle="আপনার স্টোরের লাইভ লিংক ও কাস্টম ডোমেইন" icon={Link2} className="border-2 border-slate-100 shadow-xl bg-white">
             <div className="space-y-4">
               <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 sm:p-5 shadow-inner relative space-y-3">
                 {slugEditing ? (
                   <div className="space-y-3">
                     <div>
-                      <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block mb-1">কাস্টম সাবডোমেইন প্রিফিক্স:</span>
+                      <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block mb-1">কাস্টম সাবডোমেইন স্লাগ:</span>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-500 font-mono font-bold">https://</span>
+                        <span className="text-xs text-slate-500 font-mono font-bold">/shop/</span>
                         <input
                           type="text"
                           value={slugInput}
@@ -1105,32 +1086,31 @@ export default function SettingsPage() {
                           onChange={e => { setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setSlugError(''); }}
                           className="flex-1 bg-white border-2 border-purple-200 rounded-xl px-3 py-2 text-sm font-black outline-none focus:border-purple-600 transition-all text-slate-900 font-mono"
                         />
-                        <span className="text-xs text-slate-500 font-mono font-bold">.bdretailers.com</span>
                       </div>
                     </div>
                     {slugError && <p className="text-[10px] text-red-500 font-bold">{slugError}</p>}
                     <div className="flex gap-2">
-                       <button type="button" onClick={handleSlugSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer">সেভ সাবডোমেইন</button>
+                       <button type="button" onClick={handleSlugSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer">সেভ করুন</button>
                        <button type="button" onClick={() => setSlugEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all cursor-pointer">বাতিল</button>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-white rounded-xl border border-slate-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-slate-200">
                       <div>
-                        <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">🌟 প্রাইমারি সাবডোমেইন লিংক (No /shop/):</p>
-                        <a href={primarySubdomainUrl} target="_blank" rel="noreferrer" className="text-sm font-black font-mono text-purple-600 hover:text-purple-700 underline truncate block tracking-tight mt-0.5">
-                          {primarySubdomainUrl}
+                        <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">🌐 আপনার লাইভ স্টোর লিংক:</p>
+                        <a href={storeUrl} target="_blank" rel="noreferrer" className="text-sm font-black font-mono text-purple-600 hover:text-purple-700 underline truncate block tracking-tight mt-0.5">
+                          {storeUrl}
                         </a>
                       </div>
-                      <a href={primarySubdomainUrl} target="_blank" rel="noreferrer" className="px-3.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-black self-start sm:self-auto transition-colors flex items-center gap-1">
-                        <span>ভিজিট</span>
-                        <ExternalLink size={12} />
+                      <a href={storeUrl} target="_blank" rel="noreferrer" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black self-start sm:self-auto transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
+                        <span>ভিজিট স্টোর</span>
+                        <ExternalLink size={13} />
                       </a>
                     </div>
 
-                    <button type="button" onClick={() => setSlugEditing(true)} className="w-full py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-purple-700 shadow-md shadow-purple-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-                       সাবডোমেইন পরিবর্তন করুন (Change Subdomain)
+                    <button type="button" onClick={() => setSlugEditing(true)} className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                       শপ লিংক / স্লাগ পরিবর্তন করুন
                     </button>
                   </div>
                 )}
@@ -1438,8 +1418,8 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Group 2: Design & Logo (branding) */}
-              {activeSubTab === 'branding' && (
+              {/* Group 1 & 2: Merged Branding & Design (store_info) */}
+              {activeSubTab === 'store_info' && (
                 <div className="space-y-8 animate-slide-in">
                   <Card title="Brand Assets" subtitle="Visual Logo" icon={ImageIcon} className="shadow-sm">
             <div className="flex flex-col items-center">
@@ -2341,10 +2321,10 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Group 2: Design System & Themes (branding) */}
-              {activeSubTab === 'branding' && (
+              {/* Group 1: Design System & Themes (store_info) */}
+              {activeSubTab === 'store_info' && (
                 <div className="space-y-8 animate-slide-in">
-                  <Card title="Design System" subtitle="10 Premium Themes" icon={Sparkles}>
+                  <Card title="Design System & Color Theme" subtitle="আপনার স্টোরের কালার থিম নির্বাচন করুন" icon={Sparkles}>
               <DesignThemeSelector shopId={activeShopId} />
             </Card>
                 </div>
@@ -2587,10 +2567,10 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Group 2: Social Ecosystem (branding) */}
-              {activeSubTab === 'branding' && (
+              {/* Group 1: Social Ecosystem (store_info) */}
+              {activeSubTab === 'store_info' && (
                 <div className="space-y-8 animate-slide-in">
-                  <Card title="Social Ecosystem" subtitle="Connect Audiences" icon={Globe}>
+                  <Card title="Social Media & Contact Links" subtitle="সোশ্যাল মিডিয়া ও যোগাযোগের লিংক" icon={Globe}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                    <Input label="💙 Facebook" placeholder="https://facebook.com/yourpage" value={socialLinks.fb} onChange={e => setSocialLinks({...socialLinks, fb: e.target.value})} />
                    <Input label="💜 Instagram" placeholder="https://instagram.com/yourpage" value={socialLinks.insta} onChange={e => setSocialLinks({...socialLinks, insta: e.target.value})} />

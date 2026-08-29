@@ -244,7 +244,7 @@ const standardizePhone = (phone) => {
   return cleaned.slice(0, 11);
 };
 
-const calculateRiskScoreClient = (profile) => {
+export const calculateRiskScoreClient = (profile) => {
   let score = 0;
   const reasons = [];
 

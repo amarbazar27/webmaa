@@ -3,7 +3,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Bot, X, Send, BarChart2, Package, Lightbulb, Loader2, 
   Maximize2, Minimize2, Trash2, Sparkles, TrendingUp, AlertTriangle, 
-  ShoppingBag, CheckCircle, ArrowRight, Copy, Check
+  ShoppingBag, CheckCircle, ArrowRight, Copy, Check, History, Plus,
+  MessageSquare, ChevronLeft, ChevronRight, User
 } from 'lucide-react';
 import { getProducts, getOrders, getShop } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
@@ -23,6 +24,11 @@ export default function AiCompanion({ shop, isMobile, compact = false }) {
   const { activeShopId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
+  
+  // Sessions Management
+  const [sessions, setSessions] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -42,44 +48,82 @@ export default function AiCompanion({ shop, isMobile, compact = false }) {
 
   const scrollRef = useRef(null);
 
-  // Load chat history from localStorage
+  // Load Sessions list from localStorage
   useEffect(() => {
     if (!activeShopId) return;
-    const storageKey = `bd_ai_chat_${activeShopId}`;
+    const storageKey = `bd_ai_sessions_${activeShopId}`;
     try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
+      const savedSessions = localStorage.getItem(storageKey);
+      if (savedSessions) {
+        const parsed = JSON.parse(savedSessions);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
+          setSessions(parsed);
+          // Load most recent session
+          setCurrentSessionId(parsed[0].id);
+          setMessages(parsed[0].messages || []);
           return;
         }
       }
     } catch (e) {
-      console.warn('Could not parse saved chat:', e);
+      console.warn('Could not parse saved sessions:', e);
     }
 
-    // Default welcome message
+    // Start fresh initial session
     const botName = shop?.aiConfig?.botName || 'BDRetailers AI';
-    setMessages([
+    const initSessionId = 'session_' + Date.now();
+    const initialMsgs = [
       {
-        id: 'welcome',
+        id: 'welcome_' + Date.now(),
         role: 'bot',
+        timestamp: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
         text: `আসসালামু আলাইকুম! আমি আপনার শপ অ্যানালিটিক্স অ্যাসিস্ট্যান্ট **${botName}**। 🚀\n\nআপনার স্টোরের **লাইভ সেলস, ইনভেন্টরি স্টক, পেন্ডিং অর্ডার বা মার্কেটিং স্ট্র্যাটেজি** নিয়ে যেকোনো প্রশ্ন আমাকে করতে পারেন। নিচের সাজেস্টেড বাটনগুলো ট্রাই করুন অথবা সরাসরি আপনার প্রশ্নটি লিখুন!`
       }
-    ]);
+    ];
+
+    const newSession = {
+      id: initSessionId,
+      title: 'নতুন কথোপকথন',
+      createdAt: new Date().toISOString(),
+      messages: initialMsgs
+    };
+
+    setSessions([newSession]);
+    setCurrentSessionId(initSessionId);
+    setMessages(initialMsgs);
   }, [activeShopId, shop?.aiConfig?.botName]);
 
-  // Persist chat history to localStorage
+  // Persist Current Session & Messages to localStorage
   useEffect(() => {
-    if (!activeShopId || messages.length === 0) return;
-    const storageKey = `bd_ai_chat_${activeShopId}`;
+    if (!activeShopId || !currentSessionId || messages.length === 0) return;
+    const storageKey = `bd_ai_sessions_${activeShopId}`;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(messages.slice(-30))); // Keep last 30 messages
+      setSessions(prevSessions => {
+        const updated = prevSessions.map(s => {
+          if (s.id === currentSessionId) {
+            // derive title from first user message
+            const firstUserMsg = messages.find(m => m.role === 'user');
+            const title = firstUserMsg ? firstUserMsg.text.slice(0, 30) + '...' : s.title;
+            return { ...s, title, messages };
+          }
+          return s;
+        });
+
+        // if currentSessionId doesn't exist in prev, prepend
+        const exists = updated.some(s => s.id === currentSessionId);
+        const finalSessions = exists ? updated : [{
+          id: currentSessionId,
+          title: 'নতুন কথোপকথন',
+          createdAt: new Date().toISOString(),
+          messages
+        }, ...updated];
+
+        localStorage.setItem(storageKey, JSON.stringify(finalSessions.slice(0, 20))); // Keep last 20 sessions
+        return finalSessions;
+      });
     } catch (e) {
-      console.warn('Could not save chat:', e);
+      console.warn('Could not save sessions:', e);
     }
-  }, [messages, activeShopId]);
+  }, [messages, currentSessionId, activeShopId]);
 
   // Fetch full live store analytics context
   const refreshStoreContext = useCallback(async () => {
@@ -123,21 +167,66 @@ export default function AiCompanion({ shop, isMobile, compact = false }) {
     }
   }, [messages, isTyping]);
 
-  const handleClearHistory = () => {
-    if (!confirm('আপনি কি এই চ্যাট হিস্ট্রি মুছে ফেলতে চান?')) return;
+  // Start New Chat Session
+  const handleStartNewChat = () => {
     const botName = shop?.aiConfig?.botName || 'BDRetailers AI';
-    const initialMsg = [
+    const newId = 'session_' + Date.now();
+    const initialMsgs = [
       {
-        id: Date.now(),
+        id: 'welcome_' + Date.now(),
         role: 'bot',
+        timestamp: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
         text: `আসসালামু আলাইকুম! আমি **${botName}**। আপনার স্টোরের সেলস, স্টক বা যেকোনো প্রশ্ন করুন, আমি সাহায্য করছি। 📊`
       }
     ];
-    setMessages(initialMsg);
+
+    const newSession = {
+      id: newId,
+      title: 'নতুন কথোপকথন',
+      createdAt: new Date().toISOString(),
+      messages: initialMsgs
+    };
+
+    setSessions(prev => [newSession, ...prev]);
+    setCurrentSessionId(newId);
+    setMessages(initialMsgs);
+    setShowHistoryDrawer(false);
+    toast.success('নতুন চ্যাট সেশন শুরু হয়েছে! ✨');
+  };
+
+  // Switch to an existing session
+  const handleSelectSession = (session) => {
+    setCurrentSessionId(session.id);
+    setMessages(session.messages || []);
+    setShowHistoryDrawer(false);
+  };
+
+  // Delete an entire session
+  const handleDeleteSession = (sessionId, e) => {
+    e.stopPropagation();
+    if (!confirm('আপনি কি এই চ্যাট সেশনটি স্থায়ীভাবে মুছে ফেলতে চান?')) return;
+    
+    const updated = sessions.filter(s => s.id !== sessionId);
+    setSessions(updated);
     if (activeShopId) {
-      localStorage.removeItem(`bd_ai_chat_${activeShopId}`);
+      localStorage.setItem(`bd_ai_sessions_${activeShopId}`, JSON.stringify(updated));
     }
-    toast.success('চ্যাট হিস্ট্রি রিসেট করা হয়েছে');
+
+    if (currentSessionId === sessionId) {
+      if (updated.length > 0) {
+        setCurrentSessionId(updated[0].id);
+        setMessages(updated[0].messages || []);
+      } else {
+        handleStartNewChat();
+      }
+    }
+    toast.success('চ্যাট সেশন মুছে ফেলা হয়েছে');
+  };
+
+  // Delete an individual message
+  const handleDeleteMessage = (msgId) => {
+    setMessages(prev => prev.filter(m => m.id !== msgId));
+    toast.success('মেসেজটি মুছে ফেলা হয়েছে');
   };
 
   const handleCopyMessage = (text, id) => {
@@ -151,7 +240,12 @@ export default function AiCompanion({ shop, isMobile, compact = false }) {
     const textToSend = (customPrompt || input).trim();
     if (!textToSend || isTyping) return;
 
-    const userMsg = { id: Date.now(), role: 'user', text: textToSend };
+    const userMsg = { 
+      id: Date.now(), 
+      role: 'user', 
+      text: textToSend,
+      timestamp: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
+    };
     setMessages(prev => [...prev, userMsg]);
     if (!customPrompt) setInput('');
     setIsTyping(true);
@@ -214,13 +308,23 @@ Analyze the merchant's query using the above numbers. If asked about stock, cite
       }
 
       const botText = data.choices?.[0]?.message?.content || 'দুঃখিত, এই মুহূর্তে উত্তর জেনারেট করা সম্ভব হয়নি।';
-      const botMsg = { id: Date.now() + 1, role: 'bot', text: botText };
+      const botMsg = { 
+        id: Date.now() + 1, 
+        role: 'bot', 
+        text: botText,
+        timestamp: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
+      };
       setMessages(prev => [...prev, botMsg]);
 
     } catch (err) {
       console.error('AI Error:', err);
       const fallbackText = `**আপনার স্টোরের সারসংক্ষেপ:**\n• মোট প্রোডাক্ট: **${storeContext.products.length} টি**\n• মোট অর্ডার: **${storeContext.orders.length} টি**\n• সর্বমোট সেলস: **৳${storeContext.totalRevenue.toLocaleString()}**\n• পেন্ডিং অর্ডার: **${storeContext.pendingOrdersCount} টি**\n• লো স্টক প্রোডাক্ট: **${storeContext.lowStockProducts.length} টি**\n\nAI সার্ভারে সাময়িক কানেকশন ইস্যু হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।`;
-      setMessages(prev => [...prev, { id: Date.now() + 1, role: 'bot', text: fallbackText }]);
+      setMessages(prev => [...prev, { 
+        id: Date.now() + 1, 
+        role: 'bot', 
+        text: fallbackText,
+        timestamp: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })
+      }]);
     } finally {
       setIsTyping(false);
     }
@@ -270,14 +374,14 @@ Analyze the merchant's query using the above numbers. If asked about stock, cite
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in">
           <div 
             className={clsx(
-              "bg-white shadow-2xl flex flex-col transition-all duration-300 border border-slate-200 overflow-hidden",
+              "bg-white shadow-2xl flex flex-col transition-all duration-300 border border-slate-200 overflow-hidden relative",
               isFullScreen 
                 ? "w-full h-full sm:rounded-none" 
-                : "w-full max-w-2xl h-[90vh] sm:max-h-[780px] rounded-t-3xl sm:rounded-3xl"
+                : "w-full max-w-2xl h-[92vh] sm:max-h-[800px] rounded-t-3xl sm:rounded-3xl"
             )}
           >
             {/* Header */}
-            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b-4 border-purple-600 shrink-0">
+            <div className="bg-slate-900 text-white px-5 sm:px-6 py-4 flex items-center justify-between border-b-4 border-purple-600 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30">
                   <Bot size={22} className="text-white" />
@@ -297,14 +401,26 @@ Analyze the merchant's query using the above numbers. If asked about stock, cite
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   type="button"
-                  onClick={handleClearHistory}
-                  className="p-2 text-slate-400 hover:text-rose-400 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
-                  title="চ্যাট হিস্ট্রি রিসেট করুন"
+                  onClick={() => setShowHistoryDrawer(!showHistoryDrawer)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                    showHistoryDrawer ? 'bg-purple-600 text-white shadow-md' : 'text-slate-300 hover:bg-white/10'
+                  }`}
+                  title="আগের চ্যাট হিস্ট্রি দেখুন"
                 >
-                  <Trash2 size={16} />
+                  <History size={14} />
+                  <span className="hidden sm:inline">চ্যাট হিস্ট্রি ({sessions.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleStartNewChat}
+                  className="p-2 text-purple-300 hover:text-white hover:bg-purple-600/30 rounded-xl transition-colors cursor-pointer"
+                  title="নতুন চ্যাট শুরু করুন"
+                >
+                  <Plus size={18} />
                 </button>
 
                 <button
@@ -328,7 +444,7 @@ Analyze the merchant's query using the above numbers. If asked about stock, cite
             </div>
 
             {/* Live Metrics Quick Strip */}
-            <div className="bg-slate-100/80 px-6 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600 overflow-x-auto gap-4 shrink-0">
+            <div className="bg-slate-100/80 px-5 sm:px-6 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-600 overflow-x-auto gap-4 shrink-0">
               <span className="flex items-center gap-1.5 whitespace-nowrap">
                 <TrendingUp size={14} className="text-purple-600" />
                 <span>সেলস: <strong className="text-slate-900">৳{storeContext.totalRevenue.toLocaleString()}</strong></span>
@@ -349,63 +465,149 @@ Analyze the merchant's query using the above numbers. If asked about stock, cite
               )}
             </div>
 
-            {/* Chat Messages */}
-            <div ref={scrollRef} className="flex-1 p-5 sm:p-6 bg-slate-50 overflow-y-auto space-y-4">
-              {messages.map(msg => (
-                <div key={msg.id} className={clsx("flex gap-3 group", msg.role === 'user' ? "justify-end" : "justify-start")}>
-                  {msg.role === 'bot' && (
-                    <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm mt-1">
-                      <Bot size={16} />
+            {/* Main Area: Chat or History Sidebar Drawer */}
+            <div className="flex-1 flex overflow-hidden relative">
+              
+              {/* History Drawer */}
+              {showHistoryDrawer && (
+                <div className="absolute inset-y-0 left-0 w-full sm:w-80 bg-slate-900 text-white z-30 flex flex-col border-r border-slate-800 animate-slide-in shadow-2xl">
+                  <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <History size={16} className="text-purple-400" />
+                      <h4 className="font-black text-sm">পূর্বের চ্যাটসমূহ ({sessions.length})</h4>
                     </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setShowHistoryDrawer(false)}
+                      className="p-1 text-slate-400 hover:text-white rounded-lg cursor-pointer"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
 
-                  <div className={clsx(
-                    "max-w-[85%] sm:max-w-[80%] rounded-3xl p-4 sm:p-5 text-sm leading-relaxed shadow-sm relative",
-                    msg.role === 'user'
-                      ? "bg-purple-600 text-white rounded-tr-xs font-medium"
-                      : "bg-white text-slate-800 border border-slate-200/80 rounded-tl-xs"
-                  )}>
-                    <div className="whitespace-pre-wrap font-sans text-xs sm:text-sm">
-                      {msg.text}
-                    </div>
+                  <div className="p-3">
+                    <button
+                      type="button"
+                      onClick={handleStartNewChat}
+                      className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                    >
+                      <Plus size={14} />
+                      <span>+ নতুন চ্যাট শুরু করুন</span>
+                    </button>
+                  </div>
 
-                    {msg.role === 'bot' && (
-                      <div className="flex justify-end pt-2 border-t border-slate-100 mt-2">
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {sessions.map(s => (
+                      <div
+                        key={s.id}
+                        onClick={() => handleSelectSession(s)}
+                        className={`p-3 rounded-xl transition-all cursor-pointer flex items-center justify-between group border ${
+                          currentSessionId === s.id
+                            ? 'bg-purple-950/80 border-purple-500/50 text-white'
+                            : 'bg-slate-800/60 border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <MessageSquare size={14} className={currentSessionId === s.id ? "text-purple-400" : "text-slate-500"} />
+                          <div className="truncate">
+                            <p className="text-xs font-bold truncate leading-tight">{s.title || 'কথোপকথন'}</p>
+                            <p className="text-[9px] text-slate-500 mt-0.5">
+                              {s.createdAt ? new Date(s.createdAt).toLocaleDateString('bn-BD') : ''}
+                            </p>
+                          </div>
+                        </div>
+
                         <button
                           type="button"
-                          onClick={() => handleCopyMessage(msg.text, msg.id)}
-                          className="text-[10px] text-slate-400 hover:text-purple-600 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                          onClick={(e) => handleDeleteSession(s.id, e)}
+                          className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                          title="এই চ্যাটটি ডিলিট করুন"
                         >
-                          {copiedId === msg.id ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
-                          <span>{copiedId === msg.id ? 'কপি হয়েছে' : 'কপি করুন'}</span>
+                          <Trash2 size={13} />
                         </button>
                       </div>
-                    )}
-                  </div>
-
-                  {msg.role === 'user' && (
-                    <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-black shrink-0 mt-1">
-                      User
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {isTyping && (
-                <div className="flex gap-3 items-center">
-                  <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm">
-                    <Bot size={16} />
-                  </div>
-                  <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-500 flex items-center gap-2 shadow-xs">
-                    <Loader2 size={14} className="animate-spin text-purple-600" />
-                    <span>আপনার স্টোরের ডেটা বিশ্লেষণ করা হচ্ছে...</span>
+                    ))}
                   </div>
                 </div>
               )}
+
+              {/* Chat Messages Stream */}
+              <div ref={scrollRef} className="flex-1 p-4 sm:p-6 bg-slate-50 overflow-y-auto space-y-4">
+                {messages.map(msg => (
+                  <div key={msg.id} className={clsx("flex gap-2.5 sm:gap-3 group", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                    {msg.role === 'bot' && (
+                      <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm mt-1">
+                        <Bot size={16} />
+                      </div>
+                    )}
+
+                    <div className={clsx(
+                      "max-w-[88%] sm:max-w-[80%] rounded-3xl p-4 sm:p-5 text-sm leading-relaxed shadow-sm relative transition-all",
+                      msg.role === 'user'
+                        ? "bg-purple-600 text-white rounded-tr-xs font-medium"
+                        : "bg-white text-slate-800 border border-slate-200/80 rounded-tl-xs"
+                    )}>
+                      <div className="whitespace-pre-wrap font-sans text-xs sm:text-sm">
+                        {msg.text}
+                      </div>
+
+                      {/* Action Bar inside Message */}
+                      <div className={clsx(
+                        "flex items-center justify-between pt-2 border-t mt-2 text-[10px]",
+                        msg.role === 'user' ? "border-white/20 text-purple-200" : "border-slate-100 text-slate-400"
+                      )}>
+                        <span className="font-mono">{msg.timestamp || ''}</span>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyMessage(msg.text, msg.id)}
+                            className={clsx(
+                              "font-bold flex items-center gap-1 transition-colors cursor-pointer",
+                              msg.role === 'user' ? "hover:text-white" : "hover:text-purple-600"
+                            )}
+                            title="মেসেজ কপি করুন"
+                          >
+                            {copiedId === msg.id ? <Check size={12} className={msg.role === 'user' ? "text-white" : "text-emerald-600"} /> : <Copy size={12} />}
+                            <span>{copiedId === msg.id ? 'কপি হয়েছে' : 'কপি'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="hover:text-red-400 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                            title="এই মেসেজটি ডিলিট করুন"
+                          >
+                            <Trash2 size={12} />
+                            <span>মুছুন</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {msg.role === 'user' && (
+                      <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-black shrink-0 mt-1">
+                        <User size={16} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {isTyping && (
+                  <div className="flex gap-3 items-center">
+                    <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm">
+                      <Bot size={16} />
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-500 flex items-center gap-2 shadow-xs">
+                      <Loader2 size={14} className="animate-spin text-purple-600" />
+                      <span>আপনার স্টোরের ডেটা বিশ্লেষণ করা হচ্ছে...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Suggestion Demo Pills */}
-            <div className="px-5 py-2.5 bg-white border-t border-slate-100 flex items-center gap-2 overflow-x-auto shrink-0 pb-2">
+            <div className="px-4 sm:px-5 py-2.5 bg-white border-t border-slate-100 flex items-center gap-2 overflow-x-auto shrink-0 pb-2">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap flex items-center gap-1">
                 <Sparkles size={12} className="text-purple-500" /> আইডিয়া:
               </span>
@@ -423,7 +625,7 @@ Analyze the merchant's query using the above numbers. If asked about stock, cite
             </div>
 
             {/* Input Box */}
-            <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+            <div className="p-3 sm:p-4 bg-white border-t border-slate-200 shrink-0">
               <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="flex items-center gap-2">
                 <input
                   type="text"
