@@ -1076,21 +1076,22 @@ export default function SettingsPage() {
                 {slugEditing ? (
                   <div className="space-y-3">
                     <div>
-                      <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block mb-1">কাস্টম সাবডোমেইন স্লাগ:</span>
+                      <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block mb-1">কাস্টম সাবডোমেইন প্রিফিক্স:</span>
                       <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-500 font-mono font-bold">/shop/</span>
+                        <span className="text-xs text-slate-500 font-mono font-bold">https://</span>
                         <input
                           type="text"
                           value={slugInput}
-                          placeholder="yourshop"
+                          placeholder="try"
                           onChange={e => { setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setSlugError(''); }}
                           className="flex-1 bg-white border-2 border-purple-200 rounded-xl px-3 py-2 text-sm font-black outline-none focus:border-purple-600 transition-all text-slate-900 font-mono"
                         />
+                        <span className="text-xs text-slate-500 font-mono font-bold">.bdretailers.com</span>
                       </div>
                     </div>
                     {slugError && <p className="text-[10px] text-red-500 font-bold">{slugError}</p>}
                     <div className="flex gap-2">
-                       <button type="button" onClick={handleSlugSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer">সেভ করুন</button>
+                       <button type="button" onClick={handleSlugSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer">সেভ সাবডোমেইন</button>
                        <button type="button" onClick={() => setSlugEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all cursor-pointer">বাতিল</button>
                     </div>
                   </div>
@@ -1098,19 +1099,19 @@ export default function SettingsPage() {
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-slate-200">
                       <div>
-                        <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">🌐 আপনার লাইভ স্টোর লিংক:</p>
-                        <a href={storeUrl} target="_blank" rel="noreferrer" className="text-sm font-black font-mono text-purple-600 hover:text-purple-700 underline truncate block tracking-tight mt-0.5">
-                          {storeUrl}
+                        <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">🌟 আপনার লাইভ সাবডোমেইন লিংক:</p>
+                        <a href={primarySubdomainUrl} target="_blank" rel="noreferrer" className="text-sm font-black font-mono text-purple-600 hover:text-purple-700 underline truncate block tracking-tight mt-0.5">
+                          {primarySubdomainUrl}
                         </a>
                       </div>
-                      <a href={storeUrl} target="_blank" rel="noreferrer" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black self-start sm:self-auto transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
+                      <a href={primarySubdomainUrl} target="_blank" rel="noreferrer" className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black self-start sm:self-auto transition-all shadow-sm flex items-center gap-1.5 active:scale-95">
                         <span>ভিজিট স্টোর</span>
                         <ExternalLink size={13} />
                       </a>
                     </div>
 
                     <button type="button" onClick={() => setSlugEditing(true)} className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-                       শপ লিংক / স্লাগ পরিবর্তন করুন
+                       সাবডোমেইন পরিবর্তন করুন (Change Subdomain)
                     </button>
                   </div>
                 )}
