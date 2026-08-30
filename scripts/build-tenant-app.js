@@ -439,21 +439,36 @@ async function build() {
   const googleServicesContent = JSON.stringify({
     project_info: {
       project_number: '156216219253',
+      firebase_url: 'https://webmaa-app-default-rtdb.firebaseio.com',
       project_id: 'webmaa-app',
       storage_bucket: 'webmaa-app.firebasestorage.app'
     },
     client: [
       {
         client_info: {
-          mobilesdk_app_id: '1:156216219253:android:8fec080019c45244d0ca3c',
+          mobilesdk_app_id: (packageName === 'com.messerbazar') ? '1:156216219253:android:84998771525920b1d0ca3c' : '1:156216219253:android:491be9bc9e61d0c9d0ca3c',
           android_client_info: { package_name: packageName }
         },
-        oauth_client: [],
-        api_key: [{ current_key: 'AIzaSyAMMzATvPWghOT8islcllFz9hXlCJ6HdFk' }],
-        services: { appinvite_service: { other_platform_oauth_client: [] } }
+        oauth_client: [
+          {
+            client_id: '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com',
+            client_type: 3
+          }
+        ],
+        api_key: [{ current_key: 'AIzaSyBHRcN3fql3TYrrsUGBkkxmPPrIb2lhSYc' }],
+        services: {
+          appinvite_service: {
+            other_platform_oauth_client: [
+              {
+                client_id: '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com',
+                client_type: 3
+              }
+            ]
+          }
+        }
       }
     ],
-    configuration_version: '3'
+    configuration_version: '1'
   }, null, 2);
   fs.writeFileSync(googleServicesPath, googleServicesContent);
   console.log('  └─ android/app/google-services.json configured.');

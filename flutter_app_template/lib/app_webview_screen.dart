@@ -395,25 +395,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                   },
                 ),
 
-              // ── 2. Top Sleek Linear Progress Bar (Website style blue/purple loading line) ──
-              if (_showProgressBar && _isAppReady)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: SizedBox(
-                    height: 2.8,
-                    child: LinearProgressIndicator(
-                      value: _progress > 0 ? _progress : null,
-                      backgroundColor: Colors.transparent,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        primaryColor,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // ── 3. Branded Native Splash Shell (Smooth Fade Transition) ──
+              // ── 2. Branded Native Splash Shell (Smooth Fade Transition) ──
               IgnorePointer(
                 ignoring: _isAppReady,
                 child: AnimatedOpacity(

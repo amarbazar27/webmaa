@@ -86,16 +86,9 @@ const navGroups = [
     id: 'settings', 
     label: 'Store Settings', 
     icon: Settings, 
+    href: '/dashboard/settings',
     staffAllowed: false, 
-    isLockable: true,
-    subItems: [
-      { href: '/dashboard/settings?tab=store_info', label: 'Store Profile & Domain' },
-      { href: '/dashboard/settings?tab=checkout_payments', label: 'Payment & Delivery Fee' },
-      { href: '/dashboard/settings?tab=courier_location', label: 'Courier Integration' },
-      { href: '/dashboard/settings?tab=access', label: 'Staff & Admin Access' },
-      { href: '/dashboard/settings?tab=marketing', label: 'Coupons & Promos' },
-      { href: '/dashboard/settings?tab=ai_companion', label: 'AI Companion' }
-    ]
+    isLockable: true
   }
 ];
 
