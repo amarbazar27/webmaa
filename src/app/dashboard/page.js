@@ -71,7 +71,11 @@ export default function DashboardPage() {
 
   const totalRevenue = shop?.totalRevenue !== undefined ? shop.totalRevenue : orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
   const totalOrdersCount = shop?.orderCount !== undefined ? shop.orderCount : orders.length;
-  const shopUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/shop/${shop?.shopSlug || ''}`;
+  const primarySubdomain = (shop?.subdomainSlug || shop?.shopSlug || '').toLowerCase().trim();
+  const cleanSubdomainUrl = primarySubdomain ? `https://${primarySubdomain}.bdretailers.com` : '';
+  const shopUrl = shop?.customDomain 
+    ? `https://${shop.customDomain}` 
+    : (cleanSubdomainUrl || `${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/shop/${primarySubdomain}`);
   
   const completedOrdersCount = orders.filter(o => o.status === 'completed').length;
   const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
@@ -117,13 +121,23 @@ export default function DashboardPage() {
     <>
       <div className="space-y-8 animate-slide-in pb-12">
       {/* Welcome Header & Store Live Link Hub */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Live Storefront Active
             </span>
+            {globalConfig?.donationEnabled !== false && (
+              <button
+                onClick={() => setIsDonateModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-full text-[10px] font-black uppercase transition-colors cursor-pointer"
+                title="Support Platform"
+              >
+                <Heart size={11} className="fill-current text-rose-500" />
+                <span>Donate</span>
+              </button>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mt-2">
             Welcome back, {user?.displayName?.split(' ')[0] || shop?.shopName || 'Retailer'} 👋
@@ -131,52 +145,51 @@ export default function DashboardPage() {
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1.5">Here's what's happening with your store today.</p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
-          {globalConfig?.donationEnabled !== false && (
-            <button
-              onClick={() => setIsDonateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-md shadow-rose-500/20"
-            >
-              <Heart size={15} className="fill-current animate-pulse" />
-              <span>Donate</span>
-            </button>
-          )}
-
-          {shop && (
-            <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50/50 p-2 pl-4 rounded-2xl border border-purple-200/80 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Globe size={18} className="text-purple-600 shrink-0" />
-                <div className="max-w-[180px] sm:max-w-[240px]">
-                  <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">আপনার অনলাইন স্টোর লিংক</p>
-                  <p className="text-xs font-mono font-bold text-slate-800 truncate" title={shopUrl}>
-                    {shopUrl.replace(/^https?:\/\//, '')}
-                  </p>
-                </div>
+        {/* Full-width Branded Subdomain Live Card */}
+        {shop && (
+          <div className="bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/80 p-4 sm:p-5 rounded-2xl border-2 border-purple-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 shrink-0">
+                <Globe size={20} />
               </div>
-
-              <div className="flex items-center gap-1.5 pl-2 border-l border-purple-200">
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className="px-3 py-2 bg-white hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-black transition-all border border-purple-200 flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
-                  title="Copy Store URL"
-                >
-                  {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                  <span className="hidden sm:inline">{copiedLink ? 'কপি হয়েছে' : 'কপি'}</span>
-                </button>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest flex items-center gap-1">
+                  <span>🌟 লাইভ সাবডোমেইন লিংক</span>
+                </p>
                 <a 
                   href={shopUrl} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-purple-500/20 flex items-center gap-1.5 active:scale-95"
+                  className="text-sm sm:text-base font-black font-mono text-slate-900 hover:text-purple-700 underline truncate block tracking-tight mt-0.5" 
+                  title={shopUrl}
                 >
-                  <span>ভিজিট স্টোর</span>
-                  <ExternalLink size={14} />
+                  {shopUrl}
                 </a>
               </div>
             </div>
-          )}
-        </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="px-3.5 py-2.5 bg-white hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-black transition-all border border-purple-200 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                title="Copy Store URL"
+              >
+                {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                <span>{copiedLink ? 'কপি হয়েছে' : 'কপি'}</span>
+              </button>
+              <a 
+                href={shopUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-purple-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              >
+                <span>ভিজিট স্টোর</span>
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 🎁 1-Month Free Claim Offer Banner for New Retailers / Expired Accounts */}
