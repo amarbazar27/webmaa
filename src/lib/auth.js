@@ -166,20 +166,24 @@ export const loginWithGoogle = async () => {
   if (isFlutterWebView()) {
     try {
       const result = await window.flutter_inappwebview.callHandler('NativeGoogleSignIn');
-      if (result && result.idToken) {
-        const credential = GoogleAuthProvider.credential(result.idToken, result.accessToken || null);
+      if (!result || result.cancelled) {
+        return null;
+      }
+      if (result.error) {
+        console.error('Native Google Sign-In returned error:', result.error);
+        throw new Error(result.error);
+      }
+      if (result.idToken || result.accessToken) {
+        const credential = GoogleAuthProvider.credential(result.idToken || null, result.accessToken || null);
         const signInResult = await signInWithCredential(auth, credential);
         if (signInResult?.user) {
           return await handleUserSession(signInResult.user);
         }
       }
-      // User cancelled or native returned null
       return null;
     } catch (nativeErr) {
-      // In WebView: NEVER fall through to popup — it opens the browser sign-in page
-      // which is exactly what we're trying to avoid. Just log and return null.
       console.error('Native Google Sign-In error:', nativeErr);
-      return null;
+      throw nativeErr;
     }
   }
 

@@ -23,7 +23,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
   final _googleSignIn = GoogleSignIn(
     // Web client ID from google-services.json (client_type 3)
     serverClientId: '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com',
-    scopes: ['email', 'profile', 'openid'],
+    scopes: ['email'],
   );
 
   bool _isAppReady = false;
@@ -332,24 +332,24 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                       handlerName: 'NativeGoogleSignIn',
                       callback: (args) async {
                         try {
-                          // Disconnect first to always show account picker (not auto-sign-in)
-                          await _googleSignIn.disconnect().catchError((_) {});
+                          // Sign out locally to always show the account picker without revoking server authorization
+                          await _googleSignIn.signOut().catchError((_) => null);
                           final GoogleSignInAccount? account = await _googleSignIn.signIn();
                           if (account == null) {
                             debugPrint('NativeGoogleSignIn: user cancelled');
-                            return null; // user cancelled → JS gets null → no sign-in
+                            return {'cancelled': true};
                           }
                           final GoogleSignInAuthentication gAuth = await account.authentication;
-                          debugPrint('NativeGoogleSignIn: success for ${account.email}');
+                          debugPrint('NativeGoogleSignIn: success for ${account.email}, hasIdToken: ${gAuth.idToken != null}, hasAccessToken: ${gAuth.accessToken != null}');
                           return {
                             'idToken': gAuth.idToken,
                             'accessToken': gAuth.accessToken,
                             'email': account.email,
                             'displayName': account.displayName ?? '',
                           };
-                        } catch (e) {
-                          debugPrint('NativeGoogleSignIn error: $e');
-                          return null; // JS falls back to popup/redirect
+                        } catch (e, stack) {
+                          debugPrint('NativeGoogleSignIn error: $e\n$stack');
+                          return {'error': e.toString()};
                         }
                       },
                     );

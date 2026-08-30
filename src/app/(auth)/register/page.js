@@ -50,6 +50,7 @@ export default function RegisterPage() {
       }
     } catch (err) {
       toast.error('Registration failed: ' + (err.message || 'Server error'));
+    } finally {
       setLoading(false);
     }
   };
