@@ -11,7 +11,6 @@ import {
   ShieldCheck, 
   Zap, 
   Crown, 
-  Check, 
   ShoppingBag,
   Store,
   Clock,
@@ -34,11 +33,9 @@ export default function PricingSection({ globalConfig = null }) {
 
   const handlePlanSelect = (planKey) => {
     setSelectedPlan(planKey);
-    // If logged in as retailer or superadmin, go directly to billing dashboard
     if (user && (userData?.role === 'retailer' || userData?.role === 'superadmin')) {
       router.push(`/dashboard/billing?package=${planKey}`);
     } else {
-      // If visitor or regular customer, redirect to become-retailer request page with plan pre-selected
       router.push(`/become-retailer?plan=${planKey}`);
     }
   };
@@ -55,7 +52,7 @@ export default function PricingSection({ globalConfig = null }) {
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12 md:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-200 shadow-xs">
             <Sparkles size={14} className="text-purple-700 animate-pulse" />
-            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-purple-800">
+            <span className="text-xs font-black uppercase tracking-wider text-purple-800">
               স্বচ্ছ ও সাশ্রয়ী সাবস্ক্রিপশন প্ল্যান
             </span>
           </div>
@@ -85,19 +82,16 @@ export default function PricingSection({ globalConfig = null }) {
                 : 'border-amber-200/90 hover:border-amber-400 bg-gradient-to-b from-amber-50/30 to-white hover:-translate-y-0.5'
             }`}
           >
-            {/* Top Floating Badge */}
-            <div className="absolute top-0 right-0">
-              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-bl-2xl shadow-sm">
-                <Sparkles size={11} /> নতুনদের জন্য স্পেশাল
+            {/* Standard Centered Badge */}
+            <div className="flex justify-center -mt-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black px-3.5 py-1 rounded-full shadow-sm">
+                <Sparkles size={13} /> নতুনদের জন্য স্পেশাল
               </span>
             </div>
 
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4">
               <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                  <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest">স্টার্টার প্যাকেজ</p>
-                </div>
+                <p className="text-xs font-black text-amber-700 uppercase tracking-wider">স্টার্টার প্যাকেজ</p>
                 <h3 className="text-xl font-black text-slate-900 leading-tight">Starter Plan</h3>
                 <p className="text-xs text-slate-500 font-bold mt-0.5">০৳ মাসিক ফি • রেভিনিউ শেয়ার</p>
               </div>
@@ -106,41 +100,34 @@ export default function PricingSection({ globalConfig = null }) {
               <div className="p-4 bg-white/90 border border-amber-200/80 rounded-2xl shadow-xs space-y-1">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-black text-amber-600">৳০</span>
-                  <span className="text-xs text-slate-400 font-bold">/ মাসিক চার্জ নেই</span>
+                  <span className="text-xs text-slate-500 font-bold">/ মাসিক চার্জ নেই</span>
                 </div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100/90 text-amber-900 text-xs font-black">
-                  ⚡ শুধুমাত্র {starterPercent}% বিক্রয় শেয়ার
+                  ⚡ বিক্রয়ের মাত্র ${starterPercent}% শেয়ার
                 </div>
               </div>
 
-              {/* Persuasive copy */}
-              <div className="p-3.5 bg-amber-50/80 rounded-2xl border border-amber-100 text-xs text-amber-950 font-medium leading-relaxed space-y-2">
-                <div className="font-black text-amber-900 text-[11.5px] space-y-0.5">
-                  <p>ব্যবসা একদম নতুন?</p>
-                  <p>মাসিক সাবস্ক্রিপশন নিতে এখনো দ্বিধায় আছেন?</p>
-                </div>
-                <p className="text-slate-700 font-semibold text-[11px] leading-normal">
-                  তাহলে শুরু করুন ঝুঁকি কমিয়ে! মাসিক ফি নয়—<span className="text-amber-800 font-black">আপনার বিক্রয়ের মাত্র {starterPercent}% শেয়ার করেই</span> ব্যবসা শুরু করুন। ব্যবসা যখন একটু দাঁড়িয়ে যাবে, তখন যেকোনো সময় নিয়মিত সাবস্ক্রিপশন প্ল্যানে চলে যেতে পারবেন।
-                </p>
-              </div>
-
-              {/* Features List */}
-              <div className="space-y-2 pt-2 border-t border-amber-100 text-xs font-bold text-slate-700">
+              {/* Structured Features List matching all cards */}
+              <div className="space-y-2.5 pt-2 border-t border-amber-100 text-xs font-bold text-slate-700">
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-amber-500 shrink-0" />
-                  <span>০৳ অগ্রিম খরচ (Zero Risk)</span>
+                  <CheckCircle size={16} className="text-amber-500 shrink-0" />
+                  <span>০৳ অগ্রিম খরচ (Zero Upfront Risk)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-amber-500 shrink-0" />
+                  <CheckCircle size={16} className="text-amber-500 shrink-0" />
                   <span>সম্পূর্ণ অনলাইন ওয়েবসাইট ও স্টোরফ্রন্ট</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-amber-500 shrink-0" />
-                  <span>নো সেল = নো ফি (১০০% নিরাপদ)</span>
+                  <CheckCircle size={16} className="text-amber-500 shrink-0" />
+                  <span>নো সেল = নো ফি (১০০% নিরাপদ ব্যবসা)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-amber-500 shrink-0" />
-                  <span>যেকোনো সময় আপগ্রেডের পূর্ণ স্বাধীনতা</span>
+                  <CheckCircle size={16} className="text-amber-500 shrink-0" />
+                  <span>Steadfast ও অটো পেমেন্ট গেটওয়ে</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={16} className="text-amber-500 shrink-0" />
+                  <span>যেকোনো সময় ফিক্সড প্ল্যানে আপগ্রেড</span>
                 </div>
               </div>
             </div>
@@ -170,16 +157,16 @@ export default function PricingSection({ globalConfig = null }) {
                 : 'border-slate-200 hover:border-purple-300 bg-white hover:-translate-y-0.5'
             }`}
           >
-            {/* Top Badge: 1 Month Free */}
-            <div className="absolute top-0 right-0">
-              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-bl-2xl shadow-sm">
+            {/* Standard Centered Badge */}
+            <div className="flex justify-center -mt-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-black px-3.5 py-1 rounded-full shadow-sm">
                 🎁 ১ম মাস ফ্রি ট্রায়াল
               </span>
             </div>
 
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">রেগুলার প্ল্যান</p>
+                <p className="text-xs font-black text-purple-600 uppercase tracking-wider">রেগুলার প্ল্যান</p>
                 <h3 className="text-xl font-black text-slate-900 leading-tight">Monthly Plan</h3>
                 <p className="text-xs text-slate-400 font-bold mt-0.5">১ মাসের স্টোর লাইসেন্স</p>
               </div>
@@ -187,46 +174,35 @@ export default function PricingSection({ globalConfig = null }) {
               {/* Price Box */}
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-purple-700">৳{priceMap.monthly}</span>
+                  <span className="text-4xl font-black text-purple-700">৳${priceMap.monthly}</span>
                   <span className="text-xs text-slate-400 font-bold">/ প্রতি মাস</span>
                 </div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800 text-xs font-black">
                   🛡️ ০% সেলস কমিশন (১০০% প্রফিট)
                 </div>
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black mt-1">
-                  ✨ প্রথম ১ মাস সম্পূর্ণ ফ্রি ক্লেইম করুন!
-                </div>
               </div>
 
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                প্রতি মাসে সহজে নবায়নযোগ্য স্ট্যান্ডার্ড প্যাকেজ। আপনার বিক্রির সম্পূর্ণ লাভ ১০০% আপনার থাকবে।
-              </p>
-
               {/* Features List */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 text-xs font-bold text-slate-700">
+              <div className="space-y-2.5 pt-2 border-t border-slate-100 text-xs font-bold text-slate-700">
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>১০০% বিক্রয় লাভ আপনার (০% কমিশন)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>🌐 নিজস্ব কাস্টম ডোমেন কানেকশন</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>📦 আনলিমিটেড প্রোডাক্ট ও ক্যাটালগ</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
-                  <span>৩০ দিন নিশ্চিত লাইসেন্স</span>
                 </div>
               </div>
             </div>
@@ -256,16 +232,16 @@ export default function PricingSection({ globalConfig = null }) {
                 : 'border-slate-200 hover:border-purple-300 bg-white hover:-translate-y-0.5'
             }`}
           >
-            {/* Top Badge */}
-            <div className="absolute top-0 right-0">
-              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-bl-2xl shadow-sm">
+            {/* Standard Centered Badge */}
+            <div className="flex justify-center -mt-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-black px-3.5 py-1 rounded-full shadow-sm">
                 🎁 ১ মাস ফ্রি • 🔥 জনপ্রিয়
               </span>
             </div>
 
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">ত্রৈমাসিক প্ল্যান</p>
+                <p className="text-xs font-black text-purple-600 uppercase tracking-wider">ত্রৈমাসিক প্ল্যান</p>
                 <h3 className="text-xl font-black text-slate-900 leading-tight">Quarterly Plan</h3>
                 <p className="text-xs text-slate-400 font-bold mt-0.5">৩ মাসের স্টোর লাইসেন্স</p>
               </div>
@@ -273,50 +249,35 @@ export default function PricingSection({ globalConfig = null }) {
               {/* Price Box */}
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-purple-700">৳{priceMap.quarterly}</span>
+                  <span className="text-4xl font-black text-purple-700">৳${priceMap.quarterly}</span>
                   <span className="text-xs text-slate-400 font-bold">/ প্রতি ৩ মাস</span>
                 </div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800 text-xs font-black">
                   🛡️ ০% সেলস কমিশন (১০০% প্রফিট)
                 </div>
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black mt-1">
-                  ✨ প্রথম ১ মাস সম্পূর্ণ ফ্রি ট্রায়াল!
-                </div>
               </div>
 
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                ৩ মাসের নিশ্চিন্ত ব্যবসা এবং প্রতি মাসে রিনিউ করার ঝামেলা থেকে সম্পূর্ণ মুক্তি।
-              </p>
-
               {/* Features List */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 text-xs font-bold text-slate-700">
+              <div className="space-y-2.5 pt-2 border-t border-slate-100 text-xs font-bold text-slate-700">
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>১০০% বিক্রয় লাভ আপনার (০% কমিশন)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>🌐 নিজস্ব কাস্টম ডোমেন কানেকশন</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
                   <span>📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
-                  <span>📦 আনলিমিটেড প্রোডাক্ট ও অ্যাডভান্সড ইনভেন্টরি</span>
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
+                  <span>📦 আনলিমিটেড প্রোডাক্ট ও অর্ডার</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
-                  <span>🤖 AI প্রোডাক্ট রাইটার ও স্মার্ট ইনসাইটস</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
-                  <span>🔔 ইনস্ট্যান্ট ইমেইল ও ড্যাশবোর্ড অর্ডার অ্যালার্ট</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-purple-500 shrink-0" />
-                  <span>প্রাইওরিটি কাস্টমার সাপোর্ট</span>
+                  <CheckCircle size={16} className="text-purple-600 shrink-0" />
+                  <span>⚡ ভিআইপি প্রায়োরিটি সাপোর্ট</span>
                 </div>
               </div>
             </div>
@@ -342,76 +303,56 @@ export default function PricingSection({ globalConfig = null }) {
             onClick={() => setSelectedPlan('yearly')}
             className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col justify-between overflow-hidden group cursor-pointer ${
               selectedPlan === 'yearly'
-                ? 'border-emerald-600 bg-emerald-50/30 shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-400/30 -translate-y-1'
-                : 'border-slate-200 hover:border-emerald-300 bg-white hover:-translate-y-0.5'
+                ? 'border-indigo-600 bg-indigo-50/30 shadow-xl shadow-indigo-500/10 ring-2 ring-indigo-400/30 -translate-y-1'
+                : 'border-slate-200 hover:border-indigo-300 bg-white hover:-translate-y-0.5'
             }`}
           >
-            {/* Top Badge */}
-            <div className="absolute top-0 right-0">
-              <span className="inline-flex items-center gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-bl-2xl shadow-sm">
-                👑 সেরা অফার • ১ মাস ফ্রি
+            {/* Standard Centered Badge */}
+            <div className="flex justify-center -mt-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-700 text-white text-xs font-black px-3.5 py-1 rounded-full shadow-sm">
+                👑 সর্বোচ্চ সাশ্রয়ী • ভিআইপি
               </span>
             </div>
 
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">বাৎসরিক প্যাকেজ</p>
+                <p className="text-xs font-black text-indigo-600 uppercase tracking-wider">বাৎসরিক প্ল্যান</p>
                 <h3 className="text-xl font-black text-slate-900 leading-tight">Yearly Plan</h3>
-                <p className="text-xs text-slate-400 font-bold mt-0.5">১২ মাসের স্টোর লাইসেন্স</p>
+                <p className="text-xs text-slate-400 font-bold mt-0.5">১২ মাসের সম্পূর্ণ মেম্বারশিপ</p>
               </div>
 
               {/* Price Box */}
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-emerald-700">৳{priceMap.yearly}</span>
+                  <span className="text-4xl font-black text-indigo-700">৳${priceMap.yearly}</span>
                   <span className="text-xs text-slate-400 font-bold">/ প্রতি বছর</span>
                 </div>
-                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black">
-                  🛡️ সর্বোচ্চ সাশ্রয়ী বাৎসরিক রেট
-                </div>
-                <div className="p-2 bg-gradient-to-r from-amber-100 to-yellow-100 border border-amber-300 rounded-xl text-[11px] font-black text-amber-900 mt-2 flex items-center gap-1.5 shadow-xs">
-                  <span>🎁</span>
-                  <span>১ বছর ফ্রি .COM ডোমেন গিফট!</span>
+                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-black">
+                  💎 প্রায় ২ মাস সম্পূর্ণ ফ্রি!
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                দীর্ঘমেয়াদী ও সিরিয়াস উদ্যোক্তাদের জন্য সবচেয়ে বেশি সাশ্রয়ী ও প্রিমিয়াম অফার।
-              </p>
-
               {/* Features List */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 text-xs font-bold text-slate-700">
-                <div className="flex items-center gap-2 text-amber-900 font-black">
-                  <Sparkles size={15} className="text-amber-500 shrink-0" />
-                  <span>🎁 ১ বছর ফ্রি .COM ডোমেন (Free Setup + SSL)</span>
-                </div>
+              <div className="space-y-2.5 pt-2 border-t border-slate-100 text-xs font-bold text-slate-700">
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
+                  <CheckCircle size={16} className="text-indigo-600 shrink-0" />
                   <span>১০০% বিক্রয় লাভ আপনার (০% কমিশন)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
-                  <span>📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA বিল্ডার</span>
+                  <CheckCircle size={16} className="text-indigo-600 shrink-0" />
+                  <span>🌐 আনলিমিটেড কাস্টম ডোমেন ব্যান্ডউইথ</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
-                  <span>📦 আনলিমিটেড প্রোডাক্ট ও অ্যাডভান্সড ইনভেন্টরি</span>
+                  <CheckCircle size={16} className="text-indigo-600 shrink-0" />
+                  <span>📱 প্রফেশনাল ডেডিকেটেড মোবাইল অ্যাপ</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
-                  <span>🤖 AI ফুল অ্যাসিস্ট্যান্ট ও স্মার্ট ইনসাইটস</span>
+                  <CheckCircle size={16} className="text-indigo-600 shrink-0" />
+                  <span>🤖 প্রিমিয়াম AI বিজনেস সহকারী</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
-                  <span>⚡ লাইভ অর্ডার ট্র্যাকিং ও স্মার্ট নোটিফিকেশন</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
-                  <span>৩৬৫ দিন ফুল প্রিমিয়াম অ্যাক্সেস + ১ মাস ফ্রি</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={15} className="text-emerald-500 shrink-0" />
-                  <span>ভিআইপি প্রায়োরিটি ডেডিকেটেড সাপোর্ট</span>
+                  <CheckCircle size={16} className="text-indigo-600 shrink-0" />
+                  <span>👑 ডেডিকেটেড অ্যাকাউন্ট ম্যানেজার</span>
                 </div>
               </div>
             </div>
@@ -424,7 +365,7 @@ export default function PricingSection({ globalConfig = null }) {
                   e.stopPropagation();
                   handlePlanSelect('yearly');
                 }}
-                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span>বাৎসরিক প্ল্যান বেছে নিন</span>
                 <ArrowRight size={14} />
@@ -434,24 +375,22 @@ export default function PricingSection({ globalConfig = null }) {
 
         </div>
 
-        {/* Bottom Trust & Guarantee Bar */}
-        <div className="mt-12 p-6 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
-              <ShieldCheck size={22} />
+        {/* Guarantee Banner */}
+        <div className="mt-12 text-center">
+          <div className="inline-flex flex-wrap items-center justify-center gap-6 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs text-xs font-black text-slate-700">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={18} className="text-emerald-600" />
+              <span>নিরাপদ বিকাশ ও নগদ পেমেন্ট</span>
             </div>
-            <div>
-              <h4 className="text-sm font-black text-slate-900">ঝুঁকিহীন ট্রায়াল ও ফুল অ্যাক্টিভেশন সাপোর্ট</h4>
-              <p className="text-xs text-slate-500 font-medium">কোনো কার্ড ছাড়াই স্টার্টার বা ট্রায়াল শুরু করুন। যেকোনো সময় ক্যানসেল বা প্যাকেজ আপগ্রেড করতে পারবেন।</p>
+            <div className="flex items-center gap-2">
+              <Clock size={18} className="text-purple-600" />
+              <span>২৪/৭ ডেডিকেটেড হেল্পলাইন সাপোর্ট</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles size={18} className="text-amber-500" />
+              <span>কোনো হিডেন বা সেটআপ ফি নেই</span>
             </div>
           </div>
-          <Link
-            href="/become-retailer"
-            className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shrink-0 flex items-center gap-1.5 shadow-md"
-          >
-            <Store size={14} />
-            মার্চেন্ট হতে আবেদন করুন
-          </Link>
         </div>
 
       </div>

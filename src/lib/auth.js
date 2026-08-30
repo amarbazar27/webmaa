@@ -141,22 +141,38 @@ const initializeShop = async (user) => {
   }
 };
 
+export const checkRedirectLogin = async () => {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      return await handleUserSession(result.user);
+    }
+  } catch (error) {
+    console.error("Redirect login check error:", error);
+  }
+  return null;
+};
+
 export const loginWithGoogle = async () => {
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return await handleUserSession(result.user);
-  } catch (error) {
-    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-      // User closed the popup intentionally
-      return null;
-    }
-    if (error.code === 'auth/popup-blocked') {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result?.user) {
+        return await handleUserSession(result.user);
+      }
+    } catch (popupErr) {
+      if (popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request') {
+        return null;
+      }
+      console.warn("Popup sign-in not supported in WebView/environment, falling back to redirect...", popupErr);
       await signInWithRedirect(auth, googleProvider);
       return null;
     }
+  } catch (error) {
     console.error("Google login failed:", error);
     throw error;
   }
+  return null;
 };
 
 export const handleLoginRedirect = async () => {

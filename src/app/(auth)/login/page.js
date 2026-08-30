@@ -57,6 +57,26 @@ export default function LoginPage() {
     }
   }, [authUser, authData, authLoading, redirecting, handleRedirection]);
 
+  // 2. Check Redirect login on mount (Crucial for mobile in-app webview)
+  useEffect(() => {
+    let isMounted = true;
+    const checkRedirect = async () => {
+      try {
+        const { checkRedirectLogin } = await import('@/lib/auth');
+        const result = await checkRedirectLogin();
+        if (result?.user && result?.userData && isMounted) {
+          forceUpdateAuth(result.user, result.userData);
+          setRedirecting(true);
+          handleRedirection(result.user, result.userData.role || 'user');
+        }
+      } catch (err) {
+        console.error('Redirect auth check error:', err);
+      }
+    };
+    checkRedirect();
+    return () => { isMounted = false; };
+  }, [forceUpdateAuth, handleRedirection]);
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
@@ -65,6 +85,9 @@ export default function LoginPage() {
         forceUpdateAuth(result.user, result.userData);
         setRedirecting(true);
         handleRedirection(result.user, result.userData.role || 'user');
+      } else {
+        // Null returned when redirect initiated or popup closed
+        setLoading(false);
       }
     } catch (err) {
       toast.error('Login failed: ' + (err.message || 'Server error'));

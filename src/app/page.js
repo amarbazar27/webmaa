@@ -1977,7 +1977,7 @@ export default function Home() {
                         {displayProducts.map(p => (
                           <div 
                             key={p.id}
-                            className="relative aspect-square rounded-2xl overflow-hidden bg-slate-900/60 border border-white/[0.03] group/item hover:border-purple-500/30 transition-all flex flex-col justify-between"
+                            className="relative aspect-square rounded-2xl overflow-hidden bg-slate-900 border border-white/10 group/item hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-md"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedProduct(p);
@@ -1985,9 +1985,9 @@ export default function Home() {
                             }}
                           >
                             <img src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover/item:opacity-100 group-hover/item:scale-105 transition-transform duration-500" />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 text-[10px] text-white">
-                              <p className="font-bold truncate">{p.name}</p>
-                              <p className="font-black text-purple-400 mt-0.5">৳ {Number(p.price).toLocaleString()}</p>
+                            <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 p-2 text-xs text-white border-t border-white/10">
+                              <p className="font-bold truncate text-slate-100 text-xs">{p.name}</p>
+                              <p className="font-black text-emerald-400 mt-0.5 text-xs">৳ {Number(p.price).toLocaleString()}</p>
                             </div>
                           </div>
                         ))}
@@ -3045,31 +3045,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── High-Contrast Floating Jump to Top/Bottom Group (Bottom-Left) ── */}
-      <div className="fixed bottom-24 sm:bottom-8 left-4 sm:left-8 z-[120] flex flex-col gap-2 animate-fade-in select-none">
-        <button 
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
-          className="group flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-purple-600 border border-white/20 text-white backdrop-blur-md shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
-          title="উপরে যান (Jump to Top)"
-          aria-label="উপরে যান"
-        >
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
-            <ArrowUp size={14} className="stroke-[3]" />
-          </div>
-          <span className="text-[11px] font-black tracking-tight pr-1">উপরে যান</span>
-        </button>
-        <button 
-          onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })} 
-          className="group flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-purple-600 border border-white/20 text-white backdrop-blur-md shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
-          title="নিচে যান (Jump to Bottom)"
-          aria-label="নিচে যান"
-        >
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
-            <ArrowDown size={14} className="stroke-[3]" />
-          </div>
-          <span className="text-[11px] font-black tracking-tight pr-1">নিচে যান</span>
-        </button>
-      </div>
+      {/* ── Consolidated Floating Action Group (Bottom-Right) ── */}
 
       {/* ── AI Modal (Chat + Voice + OCR + Text) ── */}
       {isAiOpen && (
