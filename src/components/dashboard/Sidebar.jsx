@@ -55,44 +55,25 @@ const navGroups = [
     ]
   },
   { 
-    id: 'shipping', 
-    label: 'Shipping', 
-    icon: Truck, 
-    staffAllowed: false,
-    subItems: [
-      { href: '/dashboard/settings?tab=courier_location', label: 'Delivery & Weight Fees' },
-      { href: '/dashboard/settings?tab=courier_location', label: 'Courier Integration' }
-    ]
+    id: 'homepage_builder', 
+    label: 'Homepage Builder', 
+    icon: Paintbrush, 
+    href: '/dashboard/homepage-builder', 
+    staffAllowed: false 
   },
   { 
-    id: 'pages', 
-    label: 'Pages', 
-    icon: FileText, 
-    staffAllowed: false,
-    subItems: [
-      { href: '/dashboard/homepage-builder', label: 'Homepage Builder' },
-      { href: '/dashboard/templates', label: 'Store Templates' }
-    ]
-  },
-  { 
-    id: 'people', 
-    label: 'People', 
+    id: 'customers', 
+    label: 'Customers', 
     icon: Users, 
-    staffAllowed: false,
-    subItems: [
-      { href: '/dashboard/customers', label: 'Customers' },
-      { href: '/dashboard/settings?tab=access', label: 'Staff & Admins' }
-    ]
+    href: '/dashboard/customers', 
+    staffAllowed: false 
   },
   { 
-    id: 'marketing', 
-    label: 'Marketing', 
+    id: 'broadcast', 
+    label: 'Broadcast', 
     icon: Radio, 
-    staffAllowed: false,
-    subItems: [
-      { href: '/dashboard/broadcast', label: 'Broadcast Messages' },
-      { href: '/dashboard/settings?tab=marketing', label: 'Coupons & Promos' }
-    ]
+    href: '/dashboard/broadcast', 
+    staffAllowed: false 
   },
   { 
     id: 'billing', 
@@ -103,13 +84,16 @@ const navGroups = [
   },
   { 
     id: 'settings', 
-    label: 'Settings', 
+    label: 'Store Settings', 
     icon: Settings, 
     staffAllowed: false, 
     isLockable: true,
     subItems: [
-      { href: '/dashboard/settings?tab=store_info', label: 'Store Info & Domain' },
+      { href: '/dashboard/settings?tab=store_info', label: 'Store Profile & Domain' },
       { href: '/dashboard/settings?tab=checkout_payments', label: 'Payment & Delivery Fee' },
+      { href: '/dashboard/settings?tab=courier_location', label: 'Courier Integration' },
+      { href: '/dashboard/settings?tab=access', label: 'Staff & Admin Access' },
+      { href: '/dashboard/settings?tab=marketing', label: 'Coupons & Promos' },
       { href: '/dashboard/settings?tab=ai_companion', label: 'AI Companion' }
     ]
   }
@@ -156,9 +140,8 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     shop?.shopName === 'Messer Bazar' ||
     shop?.shopName === 'মেসের বাজার';
 
-  // Auto-expand group if current route matches any subItem
+  // Auto-expand active group on initial load
   useEffect(() => {
-    const newOpenState = { ...openGroups };
     navGroups.forEach(group => {
       if (group.subItems) {
         const isChildActive = group.subItems.some(sub => {
@@ -166,18 +149,21 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
           return pathname === basePath || (basePath !== '/dashboard' && pathname.startsWith(basePath));
         });
         if (isChildActive) {
-          newOpenState[group.id] = true;
+          setOpenGroups({ [group.id]: true });
         }
       }
     });
-    setOpenGroups(newOpenState);
   }, [pathname]);
 
+  // Exclusive Accordion: opening one group automatically closes all previous groups
   const toggleGroup = (groupId) => {
-    setOpenGroups(prev => ({
-      ...prev,
-      [groupId]: !prev[groupId]
-    }));
+    setOpenGroups(prev => {
+      if (prev[groupId]) {
+        return {}; // Close if clicking already active group
+      } else {
+        return { [groupId]: true }; // Open this group, close others
+      }
+    });
   };
 
   const handleLogout = async () => {

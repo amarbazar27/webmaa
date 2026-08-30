@@ -85,6 +85,28 @@ export default function DeliveryFeePricingCard({ deliveryConfig = {}, setDeliver
           </label>
         </div>
 
+        {/* ── Main Default Delivery Fee ── */}
+        <div className="p-4 bg-purple-50/70 border-2 border-purple-200 rounded-2xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-purple-950">⭐ প্রধান ডিফল্ট ডেলিভারি চার্জ (Main Default Delivery Fee)</span>
+            <span className="text-[10px] bg-purple-200/70 text-purple-800 font-black px-2 py-0.5 rounded-lg uppercase">Base Rate</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-base font-black text-purple-700">৳</span>
+            <input 
+              type="number"
+              placeholder="e.g. 60"
+              value={cfg.advanceFee ?? ''}
+              onChange={e => {
+                updateField('advanceFee', e.target.value);
+                if (!cfg.insideDhakaFee) updateField('insideDhakaFee', e.target.value);
+              }}
+              className="w-full text-base font-black text-slate-900 p-3 rounded-xl bg-white border border-purple-200 outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+          <p className="text-[10px] text-purple-700 font-bold">এটি আপনার স্টোরের সাধারণ মূল ডেলিভারি চার্জ। নিচে এলাকা বা ওজন অনুযায়ী চাইলে আলাদা স্পেসিফিক রেটও দিতে পারেন।</p>
+        </div>
+
         {/* Standard Location-Based Delivery Charges */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div className="p-4 bg-purple-50/50 border border-purple-100 rounded-2xl space-y-2">
