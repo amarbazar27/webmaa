@@ -51,9 +51,9 @@ export default function LoginPage() {
 
   // 1. Immediate redirect if already logged in via Context
   useEffect(() => {
-    if (!authLoading && authUser && authData && !redirecting) {
+    if (!authLoading && authUser && !redirecting) {
       setRedirecting(true);
-      handleRedirection(authUser, authData.role || 'user');
+      handleRedirection(authUser, authData?.role || 'user');
     }
   }, [authUser, authData, authLoading, redirecting, handleRedirection]);
 

@@ -1309,80 +1309,8 @@ export default function Home() {
           border: 1px solid rgba(255, 255, 255, 0.12) !important;
           color: #F8FAFC !important;
         }
-        .neo-button:hover {
-          background: #F8FAFC;
-          border-color: #6C47FF;
-        }
-        .dark .neo-button:hover {
-          background: #283548 !important;
-          border-color: #8B5CF6 !important;
-        }
-        .neo-button:active, .neo-button-active {
-          transform: scale(0.98);
-        }
-
-        /* ── Ultra High Contrast Text Rules ── */
-        h1, h2, h3, h4, h5, h6 {
-          color: #0F172A;
-        }
-        .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-          color: #F8FAFC !important;
-        }
-        p {
-          color: #334155;
-        }
-        .dark p {
-          color: #CBD5E1 !important;
-        }
-        
-        /* ── Modern Footer Overrides ── */
-        footer#contact {
-          background: linear-gradient(135deg, #F0F4FF 0%, #FAF5FF 50%, #F0F9FF 100%);
-          color: #0F172A;
-          border-top: 2px solid #E2E8F0;
-        }
-        .dark footer#contact {
-          background: linear-gradient(135deg, #0B0F19 0%, #131B2E 50%, #0F172A 100%) !important;
-          color: #F8FAFC !important;
-          border-top: 2px solid rgba(255, 255, 255, 0.08) !important;
-        }
-        footer#contact h4 {
-          color: #1E293B;
-          font-weight: 900;
-        }
-        .dark footer#contact h4 {
-          color: #F8FAFC !important;
-        }
-        footer#contact p {
-          color: #475569;
-          font-weight: 500;
-        }
-        .dark footer#contact p {
-          color: #94A3B8 !important;
-        }
-        footer#contact a, footer#contact span {
-          color: #475569;
-          font-weight: 600;
-        }
-        .dark footer#contact a, .dark footer#contact span {
-          color: #CBD5E1 !important;
-        }
-        footer#contact a:hover {
-          color: #7C3AED;
-        }
-        .dark footer#contact a:hover {
-          color: #C084FC !important;
-        }
-        .dark .glass-panel {
-          background: #131B2E !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        }
-        .dark header.sticky {
-          background: rgba(11, 15, 25, 0.9) !important;
-          border-color: rgba(255, 255, 255, 0.08) !important;
-        }
       `}</style>
-      
+
       {/* ── Keyframe Injector ── */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes blob {
@@ -1425,8 +1353,8 @@ export default function Home() {
               className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-xs font-black text-slate-800 hover:text-purple-700 flex items-center gap-1 sm:gap-1.5 rounded-xl active:scale-95 transition-all cursor-pointer shadow-xs shrink-0"
               title="স্টোর মেনু খুলুন"
             >
-              <Menu size={16} className="text-purple-600 shrink-0" />
-              <span className="font-mono tracking-wider text-[11px] sm:text-xs">STORES</span>
+              <Store size={16} className="text-purple-600 shrink-0" />
+              <span className="font-mono tracking-wider text-[11px] sm:text-xs">Stores</span>
             </button>
 
             {/* Mobile Actions: Login/Workspace & Pricing */}
@@ -1456,7 +1384,7 @@ export default function Home() {
               {/* Mobile Pricing Button */}
               <a 
                 href="#pricing" 
-                className="px-2 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md shadow-amber-500/20 flex items-center gap-1 shrink-0"
+                className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 font-bold text-xs rounded-xl active:scale-95 transition-all flex items-center gap-1 shrink-0"
               >
                 <Sparkles size={11} /> প্যাকেজ
               </a>
@@ -1479,12 +1407,12 @@ export default function Home() {
           </div>
 
           {/* Center Links (Desktop only) */}
-          <nav className="hidden md:flex items-center gap-6 font-extrabold text-xs uppercase tracking-wider text-slate-700">
+          <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-slate-700">
             <a href="#marketplace" className="text-purple-600 hover:text-purple-700 pb-1 flex items-center gap-1.5 transition-colors">
-              <ShoppingBag size={13} /> Marketplace
+              <ShoppingBag size={14} /> Marketplace
             </a>
             <a href="#pricing" className="text-slate-700 hover:text-purple-600 pb-1 flex items-center gap-1.5 transition-colors">
-              <Sparkles size={13} className="text-amber-500" /> প্যাকেজ ও মূল্য (Pricing)
+              <Sparkles size={14} className="text-purple-600" /> প্যাকেজ ও মূল্য
             </a>
           </nav>
 
@@ -1496,10 +1424,10 @@ export default function Home() {
             {/* PWA App Download */}
             {!pwaInstalled && (
               <button 
-                onClick={handleAppDownload}
-                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-[10px] font-black uppercase tracking-wider text-purple-700 rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
+                onClick={handleAppDownload} 
+                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-700 rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
               >
-                <Download size={12} /> App
+                <Download size={13} /> App
               </button>
             )}
 
@@ -1509,50 +1437,50 @@ export default function Home() {
                 href={mainShopData.howToOrderVideo} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-[10px] font-black uppercase tracking-wider text-red-400 hover:text-red-300 rounded-xl flex items-center gap-1.5 transition-all"
+                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-700 rounded-xl flex items-center gap-1.5 transition-all"
               >
-                <PlayCircle size={12} /> Video
+                <PlayCircle size={13} /> Video
               </a>
             )}
 
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="p-2.5 bg-white/5 hover:bg-purple-600/30 border border-white/10 hover:border-purple-500/40 text-purple-300 hover:text-white rounded-xl flex items-center justify-center active:scale-95 transition-all relative cursor-pointer shadow-lg"
+              className="p-2.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-xl flex items-center justify-center active:scale-95 transition-all relative cursor-pointer"
             >
               <ShoppingCart size={17} />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] font-black rounded-full flex items-center justify-center shadow-lg shadow-purple-900/50 animate-bounce">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-purple-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-md animate-bounce">
                   {cartItemCount}
                 </span>
               )}
             </button>
 
             {/* Desktop User Profile / Login */}
-            <div className="hidden md:flex items-center gap-3">
-              <div className="w-[1px] h-5 bg-white/10 mx-0.5" />
+            <div className="hidden md:flex items-center gap-2.5">
+              <div className="w-[1px] h-5 bg-slate-200 mx-0.5" />
               {user ? (
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2.5 shrink-0">
                   <button
                     onClick={() => setIsProfileOpen(true)}
-                    className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white rounded-xl flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-800 rounded-xl flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
                   >
-                    <div className="w-5 h-5 rounded-full overflow-hidden border border-white/20 flex items-center justify-center bg-purple-600 font-bold text-white text-[9px] shrink-0">
+                    <div className="w-5 h-5 rounded-full overflow-hidden border border-purple-200 flex items-center justify-center bg-purple-600 font-bold text-white text-[10px] shrink-0">
                       {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || 'U'}
                     </div>
-                    <span className="hidden sm:inline">My Orders</span>
+                    <span>My Orders</span>
                   </button>
 
                   {getDashboardHref() && (
-                    <Link href={getDashboardHref()} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl active:scale-95 transition-all shrink-0 flex items-center gap-1.5 shadow-lg shadow-purple-900/40">
-                      <Briefcase size={13} className="shrink-0" /> Merchant Portal
+                    <Link href={getDashboardHref()} className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl active:scale-95 transition-all shrink-0 flex items-center gap-1.5 shadow-sm">
+                      <Briefcase size={13} className="shrink-0" /> Dashboard
                     </Link>
                   )}
 
                   <button 
                     type="button"
                     onClick={() => setShowLogoutConfirm(true)} 
-                    className="text-[10px] font-black text-red-400 hover:text-red-300 transition-colors uppercase cursor-pointer flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
                   >
                     <LogOut size={12} /> Exit
                   </button>
@@ -1561,9 +1489,9 @@ export default function Home() {
                 <button 
                   onClick={handleSmartLogin} 
                   disabled={loggingIn} 
-                  className="px-4.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-xs rounded-xl active:scale-95 transition-all shrink-0 cursor-pointer shadow-lg shadow-purple-900/40"
+                  className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl active:scale-95 transition-all shrink-0 cursor-pointer shadow-sm"
                 >
-                  {loggingIn ? "Connecting..." : "Portal Login"}
+                  {loggingIn ? "Connecting..." : "Login"}
                 </button>
               )}
             </div>
@@ -1579,8 +1507,8 @@ export default function Home() {
             <div className="lg:col-span-7 space-y-6 text-left">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-300 shadow-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-purple-800">
-                  VERIFIED BD RETAILERS & WHOLESALE HUB
+                <span className="text-xs font-bold text-purple-900">
+                  Verified BD Retailers & Wholesale Hub
                 </span>
               </div>
               
@@ -1594,28 +1522,28 @@ export default function Home() {
                 গ্যারান্টেড দ্রুত ডেলিভারি ও রিয়েল-টাইম এআই অ্যাসিস্ট্যান্ট সহযোগে কেনাকাটা করুন।
               </p>
 
-              <div className="flex flex-wrap gap-3 sm:gap-4 pt-2">
+              {/* Standardized Hero CTAs with Clear Hierarchy (Primary, Secondary, Ghost) */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <a 
                   href="#marketplace" 
-                  className="px-5 sm:px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-purple-500/20 hover:-translate-y-0.5 flex items-center gap-2"
+                  className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-purple-500/25 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <ShoppingBag size={16} /> পণ্যসমূহ এক্সপ্লোর করুন
                 </a>
                 <a 
                   href="#pricing" 
-                  className="px-5 sm:px-6 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-amber-500/20 hover:-translate-y-0.5 flex items-center gap-2"
+                  className="px-5 py-3.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 font-bold text-sm rounded-2xl transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <Sparkles size={16} /> প্যাকেজ ও মূল্য (০৳ শুরু)
+                  <Sparkles size={16} /> সাবস্ক্রিপশন প্যাকেজ
                 </a>
                 <Link 
                   href="/become-retailer" 
-                  className="px-5 sm:px-6 py-3.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-black text-xs uppercase tracking-wider rounded-2xl transition-all hover:-translate-y-0.5 flex items-center gap-2 shadow-xs"
+                  className="px-5 py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-sm rounded-2xl transition-all flex items-center gap-2 shadow-xs hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <Store size={16} className="text-purple-600" /> মার্চেন্ট অ্যাকাউন্ট
+                  <Store size={16} className="text-purple-600" /> মার্চেন্ট হন
                 </Link>
               </div>
             </div>
-
 
             {/* Right — Stats + CTA Card */}
             <div className="lg:col-span-5 relative">
@@ -1948,51 +1876,52 @@ export default function Home() {
                     {/* Header */}
                     <div>
                       <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
-                        <div className="flex items-center gap-2.5 max-w-[70%]">
+                        <div className="flex items-center gap-2.5 max-w-[85%]">
                           <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
                             {isCat ? (
-                              <div className="w-full h-full flex items-center justify-center font-black text-purple-400 text-xs">📁</div>
+                              <div className="w-full h-full flex items-center justify-center font-black text-purple-400 text-sm">📁</div>
                             ) : (
                               <img src={shopLogo} alt={group.shopName} className="w-full h-full object-cover" />
                             )}
                           </div>
-                          <h3 className="font-extrabold text-white text-sm tracking-tight truncate">{headerTitle}</h3>
+                          <h2 className="font-extrabold text-white text-sm tracking-tight truncate">{headerTitle}</h2>
                         </div>
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2">
                           {!isCat && (
                             <button
                               onClick={(e) => handleCopyShopSectorLink(e, group.shopName)}
                               className="p-1.5 bg-white/5 border border-white/5 hover:bg-purple-600/30 hover:border-purple-500/20 text-white/40 hover:text-purple-400 rounded-lg transition-all cursor-pointer flex items-center justify-center"
                               title={`"${group.shopName}" স্টোরের লিংক কপি করুন`}
                             >
-                              <Share2 size={11} />
+                              <Share2 size={12} />
                             </button>
                           )}
-                          <ArrowUpRight size={14} className="text-white/40 group-hover:text-purple-400 transition-colors" />
                         </div>
                       </div>
 
-                      {/* 2x2 Grid */}
-                      <div className="grid grid-cols-2 gap-3.5">
-                        {displayProducts.map(p => (
+                      {/* 2 Spacious Preview Cards (Resolves Density & Truncation Heuristics) */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {displayProducts.slice(0, 2).map(p => (
                           <div 
                             key={p.id}
-                            className="relative aspect-square rounded-2xl overflow-hidden bg-slate-900 border border-white/10 group/item hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-md"
+                            className="relative rounded-2xl overflow-hidden bg-slate-900 border border-white/10 group/item hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-md"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedProduct(p);
                               setCustomizationNote('');
                             }}
                           >
-                            <img src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover/item:opacity-100 group-hover/item:scale-105 transition-transform duration-500" />
-                            <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 p-2 text-xs text-white border-t border-white/10">
-                              <p className="font-bold truncate text-slate-100 text-xs">{p.name}</p>
-                              <p className="font-black text-emerald-400 mt-0.5 text-xs">৳ {Number(p.price).toLocaleString()}</p>
+                            <div className="aspect-square w-full overflow-hidden bg-slate-950">
+                              <img src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover/item:opacity-100 group-hover/item:scale-105 transition-transform duration-500" />
+                            </div>
+                            <div className="bg-slate-950 p-2.5 text-xs text-white border-t border-white/10 flex flex-col justify-between">
+                              <p className="font-bold text-slate-100 text-xs line-clamp-2 min-h-[32px]">{p.name}</p>
+                              <p className="font-black text-emerald-400 mt-1 text-xs">৳ {Number(p.price).toLocaleString()}</p>
                             </div>
                           </div>
                         ))}
-                        {Array.from({ length: Math.max(0, 4 - displayProducts.length) }).map((_, idx) => (
-                          <div key={idx} className="aspect-square rounded-2xl bg-white/[0.02] border border-dashed border-white/5 flex items-center justify-center text-white/10 text-[10px] font-bold">
+                        {displayProducts.length < 2 && Array.from({ length: 2 - displayProducts.length }).map((_, idx) => (
+                          <div key={idx} className="aspect-square rounded-2xl bg-white/[0.02] border border-dashed border-white/5 flex items-center justify-center text-white/10 text-xs font-bold">
                             Empty Slot
                           </div>
                         ))}
@@ -2000,9 +1929,9 @@ export default function Home() {
                     </div>
 
                     {/* Footer view link */}
-                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-black text-purple-400 group-hover:text-purple-300 transition-colors">
-                      <span>{isCat ? 'ক্যাটাগরি দেখুন (Explore Category)' : 'সবগুলো দেখুন (Explore Shop)'}</span>
-                      <span className="text-[10px] text-white/30 font-bold bg-white/5 group-hover:bg-purple-600/20 group-hover:text-white px-2 py-0.5 rounded-lg transition-all">{group.products.length} Items</span>
+                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-bold text-purple-400 group-hover:text-purple-300 transition-colors">
+                      <span className="truncate">{isCat ? 'ক্যাটাগরি এক্সপ্লোর' : 'স্টোর এক্সপ্লোর'}</span>
+                      <span className="shrink-0 text-xs text-purple-300 font-bold bg-purple-950/60 border border-purple-800/40 px-2.5 py-0.5 rounded-lg transition-all">{group.products.length} টি পণ্য</span>
                     </div>
                   </div>
                 );
@@ -2349,53 +2278,54 @@ export default function Home() {
             {products.slice(0, 3).map((featProduct, idx) => (
               <div 
                 key={featProduct.id || idx} 
-                className="bg-white border border-slate-200 rounded-[2rem] p-6 flex flex-col justify-between hover:border-indigo-300 hover:shadow-xl transition-all duration-300 shadow-md"
+                className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-300 hover:shadow-xl transition-all duration-300 shadow-md"
               >
                 <div className="space-y-4">
-                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-2 flex items-center justify-center">
                     <img 
                       src={featProduct.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} 
                       alt={featProduct.name} 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
-                    <span className="absolute top-3 right-3 px-2.5 py-1 bg-white/90 backdrop-blur-md border border-indigo-200 text-[9px] font-mono tabular-nums font-black text-indigo-600 rounded-full">
+                    <span className="absolute top-3 right-3 px-3 py-1 bg-slate-900 text-white border border-slate-700 text-xs font-mono font-bold rounded-full shadow-md">
                       MODEL #{idx + 1}
                     </span>
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
+                    <span className="text-xs font-black text-indigo-600 uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
                     <h3 className="text-lg font-black text-slate-900 truncate">{featProduct.name}</h3>
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed font-medium">
+                    <p className="text-xs text-slate-500 line-clamp-2 min-h-[32px] leading-relaxed font-medium">
                       {featProduct.description || 'উচ্চমানের অরিজিনাল কাঁচামাল এবং সুনির্দিষ্ট কোয়ালিটি চেকে প্রস্তুতকৃত নির্ভরযোগ্য মডেল।'}
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-2 text-[10px] font-bold text-slate-600 border-t border-slate-100">
-                    <div className="bg-white/5 p-2 rounded-xl flex items-center gap-1.5">
-                      <ShieldCheck size={14} className="text-purple-400 shrink-0" />
+                  <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-bold text-slate-600 border-t border-slate-100">
+                    <div className="bg-slate-50 p-2 rounded-xl flex items-center gap-1.5 border border-slate-100">
+                      <ShieldCheck size={14} className="text-purple-600 shrink-0" />
                       <span>গ্যারান্টেড কোয়ালিটি</span>
                     </div>
-                    <div className="bg-white/5 p-2 rounded-xl flex items-center gap-1.5">
-                      <Truck size={14} className="text-emerald-400 shrink-0" />
-                      <span>দ্রুত ক্যাশ অন ডেলিভারি</span>
+                    <div className="bg-slate-50 p-2 rounded-xl flex items-center gap-1.5 border border-slate-100">
+                      <Truck size={14} className="text-emerald-600 shrink-0" />
+                      <span>ক্যাশ অন ডেলিভারি</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-6 flex items-center justify-between border-t border-slate-100 mt-6">
-                  <div>
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">MODEL PRICE</span>
-                    <span className="text-xl font-mono tabular-nums font-black text-emerald-400">৳ {Number(featProduct.price || 0).toLocaleString()}</span>
+                <div className="pt-5 border-t border-slate-100 mt-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">MODEL PRICE</span>
+                    <span className="text-xl font-mono tabular-nums font-black text-emerald-600">৳ {Number(featProduct.price || 0).toLocaleString()}</span>
                   </div>
                   <button 
                     onClick={() => {
                       setSelectedProduct(featProduct);
                       setCustomizationNote('');
                     }}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 shadow-md"
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.01] active:scale-[0.99]"
                   >
-                    স্পেক্স দেখুন →
+                    <span>স্পেক্স ও বিবরণ দেখুন</span>
+                    <ArrowRight size={14} />
                   </button>
                 </div>
               </div>
@@ -3147,26 +3077,26 @@ export default function Home() {
       <div className="fixed bottom-24 sm:bottom-8 right-4 sm:right-6 z-[120] flex flex-col items-end gap-3 pointer-events-auto select-none animate-fade-in">
         {/* 1. AI Companion Trigger */}
         <div className="flex items-center gap-2 group">
-          <span className="hidden sm:inline-block bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
-            AI শপিং বট
+          <span className="hidden sm:inline-block bg-slate-900/95 text-white text-xs font-bold px-2.5 py-1 rounded-xl shadow-md border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+            AI Assistant
           </span>
           <button 
             onClick={() => {
               setAiTab('chat');
               setIsAiOpen(true);
             }}
-            className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 hover:from-pink-600 hover:via-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all border border-white/20 cursor-pointer shadow-purple-500/30 relative"
-            title="AI Assistant (এআই শপিং অ্যাসিস্ট্যান্ট)"
+            className="w-12 h-12 sm:w-13 sm:h-13 bg-gradient-to-tr from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all border border-white/20 cursor-pointer shadow-purple-500/30 relative"
+            title="AI Shopping Assistant"
           >
-            <span className="text-xl sm:text-2xl group-hover:scale-125 transition-transform duration-300 select-none">😊</span>
-            <span className="absolute inset-0 rounded-full bg-purple-500/40 -z-10 animate-ping opacity-60 pointer-events-none" />
+            <Bot size={22} className="stroke-[2.5]" />
+            <span className="absolute inset-0 rounded-full bg-purple-500/30 -z-10 animate-ping opacity-60 pointer-events-none" />
           </button>
         </div>
 
         {/* 2. Floating WhatsApp Chat Button */}
         <div className="flex items-center gap-2 group">
-          <span className="hidden sm:inline-block bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
-            WhatsApp হেল্পলাইন
+          <span className="hidden sm:inline-block bg-slate-900/95 text-white text-xs font-bold px-2.5 py-1 rounded-xl shadow-md border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+            WhatsApp
           </span>
           <a
             href={(() => {
@@ -3177,26 +3107,26 @@ export default function Home() {
             })()}
             target="_blank"
             rel="noreferrer"
-            className="w-13 h-13 sm:w-14 sm:h-14 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all border border-emerald-300/40 cursor-pointer shadow-emerald-500/30"
-            title="WhatsApp Support (সরাসরি যোগাযোগ)"
+            className="w-12 h-12 sm:w-13 sm:h-13 bg-[#25d366] hover:bg-[#20ba5a] text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all border border-emerald-300/40 cursor-pointer shadow-emerald-500/30"
+            title="WhatsApp Support"
           >
-            <MessageCircle size={24} />
+            <MessageCircle size={22} />
           </a>
         </div>
 
         {/* 3. Floating Cart Trigger */}
         <div className="flex items-center gap-2 group">
-          <span className="hidden sm:inline-block bg-slate-900/90 text-white text-[11px] font-black px-2.5 py-1 rounded-xl shadow-md backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
-            শপিং কার্ট
+          <span className="hidden sm:inline-block bg-slate-900/95 text-white text-xs font-bold px-2.5 py-1 rounded-xl shadow-md border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+            Cart
           </span>
           <button
             onClick={() => setIsCartOpen(true)}
-            className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-xl shadow-purple-500/40 hover:scale-110 active:scale-95 transition-all border border-white/20 cursor-pointer relative"
+            className="w-12 h-12 sm:w-13 sm:h-13 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-full flex items-center justify-center shadow-xl shadow-purple-500/40 hover:scale-105 active:scale-95 transition-all border border-white/20 cursor-pointer relative"
             title="শপিং কার্ট দেখুন"
           >
-            <ShoppingCart size={23} />
+            <ShoppingCart size={21} />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5.5 h-5.5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border-2 border-white">
+              <span className="absolute -top-1 -right-1 w-5.5 h-5.5 bg-red-500 text-white text-xs font-black rounded-full flex items-center justify-center animate-bounce shadow-lg border-2 border-white">
                 {cartItemCount}
               </span>
             )}

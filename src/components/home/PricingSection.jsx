@@ -103,7 +103,7 @@ export default function PricingSection({ globalConfig = null }) {
                   <span className="text-xs text-slate-500 font-bold">/ মাসিক চার্জ নেই</span>
                 </div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100/90 text-amber-900 text-xs font-black">
-                  ⚡ বিক্রয়ের মাত্র ${starterPercent}% শেয়ার
+                  ⚡ বিক্রয়ের মাত্র {starterPercent}% শেয়ার
                 </div>
               </div>
 
@@ -174,7 +174,7 @@ export default function PricingSection({ globalConfig = null }) {
               {/* Price Box */}
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-purple-700">৳${priceMap.monthly}</span>
+                  <span className="text-4xl font-black text-purple-700">৳{priceMap.monthly}</span>
                   <span className="text-xs text-slate-400 font-bold">/ প্রতি মাস</span>
                 </div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800 text-xs font-black">
@@ -249,7 +249,7 @@ export default function PricingSection({ globalConfig = null }) {
               {/* Price Box */}
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-purple-700">৳${priceMap.quarterly}</span>
+                  <span className="text-4xl font-black text-purple-700">৳{priceMap.quarterly}</span>
                   <span className="text-xs text-slate-400 font-bold">/ প্রতি ৩ মাস</span>
                 </div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800 text-xs font-black">
@@ -324,7 +324,7 @@ export default function PricingSection({ globalConfig = null }) {
               {/* Price Box */}
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-indigo-700">৳${priceMap.yearly}</span>
+                  <span className="text-4xl font-black text-indigo-700">৳{priceMap.yearly}</span>
                   <span className="text-xs text-slate-400 font-bold">/ প্রতি বছর</span>
                 </div>
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-800 text-xs font-black">

@@ -161,8 +161,19 @@ export default function BecomeRetailerPage() {
     }
   }, [user, userData, selectedPlanParam]);
 
-  const handleGoogleLogin = () => {
-    router.push('/login');
+  const handleGoogleLogin = async () => {
+    setLoginLoading(true);
+    try {
+      const result = await loginWithGoogle();
+      if (result?.user && result?.userData) {
+        forceUpdateAuth(result.user, result.userData);
+        toast.success(`স্বাগতম, ${result.user.displayName || 'ব্যবহারকারী'}! 🎉`);
+      }
+    } catch (err) {
+      toast.error('Google লগইন ব্যর্থ: ' + (err.message || 'Error'));
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
