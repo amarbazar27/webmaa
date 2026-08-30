@@ -498,23 +498,8 @@ export default function Home() {
     return null;
   };
 
-  const handleSmartLogin = async () => {
-    setLoggingIn(true);
-    try {
-      const result = await loginWithGoogle();
-      if (result?.user && result?.userData) {
-        if (forceUpdateAuth) forceUpdateAuth(result.user, result.userData);
-        if (result.userData.role === 'superadmin') {
-          router.push('/superadmin');
-        } else if (result.userData.role === 'retailer' || result.userData.role === 'staff' || result.userData.role === 'admin') {
-          router.push('/dashboard');
-        }
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-    } finally {
-      setLoggingIn(false);
-    }
+  const handleSmartLogin = () => {
+    router.push('/login');
   };
 
   const handleAddToCart = (product, customNote = '') => {

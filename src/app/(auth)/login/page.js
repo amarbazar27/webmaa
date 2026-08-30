@@ -35,7 +35,7 @@ export default function LoginPage() {
     return () => { if (unsubFn) unsubFn(); };
   }, []);
 
-  // Redirection logic — declared before useEffect to avoid hoisting issue
+  // Redirection logic
   const handleRedirection = useCallback((currUser, role) => {
     if (role === 'superadmin') {
       toast.success(`Welcome back Admin! 👑`);
@@ -44,20 +44,12 @@ export default function LoginPage() {
       toast.success(`Dashboard access authorized 🚀`);
       router.push('/dashboard');
     } else {
-      toast.success(`স্বাগতম, ${currUser.displayName}! 🎉`);
+      toast.success(`স্বাগতম, ${currUser.displayName || 'User'}! 🎉`);
       router.push('/');
     }
   }, [router]);
 
-  // 1. Immediate redirect if already logged in via Context
-  useEffect(() => {
-    if (!authLoading && authUser && !redirecting) {
-      setRedirecting(true);
-      handleRedirection(authUser, authData?.role || 'user');
-    }
-  }, [authUser, authData, authLoading, redirecting, handleRedirection]);
-
-  // 2. Check Redirect login on mount (Crucial for mobile in-app webview)
+  // Check Redirect login on mount (For mobile in-app webview redirect callback)
   useEffect(() => {
     let isMounted = true;
     const checkRedirect = async () => {
@@ -66,7 +58,6 @@ export default function LoginPage() {
         const result = await checkRedirectLogin();
         if (result?.user && result?.userData && isMounted) {
           forceUpdateAuth(result.user, result.userData);
-          setRedirecting(true);
           handleRedirection(result.user, result.userData.role || 'user');
         }
       } catch (err) {
@@ -83,14 +74,11 @@ export default function LoginPage() {
       const result = await loginWithGoogle();
       if (result?.user && result?.userData) {
         forceUpdateAuth(result.user, result.userData);
-        setRedirecting(true);
         handleRedirection(result.user, result.userData.role || 'user');
-      } else {
-        // Null returned when redirect initiated or popup closed
-        setLoading(false);
       }
     } catch (err) {
       toast.error('Login failed: ' + (err.message || 'Server error'));
+    } finally {
       setLoading(false);
     }
   };
@@ -112,7 +100,6 @@ export default function LoginPage() {
       
       if (result?.user && result?.userData) {
         forceUpdateAuth(result.user, result.userData);
-        setRedirecting(true);
         handleRedirection(result.user, result.userData.role || 'user');
       }
     } catch (err) {
@@ -121,6 +108,7 @@ export default function LoginPage() {
       else if (err.code === 'auth/user-not-found') errorMsg = 'ইমেইল পাওয়া যায়নি';
       else if (err.code === 'auth/invalid-credential') errorMsg = 'ভুল ইমেইল অথবা পাসওয়ার্ড';
       toast.error('লগইন ব্যর্থ: ' + errorMsg);
+    } finally {
       setLoading(false);
     }
   };
@@ -149,17 +137,6 @@ export default function LoginPage() {
     }
   };
 
-  if (authLoading || redirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-6">
-           <div className="w-12 h-12 border-4 border-slate-100 border-t-purple-600 rounded-full animate-spin"></div>
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Validating Session Credentials...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 relative overflow-hidden">
       {/* Decorative Blur Accents */}
@@ -167,32 +144,68 @@ export default function LoginPage() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-100 blur-[120px] rounded-full pointer-events-none opacity-50"></div>
 
       <div className="w-full max-w-md relative z-10 animate-slide-in">
-        <div className="bg-white p-10 md:p-14 text-center rounded-[2.5rem] border border-slate-100 shadow-2xl relative overflow-hidden">
+        <div className="bg-white p-8 sm:p-12 text-center rounded-[2.5rem] border border-slate-100 shadow-2xl relative overflow-hidden">
           {/* Subtle line motif */}
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-purple-600 to-blue-600"></div>
 
-          <Link href="/" className="inline-block mb-10 group">
-             <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-purple-500/20 text-white font-black text-3xl transition-transform group-hover:scale-110">
-                W
+          <Link href="/" className="inline-block mb-6 group">
+             <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-purple-500/20 text-white font-black text-2xl transition-transform group-hover:scale-105">
+                BD
              </div>
           </Link>
           
-          <h1 className="text-3xl font-black mb-3 text-slate-900 tracking-tight">System Login</h1>
-          <p className="text-sm text-slate-400 mb-12 font-medium leading-relaxed">Sign in with your verified identity to access the cloud manager.</p>
+          <h1 className="text-2xl sm:text-3xl font-black mb-2 text-slate-900 tracking-tight">লগইন পোর্টাল</h1>
+          <p className="text-xs text-slate-500 mb-8 font-medium leading-relaxed">আপনার জিমেইল বা ইমেইল অ্যাকাউন্ট দিয়ে সাইন ইন করুন।</p>
+
+          {/* Active Session Notification if already logged in */}
+          {authUser && (
+            <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-2xl text-left space-y-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-purple-300 bg-purple-600 text-white font-bold flex items-center justify-center text-xs shrink-0">
+                  {authUser.photoURL ? <img src={authUser.photoURL} alt="" className="w-full h-full object-cover" /> : authUser.displayName?.[0] || 'U'}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-xs font-black text-purple-950 truncate">{authUser.displayName || 'ব্যবহারকারী'}</p>
+                  <p className="text-[11px] font-bold text-slate-500 truncate">{authUser.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleRedirection(authUser, authData?.role || 'user')}
+                  className="flex-1 py-2.5 px-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1 shadow-sm cursor-pointer"
+                >
+                  <span>Dashboard-এ যান</span>
+                  <ArrowRight size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { logoutUser } = await import('@/lib/auth');
+                    await logoutUser();
+                    toast.success('লগআউট সম্পন্ন হয়েছে। নতুন জিমেইল বেছে নিন।');
+                  }}
+                  className="py-2.5 px-3 bg-white hover:bg-red-50 text-red-600 border border-red-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                >
+                  লগআউট
+                </button>
+              </div>
+            </div>
+          )}
 
           {globalConfig?.googleAuth !== false && (
             <button
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-4 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-md active:scale-[0.98] transition-all font-black text-lg disabled:opacity-50 group cursor-pointer"
+              className="w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 shadow-sm active:scale-[0.98] transition-all font-black text-sm disabled:opacity-50 group cursor-pointer"
             >
               {loading ? (
-                <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-slate-300 border-t-purple-600 rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6" />
-                  <span className="text-slate-800">Continue with Google</span>
-                  <ArrowRight className="w-5 h-5 text-slate-600 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 shrink-0" />
+                  <span className="text-slate-800">{authUser ? 'অন্য জিমেইল দিয়ে লগইন করুন' : 'Continue with Google'}</span>
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 transition-all shrink-0" />
                 </>
               )}
             </button>

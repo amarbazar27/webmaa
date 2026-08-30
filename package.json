@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sign-aab": "node scripts/auto-sign-aab.js"
+    "sign-aab": "node scripts/auto-sign-aab.js",
+    "deploy": "git add . && git commit -m \"chore: auto deploy update\" && git push origin main"
   },
   "allowScripts": {
     "@firebase/util": true,
