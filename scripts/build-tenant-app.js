@@ -494,7 +494,20 @@ class MainActivity: FlutterActivity() {
   }
   console.log('  └─ Kotlin folder restructured.');
 
-  // F. Generate Play Store Assets (Submission Package)
+  // F. Configure Release Keystore and key.properties for Android Signing
+  console.log('  └─ Configuring production release signing...');
+  const keyPropertiesPath = path.join(appWorkspace, 'android/key.properties');
+  const sharedKeystorePath = path.join(rootDir, 'scripts/bdretailers-release-key.jks');
+  const targetKeystorePath = path.join(appWorkspace, 'android/app/release-key.jks');
+  
+  if (fs.existsSync(sharedKeystorePath)) {
+    fs.copyFileSync(sharedKeystorePath, targetKeystorePath);
+    const keyPropsContent = `storePassword=bdretailers_release_pass_2026\nkeyPassword=bdretailers_release_pass_2026\nkeyAlias=bdretailers-release-key\nstoreFile=release-key.jks\n`;
+    fs.writeFileSync(keyPropertiesPath, keyPropsContent);
+    console.log('  └─ Production release keystore linked.');
+  }
+
+  // G. Generate Play Store Assets (Submission Package)
   console.log('🖨️ Generating Play Console Launch Checklist Package...');
   const assetsOutDir = path.join(tempBuildDir, 'play_store_assets');
   fs.mkdirSync(assetsOutDir, { recursive: true });

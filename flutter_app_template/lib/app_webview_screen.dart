@@ -20,6 +20,8 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
 
   bool _isAppReady = false;
   bool _hasError = false;
+  double _progress = 0.0;
+  bool _showProgressBar = false;
   String _errorMessage = '';
   DateTime? _lastBackPressed;
 
@@ -225,11 +227,16 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                     },
                                     onLoadStop: (controller, url) async {
                                       final urlStr = url?.toString().toLowerCase() ?? '';
-                                      if (urlStr.contains('/api/auth') || urlStr.contains('__/auth/handler') || urlStr.contains('accounts.google.com/rotatecookiespage')) {
-                                        Future.delayed(const Duration(milliseconds: 600), () {
+                                      if (urlStr.contains('/api/auth') || 
+                                          urlStr.contains('__/auth/handler') || 
+                                          urlStr.contains('accounts.google.com/rotatecookiespage') ||
+                                          urlStr.contains('/dashboard') ||
+                                          urlStr.contains('/shop')) {
+                                        Future.delayed(const Duration(milliseconds: 500), () {
                                           if (Navigator.canPop(dialogContext)) {
                                             Navigator.pop(dialogContext);
                                           }
+                                          _webViewController?.reload();
                                         });
                                       }
                                     },
@@ -256,20 +263,31 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     }
                   },
                   onProgressChanged: (controller, progress) {
-                    if (progress >= 20 && mounted && !_isAppReady) {
-                      _injectNativeAppStyles(controller);
+                    final normalized = progress / 100.0;
+                    if (mounted) {
                       setState(() {
-                        _isAppReady = true;
-                        _hasError = false;
+                        _progress = normalized;
+                        _showProgressBar = progress < 100;
+                        if (progress >= 15 && !_isAppReady) {
+                          _isAppReady = true;
+                          _hasError = false;
+                        }
                       });
+                    }
+                    if (progress >= 15) {
+                      _injectNativeAppStyles(controller);
                     }
                   },
                   onLoadStop: (controller, url) async {
                     _injectNativeAppStyles(controller);
-                    if (mounted && !_isAppReady) {
+                    if (mounted) {
                       setState(() {
-                        _isAppReady = true;
-                        _hasError = false;
+                        _progress = 1.0;
+                        _showProgressBar = false;
+                        if (!_isAppReady) {
+                          _isAppReady = true;
+                          _hasError = false;
+                        }
                       });
                     }
                   },
@@ -327,7 +345,25 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                   },
                 ),
 
-              // ── 2. Branded Native Splash Shell (Smooth Fade Transition) ──
+              // ── 2. Top Sleek Linear Progress Bar (Website style blue/purple loading line) ──
+              if (_showProgressBar && _isAppReady)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: SizedBox(
+                    height: 2.8,
+                    child: LinearProgressIndicator(
+                      value: _progress > 0 ? _progress : null,
+                      backgroundColor: Colors.transparent,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        primaryColor,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // ── 3. Branded Native Splash Shell (Smooth Fade Transition) ──
               IgnorePointer(
                 ignoring: _isAppReady,
                 child: AnimatedOpacity(
