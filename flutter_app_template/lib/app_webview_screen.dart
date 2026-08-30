@@ -227,12 +227,10 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                     },
                                     onLoadStop: (controller, url) async {
                                       final urlStr = url?.toString().toLowerCase() ?? '';
-                                      if (urlStr.contains('/api/auth') || 
-                                          urlStr.contains('__/auth/handler') || 
-                                          urlStr.contains('accounts.google.com/rotatecookiespage') ||
-                                          urlStr.contains('/dashboard') ||
-                                          urlStr.contains('/shop')) {
-                                        Future.delayed(const Duration(milliseconds: 400), () {
+                                      if (urlStr.contains('/dashboard') || 
+                                          urlStr.contains('/become-retailer') ||
+                                          urlStr.contains('/superadmin')) {
+                                        Future.delayed(const Duration(milliseconds: 500), () {
                                           if (Navigator.canPop(dialogContext)) {
                                             Navigator.pop(dialogContext);
                                           }
