@@ -157,7 +157,7 @@ function normalizePhonetic(text) {
 }
 
 export default function Home() {
-  const { user, userData } = useAuth();
+  const { user, userData, forceUpdateAuth } = useAuth();
   const router = useRouter();
   const [loggingIn, setLoggingIn] = useState(false);
   const [globalConfig, setGlobalConfig] = useState(null);
@@ -498,8 +498,23 @@ export default function Home() {
     return null;
   };
 
-  const handleSmartLogin = () => {
-    router.push('/login');
+  const handleSmartLogin = async () => {
+    setLoggingIn(true);
+    try {
+      const result = await loginWithGoogle();
+      if (result?.user && result?.userData) {
+        if (forceUpdateAuth) forceUpdateAuth(result.user, result.userData);
+        if (result.userData.role === 'superadmin') {
+          router.push('/superadmin');
+        } else if (result.userData.role === 'retailer' || result.userData.role === 'staff' || result.userData.role === 'admin') {
+          router.push('/dashboard');
+        }
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+    } finally {
+      setLoggingIn(false);
+    }
   };
 
   const handleAddToCart = (product, customNote = '') => {

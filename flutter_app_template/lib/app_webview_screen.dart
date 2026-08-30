@@ -232,11 +232,10 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                           urlStr.contains('accounts.google.com/rotatecookiespage') ||
                                           urlStr.contains('/dashboard') ||
                                           urlStr.contains('/shop')) {
-                                        Future.delayed(const Duration(milliseconds: 500), () {
+                                        Future.delayed(const Duration(milliseconds: 400), () {
                                           if (Navigator.canPop(dialogContext)) {
                                             Navigator.pop(dialogContext);
                                           }
-                                          _webViewController?.reload();
                                         });
                                       }
                                     },
