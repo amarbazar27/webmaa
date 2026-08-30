@@ -24,6 +24,7 @@ import dynamic from 'next/dynamic';
 const TemplateMarketplace = dynamic(() => import('@/components/dashboard/TemplateMarketplace'), { ssr: false, loading: () => <div className="py-12 text-center text-slate-400 text-sm font-bold">টেমপ্লেট লোড হচ্ছে...</div> });
 const StoreCustomizationPanel = dynamic(() => import('@/components/dashboard/StoreCustomizationPanel'), { ssr: false, loading: () => <div className="py-12 text-center text-slate-400 text-sm font-bold">কাস্টমাইজার লোড হচ্ছে...</div> });
 import CourierIntegrationCards from '@/components/dashboard/settings/CourierIntegrationCards';
+import DeliveryFeePricingCard from '@/components/dashboard/settings/DeliveryFeePricingCard';
 
 // Bangladesh Districts (partial list — key ones)
 const BD_DISTRICTS = [
@@ -252,6 +253,28 @@ export default function SettingsPage() {
       setGlobalConfig(config);
     });
     return () => unsubConfig();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam) {
+        if (['store_info', 'courier_location', 'checkout_payments', 'access', 'marketing', 'ai_companion', 'app_faq'].includes(tabParam)) {
+          setActiveSubTab(tabParam);
+        } else if (tabParam === 'shipping' || tabParam === 'delivery' || tabParam === 'courier') {
+          setActiveSubTab('courier_location');
+        } else if (tabParam === 'payment' || tabParam === 'payments') {
+          setActiveSubTab('checkout_payments');
+        } else if (tabParam === 'staff') {
+          setActiveSubTab('access');
+        } else if (tabParam === 'promo' || tabParam === 'marketing') {
+          setActiveSubTab('marketing');
+        } else if (tabParam === 'domain' || tabParam === 'general') {
+          setActiveSubTab('store_info');
+        }
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -1647,18 +1670,13 @@ export default function SettingsPage() {
               {/* Group 4: Checkout & Payments (checkout_payments) */}
               {activeSubTab === 'checkout_payments' && (
                 <div className="space-y-8 animate-slide-in">
-                  <Card title="Checkout & Delivery" subtitle="Payments & COD" icon={Truck}>
-              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
-                 <div>
-                    <p className="text-xs font-black text-slate-900">Cash on Delivery (COD)</p>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">If off, full payment is required via TxnID</p>
-                 </div>
-                 <label className="relative inline-flex items-center cursor-pointer">
-                   <input type="checkbox" className="sr-only peer" checked={deliveryConfig.isCOD} onChange={e => setDeliveryConfig({...deliveryConfig, isCOD: e.target.checked})} />
-                   <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                 </label>
-              </div>
+                  {/* Delivery & Weight Pricing Rules */}
+                  <DeliveryFeePricingCard 
+                    deliveryConfig={deliveryConfig} 
+                    setDeliveryConfig={setDeliveryConfig} 
+                  />
 
+                  <Card title="Payment Options & Timing" subtitle="Payment methods & Delivery details" icon={Truck}>
               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
                  <div>
                     <p className="text-xs font-black text-slate-900">ম্যানুয়াল পেমেন্ট পদ্ধতি চালু রাখুন (Enable Manual Payment)</p>
@@ -1682,13 +1700,6 @@ export default function SettingsPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 pt-6">
-                 <Input
-                   label={deliveryConfig.isCOD ? "Advance Delivery Fee (৳)" : "Flat Delivery Fee (৳)"}
-                   type="number"
-                   value={deliveryConfig.advanceFee}
-                   onChange={e => setDeliveryConfig({...deliveryConfig, advanceFee: e.target.value})}
-                   placeholder="e.g. 100"
-                 />
                  <Input
                    label="Accepted Payment Numbers"
                    value={deliveryConfig.methods}
@@ -2751,6 +2762,12 @@ export default function SettingsPage() {
               {/* Group 5: Courier & Location (courier_location) */}
               {activeSubTab === 'courier_location' && (
                 <div className="space-y-8 animate-slide-in">
+                  {/* Delivery & Weight Pricing Rules */}
+                  <DeliveryFeePricingCard 
+                    deliveryConfig={deliveryConfig} 
+                    setDeliveryConfig={setDeliveryConfig} 
+                  />
+
                   {/* Multi-Courier Settings (Steadfast, Pathao, RedX, Paperfly) */}
                   <CourierIntegrationCards 
                     courierConfig={courierConfig} 

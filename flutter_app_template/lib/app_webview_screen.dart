@@ -70,6 +70,50 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
     return true;
   }
 
+  bool _isInternalAppUrl(Uri uri) {
+    final host = uri.host.toLowerCase();
+    final targetHost = Uri.tryParse(AppConfig.targetUrl)?.host.toLowerCase() ?? '';
+    
+    // 1. Internal domains
+    if (host.isEmpty) return true;
+    if (host == 'bdretailers.com' || host.endsWith('.bdretailers.com')) return true;
+    if (host == 'webmaa-app.firebaseapp.com' || host == 'webmaa-app.web.app') return true;
+    if (host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2') return true;
+    if (targetHost.isNotEmpty && (host == targetHost || host.endsWith('.$targetHost'))) return true;
+
+    // 2. Auth handlers / OAuth redirects that must load inside app
+    final path = uri.path.toLowerCase();
+    if (path.contains('__/auth') || path.contains('/api/auth') || host.contains('accounts.google.com')) {
+      return true;
+    }
+
+    // 3. Known external social / external domains MUST open in phone's default browser
+    if (host.contains('facebook.com') ||
+        host.contains('fb.com') ||
+        host.contains('m.me') ||
+        host.contains('instagram.com') ||
+        host.contains('youtube.com') ||
+        host.contains('youtu.be') ||
+        host.contains('tiktok.com') ||
+        host.contains('twitter.com') ||
+        host.contains('x.com') ||
+        host.contains('linkedin.com') ||
+        host.contains('pinterest.com') ||
+        host.contains('t.me') ||
+        host.contains('telegram.org') ||
+        host.contains('steadfast.com.bd') ||
+        host.contains('pathao.com') ||
+        host.contains('redx.com.bd') ||
+        host.contains('paperfly.com.bd') ||
+        host.contains('play.google.com') ||
+        host.contains('apple.com')) {
+      return false;
+    }
+
+    // Default to external if domain differs from app domain
+    return false;
+  }
+
   void _handleExternalUrl(Uri uri) async {
     try {
       if (await canLaunchUrl(uri)) {
@@ -312,6 +356,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                       if (mounted) {
                         setState(() {
                           _isAppReady = false;
+                          _showProgressBar = false;
                           _hasError = true;
                           _errorMessage = error.description;
                         });
@@ -325,7 +370,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     final scheme = uri.scheme.toLowerCase();
                     final urlString = uri.toString().toLowerCase();
 
-                    // Handle phone calls, SMS, mailto, WhatsApp, bKash, Nagad
+                    // 1. Handle phone calls, SMS, mailto, WhatsApp, bKash, Nagad, Intents
                     if (scheme == 'tel' ||
                         scheme == 'mailto' ||
                         scheme == 'sms' ||
@@ -336,6 +381,14 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                         scheme == 'nagad') {
                       _handleExternalUrl(uri);
                       return NavigationActionPolicy.CANCEL;
+                    }
+
+                    // 2. Handle HTTP/HTTPS URLs: internal stay in app, external open in system default browser (Chrome)
+                    if (scheme == 'http' || scheme == 'https') {
+                      if (!_isInternalAppUrl(uri)) {
+                        _handleExternalUrl(uri);
+                        return NavigationActionPolicy.CANCEL;
+                      }
                     }
 
                     return NavigationActionPolicy.ALLOW;

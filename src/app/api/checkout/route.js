@@ -9,6 +9,7 @@ import { sendTelegramAlert } from '@/lib/telegram';
 import { runEnterpriseFraudScan, standardizePhone, calculateRiskScore } from '@/lib/fraud/detector';
 import { trackMetaServerEvent } from '@/lib/serverTracking';
 import { createRateLimiter } from '@/lib/rate-limit';
+import { calculateDeliveryFee } from '@/lib/deliveryFee';
 
 // ── Strict Payload Validation ───────────────────────────
 const CheckoutSchema = z.object({
@@ -176,7 +177,6 @@ export async function POST(req) {
 
 
     const deliveryConfig = shopData.deliveryConfig || {};
-    const deliveryFee = deliveryConfig.advanceFee ? parseInt(deliveryConfig.advanceFee) : 60;
     const isCOD = deliveryConfig.isCOD !== false;
 
     // ── Secure product fetch & pricing ──────────────────
@@ -286,11 +286,14 @@ export async function POST(req) {
       }
     }
 
-    // ── Delivery logic ─────────────────────────────────
+    // ── Dynamic Delivery & Weight Fee calculation ─────────────────────
     let freeDelivery = false;
 
+    // Calculate total order weight
+    const totalWeightKg = verifiedItems.reduce((sum, itm) => sum + (parseFloat(itm.weight || 0.5) * (Number(itm.quantity) || 1)), 0);
+    const deliveryFee = calculateDeliveryFee(deliveryConfig, { district: customerAddress, totalWeightKg: totalWeightKg || 1 });
+
     // MED-9 Fix: Free delivery requires confirmed/completed orders only + minimum subtotal
-    // Previously: any 6 orders (even cancelled/tiny) qualified for free delivery
     if (customerPhone && total >= 500) {
       const ordersSnap = await adminDb
         .collection('shops')

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
-  Settings, LogOut, ShieldCheck, Menu, X, Crown, Lock, Paintbrush, Radio
+  Settings, LogOut, ShieldCheck, Menu, X, Crown, Lock, Paintbrush, Radio,
+  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -15,24 +16,111 @@ import clsx from 'clsx';
 import AiCompanion from './AiCompanion';
 import NotificationInbox from '@/components/shared/NotificationInbox';
 
-const navItems = [
-  { href: '/dashboard',              icon: LayoutDashboard, label: 'Overview',         staffAllowed: true  },
-  { href: '/dashboard/settings',     icon: Settings,        label: 'Store Settings',   staffAllowed: false, isLockable: true },
-  { href: '/dashboard/products',     icon: ShoppingBag,     label: 'Inventory & Categories', staffAllowed: true  },
-  { href: '/dashboard/smart-inventory', icon: ShoppingBag,  label: 'Smart Inventory',  staffAllowed: true  },
-  { href: '/dashboard/orders',       icon: ShoppingCart,    label: 'Orders',           staffAllowed: true  },
-  { href: '/dashboard/customers',    icon: Users,           label: 'Customers',        staffAllowed: false },
-  { href: '/dashboard/homepage-builder', icon: Paintbrush,  label: 'Homepage Builder', staffAllowed: false },
-  { href: '/dashboard/broadcast',    icon: Radio,           label: 'Broadcast',        staffAllowed: false },
-  { href: '/dashboard/billing',      icon: ShieldCheck,     label: 'Billing',          staffAllowed: false },
+const navGroups = [
+  { 
+    id: 'dashboard', 
+    label: 'Dashboard', 
+    icon: LayoutDashboard, 
+    href: '/dashboard', 
+    staffAllowed: true 
+  },
+  { 
+    id: 'product', 
+    label: 'Product', 
+    icon: ShoppingBag, 
+    staffAllowed: true,
+    subItems: [
+      { href: '/dashboard/products', label: 'Product List' },
+      { href: '/dashboard/products/new', label: 'Add Product' },
+      { href: '/dashboard/smart-inventory', label: 'Smart Inventory', condition: 'messerbazar' }
+    ]
+  },
+  { 
+    id: 'category', 
+    label: 'Category', 
+    icon: Tag, 
+    staffAllowed: true,
+    subItems: [
+      { href: '/dashboard/categories', label: 'Category List' }
+    ]
+  },
+  { 
+    id: 'order', 
+    label: 'Order', 
+    icon: ShoppingCart, 
+    staffAllowed: true,
+    subItems: [
+      { href: '/dashboard/orders', label: 'All Orders' },
+      { href: '/dashboard/incomplete-orders', label: 'Incomplete Orders' }
+    ]
+  },
+  { 
+    id: 'shipping', 
+    label: 'Shipping', 
+    icon: Truck, 
+    staffAllowed: false,
+    subItems: [
+      { href: '/dashboard/settings?tab=courier_location', label: 'Delivery & Weight Fees' },
+      { href: '/dashboard/settings?tab=courier_location', label: 'Courier Integration' }
+    ]
+  },
+  { 
+    id: 'pages', 
+    label: 'Pages', 
+    icon: FileText, 
+    staffAllowed: false,
+    subItems: [
+      { href: '/dashboard/homepage-builder', label: 'Homepage Builder' },
+      { href: '/dashboard/templates', label: 'Store Templates' }
+    ]
+  },
+  { 
+    id: 'people', 
+    label: 'People', 
+    icon: Users, 
+    staffAllowed: false,
+    subItems: [
+      { href: '/dashboard/customers', label: 'Customers' },
+      { href: '/dashboard/settings?tab=access', label: 'Staff & Admins' }
+    ]
+  },
+  { 
+    id: 'marketing', 
+    label: 'Marketing', 
+    icon: Radio, 
+    staffAllowed: false,
+    subItems: [
+      { href: '/dashboard/broadcast', label: 'Broadcast Messages' },
+      { href: '/dashboard/settings?tab=marketing', label: 'Coupons & Promos' }
+    ]
+  },
+  { 
+    id: 'billing', 
+    label: 'Billing', 
+    icon: ShieldCheck, 
+    href: '/dashboard/billing', 
+    staffAllowed: false 
+  },
+  { 
+    id: 'settings', 
+    label: 'Settings', 
+    icon: Settings, 
+    staffAllowed: false, 
+    isLockable: true,
+    subItems: [
+      { href: '/dashboard/settings?tab=store_info', label: 'Store Info & Domain' },
+      { href: '/dashboard/settings?tab=checkout_payments', label: 'Payment & Delivery Fee' },
+      { href: '/dashboard/settings?tab=ai_companion', label: 'AI Companion' }
+    ]
+  }
 ];
 
 export default function Sidebar({ isOpen, onClose, onOpen }) {
   const { userData, activeShopId } = useAuth();
   const [shop, setShop] = useState(null);
   const [globalConfig, setGlobalConfig] = useState(null);
-  const [isLockModalOpen, setIsLockModalOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [openGroups, setOpenGroups] = useState({});
   const pathname = usePathname();
   const router = useRouter();
 
@@ -68,10 +156,29 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     shop?.shopName === 'Messer Bazar' ||
     shop?.shopName === 'মেসের বাজার';
 
-  const visibleNavItems = (isStaff && !isAdmin
-    ? navItems.filter(item => item.staffAllowed !== false)
-    : navItems
-  ).filter(item => item.href === '/dashboard/smart-inventory' ? isMesserBazar : true);
+  // Auto-expand group if current route matches any subItem
+  useEffect(() => {
+    const newOpenState = { ...openGroups };
+    navGroups.forEach(group => {
+      if (group.subItems) {
+        const isChildActive = group.subItems.some(sub => {
+          const basePath = sub.href.split('?')[0];
+          return pathname === basePath || (basePath !== '/dashboard' && pathname.startsWith(basePath));
+        });
+        if (isChildActive) {
+          newOpenState[group.id] = true;
+        }
+      }
+    });
+    setOpenGroups(newOpenState);
+  }, [pathname]);
+
+  const toggleGroup = (groupId) => {
+    setOpenGroups(prev => ({
+      ...prev,
+      [groupId]: !prev[groupId]
+    }));
+  };
 
   const handleLogout = async () => {
     await logoutUser();
@@ -80,21 +187,36 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
 
   const isSubActive = checkIsSubscriptionActive(shop, userData, globalConfig);
 
+  const filteredGroups = navGroups.filter(g => {
+    if (isStaff && !isAdmin && g.staffAllowed === false) return false;
+    return true;
+  }).map(g => {
+    if (!g.subItems) return g;
+    return {
+      ...g,
+      subItems: g.subItems.filter(sub => {
+        if (sub.condition === 'messerbazar' && !isMesserBazar) return false;
+        return true;
+      })
+    };
+  });
+
   const SidebarContent = () => (
     <>
-      <div className="p-8 pb-10">
+      {/* Brand Header */}
+      <div className="p-6 pb-6 border-b border-slate-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {shop?.logoUrl ? (
-              <img src={shop.logoUrl} alt="Store Logo" className="w-10 h-10 rounded-xl object-contain shadow-sm border border-slate-100" />
+              <img src={shop.logoUrl} alt="Store Logo" className="w-10 h-10 rounded-xl object-contain shadow-xs border border-slate-100" />
             ) : (
               <div className="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/20">
                 <span className="text-white font-black text-xl">{shop?.shopName?.[0] || 'D'}</span>
               </div>
             )}
             <div className="overflow-hidden">
-          <span className="font-black text-lg tracking-tight block leading-none truncate" style={{ color: 'var(--text-color)' }}>{shop?.shopName || 'Daripallah'}</span>
-              <span className="text-[10px] text-purple-600 font-black uppercase tracking-[0.1em] mt-1 block">Dashboard</span>
+              <span className="font-black text-base tracking-tight block leading-none truncate text-slate-900">{shop?.shopName || 'Daripallah'}</span>
+              <span className="text-[10px] text-purple-600 font-extrabold uppercase tracking-[0.1em] mt-1 block">Retailer Console</span>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -108,49 +230,109 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar pb-10">
-        <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Navigation</p>
-        {visibleNavItems.map(({ href, icon: Icon, label, isLockable }) => {
-          const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
-          const isLocked = isLockable && !isSubActive;
+      {/* Navigation Accordion Menu */}
+      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar pb-10">
+        {filteredGroups.map((group) => {
+          const Icon = group.icon;
+          const hasSubItems = Array.isArray(group.subItems) && group.subItems.length > 0;
+          const isGroupOpen = !!openGroups[group.id];
 
-          if (isLocked) {
+          // Check if direct link is active
+          const isDirectActive = group.href && (pathname === group.href || (group.href !== '/dashboard' && pathname.startsWith(group.href)));
+
+          // Check if any sub-item is active
+          const isChildActive = hasSubItems && group.subItems.some(sub => {
+            const basePath = sub.href.split('?')[0];
+            return pathname === basePath || (basePath !== '/dashboard' && pathname.startsWith(basePath));
+          });
+
+          const isLocked = group.isLockable && !isSubActive;
+
+          // Single Direct Item (e.g. Dashboard, Billing)
+          if (!hasSubItems) {
             return (
               <Link
-                key={href}
-                href={href}
+                key={group.id}
+                href={group.href}
                 onClick={onClose}
-                className="w-full group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 text-slate-400 hover:text-blue-700 hover:bg-blue-50/50"
+                className={clsx(
+                  'group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-200',
+                  isDirectActive
+                    ? 'bg-purple-50 text-purple-700 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                )}
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-                  <span>{label}</span>
+                  <Icon size={18} className={clsx('transition-colors', isDirectActive ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-700')} />
+                  <span>{group.label}</span>
                 </div>
-                <div className="flex items-center gap-1 bg-blue-100 text-blue-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  <Lock size={10} /> View Only
-                </div>
+                {isDirectActive && <div className="w-1.5 h-1.5 rounded-full bg-purple-600 shadow-xs" />}
               </Link>
             );
           }
 
+          // Expandable Sub-Navigation Accordion
           return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onClose}
-              className={clsx(
-                'group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200',
-                isActive
-                   ? 'bg-purple-50 text-purple-700'
-                   : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+            <div key={group.id} className="space-y-1">
+              <button
+                type="button"
+                onClick={() => toggleGroup(group.id)}
+                className={clsx(
+                  'w-full group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-200 cursor-pointer select-none',
+                  isChildActive || isGroupOpen
+                    ? 'bg-purple-50/70 text-purple-900'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon size={18} className={clsx('transition-colors', (isChildActive || isGroupOpen) ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-700')} />
+                  <span>{group.label}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {isLocked && (
+                    <span className="flex items-center gap-1 bg-blue-100 text-blue-700 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">
+                      <Lock size={8} /> Lock
+                    </span>
+                  )}
+                  {isGroupOpen ? (
+                    <ChevronDown size={15} className="text-purple-600 transition-transform duration-200" />
+                  ) : (
+                    <ChevronRight size={15} className="text-slate-400 group-hover:text-slate-700 transition-transform duration-200" />
+                  )}
+                </div>
+              </button>
+
+              {/* Sub items dropdown */}
+              {isGroupOpen && (
+                <div className="pl-6 pr-2 py-1 space-y-1 border-l-2 border-purple-100 ml-5 my-0.5 animate-slide-in">
+                  {group.subItems.map((sub, idx) => {
+                    const subBasePath = sub.href.split('?')[0];
+                    const isSubActive = pathname === subBasePath || (subBasePath !== '/dashboard' && pathname.startsWith(subBasePath));
+
+                    return (
+                      <Link
+                        key={idx}
+                        href={sub.href}
+                        onClick={onClose}
+                        className={clsx(
+                          'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150',
+                          isSubActive
+                            ? 'text-purple-700 font-black bg-purple-100/60'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                        )}
+                      >
+                        {isSubActive ? (
+                          <CircleDot size={12} className="text-purple-600 shrink-0" />
+                        ) : (
+                          <Circle size={10} className="text-slate-300 group-hover:text-slate-500 shrink-0" />
+                        )}
+                        <span className="truncate">{sub.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
               )}
-            >
-              <div className="flex items-center gap-3">
-                <Icon size={18} className={clsx('transition-colors', isActive ? 'text-purple-600' : 'group-hover:text-slate-900')} />
-                {label}
-              </div>
-              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-purple-600 shadow-[0_0_8px_rgba(138,43,226,0.6)]" />}
-            </Link>
+            </div>
           );
         })}
 
@@ -158,12 +340,12 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         {userData?.role === 'superadmin' && (
           <>
             <div className="my-3 border-t border-slate-100" />
-            <p className="px-4 text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2">Admin Zone</p>
+            <p className="px-3 text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1.5">Admin Zone</p>
             <Link
               href="/superadmin"
               onClick={onClose}
               className={clsx(
-                'group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200',
+                'group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-200',
                 pathname.startsWith('/superadmin')
                   ? 'bg-amber-50 text-amber-700'
                   : 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'
@@ -180,12 +362,11 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
       </nav>
 
       {/* Bottom actions */}
-      <div className="p-4 mt-auto">
-        {/* Sign Out + AI Companion row */}
+      <div className="p-4 border-t border-slate-100 mt-auto bg-slate-50/50">
         <div className="flex items-center gap-2 px-1">
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-black text-red-500 hover:bg-red-50 transition-all group cursor-pointer"
+            className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black text-red-500 hover:bg-red-50 transition-all group cursor-pointer"
           >
             <LogOut size={16} />
             <span>Sign Out</span>
@@ -203,7 +384,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="w-64 hidden lg:flex flex-col h-screen fixed left-0 top-0 border-r z-50 shadow-sm" style={{background:'var(--surface)',borderColor:'var(--border-color)'}}>
+      <aside className="w-64 hidden lg:flex flex-col h-screen fixed left-0 top-0 border-r border-slate-100 z-50 shadow-xs bg-white">
         <SidebarContent />
       </aside>
 
@@ -214,18 +395,18 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
       )}>
         <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
         <aside className={clsx(
-          "absolute left-0 top-0 bottom-0 w-72 flex flex-col transition-transform duration-300 ease-out shadow-2xl",
+          "absolute left-0 top-0 bottom-0 w-72 flex flex-col transition-transform duration-300 ease-out shadow-2xl bg-white",
           isOpen ? "translate-x-0" : "-translate-x-full"
-        )} style={{background:'var(--surface)'}}>
+        )}>
           <SidebarContent />
         </aside>
       </div>
 
-      {/* 🔴 Logout Confirmation Modal */}
+      {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
           <div className="bg-white border border-slate-100 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in">
-            <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+            <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-xs">
               <LogOut size={26} />
             </div>
             <div className="space-y-1.5">
@@ -248,53 +429,9 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
                   setShowLogoutConfirm(false);
                   await handleLogout();
                 }}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs transition-all shadow-md shadow-red-500/20 cursor-pointer active:scale-95"
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs shadow-lg shadow-red-500/25 transition-all cursor-pointer"
               >
-                হ্যাঁ, লগআউট করুন
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🔒 Subscription Lock Modal */}
-      {isLockModalOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md">
-          <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-2xl w-full max-w-md p-6 md:p-8 space-y-6 relative animate-scale-in text-center">
-            <button 
-              onClick={() => setIsLockModalOpen(false)}
-              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-3xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/10">
-              <Lock size={32} />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                সেটিংস অপশন লক করা রয়েছে 🔒
-              </h3>
-              <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                আপনার ১ মাসের ফ্রি ট্রায়াল ক্লেইম করুন অথবা সাবস্ক্রিপশন নবায়ন করুন! স্টোর সেটিংস, ব্র্যান্ডিং, লোগো ও ডোমেইন কাস্টমাইজ করতে বিলিং পেজে গিয়ে ট্রায়াল শুরু করুন।
-              </p>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <Link
-                href="/dashboard/billing"
-                onClick={() => setIsLockModalOpen(false)}
-                className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl shadow-purple-500/20 active:scale-95"
-              >
-                <span>বিলিং পেজে গিয়ে ক্লেইম / রিনিউ করুন →</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setIsLockModalOpen(false)}
-                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-xs transition-colors cursor-pointer"
-              >
-                বন্ধ করুন
+                লগআউট করুন
               </button>
             </div>
           </div>

@@ -43,6 +43,7 @@ import ProductImage from '@/features/product/components/ProductImage';
 import ProductInfo from '@/features/product/components/ProductInfo';
 import ProductVariants from '@/features/product/components/ProductVariants';
 import LegacySizes from '@/features/product/components/LegacySizes';
+import { calculateDeliveryFee } from '@/lib/deliveryFee';
 import ProductQuantity from '@/features/product/components/ProductQuantity';
 import AiCustomization from '@/features/product/components/AiCustomization';
 import SmartCalculator from '@/features/product/components/SmartCalculator';
@@ -1740,7 +1741,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * (Number(item.quantity) || 0)), 0);
-  const deliveryAdvanceFee = shop.deliveryConfig?.advanceFee ? parseInt(shop.deliveryConfig.advanceFee) : 60;
+  const totalCartWeight = cart.reduce((sum, item) => sum + (parseFloat(item.weight || 0.5) * (Number(item.quantity) || 1)), 0);
+  const dynamicDeliveryFee = calculateDeliveryFee(shop.deliveryConfig, {
+    district: orderForm.selectedDistrict || orderForm.address || '',
+    totalWeightKg: totalCartWeight || 1
+  });
+  const deliveryAdvanceFee = dynamicDeliveryFee;
   const isCOD = shop.deliveryConfig?.isCOD !== false;
   const cartCount = cart.reduce((a, c) => a + (Number(c.quantity) || 0), 0);
   const hasPaymentGateway = shop?.manualPaymentEnabled !== false || shop?.piprapayEnabled === true;
