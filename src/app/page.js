@@ -3051,6 +3051,7 @@ export default function Home() {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
           className="group flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-purple-600 border border-white/20 text-white backdrop-blur-md shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
           title="উপরে যান (Jump to Top)"
+          aria-label="উপরে যান"
         >
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
             <ArrowUp size={14} className="stroke-[3]" />
@@ -3061,6 +3062,7 @@ export default function Home() {
           onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })} 
           className="group flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-950/85 hover:bg-purple-600 border border-white/20 text-white backdrop-blur-md shadow-2xl transition-all hover:scale-105 active:scale-95 cursor-pointer"
           title="নিচে যান (Jump to Bottom)"
+          aria-label="নিচে যান"
         >
           <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
             <ArrowDown size={14} className="stroke-[3]" />

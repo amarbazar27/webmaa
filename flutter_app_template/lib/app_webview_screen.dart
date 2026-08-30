@@ -15,7 +15,7 @@ class AppWebViewScreen extends StatefulWidget {
   State<AppWebViewScreen> createState() => _AppWebViewScreenState();
 }
 
-class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerProviderStateMixin {
+class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   InAppWebViewController? _webViewController;
 
   bool _isAppReady = false;
@@ -24,18 +24,40 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
   bool _showProgressBar = false;
   String _errorMessage = '';
   DateTime? _lastBackPressed;
+  // Track whether we launched external Google OAuth so we can reload on return
+  bool _didLaunchGoogleAuth = false;
 
   @override
   void initState() {
     super.initState();
-    // Safety fallback: reveal interface after 1.5s max so user is never stuck waiting on slow networks
-    Timer(const Duration(milliseconds: 1500), () {
+    WidgetsBinding.instance.addObserver(this);
+    // Safety fallback: reveal interface after 5s max so user is never stuck waiting on slow networks
+    // (1.5s was too short for first-load on slow mobile data — now 5s so branded splash stays visible)
+    Timer(const Duration(milliseconds: 5000), () {
       if (mounted && !_isAppReady) {
         setState(() {
           _isAppReady = true;
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When the user returns from Chrome after completing Google Sign-In,
+    // reload the WebView so the NextAuth session cookie is picked up
+    if (state == AppLifecycleState.resumed && _didLaunchGoogleAuth) {
+      _didLaunchGoogleAuth = false;
+      Future.delayed(const Duration(milliseconds: 800), () {
+        _webViewController?.reload();
+      });
+    }
   }
 
   Future<bool> _handlePopScope() async {
@@ -70,8 +92,11 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
     return true;
   }
 
-  void _handleExternalUrl(Uri uri) async {
+  void _handleExternalUrl(Uri uri, {bool isGoogleAuth = false}) async {
     try {
+      if (isGoogleAuth) {
+        _didLaunchGoogleAuth = true;
+      }
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
@@ -327,6 +352,19 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
 
                     final scheme = uri.scheme.toLowerCase();
                     final urlString = uri.toString().toLowerCase();
+
+                    // ── Google OAuth: MUST open in Chrome (CustomTabs), NOT in WebView ──
+                    // Google has blocked OAuth login from WebViews since 2021.
+                    // Any accounts.google.com URL must be redirected to Chrome so
+                    // the user can complete Google Sign-In there. After login, 
+                    // they return to the app and onResume reloads the session.
+                    if (urlString.contains('accounts.google.com') ||
+                        urlString.contains('oauth2/v2') ||
+                        urlString.contains('oauth2/auth') ||
+                        urlString.contains('google.com/o/oauth2')) {
+                      _handleExternalUrl(uri, isGoogleAuth: true);
+                      return NavigationActionPolicy.CANCEL;
+                    }
 
                     // Handle phone calls, SMS, mailto, WhatsApp, bKash, Nagad
                     if (scheme == 'tel' ||

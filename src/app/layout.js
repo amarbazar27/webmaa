@@ -8,16 +8,19 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'BDRetailers — বাংলাদেশের সেরা ই-কমার্স SaaS প্ল্যাটফর্ম',
+    default: 'BDRetailers — বাংলাদেশের সেরা ই-কমার্স SaaS প্ল্যাটফর্ম | BD Retailers',
     template: '%s | BDRetailers',
   },
-  description: 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক AI-পাওয়ার্ড ই-কমার্স SaaS প্ল্যাটফর্ম। মাত্র ১ মিনিটে নিজের অনলাইন স্টোর খুলুন। Steadfast কুরিয়ার, বিকাশ, নগদ, UddoktaPay পেমেন্ট সমর্থিত। ৩০ দিনের ফ্রি ট্রায়াল।',
+  description: 'BDRetailers (BD Retailers) — বাংলাদেশের সবচেয়ে আধুনিক AI-পাওয়ার্ড ই-কমার্স SaaS প্ল্যাটফর্ম। মাত্র ১ মিনিটে নিজের অনলাইন স্টোর খুলুন। Steadfast কুরিয়ার, বিকাশ, নগদ, UddoktaPay পেমেন্ট সমর্থিত। ৩০ দিনের ফ্রি ট্রায়াল।',
   keywords: [
-    'bdretailers', 'ecommerce bangladesh', 'online store bangladesh', 'saas ecommerce',
+    'bdretailers', 'bd retailers', 'bd retailer', 'retailer bd', 'retailerbd',
+    'ecommerce bangladesh', 'online store bangladesh', 'saas ecommerce bangladesh',
     'shopify alternative bangladesh', 'online shop create bangladesh', 'বাংলাদেশ ই-কমার্স',
-    'অনলাইন স্টোর', 'ডিজিটাল শপ', 'বিডি রিটেইলার্স', 'steadfast courier integration',
-    'uddoktapay', 'bkash payment', 'nagad payment', 'retailer platform bd',
-    'white label ecommerce', 'multi vendor marketplace bangladesh', 'free online store bangladesh',
+    'অনলাইন স্টোর', 'ডিজিটাল শপ', 'বিডি রিটেইলার্স', 'বিডি রিটেইলার',
+    'steadfast courier integration', 'uddoktapay', 'bkash payment', 'nagad payment',
+    'retailer platform bd', 'white label ecommerce', 'multi vendor marketplace bangladesh',
+    'free online store bangladesh', 'best ecommerce platform bangladesh',
+    'bdretailers.com', 'online dokan bangladesh', 'free dokan create',
   ],
   authors: [{ name: 'BDRetailers', url: BASE_URL }],
   creator: 'BDRetailers',
@@ -42,14 +45,14 @@ export const metadata = {
     locale: 'bn_BD',
     url: BASE_URL,
     siteName: 'BDRetailers',
-    title: 'BDRetailers — বাংলাদেশের সেরা AI ই-কমার্স প্ল্যাটফর্ম',
+    title: 'BDRetailers — বাংলাদেশের সেরা AI ই-কমার্স প্ল্যাটফর্ম | BD Retailers',
     description: 'বাংলাদেশের প্রথম AI-পাওয়ার্ড ই-কমার্স SaaS। ৩০ দিনের ফ্রি ট্রায়াল। Steadfast কুরিয়ার, বিকাশ, নগদ সাপোর্ট।',
     images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'BDRetailers — বাংলাদেশের সেরা ই-কমার্স প্ল্যাটফর্ম' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BDRetailers — AI ই-কমার্স প্ল্যাটফর্ম বাংলাদেশ',
-    description: 'বাংলাদেশের সবচেয়ে আধুনিক AI-پাওয়ার্ড ই-কমার্স SaaS। ৩০ দিনের ফ্রি ট্রায়াল। মাত্র ১ মিনিটে স্টোর খুলুন।',
+    title: 'BDRetailers — AI ই-কমার্স প্ল্যাটফর্ম বাংলাদেশ | BD Retailers',
+    description: 'বাংলাদেশের সবচেয়ে আধুনিক AI-পাওয়ার্ড ই-কমার্স SaaS। ৩০ দিনের ফ্রি ট্রায়াল। মাত্র ১ মিনিটে স্টোর খুলুন।',
     images: [`${BASE_URL}/logo.png`],
   },
   robots: {
@@ -66,7 +69,6 @@ export const metadata = {
   alternates: {
     canonical: BASE_URL,
   },
-};
 
 export const viewport = {
   width: 'device-width',
@@ -84,17 +86,37 @@ export const viewport = {
        "@context": "https://schema.org",
        "@type": "Organization",
        "name": "BDRetailers",
-       "alternateName": ["BDRetailers SaaS", "bdretailers.com", "বিডি রিটেইলার্স"],
+       "alternateName": ["BD Retailers", "BD Retailer", "BDRetailers SaaS", "bdretailers.com", "বিডি রিটেইলার্স", "বিডি রিটেইলার"],
        "url": BASE_URL,
        "logo": `${BASE_URL}/logo.png`,
        "image": `${BASE_URL}/logo.png`,
-       "description": "বাংলাদেশের সবচেয়ে আধুনিক এআই-পাওয়ার্ড মাল্টি-ভেন্ডর মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
+       "description": "বাংলাদেশের সবচেয়ে আধুনিক এআই-পাওয়ার্ড মাল্টি-ভেন্ডর মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
        "sameAs": [],
        "contactPoint": {
          "@type": "ContactPoint",
          "contactType": "customer service",
          "availableLanguage": ["Bengali", "English"]
        }
+     },
+     // LocalBusiness — Helps Google Business Profile link to website
+     {
+       "@context": "https://schema.org",
+       "@type": "LocalBusiness",
+       "name": "BDRetailers",
+       "alternateName": ["BD Retailers", "BD Retailer", "বিডি রিটেইলার্স"],
+       "url": BASE_URL,
+       "logo": `${BASE_URL}/logo.png`,
+       "image": `${BASE_URL}/logo.png`,
+       "description": "বাংলাদেশের প্রথম AI-পাওয়ার্ড ই-কমার্স SaaS। অনলাইন স্টোর তৈরি করুন মাত্র ১ মিনিটে।",
+       "address": {
+         "@type": "PostalAddress",
+         "addressLocality": "Rangpur",
+         "addressRegion": "Rangpur Division",
+         "addressCountry": "BD"
+       },
+       "areaServed": "BD",
+       "priceRange": "Free - ৳৯৯৯/মাস",
+       "openingHours": "Mo-Su 00:00-23:59"
      },
      // WebSite — Google search box & SearchAction
      {
