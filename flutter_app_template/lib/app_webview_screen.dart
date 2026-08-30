@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
@@ -17,6 +18,13 @@ class AppWebViewScreen extends StatefulWidget {
 
 class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerProviderStateMixin {
   InAppWebViewController? _webViewController;
+
+  // Native Google Sign-In (shows Android account picker, picture 2)
+  final _googleSignIn = GoogleSignIn(
+    // Web client ID from google-services.json (client_type 3)
+    serverClientId: '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com',
+    scopes: ['email', 'profile', 'openid'],
+  );
 
   bool _isAppReady = false;
   bool _hasError = false;
@@ -207,6 +215,29 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     preferredContentMode: UserPreferredContentMode.MOBILE,
                   ),
                   onCreateWindow: (controller, createWindowAction) async {
+                    final rawUrl = createWindowAction.request.url?.toString() ?? '';
+
+                    // ── Determine if this is a Google/Firebase auth popup ──
+                    final isAuthPopup = rawUrl.isEmpty ||
+                        rawUrl.contains('firebaseapp.com/__/auth') ||
+                        rawUrl.contains('accounts.google.com') ||
+                        rawUrl.contains('/__/auth/') ||
+                        rawUrl.contains('/api/auth');
+
+                    // Non-auth new-window: open in system browser, NOT in-app
+                    if (!isAuthPopup && rawUrl.isNotEmpty) {
+                      try {
+                        final uri = Uri.tryParse(rawUrl);
+                        if (uri != null && await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      } catch (e) {
+                        debugPrint('Could not open URL externally: $e');
+                      }
+                      return true; // Consumed — don't open in-app
+                    }
+
+                    // Auth popup: show in in-app dialog WebView (fallback if native sign-in fails)
                     showDialog(
                       context: context,
                       barrierDismissible: false,
@@ -293,6 +324,35 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                   },
                   onWebViewCreated: (controller) {
                     _webViewController = controller;
+
+                    // ── Native Google Sign-In handler ──
+                    // Called by auth.js loginWithGoogle() when running inside Flutter WebView.
+                    // Returns {idToken, accessToken, email, displayName} → JS uses signInWithCredential.
+                    controller.addJavaScriptHandler(
+                      handlerName: 'NativeGoogleSignIn',
+                      callback: (args) async {
+                        try {
+                          // Disconnect first to always show account picker (not auto-sign-in)
+                          await _googleSignIn.disconnect().catchError((_) {});
+                          final GoogleSignInAccount? account = await _googleSignIn.signIn();
+                          if (account == null) {
+                            debugPrint('NativeGoogleSignIn: user cancelled');
+                            return null; // user cancelled → JS gets null → no sign-in
+                          }
+                          final GoogleSignInAuthentication gAuth = await account.authentication;
+                          debugPrint('NativeGoogleSignIn: success for ${account.email}');
+                          return {
+                            'idToken': gAuth.idToken,
+                            'accessToken': gAuth.accessToken,
+                            'email': account.email,
+                            'displayName': account.displayName ?? '',
+                          };
+                        } catch (e) {
+                          debugPrint('NativeGoogleSignIn error: $e');
+                          return null; // JS falls back to popup/redirect
+                        }
+                      },
+                    );
                   },
                   onPageCommitVisible: (controller, url) {
                     _injectNativeAppStyles(controller);

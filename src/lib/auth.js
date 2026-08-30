@@ -4,6 +4,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
+  signInWithCredential,
   signOut, 
   onAuthStateChanged,
   sendPasswordResetEmail
@@ -14,6 +15,13 @@ import { app, db } from './firebase';
 export const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
+
+// Flutter WebView detection
+const isFlutterWebView = () => {
+  try {
+    return typeof window !== 'undefined' && typeof window.flutter_inappwebview !== 'undefined';
+  } catch { return false; }
+};
 
 const determineRole = async (email) => {
   try {
@@ -154,6 +162,26 @@ export const checkRedirectLogin = async () => {
 };
 
 export const loginWithGoogle = async () => {
+  // ── Native Flutter WebView bridge (shows native Android account picker) ──
+  if (isFlutterWebView()) {
+    try {
+      const result = await window.flutter_inappwebview.callHandler('NativeGoogleSignIn');
+      if (result && result.idToken) {
+        const credential = GoogleAuthProvider.credential(result.idToken, result.accessToken || null);
+        const signInResult = await signInWithCredential(auth, credential);
+        if (signInResult?.user) {
+          return await handleUserSession(signInResult.user);
+        }
+      }
+      // User cancelled or native returned null
+      return null;
+    } catch (nativeErr) {
+      console.warn('Native Google Sign-In failed, falling back to popup:', nativeErr);
+      // Fall through to popup/redirect below
+    }
+  }
+
+  // ── Standard web flow (non-WebView / fallback) ──
   try {
     try {
       const result = await signInWithPopup(auth, googleProvider);
