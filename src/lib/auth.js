@@ -176,12 +176,14 @@ export const loginWithGoogle = async () => {
       // User cancelled or native returned null
       return null;
     } catch (nativeErr) {
-      console.warn('Native Google Sign-In failed, falling back to popup:', nativeErr);
-      // Fall through to popup/redirect below
+      // In WebView: NEVER fall through to popup — it opens the browser sign-in page
+      // which is exactly what we're trying to avoid. Just log and return null.
+      console.error('Native Google Sign-In error:', nativeErr);
+      return null;
     }
   }
 
-  // ── Standard web flow (non-WebView / fallback) ──
+  // ── Standard web flow (non-WebView only) ──
   try {
     try {
       const result = await signInWithPopup(auth, googleProvider);

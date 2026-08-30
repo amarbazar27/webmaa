@@ -433,9 +433,31 @@ async function build() {
   fs.writeFileSync(buildGradlePath, buildGradleContent);
   console.log('  └─ android/app/build.gradle configured.');
 
-  // C2. android/app/google-services.json — write complete valid JSON
-  // Ensures Firebase SDK doesn't crash due to package_name/mobilesdk_app_id mismatch
+  // C2. android/app/google-services.json — write complete valid JSON including Android OAuth client
+  // client_type 1 (Android) is REQUIRED for google_sign_in to return idToken on Android
   const googleServicesPath = path.join(appWorkspace, 'android/app/google-services.json');
+
+  // Android OAuth clients from Firebase Console (SHA-1 registered for this keystore)
+  const ANDROID_OAUTH_CLIENTS = {
+    'com.bdretailers': '156216219253-21kngrda3a07lk04rnk5cstvr07no92u.apps.googleusercontent.com',
+    'com.messerbazar': '156216219253-svv9tlktp7jdsrm13bk6964r6lf4kup7.apps.googleusercontent.com',
+  };
+  const WEB_CLIENT_ID = '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com';
+  const CERT_HASH = '25786062a1a147b884467f38e03c0b36ae1aa609';
+
+  const buildOAuthClients = (pkg) => {
+    const clients = [{ client_id: WEB_CLIENT_ID, client_type: 3 }];
+    const androidClientId = ANDROID_OAUTH_CLIENTS[pkg];
+    if (androidClientId) {
+      clients.unshift({
+        client_id: androidClientId,
+        client_type: 1,
+        android_info: { package_name: pkg, certificate_hash: CERT_HASH }
+      });
+    }
+    return clients;
+  };
+
   const googleServicesContent = JSON.stringify({
     project_info: {
       project_number: '156216219253',
@@ -449,21 +471,11 @@ async function build() {
           mobilesdk_app_id: (packageName === 'com.messerbazar') ? '1:156216219253:android:84998771525920b1d0ca3c' : '1:156216219253:android:491be9bc9e61d0c9d0ca3c',
           android_client_info: { package_name: packageName }
         },
-        oauth_client: [
-          {
-            client_id: '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com',
-            client_type: 3
-          }
-        ],
+        oauth_client: buildOAuthClients(packageName),
         api_key: [{ current_key: 'AIzaSyBHRcN3fql3TYrrsUGBkkxmPPrIb2lhSYc' }],
         services: {
           appinvite_service: {
-            other_platform_oauth_client: [
-              {
-                client_id: '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com',
-                client_type: 3
-              }
-            ]
+            other_platform_oauth_client: [{ client_id: WEB_CLIENT_ID, client_type: 3 }]
           }
         }
       }
@@ -471,7 +483,8 @@ async function build() {
     configuration_version: '1'
   }, null, 2);
   fs.writeFileSync(googleServicesPath, googleServicesContent);
-  console.log('  └─ android/app/google-services.json configured.');
+  console.log('  └─ android/app/google-services.json configured (with Android OAuth client).');
+
 
   // D. android/app/src/main/AndroidManifest.xml (replace app name and deep link domain)
   const manifestPath = path.join(appWorkspace, 'android/app/src/main/AndroidManifest.xml');
