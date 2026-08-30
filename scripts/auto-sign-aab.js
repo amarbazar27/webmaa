@@ -38,7 +38,7 @@ if (!fs.existsSync(keystorePath)) {
     '-keysize', '2048',
     '-validity', '10000',
     '-alias', keyAlias,
-    '-dname', 'CN=BDRetailers, OU=Mobile, O=BDRetailers, L=Dhaka, ST=Dhaka, C=BD',
+    '-dname', 'CN=BDRetailers,OU=Mobile,O=BDRetailers,L=Rangpur,ST=Rangpur,C=BD',
     '-storepass', keyPassword,
     '-keypass', keyPassword
   ];
@@ -65,13 +65,12 @@ console.log(`\n📦 Signing App Bundle: ${aabInputPath}...`);
 
 // 4. Sign the AAB with jarsigner
 const signArgs = [
-  '-verbose',
   '-sigalg', 'SHA256withRSA',
   '-digestalg', 'SHA-256',
-  '-keystore', keystorePath,
+  '-keystore', `"${keystorePath}"`,
   '-storepass', keyPassword,
   '-keypass', keyPassword,
-  aabInputPath,
+  `"${aabInputPath}"`,
   keyAlias
 ];
 
