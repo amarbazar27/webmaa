@@ -527,6 +527,11 @@ class MainActivity: FlutterActivity() {
   const assetsOutDir = path.join(tempBuildDir, 'play_store_assets');
   fs.mkdirSync(assetsOutDir, { recursive: true });
 
+  const pemCertPath = path.join(rootDir, 'scripts/bdretailers_upload_cert.pem');
+  if (fs.existsSync(pemCertPath)) {
+    fs.copyFileSync(pemCertPath, path.join(assetsOutDir, 'upload_certificate.pem'));
+  }
+
   const metadataJson = {
     packageName,
     appName: shopName,
