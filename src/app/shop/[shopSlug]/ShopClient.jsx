@@ -4475,22 +4475,21 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ঠিকানা *</label>
-                    {googleMapsApiKey && (
-                      <button 
-                        type="button" 
-                        onClick={() => setIsMapOpen(true)} 
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 border-2 ${
-                          orderForm.coordinates 
-                            ? 'bg-emerald-500 border-emerald-200 text-white' 
-                            : shop.requireLocationForOrder === true 
-                              ? 'bg-red-500 border-red-200 text-white animate-pulse' 
-                              : 'bg-slate-100 border-slate-200 text-slate-400'
-                        }`}
-                        title="মানচিত্রে লোকেশন চিহ্নিত করুন"
-                      >
-                        <MapPin size={20} strokeWidth={2.5} />
-                      </button>
-                    )}
+                    <button 
+                      type="button" 
+                      onClick={() => setIsMapOpen(true)} 
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-xs border cursor-pointer active:scale-95 ${
+                        orderForm.coordinates 
+                          ? 'bg-emerald-50 border-emerald-300 text-emerald-700' 
+                          : shop.requireLocationForOrder === true 
+                            ? 'bg-purple-600 border-purple-600 text-white animate-pulse shadow-purple-500/20' 
+                            : 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100'
+                      }`}
+                      title="মানচিত্রে লোকেশন বা এলাকা চিহ্নিত করুন"
+                    >
+                      <MapPin size={14} />
+                      <span>{orderForm.coordinates ? 'ম্যাপে চিহ্নিত ✅' : 'ম্যাপ/এলাকা নির্বাচন 📍'}</span>
+                    </button>
                   </div>
                   <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} />
                 </div>
