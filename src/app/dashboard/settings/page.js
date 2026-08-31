@@ -11,7 +11,7 @@ import {
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
   MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette, Tag,
-  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock
+  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock, CreditCard
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -179,6 +179,9 @@ export default function SettingsPage() {
   const [piprapayRocket, setPiprapayRocket] = useState('');
   const [uddoktapayUrl, setUddoktapayUrl] = useState('');
   const [uddoktapayApiKey, setUddoktapayApiKey] = useState('');
+  const [sslcommerzConfig, setSslcommerzConfig] = useState({ storeId: '', storePassword: '', isLive: false, enabled: false });
+  const [shurjopayConfig, setShurjopayConfig] = useState({ username: '', password: '', prefix: '', isLive: false, enabled: false });
+  const [bkashMerchantConfig, setBkashMerchantConfig] = useState({ appKey: '', appSecret: '', username: '', password: '', isLive: false, enabled: false });
   const [manualPaymentEnabled, setManualPaymentEnabled] = useState(true);
   const [serviceAreas, setServiceAreas] = useState([]);
   const [newServiceArea, setNewServiceArea] = useState('');
@@ -864,6 +867,9 @@ export default function SettingsPage() {
         piprapayRocket,
         uddoktapayUrl,
         uddoktapayApiKey,
+        sslcommerzConfig,
+        shurjopayConfig,
+        bkashMerchantConfig,
         manualPaymentEnabled,
         slogan: shop.slogan,
         notices: shop.notices,
@@ -1740,11 +1746,12 @@ export default function SettingsPage() {
               </p>
             </Card>
 
-            <Card title="UddoktaPay Automated Payment (উদ্যোক্তাপেই অটো পেমেন্ট)" subtitle="bKash/Nagad/Rocket API Integration" icon={Smartphone} className="border-l-4 border-l-purple-500">
+            {/* 1. UddoktaPay Automated Gateway */}
+            <Card title="UddoktaPay Automated Payment (উদ্যোক্তাপেই অটো পেমেন্ট)" subtitle="bKash/Nagad/Rocket/Upay Hosted Gateway" icon={Smartphone} className="border-l-4 border-l-purple-500">
                <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
                   <div>
-                     <p className="text-xs font-black text-slate-900">অটোমেটেড পেমেন্ট গেটওয়ে চালু করুন (Enable UddoktaPay)</p>
-                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকরা সরাসরি বিকাশ, নগদ, রকেটে অটো পেমেন্ট করতে পারবে</p>
+                     <p className="text-xs font-black text-slate-900">UddoktaPay গেটওয়ে সক্রিয় করুন</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">গ্রাহকরা বিকাশ, নগদ, রকেটে স্বয়ংক্রিয়ভাবে পেমেন্ট করতে পারবে</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                      <input type="checkbox" className="sr-only peer" checked={piprapayEnabled} onChange={e => setPiprapayEnabled(e.target.checked)} />
@@ -1759,54 +1766,193 @@ export default function SettingsPage() {
                         label="UddoktaPay Domain / API URL"
                         value={uddoktapayUrl}
                         onChange={e => setUddoktapayUrl(e.target.value)}
-                        placeholder="e.g. https://yoursubdomain.paymently.io"
+                        placeholder="যেমন: https://pay.yourbrand.com বা https://sandbox.uddoktapay.com/api/checkout-v2"
                       />
                       <Input
                         label="UddoktaPay API Key"
                         value={uddoktapayApiKey}
                         onChange={e => setUddoktapayApiKey(e.target.value)}
-                        placeholder="Enter your UddoktaPay API Key"
+                        placeholder="আপনার UddoktaPay API Key লিখুন"
                       />
                    </div>
 
                    <div className="bg-purple-50/50 rounded-2xl p-5 border border-purple-100 space-y-4">
                       <h3 className="text-xs font-black text-purple-900 uppercase tracking-wider flex items-center gap-2">
-                        📋 UddoktaPay Hosted Setup Guide
+                        📋 UddoktaPay Setup Guide (ধাপসমূহ)
                       </h3>
-                      <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                        আপনার স্টোরে স্বয়ংক্রিয় পেমেন্ট পাওয়ার জন্য নিচের ধাপগুলো অনুসরণ করুন:
-                      </p>
-                      
-                      <div className="space-y-3 pl-1 text-[11px] text-slate-600 font-medium">
-                        <div className="flex gap-2">
-                          <span className="text-purple-600 font-bold">১.</span>
-                          <p>
-                            প্রথমে <a href="https://uddoktapay.com" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">UddoktaPay পোর্টালে</a> একটি মার্চেন্ট অ্যাকাউন্ট তৈরি করুন।
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <span className="text-purple-600 font-bold">২.</span>
-                          <p>
-                            আপনার UddoktaPay ড্যাশবোর্ডে লগইন করে <strong>Gateways</strong> সেকশনে আপনার বিকাশ, নগদ ও রকেট নম্বর যুক্ত করুন।
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <span className="text-purple-600 font-bold">৩.</span>
-                          <p>
-                            ড্যাশবোর্ডের <strong>Brand Settings ➔ API Settings</strong> থেকে আপনার API Key এবং Hosted Domain URL কপি করে উপরের বক্সে বসিয়ে দিন।
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <span className="text-purple-600 font-bold">৪.</span>
-                          <p>
-                            <strong>গুরুত্বপূর্ণ:</strong> যদি আপনি নিজের এপিআই কী ও ডোমেন খালি রাখেন, তবে পেমেন্ট গ্লোবাল সুপারঅ্যাডমিনের অ্যাকাউন্টে জমা হবে।
-                          </p>
-                        </div>
+                      <div className="space-y-3 pl-1 text-[11px] text-slate-600 font-medium leading-relaxed">
+                        <p><strong className="text-purple-700">১. অ্যাকাউন্ট তৈরি:</strong> <a href="https://uddoktapay.com" target="_blank" rel="noopener noreferrer" className="text-purple-700 underline font-bold hover:text-purple-900">UddoktaPay.com</a> এ গিয়ে একটি মার্চেন্ট অ্যাকাউন্ট রেজিস্ট্রেশন করুন।</p>
+                        <p><strong className="text-purple-700">২. পেমেন্ট মেথড যোগ:</strong> ড্যাশবোর্ডের <strong>Gateways</strong> অপশনে গিয়ে আপনার বিকাশ/নগদ/রকেট নম্বর ভেরিফাই করুন।</p>
+                        <p><strong className="text-purple-700">৩. API Key সংগ্রহ:</strong> <strong>API Settings</strong> থেকে আপনার API Key এবং Hosted Domain URL কপি করে ওপরের ফিল্ডে বসান।</p>
                       </div>
                    </div>
+                 </div>
+               )}
+            </Card>
+
+            {/* 2. SSLCommerz Gateway */}
+            <Card title="SSLCommerz Gateway (এসএসএলকমার্জ)" subtitle="Cards, Mobile Banking & Internet Banking" icon={CreditCard} className="border-l-4 border-l-blue-500">
+               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                  <div>
+                     <p className="text-xs font-black text-slate-900">SSLCommerz পেমেন্ট গেটওয়ে চালু করুন</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">ভিসা, মাস্টারকার্ড, বিকাশ, নগদ ও সমস্ত ব্যাংক কার্ড সাপোর্ট</p>
                   </div>
-                )}
-             </Card>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                     <input type="checkbox" className="sr-only peer" checked={sslcommerzConfig?.enabled || false} onChange={e => setSslcommerzConfig(prev => ({ ...prev, enabled: e.target.checked }))} />
+                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+               </div>
+
+               {sslcommerzConfig?.enabled && (
+                 <div className="space-y-6 border-t border-slate-100 pt-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="Store ID (স্টোর আইডি)"
+                        value={sslcommerzConfig.storeId || ''}
+                        onChange={e => setSslcommerzConfig(prev => ({ ...prev, storeId: e.target.value }))}
+                        placeholder="যেমন: mystore_live বা testbox"
+                      />
+                      <Input
+                        label="Store Password (স্টোর পাসওয়ার্ড)"
+                        type="password"
+                        value={sslcommerzConfig.storePassword || ''}
+                        onChange={e => setSslcommerzConfig(prev => ({ ...prev, storePassword: e.target.value }))}
+                        placeholder="SSLCommerz থেকে প্রদত্ত সিক্রেট পাসওয়ার্ড"
+                      />
+                   </div>
+
+                   <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                     <label className="text-xs font-black text-slate-800 flex items-center gap-2 cursor-pointer">
+                       <input
+                         type="checkbox"
+                         checked={sslcommerzConfig.isLive || false}
+                         onChange={e => setSslcommerzConfig(prev => ({ ...prev, isLive: e.target.checked }))}
+                         className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
+                       />
+                       <span>লাইভ প্রোডাকশন মোড (Live Production Mode) — আনচেক থাকলে স্যান্ডবক্স টেস্ট মোডে চলবে</span>
+                     </label>
+                   </div>
+
+                   <div className="bg-blue-50/50 rounded-2xl p-5 border border-blue-100 space-y-3">
+                      <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider">
+                        📋 SSLCommerz Setup Guide
+                      </h3>
+                      <div className="space-y-2 text-[11px] text-slate-600 font-medium leading-relaxed">
+                        <p><strong className="text-blue-700">১. মার্চেন্ট অ্যাকাউন্ট:</strong> <a href="https://sslcommerz.com" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline font-bold hover:text-blue-900">SSLCommerz.com</a> এ কর্পোরেট বা মার্চেন্ট অ্যাকাউন্টের জন্য আবেদন করুন।</p>
+                        <p><strong className="text-blue-700">২. ক্রেডেনশিয়াল:</strong> এপ্রুভ হওয়ার পর তারা আপনার ইমেইলে <strong>Store ID</strong> এবং <strong>Store Password</strong> পাঠাবে।</p>
+                        <p><strong className="text-blue-700">৩. আইপিএন সেটআপ:</strong> আপনার SSLCommerz প্যানেলে আইপিএন (IPN URL) হিসেবে আপনার স্টোর ডোমেনের <code>/api/payments/sslcommerz-webhook</code> যুক্ত করুন।</p>
+                      </div>
+                   </div>
+                 </div>
+               )}
+            </Card>
+
+            {/* 3. Shurjopay Gateway */}
+            <Card title="Shurjopay Gateway (সূর্যপে)" subtitle="Bangladesh Central Automated Payment" icon={CreditCard} className="border-l-4 border-l-orange-500">
+               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                  <div>
+                     <p className="text-xs font-black text-slate-900">Shurjopay পেমেন্ট গেটওয়ে চালু করুন</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">বাংলাদেশ ব্যাংকের পিএসও লাইসেন্সপ্রাপ্ত গেটওয়ে</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                     <input type="checkbox" className="sr-only peer" checked={shurjopayConfig?.enabled || false} onChange={e => setShurjopayConfig(prev => ({ ...prev, enabled: e.target.checked }))} />
+                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                  </label>
+               </div>
+
+               {shurjopayConfig?.enabled && (
+                 <div className="space-y-6 border-t border-slate-100 pt-6">
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Input
+                        label="Merchant Username"
+                        value={shurjopayConfig.username || ''}
+                        onChange={e => setShurjopayConfig(prev => ({ ...prev, username: e.target.value }))}
+                        placeholder="আপনার Shurjopay ইউজারনেম"
+                      />
+                      <Input
+                        label="Merchant Password"
+                        type="password"
+                        value={shurjopayConfig.password || ''}
+                        onChange={e => setShurjopayConfig(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Shurjopay পাসওয়ার্ড"
+                      />
+                      <Input
+                        label="Store Prefix"
+                        value={shurjopayConfig.prefix || ''}
+                        onChange={e => setShurjopayConfig(prev => ({ ...prev, prefix: e.target.value }))}
+                        placeholder="যেমন: SP বা আপনার প্রিফিক্স"
+                      />
+                   </div>
+
+                   <div className="bg-orange-50/50 rounded-2xl p-5 border border-orange-100 space-y-3">
+                      <h3 className="text-xs font-black text-orange-900 uppercase tracking-wider">
+                        📋 Shurjopay Setup Guide
+                      </h3>
+                      <div className="space-y-2 text-[11px] text-slate-600 font-medium leading-relaxed">
+                        <p><strong className="text-orange-700">১.</strong> <a href="https://shurjopay.com.bd" target="_blank" rel="noopener noreferrer" className="text-orange-700 underline font-bold hover:text-orange-900">Shurjopay.com.bd</a> থেকে মার্চেন্ট এগ্রিমেন্ট সাইন করুন।</p>
+                        <p><strong className="text-orange-700">২.</strong> Shurjopay মার্চেন্ট ড্যাশবোর্ড থেকে প্রাপ্ত Merchant Username, Password ও Prefix ফিল্ডে প্রদান করুন।</p>
+                      </div>
+                   </div>
+                 </div>
+               )}
+            </Card>
+
+            {/* 4. bKash Merchant Direct Checkout */}
+            <Card title="bKash Direct Merchant Gateway (বিকাশ ডিরেক্ট চেকআউট)" subtitle="Official bKash PGW API Integration" icon={Smartphone} className="border-l-4 border-l-pink-500">
+               <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                  <div>
+                     <p className="text-xs font-black text-slate-900">অফিসিয়াল বিকাশ ডিরেক্ট মার্চেন্ট চালু করুন</p>
+                     <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">সরাসরি বিকাশ অফিসিয়াল পপআপ চেকআউট উইন্ডো</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                     <input type="checkbox" className="sr-only peer" checked={bkashMerchantConfig?.enabled || false} onChange={e => setBkashMerchantConfig(prev => ({ ...prev, enabled: e.target.checked }))} />
+                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+                  </label>
+               </div>
+
+               {bkashMerchantConfig?.enabled && (
+                 <div className="space-y-6 border-t border-slate-100 pt-6">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="bKash App Key"
+                        value={bkashMerchantConfig.appKey || ''}
+                        onChange={e => setBkashMerchantConfig(prev => ({ ...prev, appKey: e.target.value }))}
+                        placeholder="Enter bKash App Key"
+                      />
+                      <Input
+                        label="bKash App Secret"
+                        type="password"
+                        value={bkashMerchantConfig.appSecret || ''}
+                        onChange={e => setBkashMerchantConfig(prev => ({ ...prev, appSecret: e.target.value }))}
+                        placeholder="Enter bKash App Secret Key"
+                      />
+                      <Input
+                        label="bKash Merchant Username"
+                        value={bkashMerchantConfig.username || ''}
+                        onChange={e => setBkashMerchantConfig(prev => ({ ...prev, username: e.target.value }))}
+                        placeholder="Merchant Username"
+                      />
+                      <Input
+                        label="bKash Merchant Password"
+                        type="password"
+                        value={bkashMerchantConfig.password || ''}
+                        onChange={e => setBkashMerchantConfig(prev => ({ ...prev, password: e.target.value }))}
+                        placeholder="Merchant Password"
+                      />
+                   </div>
+
+                   <div className="bg-pink-50/50 rounded-2xl p-5 border border-pink-100 space-y-3">
+                      <h3 className="text-xs font-black text-pink-900 uppercase tracking-wider">
+                        📋 bKash Merchant API Setup Guide
+                      </h3>
+                      <div className="space-y-2 text-[11px] text-slate-600 font-medium leading-relaxed">
+                        <p><strong className="text-pink-700">১. মার্চেন্ট অ্যাকাউন্ট:</strong> বিকাশের সাথে সরাসরি মার্চেন্ট এগ্রিমেন্ট সাইন করে <a href="https://developer.bka.sh" target="_blank" rel="noopener noreferrer" className="text-pink-700 underline font-bold hover:text-pink-900">developer.bka.sh</a> পোর্টালে অ্যাপ তৈরি করুন।</p>
+                        <p><strong className="text-pink-700">২. কী সংগ্রহ:</strong> বিকাশ ড্যাশবোর্ড থেকে App Key, App Secret, Username এবং Password কপি করে ওপরের বক্সে সংরক্ষণ করুন।</p>
+                      </div>
+                   </div>
+                 </div>
+               )}
+            </Card>
                 </div>
               )}
 

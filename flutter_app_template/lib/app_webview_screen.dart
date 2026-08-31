@@ -237,39 +237,52 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                       return true; // Consumed — don't open in-app
                     }
 
-                    // Popup window: show in in-app dialog WebView with dynamic title
+                    // Popup window: show in Messenger-style full-screen in-app browser
                     showDialog(
                       context: context,
                       barrierDismissible: false,
                       builder: (dialogContext) {
-                        String dialogTitle = isAuthPopup ? 'Google Sign In' : 'Secure In-App Browser';
+                        String dialogTitle = isAuthPopup ? 'Google Sign In' : 'BDRetailers Secure Browser';
+                        String currentUrl = rawUrl;
+                        InAppWebViewController? popupController;
+                        double loadProgress = 0;
+
                         return StatefulBuilder(
                           builder: (context, setDialogState) {
-                            return Dialog(
-                              insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              clipBehavior: Clip.antiAlias,
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width,
-                                height: MediaQuery.of(context).size.height * 0.85,
+                            return Dialog.fullscreen(
+                              child: SafeArea(
                                 child: Column(
                                   children: [
+                                    // ── Narrow Messenger-style Top Bar ──
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                      color: const Color(0xFFF1F5F9),
+                                      height: 48,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+                                      ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.close_rounded, size: 22, color: Color(0xFF1E293B)),
+                                            onPressed: () {
+                                              if (Navigator.canPop(dialogContext)) {
+                                                Navigator.pop(dialogContext);
+                                              }
+                                            },
+                                          ),
+                                          const SizedBox(width: 4),
                                           Expanded(
                                             child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
                                                 Icon(
-                                                  isAuthPopup ? Icons.lock_outline_rounded : Icons.language_rounded,
-                                                  size: 16,
-                                                  color: const Color(0xFF475569),
+                                                  isAuthPopup ? Icons.lock_outline_rounded : Icons.lock_rounded,
+                                                  size: 13,
+                                                  color: const Color(0xFF16A34A),
                                                 ),
                                                 const SizedBox(width: 6),
-                                                Expanded(
+                                                Flexible(
                                                   child: Text(
                                                     dialogTitle,
                                                     maxLines: 1,
@@ -281,18 +294,87 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                             ),
                                           ),
                                           IconButton(
-                                            icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF475569)),
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
+                                            icon: const Icon(Icons.more_vert_rounded, size: 22, color: Color(0xFF1E293B)),
                                             onPressed: () {
-                                              if (Navigator.canPop(dialogContext)) {
-                                                Navigator.pop(dialogContext);
-                                              }
+                                              // Show Messenger-style "More options" bottom sheet
+                                              showModalBottomSheet(
+                                                context: context,
+                                                shape: const RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                                ),
+                                                builder: (sheetContext) {
+                                                  return SafeArea(
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                                      child: Column(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Container(
+                                                            width: 36,
+                                                            height: 4,
+                                                            margin: const EdgeInsets.only(bottom: 16),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.grey.shade300,
+                                                              borderRadius: BorderRadius.circular(2),
+                                                            ),
+                                                          ),
+                                                          const Text(
+                                                            'More options',
+                                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                                          ),
+                                                          const SizedBox(height: 12),
+                                                          ListTile(
+                                                            leading: const Icon(Icons.refresh_rounded, color: Color(0xFF1E293B)),
+                                                            title: const Text('Refresh', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                                            onTap: () {
+                                                              Navigator.pop(sheetContext);
+                                                              popupController?.reload();
+                                                            },
+                                                          ),
+                                                          ListTile(
+                                                            leading: const Icon(Icons.link_rounded, color: Color(0xFF1E293B)),
+                                                            title: const Text('Copy link', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                                            onTap: () {
+                                                              Navigator.pop(sheetContext);
+                                                              if (currentUrl.isNotEmpty) {
+                                                                Clipboard.setData(ClipboardData(text: currentUrl));
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  const SnackBar(content: Text('Link copied to clipboard')),
+                                                                );
+                                                              }
+                                                            },
+                                                          ),
+                                                          ListTile(
+                                                            leading: const Icon(Icons.open_in_browser_rounded, color: Color(0xFF1E293B)),
+                                                            title: const Text('Open in default browser', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                                            onTap: () async {
+                                                              Navigator.pop(sheetContext);
+                                                              if (currentUrl.isNotEmpty) {
+                                                                final uri = Uri.tryParse(currentUrl);
+                                                                if (uri != null && await canLaunchUrl(uri)) {
+                                                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                                                }
+                                                              }
+                                                            },
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              );
                                             },
                                           ),
                                         ],
                                       ),
                                     ),
+                                    if (loadProgress > 0 && loadProgress < 1.0)
+                                      LinearProgressIndicator(
+                                        value: loadProgress,
+                                        backgroundColor: const Color(0xFFF1F5F9),
+                                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF9333EA)),
+                                        minHeight: 2,
+                                      ),
                                     Expanded(
                                       child: InAppWebView(
                                         windowId: createWindowAction.windowId,
@@ -308,6 +390,14 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                           allowsInlineMediaPlayback: true,
                                           userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
                                         ),
+                                        onWebViewCreated: (controller) {
+                                          popupController = controller;
+                                        },
+                                        onProgressChanged: (controller, progress) {
+                                          setDialogState(() {
+                                            loadProgress = progress / 100.0;
+                                          });
+                                        },
                                         onTitleChanged: (controller, title) {
                                           if (title != null && title.trim().isNotEmpty && title != 'about:blank') {
                                             setDialogState(() {
@@ -321,10 +411,22 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                           }
                                         },
                                         onLoadStop: (controller, url) async {
-                                          final urlStr = url?.toString().toLowerCase() ?? '';
-                                          if (urlStr.contains('/dashboard') || 
-                                              urlStr.contains('/become-retailer') ||
-                                              urlStr.contains('/superadmin')) {
+                                          final urlStr = url?.toString() ?? '';
+                                          if (urlStr.isNotEmpty) {
+                                            currentUrl = urlStr;
+                                            try {
+                                              final uri = Uri.parse(urlStr);
+                                              if (uri.host.isNotEmpty) {
+                                                setDialogState(() {
+                                                  dialogTitle = uri.host.replaceFirst('www.', '');
+                                                });
+                                              }
+                                            } catch (_) {}
+                                          }
+                                          final lower = urlStr.toLowerCase();
+                                          if (lower.contains('/dashboard') || 
+                                              lower.contains('/become-retailer') ||
+                                              lower.contains('/superadmin')) {
                                             Future.delayed(const Duration(milliseconds: 500), () {
                                               if (Navigator.canPop(dialogContext)) {
                                                 Navigator.pop(dialogContext);

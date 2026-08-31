@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { MapPin, X, Navigation, Loader2, Search } from 'lucide-react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { MapPin, X, Navigation, Loader2, Search, AlertCircle, Compass } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 // Distance calculation utility
 function getDistanceInKm(lat1, lon1, lat2, lon2) {
@@ -25,6 +26,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
   const [selectedCoords, setSelectedCoords] = useState(initialCoordinates || { lat: 23.8103, lng: 90.4125 });
   const [outOfRadius, setOutOfRadius] = useState(false);
   const [distanceFromShop, setDistanceFromShop] = useState(null);
+  const [loadError, setLoadError] = useState(false);
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -35,60 +37,72 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
   const shopLng = parseFloat(shop?.deliveryConfig?.shopLng);
   const radiusLimit = parseFloat(shop?.deliveryConfig?.radiusLimit); // In KM
 
-  // 1. Dynamic Leaflet Assets Loader
+  // 1. Dynamic Leaflet Multi-CDN Asset Loader with Timeout
   useEffect(() => {
     if (!isOpen) return;
 
     let isMounted = true;
 
-    const loadLeaflet = () => {
-      return new Promise((resolve, reject) => {
-        // Load CSS first
-        if (!document.getElementById('leaflet-css')) {
-          const link = document.createElement('link');
-          link.id = 'leaflet-css';
-          link.rel = 'stylesheet';
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-          document.head.appendChild(link);
-        }
+    // Load CSS
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
+      document.head.appendChild(link);
+    }
 
-        // Check if Leaflet is already loaded in window
-        if (window.L) {
-          resolve(window.L);
-          return;
-        }
+    if (window.L) {
+      setMapLoaded(true);
+      return;
+    }
 
-        const scriptId = 'leaflet-script';
-        let script = document.getElementById(scriptId);
+    const cdnUrls = [
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
+      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js',
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    ];
 
-        if (!script) {
-          script = document.createElement('script');
-          script.id = scriptId;
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.async = true;
-          document.head.appendChild(script);
-        }
+    let currentCdnIndex = 0;
 
-        script.onload = () => {
-          if (isMounted) resolve(window.L);
-        };
+    const tryNextScript = () => {
+      if (!isMounted) return;
+      if (window.L) {
+        setMapLoaded(true);
+        return;
+      }
+      if (currentCdnIndex >= cdnUrls.length) {
+        setLoadError(true);
+        return;
+      }
 
-        script.onerror = () => {
-          reject(new Error('Failed to load Leaflet script.'));
-        };
-      });
+      const scriptUrl = cdnUrls[currentCdnIndex];
+      currentCdnIndex++;
+
+      const script = document.createElement('script');
+      script.src = scriptUrl;
+      script.async = true;
+      script.onload = () => {
+        if (isMounted) setMapLoaded(true);
+      };
+      script.onerror = () => {
+        tryNextScript();
+      };
+      document.head.appendChild(script);
     };
 
-    loadLeaflet()
-      .then(() => {
-        if (isMounted) setMapLoaded(true);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    tryNextScript();
+
+    // Fallback safety timeout: 3.5 seconds
+    const timer = setTimeout(() => {
+      if (isMounted && !window.L) {
+        setLoadError(true);
+      }
+    }, 3500);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
   }, [isOpen]);
 
@@ -105,7 +119,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
   }, [selectedCoords, shopLat, shopLng, radiusLimit]);
 
   // 2. Reverse Geocoding via OpenStreetMap Nominatim API
-  const reverseGeocode = async (lat, lng) => {
+  const reverseGeocode = useCallback(async (lat, lng) => {
     setGeocoding(true);
     try {
       const response = await fetch(
@@ -122,17 +136,19 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
       } else {
         setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
       setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
     } finally {
       setGeocoding(false);
     }
-  };
+  }, []);
 
   // 3. Center on user current GPS position
-  const getGpsPosition = () => {
-    if (!navigator.geolocation) return;
+  const getGpsPosition = useCallback((showToast = false) => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      if (showToast) toast.error('আপনার ডিভাইসে GPS সুবিধা সমর্থিত নয়।');
+      return;
+    }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -148,15 +164,29 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
           markerInstanceRef.current.setLatLng([latitude, longitude]);
         }
         reverseGeocode(latitude, longitude);
+        if (showToast) toast.success('বর্তমান অবস্থান সফলভাবে চিহ্নিত হয়েছে! 📍');
       },
       (err) => {
-        console.error(err);
         setLocating(false);
+        if (showToast) {
+          if (err.code === 1) {
+            toast.error('লোকেশন পারমিশন দেওয়া হয়নি। ব্রাউজার সেটিং থেকে Allow করুন অথবা ম্যাপে পয়েন্ট সিলেক্ট করুন।');
+          } else {
+            toast.error('GPS সিগন্যাল পাওয়া যায়নি। ম্যাপে সরাসরি পিন ড্র্যাগ করুন।');
+          }
+        }
         reverseGeocode(selectedCoords.lat, selectedCoords.lng);
       },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
     );
-  };
+  }, [selectedCoords, reverseGeocode]);
+
+  // Initial geocode when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      reverseGeocode(selectedCoords.lat, selectedCoords.lng);
+    }
+  }, [isOpen, selectedCoords.lat, selectedCoords.lng, reverseGeocode]);
 
   // 4. Initialize Leaflet Map
   useEffect(() => {
@@ -170,49 +200,55 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
       mapInstanceRef.current = null;
     }
 
-    const map = L.map(mapContainerRef.current, {
-      zoomControl: false,
-      attributionControl: false
-    }).setView([selectedCoords.lat, selectedCoords.lng], 16);
-    mapInstanceRef.current = map;
+    try {
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([selectedCoords.lat, selectedCoords.lng], 16);
+      mapInstanceRef.current = map;
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(map);
 
-    const customIcon = L.divIcon({
-      html: `<div style="display:flex; justify-content:center; align-items:center; width:40px; height:40px;">
-        <svg viewBox="0 0 24 24" width="38" height="38" fill="#db2777" stroke="#ffffff" stroke-width="2" style="filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.3));">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-12-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-      </div>`,
-      className: 'custom-leaflet-marker',
-      iconSize: [40, 40],
-      iconAnchor: [20, 38]
-    });
+      const customIcon = L.divIcon({
+        html: `<div style="display:flex; justify-content:center; align-items:center; width:40px; height:40px;">
+          <svg viewBox="0 0 24 24" width="38" height="38" fill="#9333ea" stroke="#ffffff" stroke-width="2" style="filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.3));">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-12-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+        </div>`,
+        className: 'custom-leaflet-marker',
+        iconSize: [40, 40],
+        iconAnchor: [20, 38]
+      });
 
-    const marker = L.marker([selectedCoords.lat, selectedCoords.lng], {
-      draggable: true,
-      icon: customIcon
-    }).addTo(map);
-    markerInstanceRef.current = marker;
+      const marker = L.marker([selectedCoords.lat, selectedCoords.lng], {
+        draggable: true,
+        icon: customIcon
+      }).addTo(map);
+      markerInstanceRef.current = marker;
 
-    marker.on('dragend', () => {
-      const pos = marker.getLatLng();
-      const newCoords = { lat: pos.lat(), lng: pos.lng() };
-      setSelectedCoords(newCoords);
-      reverseGeocode(newCoords.lat, newCoords.lng);
-    });
+      marker.on('dragend', () => {
+        const pos = marker.getLatLng();
+        const newCoords = { lat: pos.lat, lng: pos.lng };
+        setSelectedCoords(newCoords);
+        reverseGeocode(newCoords.lat, newCoords.lng);
+      });
 
-    map.on('click', (e) => {
-      const pos = e.latlng;
-      marker.setLatLng(pos);
-      const newCoords = { lat: pos.lat(), lng: pos.lng() };
-      setSelectedCoords(newCoords);
-      reverseGeocode(newCoords.lat, newCoords.lng);
-    });
+      map.on('click', (e) => {
+        const pos = e.latlng;
+        marker.setLatLng(pos);
+        const newCoords = { lat: pos.lat, lng: pos.lng };
+        setSelectedCoords(newCoords);
+        reverseGeocode(newCoords.lat, newCoords.lng);
+      });
 
-    getGpsPosition();
+      // Attempt GPS silently
+      getGpsPosition(false);
+    } catch (e) {
+      console.error('Error initializing map:', e);
+      setLoadError(true);
+    }
 
     return () => {
       if (mapInstanceRef.current) {
@@ -220,10 +256,10 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
         mapInstanceRef.current = null;
       }
     };
-  }, [mapLoaded, isOpen]);
+  }, [mapLoaded, isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAddressSearch = async () => {
-    if (!searchQuery.trim() || !window.L) return;
+    if (!searchQuery.trim()) return;
 
     setGeocoding(true);
     try {
@@ -253,7 +289,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             markerInstanceRef.current.setLatLng([newCoords.lat, newCoords.lng]);
           }
         } else {
-          setAddress('লোকেশনটি খুঁজে পাওয়া যায়নি');
+          toast.error('লোকেশনটি খুঁজে পাওয়া যায়নি। অনুগ্রহ করে স্পেলিং চেক করুন।');
         }
       }
     } catch (error) {
@@ -275,84 +311,88 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
         className="relative w-full h-full sm:max-w-xl sm:h-[85vh] bg-white rounded-none sm:rounded-[2rem] overflow-hidden shadow-2xl flex flex-col cursor-default"
       >
         
-        {/* Header (Contains Close Button and Search Input) */}
+        {/* Header */}
         <div className="absolute top-4 left-4 right-4 z-[1000] flex flex-col gap-3 pointer-events-none">
           <div className="flex items-center justify-between">
             <button 
               type="button" 
               onClick={onClose} 
-              className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-lg flex items-center justify-center hover:bg-slate-50 transition-colors pointer-events-auto border border-slate-100"
+              className="w-10 h-10 rounded-full bg-white/95 backdrop-blur shadow-lg flex items-center justify-center hover:bg-slate-50 transition-colors pointer-events-auto border border-slate-100 cursor-pointer"
               title="বন্ধ করুন"
             >
               <X size={20} className="text-slate-700 font-bold" />
             </button>
             
-            <div className="px-4 py-2 rounded-full bg-purple-600/90 backdrop-blur shadow-md text-white text-[11px] font-black tracking-widest uppercase border border-purple-500 pointer-events-auto">
+            <div className="px-4 py-2 rounded-full bg-purple-600/95 backdrop-blur shadow-md text-white text-[11px] font-black tracking-widest uppercase border border-purple-500 pointer-events-auto">
               ডেলিভারি লোকেশন
             </div>
           </div>
 
           {/* Place Search Bar */}
-          {mapLoaded && (
-            <div className="flex items-center bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 pointer-events-auto w-full">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddressSearch()}
-                placeholder="ম্যাপে এলাকা বা রোড খুঁজুন (যেমন: হাতিরঝিল)..."
-                className="flex-1 bg-transparent px-3 py-2 text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400"
-              />
-              <button
-                type="button"
-                onClick={handleAddressSearch}
-                className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-all shrink-0"
-              >
-                <Search size={14} />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 pointer-events-auto w-full">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddressSearch()}
+              placeholder="ম্যাপে এলাকা বা রোড খুঁজুন (যেমন: ধানমন্ডি, গুলশান)..."
+              className="flex-1 bg-transparent px-3 py-2 text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400"
+            />
+            <button
+              type="button"
+              onClick={handleAddressSearch}
+              className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition-all shrink-0 cursor-pointer"
+            >
+              <Search size={14} />
+            </button>
+          </div>
         </div>
 
         {/* Map Container */}
         <div className="flex-1 w-full bg-slate-100 relative min-h-[300px]">
-          {!mapLoaded ? (
+          {!mapLoaded && !loadError ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
               <Loader2 className="animate-spin text-purple-600" size={32} />
               <p className="text-xs font-black text-slate-400 uppercase tracking-widest">ম্যাপ লোড হচ্ছে...</p>
+            </div>
+          ) : loadError ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center bg-slate-50">
+              <AlertCircle className="text-amber-500" size={36} />
+              <p className="text-sm font-black text-slate-800">ম্যাপ ভিজ্যুয়াল লোড করা যায়নি</p>
+              <p className="text-xs text-slate-500 max-w-sm">
+                ইন্টারনেট বা ব্রাউজার সেটিংয়ের কারণে ম্যাপ দেখাতে বিলম্ব হচ্ছে। তবে আপনি নিচের বক্সে সরাসরি ঠিকানা লিখে নিশ্চিত করতে পারেন।
+              </p>
             </div>
           ) : (
             <div ref={mapContainerRef} className="w-full h-full z-10" />
           )}
 
-          {/* Floating Current Location Button */}
-          {mapLoaded && (
-            <button
-              type="button"
-              onClick={getGpsPosition}
-              disabled={locating}
-              className="absolute bottom-6 right-6 z-[1000] w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:text-purple-600 transition-colors active:scale-95 disabled:opacity-75"
-              title="আমার অবস্থান চিহ্নিত করুন"
-            >
-              {locating ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <Navigation size={20} className="fill-current" />
-              )}
-            </button>
-          )}
+          {/* Floating Current Location GPS Button */}
+          <button
+            type="button"
+            onClick={() => getGpsPosition(true)}
+            disabled={locating}
+            className="absolute bottom-6 right-6 z-[1000] w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:text-purple-600 transition-colors active:scale-95 disabled:opacity-75 cursor-pointer"
+            title="আমার বর্তমান GPS অবস্থান খুঁজুন"
+          >
+            {locating ? (
+              <Loader2 className="animate-spin text-purple-600" size={20} />
+            ) : (
+              <Navigation size={20} className="fill-current text-purple-600" />
+            )}
+          </button>
         </div>
 
         {/* Bottom Address details card */}
-        <div className="bg-white border-t border-slate-100 px-6 py-6 space-y-4 shadow-2xl z-30">
+        <div className="bg-white border-t border-slate-100 px-6 py-5 space-y-3.5 shadow-2xl z-30">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0 mt-0.5 border border-purple-100/50">
               <MapPin size={20} className="fill-current" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">চিহ্নিত ঠিকানা (আপনি চাইলে এডিট করতে পারেন)</span>
-                {geocoding && <Loader2 className="animate-spin text-slate-400" size={10} />}
+                <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">চিহ্নিত ঠিকানা (প্রয়োজনে এডিট করুন)</span>
+                {geocoding && <Loader2 className="animate-spin text-purple-600" size={10} />}
               </div>
               <textarea
                 value={address}
@@ -365,7 +405,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
           {/* Delivery radius alert constraint */}
           {outOfRadius && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex gap-2 items-center">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-2.5 flex gap-2 items-center">
               <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shrink-0"></div>
               <p className="text-[10px] text-red-700 font-bold leading-tight">
                 দুঃখিত! পিন করা লোকেশনটি আমাদের স্ট্যান্ডার্ড ডেলিভারি রেডিয়াসের ({radiusLimit} কি.মি.) বাইরে অবস্থিত (দূরত্ব: {distanceFromShop?.toFixed(1)} কি.মি.)।
@@ -374,7 +414,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
           )}
 
           {!outOfRadius && distanceFromShop !== null && (
-            <div className="bg-green-50/50 border border-green-200/50 rounded-xl p-2.5 flex gap-2 items-center">
+            <div className="bg-green-50/50 border border-green-200/50 rounded-xl p-2 flex gap-2 items-center">
               <div className="w-2 h-2 bg-green-500 rounded-full shrink-0"></div>
               <p className="text-[10px] text-green-700 font-bold leading-none">
                 লোকেশনটি ডেলিভারি সীমার ভিতরে রয়েছে (দূরত্ব: {distanceFromShop?.toFixed(1)} কি.মি.)।
@@ -386,7 +426,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             type="button"
             disabled={outOfRadius}
             onClick={() => onConfirm(selectedCoords, address)}
-            className="w-full py-4 bg-purple-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-sm hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/25 active:scale-[0.99] flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-purple-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-xs sm:text-sm hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/25 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
           >
             লোকেশন নিশ্চিত করুন (Confirm Location)
           </button>

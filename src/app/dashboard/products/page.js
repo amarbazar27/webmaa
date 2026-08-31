@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import { 
   Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, 
   AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff, 
-  Inbox, Layers, FolderPlus, HelpCircle
+  Inbox, Layers, FolderPlus, HelpCircle, Download
 } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
@@ -246,6 +246,50 @@ export default function ProductsPage() {
 
   const totalValue = products.reduce((acc, p) => acc + (parseFloat(p.price) || 0) * (parseInt(p.stock) || 0), 0);
 
+  const exportProductsToCSV = () => {
+    if (filteredProducts.length === 0) {
+      toast.error('এক্সপোর্ট করার মতো কোনো প্রোডাক্ট পাওয়া যায়নি।');
+      return;
+    }
+
+    const headers = [
+      'Product ID',
+      'Product Name',
+      'Category',
+      'Subcategory',
+      'Price (BDT)',
+      'Cost Price (BDT)',
+      'Stock Quantity',
+      'SKU',
+      'Status',
+      'Image URL'
+    ];
+
+    const rows = filteredProducts.map(p => [
+      `"${p.id}"`,
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${(p.category || '').replace(/"/g, '""')}"`,
+      `"${(p.subCategory || '').replace(/"/g, '""')}"`,
+      p.price || 0,
+      p.costPrice || 0,
+      p.stock || 0,
+      `"${(p.sku || '').replace(/"/g, '""')}"`,
+      p.hidden ? 'Hidden' : 'Active',
+      `"${(p.imageUrl || p.images?.[0] || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `products_catalog_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`${filteredProducts.length} টি প্রোডাক্ট সফলভাবে CSV ফাইলে ডাউনলোড হয়েছে! 📥`);
+  };
+
   return (
     <div className="space-y-8 animate-slide-in pb-12">
       {/* Header with Title & Action Buttons */}
@@ -255,6 +299,15 @@ export default function ProductsPage() {
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">প্রোডাক্ট স্টক, মূল্য ও ক্যাটাগরি একসাথে সহজভাবে পরিচালনা করুন</p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={exportProductsToCSV}
+            className="px-4 py-3 bg-white hover:bg-slate-50 text-purple-700 font-black rounded-2xl text-xs flex items-center gap-1.5 border border-purple-200 transition-all shadow-xs cursor-pointer active:scale-95"
+            title="প্রোডাক্ট তালিকা CSV/Excel এ ডাউনলোড করুন"
+          >
+            <Download size={15} />
+            <span>CSV এক্সপোর্ট</span>
+          </button>
           <button
             type="button"
             onClick={() => setIsQuickCatModalOpen(true)}

@@ -103,6 +103,58 @@ export default function IncompleteOrdersPage() {
     return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`;
   };
 
+  const exportDraftsToCSV = () => {
+    if (filteredDrafts.length === 0) {
+      toast.error('এক্সপোর্ট করার মতো কোনো ইনকমপ্লিট অর্ডার পাওয়া যায়নি।');
+      return;
+    }
+
+    const headers = [
+      'Draft ID',
+      'Date & Time',
+      'Customer Name',
+      'Customer Phone',
+      'Delivery Address',
+      'Items in Cart',
+      'Cart Total (BDT)',
+      'Status',
+      'Last Step Completed'
+    ];
+
+    const rows = filteredDrafts.map(d => {
+      let dateStr = '';
+      try {
+        const dateObj = d.updatedAt?.toDate ? d.updatedAt.toDate() : d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt || d.updatedAt);
+        dateStr = isNaN(dateObj.getTime()) ? '' : dateObj.toLocaleString('bn-BD');
+      } catch (e) {}
+
+      const itemsStr = (d.items || []).map(i => `${i.name} (Qty: ${i.quantity}, Price: ${i.price})`).join('; ');
+
+      return [
+        `"#${d.id?.slice(-6).toUpperCase()}"`,
+        `"${dateStr}"`,
+        `"${(d.customerName || '').replace(/"/g, '""')}"`,
+        `"${(d.customerPhone || '').replace(/"/g, '""')}"`,
+        `"${(d.customerAddress || '').replace(/"/g, '""')}"`,
+        `"${itemsStr.replace(/"/g, '""')}"`,
+        d.total || 0,
+        `"${d.status || 'abandoned'}"`,
+        `"${d.step || 'cart'}"`
+      ];
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `abandoned_carts_${shop?.shopSlug || 'export'}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`${filteredDrafts.length} টি ড্রাফট কার্ট সফলভাবে CSV ফাইলে ডাউনলোড হয়েছে! 📥`);
+  };
+
   return (
     <div className="space-y-8 p-6 max-w-7xl mx-auto">
       
@@ -114,9 +166,20 @@ export default function IncompleteOrdersPage() {
              ইনকমপ্লিট অর্ডার ট্র্যাক করুন এবং ওয়ান-ক্লিক হোয়াটসঅ্যাপ/কল দিয়ে রিকভার করুন
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-purple-50 text-purple-700 border border-purple-100 text-xs font-black uppercase tracking-wider">
-           <RefreshCw size={14} className="animate-spin shrink-0" />
-           <span>রিয়েল-টাইম আপডেট হচ্ছে</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={exportDraftsToCSV}
+            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-purple-700 font-black rounded-2xl text-xs flex items-center gap-2 border border-purple-200 shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+            title="ইনকমপ্লিট কার্ট তালিকা CSV/Excel এ ডাউনলোড করুন"
+          >
+            <Download size={14} />
+            <span>CSV এক্সপোর্ট</span>
+          </button>
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-purple-50 text-purple-700 border border-purple-100 text-xs font-black uppercase tracking-wider">
+             <RefreshCw size={14} className="animate-spin shrink-0" />
+             <span>লাইভ আপডেট</span>
+          </div>
         </div>
       </div>
 

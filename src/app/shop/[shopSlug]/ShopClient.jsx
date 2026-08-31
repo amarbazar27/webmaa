@@ -4333,16 +4333,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <h4 className="font-black text-sm text-slate-900 truncate">{item.name}</h4>
                     {item.note && <p className="text-[10px] font-bold text-purple-600 truncate mt-0.5 italic">নোট: {item.note}</p>}
                     
-                    {/* Editable Total Price Box & Read-only Unit Price */}
+                    {/* Read-Only Total Price Badge & Unit Price Display */}
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                      <span className="text-xs font-black text-slate-500">৳</span>
-                      <input 
-                        type="number" 
-                        value={item.price === '' ? '' : Math.round(parseFloat(item.price || 0) * (parseFloat(item.quantity) || 0))} 
-                        onChange={e => updateCartItemTotalPrice(item.id, e.target.value)} 
-                        className="w-16 px-1.5 py-1 text-xs font-black text-purple-700 bg-purple-50 border border-purple-200 rounded-xl outline-none focus:border-purple-500 text-center" 
-                        title="মোট দাম (এডিটেবল)"
-                      />
+                      <span className="px-2.5 py-1 text-xs font-black text-purple-700 bg-purple-50 border border-purple-200 rounded-xl shadow-xs">
+                        ৳{Math.round(parseFloat(item.price || 0) * (parseFloat(item.quantity) || 0)).toLocaleString()}
+                      </span>
                       <span className="text-[10px] font-bold text-slate-400">মোট</span>
                       
                       {(() => {
@@ -4352,7 +4347,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         const baseQty = originalProduct?.smartCalc?.enabled ? originalProduct.smartCalc.baseQuantity : 1;
                         return (
                           <span className="text-[10px] font-black text-slate-500 border-l border-slate-200 pl-2 ml-1">
-                            ৳{basePrice} / {baseQty !== 1 ? `${baseQty} ` : ''}{baseUnit} (মূল দাম)
+                            ৳{basePrice} / {baseQty !== 1 ? `${baseQty} ` : ''}{baseUnit}
                           </span>
                         );
                       })()}

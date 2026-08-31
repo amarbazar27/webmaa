@@ -563,6 +563,83 @@ export default function OrdersPage() {
      );
   }
 
+  const exportOrdersToCSV = () => {
+    const listToExport = filteredOrders.filter(order => {
+      const matchFilter = filter === 'all' || order.status === filter;
+      const searchLower = searchTerm.toLowerCase();
+      const matchSearch =
+        !searchTerm ||
+        order.id?.toLowerCase().includes(searchLower) ||
+        order.orderIdVisual?.toLowerCase().includes(searchLower) ||
+        order.customerName?.toLowerCase().includes(searchLower) ||
+        order.customerPhone?.includes(searchLower) ||
+        order.customerAddress?.toLowerCase().includes(searchLower);
+      return matchFilter && matchSearch;
+    });
+
+    if (listToExport.length === 0) {
+      toast.error('এক্সপোর্ট করার মতো কোনো অর্ডার পাওয়া যায়নি।');
+      return;
+    }
+
+    const headers = [
+      'Order ID',
+      'Date & Time',
+      'Customer Name',
+      'Customer Phone',
+      'Delivery Address',
+      'Items Ordered',
+      'Subtotal (BDT)',
+      'Delivery Fee (BDT)',
+      'Discount (BDT)',
+      'Total Amount (BDT)',
+      'Payment Method',
+      'Payment Status',
+      'Order Status',
+      'Courier Tracking / Consignment',
+      'Customer Note'
+    ];
+
+    const rows = listToExport.map(o => {
+      let dateStr = '';
+      try {
+        const d = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
+        dateStr = isNaN(d.getTime()) ? '' : d.toLocaleString('bn-BD');
+      } catch (e) {}
+
+      const itemsStr = (o.items || []).map(i => `${i.name} (Qty: ${i.quantity}, Price: ${i.price})`).join('; ');
+
+      return [
+        `"#${o.orderIdVisual || o.id?.slice(-6).toUpperCase()}"`,
+        `"${dateStr}"`,
+        `"${(o.customerName || '').replace(/"/g, '""')}"`,
+        `"${(o.customerPhone || '').replace(/"/g, '""')}"`,
+        `"${(o.customerAddress || '').replace(/"/g, '""')}"`,
+        `"${itemsStr.replace(/"/g, '""')}"`,
+        o.subtotal || o.total || 0,
+        o.deliveryFee || 0,
+        o.discount || 0,
+        o.total || 0,
+        `"${o.paymentMethod || 'COD'}"`,
+        `"${o.paymentStatus || 'Unpaid'}"`,
+        `"${o.status || 'Pending'}"`,
+        `"${(o.trackingCode || o.consignmentId || '').replace(/"/g, '""')}"`,
+        `"${(o.customerNote || '').replace(/"/g, '""')}"`
+      ];
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `orders_${shop?.shopSlug || 'export'}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`${listToExport.length} টি অর্ডার সফলভাবে CSV ফাইলে ডাউনলোড হয়েছে! 📥`);
+  };
+
   return (
     <>
       <div className="max-w-6xl mx-auto space-y-8 animate-slide-in pb-12">
@@ -572,29 +649,41 @@ export default function OrdersPage() {
           <p className="text-sm text-slate-500 font-medium">আজকের ও পূর্বের সকল কাস্টমার অর্ডার ভেরিফাই ও পরিচালনা করুন।</p>
         </div>
 
-        {/* Quick Scope Switcher */}
-        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm self-start md:self-auto">
+        {/* Quick Scope Switcher & Export Action */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm self-start md:self-auto">
+            <button
+              type="button"
+              onClick={() => { setOrderScope('today'); setSelectedDate(todayStr); }}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                orderScope === 'today'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              📅 আজকের অর্ডার ({todayOrders.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOrderScope('all'); setSelectedDate(''); }}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                orderScope === 'all'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              📋 সব অর্ডার ({orders.length})
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={() => { setOrderScope('today'); setSelectedDate(todayStr); }}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              orderScope === 'today'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
+            onClick={exportOrdersToCSV}
+            className="px-4 py-3 bg-white hover:bg-slate-50 text-purple-700 font-black rounded-2xl text-xs flex items-center gap-2 border border-purple-200 shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+            title="বর্তমান অর্ডারের তালিকা CSV/Excel এ ডাউনলোড করুন"
           >
-            📅 আজকের অর্ডার ({todayOrders.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => { setOrderScope('all'); setSelectedDate(''); }}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              orderScope === 'all'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            📋 সব অর্ডার ({orders.length})
+            <Download size={15} />
+            <span>CSV / Excel এক্সপোর্ট</span>
           </button>
         </div>
       </div>
