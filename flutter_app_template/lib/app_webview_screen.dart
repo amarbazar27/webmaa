@@ -237,86 +237,108 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                       return true; // Consumed — don't open in-app
                     }
 
-                    // Auth popup: show in in-app dialog WebView (fallback if native sign-in fails)
+                    // Popup window: show in in-app dialog WebView with dynamic title
                     showDialog(
                       context: context,
                       barrierDismissible: false,
                       builder: (dialogContext) {
-                        return Dialog(
-                          insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          clipBehavior: Clip.antiAlias,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.85,
-                            child: Column(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                  color: const Color(0xFFF1F5F9),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Row(
+                        String dialogTitle = isAuthPopup ? 'Google Sign In' : 'Secure In-App Browser';
+                        return StatefulBuilder(
+                          builder: (context, setDialogState) {
+                            return Dialog(
+                              insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                              clipBehavior: Clip.antiAlias,
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width,
+                                height: MediaQuery.of(context).size.height * 0.85,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      color: const Color(0xFFF1F5F9),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Icon(Icons.lock_outline_rounded, size: 16, color: Color(0xFF475569)),
-                                          SizedBox(width: 6),
-                                          Text(
-                                            'Google Sign In',
-                                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  isAuthPopup ? Icons.lock_outline_rounded : Icons.language_rounded,
+                                                  size: 16,
+                                                  color: const Color(0xFF475569),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Expanded(
+                                                  child: Text(
+                                                    dialogTitle,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E293B)),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF475569)),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onPressed: () {
+                                              if (Navigator.canPop(dialogContext)) {
+                                                Navigator.pop(dialogContext);
+                                              }
+                                            },
                                           ),
                                         ],
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF475569)),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                        onPressed: () {
+                                    ),
+                                    Expanded(
+                                      child: InAppWebView(
+                                        windowId: createWindowAction.windowId,
+                                        initialSettings: InAppWebViewSettings(
+                                          javaScriptEnabled: true,
+                                          domStorageEnabled: true,
+                                          databaseEnabled: true,
+                                          thirdPartyCookiesEnabled: true,
+                                          sharedCookiesEnabled: true,
+                                          mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
+                                          supportMultipleWindows: false,
+                                          javaScriptCanOpenWindowsAutomatically: true,
+                                          allowsInlineMediaPlayback: true,
+                                          userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
+                                        ),
+                                        onTitleChanged: (controller, title) {
+                                          if (title != null && title.trim().isNotEmpty && title != 'about:blank') {
+                                            setDialogState(() {
+                                              dialogTitle = title.trim();
+                                            });
+                                          }
+                                        },
+                                        onCloseWindow: (controller) {
                                           if (Navigator.canPop(dialogContext)) {
                                             Navigator.pop(dialogContext);
                                           }
                                         },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: InAppWebView(
-                                    windowId: createWindowAction.windowId,
-                                    initialSettings: InAppWebViewSettings(
-                                      javaScriptEnabled: true,
-                                      domStorageEnabled: true,
-                                      databaseEnabled: true,
-                                      thirdPartyCookiesEnabled: true,
-                                      sharedCookiesEnabled: true,
-                                      mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
-                                      supportMultipleWindows: false,
-                                      javaScriptCanOpenWindowsAutomatically: true,
-                                      allowsInlineMediaPlayback: true,
-                                      userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
-                                    ),
-                                    onCloseWindow: (controller) {
-                                      if (Navigator.canPop(dialogContext)) {
-                                        Navigator.pop(dialogContext);
-                                      }
-                                    },
-                                    onLoadStop: (controller, url) async {
-                                      final urlStr = url?.toString().toLowerCase() ?? '';
-                                      if (urlStr.contains('/dashboard') || 
-                                          urlStr.contains('/become-retailer') ||
-                                          urlStr.contains('/superadmin')) {
-                                        Future.delayed(const Duration(milliseconds: 500), () {
-                                          if (Navigator.canPop(dialogContext)) {
-                                            Navigator.pop(dialogContext);
+                                        onLoadStop: (controller, url) async {
+                                          final urlStr = url?.toString().toLowerCase() ?? '';
+                                          if (urlStr.contains('/dashboard') || 
+                                              urlStr.contains('/become-retailer') ||
+                                              urlStr.contains('/superadmin')) {
+                                            Future.delayed(const Duration(milliseconds: 500), () {
+                                              if (Navigator.canPop(dialogContext)) {
+                                                Navigator.pop(dialogContext);
+                                              }
+                                            });
                                           }
-                                        });
-                                      }
-                                    },
-                                  ),
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                            );
+                          },
                         );
                       },
                     );

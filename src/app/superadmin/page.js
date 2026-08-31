@@ -13,6 +13,7 @@ import dynamic from 'next/dynamic';
 // Phase 1.3: Dynamic import — SuperadminBroadcastPanel is 34KB
 const SuperadminBroadcastPanel = dynamic(() => import('@/components/superadmin/SuperadminBroadcastPanel'), { ssr: false });
 const SuperadminAppBuilder = dynamic(() => import('@/components/superadmin/SuperadminAppBuilder'), { ssr: false });
+const SuperadminCustomersPanel = dynamic(() => import('@/components/superadmin/SuperadminCustomersPanel'), { ssr: false });
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
@@ -1043,6 +1044,18 @@ export default function SuperAdminPage() {
             >
               <Store size={16} />
               <span>মার্চেন্ট ও স্টোর ডিরেক্টরি</span>
+            </button>
+
+            <button
+              onClick={() => setSuperadminTab('customers')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                superadminTab === 'customers'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Users size={16} />
+              <span>কাস্টমার ও ইউজার ডিরেক্টরি</span>
             </button>
             
             <button
@@ -2352,6 +2365,12 @@ export default function SuperAdminPage() {
         </div>
       </div>
       </>)}
+
+      {superadminTab === 'customers' && (
+        <div className="animate-fade-in">
+          <SuperadminCustomersPanel />
+        </div>
+      )}
 
       {superadminTab === 'inventory' && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

@@ -804,7 +804,21 @@ export default function Home() {
 
     const importCartParam = encodeURIComponent(JSON.stringify(serialized));
     const separator = shopCheckoutUrl.includes('?') ? '&' : '?';
-    const redirectUrl = `${shopCheckoutUrl}${separator}importCart=${importCartParam}`;
+
+    // Synchronize cross-store customer profile params
+    let profileParams = '';
+    const storedProfile = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('bd_customer_profile') || '{}') : {};
+    const custName = user?.displayName || userData?.name || storedProfile.name || '';
+    const custPhone = userData?.phone || storedProfile.phone || '';
+    const custAddress = userData?.address || storedProfile.address || '';
+    const custEmail = user?.email || userData?.email || storedProfile.email || '';
+
+    if (custName) profileParams += `&customerName=${encodeURIComponent(custName)}`;
+    if (custPhone) profileParams += `&customerPhone=${encodeURIComponent(custPhone)}`;
+    if (custAddress) profileParams += `&customerAddress=${encodeURIComponent(custAddress)}`;
+    if (custEmail) profileParams += `&customerEmail=${encodeURIComponent(custEmail)}`;
+
+    const redirectUrl = `${shopCheckoutUrl}${separator}importCart=${importCartParam}${profileParams}`;
 
     window.open(redirectUrl, '_blank');
   };
@@ -2705,20 +2719,22 @@ export default function Home() {
       {/* ── Cart Drawer Overlay ── */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[150] flex justify-end">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsCartOpen(false)} />
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsCartOpen(false)} />
           
-          <div className="relative w-full max-w-md bg-[#09090f] border-l border-white/10 h-full flex flex-col justify-between shadow-2xl animate-slide-in text-white z-10">
+          <div className="relative w-full max-w-md bg-slate-50 border-l border-slate-200 h-full flex flex-col justify-between shadow-2xl animate-slide-in text-slate-900 z-10 cart-drawer">
             {/* Header */}
-            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#05050a]">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-white shadow-sm">
               <div className="flex items-center gap-2.5">
-                <ShoppingCart size={20} className="text-purple-400 animate-pulse" />
+                <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
+                  <ShoppingCart size={20} className="animate-pulse" />
+                </div>
                 <div>
-                  <h3 className="font-black text-lg text-white">Shopping Cart</h3>
-                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{cartItemCount} Products Selected</p>
+                  <h3 className="font-black text-lg text-slate-900 tracking-tight">Shopping Cart</h3>
+                  <p className="text-[10px] font-black text-purple-700 uppercase tracking-widest">{cartItemCount} Products Selected</p>
                 </div>
               </div>
-              <button onClick={() => setIsCartOpen(false)} className="p-2 hover:bg-white/5 rounded-xl transition-all cursor-pointer">
-                <X size={20} className="text-white/60 hover:text-white" />
+              <button onClick={() => setIsCartOpen(false)} className="p-2.5 hover:bg-slate-100 rounded-xl transition-all cursor-pointer text-slate-500 hover:text-slate-800 border border-slate-200">
+                <X size={18} strokeWidth={2.5} />
               </button>
             </div>
 
@@ -2726,36 +2742,41 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {cart.length === 0 ? (
                 <div className="py-24 text-center space-y-4">
-                  <ShoppingCart size={64} className="mx-auto text-white/10" />
-                  <p className="text-white/40 font-black uppercase tracking-wider text-xs">Your cart is empty</p>
+                  <div className="w-20 h-20 mx-auto rounded-3xl bg-slate-100 flex items-center justify-center text-slate-300">
+                    <ShoppingCart size={40} />
+                  </div>
+                  <p className="text-slate-500 font-black uppercase tracking-wider text-xs">আপনার কার্ট খালি আছে (Your cart is empty)</p>
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* 1. Primary Daripallah Store Section */}
                   {daripallahStoreItems.length > 0 && (
-                    <div className="bg-purple-950/10 border border-purple-500/20 rounded-2xl p-4 space-y-3">
-                      <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
-                        👑 {globalConfig?.brandName || 'BDRetailers'} Store Products
-                      </p>
-                      <div className="space-y-3 divide-y divide-purple-500/10">
+                    <div className="bg-white border-2 border-purple-200 rounded-3xl p-4 space-y-3 shadow-sm">
+                      <div className="flex items-center justify-between pb-2 border-b border-purple-100">
+                        <p className="text-[11px] font-black text-purple-700 uppercase tracking-widest flex items-center gap-1.5">
+                          👑 {globalConfig?.brandName || 'BDRetailers'} Store Products
+                        </p>
+                        <span className="text-[10px] font-extrabold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">{daripallahStoreItems.length} আইটেম</span>
+                      </div>
+                      <div className="space-y-3 divide-y divide-purple-100">
                         {daripallahStoreItems.map(item => (
-                          <div key={item.id} className="flex gap-4 pt-3 first:pt-0">
-                            <img src={item.imageUrl} className="w-12 h-12 object-contain bg-slate-900 rounded-lg border border-white/10 shrink-0" />
+                          <div key={item.id} className="flex gap-3 pt-3 first:pt-0 items-center">
+                            <img src={item.imageUrl} className="w-14 h-14 object-contain bg-slate-50 rounded-xl border border-slate-200 shrink-0 p-1" />
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-xs font-black text-white truncate">{item.name}</h4>
-                              <p className="text-[10px] text-white/50 font-bold mt-1">৳ {item.price.toLocaleString()} x {item.quantity}</p>
+                              <h4 className="text-xs font-black text-slate-900 truncate leading-snug">{item.name}</h4>
+                              <p className="text-xs text-purple-700 font-extrabold mt-0.5">৳ {item.price.toLocaleString()} x {item.quantity}</p>
                               
                               <div className="flex items-center gap-2 mt-2">
-                                <button onClick={() => updateCartQty(item.productId, -1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Minus size={10} /></button>
+                                <button onClick={() => updateCartQty(item.productId, -1)} className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-purple-100 rounded-lg border border-slate-300 text-slate-700 hover:text-purple-700 transition-colors shrink-0 cursor-pointer font-bold"><Minus size={12} strokeWidth={2.5} /></button>
                                 <input 
                                   type="number" 
                                   min="1" 
                                   value={item.quantity} 
                                   onChange={(e) => setCartQtyDirect(item.productId, e.target.value)} 
-                                  className="w-12 bg-white/5 border border-white/10 rounded px-1 text-center text-xs font-black focus:outline-none focus:border-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-white shrink-0" 
+                                  className="w-12 bg-white border border-slate-300 rounded-lg py-0.5 text-center text-xs font-black focus:outline-none focus:border-purple-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 shrink-0 shadow-inner" 
                                 />
-                                <button onClick={() => updateCartQty(item.productId, 1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Plus size={10} /></button>
-                                <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"><Trash2 size={10} /> remove</button>
+                                <button onClick={() => updateCartQty(item.productId, 1)} className="w-7 h-7 flex items-center justify-center bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors shrink-0 cursor-pointer font-bold"><Plus size={12} strokeWidth={2.5} /></button>
+                                <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"><Trash2 size={11} /> remove</button>
                               </div>
                             </div>
                           </div>
@@ -2768,29 +2789,32 @@ export default function Home() {
                   {Object.entries(thirdPartyItemsByShop).map(([shopId, shopData]) => {
                     const shopCheckoutUrl = getStoreLink(shopData.shopSlug, shopData.customDomain, shopData.domainStatus);
                     return (
-                      <div key={shopId} className="bg-white/[0.02] border border-white/10 rounded-2xl p-4 space-y-3">
-                        <p className="text-[10px] font-black text-white/60 uppercase tracking-widest flex items-center gap-1.5">
-                          🏪 {shopData.shopName}
-                        </p>
-                        <div className="space-y-3 divide-y divide-white/5">
+                      <div key={shopId} className="bg-white border border-slate-200 rounded-3xl p-4 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                          <p className="text-[11px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
+                            🏪 {shopData.shopName}
+                          </p>
+                          <span className="text-[10px] font-extrabold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">{shopData.items.length} আইটেম</span>
+                        </div>
+                        <div className="space-y-3 divide-y divide-slate-100">
                           {shopData.items.map(item => (
-                            <div key={item.id} className="flex gap-4 pt-3 first:pt-0">
-                              <img src={item.imageUrl} className="w-12 h-12 object-contain bg-slate-900 rounded-lg border border-white/10 shrink-0" />
+                            <div key={item.id} className="flex gap-3 pt-3 first:pt-0 items-center">
+                              <img src={item.imageUrl} className="w-14 h-14 object-contain bg-slate-50 rounded-xl border border-slate-200 shrink-0 p-1" />
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-black text-white truncate">{item.name}</h4>
-                                <p className="text-[10px] text-white/50 font-bold mt-1">৳ {item.price.toLocaleString()} x {item.quantity}</p>
+                                <h4 className="text-xs font-black text-slate-900 truncate leading-snug">{item.name}</h4>
+                                <p className="text-xs text-purple-700 font-extrabold mt-0.5">৳ {item.price.toLocaleString()} x {item.quantity}</p>
                                 
                                 <div className="flex items-center gap-2 mt-2">
-                                  <button onClick={() => updateCartQty(item.productId, -1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Minus size={10} /></button>
+                                  <button onClick={() => updateCartQty(item.productId, -1)} className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-purple-100 rounded-lg border border-slate-300 text-slate-700 hover:text-purple-700 transition-colors shrink-0 cursor-pointer font-bold"><Minus size={12} strokeWidth={2.5} /></button>
                                   <input 
                                     type="number" 
                                     min="1" 
                                     value={item.quantity} 
                                     onChange={(e) => setCartQtyDirect(item.productId, e.target.value)} 
-                                    className="w-12 bg-white/5 border border-white/10 rounded px-1 text-center text-xs font-black focus:outline-none focus:border-purple-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-white shrink-0" 
+                                    className="w-12 bg-white border border-slate-300 rounded-lg py-0.5 text-center text-xs font-black focus:outline-none focus:border-purple-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 shrink-0 shadow-inner" 
                                   />
-                                  <button onClick={() => updateCartQty(item.productId, 1)} className="p-1 hover:bg-white/10 rounded border border-white/10 text-white/60 hover:text-white shrink-0"><Plus size={10} /></button>
-                                  <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"><Trash2 size={10} /> remove</button>
+                                  <button onClick={() => updateCartQty(item.productId, 1)} className="w-7 h-7 flex items-center justify-center bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors shrink-0 cursor-pointer font-bold"><Plus size={12} strokeWidth={2.5} /></button>
+                                  <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"><Trash2 size={11} /> remove</button>
                                 </div>
                               </div>
                             </div>
@@ -2800,11 +2824,11 @@ export default function Home() {
                         <div className="pt-2">
                           <button
                             onClick={() => handleCheckoutThirdParty(shopData, shopCheckoutUrl)}
-                            className="w-full py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg shadow-purple-500/20 active:scale-95 transition-all text-center cursor-pointer"
+                            className="w-full py-3 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-purple-500/20 active:scale-95 transition-all text-center cursor-pointer"
                           >
                             Checkout at {shopData.shopName} (৳ {shopData.items.reduce((t, i) => t + i.price * i.quantity, 0).toLocaleString()})
                           </button>
-                          <p className="text-[8px] text-center text-white/40 mt-1">অন্যান্য স্টোরের চেকআউট ঐ স্টোরে গিয়ে করতে হবে</p>
+                          <p className="text-[9px] text-center text-slate-500 font-bold mt-1.5">অন্যান্য স্টোরের চেকআউট ঐ স্টোরে গিয়ে করতে হবে</p>
                         </div>
                       </div>
                     );
@@ -2815,24 +2839,24 @@ export default function Home() {
 
             {/* Footer */}
             {cart.length > 0 && (
-              <div className="p-6 border-t border-white/10 bg-[#05050a] space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/50 text-sm font-bold">Subtotal Total</span>
-                  <span className="text-white text-xl font-black">৳ {cartTotal.toLocaleString()}</span>
+              <div className="p-6 border-t border-slate-200 bg-white space-y-4 shadow-lg">
+                <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <span className="text-slate-600 text-sm font-bold">Subtotal Total</span>
+                  <span className="text-slate-900 text-2xl font-black">৳ {cartTotal.toLocaleString()}</span>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {daripallahStoreItems.length > 0 && (
                     <button
                       onClick={handleCheckoutDaripallah}
-                      className="w-full py-4 bg-white text-black hover:scale-[1.02] rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xl cursor-pointer active:scale-95 transition-all"
+                      className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
                     >
                       Checkout {globalConfig?.brandName || 'BDRetailers'} Products (৳ {daripallahStoreTotal.toLocaleString()})
                     </button>
                   )}
                   <button
                     onClick={clearCart}
-                    className="w-full py-3 bg-red-950/20 hover:bg-red-900/30 border border-red-500/10 hover:border-red-500/30 text-red-400 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-2xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     Empty Cart
                   </button>
@@ -2846,13 +2870,12 @@ export default function Home() {
       {/* ── Platform-Wide Purchases Profile Drawer ── */}
       {isProfileOpen && (
         <div className="fixed inset-0 z-[150] flex justify-end">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setIsProfileOpen(false)} />
-          <div className="relative w-full max-w-md bg-[#09090f] border-l border-white/10 h-full flex flex-col justify-between shadow-2xl animate-slide-in text-white z-10">
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsProfileOpen(false)} />
+          <div className="relative w-full max-w-md bg-slate-50 border-l border-slate-200 h-full flex flex-col justify-between shadow-2xl animate-slide-in text-slate-900 z-10 profile-drawer">
             {/* Header */}
-            <div className="p-6 border-b border-white/10 bg-[#05050a] flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-3xl" />
+            <div className="p-6 border-b border-slate-200 bg-white flex flex-col relative overflow-hidden shadow-sm">
               <div className="flex justify-between items-start mb-4 relative z-10">
-                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-purple-500/20 bg-purple-700/20 flex items-center justify-center font-black text-2xl">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-purple-200 bg-purple-100 flex items-center justify-center font-black text-2xl text-purple-700 shadow-sm">
                   {user?.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user?.displayName?.[0] || 'U'}
                 </div>
                 <div className="flex items-center gap-2">
@@ -2860,37 +2883,37 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setShowLogoutConfirm(true)}
-                      className="bg-white/10 hover:bg-red-500/80 text-white px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer border border-white/20 active:scale-95"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer border border-red-200 active:scale-95"
                       title="লগআউট নিশ্চিতকরণ"
                     >
                       <LogOut size={14} />
                       <span>লগআউট</span>
                     </button>
                   )}
-                  <button onClick={() => setIsProfileOpen(false)} className="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/10 transition-colors cursor-pointer shrink-0"><X size={16} /></button>
+                  <button onClick={() => setIsProfileOpen(false)} className="bg-slate-100 hover:bg-slate-200 p-2.5 rounded-xl border border-slate-200 text-slate-600 transition-colors cursor-pointer shrink-0"><X size={16} strokeWidth={2.5} /></button>
                 </div>
               </div>
-              <h3 className="text-xl font-black relative z-10 text-white">{user?.displayName || 'সম্মানিত কাস্টমার'}</h3>
-              <p className="text-xs text-white/40 font-bold relative z-10 mt-0.5">{user?.email}</p>
+              <h3 className="text-xl font-black relative z-10 text-slate-900">{user?.displayName || 'সম্মানিত কাস্টমার'}</h3>
+              <p className="text-xs text-slate-500 font-bold relative z-10 mt-0.5">{user?.email}</p>
             </div>
 
             {/* Scrollable Content */}
             <div className="flex-1 p-6 space-y-6 overflow-y-auto min-h-0">
-              <div className="border-b border-white/5 pb-2 flex items-center justify-between">
-                <h4 className="text-xs font-black uppercase tracking-widest text-purple-400">আমার সকল অর্ডার ইতিহাস</h4>
-                <span className="text-[10px] text-white/30 font-bold bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{userOrders.length} Orders</span>
+              <div className="border-b border-slate-200 pb-2 flex items-center justify-between">
+                <h4 className="text-xs font-black uppercase tracking-widest text-purple-700">আমার সকল অর্ডার ইতিহাস</h4>
+                <span className="text-[10px] text-slate-600 font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-xs">{userOrders.length} Orders</span>
               </div>
               
               <div className="space-y-4">
                 {loadingOrders ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-white/40">
-                    <Loader2 className="animate-spin text-purple-500" size={24} />
+                  <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+                    <Loader2 className="animate-spin text-purple-600" size={24} />
                     <p className="text-[10px] font-black uppercase tracking-widest">অর্ডার লোড হচ্ছে...</p>
                   </div>
                 ) : userOrders.length === 0 ? (
-                  <div className="text-center py-16 bg-white/[0.01] rounded-3xl border border-dashed border-white/5">
-                    <ShoppingBag size={32} className="mx-auto text-white/10 mb-2" />
-                    <p className="text-xs font-bold text-white/40">কোনো অর্ডার ইতিহাস পাওয়া যায়নি</p>
+                  <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200">
+                    <ShoppingBag size={32} className="mx-auto text-slate-300 mb-2" />
+                    <p className="text-xs font-bold text-slate-500">কোনো অর্ডার ইতিহাস পাওয়া যায়নি</p>
                   </div>
                 ) : userOrders.map(order => {
                   const viewLink = order.customDomain && order.domainStatus === 'connected'
@@ -2898,21 +2921,21 @@ export default function Home() {
                     : `/shop/${order.shopSlug}/order/${order.id}`;
                     
                   return (
-                    <div key={order.id} className="bg-white/[0.01] border border-white/5 rounded-3xl overflow-hidden hover:border-purple-500/20 transition-colors group">
-                      <div className="p-4 bg-white/[0.01]">
+                    <div key={order.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden hover:border-purple-300 transition-colors group shadow-sm">
+                      <div className="p-4 bg-white">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-[9px] font-black text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
-                          <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${order.status === 'completed' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : order.status === 'cancelled' ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>{order.status || 'Pending'}</span>
+                          <span className="text-[9px] font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${order.status === 'completed' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : order.status === 'cancelled' ? 'text-red-700 bg-red-50 border-red-200' : 'text-amber-700 bg-amber-50 border-amber-200'}`}>{order.status || 'Pending'}</span>
                         </div>
-                        <p className="text-xs text-white/40 font-bold truncate">শপ: <span className="text-white font-extrabold">{order.shopName}</span></p>
-                        <p className="font-extrabold text-white text-sm mt-1">{order.items?.length || 0} Items <span className="text-purple-400">(৳{order.total?.toLocaleString()})</span></p>
+                        <p className="text-xs text-slate-500 font-bold truncate">শপ: <span className="text-slate-900 font-black">{order.shopName}</span></p>
+                        <p className="font-extrabold text-slate-900 text-sm mt-1">{order.items?.length || 0} Items <span className="text-purple-700 font-black">(৳{order.total?.toLocaleString()})</span></p>
                       </div>
-                      <div className="border-t border-white/5 bg-white/[0.005]">
+                      <div className="border-t border-slate-100 bg-slate-50">
                         <a 
                           href={viewLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="w-full py-2.5 text-[10px] font-black text-white/60 hover:text-white hover:bg-purple-600/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                          className="w-full py-2.5 text-[10px] font-black text-slate-700 hover:text-purple-700 hover:bg-purple-50 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Package size={11} /> মেমো দেখুন (View Invoice)
                         </a>
@@ -2924,15 +2947,15 @@ export default function Home() {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-white/10 text-center bg-[#05050a] flex flex-col gap-3">
+            <div className="p-4 border-t border-slate-200 text-center bg-white flex flex-col gap-3">
               <Link 
                 href="/account-delete"
                 onClick={() => setIsProfileOpen(false)}
-                className="mx-auto flex items-center justify-center gap-2 py-2 px-4 bg-white/5 hover:bg-red-500/10 text-white/50 hover:text-red-400 font-extrabold text-xs rounded-xl border border-white/10 hover:border-red-500/20 transition-all text-center max-w-[200px]"
+                className="mx-auto flex items-center justify-center gap-2 py-2 px-4 bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs rounded-xl border border-red-200 transition-all text-center max-w-[200px]"
               >
                 <Trash2 size={12} /> Delete Account
               </Link>
-              <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] font-black">{globalConfig?.brandName || 'BDRetailers'} Customer Profile &bull; 2026</p>
+              <p className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-black">{globalConfig?.brandName || 'BDRetailers'} Customer Profile &bull; 2026</p>
             </div>
           </div>
         </div>
@@ -2941,13 +2964,13 @@ export default function Home() {
       {/* 🔴 Global Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#0f172a] border border-white/10 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in text-white">
-            <div className="w-14 h-14 bg-red-500/10 text-red-400 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in text-slate-900">
+            <div className="w-14 h-14 bg-red-50 text-red-600 border border-red-200 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
               <LogOut size={26} />
             </div>
             <div className="space-y-1.5">
-              <h3 className="text-lg font-black text-white">লগআউট নিশ্চিতকরণ</h3>
-              <p className="text-xs text-white/60 font-medium leading-relaxed">
+              <h3 className="text-lg font-black text-slate-900">লগআউট নিশ্চিতকরণ</h3>
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
                 আপনি কি নিশ্চিত যে অ্যাকাউন্ট থেকে লগআউট করতে চান?
               </p>
             </div>
@@ -2955,7 +2978,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-black text-xs transition-all cursor-pointer"
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-black text-xs transition-all cursor-pointer border border-slate-200"
               >
                 বাতিল
               </button>
@@ -3133,6 +3156,26 @@ export default function Home() {
             )}
           </button>
         </div>
+      </div>
+
+      {/* ── Sleek Scroll To Top / Bottom Floating Pills (Bottom-Left) ── */}
+      <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8 select-none">
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="group w-10 h-10 rounded-2xl bg-white/90 hover:bg-purple-600 text-slate-700 hover:text-white shadow-lg hover:shadow-purple-500/30 border border-slate-200/80 hover:border-purple-500 backdrop-blur-md transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          title="উপরে যান (Scroll to Top)"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp size={16} className="stroke-[2.5] group-hover:-translate-y-0.5 transition-transform" />
+        </button>
+        <button
+          onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+          className="group w-10 h-10 rounded-2xl bg-white/90 hover:bg-purple-600 text-slate-700 hover:text-white shadow-lg hover:shadow-purple-500/30 border border-slate-200/80 hover:border-purple-500 backdrop-blur-md transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          title="নিচে যান (Scroll to Bottom)"
+          aria-label="Scroll to bottom"
+        >
+          <ArrowDown size={16} className="stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
+        </button>
       </div>
 
       {/* ── Unified Product Details Modal ── */}

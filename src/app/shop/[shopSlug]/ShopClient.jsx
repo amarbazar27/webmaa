@@ -633,7 +633,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         initialCart = JSON.parse(local);
       }
       
-      // Check for importCart in URL query string
+      // Check for importCart and cross-store customer profile in URL query string
       const searchParams = new URLSearchParams(window.location.search);
       const importCartParam = searchParams.get('importCart');
       if (importCartParam) {
@@ -670,6 +670,49 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         } catch (e) {
           console.error('Failed to import cart:', e);
         }
+      }
+
+      // Auto-fill cross-store customer profile
+      const cName = searchParams.get('customerName');
+      const cPhone = searchParams.get('customerPhone');
+      const cAddress = searchParams.get('customerAddress');
+      const cEmail = searchParams.get('customerEmail');
+
+      if (cName || cPhone || cAddress || cEmail) {
+        const profile = {
+          name: cName || '',
+          phone: cPhone || '',
+          address: cAddress || '',
+          email: cEmail || ''
+        };
+        try { localStorage.setItem('bd_customer_profile', JSON.stringify(profile)); } catch (e) {}
+        setOrderForm(f => ({
+          ...f,
+          name: f.name || cName || '',
+          phone: f.phone || cPhone || '',
+          address: f.address || cAddress || '',
+          paymentNumber: f.paymentNumber || cPhone || ''
+        }));
+        const url = new URL(window.location.href);
+        url.searchParams.delete('customerName');
+        url.searchParams.delete('customerPhone');
+        url.searchParams.delete('customerAddress');
+        url.searchParams.delete('customerEmail');
+        window.history.replaceState({}, '', url.toString());
+      } else {
+        try {
+          const saved = localStorage.getItem('bd_customer_profile');
+          if (saved) {
+            const p = JSON.parse(saved);
+            setOrderForm(f => ({
+              ...f,
+              name: f.name || p.name || '',
+              phone: f.phone || p.phone || '',
+              address: f.address || p.address || '',
+              paymentNumber: f.paymentNumber || p.phone || ''
+            }));
+          }
+        } catch (err) {}
       }
       
       if (initialCart.length > 0) {
@@ -867,7 +910,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     toast.success('অর্ডারের জন্য প্রস্তুত! নিচের তথ্যগুলো দিন।');
   };
 
-  // Autofill from userData
+  // Autofill from userData & global customer profile
   useEffect(() => {
     if (userData) {
       setOrderForm(f => ({
@@ -877,6 +920,16 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         address: f.address || userData.address || '',
         paymentNumber: f.paymentNumber || userData.paymentNumber || userData.phone || ''
       }));
+      try {
+        const stored = JSON.parse(localStorage.getItem('bd_customer_profile') || '{}');
+        localStorage.setItem('bd_customer_profile', JSON.stringify({
+          ...stored,
+          name: userData.name || stored.name || '',
+          phone: userData.phone || stored.phone || '',
+          address: userData.address || stored.address || '',
+          email: userData.email || stored.email || ''
+        }));
+      } catch (e) {}
     }
   }, [userData]);
 
@@ -2099,6 +2152,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       setPaymentScreenshot('');
       setIsOrderOpen(false);
       setPlacing(false);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bd_customer_profile', JSON.stringify({
+            name: orderForm.name,
+            phone: orderForm.phone,
+            address: orderForm.address,
+            email: user?.email || userData?.email || ''
+          }));
+        } catch (e) {}
+      }
       if (user?.email) {
         import('@/lib/firestore').then(lib => {
           lib.getUserOrders(shop.id, user.email).then(setUserOrders);
@@ -3786,27 +3849,23 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         isPreview={false}
       />
 
-      {/* ── Scroll To Top / Bottom Buttons ── */}
+      {/* ── Sleek Scroll To Top / Bottom Floating Pills ── */}
       <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8 select-none">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="group flex items-center gap-2 px-3 py-2 bg-slate-900/90 hover:bg-purple-600 border border-white/20 shadow-xl rounded-2xl text-white backdrop-blur-md transition-all active:scale-90"
-          title="উপরে যান"
+          className="group w-10 h-10 rounded-2xl bg-white/90 hover:bg-purple-600 text-slate-700 hover:text-white shadow-lg hover:shadow-purple-500/30 border border-slate-200/80 hover:border-purple-500 backdrop-blur-md transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          title="উপরে যান (Scroll to Top)"
+          aria-label="Scroll to top"
         >
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
-            <ArrowUp size={14} className="stroke-[3]" />
-          </div>
-          <span className="text-[11px] font-black tracking-tight pr-1">উপরে যান</span>
+          <ArrowUp size={16} className="stroke-[2.5] group-hover:-translate-y-0.5 transition-transform" />
         </button>
         <button
           onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-          className="group flex items-center gap-2 px-3 py-2 bg-slate-900/90 hover:bg-purple-600 border border-white/20 shadow-xl rounded-2xl text-white backdrop-blur-md transition-all active:scale-90"
-          title="নিচে যান"
+          className="group w-10 h-10 rounded-2xl bg-white/90 hover:bg-purple-600 text-slate-700 hover:text-white shadow-lg hover:shadow-purple-500/30 border border-slate-200/80 hover:border-purple-500 backdrop-blur-md transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          title="নিচে যান (Scroll to Bottom)"
+          aria-label="Scroll to bottom"
         >
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white group-hover:text-purple-600 transition-colors">
-            <ArrowDown size={14} className="stroke-[3]" />
-          </div>
-          <span className="text-[11px] font-black tracking-tight pr-1">নিচে যান</span>
+          <ArrowDown size={16} className="stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
         </button>
       </div>
 

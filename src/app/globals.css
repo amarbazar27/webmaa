@@ -944,6 +944,13 @@ section#marketplace .text-slate-300 { color: var(--neo-text-2) !important; }
 section#marketplace .text-slate-400 { color: var(--neo-text-3) !important; }
 section#marketplace .text-white { color: var(--neo-text) !important; }
 
+/* Modal & Drawer contrast protections */
+:not([id*="dashboard"]):not(.retailer-storefront) .cart-drawer .text-white,
+:not([id*="dashboard"]):not(.retailer-storefront) .profile-drawer .text-white,
+:not([id*="dashboard"]):not(.retailer-storefront) .stores-drawer .text-white {
+  color: var(--neo-text) !important;
+}
+
 /* Keep accent colors */
 .text-purple-400 { color: var(--neo-accent) !important; }
 .text-purple-300 { color: var(--neo-accent-2) !important; }
@@ -956,14 +963,14 @@ section#marketplace .text-white { color: var(--neo-text) !important; }
 .border-white\/20 { border-color: var(--neo-border) !important; }
 
 /* ── Dark card backgrounds → neo surface ── */
-:not(.retailer-storefront) .bg-\[\#09090f\]  { background: var(--neo-surface-card) !important; }
-:not(.retailer-storefront) .bg-\[\#05050a\]  { background: var(--neo-surface-card) !important; }
-:not(.retailer-storefront) .bg-\[\#0d0d1a\]  { background: var(--neo-surface-card) !important; }
-:not(.retailer-storefront) .bg-\[\#080d1c\]  { background: var(--neo-surface-card) !important; }
-:not(.retailer-storefront) .bg-\[\#0a0a18\]  { background: var(--neo-surface-card) !important; }
+:not(.retailer-storefront) .bg-\[\#09090f\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
+:not(.retailer-storefront) .bg-\[\#05050a\]  { background: #e2e6f0 !important; color: var(--neo-text) !important; }
+:not(.retailer-storefront) .bg-\[\#0d0d1a\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
+:not(.retailer-storefront) .bg-\[\#080d1c\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
+:not(.retailer-storefront) .bg-\[\#0a0a18\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
 :not(.retailer-storefront) .bg-\[\#030612\]  { background: var(--neo-bg-dark) !important; }
 :not(.retailer-storefront) .bg-\[\#03061a\]  { background: var(--neo-bg-dark) !important; }
-:not(.retailer-storefront) .bg-black\/80     { background: rgba(30,32,48,0.95) !important; }
+:not(.retailer-storefront) .bg-black\/80     { background: rgba(30,32,48,0.7) !important; }
 
 /* ── Store/Category pill buttons ── */
 :not(.retailer-storefront) button.text-white\/60, :not(.retailer-storefront) button.text-white\/70 { color: var(--neo-text-2) !important; }
