@@ -441,7 +441,7 @@ async function build() {
   // client_type 1 (Android) is REQUIRED for google_sign_in to return idToken on Android
   const googleServicesPath = path.join(appWorkspace, 'android/app/google-services.json');
 
-  // Android OAuth clients from Firebase Console (both Upload Key & Play App Signing Key)
+  // Android OAuth clients from Firebase Console (Upload Key, Quantum-ready Key, & Previous Key)
   const ANDROID_OAUTH_CLIENTS = {
     'com.bdretailers': [
       {
@@ -453,6 +453,11 @@ async function build() {
         client_id: '156216219253-947el7srnb4o46v7uf8ojc21k04i8a7k.apps.googleusercontent.com',
         client_type: 1,
         android_info: { package_name: 'com.bdretailers', certificate_hash: '2fbffe07234e89948c4a73d4d35a28af28f42a64' }
+      },
+      {
+        client_id: '156216219253-tkfgoav19l64ele5am1g627ooomjgk37.apps.googleusercontent.com',
+        client_type: 1,
+        android_info: { package_name: 'com.bdretailers', certificate_hash: '566ca9965c63ca07b73f905d465378f1adbecd33' }
       }
     ],
     'com.messerbazar': [
@@ -465,6 +470,11 @@ async function build() {
         client_id: '156216219253-edl3je55b748ciq422g8r9h21ot5ot26.apps.googleusercontent.com',
         client_type: 1,
         android_info: { package_name: 'com.messerbazar', certificate_hash: '3983f8e4cc0ec92b830628cf53738d53c8682a6e' }
+      },
+      {
+        client_id: '156216219253-5u3ii8bfahkmna879pcu8kl8f19elonl.apps.googleusercontent.com',
+        client_type: 1,
+        android_info: { package_name: 'com.messerbazar', certificate_hash: '3033788cb4ffce9299aee48b8f7745b1c51444bd' }
       }
     ]
   };
