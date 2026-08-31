@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "156216219253-947el7srnb4o46v7uf8ojc21k04i8a7k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bdretailers",
+            "certificate_hash": "2fbffe07234e89948c4a73d4d35a28af28f42a64"
+          }
+        },
+        {
           "client_id": "156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -51,6 +59,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "156216219253-edl3je55b748ciq422g8r9h21ot5ot26.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.messerbazar",
+            "certificate_hash": "3983f8e4cc0ec92b830628cf53738d53c8682a6e"
+          }
+        },
         {
           "client_id": "156216219253-svv9tlktp7jdsrm13bk6964r6lf4kup7.apps.googleusercontent.com",
           "client_type": 1,

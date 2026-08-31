@@ -441,23 +441,42 @@ async function build() {
   // client_type 1 (Android) is REQUIRED for google_sign_in to return idToken on Android
   const googleServicesPath = path.join(appWorkspace, 'android/app/google-services.json');
 
-  // Android OAuth clients from Firebase Console (SHA-1 registered for this keystore)
+  // Android OAuth clients from Firebase Console (both Upload Key & Play App Signing Key)
   const ANDROID_OAUTH_CLIENTS = {
-    'com.bdretailers': '156216219253-21kngrda3a07lk04rnk5cstvr07no92u.apps.googleusercontent.com',
-    'com.messerbazar': '156216219253-svv9tlktp7jdsrm13bk6964r6lf4kup7.apps.googleusercontent.com',
+    'com.bdretailers': [
+      {
+        client_id: '156216219253-21kngrda3a07lk04rnk5cstvr07no92u.apps.googleusercontent.com',
+        client_type: 1,
+        android_info: { package_name: 'com.bdretailers', certificate_hash: '25786062a1a147b884467f38e03c0b36ae1aa609' }
+      },
+      {
+        client_id: '156216219253-947el7srnb4o46v7uf8ojc21k04i8a7k.apps.googleusercontent.com',
+        client_type: 1,
+        android_info: { package_name: 'com.bdretailers', certificate_hash: '2fbffe07234e89948c4a73d4d35a28af28f42a64' }
+      }
+    ],
+    'com.messerbazar': [
+      {
+        client_id: '156216219253-svv9tlktp7jdsrm13bk6964r6lf4kup7.apps.googleusercontent.com',
+        client_type: 1,
+        android_info: { package_name: 'com.messerbazar', certificate_hash: '25786062a1a147b884467f38e03c0b36ae1aa609' }
+      },
+      {
+        client_id: '156216219253-edl3je55b748ciq422g8r9h21ot5ot26.apps.googleusercontent.com',
+        client_type: 1,
+        android_info: { package_name: 'com.messerbazar', certificate_hash: '3983f8e4cc0ec92b830628cf53738d53c8682a6e' }
+      }
+    ]
   };
   const WEB_CLIENT_ID = '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com';
-  const CERT_HASH = '25786062a1a147b884467f38e03c0b36ae1aa609';
 
   const buildOAuthClients = (pkg) => {
     const clients = [{ client_id: WEB_CLIENT_ID, client_type: 3 }];
-    const androidClientId = ANDROID_OAUTH_CLIENTS[pkg];
-    if (androidClientId) {
-      clients.unshift({
-        client_id: androidClientId,
-        client_type: 1,
-        android_info: { package_name: pkg, certificate_hash: CERT_HASH }
-      });
+    const androidClients = ANDROID_OAUTH_CLIENTS[pkg];
+    if (Array.isArray(androidClients)) {
+      clients.unshift(...androidClients);
+    } else if (androidClients) {
+      clients.unshift(androidClients);
     }
     return clients;
   };
