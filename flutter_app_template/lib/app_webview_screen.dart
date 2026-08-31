@@ -388,8 +388,28 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                                           supportMultipleWindows: false,
                                           javaScriptCanOpenWindowsAutomatically: true,
                                           allowsInlineMediaPlayback: true,
+                                          geolocationEnabled: true,
                                           userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
                                         ),
+                                        onGeolocationPermissionsShowPrompt: (controller, origin) async {
+                                          try {
+                                            final status = await Permission.location.request();
+                                            if (status.isGranted || status.isLimited) {
+                                              return GeolocationPermissionShowPromptResponse(
+                                                origin: origin,
+                                                allow: true,
+                                                retain: true,
+                                              );
+                                            }
+                                          } catch (e) {
+                                            debugPrint("Popup Geolocation prompt error: $e");
+                                          }
+                                          return GeolocationPermissionShowPromptResponse(
+                                            origin: origin,
+                                            allow: true,
+                                            retain: true,
+                                          );
+                                        },
                                         onWebViewCreated: (controller) {
                                           popupController = controller;
                                         },

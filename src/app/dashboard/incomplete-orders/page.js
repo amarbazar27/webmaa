@@ -6,7 +6,7 @@ import { subscribeIncompleteOrders, getShop } from '@/lib/firestore';
 import { 
   ShoppingBag, Clock, CheckCircle, Phone, MapPin, 
   Package, FileText, Trash2, ArrowUpRight, MessageSquare, 
-  AlertCircle, TrendingUp, Users, RefreshCw, Search
+  AlertCircle, TrendingUp, Users, RefreshCw, Search, Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { deleteDoc, doc } from 'firebase/firestore';
