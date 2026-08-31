@@ -23,7 +23,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
   final _googleSignIn = GoogleSignIn(
     // Web client ID from google-services.json (client_type 3)
     serverClientId: '156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com',
-    scopes: ['email'],
+    scopes: ['email', 'profile'],
   );
 
   bool _isAppReady = false;

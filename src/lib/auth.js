@@ -171,6 +171,9 @@ export const loginWithGoogle = async () => {
       }
       if (result.error) {
         console.error('Native Google Sign-In returned error:', result.error);
+        if (typeof result.error === 'string' && result.error.includes('ApiException: 10')) {
+          throw new Error('Google Sign-In configuration error: SHA-1 fingerprint mismatch (ApiException 10).');
+        }
         throw new Error(result.error);
       }
       if (result.idToken || result.accessToken) {
