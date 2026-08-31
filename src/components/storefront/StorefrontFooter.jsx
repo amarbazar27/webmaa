@@ -369,9 +369,9 @@ export default function StorefrontFooter({
             <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">গ্রাহক সেবা ও নীতি</h4>
             <ul className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
               <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} className="hover:opacity-80 transition-opacity">প্রাইভেসি পলিসি</Link></li>
+              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/terms`} className="hover:opacity-80 transition-opacity">শর্তাবলী ও নিয়ম</Link></li>
               <li><span className="opacity-90">রিটার্ন ও রিফান্ড নীতি</span></li>
               <li><span className="opacity-90">ডেলিভারি ট্র্যাকিং</span></li>
-              <li><span className="opacity-90">শর্তাবলী ও নিয়ম</span></li>
             </ul>
           </div>
 
@@ -510,6 +510,13 @@ export default function StorefrontFooter({
               className="text-xs font-bold hover:underline"
             >
               Privacy
+            </Link>
+            <Link 
+              href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/terms`} 
+              style={{ color: palette.textColor }}
+              className="text-xs font-bold hover:underline"
+            >
+              Terms
             </Link>
           </div>
         </div>
@@ -736,6 +743,7 @@ export default function StorefrontFooter({
             <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">নীতি ও সেবা</h4>
             <ul className="space-y-1.5 text-xs font-bold" style={{ color: palette.textColor }}>
               <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} className="hover:opacity-80">প্রাইভেসি পলিসি</Link></li>
+              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/terms`} className="hover:opacity-80">সেবার শর্তাবলী</Link></li>
               <li><span className="opacity-90">রিটার্ন নীতি</span></li>
               <li><span className="opacity-90">ডেলিভারি শর্তাবলী</span></li>
             </ul>
