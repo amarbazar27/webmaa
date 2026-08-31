@@ -380,8 +380,12 @@ async function build() {
   
   // A. lib/config.dart
   const configDartPath = path.join(appWorkspace, 'lib/config.dart');
+  const shopTagline = (shopSlug === 'main') ? "YOUR STORE. YOUR WAY." : (appConfig.appShortDesc || "OFFICIAL MOBILE STORE");
+  const shopSubtitle = (shopSlug === 'main') ? "সহজ ও নির্ভরযোগ্য অনলাইন শপিং" : "দ্রুত ও নিরাপদ শপিং অভিজ্ঞতা";
   const configContent = `class AppConfig {
   static const String appName = "${shopName.replace(/"/g, '\\"').trim()}";
+  static const String appTagline = "${shopTagline.replace(/"/g, '\\"').trim()}";
+  static const String appSubtitle = "${shopSubtitle.replace(/"/g, '\\"').trim()}";
   static const String targetUrl = "${targetUrl.trim()}";
   static const String primaryColorHex = "${primaryColor.trim()}";
   static const String shopId = "${actualShopId.trim()}";
