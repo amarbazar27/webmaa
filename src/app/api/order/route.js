@@ -26,10 +26,17 @@ export async function GET(req) {
       if (!shopQuery2.empty) {
         shopId = shopQuery2.docs[0].id;
         shopData = shopQuery2.docs[0].data();
+      } else {
+        // Direct document ID fallback
+        const shopDoc = await adminDb.collection('shops').doc(shopSlug).get();
+        if (shopDoc.exists) {
+          shopId = shopDoc.id;
+          shopData = shopDoc.data();
+        }
       }
     }
 
-    if (!shopId) {
+    if (!shopId || !shopData) {
       return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
     }
 
@@ -55,14 +62,17 @@ export async function GET(req) {
     // 🔒 CRIT-4 Fix: Sanitize shop data — never expose internal config/secrets
     const safeShopData = {
       id: shopId,
-      shopName: shopData.shopName,
-      shopSlug: shopData.shopSlug || shopData.subdomainSlug,
-      subdomainSlug: shopData.subdomainSlug,
-      logo: shopData.logo || '',
+      shopName: shopData.shopName || 'Store',
+      shopSlug: shopData.shopSlug || shopData.subdomainSlug || shopId,
+      subdomainSlug: shopData.subdomainSlug || shopData.shopSlug || shopId,
+      logoUrl: shopData.logoUrl || shopData.logo || '',
+      logo: shopData.logoUrl || shopData.logo || '',
+      phone: shopData.phone || shopData.contactPhone || shopData.deliveryConfig?.contactPhone || '',
       deliveryConfig: shopData.deliveryConfig ? {
-        contactPhone: shopData.deliveryConfig.contactPhone,
-        advanceFee: shopData.deliveryConfig.advanceFee,
-        isCOD: shopData.deliveryConfig.isCOD,
+        contactPhone: shopData.deliveryConfig.contactPhone || shopData.phone || '',
+        advanceFee: shopData.deliveryConfig.advanceFee || 0,
+        isCOD: shopData.deliveryConfig.isCOD ?? true,
+        deliveryTime: shopData.deliveryConfig.deliveryTime || '',
       } : {},
     };
 

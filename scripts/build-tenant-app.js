@@ -40,6 +40,8 @@ const isDryRun = process.argv.includes('--dry-run');
 const isGitHubActions = process.argv.includes('--github-actions');
 const versionCodeFlag = process.argv.find(arg => arg.startsWith('--version-code='));
 const customVersionCode = versionCodeFlag ? parseInt(versionCodeFlag.split('=')[1], 10) : null;
+const versionNameFlag = process.argv.find(arg => arg.startsWith('--version-name='));
+const customVersionName = versionNameFlag ? versionNameFlag.split('=')[1].trim() : null;
 
 if (!shopSlug) {
   console.error('❌ Error: Please specify shopSlug as the first argument.');
@@ -406,16 +408,20 @@ async function build() {
 
   const firestoreVersion = Number(appConfig.versionCode || 0);
   const fileVersion = Number(appVersions[shopSlug] || 0);
-  const minimumFloor = (shopSlug === 'messerbazar') ? 5 : (shopSlug === 'main' ? 2 : 1);
+  const minimumFloor = (shopSlug === 'messerbazar') ? 17 : (shopSlug === 'main' ? 22 : 1);
   const previousVersionCode = Math.max(firestoreVersion, fileVersion, minimumFloor);
   const targetVersionCode = customVersionCode || (previousVersionCode + 1);
-  const targetVersionName = appConfig.versionName || `1.0.${targetVersionCode - 1}`;
+
+  // Dynamic Version Name:
+  // If explicitly passed via CLI/payload (--version-name=X.Y.Z), use that.
+  // Otherwise, automatically derive `1.0.${targetVersionCode}` so it ALWAYS increments and avoids Play Console caching!
+  const targetVersionName = customVersionName || `1.0.${targetVersionCode}`;
 
   // Persist updated version code back to app-versions.json
   appVersions[shopSlug] = targetVersionCode;
   try {
     fs.writeFileSync(versionsFilePath, JSON.stringify(appVersions, null, 2));
-    console.log(`  📌 Auto-incremented version code for [${shopSlug}]: ${previousVersionCode} ➔ ${targetVersionCode} (v${targetVersionName})`);
+    console.log(`  📌 Auto-incremented version for [${shopSlug}]: Code ${previousVersionCode} ➔ ${targetVersionCode} | Name: v${targetVersionName}`);
   } catch (err) {
     console.warn(`  ⚠️ Could not update app-versions.json: ${err.message}`);
   }
@@ -427,7 +433,7 @@ async function build() {
   pubspecContent = pubspecContent.replace(/version:\s*[\d\.\+\-]+/, `version: ${targetVersionName}+${targetVersionCode}`);
 
   fs.writeFileSync(pubspecPath, pubspecContent);
-  console.log(`  └─ pubspec.yaml configured with Version Code: ${targetVersionCode} (${targetVersionName}).`);
+  console.log(`  └─ pubspec.yaml configured with Version Code: ${targetVersionCode} (v${targetVersionName}).`);
 
   // C. android/app/build.gradle (replace namespace AND applicationId)
   const buildGradlePath = path.join(appWorkspace, 'android/app/build.gradle');
@@ -660,15 +666,25 @@ class MainActivity: FlutterActivity() {
     console.warn(`⚠️ Splash generation warning.`);
   }
 
-  console.log('  └─ Compiling Release APK...');
-  const buildApk = spawnSync('flutter', ['build', 'apk', '--release', '--android-skip-build-dependency-validation'], { cwd: appWorkspace, shell: true });
+  console.log(`  └─ Compiling Release APK (v${targetVersionName}+${targetVersionCode})...`);
+  const buildApk = spawnSync('flutter', [
+    'build', 'apk', '--release',
+    '--android-skip-build-dependency-validation',
+    `--build-name=${targetVersionName}`,
+    `--build-number=${targetVersionCode}`
+  ], { cwd: appWorkspace, shell: true });
   if (buildApk.status !== 0) {
     throw new Error(`APK build failed: ${buildApk.stderr?.toString() || buildApk.stdout?.toString()}`);
   }
   console.log('  └─ Compiled APK successfully.');
 
-  console.log('  └─ Compiling Release App Bundle (AAB)...');
-  const buildAab = spawnSync('flutter', ['build', 'appbundle', '--release', '--android-skip-build-dependency-validation'], { cwd: appWorkspace, shell: true });
+  console.log(`  └─ Compiling Release App Bundle AAB (v${targetVersionName}+${targetVersionCode})...`);
+  const buildAab = spawnSync('flutter', [
+    'build', 'appbundle', '--release',
+    '--android-skip-build-dependency-validation',
+    `--build-name=${targetVersionName}`,
+    `--build-number=${targetVersionCode}`
+  ], { cwd: appWorkspace, shell: true });
   if (buildAab.status !== 0) {
     throw new Error(`AAB build failed: ${buildAab.stderr?.toString() || buildAab.stdout?.toString()}`);
   }

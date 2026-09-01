@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState, use } from 'react';
-import { Loader2, Download, Package, ArrowLeft, Clock, ShieldAlert, RefreshCw } from 'lucide-react';
+import { Loader2, Download, Package, ArrowLeft, Clock, ShieldAlert, RefreshCw, Eye, CheckCircle2, Truck, Calendar, MapPin, Phone, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -16,13 +17,14 @@ function LiveCountdown({ deliveryETA }) {
       const target = deliveryETA.toDate ? deliveryETA.toDate() : new Date(deliveryETA);
       const diff = target.getTime() - Date.now();
       if (diff <= 0) {
-        setTimeLeft('00:00:00');
+        setTimeLeft('সময় শেষ (শীঘ্রই পৌঁছাবে)');
         setIsExpired(true);
       } else {
-        const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
         const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
-        setTimeLeft(`${h}:${m}:${s}`);
+        setTimeLeft(d > 0 ? `${d} দিন ${h}:${m}:${s}` : `${h}:${m}:${s}`);
       }
     };
     update();
@@ -33,171 +35,83 @@ function LiveCountdown({ deliveryETA }) {
   if (!deliveryETA) return null;
 
   return (
-    <div className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center ${isExpired ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200 animate-pulse'}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <Clock size={16} className={isExpired ? 'text-red-500' : 'text-blue-500'} />
-        <p className={`text-[10px] font-black uppercase tracking-widest ${isExpired ? 'text-red-600' : 'text-blue-600'}`}>
-          {isExpired ? 'ডেলিভারি সময় শেষ' : 'ডেলিভারি পৌঁছানোর সম্ভাব্য সময়'}
+    <div className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center ${isExpired ? 'bg-amber-50 border-amber-200' : 'bg-purple-50 border-purple-200'}`}>
+      <div className="flex items-center gap-2 mb-1.5">
+        <Clock size={16} className={isExpired ? 'text-amber-600' : 'text-purple-600'} />
+        <p className={`text-[11px] font-black uppercase tracking-wider ${isExpired ? 'text-amber-700' : 'text-purple-700'}`}>
+          {isExpired ? 'ডেলিভারি সময়সীমা' : 'পৌঁছানোর সম্ভাব্য কাউন্টডাউন'}
         </p>
       </div>
-      <p className={`text-3xl font-black tracking-tight font-mono ${isExpired ? 'text-red-700' : 'text-blue-700'}`}>
+      <p className={`text-2xl sm:text-3xl font-black tracking-tight font-mono ${isExpired ? 'text-amber-800' : 'text-purple-900'}`}>
         {timeLeft}
       </p>
     </div>
   );
 }
 
-function DeliveryTracker({ coordinates, status }) {
-  const [distance, setDistance] = useState(1200); // initial simulated distance
-  const [mapLoaded, setMapLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!coordinates || typeof window === 'undefined') return;
-    let isMounted = true;
-    let map = null;
-    let interval = null;
-
-    const loadLeaflet = () => {
-      return new Promise((resolve) => {
-        if (window.L) {
-          resolve(window.L);
-          return;
-        }
-
-        if (!document.getElementById('leaflet-css-tracker')) {
-          const link = document.createElement('link');
-          link.id = 'leaflet-css-tracker';
-          link.rel = 'stylesheet';
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-          document.head.appendChild(link);
-        }
-
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.onload = () => {
-          if (isMounted) resolve(window.L);
-        };
-        document.head.appendChild(script);
-      });
-    };
-
-    loadLeaflet().then((L) => {
-      if (!isMounted) return;
-      const parts = coordinates.split(',');
-      if (parts.length !== 2) return;
-      const lat = parseFloat(parts[0]);
-      const lng = parseFloat(parts[1]);
-      if (isNaN(lat) || isNaN(lng)) return;
-
-      // Setup Custom Icons
-      const customerIcon = L.divIcon({
-        className: 'custom-customer-icon',
-        html: `<div style="font-size:24px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.35));">📍</div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 30]
-      });
-
-      const riderIcon = L.divIcon({
-        className: 'custom-rider-icon animate-bounce',
-        html: `<div style="font-size:28px;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.4));">🚴</div>`,
-        iconSize: [34, 34],
-        iconAnchor: [17, 34]
-      });
-
-      // Initialize map
-      map = L.map('tracking-map', { zoomControl: false }).setView([lat + 0.003, lng + 0.003], 15);
-      L.control.zoom({ position: 'topright' }).addTo(map);
-
-      // Premium Voyager Tile Layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CartoDB'
-      }).addTo(map);
-
-      // Customer Marker
-      L.marker([lat, lng], { icon: customerIcon }).addTo(map).bindPopup('ডেলিভারি ঠিকানা').openPopup();
-
-      // Ride simulation
-      let currentRiderLat = lat + 0.004;
-      let currentRiderLng = lng + 0.004;
-      const riderMarker = L.marker([currentRiderLat, currentRiderLng], { icon: riderIcon }).addTo(map);
-
-      const getDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371e3; // metres
-        const φ1 = lat1 * Math.PI/180;
-        const φ2 = lat2 * Math.PI/180;
-        const Δφ = (lat2-lat1) * Math.PI/180;
-        const Δλ = (lon2-lon1) * Math.PI/180;
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c; // in metres
-      };
-
-      setDistance(Math.round(getDistance(currentRiderLat, currentRiderLng, lat, lng)));
-
-      // Simulate rider moving 15% closer every 4s
-      interval = setInterval(() => {
-        if (status === 'completed') {
-          riderMarker.setLatLng([lat, lng]);
-          setDistance(0);
-          clearInterval(interval);
-          return;
-        }
-
-        const step = 0.15;
-        currentRiderLat = currentRiderLat + (lat - currentRiderLat) * step;
-        currentRiderLng = currentRiderLng + (lng - currentRiderLng) * step;
-
-        riderMarker.setLatLng([currentRiderLat, currentRiderLng]);
-        const dist = getDistance(currentRiderLat, currentRiderLng, lat, lng);
-        setDistance(Math.round(dist));
-
-        if (dist < 10) {
-          riderMarker.setLatLng([lat, lng]);
-          setDistance(0);
-          clearInterval(interval);
-        }
-      }, 4000);
-
-      setMapLoaded(true);
-    }).catch(err => console.error("Leaflet load error:", err));
-
-    return () => {
-      isMounted = false;
-      if (interval) clearInterval(interval);
-      if (map) map.remove();
-    };
-  }, [coordinates, status]);
-
-  if (!coordinates) return null;
+function DeliveryInfoCard({ order, shop }) {
+  const deliveryTime = order.deliveryCountdownFormatted || order.deliveryTime || shop?.deliveryConfig?.deliveryTime || '';
+  const isCompleted = order.status === 'completed';
+  const isCancelled = order.status === 'cancelled';
+  const isConfirmed = order.status === 'confirmed';
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm space-y-0.5">
-      <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-600"></span>
-          </span>
-          <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">ডেলিভারি ট্র্যাকার (রিয়েল-টাইম)</h3>
-        </div>
-        {distance > 0 ? (
-          <span className="text-[10px] font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200 animate-pulse">
-            রাইডার আপনার থেকে {distance} মিটার দূরে আছে
-          </span>
-        ) : (
-          <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-            রাইডার আপনার ঠিকানায় পৌঁছে গেছে! 🎉
-          </span>
-        )}
-      </div>
-      <div className="h-[250px] w-full bg-slate-100 relative" id="tracking-map">
-        {!mapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-400 bg-slate-50">
-            <Loader2 className="animate-spin text-purple-600 mr-2" size={16} />
-            লাইভ ট্র্যাকিং ম্যাপ লোড হচ্ছে...
+    <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-4">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+            isCompleted ? 'bg-emerald-100 text-emerald-600' :
+            isCancelled ? 'bg-red-100 text-red-600' :
+            isConfirmed ? 'bg-purple-100 text-purple-600' : 'bg-amber-100 text-amber-600'
+          }`}>
+            <Truck size={18} strokeWidth={2.5} />
           </div>
+          <div>
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">ডেলিভারি সংক্রান্ত তথ্য</h3>
+            <p className="text-[11px] font-bold text-slate-500">
+              {isCompleted ? 'ডেলিভারি সম্পন্ন হয়েছে' :
+               isCancelled ? 'অর্ডার বাতিল করা হয়েছে' :
+               isConfirmed ? 'অর্ডার কনফার্মড - ডেলিভারির প্রস্তুতি চলছে' : 'অর্ডার প্রক্রিয়াধীন রয়েছে'}
+            </p>
+          </div>
+        </div>
+
+        <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider border ${
+          isCompleted ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
+          isCancelled ? 'text-red-700 bg-red-50 border-red-200' :
+          isConfirmed ? 'text-purple-700 bg-purple-50 border-purple-200' :
+          'text-amber-700 bg-amber-50 border-amber-200'
+        }`}>
+          {order.status || 'Pending'}
+        </span>
+      </div>
+
+      {/* ETA Countdown if available */}
+      {order.deliveryETA && !isCompleted && !isCancelled && (
+        <LiveCountdown deliveryETA={order.deliveryETA} />
+      )}
+
+      {/* Retailer Set Delivery Time */}
+      {deliveryTime && (
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex items-center gap-3">
+          <Clock size={18} className="text-purple-600 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">সম্ভাব্য ডেলিভারি সময়</p>
+            <p className="text-sm font-black text-slate-900 mt-0.5">{deliveryTime}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Status Description Message */}
+      <div className="text-xs font-bold text-slate-600 bg-slate-50/70 p-3 rounded-xl border border-slate-100 flex items-center gap-2">
+        {isCompleted ? (
+          <><CheckCircle2 size={16} className="text-emerald-600 shrink-0" /> আপনার অর্ডারটি সফলভাবে ডেলিভারি সম্পন্ন হয়েছে। ধন্যবাদ!</>
+        ) : isCancelled ? (
+          <><ShieldAlert size={16} className="text-red-600 shrink-0" /> দুঃখিত, অর্ডারটি বাতিল করা হয়েছে। কোনো জিজ্ঞাসা থাকলে দোকানে যোগাযোগ করুন।</>
+        ) : isConfirmed ? (
+          <><CheckCircle2 size={16} className="text-purple-600 shrink-0" /> দোকানদার অর্ডারটি গ্রহণ করেছেন এবং ডেলিভারির কাজ চলমান রয়েছে।</>
+        ) : (
+          <><Clock size={16} className="text-amber-600 shrink-0" /> অর্ডারটি দোকানদারের অনুমোদনের অপেক্ষায় রয়েছে। শীঘ্রই কনফার্ম করা হবে।</>
         )}
       </div>
     </div>
@@ -249,79 +163,95 @@ export default function OrderSummaryPage({ params }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const fetchOrder = async () => {
       try {
-        // Use API route to avoid Firestore client-side permission issues
         const res = await fetch(`/api/order?shopSlug=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`);
         if (res.status === 403) {
-          setError('permission');
+          if (isMounted) setError('permission');
           return;
         }
-        if (!res.ok) {
-          // Fallback: try direct Firestore (will work if user is logged in)
-          const { getShopBySlug } = await import('@/lib/firestore');
-          const { db } = await import('@/lib/firebase');
-          const { doc, getDoc } = await import('firebase/firestore');
-          const shopData = await getShopBySlug(shopSlug);
-          if (!shopData) { setError('not_found'); return; }
-          setShop(shopData);
-          const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
-          if (!orderSnap.exists()) { setError('not_found'); return; }
-          setOrder({ id: orderSnap.id, ...orderSnap.data() });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setShop(data.shop);
+            setOrder(data.order);
+          }
           return;
         }
-        const data = await res.json();
-        setShop(data.shop);
-        setOrder(data.order);
+
+        // Fallback: try direct Firestore
+        const { getShopBySlug } = await import('@/lib/firestore');
+        const { db } = await import('@/lib/firebase');
+        const { doc, getDoc } = await import('firebase/firestore');
+        const shopData = await getShopBySlug(shopSlug);
+        if (!shopData) {
+          if (isMounted) setError('not_found');
+          return;
+        }
+        if (isMounted) setShop(shopData);
+        const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
+        if (!orderSnap.exists()) {
+          if (isMounted) setError('not_found');
+          return;
+        }
+        if (isMounted) setOrder({ id: orderSnap.id, ...orderSnap.data() });
       } catch (err) {
         console.error('[OrderPage]', err);
-        // Final fallback: try direct Firestore
         try {
           const { getShopBySlug } = await import('@/lib/firestore');
           const { db } = await import('@/lib/firebase');
           const { doc, getDoc } = await import('firebase/firestore');
           const shopData = await getShopBySlug(shopSlug);
-          if (!shopData) { setError('not_found'); return; }
-          setShop(shopData);
-          const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
-          if (!orderSnap.exists()) { setError('not_found'); return; }
-          setOrder({ id: orderSnap.id, ...orderSnap.data() });
+          if (shopData) {
+            if (isMounted) setShop(shopData);
+            const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
+            if (orderSnap.exists()) {
+              if (isMounted) setOrder({ id: orderSnap.id, ...orderSnap.data() });
+              return;
+            }
+          }
+          if (isMounted) setError('not_found');
         } catch (e) {
-          if (e?.code === 'permission-denied') {
-            setError('permission');
-          } else {
-            setError('not_found');
+          if (isMounted) {
+            if (e?.code === 'permission-denied') {
+              setError('permission');
+            } else {
+              setError('not_found');
+            }
           }
         }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     fetchOrder();
+    return () => { isMounted = false; };
   }, [shopSlug, orderId]);
+
+  const invoiceUrl = `/shop/${shopSlug}/invoice/${orderId}`;
 
   const generatePDF = async () => {
     if (isGeneratingPdf) return;
     try {
       setIsGeneratingPdf(true);
-      setPdfState('Preparing...');
-      setPdfProgress(10);
+      setPdfState('প্রস্তুত করা হচ্ছে...');
+      setPdfProgress(15);
 
       const invoiceElement = document.getElementById('pdf-content');
       if (!invoiceElement) throw new Error('Invoice element not found');
 
-      // Make visible for capture
       invoiceElement.style.display = 'block';
-      setPdfState('Downloading (40%)');
-      setPdfProgress(40);
+      setPdfState('ইনভয়েস ক্যাপচার হচ্ছে...');
+      setPdfProgress(45);
 
       const canvas = await html2canvas(invoiceElement, {
         scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff'
       });
       invoiceElement.style.display = 'none';
 
-      setPdfState('Downloading (70%)');
-      setPdfProgress(70);
+      setPdfState('PDF তৈরি হচ্ছে...');
+      setPdfProgress(75);
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
@@ -331,7 +261,7 @@ export default function OrderSummaryPage({ params }) {
       let heightLeft = pdfHeight;
       let position = 0;
 
-      setPdfState('Downloading (90%)');
+      setPdfState('ফাইল সেভ হচ্ছে...');
       setPdfProgress(90);
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
       heightLeft -= pageHeight;
@@ -343,20 +273,44 @@ export default function OrderSummaryPage({ params }) {
       }
 
       const orderNum = order.orderIdVisual || order.id.slice(-6);
-      pdf.save(`Order_${orderNum}.pdf`);
-      setPdfState('Completed ✓');
+      pdf.save(`Invoice_${orderNum}.pdf`);
+      setPdfState('ডাউনলোড সম্পন্ন ✓');
       setPdfProgress(100);
-      toast.success('PDF ডাউনলোড সফল! 📄');
+
+      toast((t) => (
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="font-black text-xs text-slate-900">PDF ডাউনলোড সফল! 📄</p>
+            <p className="text-[10px] text-slate-500">ইনভয়েসটি ব্রাউজারেও সরাসরি দেখতে পারেন</p>
+          </div>
+          <Link
+            href={invoiceUrl}
+            onClick={() => toast.dismiss(t.id)}
+            className="px-2.5 py-1.5 bg-purple-600 text-white rounded-lg font-black text-xs shrink-0 hover:bg-purple-700"
+          >
+            ওপেন করুন
+          </Link>
+        </div>
+      ), { duration: 6000 });
+
     } catch (err) {
       console.error(err);
-      toast.error('PDF ডাউনলোড ব্যর্থ হয়েছে। আবার চেষ্টা করুন।');
+      toast.error('PDF ডাউনলোড ব্যর্থ হয়েছে। ব্রাউজারে ইনভয়েস ওপেন করে দেখুন।');
       setPdfState('');
     } finally {
       setTimeout(() => {
         setIsGeneratingPdf(false);
         setPdfProgress(0);
         setPdfState('');
-      }, 2000);
+      }, 2500);
+    }
+  };
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(`/shop/${shopSlug}`);
     }
   };
 
@@ -376,7 +330,7 @@ export default function OrderSummaryPage({ params }) {
           <h2 className="text-lg font-black text-slate-900">অর্ডার দেখার অনুমতি নেই</h2>
           <p className="text-sm text-slate-500 font-bold mt-2">এই অর্ডারটি দেখতে আপনাকে সংশ্লিষ্ট ইমেইল দিয়ে লগইন করতে হবে।</p>
         </div>
-        <button onClick={() => router.back()} className="w-full py-3 bg-purple-600 text-white rounded-2xl font-black text-sm hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 shadow-lg">
+        <button onClick={handleBack} className="w-full py-3 bg-purple-600 text-white rounded-2xl font-black text-sm hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer">
           <ArrowLeft size={16} /> ফিরে যান
         </button>
       </div>
@@ -388,7 +342,7 @@ export default function OrderSummaryPage({ params }) {
       <div className="bg-white rounded-3xl border border-slate-200 p-8 max-w-sm w-full text-center shadow-sm space-y-4">
         <Package size={40} className="mx-auto text-slate-300" />
         <p className="text-lg font-black text-slate-500">অর্ডার পাওয়া যায়নি</p>
-        <button onClick={() => router.back()} className="w-full py-3 bg-slate-100 text-slate-700 rounded-2xl font-black text-sm hover:bg-slate-200 transition-colors flex items-center justify-center gap-2">
+        <button onClick={handleBack} className="w-full py-3 bg-slate-100 text-slate-700 rounded-2xl font-black text-sm hover:bg-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer">
           <ArrowLeft size={16} /> ফিরে যান
         </button>
       </div>
@@ -408,37 +362,36 @@ export default function OrderSummaryPage({ params }) {
     <div className="min-h-screen bg-slate-50 font-sans pb-20">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
-          <button onClick={() => router.back()} className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors">
-            <ArrowLeft size={20} className="text-slate-700" />
-          </button>
-          <div>
-            <h1 className="font-black text-slate-900 text-lg leading-tight">অর্ডার সামারি</h1>
-            <p className="text-xs text-slate-500 font-bold">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</p>
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={handleBack} className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer border-0">
+              <ArrowLeft size={20} className="text-slate-700" />
+            </button>
+            <div>
+              <h1 className="font-black text-slate-900 text-lg leading-tight">অর্ডার সামারি</h1>
+              <p className="text-xs text-slate-500 font-bold">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</p>
+            </div>
           </div>
+          <Link
+            href={invoiceUrl}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-black border border-purple-200 transition-colors"
+          >
+            <Eye size={14} /> ইনভয়েস ভিউ
+          </Link>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        {/* Status */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-black text-slate-900">অর্ডার স্ট্যাটাস</h2>
-            <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border ${
-              order.status === 'completed' ? 'text-emerald-700 bg-emerald-100 border-emerald-200' 
-              : order.status === 'cancelled' ? 'text-red-700 bg-red-100 border-red-200' 
-              : 'text-amber-700 bg-amber-100 border-amber-200'}`}>
-              {order.status || 'Pending'}
-            </span>
+        {/* Delivery Details Card (Replaces fake 1200m tracker) */}
+        <DeliveryInfoCard order={order} shop={shop} />
+
+        {/* Retailer Return Note if exists */}
+        {order.returnNote && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-3xl">
+            <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">রিটেইলার বার্তা</p>
+            <p className="text-sm font-bold text-amber-900">{order.returnNote}</p>
           </div>
-          {order.returnNote && (
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-              <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">রিটেইলার বার্তা</p>
-              <p className="text-sm font-bold text-amber-900">{order.returnNote}</p>
-            </div>
-          )}
-          {order.deliveryETA && <LiveCountdown deliveryETA={order.deliveryETA} />}
-        </div>
+        )}
 
         {/* Unpaid Automated Order - Retry Payment */}
         {isUnpaidAutomatedOrder && (
@@ -475,29 +428,34 @@ export default function OrderSummaryPage({ params }) {
           </div>
         )}
 
-        {/* Live Tracking Map */}
-        {order.coordinates && (
-          <DeliveryTracker coordinates={order.coordinates} status={order.status} />
-        )}
+        {/* Dual Invoice Action Buttons: Download PDF & Open Invoice in Browser */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={generatePDF}
+            disabled={isGeneratingPdf}
+            className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20 disabled:opacity-60 relative overflow-hidden cursor-pointer"
+          >
+            {isGeneratingPdf && (
+              <div
+                className="absolute left-0 top-0 bottom-0 bg-purple-500/50 transition-all duration-500"
+                style={{ width: `${pdfProgress}%` }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-2">
+              {isGeneratingPdf
+                ? <><Loader2 size={16} className="animate-spin" /> {pdfState}</>
+                : <><Download size={16} strokeWidth={2.5} /> ইনভয়েস ডাউনলোড (PDF)</>}
+            </span>
+          </button>
 
-        {/* PDF Download Button */}
-        <button
-          onClick={generatePDF}
-          disabled={isGeneratingPdf}
-          className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors shadow-xl disabled:opacity-60 relative overflow-hidden"
-        >
-          {isGeneratingPdf && (
-            <div
-              className="absolute left-0 top-0 bottom-0 bg-purple-500/50 transition-all duration-500"
-              style={{ width: `${pdfProgress}%` }}
-            />
-          )}
-          <span className="relative z-10 flex items-center gap-2">
-            {isGeneratingPdf
-              ? <><Loader2 size={16} className="animate-spin" /> {pdfState}</>
-              : <><Download size={16} strokeWidth={2.5} /> ইনভয়েস ডাউনলোড (PDF)</>}
-          </span>
-        </button>
+          <Link
+            href={invoiceUrl}
+            className="w-full py-4 bg-white text-slate-800 hover:bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-sm text-center"
+          >
+            <Eye size={16} className="text-purple-600" strokeWidth={2.5} />
+            ইনভয়েস ওপেন করুন (Open)
+          </Link>
+        </div>
 
         {/* Customer Info */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-3">
@@ -587,7 +545,7 @@ export default function OrderSummaryPage({ params }) {
               # {order.orderIdVisual || order.id.slice(-6).toUpperCase()}
             </div>
             <div style={{ fontSize: '10px', fontWeight: 700, marginTop: '4px' }}>
-              Date: {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : 'N/A'}
+              Date: {order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : 'N/A')}
             </div>
           </div>
         </div>

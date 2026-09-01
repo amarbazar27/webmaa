@@ -26,6 +26,12 @@ export const getShopBySlug = async (slug) => {
   const snap2 = await getDocs(q2);
   if (!snap2.empty) return { id: snap2.docs[0].id, ...snap2.docs[0].data() };
   
+  // Direct document ID fallback
+  try {
+    const docSnap = await getDoc(doc(db, 'shops', slug));
+    if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
+  } catch (_) {}
+
   return null;
 };
 

@@ -66,6 +66,9 @@ jobs:
         if [ -n "${{ github.event.client_payload.versionCode }}" ]; then
           VERSION_ARG="--version-code=${{ github.event.client_payload.versionCode }}"
         fi
+        if [ -n "${{ github.event.client_payload.versionName }}" ]; then
+          VERSION_ARG="$VERSION_ARG --version-name=${{ github.event.client_payload.versionName }}"
+        fi
         node scripts/build-tenant-app.js ${{ github.event.client_payload.shopSlug }} --github-actions $VERSION_ARG
       env:
         FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
