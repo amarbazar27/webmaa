@@ -557,6 +557,10 @@ export const initializeShop = async (uid, email, displayName) => {
       showOnMainSite: false,
       createdAt: serverTimestamp(),
       staffEmails: [],
+      aiConfig: {
+        enableAiShoppingList: false,
+        smartCalcEnabled: false,
+      },
       banners: [
         'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200',
         'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1200'

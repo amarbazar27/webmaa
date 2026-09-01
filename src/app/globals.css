@@ -935,19 +935,19 @@ section#marketplace .bg-slate-900\/70 { background: var(--neo-surface-card) !imp
 section#marketplace .bg-slate-900\/80 { background: var(--neo-surface-card) !important; }
 
 /* ── Text color fixes (scoped to main site only, not dashboard/retailer) ── */
-:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/80 { color: var(--neo-text-2) !important; }
-:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/60 { color: var(--neo-text-2) !important; }
-:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/50 { color: var(--neo-text-3) !important; }
-:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/40 { color: var(--neo-text-3) !important; }
-:not([id*="dashboard"]):not(.retailer-storefront) .text-white\/30 { color: var(--neo-text-3) !important; }
+.neo-root .text-white\/80 { color: var(--neo-text-2) !important; }
+.neo-root .text-white\/60 { color: var(--neo-text-2) !important; }
+.neo-root .text-white\/50 { color: var(--neo-text-3) !important; }
+.neo-root .text-white\/40 { color: var(--neo-text-3) !important; }
+.neo-root .text-white\/30 { color: var(--neo-text-3) !important; }
 section#marketplace .text-slate-300 { color: var(--neo-text-2) !important; }
 section#marketplace .text-slate-400 { color: var(--neo-text-3) !important; }
 section#marketplace .text-white { color: var(--neo-text) !important; }
 
 /* Modal & Drawer contrast protections */
-:not([id*="dashboard"]):not(.retailer-storefront) .cart-drawer .text-white,
-:not([id*="dashboard"]):not(.retailer-storefront) .profile-drawer .text-white,
-:not([id*="dashboard"]):not(.retailer-storefront) .stores-drawer .text-white {
+.neo-root .cart-drawer .text-white,
+.neo-root .profile-drawer .text-white,
+.neo-root .stores-drawer .text-white {
   color: var(--neo-text) !important;
 }
 
@@ -958,68 +958,73 @@ section#marketplace .text-white { color: var(--neo-text) !important; }
 .text-emerald-400 { color: #059669 !important; }
 
 /* ── Border overrides ── */
-.border-white\/10 { border-color: var(--neo-border) !important; }
-.border-white\/5  { border-color: var(--neo-border) !important; }
-.border-white\/20 { border-color: var(--neo-border) !important; }
+.neo-root .border-white\/10 { border-color: var(--neo-border) !important; }
+.neo-root .border-white\/5  { border-color: var(--neo-border) !important; }
+.neo-root .border-white\/20 { border-color: var(--neo-border) !important; }
 
 /* ── Dark card backgrounds → neo surface ── */
-:not(.retailer-storefront) .bg-\[\#09090f\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
-:not(.retailer-storefront) .bg-\[\#05050a\]  { background: #e2e6f0 !important; color: var(--neo-text) !important; }
-:not(.retailer-storefront) .bg-\[\#0d0d1a\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
-:not(.retailer-storefront) .bg-\[\#080d1c\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
-:not(.retailer-storefront) .bg-\[\#0a0a18\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
-:not(.retailer-storefront) .bg-\[\#030612\]  { background: var(--neo-bg-dark) !important; }
-:not(.retailer-storefront) .bg-\[\#03061a\]  { background: var(--neo-bg-dark) !important; }
-:not(.retailer-storefront) .bg-black\/80     { background: rgba(30,32,48,0.7) !important; }
+.neo-root .bg-\[\#09090f\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
+.neo-root .bg-\[\#05050a\]  { background: #e2e6f0 !important; color: var(--neo-text) !important; }
+.neo-root .bg-\[\#0d0d1a\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
+.neo-root .bg-\[\#080d1c\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
+.neo-root .bg-\[\#0a0a18\]  { background: var(--neo-surface-card) !important; color: var(--neo-text) !important; }
+.neo-root .bg-\[\#030612\]  { background: var(--neo-bg-dark) !important; }
+.neo-root .bg-\[\#03061a\]  { background: var(--neo-bg-dark) !important; }
+.neo-root .bg-black\/80     { background: rgba(30,32,48,0.7) !important; }
 
 /* ── Store/Category pill buttons ── */
-:not(.retailer-storefront) button.text-white\/60, :not(.retailer-storefront) button.text-white\/70 { color: var(--neo-text-2) !important; }
-:not(.retailer-storefront) button.bg-white\/5 { background: var(--neo-bg-dark) !important; border: 1px solid var(--neo-border) !important; color: var(--neo-text-2) !important; }
-:not(.retailer-storefront) button.bg-white\/10 { background: var(--neo-bg-dark) !important; }
-:not(.retailer-storefront) button.hover\:bg-white\/10:hover { background: rgba(160,165,185,0.2) !important; }
+.neo-root button.text-white\/60, .neo-root button.text-white\/70 { color: var(--neo-text-2) !important; }
+.neo-root button.bg-white\/5 { background: var(--neo-bg-dark) !important; border: 1px solid var(--neo-border) !important; color: var(--neo-text-2) !important; }
+.neo-root button.bg-white\/10 { background: var(--neo-bg-dark) !important; }
+.neo-root button.hover\:bg-white\/10:hover { background: rgba(160,165,185,0.2) !important; }
 
 /* ── Search & Select inputs ── */
-:not(.retailer-storefront) input[placeholder="পণ্য খুঁজুন..."],
-:not(.retailer-storefront) input[placeholder*="search"], :not(.retailer-storefront) input[placeholder*="Search"] {
+.neo-root input[placeholder="পণ্য খুঁজুন..."],
+.neo-root input[placeholder*="search"], .neo-root input[placeholder*="Search"] {
   background: var(--neo-bg-dark) !important;
   border: 1px solid var(--neo-border) !important;
   color: var(--neo-text) !important;
   box-shadow: inset 4px 4px 8px rgba(160,165,185,0.45), inset -3px -3px 7px rgba(255,255,255,0.9) !important;
   border-radius: 14px !important;
 }
-:not(.retailer-storefront) input[placeholder="পণ্য খুঁজুন..."]::placeholder { color: var(--neo-text-3) !important; }
-:not(.retailer-storefront) select { background: var(--neo-bg-dark) !important; border: 1px solid var(--neo-border) !important; color: var(--neo-text) !important; border-radius: 12px !important; }
+.neo-root input[placeholder="পণ্য খুঁজুন..."]::placeholder { color: var(--neo-text-3) !important; }
+.neo-root select { background: var(--neo-bg-dark) !important; border: 1px solid var(--neo-border) !important; color: var(--neo-text) !important; border-radius: 12px !important; }
 
 /* ── Product cards ── */
-:not(.retailer-storefront) .rounded-2xl.overflow-hidden.cursor-pointer,
-:not(.retailer-storefront) .group.cursor-pointer.rounded-2xl {
+.neo-root .rounded-2xl.overflow-hidden.cursor-pointer,
+.neo-root .group.cursor-pointer.rounded-2xl {
   background: var(--neo-surface-card) !important;
   box-shadow: 5px 5px 14px rgba(160,165,185,0.6), -4px -4px 10px rgba(255,255,255,0.95) !important;
   border-color: var(--neo-border) !important;
 }
-:not(.retailer-storefront) .group.cursor-pointer.rounded-2xl:hover {
+.neo-root .group.cursor-pointer.rounded-2xl:hover {
   box-shadow: 7px 7px 20px rgba(160,165,185,0.7), -5px -5px 14px rgba(255,255,255,1) !important;
   transform: translateY(-2px);
 }
 
 /* ── Footer ── */
-:not(.retailer-storefront) footer { background: var(--neo-bg-dark) !important; border-top: 1px solid var(--neo-border) !important; }
-:not(.retailer-storefront) footer .text-white { color: var(--neo-text) !important; }
-:not(.retailer-storefront) footer .text-white\/80, :not(.retailer-storefront) footer .text-white\/60 { color: var(--neo-text-2) !important; }
-:not(.retailer-storefront) footer .text-white\/30, :not(.retailer-storefront) footer .text-white\/40 { color: var(--neo-text-3) !important; }
-:not(.retailer-storefront) footer .border-white\/10 { border-color: var(--neo-border) !important; }
+.neo-root footer { background: var(--neo-bg-dark) !important; border-top: 1px solid var(--neo-border) !important; }
+.neo-root footer .text-white { color: var(--neo-text) !important; }
+.neo-root footer .text-white\/80, .neo-root footer .text-white\/60 { color: var(--neo-text-2) !important; }
+.neo-root footer .text-white\/30, .neo-root footer .text-white\/40 { color: var(--neo-text-3) !important; }
+.neo-root footer .border-white\/10 { border-color: var(--neo-border) !important; }
+
+/* ── Retailer Storefront Isolation: Do not allow any ambient overrides ── */
+.retailer-storefront footer {
+  background-color: var(--sp-footer-bg, #0f172a);
+}
 
 /* ── Mobile bottom nav ── */
-.fixed.bottom-0.inset-x-0.z-\[99\] {
+.neo-root .fixed.bottom-0.inset-x-0.z-\[99\] {
   background: var(--neo-surface-card) !important;
   box-shadow: 0 -4px 20px rgba(160,165,185,0.4) !important;
   border-top: 1px solid var(--neo-border) !important;
 }
-.fixed.bottom-0.inset-x-0.z-\[99\] .text-white\/50,
-.fixed.bottom-0.inset-x-0.z-\[99\] .text-white\/60 { color: var(--neo-text-3) !important; }
+.neo-root .fixed.bottom-0.inset-x-0.z-\[99\] .text-white\/50,
+.neo-root .fixed.bottom-0.inset-x-0.z-\[99\] .text-white\/60 { color: var(--neo-text-3) !important; }
 
 /* ── Stores drawer ── */
-.fixed.inset-0.z-\[200\] > div:last-child {
+.neo-root .fixed.inset-0.z-\[200\] > div:last-child {
   background: var(--neo-surface-card) !important;
   box-shadow: 8px 0 32px rgba(160,165,185,0.5) !important;
 }

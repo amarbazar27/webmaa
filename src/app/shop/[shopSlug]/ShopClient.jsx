@@ -2846,7 +2846,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             )}
 
             {/* ── AI Shopping List (Vision Component) ── */}
-            {(shop.aiConfig?.enableAiShoppingList !== false || shop.settings?.enableAiShoppingList !== false) && (
+            {(shop?.aiConfig?.enableAiShoppingList === true || shop?.settings?.enableAiShoppingList === true) && (
               <AiShoppingList 
                 shop={shop} 
                 products={products} 

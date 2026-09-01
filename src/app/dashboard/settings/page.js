@@ -172,7 +172,7 @@ export default function SettingsPage() {
   const [authSettings, setAuthSettings] = useState({ emailAuth: false, googleAuth: true, emailPasswordAuth: false, actionPin: '', requireLoginBeforeOrder: true });
   const [promoSettings, setPromoSettings] = useState({ seventhDayFree: false });
   const [deliveryConfig, setDeliveryConfig] = useState({ advanceFee: '', methods: '', isCOD: true, contactEmail: '', minOrderAmount: '', deliveryDays: '', deliveryHours: '', deliveryMinutes: '', requirePaymentScreenshot: false });
-  const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: true, smartCalcEnabled: true });
+  const [aiConfig, setAiConfig] = useState({ apiKey: '', botName: '', botTone: 'funny', enableAiShoppingList: false, smartCalcEnabled: true });
   const [piprapayEnabled, setPiprapayEnabled] = useState(false);
   const [piprapayBkash, setPiprapayBkash] = useState('');
   const [piprapayNagad, setPiprapayNagad] = useState('');
@@ -357,7 +357,7 @@ export default function SettingsPage() {
         apiKey: data?.aiConfig?.apiKey || '',
         botName: data?.aiConfig?.botName || '',
         botTone: data?.aiConfig?.botTone || 'funny',
-        enableAiShoppingList: data?.aiConfig?.enableAiShoppingList !== false,
+        enableAiShoppingList: data?.aiConfig?.enableAiShoppingList === true,
         smartCalcEnabled: data?.aiConfig?.smartCalcEnabled || false
       });
       setStaffEmails(data?.staffEmails || []);

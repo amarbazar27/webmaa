@@ -133,15 +133,33 @@ export function getFooterColorPalette(footerConfig = {}, themeVars = {}, shop = 
   if (footerConfig?.textColorMode === 'dark') isDark = false;
 
   // 3. Compute High-Contrast Accessible Colors (100% WCAG AAA compliant text)
-  const textColor = footerConfig?.textColor || (isDark ? '#f1f5f9' : '#1e293b');
+  const textColor = footerConfig?.textColor || (isDark ? '#f8fafc' : '#1e293b');
   const headingColor = footerConfig?.headingColor || (isDark ? '#ffffff' : '#09090b');
-  const mutedTextColor = isDark ? '#cbd5e1' : '#475569';
+  const mutedTextColor = isDark ? '#cbd5e1' : '#64748b';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.12)';
   const cardBg = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)';
   const cardBorder = isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.09)';
   const badgeBg = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)';
   const badgeBorder = isDark ? 'rgba(255, 255, 255, 0.20)' : 'rgba(0, 0, 0, 0.14)';
   const badgeText = isDark ? '#ffffff' : '#0f172a';
+
+  // For dark footer backgrounds, ensure section titles are vibrant and highly legible
+  let sectionTitleColor = primaryColor || '#6D28D9';
+  if (isDark) {
+    sectionTitleColor = '#c084fc';
+    if (primaryColor && primaryColor.startsWith('#')) {
+      const hex = primaryColor.replace('#', '');
+      if (hex.length === 6) {
+        const r = parseInt(hex.slice(0, 2), 16) || 0;
+        const g = parseInt(hex.slice(2, 4), 16) || 0;
+        const b = parseInt(hex.slice(4, 6), 16) || 0;
+        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        if (lum >= 0.35) {
+          sectionTitleColor = primaryColor;
+        }
+      }
+    }
+  }
 
   return {
     bgColor,
@@ -155,7 +173,7 @@ export function getFooterColorPalette(footerConfig = {}, themeVars = {}, shop = 
     badgeBg,
     badgeBorder,
     badgeText,
-    primaryColor,
+    primaryColor: sectionTitleColor,
   };
 }
 
@@ -329,6 +347,7 @@ export default function StorefrontFooter({
     backgroundColor: palette.bgColor,
     color: palette.textColor,
     borderColor: palette.borderColor,
+    '--sp-footer-bg': palette.bgColor,
   };
 
   // ══════════════════════════════════════════════════════════════════
@@ -354,7 +373,7 @@ export default function StorefrontFooter({
                   const catName = typeof c === 'object' ? (c.name || '') : String(c);
                   return (
                     <li key={typeof c === 'object' ? (c.id || catName) : catName}>
-                      <button onClick={() => onCategoryClick?.(catName)} className="hover:opacity-80 transition-opacity cursor-pointer text-left">
+                      <button onClick={() => onCategoryClick?.(catName)} style={{ color: palette.textColor }} className="hover:opacity-80 transition-opacity cursor-pointer text-left">
                         → {catName}
                       </button>
                     </li>
@@ -368,10 +387,10 @@ export default function StorefrontFooter({
           <div className="space-y-3">
             <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">গ্রাহক সেবা ও নীতি</h4>
             <ul className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
-              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} className="hover:opacity-80 transition-opacity">প্রাইভেসি পলিসি</Link></li>
-              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/terms`} className="hover:opacity-80 transition-opacity">শর্তাবলী ও নিয়ম</Link></li>
-              <li><span className="opacity-90">রিটার্ন ও রিফান্ড নীতি</span></li>
-              <li><span className="opacity-90">ডেলিভারি ট্র্যাকিং</span></li>
+              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} style={{ color: palette.textColor }} className="hover:opacity-80 transition-opacity">প্রাইভেসি পলিসি</Link></li>
+              <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/terms`} style={{ color: palette.textColor }} className="hover:opacity-80 transition-opacity">শর্তাবলী ও নিয়ম</Link></li>
+              <li><span style={{ color: palette.textColor }} className="opacity-90">রিটার্ন ও রিফান্ড নীতি</span></li>
+              <li><span style={{ color: palette.textColor }} className="opacity-90">ডেলিভারি ট্র্যাকিং</span></li>
             </ul>
           </div>
 
@@ -380,8 +399,8 @@ export default function StorefrontFooter({
             <div className="space-y-3">
               <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">যোগাযোগ</h4>
               <div className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
-                <p className="flex items-center gap-2"><Phone size={13} className="text-emerald-500 shrink-0" /> {displayPhone}</p>
-                <p className="flex items-center gap-2"><Mail size={13} className="text-purple-500 shrink-0" /> {displayEmail}</p>
+                <p className="flex items-center gap-2" style={{ color: palette.textColor }}><Phone size={13} className="text-emerald-500 shrink-0" /> {displayPhone}</p>
+                <p className="flex items-center gap-2" style={{ color: palette.textColor }}><Mail size={13} className="text-purple-500 shrink-0" /> {displayEmail}</p>
                 <div className="pt-2">{renderPaymentLogos()}</div>
               </div>
             </div>

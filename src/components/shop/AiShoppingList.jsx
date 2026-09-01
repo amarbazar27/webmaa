@@ -241,8 +241,18 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
     if (!showModal) setShowModal(true);
   };
 
-  // Feature toggle - check both paths for compatibility
-  if (shop.aiConfig?.enableAiShoppingList === false || shop.settings?.enableAiShoppingList === false) return null;
+  // Feature toggle: By default, AI Shopping List is DISABLED for retailer shops unless explicitly enabled (true).
+  // On the main platform marketplace, it is enabled by default unless explicitly disabled (false).
+  const isMainPlatform = Boolean(shop?.isMain || shop?.shopSlug === 'main' || shop?.id === 'main' || !shop?.id);
+  if (!isMainPlatform) {
+    if (shop?.aiConfig?.enableAiShoppingList !== true && shop?.settings?.enableAiShoppingList !== true) {
+      return null;
+    }
+  } else {
+    if (shop?.aiConfig?.enableAiShoppingList === false || shop?.settings?.enableAiShoppingList === false) {
+      return null;
+    }
+  }
 
   const confidenceBadge = (level) => {
     if (level === 'low') return (
