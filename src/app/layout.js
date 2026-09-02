@@ -83,7 +83,7 @@ export const viewport = {
       {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "bdretailers",
+        "name": "BDRetailers",
         "alternateName": ["BD Retailers", "BDRetailers", "BDRetailers SaaS", "bdretailers.com", "বিডি রিটেইলার্স"],
         "url": BASE_URL,
         "logo": `${BASE_URL}/logo.png`,
@@ -105,7 +105,7 @@ export const viewport = {
       {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
-        "name": "bdretailers",
+        "name": "BDRetailers",
         "alternateName": ["BD Retailers", "BDRetailers", "বিডি রিটেইলার্স", "bdretailers.com"],
         "url": BASE_URL,
         "telephone": "+8801350783000",

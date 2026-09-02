@@ -7,9 +7,17 @@ export async function GET(request) {
 
   const txt = `User-agent: *
 Allow: /
+Allow: /api/manifest
 Disallow: /dashboard/
 Disallow: /api/
 Disallow: /superadmin/
+Disallow: /login
+Disallow: /register
+Disallow: /checkout
+Disallow: /cart
+Disallow: /profile
+Disallow: /orders
+Crawl-delay: 2
 
 # Explicitly Allow AI Search Engines for Generative Engine Optimization (GEO)
 User-agent: GPTBot
@@ -35,6 +43,19 @@ Allow: /
 
 User-agent: Applebot-Extended
 Allow: /
+
+# Block SEO scrapers — protect crawl budget
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
 
 Sitemap: ${sitemapUrl}
 `;

@@ -1,12 +1,11 @@
 'use client';
 import { useEffect, useState, use } from 'react';
-import { Loader2, Download, Package, ArrowLeft, Clock, ShieldAlert, RefreshCw, Eye, CheckCircle2, Truck, Calendar, MapPin, Phone, User } from 'lucide-react';
+import { Loader2, Download, Package, ArrowLeft, Clock, ShieldAlert, RefreshCw, Eye, CheckCircle2, Truck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
+// ── Delivery ETA Countdown ──────────────────────────────────────────
 function LiveCountdown({ deliveryETA }) {
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
@@ -49,6 +48,7 @@ function LiveCountdown({ deliveryETA }) {
   );
 }
 
+// ── Delivery Info Card (Replaces fake 1200m tracker) ────────────────
 function DeliveryInfoCard({ order, shop }) {
   const deliveryTime = order.deliveryCountdownFormatted || order.deliveryTime || shop?.deliveryConfig?.deliveryTime || '';
   const isCompleted = order.status === 'completed';
@@ -75,7 +75,6 @@ function DeliveryInfoCard({ order, shop }) {
             </p>
           </div>
         </div>
-
         <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider border ${
           isCompleted ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
           isCancelled ? 'text-red-700 bg-red-50 border-red-200' :
@@ -86,12 +85,10 @@ function DeliveryInfoCard({ order, shop }) {
         </span>
       </div>
 
-      {/* ETA Countdown if available */}
       {order.deliveryETA && !isCompleted && !isCancelled && (
         <LiveCountdown deliveryETA={order.deliveryETA} />
       )}
 
-      {/* Retailer Set Delivery Time */}
       {deliveryTime && (
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex items-center gap-3">
           <Clock size={18} className="text-purple-600 shrink-0" />
@@ -102,7 +99,6 @@ function DeliveryInfoCard({ order, shop }) {
         </div>
       )}
 
-      {/* Status Description Message */}
       <div className="text-xs font-bold text-slate-600 bg-slate-50/70 p-3 rounded-xl border border-slate-100 flex items-center gap-2">
         {isCompleted ? (
           <><CheckCircle2 size={16} className="text-emerald-600 shrink-0" /> আপনার অর্ডারটি সফলভাবে ডেলিভারি সম্পন্ন হয়েছে। ধন্যবাদ!</>
@@ -118,6 +114,7 @@ function DeliveryInfoCard({ order, shop }) {
   );
 }
 
+// ── Main Order Summary Page ──────────────────────────────────────────
 export default function OrderSummaryPage({ params }) {
   const { shopSlug, orderId } = use(params);
   const router = useRouter();
@@ -130,6 +127,7 @@ export default function OrderSummaryPage({ params }) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  // ── Verify payment (for unpaid automated orders) ──
   const handleVerifyPayment = async () => {
     setIsVerifying(true);
     const loadingToast = toast.loading('পেমেন্ট যাচাই করা হচ্ছে...');
@@ -137,31 +135,29 @@ export default function OrderSummaryPage({ params }) {
       const res = await fetch('/api/payments/verify-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, shopId: shop.id })
+        body: JSON.stringify({ orderId, shopId: shop?.id })
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'ভেরিফিকেশন সম্পন্ন করা যায়নি।');
-      }
+      if (!res.ok) throw new Error(data.error || 'ভেরিফিকেশন সম্পন্ন করা যায়নি।');
       if (data.success) {
-        toast.success(data.message || 'পেমেন্ট সফলভাবে ভেরিফাই ও অর্ডার কনফার্ম হয়েছে! 🎉', { id: loadingToast });
-        // Reload order state
-        const updatedOrderRes = await fetch(`/api/order?shopSlug=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`);
-        if (updatedOrderRes.ok) {
-          const updatedData = await updatedOrderRes.json();
+        toast.success(data.message || 'পেমেন্ট সফলভাবে ভেরিফাই ও অর্ডার কনফার্ম হয়েছে! 🎉', { id: loadingToast });
+        const updatedRes = await fetch(`/api/order?shopSlug=${encodeURIComponent(shopSlug)}&orderId=${encodeURIComponent(orderId)}`);
+        if (updatedRes.ok) {
+          const updatedData = await updatedRes.json();
           setOrder(updatedData.order);
         }
       } else {
-        toast.error(data.message || 'পেমেন্ট এখনো সম্পন্ন হয়নি।', { id: loadingToast });
+        toast.error(data.message || 'পেমেন্ট এখনো সম্পন্ন হয়নি।', { id: loadingToast });
       }
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'ভেরিফিকেশন রিকোয়েস্টে সমস্যা হয়েছে।', { id: loadingToast });
+      toast.error(err.message || 'ভেরিফিকেশন রিকোয়েস্টে সমস্যা হয়েছে।', { id: loadingToast });
     } finally {
       setIsVerifying(false);
     }
   };
 
+  // ── Fetch order on mount ──
   useEffect(() => {
     let isMounted = true;
     const fetchOrder = async () => {
@@ -179,47 +175,20 @@ export default function OrderSummaryPage({ params }) {
           }
           return;
         }
-
-        // Fallback: try direct Firestore
+        // Fallback: direct Firestore
         const { getShopBySlug } = await import('@/lib/firestore');
         const { db } = await import('@/lib/firebase');
         const { doc, getDoc } = await import('firebase/firestore');
         const shopData = await getShopBySlug(shopSlug);
-        if (!shopData) {
-          if (isMounted) setError('not_found');
-          return;
-        }
+        if (!shopData) { if (isMounted) setError('not_found'); return; }
         if (isMounted) setShop(shopData);
         const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
-        if (!orderSnap.exists()) {
-          if (isMounted) setError('not_found');
-          return;
-        }
+        if (!orderSnap.exists()) { if (isMounted) setError('not_found'); return; }
         if (isMounted) setOrder({ id: orderSnap.id, ...orderSnap.data() });
       } catch (err) {
         console.error('[OrderPage]', err);
-        try {
-          const { getShopBySlug } = await import('@/lib/firestore');
-          const { db } = await import('@/lib/firebase');
-          const { doc, getDoc } = await import('firebase/firestore');
-          const shopData = await getShopBySlug(shopSlug);
-          if (shopData) {
-            if (isMounted) setShop(shopData);
-            const orderSnap = await getDoc(doc(db, 'shops', shopData.id, 'orders', orderId));
-            if (orderSnap.exists()) {
-              if (isMounted) setOrder({ id: orderSnap.id, ...orderSnap.data() });
-              return;
-            }
-          }
-          if (isMounted) setError('not_found');
-        } catch (e) {
-          if (isMounted) {
-            if (e?.code === 'permission-denied') {
-              setError('permission');
-            } else {
-              setError('not_found');
-            }
-          }
+        if (isMounted) {
+          setError(err?.code === 'permission-denied' ? 'permission' : 'not_found');
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -231,12 +200,19 @@ export default function OrderSummaryPage({ params }) {
 
   const invoiceUrl = `/shop/${shopSlug}/invoice/${orderId}`;
 
+  // ── Generate PDF — dynamically imports heavy libs only on demand ──
   const generatePDF = async () => {
     if (isGeneratingPdf) return;
     try {
       setIsGeneratingPdf(true);
-      setPdfState('প্রস্তুত করা হচ্ছে...');
-      setPdfProgress(15);
+      setPdfState('লাইব্রেরি লোড হচ্ছে...');
+      setPdfProgress(10);
+
+      // Dynamic imports — NOT loaded at page init so Flutter WebView doesn't freeze
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
 
       const invoiceElement = document.getElementById('pdf-content');
       if (!invoiceElement) throw new Error('Invoice element not found');
@@ -281,7 +257,7 @@ export default function OrderSummaryPage({ params }) {
         <div className="flex items-center gap-3">
           <div>
             <p className="font-black text-xs text-slate-900">PDF ডাউনলোড সফল! 📄</p>
-            <p className="text-[10px] text-slate-500">ইনভয়েসটি ব্রাউজারেও সরাসরি দেখতে পারেন</p>
+            <p className="text-[10px] text-slate-500">ইনভয়েসটি ব্রাউজারেও সরাসরি দেখতে পারেন</p>
           </div>
           <Link
             href={invoiceUrl}
@@ -306,20 +282,27 @@ export default function OrderSummaryPage({ params }) {
     }
   };
 
+  // ── Safe back navigation ──
   const handleBack = () => {
-    if (window.history.length > 1) {
-      router.back();
-    } else {
+    try {
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        router.back();
+      } else {
+        router.push(`/shop/${shopSlug}`);
+      }
+    } catch {
       router.push(`/shop/${shopSlug}`);
     }
   };
 
+  // ── Loading state ──
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <Loader2 className="animate-spin text-purple-600" size={32} />
     </div>
   );
 
+  // ── Permission denied ──
   if (error === 'permission') return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
       <div className="bg-white rounded-3xl border border-amber-200 p-8 max-w-sm w-full text-center shadow-sm space-y-4">
@@ -337,6 +320,7 @@ export default function OrderSummaryPage({ params }) {
     </div>
   );
 
+  // ── Not found ──
   if (!order || !shop || error === 'not_found') return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-4">
       <div className="bg-white rounded-3xl border border-slate-200 p-8 max-w-sm w-full text-center shadow-sm space-y-4">
@@ -349,7 +333,6 @@ export default function OrderSummaryPage({ params }) {
     </div>
   );
 
-  // Safe number parsing helpers
   const safeNum = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
   const safeInt = (v) => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
 
@@ -360,7 +343,7 @@ export default function OrderSummaryPage({ params }) {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-20">
-      {/* Header */}
+      {/* Sticky Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -376,16 +359,16 @@ export default function OrderSummaryPage({ params }) {
             href={invoiceUrl}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-black border border-purple-200 transition-colors"
           >
-            <Eye size={14} /> ইনভয়েস ভিউ
+            <Eye size={14} /> ইনভয়েস ভিউ
           </Link>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        {/* Delivery Details Card (Replaces fake 1200m tracker) */}
+        {/* Delivery Info Card */}
         <DeliveryInfoCard order={order} shop={shop} />
 
-        {/* Retailer Return Note if exists */}
+        {/* Retailer note */}
         {order.returnNote && (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-3xl">
             <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">রিটেইলার বার্তা</p>
@@ -393,7 +376,7 @@ export default function OrderSummaryPage({ params }) {
           </div>
         )}
 
-        {/* Unpaid Automated Order - Retry Payment */}
+        {/* Unpaid automated order */}
         {isUnpaidAutomatedOrder && (
           <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-3xl border-2 border-red-200 p-6 shadow-md space-y-4">
             <div className="flex items-center gap-3">
@@ -401,7 +384,7 @@ export default function OrderSummaryPage({ params }) {
                 <ShieldAlert size={20} strokeWidth={2.5} />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="font-black text-red-900 text-sm">পেমেন্ট সম্পন্ন হয়নি (Payment Unpaid)</h3>
+                <h3 className="font-black text-red-900 text-sm">পেমেন্ট সম্পন্ন হয়নি (Payment Unpaid)</h3>
                 <p className="text-xs text-red-600 font-bold mt-0.5">অর্ডারটি কনফার্ম করার জন্য পেমেন্ট সম্পন্ন করা আবশ্যক।</p>
               </div>
             </div>
@@ -428,7 +411,7 @@ export default function OrderSummaryPage({ params }) {
           </div>
         )}
 
-        {/* Dual Invoice Action Buttons: Download PDF & Open Invoice in Browser */}
+        {/* Invoice Action Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={generatePDF}
@@ -453,7 +436,7 @@ export default function OrderSummaryPage({ params }) {
             className="w-full py-4 bg-white text-slate-800 hover:bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-sm text-center"
           >
             <Eye size={16} className="text-purple-600" strokeWidth={2.5} />
-            ইনভয়েস ওপেন করুন (Open)
+            ইনভয়েস ওপেন করুন (Open)
           </Link>
         </div>
 
@@ -500,9 +483,7 @@ export default function OrderSummaryPage({ params }) {
                       <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest">→ Customized: {item.customizedText}</p>
                     </div>
                   )}
-                  {item.note && (
-                    <p className="text-xs text-slate-500 font-bold italic mt-1">নোট: {item.note}</p>
-                  )}
+                  {item.note && <p className="text-xs text-slate-500 font-bold italic mt-1">নোট: {item.note}</p>}
                   <span className="inline-block text-xs font-black text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md mt-2">
                     {item.quantity} × ৳{safeNum(item.price).toLocaleString()}
                   </span>
@@ -532,7 +513,6 @@ export default function OrderSummaryPage({ params }) {
         id="pdf-content"
         style={{ display: 'none', position: 'fixed', top: 0, left: 0, background: 'white', width: '650px', zIndex: -1, padding: '20px', fontFamily: 'sans-serif', color: '#000' }}
       >
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #000', paddingBottom: '10px', marginBottom: '15px' }}>
           <div>
             {shop.logoUrl
@@ -549,8 +529,6 @@ export default function OrderSummaryPage({ params }) {
             </div>
           </div>
         </div>
-
-        {/* Addresses */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px', fontSize: '11px' }}>
           <div>
             <div style={{ fontSize: '9px', textTransform: 'uppercase', fontWeight: 900, marginBottom: '4px' }}>Billed From</div>
@@ -563,8 +541,6 @@ export default function OrderSummaryPage({ params }) {
             <div style={{ fontWeight: 900 }}>{order.customerPhone}</div>
           </div>
         </div>
-
-        {/* Items Table */}
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #000', borderTop: '1px solid #000', fontSize: '10px', textTransform: 'uppercase', fontWeight: 900 }}>
@@ -578,18 +554,9 @@ export default function OrderSummaryPage({ params }) {
             {order.items?.map((item, idx) => (
               <tr key={idx} style={{ borderBottom: '1px dashed #ccc', fontSize: '11px' }}>
                 <td style={{ padding: '8px 0', fontWeight: 700 }}>
-                  <div style={{ fontWeight: 900 }}>
-                    {item.name} {item.realBasePrice && <span style={{ fontSize: '9px', fontWeight: 'bold' }}>(Base: ৳{item.realBasePrice})</span>}
-                  </div>
-                  {item.customizedText && (
-                    <div style={{ marginTop: '2px' }}>
-                      {item.baseUnit && <div style={{ fontSize: '9px', fontWeight: 700 }}>Base: {item.baseUnit}</div>}
-                      <div style={{ fontSize: '9px', fontWeight: 900, color: '#7c3aed' }}>Customized: {item.customizedText}</div>
-                    </div>
-                  )}
-                  {item.note && (
-                    <div style={{ fontSize: '9px', fontStyle: 'italic', marginTop: '2px', color: '#666' }}>Note: {item.note}</div>
-                  )}
+                  <div style={{ fontWeight: 900 }}>{item.name}</div>
+                  {item.customizedText && <div style={{ fontSize: '9px', fontWeight: 900, color: '#7c3aed' }}>→ {item.customizedText}</div>}
+                  {item.note && <div style={{ fontSize: '9px', fontStyle: 'italic', marginTop: '2px', color: '#666' }}>Note: {item.note}</div>}
                 </td>
                 <td style={{ padding: '8px 0', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>
                 <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 700 }}>৳{safeNum(item.price).toLocaleString()}</td>
@@ -598,8 +565,6 @@ export default function OrderSummaryPage({ params }) {
             ))}
           </tbody>
         </table>
-
-        {/* Totals */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px' }}>
           <div style={{ width: '200px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
@@ -613,17 +578,9 @@ export default function OrderSummaryPage({ params }) {
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{ borderTop: '1px solid #000', paddingTop: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '9px', fontWeight: 700 }}>
-          <div>
-            {order.transactionId && (
-              <p>Txn ID: {order.transactionId}</p>
-            )}
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ marginTop: '4px' }}>Thank you for your business!</p>
-          </div>
+        <div style={{ borderTop: '1px solid #000', paddingTop: '10px', fontSize: '9px', fontWeight: 700, textAlign: 'right' }}>
+          <p>Thank you for your business!</p>
+          {order.transactionId && <p>Txn ID: {order.transactionId}</p>}
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
   try {
     const { shopSlug } = await params;
     const shop = await getShopServer(shopSlug);
-    if (!shop) return { title: 'Daripallah Store' };
+    if (!shop) return { title: 'Store Not Found | BDRetailers', robots: { index: false, follow: false } };
 
     const rawLogo = shop?.logoUrl || '/logo.png';
     const logoUrl = rawLogo.startsWith('http') ? rawLogo : `${BASE_URL}${rawLogo}`;
@@ -74,7 +74,7 @@ export async function generateMetadata({ params }) {
     };
   } catch (err) {
     console.error('[ShopPage] Metadata Error:', err);
-    return { title: 'Daripallah Store' };
+    return { title: 'Store Not Found | BDRetailers', robots: { index: false, follow: false } };
   }
 }
 
@@ -142,8 +142,10 @@ export default async function ShopPage({ params }) {
       name: shop.shopName,
       ...(alternateNames.length > 1 ? { alternateName: alternateNames } : {}),
       url: canonicalUrl,
-      ...(shop.logoUrl ? { logo: shop.logoUrl } : {}),
+      ...(shop.logoUrl ? { logo: shop.logoUrl, image: shop.logoUrl } : {}),
       description: shop?.seoDescription || shop?.slogan || `${shop.shopName} — অনলাইনে অর্ডার করুন`,
+      priceRange: '৳',
+      openingHours: 'Mo-Su 00:00-24:00',
       ...(shop?.socialLinks?.wa ? { telephone: shop.socialLinks.wa } : {}),
       ...(shop?.serviceAreas?.length ? {
         areaServed: shop.serviceAreas.map(a => ({ '@type': 'City', name: a }))

@@ -1608,6 +1608,27 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── SEO Hero Section: Statically rendered — crawlable by Google ── */}
+      <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2 text-center">
+        <h1 className="sr-only text-2xl sm:text-4xl font-black text-slate-900 leading-tight tracking-tight">
+          BDRetailers — বাংলাদেশের সেরা AI ই-কমার্স মার্কেটপ্লেস
+        </h1>
+        <p className="sr-only text-sm text-slate-600 max-w-3xl mx-auto mt-2">
+          মাত্র ১ মিনিটে আপনার নিজের অনলাইন স্টোর খুলুন। Steadfast কুরিয়ার, বিকাশ, নগদ, UddoktaPay পেমেন্ট সমর্থিত। ৩০ দিনের ফ্রি ট্রায়াল। বাংলাদেশের শীর্ষ ই-কমার্স SaaS প্ল্যাটফর্ম — bdretailers.com।
+        </p>
+        {/* Keyword-rich feature signals for Google crawling */}
+        <ul className="sr-only">
+          <li>Online Store Bangladesh — Free Trial 30 days</li>
+          <li>Shopify Alternative Bangladesh — BDRetailers SaaS</li>
+          <li>Steadfast Courier Integration Bangladesh</li>
+          <li>bKash Nagad UddoktaPay Payment Gateway Bangladesh</li>
+          <li>Multi Vendor Marketplace Bangladesh — Free</li>
+          <li>White Label E-commerce Platform Bangladesh</li>
+          <li>অনলাইন শপ বাংলাদেশ — বিনামূল্যে শুরু করুন</li>
+          <li>ই-কমার্স SaaS বাংলাদেশ — AI পাওয়ার্ড</li>
+        </ul>
+      </section>
+
       {/* ── Marketplace Section ── */}
       <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 scroll-mt-24">
         

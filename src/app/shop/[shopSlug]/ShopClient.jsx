@@ -5093,16 +5093,23 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     ) : userOrders.map(order => {
                       const currentShopSlug = shop?.shopSlug || shop?.subdomainSlug || shop?.id || initialShop?.shopSlug || initialShop?.subdomainSlug || 'main';
                       const orderDetailUrl = `/shop/${currentShopSlug}/order/${order.id}`;
+                      // Use full-page navigation (window.location.href) — guaranteed to work in Flutter WebView
+                      // Next.js <Link> client-side nav can fail when navigating between separate route bundles
+                      const goToOrderDetail = (e) => {
+                        e?.preventDefault?.();
+                        setIsProfileOpen(false);
+                        // Small delay so drawer closes before navigation
+                        setTimeout(() => { window.location.href = orderDetailUrl; }, 120);
+                      };
 
                       return (
                       <div
                         key={order.id}
                         className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:border-purple-300 transition-colors group"
                       >
-                        <Link
-                          href={orderDetailUrl}
-                          onClick={() => setIsProfileOpen(false)}
-                          className="block p-4 bg-slate-50 cursor-pointer hover:bg-slate-100/80 transition-colors text-inherit no-underline"
+                        <div
+                          className="block p-4 bg-slate-50 cursor-pointer hover:bg-slate-100/80 transition-colors"
+                          onClick={goToOrderDetail}
                         >
                           <div className="flex justify-between items-center mb-1.5">
                             <span className="text-[11px] font-black text-purple-700 bg-purple-100 px-2 py-1 rounded-md border border-purple-200">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
@@ -5110,15 +5117,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           </div>
                           <p className="font-extrabold text-slate-900 text-base">{order.items?.length || 0} Items <span className="text-purple-600">(৳{order.total?.toLocaleString()})</span></p>
                           <p className="text-[10px] font-bold text-slate-400 mt-1">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : '')}</p>
-                        </Link>
+                        </div>
                         <div className="grid grid-cols-2 border-t border-slate-100">
-                          <Link
-                            href={orderDetailUrl}
-                            onClick={() => setIsProfileOpen(false)}
-                            className="py-2.5 text-xs font-black text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors border-r border-slate-100 flex items-center justify-center gap-1.5 text-inherit no-underline"
+                          <button
+                            onClick={goToOrderDetail}
+                            className="py-2.5 text-xs font-black text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors border-r border-slate-100 flex items-center justify-center gap-1.5 cursor-pointer border-0"
                           >
                             <Package size={13} /> বিস্তারিত
-                          </Link>
+                          </button>
                           <button
                             onClick={() => {
                               // Reorder: load previous order items into cart
