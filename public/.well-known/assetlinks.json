@@ -1,0 +1,13 @@
+﻿[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bdretailers",
+      "sha256_cert_fingerprints": [
+        "C5:7F:4B:70:78:E4:49:A6:D1:3D:1E:58:CC:F3:D7:30:31:62:66:54:61:5B:F5:F6:7C:18:EE:76:26:00:E0:90",
+        "08:6C:16:5D:1B:46:8F:AF:11:47:98:7D:BB:A6:B8:83:22:A2:D6:D8:C8:99:CC:93:82:8A:79:97:D7:56:62:D8"
+      ]
+    }
+  }
+]

@@ -90,7 +90,17 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
         ],
       },
+      // ✅ Android App Links — Digital Asset Links verification (no redirect allowed)
+      {
+        source: '/.well-known/assetlinks.json',
+        headers: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'Cache-Control', value: 'public, max-age=3600' },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+        ],
+      },
       // ✅ FCM Service Worker — never cache, must use root scope
+
       {
         source: '/firebase-messaging-sw.js',
         headers: [
