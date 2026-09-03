@@ -176,10 +176,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/icons/') ||
     pathname.startsWith('/__/') ||
     pathname.startsWith('/logo.png') ||
-    pathname.startsWith('/favicon.ico')
+    pathname.startsWith('/favicon.ico') ||
+    pathname.startsWith('/.well-known/')  // ✅ Android App Links / Digital Asset Links
   ) {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
+
 
   const pathParts = pathname.split('/').filter(Boolean);
   const firstSegment = pathParts[0] || '';
