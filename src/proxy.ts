@@ -49,6 +49,7 @@ const RESERVED_KEYWORDS = [
 function normalizeHost(host: string): string {
   return host
     .replace(/^www\./i, '')
+    .replace(/\.$/, '')       // strip trailing dot (DNS canonical form, e.g. bdretailers.com.)
     .toLowerCase()
     .split(':')[0];
 }
