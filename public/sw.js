@@ -4,7 +4,7 @@
  * The actual FCM push handling is in /firebase-messaging-sw.js
  */
 
-const CACHE_NAME = 'webmaa-v3';
+const CACHE_NAME = 'webmaa-v4';
 const STATIC_ASSETS = [
   '/',
   '/logo.png',
@@ -13,7 +13,7 @@ const STATIC_ASSETS = [
 
 // ── Install: pre-cache static assets ────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Webmaa Service Worker v3');
+  console.log('[SW] Installing Webmaa Service Worker v4');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );

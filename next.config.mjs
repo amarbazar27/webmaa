@@ -59,12 +59,12 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://www.googletagmanager.com https://connect.facebook.net",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https: http:",
-              "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.cloudfunctions.net https://api.cloudinary.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com https://graph.facebook.com https://api.ipify.org https://*.vercel.app",
+              "default-src 'self' https://bdretailers.com https://www.bdretailers.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://bdretailers.com https://www.bdretailers.com https://www.gstatic.com https://apis.google.com https://www.googletagmanager.com https://connect.facebook.net",
+              "style-src 'self' 'unsafe-inline' https://bdretailers.com https://www.bdretailers.com https://fonts.googleapis.com",
+              "img-src 'self' data: blob: https: http: https://bdretailers.com https://www.bdretailers.com",
+              "font-src 'self' https://bdretailers.com https://www.bdretailers.com https://fonts.gstatic.com",
+              "connect-src 'self' https://bdretailers.com https://www.bdretailers.com https://*.firebaseio.com https://*.googleapis.com https://*.firebase.com https://*.cloudfunctions.net https://api.cloudinary.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com wss://*.firebaseio.com https://graph.facebook.com https://api.ipify.org https://*.vercel.app",
               "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com",
               "media-src 'self' https: blob:",
               "object-src 'none'",
@@ -75,11 +75,25 @@ const nextConfig = {
           },
         ],
       },
-      // Cache static assets for 1 year
+      // Enable CORS on Next.js static chunks
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+        ],
+      },
+      {
+        source: '/_next/image(.*)',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+        ],
+      },
+      // Cache public static assets
       {
         source: '/static/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          { key: 'Access-Control-Allow-Origin', value: '*' },
         ],
       },
       // API routes — no cache, CORS restricted

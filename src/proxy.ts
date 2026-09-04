@@ -26,9 +26,7 @@ const BYPASS_HOSTS = [
   'webmaa.vercel.app',
   'daripallah.com',
   'bdretailers.com',
-  'www.bdretailers.com',
   'freeappweb.com',
-  'www.freeappweb.com',
   'localhost',
   '127.0.0.1',
 ];
@@ -60,7 +58,7 @@ function normalizeHost(host: string): string {
  */
 function isBypassHost(host: string): boolean {
   return BYPASS_HOSTS.some(
-    (bypass) => host === bypass || host === 'www.' + bypass
+    (bypass) => host === bypass
   );
 }
 
@@ -183,6 +181,17 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
+  // ── Canonical Domain Redirect (www -> apex) ─────────────────────────
+  // Redirects www.bdretailers.com (and other www platform domains) to the canonical apex domain.
+  // Preserves pathname, search query parameters, and forces HTTPS.
+  // Static assets are already bypassed above and will never be redirected.
+  const cleanRawHost = rawHost.split(':')[0].toLowerCase();
+  if (cleanRawHost === 'www.bdretailers.com' || cleanRawHost === 'www.daripallah.com' || cleanRawHost === 'www.freeappweb.com') {
+    const nonWwwHost = cleanRawHost.replace(/^www\./, '');
+    const canonicalUrl = new URL(pathname + request.nextUrl.search, `https://${nonWwwHost}`);
+    console.log(`[Proxy] Canonical redirect 308: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
 
   const pathParts = pathname.split('/').filter(Boolean);
   const firstSegment = pathParts[0] || '';
