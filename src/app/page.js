@@ -8,7 +8,7 @@ import {
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
   Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag, User,
-  ShieldCheck, Truck, Clock, Maximize2, Minimize2
+  ShieldCheck, Truck, Clock, Maximize2, Minimize2, LogIn
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -18,6 +18,9 @@ import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import PricingSection from '@/components/home/PricingSection';
+import FaqSection from '@/components/home/FaqSection';
+import NewsletterSection from '@/components/home/NewsletterSection';
+import SponsorsSection from '@/components/home/SponsorsSection';
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
@@ -214,6 +217,19 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStoresMenuOpen, setIsStoresMenuOpen] = useState(false);
   const [showPwaBanner, setShowPwaBanner] = useState(false);
+
+  // ── Homepage Sections Toggle Control (Configured from Superadmin) ──
+  const sectionsConfig = globalConfig?.homepageSections || {};
+  const showHero = sectionsConfig.hero !== false;
+  const showStats = sectionsConfig.stats !== false;
+  const showBanners = sectionsConfig.banners !== false;
+  const showMarketplace = sectionsConfig.marketplace !== false;
+  const showFeaturedModels = sectionsConfig.featuredModels !== false;
+  const showShowcase = sectionsConfig.showcase !== false;
+  const showSponsors = sectionsConfig.sponsors !== false;
+  const showPricing = sectionsConfig.pricing !== false;
+  const showFaq = sectionsConfig.faq !== false;
+  const showNewsletter = sectionsConfig.newsletter !== false;
 
   // ── AI Product Clustering Helper ──
   const getProductType = (product) => {
@@ -1241,146 +1257,66 @@ export default function Home() {
   }
 
   return (
-    <div className="neo-root font-sans overflow-x-hidden pb-20 lg:pb-10">
+    <div className="neo-root neo-clay font-sans overflow-x-hidden pb-20 lg:pb-10 transition-colors duration-300">
       <style jsx global>{`
         body {
-          background-color: var(--bg-color, #F8FAFC);
-          color: var(--text-color, #0F172A);
+          background-color: #E0E5EC;
+          color: #3D4852;
           transition: background-color 0.3s ease, color 0.3s ease;
         }
         .dark body {
-          background-color: #0B0F19 !important;
-          color: #F8FAFC !important;
+          background-color: #1A202C !important;
+          color: #E2E8F0 !important;
         }
         .neo-root {
-          --bg-color: #F8FAFC;
-          --text-color: #0F172A;
-          --surface: #FFFFFF;
-          --surface-2: #F1F5F9;
-          --surface-3: #E2E8F0;
-          --panel-bg: #FFFFFF;
-          --border-color: #E2E8F0;
-          
-          --neo-text: #0F172A;
-          --neo-text-2: #334155;
-          --neo-text-3: #64748B;
-          --neo-border: #E2E8F0;
-          --neo-bg-dark: #F8FAFC;
-          --neo-accent: #6C47FF;
-          
-          background-color: #F8FAFC;
-          color: #0F172A;
+          --bg-color: #E0E5EC;
+          --text-color: #3D4852;
+          background-color: #E0E5EC;
+          color: #3D4852;
           min-height: 100vh;
         }
         .dark .neo-root {
-          --bg-color: #0B0F19 !important;
-          --text-color: #F8FAFC !important;
-          --surface: #131B2E !important;
-          --surface-2: #1E293B !important;
-          --surface-3: #334155 !important;
-          --panel-bg: #131B2E !important;
-          --border-color: rgba(255, 255, 255, 0.08) !important;
-          
-          --neo-text: #F8FAFC !important;
-          --neo-text-2: #CBD5E1 !important;
-          --neo-text-3: #94A3B8 !important;
-          --neo-border: rgba(255, 255, 255, 0.1) !important;
-          --neo-bg-dark: #0B0F19 !important;
-          --neo-accent: #8B5CF6 !important;
-          
-          background-color: #0B0F19 !important;
-          color: #F8FAFC !important;
-        }
-        .neo-raised {
-          background: #FFFFFF;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-          border: 1px solid #E2E8F0;
-          border-radius: 1.5rem;
-        }
-        .dark .neo-raised {
-          background: #131B2E !important;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        }
-        .neo-inset {
-          background: #F1F5F9;
-          border: 1px solid #E2E8F0;
-          border-radius: 1.0rem;
-        }
-        .dark .neo-inset {
-          background: #0F172A !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        }
-        .neo-button {
-          background: #FFFFFF;
-          border: 1px solid #CBD5E1;
-          border-radius: 0.75rem;
-          color: #0F172A;
-          transition: all 0.2s ease-in-out;
-        }
-        .dark .neo-button {
-          background: #1E293B !important;
-          border: 1px solid rgba(255, 255, 255, 0.12) !important;
-          color: #F8FAFC !important;
+          --bg-color: #1A202C !important;
+          --text-color: #E2E8F0 !important;
+          background-color: #1A202C !important;
+          color: #E2E8F0 !important;
         }
       `}</style>
 
       {/* ── Keyframe Injector ── */}
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.05); }
-          66% { transform: translate(-20px, 20px) scale(0.95); }
-          100% { transform: translate(0px, 0px) scale(1); }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
         }
-        .animate-blob { animation: blob 10s infinite; }
-        .animation-delay-2000 { animation-delay: 2.5s; }
-        .animation-delay-4000 { animation-delay: 5s; }
-        .glass-panel {
-          background: #FFFFFF;
-          border: 1px solid #E2E8F0;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
       `}} />
 
-      {/* ── Dynamic Light Gradient Glow ── */}
-      <div 
-        className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
-        style={{
-          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(108, 71, 255, 0.03), transparent 40%)`
-        }}
-      />
-
-      {/* ── Background Soft Blobs ── */}
-      <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-200/40 rounded-full blur-[140px] animate-blob" />
-      <div className="fixed top-[-15%] right-[-5%] w-[600px] h-[600px] bg-indigo-200/40 rounded-full blur-[140px] animate-blob animation-delay-2000" />
-      <div className="fixed bottom-[-15%] left-[10%] w-[600px] h-[600px] bg-pink-200/30 rounded-full blur-[140px] animate-blob animation-delay-4000" />
-
-      {/* ── Sleek Floating Glass Navigation Header ── */}
-      <header className="sticky top-0 z-50 px-4 py-3 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto flex justify-between items-center gap-4">
+      {/* ── Sleek Neumorphic Navigation Header ── */}
+      <header className="sticky top-0 z-50 px-3 sm:px-6 py-3 bg-[#E0E5EC]/90 dark:bg-[#1A202C]/90 backdrop-blur-xl neo-extruded-sm transition-all duration-300">
+        <div className="max-w-7xl mx-auto flex justify-between items-center gap-2 sm:gap-4">
           {/* Left Area: Stores Drawer on Far Left, Mobile Login/Workspace, Mobile Pricing, and Brand Logo */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Stores Drawer Trigger (FAR LEFT on Mobile and Desktop) */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-slate-100 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-xs font-black text-slate-800 hover:text-purple-700 flex items-center gap-1 sm:gap-1.5 rounded-xl active:scale-95 transition-all cursor-pointer shadow-xs shrink-0"
-              title="স্টোর মেনু খুলুন"
+              className="px-3 py-2 neo-btn text-xs font-black text-[#3D4852] dark:text-slate-200 flex items-center gap-1.5 cursor-pointer shrink-0"
+              title="মেনু ও স্টোরসমূহ খুলুন"
             >
-              <Store size={16} className="text-purple-600 shrink-0" />
+              <Store size={16} className="text-[#6C63FF] shrink-0" />
               <span className="font-mono tracking-wider text-[11px] sm:text-xs">Stores</span>
             </button>
 
-            {/* Mobile Actions: Login/Workspace & Pricing */}
+            {/* Mobile Actions: Login/Workspace & Pricing (ALWAYS VISIBLE ON MOBILE & TABLET) */}
             <div className="md:hidden flex items-center gap-1.5">
               {user ? (
                 <div>
                   {getDashboardHref() ? (
-                    <Link href={getDashboardHref()} className="px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all flex items-center gap-1 shadow-md">
+                    <Link href={getDashboardHref()} className="px-2.5 py-1.5 bg-[#6C63FF] text-white font-extrabold text-[11px] rounded-xl neo-extruded-sm flex items-center gap-1">
                       <Briefcase size={12} /> Workspace
                     </Link>
                   ) : (
-                    <button onClick={() => setIsProfileOpen(true)} className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-purple-700 font-extrabold text-[11px] rounded-xl active:scale-95 transition-all">
+                    <button onClick={() => setIsProfileOpen(true)} className="px-2.5 py-1.5 neo-btn text-[#6C63FF] font-extrabold text-[11px] rounded-xl">
                       Profile
                     </button>
                   )}
@@ -1389,16 +1325,16 @@ export default function Home() {
                 <button 
                   onClick={handleSmartLogin} 
                   disabled={loggingIn} 
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] rounded-xl active:scale-95 transition-all shadow-md"
+                  className="px-3 py-1.5 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-[11px] rounded-xl neo-extruded-sm active:neo-inset-sm transition-all flex items-center gap-1 cursor-pointer"
                 >
-                  {loggingIn ? "..." : "Login"}
+                  <LogIn size={12} /> {loggingIn ? "..." : "Login"}
                 </button>
               )}
 
               {/* Mobile Pricing Button */}
               <a 
                 href="#pricing" 
-                className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 font-bold text-xs rounded-xl active:scale-95 transition-all flex items-center gap-1 shrink-0"
+                className="px-2.5 py-1.5 neo-btn text-[#6C63FF] font-bold text-xs rounded-xl flex items-center gap-1 shrink-0"
               >
                 <Sparkles size={11} /> প্যাকেজ
               </a>
@@ -1412,59 +1348,54 @@ export default function Home() {
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
                 <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-7 sm:h-10 object-contain" alt="Logo" />
               ) : (
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs rounded-xl shadow-md">BD</div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl neo-inset-deep flex items-center justify-center text-[#6C63FF] font-black text-xs">
+                  BD
+                </div>
               )}
-              <span className="text-base sm:text-xl font-black text-slate-900 tracking-tight whitespace-nowrap hidden sm:block">
+              <span className="text-base sm:text-xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight whitespace-nowrap hidden sm:block">
                 {globalConfig?.brandName || 'BDRetailers'}
               </span>
             </Link>
           </div>
 
           {/* Center Links (Desktop only) */}
-          <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-slate-700">
-            <a href="#marketplace" className="text-purple-600 hover:text-purple-700 pb-1 flex items-center gap-1.5 transition-colors">
-              <ShoppingBag size={14} /> Marketplace
+          <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-[#6B7280] dark:text-slate-300">
+            <a href="#marketplace" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
+              <ShoppingBag size={14} className="text-[#6C63FF]" /> Marketplace
             </a>
-            <a href="#pricing" className="text-slate-700 hover:text-purple-600 pb-1 flex items-center gap-1.5 transition-colors">
-              <Sparkles size={14} className="text-purple-600" /> প্যাকেজ ও মূল্য
+            <a href="#pricing" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
+              <Sparkles size={14} className="text-[#6C63FF]" /> প্যাকেজ ও মূল্য
+            </a>
+            <a href="#sponsors" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
+              <ShieldCheck size={14} className="text-[#6C63FF]" /> পার্টনার্স
+            </a>
+            <a href="#faq" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
+              <MessageCircle size={14} className="text-[#6C63FF]" /> FAQ
             </a>
           </nav>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Swipable Light/Dark Theme Switch */}
             <ThemeToggleButton size="sm" />
 
             {/* PWA App Download */}
             {!pwaInstalled && (
               <button 
                 onClick={handleAppDownload} 
-                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-700 rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
+                className="px-3 py-1.5 neo-btn text-xs font-bold text-[#6C63FF] rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
               >
                 <Download size={13} /> App
               </button>
             )}
 
-            {/* Video Guide */}
-            {mainShopData?.howToOrderVideo && (
-              <a 
-                href={mainShopData.howToOrderVideo} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-700 rounded-xl flex items-center gap-1.5 transition-all"
-              >
-                <PlayCircle size={13} /> Video
-              </a>
-            )}
-
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="p-2.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 rounded-xl flex items-center justify-center active:scale-95 transition-all relative cursor-pointer"
+              className="p-2.5 neo-btn text-[#6C63FF] rounded-xl flex items-center justify-center relative cursor-pointer active:scale-95"
             >
               <ShoppingCart size={17} />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-purple-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-md animate-bounce">
+                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#6C63FF] text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-md animate-bounce">
                   {cartItemCount}
                 </span>
               )}
@@ -1472,21 +1403,20 @@ export default function Home() {
 
             {/* Desktop User Profile / Login */}
             <div className="hidden md:flex items-center gap-2.5">
-              <div className="w-[1px] h-5 bg-slate-200 mx-0.5" />
               {user ? (
                 <div className="flex items-center gap-2.5 shrink-0">
                   <button
                     onClick={() => setIsProfileOpen(true)}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-800 rounded-xl flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
+                    className="px-3 py-1.5 neo-btn text-xs font-bold text-[#3D4852] dark:text-slate-200 rounded-xl flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
                   >
-                    <div className="w-5 h-5 rounded-full overflow-hidden border border-purple-200 flex items-center justify-center bg-purple-600 font-bold text-white text-[10px] shrink-0">
+                    <div className="w-5 h-5 rounded-full overflow-hidden neo-inset-sm flex items-center justify-center bg-[#6C63FF] font-bold text-white text-[10px] shrink-0">
                       {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || 'U'}
                     </div>
                     <span>My Orders</span>
                   </button>
 
                   {getDashboardHref() && (
-                    <Link href={getDashboardHref()} className="px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl active:scale-95 transition-all shrink-0 flex items-center gap-1.5 shadow-sm">
+                    <Link href={getDashboardHref()} className="px-3.5 py-1.5 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-bold text-xs rounded-xl active:scale-95 transition-all shrink-0 flex items-center gap-1.5 neo-extruded-sm">
                       <Briefcase size={13} className="shrink-0" /> Dashboard
                     </Link>
                   )}
@@ -1494,7 +1424,7 @@ export default function Home() {
                   <button 
                     type="button"
                     onClick={() => setShowLogoutConfirm(true)} 
-                    className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                    className="px-2.5 py-1.5 neo-btn text-red-500 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
                   >
                     <LogOut size={12} /> Exit
                   </button>
@@ -1503,7 +1433,7 @@ export default function Home() {
                 <button 
                   onClick={handleSmartLogin} 
                   disabled={loggingIn} 
-                  className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs rounded-xl active:scale-95 transition-all shrink-0 cursor-pointer shadow-sm"
+                  className="px-4 py-2 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-xs rounded-2xl neo-extruded active:neo-inset-sm transition-all shrink-0 cursor-pointer"
                 >
                   {loggingIn ? "Connecting..." : "Login"}
                 </button>
@@ -1513,100 +1443,105 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Luxury Hero Section & Interactive Models Showcase ── */}
-      <section className="relative z-20 pt-8 pb-12 overflow-hidden border-b border-slate-200/80 bg-gradient-to-b from-purple-50/80 via-white to-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left Headline & Content */}
-            <div className="lg:col-span-7 space-y-6 text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-300 shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                <span className="text-xs font-bold text-purple-900">
-                  Verified BD Retailers & Wholesale Hub
-                </span>
-              </div>
-              
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
-                বাংলাদেশের সবচেয়ে গতিশীল{' '}
-                <span className="bg-gradient-to-r from-purple-700 via-indigo-600 to-pink-600 bg-clip-text text-transparent">ই-কমার্স ইকোসিস্টেম</span>
-              </h1>
-              
-              <p className="text-sm sm:text-base text-slate-700 font-medium leading-relaxed max-w-2xl">
-                সরাসরি ভেরিফাইড মার্চেন্ট নেটওয়ার্ক থেকে সেরা মানের পণ্য, কাস্টম প্রডাক্ট অর্ডারিং, 
-                গ্যারান্টেড দ্রুত ডেলিভারি ও রিয়েল-টাইম এআই অ্যাসিস্ট্যান্ট সহযোগে কেনাকাটা করুন।
-              </p>
+      {/* ── Neumorphic Hero Section ── */}
+      {showHero && (
+        <section className="relative z-20 pt-10 pb-16 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              {/* Left Headline & Content */}
+              <div className="lg:col-span-7 space-y-6 text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full neo-extruded-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span className="text-xs font-black text-[#6C63FF] uppercase tracking-wider">
+                    Verified BD Retailers & Wholesale Hub
+                  </span>
+                </div>
+                
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight leading-[1.1]">
+                  বাংলাদেশের সবচেয়ে গতিশীল{' '}
+                  <span className="text-[#6C63FF]">ই-কমার্স ইকোসিস্টেম</span>
+                </h1>
+                
+                <p className="text-sm sm:text-base text-[#6B7280] dark:text-slate-400 font-medium leading-relaxed max-w-2xl">
+                  সরাসরি ভেরিফাইড মার্চেন্ট নেটওয়ার্ক থেকে সেরা মানের পণ্য, কাস্টম প্রডাক্ট অর্ডারিং, 
+                  গ্যারান্টেড দ্রুত ডেলিভারি ও রিয়েল-টাইম এআই অ্যাসিস্ট্যান্ট সহযোগে কেনাকাটা করুন।
+                </p>
 
-              {/* Standardized Hero CTAs with Clear Hierarchy (Primary, Secondary, Ghost) */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <a 
-                  href="#marketplace" 
-                  className="px-6 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-sm rounded-2xl transition-all shadow-lg shadow-purple-500/25 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <ShoppingBag size={16} /> পণ্যসমূহ এক্সপ্লোর করুন
-                </a>
-                <a 
-                  href="#pricing" 
-                  className="px-5 py-3.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 font-bold text-sm rounded-2xl transition-all flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Sparkles size={16} /> সাবস্ক্রিপশন প্যাকেজ
-                </a>
-                <Link 
-                  href="/become-retailer" 
-                  className="px-5 py-3.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-sm rounded-2xl transition-all flex items-center gap-2 shadow-xs hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Store size={16} className="text-purple-600" /> মার্চেন্ট হন
-                </Link>
-              </div>
-            </div>
-
-            {/* Right — Stats + CTA Card */}
-            <div className="lg:col-span-5 relative">
-              <div className="p-6 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2.5rem] shadow-xl relative overflow-hidden text-white">
-                <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-                <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-indigo-400/20 blur-2xl" />
-
-                <div className="relative z-10 space-y-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-white/20 flex items-center justify-center">
-                      <Store size={22} className="text-white" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-widest text-white/80">BDRetailers Platform</p>
-                      <p className="text-sm font-black text-white leading-tight">বাংলাদেশের সেরা মার্কেটপ্লেস</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums text-white">{allShops.length}+</p>
-                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
-                    </div>
-                    <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums text-white">{products.length}+</p>
-                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
-                    </div>
-                    <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums text-white">99.8%</p>
-                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">সন্তুষ্টি হার</p>
-                    </div>
-                    <div className="bg-white/15 rounded-2xl p-3.5">
-                      <p className="text-2xl font-black font-mono tabular-nums text-white">24/7</p>
-                      <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mt-0.5">AI সহায়তা</p>
-                    </div>
-                  </div>
-
-                  <Link
-                    href="/become-retailer"
-                    className="w-full py-3.5 bg-white hover:bg-purple-50 text-purple-700 font-black text-xs uppercase tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                {/* Standardized Hero CTAs */}
+                <div className="flex flex-wrap items-center gap-3.5 pt-2">
+                  <a 
+                    href="#marketplace" 
+                    className="px-6 py-4 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-sm rounded-2xl neo-extruded active:neo-inset-sm transition-all flex items-center gap-2 cursor-pointer hover:-translate-y-0.5"
                   >
-                    <ShoppingBag size={14} /> আজই মার্চেন্ট হোন →
+                    <ShoppingBag size={16} /> পণ্যসমূহ এক্সপ্লোর করুন
+                  </a>
+                  <a 
+                    href="#pricing" 
+                    className="px-5 py-4 neo-btn text-[#6C63FF] font-black text-sm rounded-2xl transition-all flex items-center gap-2 cursor-pointer hover:-translate-y-0.5"
+                  >
+                    <Sparkles size={16} /> সাবস্ক্রিপশন প্যাকেজ
+                  </a>
+                  <Link 
+                    href="/become-retailer" 
+                    className="px-5 py-4 neo-btn text-[#3D4852] dark:text-slate-200 font-black text-sm rounded-2xl transition-all flex items-center gap-2 cursor-pointer hover:-translate-y-0.5"
+                  >
+                    <Store size={16} className="text-[#6C63FF]" /> মার্চেন্ট হন
                   </Link>
                 </div>
               </div>
+
+              {/* Right — Stats + CTA Card */}
+              {showStats && (
+                <div className="lg:col-span-5 relative">
+                  <div className="neo-card p-7 sm:p-8 rounded-[32px] relative overflow-hidden text-[#3D4852] dark:text-slate-100 space-y-6">
+                    {/* Concentric Decorative Rings */}
+                    <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full neo-inset-deep pointer-events-none opacity-30" />
+                    <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full neo-extruded pointer-events-none opacity-40" />
+
+                    <div className="relative z-10 space-y-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl neo-inset-deep text-[#6C63FF] flex items-center justify-center">
+                          <Store size={22} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-widest text-[#6C63FF]">BDRetailers Platform</p>
+                          <p className="text-sm font-black text-[#3D4852] dark:text-slate-100 leading-tight">বাংলাদেশের সেরা মার্কেটপ্লেস</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3.5">
+                        <div className="neo-inset rounded-2xl p-4">
+                          <p className="text-2xl font-black font-mono tabular-nums text-[#6C63FF]">{allShops.length}+</p>
+                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
+                        </div>
+                        <div className="neo-inset rounded-2xl p-4">
+                          <p className="text-2xl font-black font-mono tabular-nums text-[#6C63FF]">{products.length}+</p>
+                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
+                        </div>
+                        <div className="neo-inset rounded-2xl p-4">
+                          <p className="text-2xl font-black font-mono tabular-nums text-[#38B2AC]">99.8%</p>
+                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">সন্তুষ্টি হার</p>
+                        </div>
+                        <div className="neo-inset rounded-2xl p-4">
+                          <p className="text-2xl font-black font-mono tabular-nums text-[#6C63FF]">24/7</p>
+                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">AI সহায়তা</p>
+                        </div>
+                      </div>
+
+                      <Link
+                        href="/become-retailer"
+                        className="w-full py-4 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-xs uppercase tracking-wider rounded-2xl neo-extruded active:neo-inset-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <ShoppingBag size={14} /> আজই মার্চেন্ট হোন →
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── SEO Hero Section: Statically rendered — crawlable by Google ── */}
       <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2 text-center">
@@ -1630,11 +1565,12 @@ export default function Home() {
       </section>
 
       {/* ── Marketplace Section ── */}
+      {showMarketplace && (
       <section id="marketplace" className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-6 scroll-mt-24">
         
         {/* ── Main Site Banners Carousel ── */}
-        {bannersList.length > 0 && (
-          <div className="mb-8 relative rounded-3xl overflow-hidden shadow-2xl border border-purple-100 dark:border-white/10 bg-slate-900 group">
+        {showBanners && bannersList.length > 0 && (
+          <div className="mb-8 relative rounded-[32px] overflow-hidden neo-card bg-slate-900 group">
             <div 
               className="relative w-full h-[220px] sm:h-[340px] md:h-[420px] flex transition-transform duration-700 ease-out"
               style={{ transform: `translateX(-${activeBanner * 100}%)` }}
@@ -2291,95 +2227,103 @@ export default function Home() {
         ))}
         </div>
       </section>
+      )}
 
       {/* ── Featured Models & Specs Breakdown Showcase ── */}
-      <section id="featured-models" className="relative z-20 py-16 bg-gradient-to-br from-indigo-50 via-white to-violet-50 border-y border-indigo-100 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-            <div className="text-left space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 border border-indigo-200 text-[10px] font-black uppercase tracking-[0.25em] text-indigo-700">
-                <Sparkles size={12} className="text-indigo-500" /> TOP-TIER SELECTION
+      {showFeaturedModels && (
+        <section id="featured-models" className="relative z-20 py-16 scroll-mt-20 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+              <div className="text-left space-y-2">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full neo-extruded-sm text-[#6C63FF] font-black text-xs uppercase tracking-widest">
+                  <Sparkles size={14} /> TOP-TIER SELECTION
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight">
+                  ফিচার্ড মডেলস & <span className="text-[#6C63FF]">কাস্টম স্পেসিফিকেশন</span>
+                </h2>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                ফিচার্ড মডেলস & <span className="gradient-shimmer-text">কাস্টম স্পেসিফিকেশন</span>
-              </h2>
+              <p className="text-xs sm:text-sm text-[#6B7280] dark:text-slate-400 font-medium max-w-md">
+                প্রতিটি প্রডাক্ট মডেলের নিখুঁত ভ্যারিয়েন্ট, স্পেক্স, এবং রিয়েল-টাইম এআই প্রাইস ক্যালকুলেটর সাপোর্ট দেখুন।
+              </p>
             </div>
-            <p className="text-xs text-slate-400 font-medium max-w-md">
-              প্রতিটি প্রডাক্ট মডেলের নিখুঁত ভ্যারিয়েন্ট, স্পেক্স, এবং রিয়েল-টাইম এআই প্রাইস ক্যালকুলেটর সাপোর্ট দেখুন।
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {products.slice(0, 3).map((featProduct, idx) => (
-              <div 
-                key={featProduct.id || idx} 
-                className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col justify-between hover:border-indigo-300 hover:shadow-xl transition-all duration-300 shadow-md"
-              >
-                <div className="space-y-4">
-                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-50 border border-slate-200 p-2 flex items-center justify-center">
-                    <img 
-                      src={featProduct.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} 
-                      alt={featProduct.name} 
-                      className="w-full h-full object-contain"
-                    />
-                    <span className="absolute top-3 right-3 px-3 py-1 bg-slate-900 text-white border border-slate-700 text-xs font-mono font-bold rounded-full shadow-md">
-                      MODEL #{idx + 1}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-xs font-black text-indigo-600 uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
-                    <h3 className="text-lg font-black text-slate-900 truncate">{featProduct.name}</h3>
-                    <p className="text-xs text-slate-500 line-clamp-2 min-h-[32px] leading-relaxed font-medium">
-                      {featProduct.description || 'উচ্চমানের অরিজিনাল কাঁচামাল এবং সুনির্দিষ্ট কোয়ালিটি চেকে প্রস্তুতকৃত নির্ভরযোগ্য মডেল।'}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-bold text-slate-600 border-t border-slate-100">
-                    <div className="bg-slate-50 p-2 rounded-xl flex items-center gap-1.5 border border-slate-100">
-                      <ShieldCheck size={14} className="text-purple-600 shrink-0" />
-                      <span>গ্যারান্টেড কোয়ালিটি</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {products.slice(0, 3).map((featProduct, idx) => (
+                <div 
+                  key={featProduct.id || idx} 
+                  className="neo-card p-6 flex flex-col justify-between transition-all duration-300 group"
+                >
+                  <div className="space-y-4">
+                    <div className="relative aspect-video rounded-2xl overflow-hidden neo-inset p-3 flex items-center justify-center">
+                      <img 
+                        src={featProduct.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} 
+                        alt={featProduct.name} 
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                      />
+                      <span className="absolute top-3 right-3 px-3 py-1 neo-extruded-sm text-[10px] font-mono font-bold rounded-full text-[#6C63FF]">
+                        MODEL #{idx + 1}
+                      </span>
                     </div>
-                    <div className="bg-slate-50 p-2 rounded-xl flex items-center gap-1.5 border border-slate-100">
-                      <Truck size={14} className="text-emerald-600 shrink-0" />
-                      <span>ক্যাশ অন ডেলিভারি</span>
+
+                    <div className="space-y-1">
+                      <span className="text-xs font-black text-[#6C63FF] uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
+                      <h3 className="text-lg font-black text-[#3D4852] dark:text-slate-100 truncate">{featProduct.name}</h3>
+                      <p className="text-xs text-[#6B7280] dark:text-slate-400 line-clamp-2 min-h-[32px] leading-relaxed font-medium">
+                        {featProduct.description || 'উচ্চমানের অরিজিনাল কাঁচামাল এবং সুনির্দিষ্ট কোয়ালিটি চেকে প্রস্তুতকৃত নির্ভরযোগ্য মডেল।'}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-bold text-[#6B7280] dark:text-slate-300 border-t border-slate-300/30 dark:border-white/5">
+                      <div className="neo-inset-sm p-2 rounded-xl flex items-center gap-1.5">
+                        <ShieldCheck size={14} className="text-[#6C63FF] shrink-0" />
+                        <span>কোয়ালিটি চেক</span>
+                      </div>
+                      <div className="neo-inset-sm p-2 rounded-xl flex items-center gap-1.5">
+                        <Truck size={14} className="text-[#38B2AC] shrink-0" />
+                        <span>ক্যাশ অন ডেলিভারি</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="pt-5 border-t border-slate-100 mt-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">MODEL PRICE</span>
-                    <span className="text-xl font-mono tabular-nums font-black text-emerald-600">৳ {Number(featProduct.price || 0).toLocaleString()}</span>
+                  <div className="pt-5 border-t border-slate-300/30 dark:border-white/5 mt-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-[#6B7280] dark:text-slate-400 font-bold uppercase tracking-wider">MODEL PRICE</span>
+                      <span className="text-xl font-mono tabular-nums font-black text-[#6C63FF]">৳ {Number(featProduct.price || 0).toLocaleString()}</span>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setSelectedProduct(featProduct);
+                        setCustomizationNote('');
+                      }}
+                      className="w-full py-3 bg-[#6C63FF] hover:bg-[#5a52ea] text-white rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 neo-extruded active:neo-inset-sm"
+                    >
+                      <span>স্পেক্স ও বিবরণ দেখুন</span>
+                      <ArrowRight size={14} />
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => {
-                      setSelectedProduct(featProduct);
-                      setCustomizationNote('');
-                    }}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.01] active:scale-[0.99]"
-                  >
-                    <span>স্পেক্স ও বিবরণ দেখুন</span>
-                    <ArrowRight size={14} />
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Promoted Shops Showcase / Registry ── */}
-      {(globalConfig?.promotedLinks && globalConfig.promotedLinks.length > 0) && (
-        <section id="showcase" className="relative z-20 py-24 bg-white/[0.01] border-y border-white/5 overflow-hidden">
-          <div className="max-w-[96%] xl:max-w-[98%] mx-auto px-6">
-            <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-10">
-               <div className="text-left">
-                  <span className="inline-block px-5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-black uppercase tracking-[0.4em] text-purple-400 mb-6">Verified Registry</span>
-                  <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-none uppercase">Elite Merchants</h2>
+      {showShowcase && (globalConfig?.promotedLinks && globalConfig.promotedLinks.length > 0) && (
+        <section id="showcase" className="relative z-20 py-20 scroll-mt-20 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between mb-14 gap-8">
+               <div className="text-left space-y-2">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full neo-extruded-sm text-[#6C63FF] font-black text-xs uppercase tracking-widest">
+                    <Sparkles size={13} />
+                    <span>Verified Registry</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-5xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight leading-none uppercase">
+                    Elite <span className="text-[#6C63FF]">Merchants</span>
+                  </h2>
                </div>
                <div className="md:text-right max-w-sm">
-                  <p className="text-xs text-white/40 font-bold leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#6B7280] dark:text-slate-400 font-bold leading-relaxed">
                      A curated registry of elite retail storefronts built and hosted securely on our high-performance cloud network.
                   </p>
                </div>
@@ -2387,18 +2331,18 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {globalConfig.promotedLinks.map((link, idx) => (
-                <a key={idx} href={link.url} target="_blank" rel="noreferrer" className="group relative glass-panel p-8 rounded-[2rem] flex flex-col items-start gap-6 hover:bg-white/5 transition-all hover:-translate-y-1 hover:shadow-xl border-white/5">
-                  <div className="w-14 h-14 bg-gradient-to-br from-slate-800 to-slate-950 rounded-[1.2rem] flex items-center justify-center shadow-2xl border border-white/10 group-hover:border-purple-500/50 transition-all">
-                    <Globe size={24} className="text-white/20 group-hover:text-purple-400 transition-colors" />
+                <a key={idx} href={link.url} target="_blank" rel="noreferrer" className="group relative neo-card p-8 rounded-[32px] flex flex-col items-start gap-6 transition-all duration-300 hover:-translate-y-1">
+                  <div className="w-14 h-14 neo-inset-deep rounded-2xl flex items-center justify-center text-[#6C63FF] group-hover:scale-110 transition-transform">
+                    <Globe size={24} />
                   </div>
                   <div>
-                    <h4 className="text-xl font-black group-hover:text-white transition-all tracking-tight">{link.title}</h4>
-                    <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] mt-3 flex items-center gap-1.5 group-hover:text-purple-400 transition-colors">
-                       Visit Store <ArrowUpRight size={12} />
+                    <h4 className="text-xl font-black text-[#3D4852] dark:text-slate-100 group-hover:text-[#6C63FF] transition-colors tracking-tight">{link.title}</h4>
+                    <p className="text-[11px] text-[#6B7280] dark:text-slate-400 font-black uppercase tracking-[0.2em] mt-3 flex items-center gap-1.5 group-hover:text-[#6C63FF] transition-colors">
+                       Visit Store <ArrowUpRight size={13} />
                     </p>
                   </div>
-                  <div className="absolute top-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+                  <div className="absolute top-8 right-8">
+                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
                 </a>
               ))}
@@ -2407,11 +2351,20 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── Public 4-Column Pricing & Subscription Section ── */}
-      <PricingSection globalConfig={globalConfig} />
+      {/* ── Public Sponsors / Partners Section ── */}
+      {showSponsors && <SponsorsSection globalConfig={globalConfig} />}
 
-      {/* ── Bottom Navigation Bar (Mobile Only) ── */}
-      <nav className="fixed bottom-0 inset-x-0 z-50 lg:hidden flex justify-around items-center h-16 px-3 border-t border-slate-200/80 bg-white/95 backdrop-blur-xl shadow-[0_-8px_20px_rgba(0,0,0,0.06)]">
+      {/* ── Public 4-Column Pricing & Subscription Section ── */}
+      {showPricing && <PricingSection globalConfig={globalConfig} />}
+
+      {/* ── Frequently Asked Questions (FAQ) Section ── */}
+      {showFaq && <FaqSection globalConfig={globalConfig} />}
+
+      {/* ── Email Subscription Newsletter Section ── */}
+      {showNewsletter && <NewsletterSection globalConfig={globalConfig} />}
+
+      {/* ── Bottom Navigation Bar (Mobile Only - Neumorphic & Full Login Support) ── */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 lg:hidden flex justify-around items-center h-16 px-2 bg-[#E0E5EC]/95 dark:bg-[#1A202C]/95 backdrop-blur-xl neo-extruded border-none">
         <button 
           onClick={() => {
             setActiveShopFilter('All');
@@ -2419,7 +2372,7 @@ export default function Home() {
             setActiveSubcategory('');
             document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="flex flex-col items-center justify-center text-purple-700 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
           <ShoppingBag size={18} className="stroke-[2.5]" />
           <span className="text-[10px] mt-0.5 tracking-tight">Marketplace</span>
@@ -2428,9 +2381,9 @@ export default function Home() {
           onClick={() => {
             document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="flex flex-col items-center justify-center text-amber-600 hover:text-amber-700 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
-          <Sparkles size={18} className="text-amber-500 stroke-[2.5]" />
+          <Sparkles size={18} className="stroke-[2.5]" />
           <span className="text-[10px] mt-0.5 tracking-tight">প্যাকেজ</span>
         </button>
         <button 
@@ -2438,7 +2391,7 @@ export default function Home() {
             document.getElementById('search-input-field')?.focus();
             document.getElementById('search-input-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }}
-          className="flex flex-col items-center justify-center text-slate-600 hover:text-purple-600 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-[#6B7280] hover:text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
           <Search size={18} className="stroke-[2.5]" />
           <span className="text-[10px] mt-0.5 tracking-tight">Search</span>
@@ -2451,11 +2404,12 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-slate-600 hover:text-purple-600 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-[#6B7280] hover:text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
           <Package size={18} className="stroke-[2.5]" />
-          <span className="text-[10px] mt-0.5 tracking-tight">My Orders</span>
+          <span className="text-[10px] mt-0.5 tracking-tight">Orders</span>
         </button>
+        {/* LOGIN / WORKSPACE (ALWAYS PROMINENT ON MOBILE) */}
         <button 
           onClick={() => {
             if (user) {
@@ -2469,10 +2423,10 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-slate-600 hover:text-purple-600 font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
         >
           <User size={18} className="stroke-[2.5]" />
-          <span className="text-[10px] mt-0.5 tracking-tight">
+          <span className="text-[10px] mt-0.5 tracking-tight font-black">
             {user ? 'Workspace' : 'Login'}
           </span>
         </button>
@@ -2626,11 +2580,11 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Footer ── */}
-      <footer id="contact" className="relative z-20 border-t-2 border-slate-200 pt-16 pb-12" style={{ background: 'linear-gradient(135deg, #F0F4FF 0%, #FAF5FF 50%, #F0F9FF 100%)' }}>
+      {/* ── Neumorphic Footer ── */}
+      <footer id="contact" className="relative z-20 neo-extruded bg-[#E0E5EC] dark:bg-[#1A202C] pt-16 pb-12 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Decorative top accent line */}
-          <div className="w-20 h-1.5 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 mx-auto mb-14" />
+          <div className="w-20 h-1.5 rounded-full bg-[#6C63FF] mx-auto mb-14 neo-inset-sm" />
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
               
@@ -2643,35 +2597,37 @@ export default function Home() {
                      alt="Logo" 
                    />
                    <div>
-                     <h3 className="text-base font-black text-white tracking-tight">{globalConfig?.brandName || 'BDRetailers'}</h3>
-                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">bdretailers.com</p>
+                     <h3 className="text-base font-black text-[#3D4852] dark:text-slate-100 tracking-tight">{globalConfig?.brandName || 'BDRetailers'}</h3>
+                     <p className="text-[10px] text-[#6B7280] dark:text-slate-400 font-bold uppercase tracking-wider">bdretailers.com</p>
                    </div>
                  </div>
-                 <p className="text-xs text-white/50 leading-relaxed max-w-sm font-bold">
+                 <p className="text-xs text-[#6B7280] dark:text-slate-400 leading-relaxed max-w-sm font-medium">
                     {globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব।'}
                  </p>
                  <div className="pt-2">
-                   <span className="text-[9px] font-black text-white/30 tracking-[0.4em] uppercase">bdretailers global platform © {new Date().getFullYear()}</span>
+                   <span className="text-[9px] font-black text-[#6B7280] dark:text-slate-500 tracking-[0.4em] uppercase">bdretailers global platform © {new Date().getFullYear()}</span>
                  </div>
               </div>
               
               {/* Navigation Links */}
               <div>
-                 <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/80 mb-6">Navigation</h4>
-                 <ul className="space-y-4 text-xs font-bold text-white/50">
-                    <li><Link href="/showcase" className="hover:text-white transition-colors">Live Showcase Registry</Link></li>
-                    <li><a href="#marketplace" className="hover:text-white transition-colors">All Products Marketplace</a></li>
-                    <li><Link href="/dashboard" className="hover:text-white transition-colors">Store Admin Portal</Link></li>
-                    <li><Link href="/become-retailer" className="text-purple-400 hover:text-purple-300 font-black uppercase tracking-wider transition-colors flex items-center gap-1">🤝 Become Retailer</Link></li>
-                    <li><Link href="/reviews" className="text-purple-400 hover:text-purple-300 font-black uppercase tracking-wider transition-colors flex items-center gap-1">⭐ Platform Reviews</Link></li>
-                    <li><Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-                    <li><Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
+                 <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#3D4852] dark:text-slate-200 mb-6">Navigation</h4>
+                 <ul className="space-y-3.5 text-xs font-bold text-[#6B7280] dark:text-slate-400">
+                    <li><Link href="/showcase" className="hover:text-[#6C63FF] transition-colors">Live Showcase Registry</Link></li>
+                    <li><a href="#marketplace" className="hover:text-[#6C63FF] transition-colors">All Products Marketplace</a></li>
+                    <li><a href="#pricing" className="hover:text-[#6C63FF] transition-colors">Subscription Pricing</a></li>
+                    <li><a href="#faq" className="hover:text-[#6C63FF] transition-colors">Frequently Asked Questions</a></li>
+                    <li><Link href="/dashboard" className="hover:text-[#6C63FF] transition-colors">Store Admin Portal</Link></li>
+                    <li><Link href="/become-retailer" className="text-[#6C63FF] hover:text-[#5a52ea] font-black uppercase tracking-wider transition-colors flex items-center gap-1">🤝 Become Retailer</Link></li>
+                    <li><Link href="/reviews" className="text-[#6C63FF] hover:text-[#5a52ea] font-black uppercase tracking-wider transition-colors flex items-center gap-1">⭐ Platform Reviews</Link></li>
+                    <li><Link href="/privacy-policy" className="hover:text-[#6C63FF] transition-colors">Privacy Policy</Link></li>
+                    <li><Link href="/terms" className="hover:text-[#6C63FF] transition-colors">Terms of Service</Link></li>
                  </ul>
               </div>
 
               {/* Contact Section */}
               <div className="space-y-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-900 mb-6">যোগাযোগ করুন</h4>
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#3D4852] dark:text-slate-200 mb-6">যোগাযোগ করুন</h4>
                   <div className="space-y-3">
                     {(() => {
                       const rawEmail = globalConfig?.contactEmail || 'bdretailers26@gmail.com';
@@ -2682,12 +2638,12 @@ export default function Home() {
 
                       return (
                         <>
-                          <a href={`mailto:${rawEmail}`} className="flex items-center gap-2 text-slate-500 hover:text-purple-600 group transition-colors cursor-pointer">
-                            <Bot size={14} className="text-purple-500" />
+                          <a href={`mailto:${rawEmail}`} className="flex items-center gap-2.5 text-[#6B7280] dark:text-slate-300 hover:text-[#6C63FF] group transition-colors cursor-pointer">
+                            <Bot size={15} className="text-[#6C63FF]" />
                             <span className="text-sm font-medium">{rawEmail}</span>
                           </a>
-                          <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 group transition-colors cursor-pointer">
-                            <Phone size={14} className="text-emerald-500" />
+                          <a href={`https://wa.me/${formattedWa}`} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[#6B7280] dark:text-slate-300 hover:text-[#38B2AC] group transition-colors cursor-pointer">
+                            <Phone size={15} className="text-[#38B2AC]" />
                             <span className="text-sm font-medium">
                               {rawWa.startsWith('+') || rawWa.startsWith('88') ? rawWa : `+88${rawWa.replace(/^0+/, '')}`}
                             </span>
@@ -2709,22 +2665,22 @@ export default function Home() {
                       return (
                         <>
                           {fbLink && (
-                            <a href={fbLink} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 text-slate-500 hover:text-white hover:scale-110 transition-all duration-300 shadow-sm cursor-pointer">
+                            <a href={fbLink} target="_blank" rel="noreferrer" className="neo-btn w-10 h-10 rounded-2xl flex items-center justify-center text-[#6B7280] hover:text-[#6C63FF] transition-all cursor-pointer" aria-label="Facebook">
                               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                             </a>
                           )}
                           {instaLink && (
-                            <a href={instaLink} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center hover:bg-gradient-to-br hover:from-pink-600 hover:to-orange-500 hover:border-pink-600 text-slate-500 hover:text-white hover:scale-110 transition-all duration-300 shadow-sm cursor-pointer">
+                            <a href={instaLink} target="_blank" rel="noreferrer" className="neo-btn w-10 h-10 rounded-2xl flex items-center justify-center text-[#6B7280] hover:text-[#6C63FF] transition-all cursor-pointer" aria-label="Instagram">
                               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                             </a>
                           )}
                           {ytLink && (
-                            <a href={ytLink} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center hover:bg-red-600 hover:border-red-600 text-slate-500 hover:text-white hover:scale-110 transition-all duration-300 shadow-sm cursor-pointer">
+                            <a href={ytLink} target="_blank" rel="noreferrer" className="neo-btn w-10 h-10 rounded-2xl flex items-center justify-center text-[#6B7280] hover:text-[#6C63FF] transition-all cursor-pointer" aria-label="YouTube">
                               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
                             </a>
                           )}
                           {waLink && (
-                            <a href={waLink} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-2xl bg-white border border-slate-200 flex items-center justify-center hover:bg-emerald-600 hover:border-emerald-600 text-slate-500 hover:text-white hover:scale-110 transition-all duration-300 shadow-sm cursor-pointer">
+                            <a href={waLink} target="_blank" rel="noreferrer" className="neo-btn w-10 h-10 rounded-2xl flex items-center justify-center text-[#6B7280] hover:text-[#38B2AC] transition-all cursor-pointer" aria-label="WhatsApp">
                               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
                             </a>
                           )}

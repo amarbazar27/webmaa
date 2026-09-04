@@ -14,11 +14,17 @@ import dynamic from 'next/dynamic';
 const SuperadminBroadcastPanel = dynamic(() => import('@/components/superadmin/SuperadminBroadcastPanel'), { ssr: false });
 const SuperadminAppBuilder = dynamic(() => import('@/components/superadmin/SuperadminAppBuilder'), { ssr: false });
 const SuperadminCustomersPanel = dynamic(() => import('@/components/superadmin/SuperadminCustomersPanel'), { ssr: false });
+const SuperadminHomepageControls = dynamic(() => import('@/components/superadmin/SuperadminHomepageControls'), { ssr: false });
+const SuperadminPricingCustomizer = dynamic(() => import('@/components/superadmin/SuperadminPricingCustomizer'), { ssr: false });
+const SuperadminSubscribersPanel = dynamic(() => import('@/components/superadmin/SuperadminSubscribersPanel'), { ssr: false });
+const SuperadminSponsorsManager = dynamic(() => import('@/components/superadmin/SuperadminSponsorsManager'), { ssr: false });
+const SuperadminFaqManager = dynamic(() => import('@/components/superadmin/SuperadminFaqManager'), { ssr: false });
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
-  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy, TrendingUp, Percent, DollarSign, Receipt, RefreshCw, AlertCircle, Bell
+  Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy, TrendingUp, Percent, DollarSign, Receipt, RefreshCw, AlertCircle, Bell,
+  Layout, HelpCircle, Handshake
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -90,7 +96,11 @@ export default function SuperAdminPage() {
     donationEnabled: true,
     bankDetails: '',
     greenwebToken: '',
-    smsGateway: 'mock'
+    smsGateway: 'mock',
+    homepageSections: {},
+    pricingPlans: null,
+    sponsors: [],
+    faqs: []
   });
   const [savingConfig, setSavingConfig] = useState(false);
   
@@ -375,7 +385,11 @@ export default function SuperAdminPage() {
         donationEnabled: configData?.donationEnabled !== false,
         bankDetails: configData?.bankDetails || '',
         greenwebToken: configData?.greenwebToken || '',
-        smsGateway: configData?.smsGateway || 'mock'
+        smsGateway: configData?.smsGateway || 'mock',
+        homepageSections: configData?.homepageSections || {},
+        pricingPlans: configData?.pricingPlans || null,
+        sponsors: configData?.sponsors || [],
+        faqs: configData?.faqs || []
       });
     });
     return () => unsubscribe();
@@ -1117,6 +1131,73 @@ export default function SuperAdminPage() {
               <TrendingUp size={16} />
               <span>শেয়ার্ড বিজনেস (Revenue Share)</span>
             </button>
+
+            <div className="pt-2 mt-2 border-t border-slate-100">
+              <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest px-3 mb-2 flex items-center gap-1.5">
+                <Sparkles size={11} />
+                <span>হোমপেজ ও সিএমএস কন্ট্রোল</span>
+              </p>
+              
+              <button
+                onClick={() => setSuperadminTab('homepage_sections')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'homepage_sections'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Layout size={16} />
+                <span>হোমপেজ সেকশন অন / অফ</span>
+              </button>
+
+              <button
+                onClick={() => setSuperadminTab('pricing_customizer')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'pricing_customizer'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <DollarSign size={16} />
+                <span>প্রাইসিং প্ল্যান ও ফিচার লাইনস</span>
+              </button>
+
+              <button
+                onClick={() => setSuperadminTab('subscribers')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'subscribers'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Mail size={16} />
+                <span>নিউজলেটার সাবস্ক্রাইবার্স</span>
+              </button>
+
+              <button
+                onClick={() => setSuperadminTab('sponsors_manager')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'sponsors_manager'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Handshake size={16} />
+                <span>স্পনসর ও পার্টনার্স</span>
+              </button>
+
+              <button
+                onClick={() => setSuperadminTab('faq_manager')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'faq_manager'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <HelpCircle size={16} />
+                <span>FAQ প্রশ্নোত্তর কন্ট্রোল</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -3546,6 +3627,26 @@ export default function SuperAdminPage() {
           </div>
         </div>
       </>)}
+
+      {superadminTab === 'homepage_sections' && (
+        <SuperadminHomepageControls globalConfig={globalConfig} />
+      )}
+
+      {superadminTab === 'pricing_customizer' && (
+        <SuperadminPricingCustomizer globalConfig={globalConfig} />
+      )}
+
+      {superadminTab === 'subscribers' && (
+        <SuperadminSubscribersPanel />
+      )}
+
+      {superadminTab === 'sponsors_manager' && (
+        <SuperadminSponsorsManager globalConfig={globalConfig} />
+      )}
+
+      {superadminTab === 'faq_manager' && (
+        <SuperadminFaqManager globalConfig={globalConfig} />
+      )}
 
         </div>
       </div>

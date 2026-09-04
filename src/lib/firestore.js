@@ -1043,4 +1043,54 @@ export const addSubscriptionHistory = async (shopId, historyData) => {
   });
 };
 
+// ── NEWSLETTER SUBSCRIBERS ─────────────────────────
+export const getNewsletterSubscribers = async () => {
+  try {
+    const q = query(collection(db, 'newsletter_subscribers'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    console.error('getNewsletterSubscribers error:', err);
+    // Fallback without ordering
+    try {
+      const snap = await getDocs(collection(db, 'newsletter_subscribers'));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (_) {
+      return [];
+    }
+  }
+};
+
+export const deleteNewsletterSubscriber = async (subscriberId) => {
+  return deleteDoc(doc(db, 'newsletter_subscribers', subscriberId));
+};
+
+// ── SPONSOR REQUESTS & SPONSORS ────────────────────
+export const getSponsorRequests = async () => {
+  try {
+    const q = query(collection(db, 'sponsor_requests'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    try {
+      const snap = await getDocs(collection(db, 'sponsor_requests'));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (_) {
+      return [];
+    }
+  }
+};
+
+export const deleteSponsorRequest = async (requestId) => {
+  return deleteDoc(doc(db, 'sponsor_requests', requestId));
+};
+
+export const updateSponsorRequestStatus = async (requestId, status) => {
+  return updateDoc(doc(db, 'sponsor_requests', requestId), {
+    status,
+    updatedAt: serverTimestamp()
+  });
+};
+
+
 
