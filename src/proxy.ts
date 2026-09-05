@@ -187,20 +187,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // Static assets are already bypassed above and will never be redirected.
   const cleanRawHost = rawHost.split(':')[0].toLowerCase();
 
-  // ── Replica Domain Redirect: messbazar.com -> messerbazar.com ──
+  // ── Replica Domain Redirect: messbazar.com -> www.messerbazar.com ──
   // User purchased messbazar.com as alias/replica of messerbazar.com.
-  // 308 permanent redirect passes full SEO link equity and routes all visitors to messerbazar.com.
+  // 308 permanent redirect passes full SEO link equity directly to the active live domain.
   if (cleanRawHost === 'messbazar.com' || cleanRawHost === 'www.messbazar.com') {
-    const canonicalUrl = new URL(pathname + request.nextUrl.search, 'https://messerbazar.com');
+    const canonicalUrl = new URL(pathname + request.nextUrl.search, 'https://www.messerbazar.com');
     console.log(`[Proxy] Replica redirect 308: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
-    return NextResponse.redirect(canonicalUrl, 308);
-  }
-
-  // ── Canonical Domain Redirect (www -> apex) ─────────────────────────
-  if (cleanRawHost === 'www.messerbazar.com' || cleanRawHost === 'www.bdretailers.com' || cleanRawHost === 'www.daripallah.com' || cleanRawHost === 'www.freeappweb.com') {
-    const nonWwwHost = cleanRawHost.replace(/^www\./, '');
-    const canonicalUrl = new URL(pathname + request.nextUrl.search, `https://${nonWwwHost}`);
-    console.log(`[Proxy] Canonical redirect 308: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
     return NextResponse.redirect(canonicalUrl, 308);
   }
 

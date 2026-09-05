@@ -37,7 +37,8 @@ export const getShopByDomain = async (rawDomain) => {
     }
 
     // 4. Fallback to legacy field check
-    const legacyQ = query(shopsRef, where('customDomain', '==', naked));
+    const lookupDomain = (naked === 'messbazar.com' || naked === 'messerbazar.com') ? 'messerbazar.com' : naked;
+    const legacyQ = query(shopsRef, where('customDomain', '==', lookupDomain));
     const legacySnap = await getDocs(legacyQ);
     
     if (!legacySnap.empty) {
@@ -60,7 +61,7 @@ export const getShopByDomain = async (rawDomain) => {
         }
         // Admin SDK legacy fallback
         const adminLegacy = await adminDb.collection('shops')
-          .where('customDomain', '==', naked)
+          .where('customDomain', '==', lookupDomain)
           .limit(1)
           .get();
         if (!adminLegacy.empty) {
