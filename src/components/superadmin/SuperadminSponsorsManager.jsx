@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { 
   Handshake, Plus, Trash2, Edit2, CheckCircle2, XCircle, 
   ExternalLink, Globe, Image, Mail, Phone, Clock, 
-  Sparkles, Check, X, ArrowUp, ArrowDown, Save, Loader2 
+  Sparkles, Check, X, ArrowUp, ArrowDown, Save, Loader2, Upload 
 } from 'lucide-react';
 import { 
   getSponsorRequests, 
   deleteSponsorRequest, 
   updateSponsorRequestStatus, 
-  updateGlobalConfig 
+  updateGlobalConfig,
+  subscribeGlobalConfig
 } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 
@@ -18,22 +19,22 @@ const DEFAULT_SPONSORS_FALLBACK = [
   {
     id: 'sp-1',
     companyName: 'Steadfast Courier',
-    tier: 'অফিসিয়াল লজিস্টিক পার্টনার',
-    logoUrl: 'https://steadfast.com.bd/images/logo.png',
+    tier: 'অফিসিয়াল লজিস্টিক পার্টনার',
+    logoUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120"><rect width="400" height="120" rx="16" fill="%23004b93"/><g fill="%23ffffff"><path d="M40 35 L65 20 L90 35 L90 65 L65 80 L40 65 Z" fill="none" stroke="%23ffffff" stroke-width="6"/><circle cx="65" cy="50" r="10" fill="%23ffc20e"/><text x="110" y="60" font-family="sans-serif" font-size="28" font-weight="900" fill="%23ffffff">STEADFAST</text><text x="110" y="85" font-family="sans-serif" font-size="15" font-weight="700" fill="%23ffc20e" letter-spacing="4">COURIER BD</text></g></svg>',
     websiteUrl: 'https://steadfast.com.bd'
   },
   {
     id: 'sp-2',
     companyName: 'UddoktaPay',
     tier: 'পেমেন্ট গেটওয়ে পার্টনার',
-    logoUrl: 'https://uddoktapay.com/assets/images/logo.png',
+    logoUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120"><rect width="400" height="120" rx="16" fill="%235a31f4"/><circle cx="65" cy="60" r="30" fill="%23ffffff"/><path d="M52 45 L68 60 L52 75 M64 45 L80 60 L64 75" fill="none" stroke="%235a31f4" stroke-width="5" stroke-linecap="round"/><text x="115" y="64" font-family="sans-serif" font-size="28" font-weight="900" fill="%23ffffff">UddoktaPay</text><text x="115" y="86" font-family="sans-serif" font-size="13" font-weight="700" fill="%23c4b5fd" letter-spacing="2">PAYMENT GATEWAY</text></svg>',
     websiteUrl: 'https://uddoktapay.com'
   },
   {
     id: 'sp-3',
     companyName: 'Bkash Merchant',
     tier: 'ডিজিটাল পেমেন্ট নেটওয়ার্ক',
-    logoUrl: 'https://www.bkash.com/images/bkash_logo.png',
+    logoUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120"><rect width="400" height="120" rx="16" fill="%23e2136e"/><polygon points="40,35 75,35 60,65" fill="%23ffffff"/><polygon points="60,65 95,50 80,85" fill="%23ffffff"/><polygon points="40,35 60,65 35,80" fill="%23ffffff"/><text x="115" y="62" font-family="sans-serif" font-size="28" font-weight="900" fill="%23ffffff">bKash</text><text x="115" y="86" font-family="sans-serif" font-size="13" font-weight="700" fill="%23ffffff" letter-spacing="2">MERCHANT NETWORK</text></svg>',
     websiteUrl: 'https://www.bkash.com'
   }
 ];
@@ -44,19 +45,23 @@ export default function SuperadminSponsorsManager({ globalConfig = {} }) {
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
 
-  // Active Sponsors State from globalConfig
+  // Active Sponsors State - accurately tracks Firestore state (even empty array)
   const [sponsors, setSponsors] = useState(() => {
-    return (globalConfig?.sponsors && globalConfig.sponsors.length > 0)
-      ? globalConfig.sponsors
-      : DEFAULT_SPONSORS_FALLBACK;
+    if (Array.isArray(globalConfig?.sponsors)) {
+      return globalConfig.sponsors;
+    }
+    return DEFAULT_SPONSORS_FALLBACK;
   });
+
+  // Upload state
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   // New Sponsor Form
   const [newSponsor, setNewSponsor] = useState({
     companyName: '',
     logoUrl: '',
     websiteUrl: '',
-    tier: 'অফিসিয়াল পার্টনার'
+    tier: 'অফিসিয়াল পার্টনার'
   });
 
   // Edit Sponsor State
@@ -70,12 +75,18 @@ export default function SuperadminSponsorsManager({ globalConfig = {} }) {
 
   const [savingSponsors, setSavingSponsors] = useState(false);
 
-  // Sync sponsors if globalConfig updates externally
+  // Direct realtime Firestore sync: guarantees deletes, edits, additions persist permanently across refresh!
   useEffect(() => {
-    if (globalConfig?.sponsors && globalConfig.sponsors.length > 0) {
-      setSponsors(globalConfig.sponsors);
-    }
-  }, [globalConfig?.sponsors]);
+    const unsub = subscribeGlobalConfig((configData) => {
+      if (Array.isArray(configData?.sponsors)) {
+        setSponsors(configData.sponsors);
+      } else if (!configData?.sponsors) {
+        setSponsors(DEFAULT_SPONSORS_FALLBACK);
+        updateGlobalConfig({ sponsors: DEFAULT_SPONSORS_FALLBACK }).catch(() => {});
+      }
+    });
+    return () => unsub && unsub();
+  }, []);
 
   // Load Requests
   const loadRequests = async () => {
@@ -195,6 +206,55 @@ export default function SuperadminSponsorsManager({ globalConfig = {} }) {
       toast.error('যুক্ত করতে ব্যর্থ হয়েছে', { id: toastId });
     } finally {
       setSavingSponsors(false);
+    }
+  };
+
+  const handleAdminFileUpload = async (e, target = 'new') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    const toastId = toast.loading('ছবি আপলোড হচ্ছে...');
+    try {
+      const uploadForm = new FormData();
+      uploadForm.append('file', file);
+      uploadForm.append('folder', 'partner-sponsors');
+      const res = await fetch('/api/upload', { method: 'POST', body: uploadForm });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) {
+          if (target === 'new') {
+            setNewSponsor(prev => ({ ...prev, logoUrl: data.url }));
+          } else {
+            setEditFormData(prev => ({ ...prev, logoUrl: data.url }));
+          }
+          toast.success('ছবি আপলোড সফল হয়েছে! 📸', { id: toastId });
+          setUploadingLogo(false);
+          return;
+        }
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (target === 'new') {
+          setNewSponsor(prev => ({ ...prev, logoUrl: reader.result }));
+        } else {
+          setEditFormData(prev => ({ ...prev, logoUrl: reader.result }));
+        }
+        toast.success('ছবি যুক্ত হয়েছে! 📸', { id: toastId });
+        setUploadingLogo(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (target === 'new') {
+          setNewSponsor(prev => ({ ...prev, logoUrl: reader.result }));
+        } else {
+          setEditFormData(prev => ({ ...prev, logoUrl: reader.result }));
+        }
+        toast.success('ছবি যুক্ত হয়েছে!', { id: toastId });
+      };
+      reader.readAsDataURL(file);
+      setUploadingLogo(false);
     }
   };
 
@@ -511,18 +571,49 @@ export default function SuperadminSponsorsManager({ globalConfig = {} }) {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">লোগো ইমেজ লিঙ্ক (Image URL)</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">লোগো বা ব্যানার ছবি (আপলোড অথবা লিংক)</label>
+                <div className="flex gap-2 mb-2">
+                  <label className="flex-1 px-3 py-2 rounded-xl border border-dashed border-purple-400 bg-purple-50 hover:bg-purple-100/60 text-purple-700 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+                    {uploadingLogo ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin" />
+                        <span>আপলোড হচ্ছে...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={13} />
+                        <span>ডিভাইস থেকে ছবি আপলোড</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleAdminFileUpload(e, 'new')}
+                      disabled={uploadingLogo}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
                 <input
                   type="url"
                   value={newSponsor.logoUrl}
                   onChange={(e) => setNewSponsor({ ...newSponsor, logoUrl: e.target.value })}
-                  placeholder="https://example.com/logo.png"
-                  className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-purple-600"
+                  placeholder="অথবা সরাসরি লিংক: https://example.com/logo.png"
+                  className="w-full px-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-purple-600"
                 />
                 {newSponsor.logoUrl && (
-                  <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
-                    <img src={newSponsor.logoUrl} alt="Preview" className="h-8 object-contain max-w-[120px]" />
-                    <span className="text-[11px] text-slate-500 font-bold">লোগো প্রিভিউ</span>
+                  <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <img src={newSponsor.logoUrl} alt="Preview" className="h-8 object-contain max-w-[120px] rounded" />
+                      <span className="text-[11px] text-emerald-600 font-bold">লোগো প্রিভিউ OK</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNewSponsor({ ...newSponsor, logoUrl: '' })}
+                      className="text-xs text-rose-500 hover:text-rose-700 font-bold"
+                    >
+                      মুছুন
+                    </button>
                   </div>
                 )}
               </div>
@@ -602,11 +693,25 @@ export default function SuperadminSponsorsManager({ globalConfig = {} }) {
                           </div>
 
                           <div>
-                            <label className="text-[10px] font-bold text-slate-600 block mb-1">লোগো URL</label>
+                            <label className="text-[10px] font-bold text-slate-600 block mb-1">লোগো ছবি (আপলোড বা URL)</label>
+                            <div className="flex gap-2 mb-1.5">
+                              <label className="px-2.5 py-1 rounded-lg border border-dashed border-purple-400 bg-purple-50 text-purple-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer">
+                                <Upload size={11} />
+                                <span>ছবি আপলোড</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleAdminFileUpload(e, 'edit')}
+                                  disabled={uploadingLogo}
+                                  className="hidden"
+                                />
+                              </label>
+                            </div>
                             <input
                               type="url"
                               value={editFormData.logoUrl}
                               onChange={(e) => setEditFormData({ ...editFormData, logoUrl: e.target.value })}
+                              placeholder="https://example.com/logo.png"
                               className="w-full px-3 py-1.5 text-xs rounded-lg border border-purple-500 focus:outline-none"
                             />
                           </div>

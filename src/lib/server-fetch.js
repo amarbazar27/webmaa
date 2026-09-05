@@ -186,12 +186,13 @@ export async function getShopByDomainServer(host) {
     if (!host) return null;
     // Normalize host
     const normalizedHost = host.toLowerCase().trim().replace(/^www\./i, '');
+    const lookupHost = normalizedHost === 'messbazar.com' ? 'messerbazar.com' : normalizedHost;
     if (adminDb) {
       const shopsRef = adminDb.collection('shops');
-      let snap = await shopsRef.where('customDomain', '==', normalizedHost).limit(1).get();
+      let snap = await shopsRef.where('customDomain', '==', lookupHost).limit(1).get();
       if (snap.empty) {
         // Fallback to checking subdomain (e.g. messerbazar.daripallah.com -> messerbazar)
-        const subdomain = normalizedHost.split('.')[0];
+        const subdomain = lookupHost.split('.')[0];
         snap = await shopsRef.where('subdomainSlug', '==', subdomain).limit(1).get();
       }
       if (snap.empty) return null;

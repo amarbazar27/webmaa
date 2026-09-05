@@ -1458,13 +1458,11 @@ export default function Home() {
                 </div>
                 
                 <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight leading-[1.1]">
-                  বাংলাদেশের সবচেয়ে গতিশীল{' '}
-                  <span className="text-[#6C63FF]">ই-কমার্স ইকোসিস্টেম</span>
+                  <span className="text-[#6C63FF]">BD Retailers (বিডি রিটেইলার)</span> — বাংলাদেশের সেরা অনলাইন শপিং ও ই-কমার্স মার্কেটপ্লেস
                 </h1>
                 
                 <p className="text-sm sm:text-base text-[#6B7280] dark:text-slate-400 font-medium leading-relaxed max-w-2xl">
-                  সরাসরি ভেরিফাইড মার্চেন্ট নেটওয়ার্ক থেকে সেরা মানের পণ্য, কাস্টম প্রডাক্ট অর্ডারিং, 
-                  গ্যারান্টেড দ্রুত ডেলিভারি ও রিয়েল-টাইম এআই অ্যাসিস্ট্যান্ট সহযোগে কেনাকাটা করুন।
+                  বিডি রিটেইলার (BD Retailers) এ সরাসরি ভেরিফাইড মার্চেন্ট নেটওয়ার্ক থেকে সুলভ মূল্যে কিনুন সেরা মানের পণ্য। ক্যাশ অন ডেলিভারি, দ্রুত স্টেডফাস্ট কুরিয়ার ডেলিভারি ও নিরাপদ বিকাশ পেমেন্ট সুবিধা। উদ্যোক্তারা মাত্র ১ মিনিটে খুলুন নিজস্ব ফ্রি অনলাইন স্টোর।
                 </p>
 
                 {/* Standardized Hero CTAs */}
@@ -1543,25 +1541,32 @@ export default function Home() {
         </section>
       )}
 
-      {/* ── SEO Hero Section: Statically rendered — crawlable by Google ── */}
-      <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-2 text-center">
-        <h1 className="sr-only text-2xl sm:text-4xl font-black text-slate-900 leading-tight tracking-tight">
-          BDRetailers — বাংলাদেশের সেরা AI ই-কমার্স মার্কেটপ্লেস
-        </h1>
-        <p className="sr-only text-sm text-slate-600 max-w-3xl mx-auto mt-2">
-          মাত্র ১ মিনিটে আপনার নিজের অনলাইন স্টোর খুলুন। Steadfast কুরিয়ার, বিকাশ, নগদ, UddoktaPay পেমেন্ট সমর্থিত। ৩০ দিনের ফ্রি ট্রায়াল। বাংলাদেশের শীর্ষ ই-কমার্স SaaS প্ল্যাটফর্ম — bdretailers.com।
-        </p>
-        {/* Keyword-rich feature signals for Google crawling */}
-        <ul className="sr-only">
-          <li>Online Store Bangladesh — Free Trial 30 days</li>
-          <li>Shopify Alternative Bangladesh — BDRetailers SaaS</li>
-          <li>Steadfast Courier Integration Bangladesh</li>
-          <li>bKash Nagad UddoktaPay Payment Gateway Bangladesh</li>
-          <li>Multi Vendor Marketplace Bangladesh — Free</li>
-          <li>White Label E-commerce Platform Bangladesh</li>
-          <li>অনলাইন শপ বাংলাদেশ — বিনামূল্যে শুরু করুন</li>
-          <li>ই-কমার্স SaaS বাংলাদেশ — AI পাওয়ার্ড</li>
-        </ul>
+      {/* ── SEO & Platform Authority Section: 100% crawlable & visible ── */}
+      <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+        <div className="neo-card p-4 sm:p-6 rounded-3xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 via-indigo-500/5 to-pink-500/5">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center md:text-left">
+              <h2 className="text-base sm:text-lg font-black text-[#3D4852] dark:text-slate-100 flex items-center justify-center md:justify-start gap-2">
+                <Sparkles className="text-[#6C63FF]" size={18} />
+                <span>বিডি রিটেইলার (BD Retailers) — নির্ভরযোগ্য অনলাইন শপিং ও বিশ্বস্ত মার্কেটপ্লেস</span>
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-3xl">
+                মাত্র ১ মিনিটে আপনার নিজের অনলাইন স্টোর খুলুন অথবা সাশ্রয়ী মূল্যে কেনাকাটা করুন। Steadfast কুরিয়ার, বিকাশ, নগদ পেমেন্ট সমর্থিত বাংলাদেশের শীর্ষ ই-কমার্স প্ল্যাটফর্ম — bdretailers.com।
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
+              <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                🚚 স্টেডফাস্ট কুরিয়ার পার্টনার
+              </span>
+              <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                💳 বিকাশ ও নগদ পেমেন্ট
+              </span>
+              <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                ✓ ভেরিফাইড রিটেইলার্স
+              </span>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── Marketplace Section ── */}

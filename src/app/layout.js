@@ -3,25 +3,27 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
+// Decouple platform base URL from any tenant shop environment variables
+const BASE_URL = 'https://bdretailers.com';
 
 export const metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'BDRetailers — বাংলাদেশের সেরা ই-কমার্স SaaS প্ল্যাটফর্ম',
-    template: '%s | BDRetailers',
+    default: 'BD Retailers (বিডি রিটেইলার) — সেরা অনলাইন শপিং ও বিশ্বস্ত ই-কমার্স প্ল্যাটফর্ম',
+    template: '%s | BD Retailers',
   },
-  description: 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক AI-পাওয়ার্ড ই-কমার্স SaaS প্ল্যাটফর্ম। মাত্র ১ মিনিটে নিজের অনলাইন স্টোর খুলুন। Steadfast কুরিয়ার, বিকাশ, নগদ, UddoktaPay পেমেন্ট সমর্থিত। ৩০ দিনের ফ্রি ট্রায়াল।',
+  description: 'বিডি রিটেইলার (BD Retailers) — বাংলাদেশের সেরা অনলাইন শপিং মার্কেটপ্লেস ও আধুনিক AI ই-কমার্স প্ল্যাটফর্ম। গ্রোসারি, ফ্যাশন ও গ্যাজেট কিনুন সুলভ মূল্যে ক্যাশ অন ডেলিভারিতে, অথবা মাত্র ১ মিনিটে নিজের ফ্রি অনলাইন স্টোর খুলুন।',
   keywords: [
-    'bdretailers', 'ecommerce bangladesh', 'online store bangladesh', 'saas ecommerce',
-    'shopify alternative bangladesh', 'online shop create bangladesh', 'বাংলাদেশ ই-কমার্স',
-    'অনলাইন স্টোর', 'ডিজিটাল শপ', 'বিডি রিটেইলার্স', 'steadfast courier integration',
-    'uddoktapay', 'bkash payment', 'nagad payment', 'retailer platform bd',
-    'white label ecommerce', 'multi vendor marketplace bangladesh', 'free online store bangladesh',
+    'বিডি রিটেইলার', 'বিডি রিটেইলার্স', 'bd retailers', 'bdretailers', 'retailer bd', 'bd retailer',
+    'online shopping bangladesh', 'অনলাইন শপিং বাংলাদেশ', 'ecommerce bangladesh', 'online store bangladesh',
+    'saas ecommerce', 'shopify alternative bangladesh', 'online shop create bangladesh', 'বাংলাদেশ ই-কমার্স',
+    'অনলাইন স্টোর', 'ডিজিটাল শপ', 'steadfast courier integration', 'uddoktapay', 'bkash payment',
+    'nagad payment', 'retailer platform bd', 'white label ecommerce', 'multi vendor marketplace bangladesh',
+    'free online store bangladesh', 'পাইকারি ও খুচরা বাজার'
   ],
-  authors: [{ name: 'BDRetailers', url: BASE_URL }],
-  creator: 'BDRetailers',
-  publisher: 'BDRetailers',
+  authors: [{ name: 'BD Retailers', url: BASE_URL }],
+  creator: 'BD Retailers',
+  publisher: 'BD Retailers',
   manifest: '/api/manifest',
   icons: {
     icon: [
@@ -41,15 +43,15 @@ export const metadata = {
     type: 'website',
     locale: 'bn_BD',
     url: BASE_URL,
-    siteName: 'BDRetailers',
-    title: 'BDRetailers — বাংলাদেশের সেরা AI ই-কমার্স প্ল্যাটফর্ম',
-    description: 'বাংলাদেশের প্রথম AI-পাওয়ার্ড ই-কমার্স SaaS। ৩০ দিনের ফ্রি ট্রায়াল। Steadfast কুরিয়ার, বিকাশ, নগদ সাপোর্ট।',
-    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'BDRetailers — বাংলাদেশের সেরা ই-কমার্স প্ল্যাটফর্ম' }],
+    siteName: 'BD Retailers (বিডি রিটেইলার)',
+    title: 'BD Retailers (বিডি রিটেইলার) — সেরা অনলাইন শপিং ও বিশ্বস্ত ই-কমার্স প্ল্যাটফর্ম',
+    description: 'বিডি রিটেইলার (BD Retailers) — বাংলাদেশের শীর্ষ অনলাইন শপিং মার্কেটপ্লেস ও এআই-পাওয়ার্ড ই-কমার্স সমাধান। সুলভ মূল্যে কেনাকাটা ও দ্রুত ফ্রি অনলাইন শপ তৈরি করুন।',
+    images: [{ url: `${BASE_URL}/logo.png`, width: 512, height: 512, alt: 'BD Retailers (বিডি রিটেইলার) — সেরা অনলাইন শপিং ও ই-কমার্স প্ল্যাটফর্ম' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BDRetailers — AI ই-কমার্স প্ল্যাটফর্ম বাংলাদেশ',
-    description: 'বাংলাদেশের সবচেয়ে আধুনিক AI-پাওয়ার্ড ই-কমার্স SaaS। ৩০ দিনের ফ্রি ট্রায়াল। মাত্র ১ মিনিটে স্টোর খুলুন।',
+    title: 'BD Retailers (বিডি রিটেইলার) — অনলাইন শপিং ও ই-কমার্স প্ল্যাটফর্ম',
+    description: 'বিডি রিটেইলার (BD Retailers) — বাংলাদেশের শীর্ষ অনলাইন শপিং মার্কেটপ্লেস ও এআই-পাওয়ার্ড ই-কমার্স সমাধান। ৩০ দিনের ফ্রি ট্রায়াল। মাত্র ১ মিনিটে স্টোর খুলুন।',
     images: [`${BASE_URL}/logo.png`],
   },
   robots: {
@@ -76,19 +78,19 @@ export const viewport = {
   userScalable: true,
  };
  
- // JSON-LD Structured Data for Google Search Branding
+ // JSON-LD Structured Data for Google Search Branding & Rich Snippets
  function JsonLd() {
    const structuredData = [
       // Organization — Google search logo + brand
       {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "BDRetailers",
-        "alternateName": ["BD Retailers", "BDRetailers", "BDRetailers SaaS", "bdretailers.com", "বিডি রিটেইলার্স"],
+        "name": "BD Retailers",
+        "alternateName": ["বিডি রিটেইলার", "বিডি রিটেইলার্স", "BDRetailers", "retailer bd", "bdretailers.com"],
         "url": BASE_URL,
         "logo": `${BASE_URL}/logo.png`,
         "image": `${BASE_URL}/logo.png`,
-        "description": "বাংলাদেশের সবচেয়ে আধুনিক এআই-পাওয়ার্ড মাল্টি-ভেন্ডর মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
+        "description": "বিডি রিটেইলার (BD Retailers) — বাংলাদেশের সবচেয়ে আধুনিক এআই-পাওয়ার্ড মাল্টি-ভেন্ডর মার্কেটপ্লেস ও ই-কমার্স সলিউশন।",
         "sameAs": [
           "https://www.facebook.com/bdretailers",
           "https://play.google.com/store/apps/details?id=com.bdretailers"
@@ -105,8 +107,8 @@ export const viewport = {
       {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
-        "name": "BDRetailers",
-        "alternateName": ["BD Retailers", "BDRetailers", "বিডি রিটেইলার্স", "bdretailers.com"],
+        "name": "BD Retailers (বিডি রিটেইলার)",
+        "alternateName": ["BD Retailers", "বিডি রিটেইলার", "বিডি রিটেইলার্স", "bdretailers.com"],
         "url": BASE_URL,
         "telephone": "+8801350783000",
         "image": `${BASE_URL}/logo.png`,
@@ -119,14 +121,14 @@ export const viewport = {
         },
         "priceRange": "৳",
         "openingHours": "Mo-Su 00:00-24:00",
-        "description": "bdretailers — বাংলাদেশের আধুনিক ই-কমার্স প্ল্যাটফর্ম ও ভেরিফায়েড রিটেইল হাব।"
+        "description": "বিডি রিটেইলার (BD Retailers) — বাংলাদেশের আধুনিক ই-কমার্স প্ল্যাটফর্ম ও ভেরিফায়েড রিটেইল হাব।"
       },
       // WebSite — Google search box & SearchAction
       {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "BD Retailers",
-        "alternateName": ["bdretailers", "BDRetailers eCommerce", "বিডি রিটেইলার্স"],
+        "name": "BD Retailers (বিডি রিটেইলার)",
+        "alternateName": ["BD Retailers", "বিডি রিটেইলার", "bdretailers", "BDRetailers", "retailer bd"],
         "url": BASE_URL,
         "potentialAction": {
           "@type": "SearchAction",
@@ -143,15 +145,54 @@ export const viewport = {
         "@type": "WebPage",
         "@id": `${BASE_URL}/#webpage`,
         "url": BASE_URL,
-        "name": "BD Retailers — বিডি রিটেইলার্স",
-        "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস ও ই-কমার্স প্ল্যাটফর্ম।"
+        "name": "BD Retailers (বিডি রিটেইলার) — সেরা অনলাইন শপিং মার্কেটপ্লেস",
+        "description": "বাংলাদেশের প্রথম ও সবচেয়ে প্রিমিয়াম এআই-পাওয়ার্ড অনলাইন মার্কেটপ্লেস ও ই-কমার্স প্ল্যাটফর্ম — BD Retailers (বিডি রিটেইলার)।"
+      },
+      // FAQPage — Google Rich Snippets for BD Retailers
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "বিডি রিটেইলার (BD Retailers) কী?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "বিডি রিটেইলার (BD Retailers / bdretailers.com) হলো বাংলাদেশের শীর্ষস্থানীয় মাল্টি-ভেন্ডর অনলাইন শপিং মার্কেটপ্লেস এবং আধুনিক AI ই-কমার্স প্ল্যাটফর্ম। এখানে সুলভ মূল্যে গ্রোসারি, ফ্যাশন ও টেক গ্যাজেট কেনাকাটা করা যায় এবং যেকোনো ব্যবসায়ী মাত্র ১ মিনিটে ফ্রি অনলাইন স্টোর খুলতে পারেন।"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "বিডি রিটেইলার এ কীভাবে কেনাকাটা বা অর্ডার করবেন?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "bdretailers.com এ প্রবেশ করে আপনার পছন্দের পণ্য কার্টে যোগ করে সরাসরি ক্যাশ অন ডেলিভারি (COD) অথবা বিকাশ/নগদ পেমেন্টে সহজ চেকআউট সম্পন্ন করতে পারবেন। সারাদেশে দ্রুত হোম ডেলিভারি পাওয়া যায়।"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "BD Retailers এ কীভাবে অনলাইন স্টোর বা দোকান খুলবেন?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "মার্চেন্ট হতে Become Retailer বাটনে ক্লিক করে নাম, দোকানের নাম, মোবাইল নম্বর দিয়ে মাত্র ১ মিনিটেই ফ্রি রেজিস্ট্রেশন সম্পন্ন করুন। কোনো কোডিং জ্ঞান ছাড়াই স্বয়ংক্রিয়ভাবে আপনার অনলাইন শপ তৈরি হয়ে যাবে।"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "বিডি রিটেইলার এ ডেলিভারি ও পেমেন্ট ব্যবস্থা কেমন?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "বিডি রিটেইলার এ স্টেডফাস্ট কুরিয়ার (Steadfast Courier) এর সাথে ফুল অটোমেশন রয়েছে, যার ফলে সারাদেশে দ্রুত ক্যাশ অন ডেলিভারি সুবিধা পাওয়া যায়। পাশাপাশি বিকাশ, নগদ ও কার্ড পেমেন্ট সম্পূর্ণ সুরক্ষিতভাবে সম্পন্ন হয়।"
+            }
+          }
+        ]
       },
       // SoftwareApplication — AI & Search Engine SaaS Product Entity
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "BDRetailers Webmaa",
-        "alternateName": ["BD Retailers App", "BDRetailers E-commerce SaaS"],
+        "name": "BD Retailers Webmaa",
+        "alternateName": ["BD Retailers App", "বিডি রিটেইলার্স অ্যাপ", "BDRetailers E-commerce SaaS"],
         "operatingSystem": "Web, Android, iOS",
         "applicationCategory": "BusinessApplication",
         "offers": {

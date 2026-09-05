@@ -19,6 +19,9 @@ export const getShopByDomain = async (rawDomain) => {
   const www = `www.${naked}`;
   
   const variants = [...new Set([host, naked, www])];
+  if (naked === 'messbazar.com') {
+    variants.push('messerbazar.com', 'www.messerbazar.com');
+  }
 
   try {
     const shopsRef = collection(db, 'shops');
