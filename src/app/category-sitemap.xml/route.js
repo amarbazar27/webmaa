@@ -1,5 +1,5 @@
 import { getAllMarketplaceProducts } from '@/lib/firestore';
-import { getShopByDomainServer, getProductsServer } from '@/lib/server-fetch';
+import { getShopByDomainServer, getProductsServer, getAllMarketplaceProductsServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +41,10 @@ export async function GET(request) {
         products = await getProductsServer(shop.id);
       }
     } else {
-      products = await getAllMarketplaceProducts();
+      products = await getAllMarketplaceProductsServer();
+      if (!products || products.length === 0) {
+        products = await getAllMarketplaceProducts();
+      }
     }
 
     // Unique Categories

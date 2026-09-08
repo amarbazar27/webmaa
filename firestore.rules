@@ -14,6 +14,15 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
 
+    function isSubSuperAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             (
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin' ||
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'sub_superadmin'
+             );
+    }
+
     function isShopOwner(shopId) {
       return isAuthenticated() && (
         request.auth.uid == shopId ||
@@ -86,10 +95,15 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    match /sub_superadmins/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
     match /retailer_requests/{docId} {
       allow create: if isAuthenticated() && request.auth.uid == docId &&
                     (request.resource.data.status == 'pending' || (request.resource.data.status == 'approved' && isAutoApproveEnabled()));
-      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == docId);
+      allow read: if isSubSuperAdmin() || (isAuthenticated() && request.auth.uid == docId);
       allow update: if isAuthenticated() && request.auth.uid == docId &&
                     (
                       request.resource.data.status == 'pending' || 
@@ -100,13 +114,13 @@ service cloud.firestore {
     }
     
     match /retailer_invites/{docId} {
-      allow read: if isAuthenticated();
+      allow read: if isSubSuperAdmin() || isAuthenticated();
       allow write: if isSuperAdmin();
     }
 
     // ── Users ─────────────────────────────────────────────────────
     match /users/{userId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow read: if isSubSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
       
       // Apply secure role validation on creation
       allow create: if isAuthenticated() && request.auth.uid == userId && isValidRoleAssignment();

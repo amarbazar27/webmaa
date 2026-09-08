@@ -34,6 +34,20 @@ const determineRole = async (email) => {
       return { role: 'superadmin' };
     }
 
+    // 🔐 Sub Super Admin Check
+    try {
+      const subAdminSnap = await getDoc(doc(db, 'sub_superadmins', currentEmail));
+      if (subAdminSnap.exists()) {
+        const subData = subAdminSnap.data();
+        if (subData.isActive !== false) {
+          return { 
+            role: 'sub_superadmin', 
+            permissions: Array.isArray(subData.permissions) ? subData.permissions : [] 
+          };
+        }
+      }
+    } catch (_) {}
+
     // Parallelize role checks for speed
     const [inviteSnap, staffSnap, adminSnap] = await Promise.all([
       getDocs(query(collection(db, 'retailer_invites'), where('email', '==', currentEmail))),
@@ -91,16 +105,18 @@ export const handleUserSession = async (user) => {
     if (existingData.role === 'retailer' || existingData.role === 'superadmin') {
       finalUserData = existingData;
     } else {
-      const freshRole = await determineRole(user.email);
+      const permissionsChanged = JSON.stringify(existingData.permissions || []) !== JSON.stringify(freshRole.permissions || []);
       const roleChanged = existingData.role !== freshRole.role ||
                           existingData.accessShopId !== freshRole.accessShopId ||
-                          existingData.shopSlug !== freshRole.shopSlug;
+                          existingData.shopSlug !== freshRole.shopSlug ||
+                          permissionsChanged;
 
       if (roleChanged) {
         const updatePayload = {
           role: freshRole.role,
           accessShopId: freshRole.accessShopId || null,
-          shopSlug: freshRole.shopSlug || null
+          shopSlug: freshRole.shopSlug || null,
+          permissions: freshRole.permissions || []
         };
         await updateDoc(userDocRef, updatePayload);
         finalUserData = { ...existingData, ...updatePayload };

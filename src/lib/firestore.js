@@ -1092,5 +1092,97 @@ export const updateSponsorRequestStatus = async (requestId, status) => {
   });
 };
 
+// ── SUB-SUPERADMIN MANAGEMENT ──────────────────────
+export const getSubSuperAdmins = async () => {
+  try {
+    const snap = await getDocs(collection(db, 'sub_superadmins'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    console.error('getSubSuperAdmins error:', err);
+    return [];
+  }
+};
+
+export const addSubSuperAdmin = async ({ email, name, permissions = [], addedBy = '' }) => {
+  const cleanEmail = email.toLowerCase().trim();
+  const ref = doc(db, 'sub_superadmins', cleanEmail);
+  const data = {
+    email: cleanEmail,
+    name: name?.trim() || cleanEmail.split('@')[0],
+    role: 'sub_superadmin',
+    permissions: Array.isArray(permissions) ? permissions : [],
+    addedBy: addedBy || 'superadmin',
+    isActive: true,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  await setDoc(ref, data);
+
+  // If user already exists in users collection, update their role to sub_superadmin
+  try {
+    const userQuery = query(collection(db, 'users'), where('email', '==', cleanEmail));
+    const userSnap = await getDocs(userQuery);
+    if (!userSnap.empty) {
+      const uDoc = userSnap.docs[0];
+      await updateDoc(doc(db, 'users', uDoc.id), {
+        role: 'sub_superadmin',
+        permissions: data.permissions,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (e) {
+    console.warn('Could not sync role directly to user doc:', e);
+  }
+
+  return { id: cleanEmail, ...data };
+};
+
+export const updateSubSuperAdmin = async (email, updateData) => {
+  const cleanEmail = email.toLowerCase().trim();
+  const ref = doc(db, 'sub_superadmins', cleanEmail);
+  await updateDoc(ref, {
+    ...updateData,
+    updatedAt: serverTimestamp(),
+  });
+
+  // Also sync permissions if user document exists
+  try {
+    const userQuery = query(collection(db, 'users'), where('email', '==', cleanEmail));
+    const userSnap = await getDocs(userQuery);
+    if (!userSnap.empty) {
+      const uDoc = userSnap.docs[0];
+      const payload = { updatedAt: serverTimestamp() };
+      if (updateData.permissions) payload.permissions = updateData.permissions;
+      if (updateData.isActive === false) payload.role = 'user';
+      else if (updateData.isActive === true) payload.role = 'sub_superadmin';
+      await updateDoc(doc(db, 'users', uDoc.id), payload);
+    }
+  } catch (e) {
+    console.warn('Could not sync update to user doc:', e);
+  }
+};
+
+export const deleteSubSuperAdmin = async (email) => {
+  const cleanEmail = email.toLowerCase().trim();
+  await deleteDoc(doc(db, 'sub_superadmins', cleanEmail));
+
+  // Reset user document role back to user
+  try {
+    const userQuery = query(collection(db, 'users'), where('email', '==', cleanEmail));
+    const userSnap = await getDocs(userQuery);
+    if (!userSnap.empty) {
+      const uDoc = userSnap.docs[0];
+      await updateDoc(doc(db, 'users', uDoc.id), {
+        role: 'user',
+        permissions: [],
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (e) {
+    console.warn('Could not reset user role:', e);
+  }
+};
+
+
 
 

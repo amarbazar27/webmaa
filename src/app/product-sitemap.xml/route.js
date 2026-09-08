@@ -1,5 +1,5 @@
 import { getAllMarketplaceProducts } from '@/lib/firestore';
-import { getShopByDomainServer, getProductsServer } from '@/lib/server-fetch';
+import { getShopByDomainServer, getProductsServer, getAllMarketplaceProductsServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,8 +59,11 @@ export async function GET(request) {
       }
     } else {
       // Main site product sitemap lists all products from all shops
-      const products = await getAllMarketplaceProducts();
-      const activeProducts = products.filter(p => p.stock !== 0);
+      let products = await getAllMarketplaceProductsServer();
+      if (!products || products.length === 0) {
+        products = await getAllMarketplaceProducts();
+      }
+      const activeProducts = (products || []).filter(p => p.stock !== 0);
 
       activeProducts.forEach((prod) => {
         const shopSlug = prod.shopSlug || 'daripallah-store';

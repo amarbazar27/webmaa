@@ -7,7 +7,8 @@ import {
   subscribeGlobalConfig, updateGlobalConfig, getOrders,
   pauseShop, resumeShop, deleteRetailerRequest, deleteShop,
   getImpersonationLogs, toggleShopMainSiteVisibility, createSuperadminShop, getShop, getShopBySlug,
-  getAllMarketplaceProducts, updateProduct, updateShop, getAllUsers, recordSharedRevenuePayment, addSubscriptionHistory
+  getAllMarketplaceProducts, updateProduct, updateShop, getAllUsers, recordSharedRevenuePayment, addSubscriptionHistory,
+  getSubSuperAdmins, addSubSuperAdmin, updateSubSuperAdmin, deleteSubSuperAdmin
 } from '@/lib/firestore';
 import dynamic from 'next/dynamic';
 // Phase 1.3: Dynamic import — SuperadminBroadcastPanel is 34KB
@@ -121,7 +122,120 @@ export default function SuperAdminPage() {
   const [sendingNotice, setSendingNotice] = useState(false);
 
   const { theme, setSystemDefault, systemDefault } = useTheme();
-  const { loginAsRetailer, user } = useAuth();
+  const { loginAsRetailer, user, userData } = useAuth();
+
+  const isSubAdmin = userData?.role === 'sub_superadmin';
+  const subPermissions = isSubAdmin ? (userData?.permissions || []) : [];
+
+  // Helper to check permission
+  const canAccess = (permKey) => {
+    if (!isSubAdmin) return true; // Root superadmin has full access
+    return subPermissions.includes(permKey);
+  };
+
+  const [subSuperAdmins, setSubSuperAdmins] = useState([]);
+  const [newSubEmail, setNewSubEmail] = useState('');
+  const [newSubName, setNewSubName] = useState('');
+  const [newSubPermissions, setNewSubPermissions] = useState(['view_subscriptions', 'view_live_stores']);
+  const [addingSubAdmin, setAddingSubAdmin] = useState(false);
+
+  const AVAILABLE_PERMISSIONS = [
+    { key: 'view_subscriptions', label: 'সাবস্ক্রিপশন ও বিলিং', desc: 'কে কে সাবস্ক্রিপশন কিনেছে, প্যাকেজ ও পেমেন্ট হিস্ট্রি' },
+    { key: 'view_live_stores', label: 'মার্চেন্ট ও লাইভ স্টোর ডিরেক্টরি', desc: 'মেইন সাইটে কার কার বা কতজনের স্টোর লাইভ আছে' },
+    { key: 'view_marketplace', label: 'মার্কেটপ্লেস কনফিগারেশন', desc: 'হোমপেজ ব্যানার, ডিসপ্লে মোড ও ল্যান্ডিং পেজ সেটিংস' },
+    { key: 'view_customers', label: 'কাস্টমার ও ইউজার ডিরেক্টরি', desc: 'নিবন্ধিত কাস্টমারদের তালিকা ও প্রোফাইল ওভারভিউ' },
+    { key: 'view_inventory', label: 'স্মার্ট ইনভেন্টরি ও ক্যাটালগ', desc: 'প্লাটফর্মের সকল পণ্যের ক্যাটালগ ও স্টক পরিসংখ্যান' },
+    { key: 'view_shared_business', label: 'শেয়ার্ড বিজনেস (Revenue Share)', desc: 'রেভিনিউ শেয়ার হিসাব, কমিশন ও লেনদেন' },
+    { key: 'view_broadcast', label: 'ব্রডকাস্ট ও মোবাইল অ্যাপ', desc: 'পুশ নোটিফিকেশন পাঠানো ও অ্যাপ বিল্ডার স্ট্যাটাস' },
+    { key: 'view_homepage_cms', label: 'হোমপেজ সিএমএস, প্রাইসিং ও FAQ', desc: 'প্রাইসিং প্ল্যান, স্পনসর ও এফএকিউ ম্যানেজমেন্ট' },
+  ];
+
+  // Auto-switch to first permitted tab for sub-superadmin
+  useEffect(() => {
+    if (isSubAdmin && superadminTab === 'marketplace' && !subPermissions.includes('view_marketplace')) {
+      if (subPermissions.includes('view_subscriptions')) setSuperadminTab('subscriptions');
+      else if (subPermissions.includes('view_live_stores')) setSuperadminTab('directory');
+      else if (subPermissions.includes('view_customers')) setSuperadminTab('customers');
+      else if (subPermissions.includes('view_inventory')) setSuperadminTab('inventory');
+      else if (subPermissions.includes('view_shared_business')) setSuperadminTab('shared_business');
+      else if (subPermissions.includes('view_broadcast')) setSuperadminTab('broadcast');
+      else if (subPermissions.includes('view_homepage_cms')) setSuperadminTab('homepage_sections');
+    }
+  }, [isSubAdmin, subPermissions, superadminTab]);
+
+  const handleAddSubSuperAdmin = async (e) => {
+    e?.preventDefault();
+    if (!newSubEmail || !newSubEmail.includes('@')) {
+      toast.error('সঠিক জিমেইল অ্যাড্রেস লিখুন।');
+      return;
+    }
+    if (newSubPermissions.length === 0) {
+      toast.error('অন্তত একটি পারমিশন সিলেক্ট করুন।');
+      return;
+    }
+    setAddingSubAdmin(true);
+    const toastId = toast.loading('সাব-সুপারএডমিন যোগ করা হচ্ছে...');
+    try {
+      await addSubSuperAdmin({
+        email: newSubEmail.trim().toLowerCase(),
+        name: newSubName.trim() || newSubEmail.split('@')[0],
+        permissions: newSubPermissions,
+        addedBy: user?.email || 'superadmin'
+      });
+      toast.success(`${newSubEmail} কে সফলভাবে সাব-সুপারএডমিন হিসেবে যুক্ত করা হয়েছে! 🎉`, { id: toastId });
+      setNewSubEmail('');
+      setNewSubName('');
+      setNewSubPermissions(['view_subscriptions', 'view_live_stores']);
+      const updatedList = await getSubSuperAdmins();
+      setSubSuperAdmins(updatedList);
+    } catch (err) {
+      console.error(err);
+      toast.error('সাব-সুপারএডমিন যোগ করতে সমস্যা হয়েছে: ' + err.message, { id: toastId });
+    } finally {
+      setAddingSubAdmin(false);
+    }
+  };
+
+  const handleToggleSubAdminActive = async (subAdmin) => {
+    const newStatus = !subAdmin.isActive;
+    const toastId = toast.loading('স্ট্যাটাস আপডেট করা হচ্ছে...');
+    try {
+      await updateSubSuperAdmin(subAdmin.email, { isActive: newStatus });
+      toast.success(newStatus ? 'সাব-সুপারএডমিন সক্রিয় করা হয়েছে ✅' : 'সাব-সুপারএডমিন সাময়িক স্থগিত করা হয়েছে', { id: toastId });
+      setSubSuperAdmins(prev => prev.map(s => s.email === subAdmin.email ? { ...s, isActive: newStatus } : s));
+    } catch (err) {
+      toast.error('আপডেট ব্যর্থ হয়েছে', { id: toastId });
+    }
+  };
+
+  const handleDeleteSubAdmin = async (email) => {
+    if (!confirm(`আপনি কি নিশ্চিত যে ${email} এর সাব-সুপারএডমিন অ্যাক্সেস সম্পূর্ণ বাতিল ও মুছে ফেলতে চান?`)) return;
+    const toastId = toast.loading('মুছে ফেলা হচ্ছে...');
+    try {
+      await deleteSubSuperAdmin(email);
+      toast.success('সাব-সুপারএডমিন সফলভাবে মুছে ফেলা হয়েছে', { id: toastId });
+      setSubSuperAdmins(prev => prev.filter(s => s.email !== email));
+    } catch (err) {
+      toast.error('মুছে ফেলতে সমস্যা হয়েছে', { id: toastId });
+    }
+  };
+
+  const handleToggleSubAdminPerm = async (email, permKey) => {
+    const target = subSuperAdmins.find(s => s.email === email);
+    if (!target) return;
+    const currentPerms = target.permissions || [];
+    const newPerms = currentPerms.includes(permKey)
+      ? currentPerms.filter(p => p !== permKey)
+      : [...currentPerms, permKey];
+
+    try {
+      await updateSubSuperAdmin(email, { permissions: newPerms });
+      setSubSuperAdmins(prev => prev.map(s => s.email === email ? { ...s, permissions: newPerms } : s));
+      toast.success('পারমিশন আপডেট সম্পন্ন!');
+    } catch (err) {
+      toast.error('পারমিশন আপডেট করতে সমস্যা হয়েছে');
+    }
+  };
 
   const handleCopyCloudinaryMedia = async (shopId) => {
     if (!confirm('আপনি কি এই মার্চেন্টের সমস্ত মিডিয়া ফাইল (লোগো, ব্যানার, প্রোডাক্ট ও ক্যাটাগরি ছবি) মেইন সাইটের Cloudinary থেকে মার্চেন্টের ডেডিকেটেড Cloudinary অ্যাকাউন্টে ১-ক্লিকে কপি করতে চান?')) return;
@@ -300,6 +414,15 @@ export default function SuperAdminPage() {
       setInvites(invitesData);
       setShops(shopsWithMetrics);
       setRequests(requestsData);
+
+      if (userData?.role !== 'sub_superadmin') {
+        try {
+          const subAdminsData = await getSubSuperAdmins();
+          setSubSuperAdmins(subAdminsData);
+        } catch (subErr) {
+          console.error('Error loading sub superadmins:', subErr);
+        }
+      }
     } catch (err) {
       console.error(err);
     }
@@ -1034,163 +1157,202 @@ export default function SuperAdminPage() {
         {/* Left Sidebar Navigation */}
         <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
           <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সুপারএডমিন সেটিংস</p>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">
+              {isSubAdmin ? 'অনুমোদিত সেটিংস' : 'সুপারএডমিন সেটিংস'}
+            </p>
             
-            <button
-              onClick={() => setSuperadminTab('marketplace')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'marketplace'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <Sparkles size={16} />
-              <span>মার্কেটপ্লেস কনফিগারেশন</span>
-            </button>
-            
-            <button
-              onClick={() => setSuperadminTab('directory')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'directory'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <Store size={16} />
-              <span>মার্চেন্ট ও স্টোর ডিরেক্টরি</span>
-            </button>
-
-            <button
-              onClick={() => setSuperadminTab('customers')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'customers'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <Users size={16} />
-              <span>কাস্টমার ও ইউজার ডিরেক্টরি</span>
-            </button>
-            
-            <button
-              onClick={() => setSuperadminTab('inventory')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'inventory'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <Package size={16} />
-              <span>স্মার্ট ইনভেন্টরি ও ক্যাটালগ</span>
-            </button>
-            
-            <button
-              onClick={() => setSuperadminTab('broadcast')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'broadcast'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <MessageCircle size={16} />
-              <span>ব্রডকাস্ট ও মোবাইল অ্যাপ</span>
-            </button>
-            
-            <button
-              onClick={() => setSuperadminTab('security')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'security'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <ShieldAlert size={16} />
-              <span>নিরাপত্তা ও অডিট লগ</span>
-            </button>
-            
-            <button
-              onClick={() => setSuperadminTab('subscriptions')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'subscriptions'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <Crown size={16} />
-              <span>সাবস্ক্রিপশন ও বিলিং</span>
-            </button>
-
-            <button
-              onClick={() => setSuperadminTab('shared_business')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                superadminTab === 'shared_business'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/20'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }`}
-            >
-              <TrendingUp size={16} />
-              <span>শেয়ার্ড বিজনেস (Revenue Share)</span>
-            </button>
-
-            <div className="pt-2 mt-2 border-t border-slate-100">
-              <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest px-3 mb-2 flex items-center gap-1.5">
-                <Sparkles size={11} />
-                <span>হোমপেজ ও সিএমএস কন্ট্রোল</span>
-              </p>
-              
+            {/* Sub-Superadmin Management Tab (Root Superadmin only) */}
+            {!isSubAdmin && (
               <button
-                onClick={() => setSuperadminTab('homepage_sections')}
+                onClick={() => setSuperadminTab('sub_superadmins')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'homepage_sections'
+                  superadminTab === 'sub_superadmins'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-700 hover:bg-purple-50 hover:text-purple-700'
+                }`}
+              >
+                <ShieldCheck size={16} className="text-purple-500" />
+                <span className="flex-1 text-left">সাব-সুপারএডমিন ম্যানেজমেন্ট</span>
+                {subSuperAdmins.length > 0 && (
+                  <span className="text-[10px] font-black bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
+                    {subSuperAdmins.length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {canAccess('view_marketplace') && (
+              <button
+                onClick={() => setSuperadminTab('marketplace')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'marketplace'
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
-                <Layout size={16} />
-                <span>হোমপেজ সেকশন অন / অফ</span>
+                <Sparkles size={16} />
+                <span>মার্কেটপ্লেস কনফিগারেশন</span>
               </button>
-
+            )}
+            
+            {canAccess('view_live_stores') && (
               <button
-                onClick={() => setSuperadminTab('pricing_customizer')}
+                onClick={() => setSuperadminTab('directory')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'pricing_customizer'
+                  superadminTab === 'directory'
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
-                <DollarSign size={16} />
-                <span>প্রাইসিং প্ল্যান ও ফিচার লাইনস</span>
+                <Store size={16} />
+                <span>মার্চেন্ট ও স্টোর ডিরেক্টরি</span>
               </button>
+            )}
 
+            {canAccess('view_customers') && (
               <button
-                onClick={() => setSuperadminTab('subscribers')}
+                onClick={() => setSuperadminTab('customers')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'subscribers'
+                  superadminTab === 'customers'
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
-                <Mail size={16} />
-                <span>নিউজলেটার সাবস্ক্রাইবার্স</span>
+                <Users size={16} />
+                <span>কাস্টমার ও ইউজার ডিরেক্টরি</span>
               </button>
-
+            )}
+            
+            {canAccess('view_inventory') && (
               <button
-                onClick={() => setSuperadminTab('sponsors_manager')}
+                onClick={() => setSuperadminTab('inventory')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'sponsors_manager'
+                  superadminTab === 'inventory'
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
-                <Handshake size={16} />
-                <span>স্পনসর ও পার্টনার্স</span>
+                <Package size={16} />
+                <span>স্মার্ট ইনভেন্টরি ও ক্যাটালগ</span>
               </button>
-
+            )}
+            
+            {canAccess('view_broadcast') && (
               <button
-                onClick={() => setSuperadminTab('faq_manager')}
+                onClick={() => setSuperadminTab('broadcast')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'faq_manager'
+                  superadminTab === 'broadcast'
                     ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <MessageCircle size={16} />
+                <span>ব্রডকাস্ট ও মোবাইল অ্যাপ</span>
+              </button>
+            )}
+            
+            {!isSubAdmin && (
+              <button
+                onClick={() => setSuperadminTab('security')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'security'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <ShieldAlert size={16} />
+                <span>নিরাপত্তা ও অডিট লগ</span>
+              </button>
+            )}
+            
+            {canAccess('view_subscriptions') && (
+              <button
+                onClick={() => setSuperadminTab('subscriptions')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'subscriptions'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Crown size={16} />
+                <span>সাবস্ক্রিপশন ও বিলিং</span>
+              </button>
+            )}
+
+            {canAccess('view_shared_business') && (
+              <button
+                onClick={() => setSuperadminTab('shared_business')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'shared_business'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <TrendingUp size={16} />
+                <span>শেয়ার্ড বিজনেস (Revenue Share)</span>
+              </button>
+            )}
+
+            {canAccess('view_homepage_cms') && (
+              <div className="pt-2 mt-2 border-t border-slate-100">
+                <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest px-3 mb-2 flex items-center gap-1.5">
+                  <Sparkles size={11} />
+                  <span>হোমপেজ ও সিএমএস কন্ট্রোল</span>
+                </p>
+                
+                <button
+                  onClick={() => setSuperadminTab('homepage_sections')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                    superadminTab === 'homepage_sections'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Layout size={16} />
+                  <span>হোমপেজ সেকশন অন / অফ</span>
+                </button>
+
+                <button
+                  onClick={() => setSuperadminTab('pricing_customizer')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                    superadminTab === 'pricing_customizer'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <DollarSign size={16} />
+                  <span>প্রাইসিং প্ল্যান ও ফিচার লাইনস</span>
+                </button>
+
+                <button
+                  onClick={() => setSuperadminTab('subscribers')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                    superadminTab === 'subscribers'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Mail size={16} />
+                  <span>নিউজলেটার সাবস্ক্রাইবার্স</span>
+                </button>
+
+                <button
+                  onClick={() => setSuperadminTab('sponsors_manager')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                    superadminTab === 'sponsors_manager'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Handshake size={16} />
+                  <span>স্পনসর ও পার্টনার্স</span>
+                </button>
+
+                <button
+                  onClick={() => setSuperadminTab('faq_manager')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                    superadminTab === 'faq_manager'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
@@ -1198,13 +1360,221 @@ export default function SuperAdminPage() {
                 <span>FAQ প্রশ্নোত্তর কন্ট্রোল</span>
               </button>
             </div>
+            )}
           </div>
         </div>
 
         {/* Right Side Settings Cards Container */}
         <div className="lg:col-span-9 space-y-8">
 
-          {superadminTab === 'marketplace' && (<>
+          {/* ── Sub-Superadmin Management Section (Root Superadmin Only) ── */}
+          {superadminTab === 'sub_superadmins' && !isSubAdmin && (
+            <div className="space-y-8 animate-fade-in">
+              <Card
+                title="সাব-সুপারএডমিন যুক্ত ও পারমিশন কন্ট্রোল"
+                subtitle="জিমেইল অ্যাড্রেস দিয়ে সাব-সুপারএডমিন নির্ধারণ করুন এবং কে কোন সেকশন দেখতে ও ম্যানেজ করতে পারবে তা স্পেসিফিক পারমিশন দিয়ে নিয়ন্ত্রণ করুন"
+                icon={ShieldCheck}
+                className="border-2 border-purple-200 bg-gradient-to-br from-purple-50/40 via-white to-indigo-50/20"
+              >
+                <form onSubmit={handleAddSubSuperAdmin} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                        <Mail size={13} className="text-purple-600" /> সাব-সুপারএডমিন জিমেইল (Gmail) *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. subadmin@gmail.com"
+                        value={newSubEmail}
+                        onChange={e => setNewSubEmail(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs font-bold outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                        <UserPlus size={13} className="text-purple-600" /> নাম বা পরিচিতি (Name / Role)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. তানভীর আহমেদ (অপারেশনস ম্যানেজার)"
+                        value={newSubName}
+                        onChange={e => setNewSubName(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs font-bold outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Granular Permissions Selection Grid */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <Crown size={14} className="text-purple-600" /> নির্দিষ্ট পারমিশনসমূহ নির্ধারণ করুন (Select Permissions)
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setNewSubPermissions(AVAILABLE_PERMISSIONS.map(p => p.key))}
+                          className="text-[10px] font-black text-purple-600 hover:text-purple-800 underline cursor-pointer"
+                        >
+                          সবগুলো সিলেক্ট করুন
+                        </button>
+                        <span className="text-slate-300">|</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewSubPermissions([])}
+                          className="text-[10px] font-black text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                        >
+                          ক্লিয়ার করুন
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
+                      {AVAILABLE_PERMISSIONS.map(perm => {
+                        const isChecked = newSubPermissions.includes(perm.key);
+                        return (
+                          <div
+                            key={perm.key}
+                            onClick={() => {
+                              if (isChecked) {
+                                setNewSubPermissions(prev => prev.filter(k => k !== perm.key));
+                              } else {
+                                setNewSubPermissions(prev => [...prev, perm.key]);
+                              }
+                            }}
+                            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
+                              isChecked
+                                ? 'bg-purple-50/80 border-purple-300 shadow-sm'
+                                : 'bg-white border-slate-200 hover:border-slate-300'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}}
+                              className="mt-0.5 w-4 h-4 rounded accent-purple-600 cursor-pointer shrink-0"
+                            />
+                            <div>
+                              <p className="text-xs font-black text-slate-900">{perm.label}</p>
+                              <p className="text-[10px] text-slate-500 font-bold mt-0.5 leading-snug">{perm.desc}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      type="submit"
+                      loading={addingSubAdmin}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-6 h-11 text-xs font-black rounded-xl shadow-md cursor-pointer active:scale-95 border-0"
+                    >
+                      <UserPlus size={14} className="mr-1.5" /> সাব-সুপারএডমিন তৈরি করুন
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+
+              {/* Sub-Superadmin List Table */}
+              <Card
+                title={`বর্তমান সাব-সুপারএডমিন তালিকা (${subSuperAdmins.length} জন)`}
+                subtitle="সাব-সুপারএডমিনদের অ্যাক্টিভ/ইনঅ্যাক্টিভ করুন, পারমিশন পরিবর্তন করুন অথবা অ্যাক্সেস বাতিল করুন"
+                icon={Users}
+                className="border border-slate-200"
+              >
+                {subSuperAdmins.length === 0 ? (
+                  <div className="py-16 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <ShieldCheck size={36} className="mx-auto mb-3 text-slate-300" />
+                    <p className="text-xs font-black text-slate-700">কোনো সাব-সুপারএডমিন যুক্ত নেই</p>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1">উপরের ফর্ম থেকে জিমেইল দিয়ে নির্দিষ্ট পারমিশন সহ সাব-সুপারএডমিন যোগ করুন</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-separate border-spacing-y-2">
+                      <thead>
+                        <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                          <th className="pb-2 px-4 border-b border-slate-100">ইউজার / জিমেইল</th>
+                          <th className="pb-2 px-4 border-b border-slate-100">স্ট্যাটাস</th>
+                          <th className="pb-2 px-4 border-b border-slate-100">অনুমোদিত পারমিশনসমূহ</th>
+                          <th className="pb-2 px-4 border-b border-slate-100 text-right">অ্যাকশন</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subSuperAdmins.map(admin => {
+                          const perms = admin.permissions || [];
+                          return (
+                            <tr key={admin.email} className="bg-white hover:bg-slate-50 transition-colors border-b border-slate-50">
+                              <td className="p-4 first:rounded-l-2xl">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 font-black flex items-center justify-center text-xs shrink-0">
+                                    {admin.name?.[0] || admin.email?.[0] || 'S'}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-slate-900 text-xs">{admin.name || admin.email.split('@')[0]}</p>
+                                    <p className="font-mono text-[10px] text-slate-500 font-bold">{admin.email}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleSubAdminActive(admin)}
+                                  className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border cursor-pointer transition-all ${
+                                    admin.isActive !== false
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                      : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                                  }`}
+                                  title="ক্লিক করে স্ট্যাটাস পরিবর্তন করুন"
+                                >
+                                  {admin.isActive !== false ? 'Active ✅' : 'Suspended ⏸️'}
+                                </button>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex flex-wrap gap-1.5 max-w-md">
+                                  {AVAILABLE_PERMISSIONS.map(p => {
+                                    const hasIt = perms.includes(p.key);
+                                    return (
+                                      <button
+                                        key={p.key}
+                                        type="button"
+                                        onClick={() => handleToggleSubAdminPerm(admin.email, p.key)}
+                                        className={`px-2 py-0.5 rounded-lg text-[9px] font-bold border transition-all cursor-pointer ${
+                                          hasIt
+                                            ? 'bg-purple-100 text-purple-800 border-purple-300 hover:bg-purple-200'
+                                            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 opacity-60'
+                                        }`}
+                                        title={`${p.desc} — ক্লিক করে টগল করুন`}
+                                      >
+                                        {hasIt ? '✓ ' : '+ '} {p.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+                              <td className="p-4 text-right last:rounded-r-2xl">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSubAdmin(admin.email)}
+                                  className="p-2 rounded-xl text-red-500 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-200 transition-all cursor-pointer"
+                                  title="সাব-সুপারএডমিন মুছে ফেলুন"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {superadminTab === 'marketplace' && canAccess('view_marketplace') && (<>
             {/* 🎨 System Theme Control */}
             <Card title="Platform Appearance" subtitle="Set the system-wide default theme for all users" icon={Sparkles} className="border-2 border-indigo-100 bg-indigo-50/10">
         <div className="flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
@@ -1878,7 +2248,7 @@ export default function SuperAdminPage() {
       </Card>
       </>)}
 
-      {superadminTab === 'directory' && (<>
+      {superadminTab === 'directory' && canAccess('view_live_stores') && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* Pending Retailer Requests Section */}
@@ -2121,20 +2491,22 @@ export default function SuperAdminPage() {
                             </td>
                             <td className="p-4 text-right last:rounded-r-2xl">
                               <div className="flex items-center justify-end gap-2 flex-wrap max-w-md">
-                                {/* 🔐 Login as Retailer Button */}
-                                <button
-                                  onClick={() => handleLoginAsRetailer(shop)}
-                                  disabled={impersonatingId === shop.id}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
-                                  title="এই রিটেইলারের ড্যাশবোর্ডে প্রবেশ করুন"
-                                >
-                                  {impersonatingId === shop.id ? (
-                                    <Loader2 size={11} className="animate-spin" />
-                                  ) : (
-                                    <LogIn size={11} />
-                                  )}
-                                  Login as
-                                </button>
+                                {/* 🔐 Login as Retailer Button (Root Superadmin only) */}
+                                {!isSubAdmin && (
+                                  <button
+                                    onClick={() => handleLoginAsRetailer(shop)}
+                                    disabled={impersonatingId === shop.id}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
+                                    title="এই রিটেইলারের ড্যাশবোর্ডে প্রবেশ করুন"
+                                  >
+                                    {impersonatingId === shop.id ? (
+                                      <Loader2 size={11} className="animate-spin" />
+                                    ) : (
+                                      <LogIn size={11} />
+                                    )}
+                                    Login as
+                                  </button>
+                                )}
 
                                 {(shop.subdomainSlug || shop.shopSlug) && (
                                   <a
@@ -2195,14 +2567,16 @@ export default function SuperAdminPage() {
                                     <><Play size={11} /> Resume</>
                                   )}
                                 </button>
-                                <button
-                                  onClick={() => initiateDeleteShop(shop)}
-                                  disabled={processingShopId === shop.id}
-                                  className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
-                                  title="স্টোর ডিলিট করুন"
-                                >
-                                  <Trash2 size={11} /> Delete
-                                </button>
+                                {!isSubAdmin && (
+                                  <button
+                                    onClick={() => initiateDeleteShop(shop)}
+                                    disabled={processingShopId === shop.id}
+                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                                    title="স্টোর ডিলিট করুন"
+                                  >
+                                    <Trash2 size={11} /> Delete
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -2447,13 +2821,13 @@ export default function SuperAdminPage() {
       </div>
       </>)}
 
-      {superadminTab === 'customers' && (
+      {superadminTab === 'customers' && canAccess('view_customers') && (
         <div className="animate-fade-in">
           <SuperadminCustomersPanel />
         </div>
       )}
 
-      {superadminTab === 'inventory' && (<>
+      {superadminTab === 'inventory' && canAccess('view_inventory') && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* Showcase Curation & Whitelisting Card */}
@@ -2751,7 +3125,7 @@ export default function SuperAdminPage() {
       </div>
       </>)}
 
-      {superadminTab === 'security' && (<>
+      {superadminTab === 'security' && !isSubAdmin && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* 🔍 Impersonation Audit Logs */}
@@ -2806,7 +3180,7 @@ export default function SuperAdminPage() {
       </div>
       </>)}
 
-      {superadminTab === 'broadcast' && (<>
+      {superadminTab === 'broadcast' && canAccess('view_broadcast') && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* 🔔 Broadcast Center */}
@@ -2821,7 +3195,7 @@ export default function SuperAdminPage() {
       </div>
       </>)}
 
-      {superadminTab === 'directory' && (<>
+      {superadminTab === 'directory' && canAccess('view_live_stores') && !isSubAdmin && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* Invitation Area */}
@@ -2892,7 +3266,7 @@ export default function SuperAdminPage() {
       </div>
       </>)}
 
-      {superadminTab === 'subscriptions' && (<>
+      {superadminTab === 'subscriptions' && canAccess('view_subscriptions') && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Pending Manual Approvals Section */}
           {shops.filter(s => s.subscriptionStatus === 'pending').length > 0 && (
@@ -3267,7 +3641,7 @@ export default function SuperAdminPage() {
       </>)}
 
       {/* ── SHARED BUSINESS (REVENUE SHARE) TAB ────────────────── */}
-      {superadminTab === 'shared_business' && (<>
+      {superadminTab === 'shared_business' && canAccess('view_shared_business') && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Header Summary Statistics */}
           <div className="lg:col-span-12 space-y-6">
@@ -3628,23 +4002,23 @@ export default function SuperAdminPage() {
         </div>
       </>)}
 
-      {superadminTab === 'homepage_sections' && (
+      {superadminTab === 'homepage_sections' && canAccess('view_homepage_cms') && (
         <SuperadminHomepageControls globalConfig={globalConfig} />
       )}
 
-      {superadminTab === 'pricing_customizer' && (
+      {superadminTab === 'pricing_customizer' && canAccess('view_homepage_cms') && (
         <SuperadminPricingCustomizer globalConfig={globalConfig} />
       )}
 
-      {superadminTab === 'subscribers' && (
+      {superadminTab === 'subscribers' && canAccess('view_homepage_cms') && (
         <SuperadminSubscribersPanel />
       )}
 
-      {superadminTab === 'sponsors_manager' && (
+      {superadminTab === 'sponsors_manager' && canAccess('view_homepage_cms') && (
         <SuperadminSponsorsManager globalConfig={globalConfig} />
       )}
 
-      {superadminTab === 'faq_manager' && (
+      {superadminTab === 'faq_manager' && canAccess('view_homepage_cms') && (
         <SuperadminFaqManager globalConfig={globalConfig} />
       )}
 

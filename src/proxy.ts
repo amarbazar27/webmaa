@@ -35,7 +35,7 @@ const RESERVED_KEYWORDS = [
   'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
   'reviews', 'become-retailer', 'privacy-policy', 'privacy', 'account-delete',
   'terms', 'terms-of-service', 'terms-and-conditions',
-  '_next', 'robots.txt', 'sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
+  '_next', 'robots.txt', 'sitemap.xml', 'shop-sitemap.xml', 'product-sitemap.xml', 'category-sitemap.xml', 'image-sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
 ];
 
 /**
@@ -168,7 +168,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/robots') ||
-    pathname.startsWith('/sitemap') ||
+    pathname.includes('sitemap') ||
+    pathname.endsWith('.xml') ||
     pathname.startsWith('/sw.') ||
     pathname.startsWith('/manifest') ||
     pathname.startsWith('/not-found-domain') ||
@@ -193,6 +194,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (cleanRawHost === 'messbazar.com' || cleanRawHost === 'www.messbazar.com') {
     const canonicalUrl = new URL(pathname + request.nextUrl.search, 'https://www.messerbazar.com');
     console.log(`[Proxy] Replica redirect 308: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
+    return NextResponse.redirect(canonicalUrl, 308);
+  }
+
+  // ── Apex Redirect for Platform Domains: www.bdretailers.com -> bdretailers.com ──
+  if (cleanRawHost === 'www.bdretailers.com' || cleanRawHost === 'www.daripallah.com' || cleanRawHost === 'www.freeappweb.com') {
+    const apexDomain = cleanRawHost.replace(/^www\./, '');
+    const canonicalUrl = new URL(pathname + request.nextUrl.search, `https://${apexDomain}`);
+    console.log(`[Proxy] Apex 308 redirect: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
     return NextResponse.redirect(canonicalUrl, 308);
   }
 

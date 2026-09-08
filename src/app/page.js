@@ -169,6 +169,10 @@ export default function Home() {
   )?.url || '';
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
  
+  // ── Online / Offline System State ──
+  const [isOnline, setIsOnline] = useState(true);
+  const [wasOffline, setWasOffline] = useState(false);
+
   // ── Marketplace & Cart States ──
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -303,8 +307,42 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Load products, global config, superadmin shop & cart on mount
+  // Load products, global config, superadmin shop & cart on mount (with full offline cache fallback)
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const handleOnlineEvent = () => {
+        setIsOnline(true);
+        setWasOffline(true);
+        setTimeout(() => setWasOffline(false), 5000);
+      };
+      const handleOfflineEvent = () => {
+        setIsOnline(false);
+      };
+      window.addEventListener('online', handleOnlineEvent);
+      window.addEventListener('offline', handleOfflineEvent);
+
+      // ── Instant Offline Cache Hydration ──
+      try {
+        const cachedProds = localStorage.getItem('bd_cached_marketplace_products');
+        if (cachedProds) {
+          const parsed = JSON.parse(cachedProds);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+            setProductsLoading(false);
+          }
+        }
+        const cachedShops = localStorage.getItem('bd_cached_all_shops');
+        if (cachedShops) {
+          setAllShops(JSON.parse(cachedShops));
+        }
+        const cachedConfig = localStorage.getItem('bd_cached_global_config');
+        if (cachedConfig) {
+          setGlobalConfig(JSON.parse(cachedConfig));
+        }
+      } catch (_) {}
+    }
+
     getAllMarketplaceProducts().then(data => {
       // 🚨 Admin Shop Mapping & Overwrites
       const mapped = data.map(p => {
@@ -315,6 +353,12 @@ export default function Home() {
       });
       setProducts(mapped);
       setProductsLoading(false);
+
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('bd_cached_marketplace_products', JSON.stringify(mapped));
+        } catch (_) {}
+      }
 
       // ── Stepped category query parameters parser ──
       if (typeof window !== 'undefined') {
@@ -372,13 +416,25 @@ export default function Home() {
       }
     }
 
-    return subscribeGlobalConfig(setGlobalConfig);
+    return subscribeGlobalConfig((cfg) => {
+      setGlobalConfig(cfg);
+      if (typeof window !== 'undefined' && cfg) {
+        try {
+          localStorage.setItem('bd_cached_global_config', JSON.stringify(cfg));
+        } catch (_) {}
+      }
+    });
   }, []);
 
   // Load active shops and PWA logic
   useEffect(() => {
     getAllShops().then(shopsData => {
       setAllShops(shopsData || []);
+      if (typeof window !== 'undefined' && shopsData) {
+        try {
+          localStorage.setItem('bd_cached_all_shops', JSON.stringify(shopsData));
+        } catch (_) {}
+      }
     }).catch(err => console.error("Error loading shops:", err));
 
     if (typeof window === 'undefined') return;
@@ -446,7 +502,16 @@ export default function Home() {
   };
 
   const loadAllUserOrders = async (email) => {
-    if (!email || !allShops || allShops.length === 0) return;
+    if (!email) return;
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem(`bd_cached_orders_${email}`);
+      if (cached) {
+        try {
+          setUserOrders(JSON.parse(cached));
+        } catch (_) {}
+      }
+    }
+    if (!allShops || allShops.length === 0) return;
     setLoadingOrders(true);
     try {
       const promises = allShops.map(shop => 
@@ -468,6 +533,11 @@ export default function Home() {
         return dateB - dateA;
       });
       setUserOrders(merged);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(`bd_cached_orders_${email}`, JSON.stringify(merged));
+        } catch (_) {}
+      }
     } catch (err) {
       console.error("Error loading user orders across shops:", err);
     } finally {
@@ -507,7 +577,7 @@ export default function Home() {
   }, []);
 
   const getDashboardHref = () => {
-    if (userData?.role === 'superadmin') return '/superadmin';
+    if (userData?.role === 'superadmin' || userData?.role === 'sub_superadmin') return '/superadmin';
     if (userData?.role === 'retailer') return '/dashboard';
     if (userData?.role === 'staff') return '/dashboard';
     if (userData?.role === 'admin') return '/dashboard';
@@ -789,6 +859,10 @@ export default function Home() {
   const daripallahStoreTotal = daripallahStoreItems.reduce((t, i) => t + i.price * i.quantity, 0);
 
   const handleCheckoutDaripallah = () => {
+    if (!isOnline) {
+      toast.error('⚠️ আপনি অফলাইনে আছেন (Offline Preview)। ইন্টারনেট সংযোগ পেলে সরাসরি এই কার্ট থেকেই অর্ডার করতে পারবেন।', { duration: 4500 });
+      return;
+    }
     const superadminItem = cart.find(i => !i.isThirdParty);
     const slug = superadminItem ? superadminItem.shopSlug : 'daripallah-store';
     router.push(`/shop/${slug}`);
@@ -796,6 +870,10 @@ export default function Home() {
   };
 
   const handleCheckoutThirdParty = async (shopData, shopCheckoutUrl) => {
+    if (!isOnline) {
+      toast.error('⚠️ আপনি অফলাইনে আছেন (Offline Preview)। ইন্টারনেট সংযোগ পেলে সরাসরি এই কার্ট থেকেই অর্ডার করতে পারবেন।', { duration: 4500 });
+      return;
+    }
     if (!user) {
       toast.error('চেকআউট করতে প্রথমে লগইন সম্পন্ন করুন।');
       try {
@@ -1257,31 +1335,46 @@ export default function Home() {
   }
 
   return (
-    <div className="neo-root neo-clay font-sans overflow-x-hidden pb-20 lg:pb-10 transition-colors duration-300">
+    <div className="neo-root font-sans overflow-x-hidden pb-20 lg:pb-10 transition-colors duration-300">
       <style jsx global>{`
         body {
-          background-color: #E0E5EC;
-          color: #3D4852;
+          background-color: #F8FAFC;
+          color: #0F172A;
           transition: background-color 0.3s ease, color 0.3s ease;
+          -webkit-text-size-adjust: 100%;
         }
         .dark body {
-          background-color: #1A202C !important;
-          color: #E2E8F0 !important;
+          background-color: #0B0F19 !important;
+          color: #F8FAFC !important;
         }
         .neo-root {
-          --bg-color: #E0E5EC;
-          --text-color: #3D4852;
-          background-color: #E0E5EC;
-          color: #3D4852;
+          --bg-color: #F8FAFC;
+          --text-color: #0F172A;
+          background-color: #F8FAFC;
+          color: #0F172A;
           min-height: 100vh;
         }
         .dark .neo-root {
-          --bg-color: #1A202C !important;
-          --text-color: #E2E8F0 !important;
-          background-color: #1A202C !important;
-          color: #E2E8F0 !important;
+          --bg-color: #0B0F19 !important;
+          --text-color: #F8FAFC !important;
+          background-color: #0B0F19 !important;
+          color: #F8FAFC !important;
         }
       `}</style>
+
+      {/* ── Offline Preview Notification Banner ── */}
+      {!isOnline && (
+        <div className="sticky top-0 z-[100] bg-amber-500 text-slate-950 px-4 py-2 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md border-b border-amber-600 transition-all">
+          <span className="text-base animate-bounce">⚡</span>
+          <span>আপনি অফলাইনে আছেন (Offline Preview) — ব্রাউজিং ও কার্ট চালু আছে। ইন্টারনেট সংযোগ পেলে অর্ডার সম্পন্ন করতে পারবেন।</span>
+        </div>
+      )}
+      {isOnline && wasOffline && (
+        <div className="sticky top-0 z-[100] bg-emerald-500 text-white px-4 py-2 text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-md border-b border-emerald-600 animate-fade-in transition-all">
+          <span className="text-base">🟢</span>
+          <span>আপনি আবার অনলাইনে ফিরে এসেছেন! আপনার কার্ট থেকে সরাসরি অর্ডার সম্পন্ন করুন।</span>
+        </div>
+      )}
 
       {/* ── Keyframe Injector ── */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -1292,15 +1385,15 @@ export default function Home() {
         .animate-float { animation: float 4s ease-in-out infinite; }
       `}} />
 
-      {/* ── Sleek Neumorphic Navigation Header ── */}
-      <header className="sticky top-0 z-50 px-3 sm:px-6 py-3 bg-[#E0E5EC]/90 dark:bg-[#1A202C]/90 backdrop-blur-xl neo-extruded-sm transition-all duration-300">
+      {/* ── Sleek High-Contrast Navigation Header ── */}
+      <header className="sticky top-0 z-50 px-3 sm:px-6 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2 sm:gap-4">
           {/* Left Area: Stores Drawer on Far Left, Mobile Login/Workspace, Mobile Pricing, and Brand Logo */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Stores Drawer Trigger (FAR LEFT on Mobile and Desktop) */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="px-3 py-2 neo-btn text-xs font-black text-[#3D4852] dark:text-slate-200 flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-3 py-2 neo-btn text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5 cursor-pointer shrink-0"
               title="মেনু ও স্টোরসমূহ খুলুন"
             >
               <Store size={16} className="text-[#6C63FF] shrink-0" />
@@ -1835,7 +1928,7 @@ export default function Home() {
                 return (
                   <div 
                     key={uniqueKey}
-                    className="group glass-panel border-white/5 rounded-3xl p-5 hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.1)] transition-all duration-500 flex flex-col justify-between bg-slate-950/45 cursor-pointer"
+                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-5 hover:border-purple-500/40 hover:shadow-xl dark:hover:shadow-[0_0_50px_rgba(139,92,246,0.1)] transition-all duration-500 flex flex-col justify-between cursor-pointer shadow-sm"
                     onClick={() => {
                       if (isCat) {
                         setActiveCategory(group.categoryName);
@@ -1851,22 +1944,22 @@ export default function Home() {
                   >
                     {/* Header */}
                     <div>
-                      <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                      <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-white/5 pb-3">
                         <div className="flex items-center gap-2.5 max-w-[85%]">
-                          <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 shrink-0 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 shrink-0 flex items-center justify-center">
                             {isCat ? (
-                              <div className="w-full h-full flex items-center justify-center font-black text-purple-400 text-sm">📁</div>
+                              <div className="w-full h-full flex items-center justify-center font-black text-purple-600 dark:text-purple-400 text-sm">📁</div>
                             ) : (
                               <img src={shopLogo} alt={group.shopName} className="w-full h-full object-cover" />
                             )}
                           </div>
-                          <h2 className="font-extrabold text-white text-sm tracking-tight truncate">{headerTitle}</h2>
+                          <h2 className="font-extrabold text-slate-900 dark:text-white text-sm tracking-tight truncate">{headerTitle}</h2>
                         </div>
                         <div className="flex items-center gap-2">
                           {!isCat && (
                             <button
                               onClick={(e) => handleCopyShopSectorLink(e, group.shopName)}
-                              className="p-1.5 bg-white/5 border border-white/5 hover:bg-purple-600/30 hover:border-purple-500/20 text-white/40 hover:text-purple-400 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                              className="p-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:bg-purple-100 dark:hover:bg-purple-600/30 text-slate-500 dark:text-white/60 hover:text-purple-600 dark:hover:text-purple-300 rounded-lg transition-all cursor-pointer flex items-center justify-center"
                               title={`"${group.shopName}" স্টোরের লিংক কপি করুন`}
                             >
                               <Share2 size={12} />
@@ -1880,24 +1973,24 @@ export default function Home() {
                         {displayProducts.slice(0, 2).map(p => (
                           <div 
                             key={p.id}
-                            className="relative rounded-2xl overflow-hidden bg-slate-900 border border-white/10 group/item hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-md"
+                            className="relative rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 group/item hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-sm"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedProduct(p);
                               setCustomizationNote('');
                             }}
                           >
-                            <div className="aspect-square w-full overflow-hidden bg-slate-950">
+                            <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
                               <img src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover/item:opacity-100 group-hover/item:scale-105 transition-transform duration-500" />
                             </div>
-                            <div className="bg-slate-950 p-2.5 text-xs text-white border-t border-white/10 flex flex-col justify-between">
-                              <p className="font-bold text-slate-100 text-xs line-clamp-2 min-h-[32px]">{p.name}</p>
-                              <p className="font-black text-emerald-400 mt-1 text-xs">৳ {Number(p.price).toLocaleString()}</p>
+                            <div className="bg-white dark:bg-slate-950 p-2.5 text-xs border-t border-slate-100 dark:border-white/10 flex flex-col justify-between">
+                              <p className="font-bold text-slate-800 dark:text-slate-100 text-xs line-clamp-2 min-h-[32px]">{p.name}</p>
+                              <p className="font-black text-emerald-600 dark:text-emerald-400 mt-1 text-xs">৳ {Number(p.price).toLocaleString()}</p>
                             </div>
                           </div>
                         ))}
                         {displayProducts.length < 2 && Array.from({ length: 2 - displayProducts.length }).map((_, idx) => (
-                          <div key={idx} className="aspect-square rounded-2xl bg-white/[0.02] border border-dashed border-white/5 flex items-center justify-center text-white/10 text-xs font-bold">
+                          <div key={idx} className="aspect-square rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-dashed border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 text-xs font-bold">
                             Empty Slot
                           </div>
                         ))}
@@ -1905,9 +1998,9 @@ export default function Home() {
                     </div>
 
                     {/* Footer view link */}
-                    <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-bold text-purple-400 group-hover:text-purple-300 transition-colors">
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
                       <span className="truncate">{isCat ? 'ক্যাটাগরি এক্সপ্লোর' : 'স্টোর এক্সপ্লোর'}</span>
-                      <span className="shrink-0 text-xs text-purple-300 font-bold bg-purple-950/60 border border-purple-800/40 px-2.5 py-0.5 rounded-lg transition-all">{group.products.length} টি পণ্য</span>
+                      <span className="shrink-0 text-xs text-purple-700 dark:text-purple-300 font-bold bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/40 px-2.5 py-0.5 rounded-lg transition-all">{group.products.length} টি পণ্য</span>
                     </div>
                   </div>
                 );
@@ -1930,10 +2023,10 @@ export default function Home() {
             ))}
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="py-20 text-center glass-panel rounded-3xl border-white/5">
-            <ShoppingBag size={48} className="mx-auto text-white/20 mb-4" />
-            <h4 className="text-lg font-black text-white/60">কোনো পণ্য পাওয়া যায়নি</h4>
-            <p className="text-xs text-white/30 font-bold uppercase tracking-widest mt-1">অনুগ্রহ করে ফিল্টার অথবা সার্চের শব্দ পরিবর্তন করে ট্রাই করুন</p>
+          <div className="py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-white/10 shadow-sm">
+            <ShoppingBag size={48} className="mx-auto text-slate-300 dark:text-white/20 mb-4" />
+            <h4 className="text-lg font-black text-slate-800 dark:text-white">কোনো পণ্য পাওয়া যায়নি</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-1">অনুগ্রহ করে ফিল্টার অথবা সার্চের শব্দ পরিবর্তন করে ট্রাই করুন</p>
           </div>
         ) : activeShopFilter === 'All' ? (
           <div className="space-y-16">
@@ -1942,14 +2035,14 @@ export default function Home() {
               return (
                 <div key={group.shopName} className="space-y-6">
                   {/* Shop Section Header */}
-                  <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10 bg-white/5 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
                         <img src={group.shopLogoUrl || '/logo.png'} alt={group.shopName} className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-white text-base tracking-tight">{group.shopName}</h3>
-                        <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">পণ্য সংখ্যা: {group.products.length}টি</p>
+                        <h3 className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight">{group.shopName}</h3>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">পণ্য সংখ্যা: {group.products.length}টি</p>
                       </div>
                     </div>
                     <button
@@ -1957,7 +2050,7 @@ export default function Home() {
                         setFilterMode('merchant');
                         setActiveShopFilter(group.shopName);
                       }}
-                      className="px-4 py-2 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white border border-purple-500/20 hover:border-purple-500 rounded-xl text-xs font-black transition-all cursor-pointer"
+                      className="px-4 py-2 bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white dark:bg-purple-600/20 dark:hover:bg-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 rounded-xl text-xs font-black transition-all cursor-pointer"
                     >
                       স্টোর ভিজিট করুন →
                     </button>
@@ -1972,14 +2065,14 @@ export default function Home() {
                       return (
                         <div
                           key={product.id}
-                          className="group spotlight-card border border-white/10 rounded-3xl overflow-hidden hover:border-purple-500/40 hover:shadow-2xl hover:shadow-purple-950/40 transition-all duration-300 flex flex-col justify-between bg-slate-900/60"
+                          className="group border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-purple-500/40 hover:shadow-xl dark:hover:shadow-purple-950/40 transition-all duration-300 flex flex-col justify-between bg-white dark:bg-slate-900 shadow-sm"
                         >
                           <div 
                             onClick={() => {
                               setSelectedProduct(product);
                               setCustomizationNote('');
                             }}
-                            className="relative aspect-square overflow-hidden bg-slate-950/80 border-b border-white/5 cursor-pointer"
+                            className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-950/80 border-b border-slate-100 dark:border-white/5 cursor-pointer"
                           >
                             <img
                               src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
@@ -1992,8 +2085,8 @@ export default function Home() {
                               </span>
                             )}
                             {product.stock !== 0 && (
-                              <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-slate-950/80 backdrop-blur-md text-emerald-400 border border-emerald-500/30 text-[8px] font-extrabold rounded-full flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> In Stock
+                              <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-white/90 dark:bg-slate-950/80 backdrop-blur-md text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 text-[8px] font-extrabold rounded-full flex items-center gap-1 shadow-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> In Stock
                               </span>
                             )}
                           </div>
@@ -2001,12 +2094,12 @@ export default function Home() {
                           <div className="p-3.5 flex-1 flex flex-col justify-between">
                             <div className="space-y-1 mb-3">
                               <div className="flex justify-between items-center gap-2">
-                                <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
+                                <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
                                 <a 
                                   href={storeLinkOfProduct} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="text-[9px] font-black text-slate-400 hover:text-purple-300 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                                  className="text-[9px] font-black text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-300 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
                                 >
                                   🏪 {product.shopName} <ArrowUpRight size={8} />
                                 </a>
@@ -2016,25 +2109,25 @@ export default function Home() {
                                   setSelectedProduct(product);
                                   setCustomizationNote('');
                                 }}
-                                className="font-extrabold text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-purple-300 transition-colors"
+                                className="font-extrabold text-slate-900 dark:text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-purple-600 dark:hover:text-purple-300 transition-colors"
                               >
                                 {product.name}
                               </h3>
                             </div>
 
-                            <div className="space-y-2.5 pt-2.5 border-t border-white/10">
+                            <div className="space-y-2.5 pt-2.5 border-t border-slate-100 dark:border-white/10">
                               <div className="flex justify-between items-center">
-                                <span className="text-slate-400 text-[9px] font-bold">দাম (Price)</span>
-                                <span className="text-emerald-400 font-mono tabular-nums font-black text-sm">৳ {Number(product.price).toLocaleString()}</span>
+                                <span className="text-slate-500 dark:text-slate-400 text-[9px] font-bold">দাম (Price)</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-mono tabular-nums font-black text-sm">৳ {Number(product.price).toLocaleString()}</span>
                               </div>
 
                               {product.stock === 0 ? (
-                                <div className="w-full py-2 rounded-xl font-black text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
+                                <div className="w-full py-2 rounded-xl font-black text-[9px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
                                   🚫 স্টক শেষ (Out of Stock)
                                 </div>
                               ) : (
                                 cartItem ? (
-                                  <div className="flex items-center justify-between bg-purple-950/80 rounded-xl p-1 border border-purple-500/40">
+                                  <div className="flex items-center justify-between bg-purple-50 dark:bg-purple-950/80 rounded-xl p-1 border border-purple-200 dark:border-purple-500/40">
                                     <button onClick={() => updateCartQty(product.id, -1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-500 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
                                       <Minus size={11} strokeWidth={2.5} />
                                     </button>
@@ -2044,7 +2137,7 @@ export default function Home() {
                                       step="any"
                                       value={cartItem.quantity}
                                       onChange={e => setCartQtyDirect(product.id, e.target.value)}
-                                      className="font-mono tabular-nums font-black text-white text-xs w-full text-center bg-transparent outline-none border-none"
+                                      className="font-mono tabular-nums font-black text-slate-900 dark:text-white text-xs w-full text-center bg-transparent outline-none border-none"
                                     />
                                     <button onClick={() => updateCartQty(product.id, 1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-500 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
                                       <Plus size={11} strokeWidth={2.5} />
@@ -2066,7 +2159,7 @@ export default function Home() {
                                     setSelectedProduct(product);
                                     setCustomizationNote('');
                                   }}
-                                  className="w-full py-1.5 rounded-xl font-extrabold text-[9px] border border-purple-500/30 hover:border-purple-400 text-purple-300 hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                  className="w-full py-1.5 rounded-xl font-extrabold text-[9px] border border-purple-200 dark:border-purple-500/30 hover:border-purple-500 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                                 >
                                   <Sparkles size={10} /> Specs / Customize
                                 </button>
@@ -2090,19 +2183,19 @@ export default function Home() {
                 return (
                   <div
                     key={product.id}
-                    className="group glass-panel border-white/5 rounded-3xl overflow-hidden hover:border-white/10 hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between bg-slate-950/20"
+                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-purple-500/40 hover:shadow-xl dark:hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between shadow-sm"
                   >
                     <div 
                       onClick={() => {
                         setSelectedProduct(product);
                         setCustomizationNote('');
                       }}
-                      className="relative aspect-square overflow-hidden bg-slate-950/40 border-b border-white/5 cursor-pointer"
+                      className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-950/40 border-b border-slate-100 dark:border-white/5 cursor-pointer"
                     >
                       <img
                         src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
                       />
                       {(product.shopSlug === 'daripallah-store' || product.shopSlug === 'webmaa-store') && (
                         <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
@@ -2111,15 +2204,15 @@ export default function Home() {
                       )}
                     </div>
 
-                    <div className="p-4 flex-1 flex flex-col justify-between">
-                      <div className="space-y-1 mb-4">
+                    <div className="p-3.5 flex-1 flex flex-col justify-between">
+                      <div className="space-y-1 mb-3">
                         <div className="flex justify-between items-center gap-2">
-                          <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
+                          <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
                           <a 
                             href={storeLink} 
                             target="_blank" 
                             rel="noreferrer" 
-                            className="text-[9px] font-black text-white/40 hover:text-purple-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                            className="text-[9px] font-black text-slate-500 hover:text-purple-600 dark:text-white/40 dark:hover:text-purple-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
                           >
                             🏪 {product.shopName} <ArrowUpRight size={8} />
                           </a>
@@ -2129,27 +2222,27 @@ export default function Home() {
                             setSelectedProduct(product);
                             setCustomizationNote('');
                           }}
-                          className="font-extrabold text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2rem] cursor-pointer hover:text-purple-400 transition-colors"
+                          className="font-extrabold text-slate-900 dark:text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
                         >
                           {product.name}
                         </h3>
                       </div>
 
-                      <div className="space-y-3 pt-3 border-t border-white/5">
+                      <div className="space-y-2.5 pt-2.5 border-t border-slate-100 dark:border-white/5">
                         <div className="flex justify-between items-center">
-                          <span className="text-white/40 text-[9px] font-bold">দাম (Price)</span>
-                          <span className="text-white font-black text-xs">৳ {Number(product.price).toLocaleString()}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-[9px] font-bold">দাম (Price)</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-mono tabular-nums font-black text-sm">৳ {Number(product.price).toLocaleString()}</span>
                         </div>
 
                         {product.stock === 0 ? (
-                          <div className="w-full py-2.5 rounded-2xl font-black text-[9px] bg-red-500/10 text-red-400 border border-red-500/20 flex items-center justify-center gap-1.5 cursor-not-allowed">
+                          <div className="w-full py-2 rounded-xl font-black text-[9px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
                             🚫 স্টক শেষ (Stock Out)
                           </div>
                         ) : (
                           cartItem ? (
-                            <div className="flex items-center justify-between bg-purple-900/40 rounded-2xl p-1 border border-purple-500/30">
-                              <button onClick={() => updateCartQty(product.id, -1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
-                                <Minus size={12} strokeWidth={2.5} />
+                            <div className="flex items-center justify-between bg-purple-50 dark:bg-purple-900/40 rounded-xl p-1 border border-purple-200 dark:border-purple-500/30">
+                              <button onClick={() => updateCartQty(product.id, -1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                <Minus size={11} strokeWidth={2.5} />
                               </button>
                               <input
                                 type="number"
@@ -2157,18 +2250,18 @@ export default function Home() {
                                 step="any"
                                 value={cartItem.quantity}
                                 onChange={e => setCartQtyDirect(product.id, e.target.value)}
-                                className="font-black text-white text-xs w-full text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="font-mono tabular-nums font-black text-slate-900 dark:text-white text-xs w-full text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
-                              <button onClick={() => updateCartQty(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
-                                <Plus size={12} strokeWidth={2.5} />
+                              <button onClick={() => updateCartQty(product.id, 1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                <Plus size={11} strokeWidth={2.5} />
                               </button>
                             </div>
                           ) : (
                             <button
                               onClick={() => handleAddToCart(product)}
-                              className="w-full py-2.5 bg-white/5 hover:bg-purple-600 hover:text-white border border-white/10 hover:border-purple-500 rounded-2xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-95 text-white/70"
+                              className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95"
                             >
-                              <ShoppingCart size={11} /> Add to Cart
+                              <ShoppingCart size={12} /> Add to Cart
                             </button>
                           )
                         )}
@@ -2179,7 +2272,7 @@ export default function Home() {
                               setSelectedProduct(product);
                               setCustomizationNote('');
                             }}
-                            className="w-full py-2 rounded-2xl font-black text-[9px] border border-purple-500/20 hover:border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                            className="w-full py-1.5 rounded-xl font-extrabold text-[9px] border border-purple-200 dark:border-purple-500/20 hover:border-purple-500 text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <Sparkles size={11} /> কাস্টমাইজ (Customize)
                           </button>
@@ -2193,11 +2286,11 @@ export default function Home() {
 
             {/* Glassmorphic Numbered Pagination Controls */}
             {Math.ceil(filteredProducts.length / itemsPerPage) > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12 bg-white/[0.02] border border-white/5 rounded-3xl p-3 w-max mx-auto shadow-2xl animate-fade-in">
+              <div className="flex justify-center items-center gap-2 mt-12 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-3 w-max mx-auto shadow-md animate-fade-in">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-white/50 hover:text-white bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-white/5"
+                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-slate-200 dark:border-white/5"
                 >
                   Prev
                 </button>
@@ -2211,7 +2304,7 @@ export default function Home() {
                       className={`w-8 h-8 rounded-xl text-xs font-black transition-all flex items-center justify-center cursor-pointer border ${
                         isActive
                           ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]'
-                          : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                          : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-700 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       {page}
@@ -2222,7 +2315,7 @@ export default function Home() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredProducts.length / itemsPerPage), prev + 1))}
                   disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
-                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-white/50 hover:text-white bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-white/5"
+                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-slate-200 dark:border-white/5"
                 >
                   Next
                 </button>
@@ -2822,6 +2915,13 @@ export default function Home() {
             {/* Footer */}
             {cart.length > 0 && (
               <div className="p-6 border-t border-slate-200 bg-white space-y-4 shadow-lg">
+                {!isOnline && (
+                  <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl p-3 text-xs font-bold flex items-center gap-2">
+                    <span className="text-base">⚡</span>
+                    <span>অফলাইন প্রিভিউ: কার্ট সেভ থাকবে। অনলাইনে আসলে সরাসরি অর্ডার করতে পারবেন।</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
                   <span className="text-slate-600 text-sm font-bold">Subtotal Total</span>
                   <span className="text-slate-900 text-2xl font-black">৳ {cartTotal.toLocaleString()}</span>
@@ -2831,7 +2931,12 @@ export default function Home() {
                   {daripallahStoreItems.length > 0 && (
                     <button
                       onClick={handleCheckoutDaripallah}
-                      className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl cursor-pointer active:scale-95 transition-all"
+                      disabled={!isOnline}
+                      className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl transition-all ${
+                        !isOnline
+                          ? 'bg-slate-400 text-white cursor-not-allowed opacity-75'
+                          : 'bg-slate-900 hover:bg-slate-800 text-white cursor-pointer active:scale-95'
+                      }`}
                     >
                       Checkout {globalConfig?.brandName || 'BDRetailers'} Products (৳ {daripallahStoreTotal.toLocaleString()})
                     </button>

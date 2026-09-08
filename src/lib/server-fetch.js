@@ -272,3 +272,42 @@ export async function getGlobalConfigServer() {
     return {};
   }
 }
+
+export async function getAllShopsServer() {
+  try {
+    if (adminDb) {
+      const snap = await adminDb.collection('shops').get();
+      return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+    } else {
+      const shops = await firestoreRestCollection('shops');
+      return shops || [];
+    }
+  } catch (err) {
+    console.error('[getAllShopsServer] Error:', err);
+    return [];
+  }
+}
+
+export async function getAllMarketplaceProductsServer() {
+  try {
+    const shops = await getAllShopsServer();
+    const activeShops = shops.filter(s => s.isActive !== false && s.showOnMainSite !== false);
+    const productArrays = await Promise.all(
+      activeShops.map(async (shop) => {
+        const prods = await getProductsServer(shop.id);
+        return prods.map(p => ({
+          ...p,
+          shopId: shop.id,
+          shopName: shop.shopName || '',
+          shopSlug: shop.subdomainSlug || shop.shopSlug || '',
+          customDomain: shop.customDomain || '',
+        }));
+      })
+    );
+    return productArrays.flat();
+  } catch (err) {
+    console.error('[getAllMarketplaceProductsServer] Error:', err);
+    return [];
+  }
+}
+

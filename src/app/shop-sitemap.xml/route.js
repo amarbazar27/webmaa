@@ -1,5 +1,5 @@
 import { getAllShops } from '@/lib/firestore';
-import { getShopByDomainServer } from '@/lib/server-fetch';
+import { getShopByDomainServer, getAllShopsServer } from '@/lib/server-fetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +37,7 @@ export async function GET(request) {
     if (isRetailer) {
       const shop = await getShopByDomainServer(host);
       if (shop && shop.isActive !== false) {
-        // Retailer's own sitemap only contains their home URL
+        // Retailer's own sitemap contains their home URL
         xmlItems += `  <url>
     <loc>${baseUrl}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
@@ -46,9 +46,12 @@ export async function GET(request) {
   </url>\n`;
       }
     } else {
-      // Main site sitemap lists main site home and all active shops
-      const shops = await getAllShops();
-      const activeShops = shops.filter(shop => {
+      // Main site sitemap lists main site home, primary static pages, and all active shops
+      let shops = await getAllShopsServer();
+      if (!shops || shops.length === 0) {
+        shops = await getAllShops();
+      }
+      const activeShops = (shops || []).filter(shop => {
         const isTest = shop.shopSlug === 'test' || shop.subdomainSlug === 'test' || shop.shopName?.toLowerCase() === 'test';
         return shop.isActive !== false && shop.showOnMainSite !== false && (!isTest || shop.showOnMainSite === true);
       });
@@ -59,6 +62,17 @@ export async function GET(request) {
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>\n`;
+
+      // Essential platform static routes for Google indexing
+      const staticPages = ['/showcase', '/become-retailer', '/privacy-policy', '/terms'];
+      staticPages.forEach((p) => {
+        xmlItems += `  <url>
+    <loc>${baseUrl}${p}</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>\n`;
+      });
 
       activeShops.forEach((shop) => {
         const slug = shop.subdomainSlug || shop.shopSlug;

@@ -76,7 +76,12 @@ export const viewport = {
   minimumScale: 1.0,
   maximumScale: 5.0,
   userScalable: true,
- };
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F8FAFC' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B0F19' },
+  ],
+};
  
  // JSON-LD Structured Data for Google Search Branding & Rich Snippets
  function JsonLd() {
@@ -222,6 +227,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="bn" translate="no" suppressHydrationWarning>
       <head>
+        <meta name="color-scheme" content="light dark" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="google" content="notranslate" />
         <JsonLd />
       </head>

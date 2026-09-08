@@ -1117,51 +1117,61 @@ section#marketplace .text-white { color: var(--neo-text) !important; }
 }
 
 .neo-card {
-  background-color: #E0E5EC;
-  border-radius: 32px;
-  box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.5);
-  border: none;
+  background-color: #ffffff;
+  color: #0F172A;
+  border-radius: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E2E8F0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .neo-card:hover {
-  box-shadow: 12px 12px 20px rgba(163, 177, 198, 0.7), -12px -12px 20px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+  border-color: #CBD5E1;
 }
 .dark .neo-card {
-  background-color: #1A202C !important;
-  box-shadow: 8px 8px 18px rgba(0, 0, 0, 0.6), -8px -8px 18px rgba(255, 255, 255, 0.04) !important;
+  background-color: #131B2E !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
 .dark .neo-card:hover {
-  box-shadow: 10px 10px 24px rgba(0, 0, 0, 0.7), -10px -10px 24px rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 .neo-btn {
-  background-color: #E0E5EC;
-  border-radius: 16px;
-  box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.5);
-  border: none;
+  background-color: #ffffff;
+  color: #0F172A;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #E2E8F0;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .neo-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 8px 8px 14px rgba(163, 177, 198, 0.7), -8px -8px 14px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #CBD5E1;
 }
 .neo-btn:active {
   transform: translateY(1px);
-  box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6), inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 .dark .neo-btn {
-  background-color: #1A202C !important;
-  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.04) !important;
+  background-color: #1E293B !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }
 .dark .neo-btn:hover {
-  box-shadow: 7px 7px 14px rgba(0, 0, 0, 0.7), -7px -7px 14px rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
 }
 .dark .neo-btn:active {
-  box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.7), inset -4px -4px 8px rgba(255, 255, 255, 0.03) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
 }
 
 .neo-extruded {
-  box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 .dark .neo-extruded {
   box-shadow: 8px 8px 18px rgba(0, 0, 0, 0.6), -8px -8px 18px rgba(255, 255, 255, 0.04);

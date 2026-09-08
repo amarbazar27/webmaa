@@ -16,7 +16,7 @@ export default function SuperAdminLayout({ children }) {
     if (!loading) {
       if (!user) {
         router.push('/login');
-      } else if (userData?.role !== 'superadmin') {
+      } else if (userData?.role !== 'superadmin' && userData?.role !== 'sub_superadmin') {
         router.push('/dashboard');
       }
     }
@@ -30,7 +30,9 @@ export default function SuperAdminLayout({ children }) {
     );
   }
 
-  if (!user || userData?.role !== 'superadmin') return null;
+  if (!user || (userData?.role !== 'superadmin' && userData?.role !== 'sub_superadmin')) return null;
+
+  const isSubAdmin = userData?.role === 'sub_superadmin';
 
   return (
     <div className="min-h-screen" style={{background:'var(--bg-color)',color:'var(--text-color)'}}>
@@ -46,9 +48,17 @@ export default function SuperAdminLayout({ children }) {
           <div>
             <h1 className="font-black text-lg tracking-tighter text-slate-900 flex items-center gap-2">
               DARIPALLAH <span className="text-red-600">OVERWATCH</span>
-              <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Root</span>
+              {isSubAdmin ? (
+                <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded font-black uppercase tracking-wider shadow-sm">
+                  Sub-Admin
+                </span>
+              ) : (
+                <span className="text-[10px] bg-red-600 text-white px-1.5 py-0.5 rounded font-black uppercase tracking-wider">Root</span>
+              )}
             </h1>
-            <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">Central Control Node</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">
+              {isSubAdmin ? `Restricted Access Node (${userData?.permissions?.length || 0} permissions)` : 'Central Control Node'}
+            </p>
           </div>
         </div>
 

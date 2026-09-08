@@ -44,24 +44,42 @@ self.addEventListener('fetch', (event) => {
   // Skip Firebase requests
   if (url.hostname.includes('firebase') || url.hostname.includes('googleapis')) return;
 
-  // Network-first for HTML pages
-  if (request.destination === 'document') {
+  // Network-first with automatic caching for HTML pages
+  if (request.destination === 'document' || request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request))
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const fallback = await caches.match('/');
+          return fallback || new Response(
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Offline Preview</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:sans-serif;text-align:center;padding:50px 20px;background:#F8FAFC;color:#0F172A;"><h2>⚡ আপনি অফলাইনে আছেন</h2><p>ইন্টারনেট সংযোগ চালু হলে পেজটি রিফ্রেশ করুন।</p></body></html>',
+            { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+          );
+        })
     );
     return;
   }
 
-  // Cache-first for static assets (images, fonts, scripts)
+  // Stale-while-revalidate for Next.js chunks, styles, scripts and images
   event.respondWith(
     caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
-        if (!response || response.status !== 200) return response;
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+      const networkFetch = fetch(request).then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
         return response;
-      });
+      }).catch(() => cached);
+
+      return cached || networkFetch;
     })
   );
 });
