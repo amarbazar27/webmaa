@@ -953,6 +953,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
         .then(reg => {
+          reg.update().catch(() => {});
           console.log('[PWA] SW registered immediately, scope:', reg.scope);
           // Inject Firebase config dynamically so it's SSR-safe
           const config = {
@@ -2572,8 +2573,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       )}
 
-      {/* ── Banner/Carousel Section — Full Image Edge-to-Edge, No Crop ── */}
-      <div className={`sf-hero relative w-full overflow-hidden border-b border-slate-900/20 group/banner ${normalizedBanners.length > 0 ? 'bg-black h-[50vh] md:h-[60vh] min-h-[260px] max-h-[600px]' : 'bg-transparent'}`}>
+      {/* ── Banner/Carousel Section — Clean 16:9 Responsive, Zero Blurry Sides ── */}
+      <div className={`sf-hero relative w-full overflow-hidden border-b border-slate-900/20 group/banner ${normalizedBanners.length > 0 ? 'bg-slate-950 w-full aspect-[16/9] max-h-[520px] md:max-h-[580px]' : 'bg-transparent'}`}>
         {normalizedBanners.length > 0 ? (
           <div 
             className="relative w-full h-full overflow-hidden"
@@ -2590,19 +2591,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     : 'absolute inset-0 z-0 opacity-0 scale-95 pointer-events-none'
                 }`}
               >
-                {/* Actual banner — filled with ambient backdrop, 100% full view, never cut */}
+                {/* 16:9 Edge-to-Edge Banner — Crisp, Full View, Zero Blurry Sides on Desktop/Mobile */}
                 <div className="w-full h-full relative flex items-center justify-center bg-slate-950 overflow-hidden">
-                  {/* Ambient blurred backdrop */}
-                  <div 
-                    className="absolute inset-0 w-full h-full bg-cover bg-center blur-3xl scale-125 opacity-40 select-none pointer-events-none" 
-                    style={{ backgroundImage: `url(${banner.url})` }} 
-                  />
-                  {/* Main Banner Image — Full display, 0% cropped */}
                   <img
                     src={banner.url}
                     loading={i === 0 ? "eager" : "lazy"}
                     alt={banner.title || `Banner ${i+1}`}
-                    className="relative w-full h-full object-contain z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
+                    className="w-full h-full object-cover object-center z-10 select-none transition-transform duration-700 hover:scale-[1.01]"
                   />
                 </div>
                 {/* Premium Text Overlay if defined */}

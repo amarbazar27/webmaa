@@ -172,6 +172,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.includes('sitemap') ||
     pathname.endsWith('.xml') ||
     pathname.startsWith('/sw.') ||
+    pathname.startsWith('/sw.js') ||
+    pathname.startsWith('/firebase-messaging-sw') ||
     pathname.startsWith('/manifest') ||
     pathname.startsWith('/not-found-domain') ||
     pathname.startsWith('/icons/') ||

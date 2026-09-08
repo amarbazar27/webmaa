@@ -76,7 +76,8 @@ async function registerFCMServiceWorker() {
     // Check if already registered at the correct path
     const existing = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
     if (existing) {
-      log('✅ FCM SW already registered:', existing.scope);
+      existing.update().catch(() => {});
+      log('✅ FCM SW already registered (update triggered):', existing.scope);
       return existing;
     }
 

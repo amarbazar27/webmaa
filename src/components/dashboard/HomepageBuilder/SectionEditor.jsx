@@ -36,13 +36,37 @@ function Textarea({ value, onChange, placeholder, rows = 3 }) {
   );
 }
 
-function ImageUploadField({ label, value, onChange, placeholder, shopId }) {
+function ImageUploadField({ label, value, onChange, placeholder, shopId, aspectRatio }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (aspectRatio === '16:9') {
+      try {
+        await new Promise((resolve, reject) => {
+          const img = new Image();
+          img.src = URL.createObjectURL(file);
+          img.onload = () => {
+            URL.revokeObjectURL(img.src);
+            const ratio = img.naturalWidth / img.naturalHeight;
+            if (Math.abs(ratio - 16 / 9) > 0.10) {
+              reject(new Error(`❌ ব্যানার অবশ্যই ১৬:৯ (16:9) রেশিও হতে হবে (যেমন: 1920x1080 বা 1600x900)। আপনার ছবির রেশিও ${ratio.toFixed(2)}:1 অমিল।`));
+            } else {
+              resolve();
+            }
+          };
+          img.onerror = () => reject(new Error('ইমেজ ফাইলটি পড়া যায়নি।'));
+        });
+      } catch (err) {
+        setError(err.message);
+        e.target.value = '';
+        return;
+      }
+    }
+
     setUploading(true);
     setError('');
     try {
@@ -61,6 +85,7 @@ function ImageUploadField({ label, value, onChange, placeholder, shopId }) {
       setError('আপলোড ব্যর্থ হয়েছে।');
     }
     setUploading(false);
+    e.target.value = '';
   };
 
   return (
@@ -108,7 +133,7 @@ function HeroCarouselEditor({ data, onChange, shopId }) {
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Slide {i + 1}</span>
             <button onClick={() => removeSlide(i)} className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"><Trash2 size={13} /></button>
           </div>
-          <ImageUploadField label="ব্যানার ইমেজ" value={slide.url} onChange={v => updateSlide(i, 'url', v)} shopId={shopId} />
+          <ImageUploadField label="ব্যানার ইমেজ (বাধ্যতামূলক ১৬:৯ রেশিও)" value={slide.url} onChange={v => updateSlide(i, 'url', v)} shopId={shopId} aspectRatio="16:9" />
           <Field label="টাইটেল"><Input value={slide.title} onChange={v => updateSlide(i, 'title', v)} placeholder="ব্যানার টাইটেল" /></Field>
           <Field label="বিবরণ"><Input value={slide.description} onChange={v => updateSlide(i, 'description', v)} placeholder="সংক্ষিপ্ত বিবরণ" /></Field>
           <div className="grid grid-cols-2 gap-2">

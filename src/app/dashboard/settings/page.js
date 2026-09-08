@@ -636,54 +636,42 @@ export default function SettingsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shop?.customDomain, domainStatus]);
 
-  const cropTo169 = (file) => {
-    return new Promise((resolve) => {
+  const validateAndCrop169 = (file) => {
+    return new Promise((resolve, reject) => {
       const img = new Image();
       img.src = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(img.src);
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const currentAspectRatio = img.naturalWidth / img.naturalHeight;
+        const targetAspectRatio = 16 / 9; // ~1.7777
 
-        const targetAspectRatio = 16 / 9;
-        const currentAspectRatio = img.width / img.height;
-
-        let sourceX = 0;
-        let sourceY = 0;
-        let sourceWidth = img.width;
-        let sourceHeight = img.height;
-
-        if (currentAspectRatio > targetAspectRatio) {
-          sourceWidth = img.height * targetAspectRatio;
-          sourceX = (img.width - sourceWidth) / 2;
-        } else if (currentAspectRatio < targetAspectRatio) {
-          sourceHeight = img.width / targetAspectRatio;
-          sourceY = (img.height - sourceHeight) / 2;
+        // Strict 16:9 aspect ratio check (allow tolerance between 1.68 and 1.88)
+        if (Math.abs(currentAspectRatio - targetAspectRatio) > 0.10) {
+          reject(new Error(`❌ ব্যানার অবশ্যই ১৬:৯ (16:9) রেশিও সাইজের হতে হবে (যেমন: 1920x1080, 1600x900 বা 1280x720)। আপনার ছবির সাইজ ${img.naturalWidth}x${img.naturalHeight} (রেশিও ${currentAspectRatio.toFixed(2)}:1), যা অনুমোদিত নয়।`));
+          return;
         }
 
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         canvas.width = 1600;
         canvas.height = 900;
 
-        ctx.drawImage(
-          img,
-          sourceX, sourceY, sourceWidth, sourceHeight,
-          0, 0, 1600, 900
-        );
+        ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, 1600, 900);
 
         canvas.toBlob((blob) => {
           if (!blob) {
             resolve(file);
             return;
           }
-          const croppedFile = new File([blob], file.name || 'banner.jpg', {
+          const croppedFile = new File([blob], file.name ? file.name.replace(/\.[^/.]+$/, ".jpg") : 'banner.jpg', {
             type: 'image/jpeg',
             lastModified: Date.now(),
           });
           resolve(croppedFile);
-        }, 'image/jpeg', 0.85);
+        }, 'image/jpeg', 0.90);
       };
       img.onerror = () => {
-        resolve(file);
+        reject(new Error('ইমেজ ফাইলটি পড়া যায়নি। অনুগ্রহ করে সঠিক ফরম্যাটের ছবি আপলোড করুন।'));
       };
     });
   };
@@ -702,18 +690,19 @@ export default function SettingsPage() {
     
     setSaving(true);
     try {
-      const croppedFile = await cropTo169(file);
+      const croppedFile = await validateAndCrop169(file);
       const { uploadImage } = await import('@/lib/storage');
       const url = await uploadImage(croppedFile, activeShopId);
       const newBannerObj = { url, title: '', description: '', linkUrl: '', buttonText: '' };
       const newBanners = [...(shop.banners || []), newBannerObj];
       await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
-      toast.success('ব্যানার আপলোড সফল হয়েছে (১৬:৯ মাপে ক্রপ করা হয়েছে)! 🖼️');
+      toast.success('১৬:৯ ব্যানার সফলভাবে আপলোড হয়েছে! 🖼️');
     } catch (err) {
       toast.error(err.message || 'ব্যানার আপলোড ব্যর্থ হয়েছে');
     } finally {
       setSaving(false);
+      e.target.value = '';
     }
   };
 
@@ -726,7 +715,7 @@ export default function SettingsPage() {
     }
     setSaving(true);
     try {
-      const croppedFile = await cropTo169(file);
+      const croppedFile = await validateAndCrop169(file);
       const { uploadImage } = await import('@/lib/storage');
       const url = await uploadImage(croppedFile, activeShopId);
       const newBanners = [...(shop.banners || [])];
@@ -738,11 +727,12 @@ export default function SettingsPage() {
       }
       await updateShop(activeShopId, { banners: newBanners });
       setShop(s => ({ ...s, banners: newBanners }));
-      toast.success('ব্যানার পরিবর্তন সফল হয়েছে (১৬:৯ মাপে ক্রপ করা হয়েছে)! 🔄');
+      toast.success('১৬:৯ ব্যানার সফলভাবে পরিবর্তন হয়েছে! 🔄');
     } catch (err) {
       toast.error(err.message || 'ব্যানার পরিবর্তন ব্যর্থ হয়েছে');
     } finally {
       setSaving(false);
+      e.target.value = '';
     }
   };
 
@@ -2118,8 +2108,18 @@ export default function SettingsPage() {
                   placeholder="e.g. https://youtube.com/watch?v=..."
                 />
 
-                 <div className="space-y-3 pt-4 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Shop Banners (Max 5, 5MB each)</label>
+                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                      <label className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest ml-1">
+                        Shop Banners (বাধ্যতামূলক ১৬:৯ / 16:9 রেশিও, সর্বোচ্চ ৫টি)
+                      </label>
+                      <span className="text-[9px] font-extrabold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/40 w-fit">
+                        📐 সাইজ: 1920x1080 বা 1600x900 (১৬:৯ রেশিও)
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold ml-1">
+                      ⚠️ ডেস্কটপ এবং মোবাইলে প্রফেশনাল ফুল-উইডথ প্রদর্শনের জন্য ব্যানার অবশ্যই ১৬:৯ (16:9) রেশিও হতে হবে। অন্য কোনো সাইজ গ্রহণযোগ্য নয়।
+                    </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        {shop.banners?.map((banner, i) => {
                           const bannerUrl = typeof banner === 'string' ? banner : (banner?.url || '');
@@ -2214,7 +2214,7 @@ export default function SettingsPage() {
                        {(shop.banners?.length || 0) < 5 && (
                           <label className="aspect-video rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 hover:border-purple-300 cursor-pointer transition-colors group">
                              <ImageIcon size={24} className="text-slate-300 group-hover:text-purple-500 transition-colors" />
-                             <span className="text-[10px] font-black text-slate-400 group-hover:text-purple-600">+ নতুন ব্যানার</span>
+                             <span className="text-[10px] font-black text-slate-400 group-hover:text-purple-600">+ নতুন ১৬:৯ ব্যানার যোগ করুন</span>
                              <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
                           </label>
                        )}

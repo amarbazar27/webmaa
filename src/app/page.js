@@ -442,7 +442,10 @@ export default function Home() {
     // Register Service Worker on the main website
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
-        .then(reg => console.log('[PWA] Service Worker registered for main website:', reg.scope))
+        .then(reg => {
+          reg.update().catch(() => {});
+          console.log('[PWA] Service Worker registered for main website:', reg.scope);
+        })
         .catch(err => console.error('[PWA] Service Worker registration failed:', err));
     }
 
@@ -2336,11 +2339,11 @@ export default function Home() {
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full neo-extruded-sm text-[#6C63FF] font-black text-xs uppercase tracking-widest">
                   <Sparkles size={14} /> TOP-TIER SELECTION
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight">
+                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                   ফিচার্ড মডেলস & <span className="text-[#6C63FF]">কাস্টম স্পেসিফিকেশন</span>
                 </h2>
               </div>
-              <p className="text-xs sm:text-sm text-[#6B7280] dark:text-slate-400 font-medium max-w-md">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium max-w-md">
                 প্রতিটি প্রডাক্ট মডেলের নিখুঁত ভ্যারিয়েন্ট, স্পেক্স, এবং রিয়েল-টাইম এআই প্রাইস ক্যালকুলেটর সাপোর্ট দেখুন।
               </p>
             </div>
@@ -2365,13 +2368,13 @@ export default function Home() {
 
                     <div className="space-y-1">
                       <span className="text-xs font-black text-[#6C63FF] uppercase tracking-wider">{featProduct.category || 'Premium Grade'}</span>
-                      <h3 className="text-lg font-black text-[#3D4852] dark:text-slate-100 truncate">{featProduct.name}</h3>
-                      <p className="text-xs text-[#6B7280] dark:text-slate-400 line-clamp-2 min-h-[32px] leading-relaxed font-medium">
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white truncate">{featProduct.name}</h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 min-h-[32px] leading-relaxed font-medium">
                         {featProduct.description || 'উচ্চমানের অরিজিনাল কাঁচামাল এবং সুনির্দিষ্ট কোয়ালিটি চেকে প্রস্তুতকৃত নির্ভরযোগ্য মডেল।'}
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-bold text-[#6B7280] dark:text-slate-300 border-t border-slate-300/30 dark:border-white/5">
+                    <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-bold text-slate-700 dark:text-slate-200 border-t border-slate-300/30 dark:border-white/5">
                       <div className="neo-inset-sm p-2 rounded-xl flex items-center gap-1.5">
                         <ShieldCheck size={14} className="text-[#6C63FF] shrink-0" />
                         <span>কোয়ালিটি চেক</span>
@@ -2385,7 +2388,7 @@ export default function Home() {
 
                   <div className="pt-5 border-t border-slate-300/30 dark:border-white/5 mt-5 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-[#6B7280] dark:text-slate-400 font-bold uppercase tracking-wider">MODEL PRICE</span>
+                      <span className="text-xs text-slate-700 dark:text-slate-300 font-black uppercase tracking-wider">MODEL PRICE</span>
                       <span className="text-xl font-mono tabular-nums font-black text-[#6C63FF]">৳ {Number(featProduct.price || 0).toLocaleString()}</span>
                     </div>
                     <button 

@@ -137,11 +137,11 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // ── Offline & PWA Caching Strategy ────────────────────────────────────────
-const CACHE_NAME = 'webmaa-offline-v5';
+const CACHE_NAME = 'webmaa-offline-v7';
 const STATIC_ASSETS = ['/', '/logo.png', '/manifest.json'];
 
 self.addEventListener('install', (event) => {
-  console.log('[FCM-SW] Installing and pre-caching static assets');
+  console.log('[FCM-SW] Installing and pre-caching static assets v7');
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       await Promise.allSettled(
@@ -157,7 +157,7 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[FCM-SW] Activated, claiming clients');
+  console.log('[FCM-SW] Activated v7, claiming clients');
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
@@ -172,11 +172,15 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET and non-http(s) requests
   if (request.method !== 'GET' || !url.protocol.startsWith('http')) return;
 
+  // CRITICAL: NEVER intercept cross-origin third-party requests (Cloudinary, Google, Gstatic, Unsplash, etc.)
+  // Let the browser handle external media natively without SW or connect-src restrictions!
+  if (url.origin !== self.location.origin) return;
+
   // Skip API routes — always network
   if (url.pathname.startsWith('/api/')) return;
 
-  // Skip Firebase requests
-  if (url.hostname.includes('firebase') || url.hostname.includes('googleapis')) return;
+  // Skip Next.js dev websocket / hot-reload
+  if (url.pathname.startsWith('/_next/webpack-hmr')) return;
 
   // HTML page navigation: Network-first, fallback to cache
   if (request.destination === 'document' || request.mode === 'navigate') {
@@ -203,7 +207,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Assets (JS, CSS, images, fonts): Stale-while-revalidate
+  // Same-origin static assets: Stale-while-revalidate
   event.respondWith(
     caches.match(request).then((cached) => {
       const networkFetch = fetch(request).then((response) => {
@@ -212,7 +216,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      }).catch(() => cached);
+      }).catch(() => cached || new Response('', { status: 408, statusText: 'Network request failed' }));
 
       return cached || networkFetch;
     })
