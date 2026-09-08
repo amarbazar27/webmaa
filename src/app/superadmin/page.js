@@ -25,7 +25,7 @@ import {
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
   Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy, TrendingUp, Percent, DollarSign, Receipt, RefreshCw, AlertCircle, Bell,
-  Layout, HelpCircle, Handshake
+  Layout, HelpCircle, Handshake, Truck, Lock, Save
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -139,6 +139,11 @@ export default function SuperAdminPage() {
   const [newSubPermissions, setNewSubPermissions] = useState(['view_subscriptions', 'view_live_stores']);
   const [addingSubAdmin, setAddingSubAdmin] = useState(false);
 
+  // Master Global Steadfast Courier Fraud Checker Keys
+  const [globalSteadfastApiKey, setGlobalSteadfastApiKey] = useState('');
+  const [globalSteadfastSecretKey, setGlobalSteadfastSecretKey] = useState('');
+  const [savingCourier, setSavingCourier] = useState(false);
+
   const AVAILABLE_PERMISSIONS = [
     { key: 'view_subscriptions', label: 'সাবস্ক্রিপশন ও বিলিং', desc: 'কে কে সাবস্ক্রিপশন কিনেছে, প্যাকেজ ও পেমেন্ট হিস্ট্রি' },
     { key: 'view_live_stores', label: 'মার্চেন্ট ও লাইভ স্টোর ডিরেক্টরি', desc: 'মেইন সাইটে কার কার বা কতজনের স্টোর লাইভ আছে' },
@@ -234,6 +239,28 @@ export default function SuperAdminPage() {
       toast.success('পারমিশন আপডেট সম্পন্ন!');
     } catch (err) {
       toast.error('পারমিশন আপডেট করতে সমস্যা হয়েছে');
+    }
+  };
+
+  useEffect(() => {
+    if (globalConfig?.steadfastApiKey) setGlobalSteadfastApiKey(globalConfig.steadfastApiKey);
+    if (globalConfig?.steadfastSecretKey) setGlobalSteadfastSecretKey(globalConfig.steadfastSecretKey);
+  }, [globalConfig]);
+
+  const handleSaveGlobalCourier = async (e) => {
+    e?.preventDefault();
+    setSavingCourier(true);
+    const toastId = toast.loading('গ্লোবাল কুরিয়ার কি সংরক্ষণ করা হচ্ছে...');
+    try {
+      await updateGlobalConfig({
+        steadfastApiKey: globalSteadfastApiKey.trim(),
+        steadfastSecretKey: globalSteadfastSecretKey.trim()
+      });
+      toast.success('গ্লোবাল স্টিডফাস্ট ফ্রড চেকার সক্রিয় হয়েছে! এখন সব রিটেইলার ফ্রিতে ফ্রড চেক করতে পারবে। 🎉', { id: toastId });
+    } catch (err) {
+      toast.error('সেভ করতে সমস্যা হয়েছে: ' + err.message, { id: toastId });
+    } finally {
+      setSavingCourier(false);
     }
   };
 
@@ -1570,6 +1597,56 @@ export default function SuperAdminPage() {
                     </table>
                   </div>
                 )}
+              </Card>
+
+              {/* 🚚 Master Courier & Fraud Checker Settings */}
+              <Card
+                title="প্ল্যাটফর্ম গ্লোবাল কুরিয়ার ফ্রড চেকার (Steadfast Master Key)"
+                subtitle="এখানে সুপারএডমিনের একটি মাত্র Steadfast API Key ও Secret Key প্রদান করুন। এটি দিয়ে রাখলে প্ল্যাটফর্মের সকল রিটেইলার নিজেরা কোনো কিছু কানেক্ট না করেই ফ্রিতে কাস্টমারের ডেলিভারি রেট ও ফ্রড স্ট্যাটাস চেক করতে পারবে।"
+                icon={Truck}
+                className="border-2 border-amber-200 bg-gradient-to-br from-amber-50/40 via-white to-orange-50/20 shadow-lg"
+              >
+                <form onSubmit={handleSaveGlobalCourier} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                        <Key size={13} className="text-amber-600" /> Steadfast API Key
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 5x... (Steadfast Api-Key)"
+                        value={globalSteadfastApiKey}
+                        onChange={e => setGlobalSteadfastApiKey(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs font-bold outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                        <Lock size={13} className="text-amber-600" /> Steadfast Secret Key
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="Steadfast Secret-Key"
+                        value={globalSteadfastSecretKey}
+                        onChange={e => setGlobalSteadfastSecretKey(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs font-bold outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                    <p className="text-[11px] text-slate-500 font-bold">
+                      💡 <strong>সুবিধা:</strong> রিটেইলাররা কোনো কি কানেক্ট না করলেও স্বয়ংক্রিয়ভাবে আপনার এই মাস্টার কী দিয়ে সব দোকানে ফ্রড চেক চালু থাকবে।
+                    </p>
+                    <Button
+                      type="submit"
+                      loading={savingCourier}
+                      icon={Save}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-6 py-2.5 rounded-xl cursor-pointer shadow-md shrink-0 w-full sm:w-auto"
+                    >
+                      মাস্টার ফ্রড চেকার সক্রিয় করুন
+                    </Button>
+                  </div>
+                </form>
               </Card>
             </div>
           )}

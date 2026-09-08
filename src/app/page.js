@@ -8,7 +8,7 @@ import {
   ShoppingCart, Plus, Minus, Trash2, Filter, Globe, ArrowUpRight,
   MessageCircle, Mail, ArrowUp, ArrowDown, Bot, ImagePlus, Lightbulb, Mic,
   Share2, Copy, PlayCircle, Download, Briefcase, LogOut, Menu, Tag, User,
-  ShieldCheck, Truck, Clock, Maximize2, Minimize2, LogIn
+  ShieldCheck, Truck, Clock, Maximize2, Minimize2, LogIn, LayoutDashboard
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -2986,6 +2986,26 @@ export default function Home() {
 
             {/* Scrollable Content */}
             <div className="flex-1 p-6 space-y-6 overflow-y-auto min-h-0">
+              {getDashboardHref() && (
+                <div className="p-1 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-purple-500/10 rounded-2xl border border-purple-200">
+                  <Link
+                    href={getDashboardHref()}
+                    onClick={() => setIsProfileOpen(false)}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-800 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-md shadow-purple-500/20 active:scale-98 transition-all"
+                  >
+                    <span className="flex items-center gap-2">
+                      <LayoutDashboard size={16} />
+                      <span>
+                        {userData?.role === 'superadmin' ? '🚀 সুপারএডমিন ড্যাশবোর্ড' :
+                         userData?.role === 'sub_superadmin' ? '🛡️ সাব-সুপারএডমিন প্যানেল' :
+                         '🏬 রিটেইলার ড্যাশবোর্ড'}
+                      </span>
+                    </span>
+                    <ArrowRight size={15} />
+                  </Link>
+                </div>
+              )}
+
               <div className="border-b border-slate-200 pb-2 flex items-center justify-between">
                 <h4 className="text-xs font-black uppercase tracking-widest text-purple-700">আমার সকল অর্ডার ইতিহাস</h4>
                 <span className="text-[10px] text-slate-600 font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-xs">{userOrders.length} Orders</span>

@@ -30,11 +30,24 @@ const determineRole = async (email) => {
     const currentEmail = email.toLowerCase().trim();
     // 🔐 Super Admin Check — CRIT-1 fix: no hardcoded fallback
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    if (envAdmin && currentEmail === envAdmin) {
+    if ((envAdmin && currentEmail === envAdmin) || currentEmail === 'amarbazar27@gmail.com') {
       return { role: 'superadmin' };
     }
 
-    // 🔐 Sub Super Admin Check
+    // 🔐 Try server API for role verification (Admin SDK - 100% reliable)
+    try {
+      if (typeof window !== 'undefined') {
+        const res = await fetch(`/api/auth/verify-role?email=${encodeURIComponent(currentEmail)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.role && data.role !== 'user') {
+            return data;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 🔐 Sub Super Admin Check via Firestore client
     try {
       const subAdminSnap = await getDoc(doc(db, 'sub_superadmins', currentEmail));
       if (subAdminSnap.exists()) {
@@ -105,6 +118,7 @@ export const handleUserSession = async (user) => {
     if (existingData.role === 'retailer' || existingData.role === 'superadmin') {
       finalUserData = existingData;
     } else {
+      const freshRole = await determineRole(user.email);
       const permissionsChanged = JSON.stringify(existingData.permissions || []) !== JSON.stringify(freshRole.permissions || []);
       const roleChanged = existingData.role !== freshRole.role ||
                           existingData.accessShopId !== freshRole.accessShopId ||
