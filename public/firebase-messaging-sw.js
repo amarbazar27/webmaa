@@ -136,9 +136,88 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// ── Install & Activate ────────────────────────────────────────────────────
-self.addEventListener('install',  () => { console.log('[FCM-SW] Installed'); self.skipWaiting(); });
-self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); console.log('[FCM-SW] Activated'); });
+// ── Offline & PWA Caching Strategy ────────────────────────────────────────
+const CACHE_NAME = 'webmaa-offline-v5';
+const STATIC_ASSETS = ['/', '/logo.png', '/manifest.json'];
+
+self.addEventListener('install', (event) => {
+  console.log('[FCM-SW] Installing and pre-caching static assets');
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.allSettled(
+        STATIC_ASSETS.map((url) =>
+          fetch(url).then((res) => {
+            if (res && res.status === 200) return cache.put(url, res);
+          }).catch(() => {})
+        )
+      );
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('[FCM-SW] Activated, claiming clients');
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET and non-http(s) requests
+  if (request.method !== 'GET' || !url.protocol.startsWith('http')) return;
+
+  // Skip API routes — always network
+  if (url.pathname.startsWith('/api/')) return;
+
+  // Skip Firebase requests
+  if (url.hostname.includes('firebase') || url.hostname.includes('googleapis')) return;
+
+  // HTML page navigation: Network-first, fallback to cache
+  if (request.destination === 'document' || request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const rootFallback = await caches.match('/');
+          if (rootFallback) return rootFallback;
+          return new Response(
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Offline Preview</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font-family:sans-serif;text-align:center;padding:50px 20px;background:#F8FAFC;color:#0F172A;"><h2>⚡ আপনি অফলাইনে আছেন</h2><p>ইন্টারনেট সংযোগ চালু হলে পেজটি রিফ্রেশ করুন।</p></body></html>',
+            { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+          );
+        })
+    );
+    return;
+  }
+
+  // Assets (JS, CSS, images, fonts): Stale-while-revalidate
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      const networkFetch = fetch(request).then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => cached);
+
+      return cached || networkFetch;
+    })
+  );
+});
 
 // ── Config Injection via postMessage ─────────────────────────────────────
 self.addEventListener('message', (event) => {
@@ -153,11 +232,3 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
-
-// ── PWA Caching Support (sw.js integration for installability) ────────────
-try {
-  importScripts('/sw.js');
-  console.log('[FCM-SW] ✅ Successfully imported sw.js for PWA caching support.');
-} catch (err) {
-  console.warn('[FCM-SW] ⚠️ Failed to import sw.js:', err.message);
-}

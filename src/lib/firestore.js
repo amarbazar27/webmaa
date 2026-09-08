@@ -1093,8 +1093,28 @@ export const updateSponsorRequestStatus = async (requestId, status) => {
 };
 
 // ── SUB-SUPERADMIN MANAGEMENT ──────────────────────
+const getAuthToken = async () => {
+  try {
+    const { getAuth } = await import('firebase/auth');
+    const auth = getAuth();
+    return await auth.currentUser?.getIdToken();
+  } catch (_) {
+    return null;
+  }
+};
+
 export const getSubSuperAdmins = async () => {
   try {
+    const token = await getAuthToken();
+    if (token) {
+      const res = await fetch('/api/superadmin/sub-superadmins', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.subSuperAdmins)) return data.subSuperAdmins;
+      }
+    }
     const snap = await getDocs(collection(db, 'sub_superadmins'));
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (err) {
@@ -1105,6 +1125,25 @@ export const getSubSuperAdmins = async () => {
 
 export const addSubSuperAdmin = async ({ email, name, permissions = [], addedBy = '' }) => {
   const cleanEmail = email.toLowerCase().trim();
+  const token = await getAuthToken();
+
+  if (token) {
+    const res = await fetch('/api/superadmin/sub-superadmins', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ email: cleanEmail, name, permissions, addedBy })
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result.error || 'সাব-সুপারএডমিন যোগ করতে সমস্যা হয়েছে');
+    }
+    return result.subAdmin || { id: cleanEmail, email: cleanEmail };
+  }
+
+  // Fallback to client SDK
   const ref = doc(db, 'sub_superadmins', cleanEmail);
   const data = {
     email: cleanEmail,
@@ -1117,72 +1156,54 @@ export const addSubSuperAdmin = async ({ email, name, permissions = [], addedBy 
     updatedAt: serverTimestamp(),
   };
   await setDoc(ref, data);
-
-  // If user already exists in users collection, update their role to sub_superadmin
-  try {
-    const userQuery = query(collection(db, 'users'), where('email', '==', cleanEmail));
-    const userSnap = await getDocs(userQuery);
-    if (!userSnap.empty) {
-      const uDoc = userSnap.docs[0];
-      await updateDoc(doc(db, 'users', uDoc.id), {
-        role: 'sub_superadmin',
-        permissions: data.permissions,
-        updatedAt: serverTimestamp(),
-      });
-    }
-  } catch (e) {
-    console.warn('Could not sync role directly to user doc:', e);
-  }
-
   return { id: cleanEmail, ...data };
 };
 
 export const updateSubSuperAdmin = async (email, updateData) => {
   const cleanEmail = email.toLowerCase().trim();
+  const token = await getAuthToken();
+
+  if (token) {
+    const res = await fetch('/api/superadmin/sub-superadmins', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ email: cleanEmail, ...updateData })
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result.error || 'আপডেট ব্যর্থ হয়েছে');
+    }
+    return true;
+  }
+
   const ref = doc(db, 'sub_superadmins', cleanEmail);
   await updateDoc(ref, {
     ...updateData,
     updatedAt: serverTimestamp(),
   });
-
-  // Also sync permissions if user document exists
-  try {
-    const userQuery = query(collection(db, 'users'), where('email', '==', cleanEmail));
-    const userSnap = await getDocs(userQuery);
-    if (!userSnap.empty) {
-      const uDoc = userSnap.docs[0];
-      const payload = { updatedAt: serverTimestamp() };
-      if (updateData.permissions) payload.permissions = updateData.permissions;
-      if (updateData.isActive === false) payload.role = 'user';
-      else if (updateData.isActive === true) payload.role = 'sub_superadmin';
-      await updateDoc(doc(db, 'users', uDoc.id), payload);
-    }
-  } catch (e) {
-    console.warn('Could not sync update to user doc:', e);
-  }
+  return true;
 };
 
 export const deleteSubSuperAdmin = async (email) => {
   const cleanEmail = email.toLowerCase().trim();
-  await deleteDoc(doc(db, 'sub_superadmins', cleanEmail));
+  const token = await getAuthToken();
 
-  // Reset user document role back to user
-  try {
-    const userQuery = query(collection(db, 'users'), where('email', '==', cleanEmail));
-    const userSnap = await getDocs(userQuery);
-    if (!userSnap.empty) {
-      const uDoc = userSnap.docs[0];
-      await updateDoc(doc(db, 'users', uDoc.id), {
-        role: 'user',
-        permissions: [],
-        updatedAt: serverTimestamp(),
-      });
+  if (token) {
+    const res = await fetch(`/api/superadmin/sub-superadmins?email=${encodeURIComponent(cleanEmail)}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const result = await res.json();
+    if (!res.ok) {
+      throw new Error(result.error || 'মুছে ফেলতে ব্যর্থ হয়েছে');
     }
-  } catch (e) {
-    console.warn('Could not reset user role:', e);
+    return true;
   }
+
+  const ref = doc(db, 'sub_superadmins', cleanEmail);
+  await deleteDoc(ref);
+  return true;
 };
-
-
-
-

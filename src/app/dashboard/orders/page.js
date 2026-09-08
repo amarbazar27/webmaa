@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeOrders, updateOrderStatus, getShop, deleteOrder, reportCustomerFraud, calculateRiskScoreClient } from '@/lib/firestore';
-import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download, AlertCircle, Mail, Users, RefreshCw } from 'lucide-react';
+import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download, AlertCircle, Mail, Users, RefreshCw, ShieldAlert, ShieldCheck, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { updateDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -67,6 +67,41 @@ export default function OrdersPage() {
   const [reportModal, setReportModal] = useState({ open: false, phone: '', reason: 'fake_order', comment: '' });
   const [submittingReport, setSubmittingReport] = useState(false);
   const [verifyingId, setVerifyingId] = useState(null);
+
+  // 🚚 Live Courier Delivery & Fraud Rate States
+  const [courierFraudData, setCourierFraudData] = useState({});
+  const [checkingFraudPhone, setCheckingFraudPhone] = useState(null);
+
+  const handleCheckCourierFraud = async (rawPhone) => {
+    const phone = standardizePhone(rawPhone);
+    if (!phone) {
+      toast.error('ফোন নম্বর পাওয়া যায়নি');
+      return;
+    }
+    setCheckingFraudPhone(phone);
+    const toastId = toast.loading('কুরিয়ার ডেটাবেসে ডেলিভারি হিস্ট্রি যাচাই করা হচ্ছে...');
+    try {
+      const sId = shop?.id || activeShopId || '';
+      const res = await fetch(`/api/courier/fraud-check?phone=${encodeURIComponent(phone)}&shopId=${encodeURIComponent(sId)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'ফ্রড চেক সম্পন্ন করা সম্ভব হয়নি');
+      }
+      setCourierFraudData(prev => ({ ...prev, [phone]: data }));
+      if (data.riskLevel === 'danger') {
+        toast.error(`⚠️ ফ্রড অ্যালার্ট: এই নম্বরে ক্যান্সেল রেট ${data.cancellationRate}%!`, { id: toastId });
+      } else if (data.riskLevel === 'safe') {
+        toast.success(`✅ নির্ভরযোগ্য কাস্টমার: ডেলিভারি সাকসেস ${data.deliveryRate}%!`, { id: toastId });
+      } else {
+        toast(data.riskLabel || 'কুরিয়ার তথ্য প্রাপ্ত হয়েছে', { id: toastId, icon: 'ℹ️' });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'ফ্রড চেক ব্যর্থ হয়েছে', { id: toastId });
+    } finally {
+      setCheckingFraudPhone(null);
+    }
+  };
 
   const handleVerifyPayment = async (orderId, shopId) => {
     setVerifyingId(orderId);
@@ -978,12 +1013,66 @@ export default function OrdersPage() {
                                  <span className="text-xs font-black text-slate-900">{order.customerName || 'N/A'}</span>
                                </div>
                                
-                               {/* Phone */}
-                               <div className="flex items-center gap-2.5">
-                                 <Phone size={14} className="text-slate-400 shrink-0" />
-                                 <a href={`tel:${order.customerPhone}`} className="text-xs font-black text-purple-600 hover:text-purple-700 hover:underline">
-                                   {order.customerPhone || 'N/A'}
-                                 </a>
+                               {/* Phone & Live Courier Fraud Check */}
+                               <div className="space-y-1.5">
+                                 <div className="flex items-center justify-between gap-2">
+                                   <div className="flex items-center gap-2.5">
+                                     <Phone size={14} className="text-slate-400 shrink-0" />
+                                     <a href={`tel:${order.customerPhone}`} className="text-xs font-black text-purple-600 hover:text-purple-700 hover:underline">
+                                       {order.customerPhone || 'N/A'}
+                                     </a>
+                                   </div>
+                                   <button
+                                     type="button"
+                                     onClick={() => handleCheckCourierFraud(order.customerPhone)}
+                                     disabled={checkingFraudPhone === phone}
+                                     className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 shadow-xs"
+                                     title="Steadfast ও অন্যান্য কুরিয়ারে এই নম্বরের পার্সেল ডেলিভারি সাকসেস রেট যাচাই করুন"
+                                   >
+                                     {checkingFraudPhone === phone ? (
+                                       <><RefreshCw size={10} className="animate-spin text-amber-600" /> চেকিং...</>
+                                     ) : (
+                                       <><ShieldAlert size={11} className="text-amber-600" /> ফ্রড চেক</>
+                                     )}
+                                   </button>
+                                 </div>
+
+                                 {/* Courier Delivery Performance & Fraud Data */}
+                                 {courierFraudData[phone] && (
+                                   <div className={`p-2.5 rounded-xl border text-xs font-bold transition-all shadow-xs ${
+                                     courierFraudData[phone].riskLevel === 'danger'
+                                       ? 'bg-red-50/90 border-red-200 text-red-900'
+                                       : courierFraudData[phone].riskLevel === 'safe'
+                                       ? 'bg-emerald-50/90 border-emerald-200 text-emerald-900'
+                                       : courierFraudData[phone].riskLevel === 'medium'
+                                       ? 'bg-amber-50/90 border-amber-200 text-amber-900'
+                                       : 'bg-slate-100/90 border-slate-200 text-slate-800'
+                                   }`}>
+                                     <div className="flex items-center justify-between mb-1">
+                                       <span className="flex items-center gap-1.5 font-black text-[11px]">
+                                         {courierFraudData[phone].riskLevel === 'danger' && <ShieldAlert size={13} className="text-red-600 shrink-0" />}
+                                         {courierFraudData[phone].riskLevel === 'safe' && <ShieldCheck size={13} className="text-emerald-600 shrink-0" />}
+                                         {courierFraudData[phone].riskLevel === 'medium' && <ShieldAlert size={13} className="text-amber-600 shrink-0" />}
+                                         {courierFraudData[phone].riskLevel === 'new' && <Shield size={13} className="text-slate-500 shrink-0" />}
+                                         {courierFraudData[phone].riskLabel}
+                                       </span>
+                                       {courierFraudData[phone].deliveryRate !== null && (
+                                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black shadow-xs ${
+                                           courierFraudData[phone].deliveryRate >= 80 ? 'bg-emerald-600 text-white' :
+                                           courierFraudData[phone].deliveryRate >= 60 ? 'bg-amber-500 text-white' :
+                                           'bg-red-600 text-white'
+                                         }`}>
+                                           {courierFraudData[phone].deliveryRate}% ডেলিভারি
+                                         </span>
+                                       )}
+                                     </div>
+                                     <div className="flex flex-wrap items-center gap-2.5 text-[10px] font-semibold opacity-90 pt-0.5 border-t border-black/5">
+                                       <span>মোট পার্সেল: <strong>{courierFraudData[phone].totalParcels}</strong></span>
+                                       <span>• সফল ডেলিভারি: <strong className="text-emerald-700">{courierFraudData[phone].totalDelivered}</strong></span>
+                                       <span>• বাতিল / রিটার্ন: <strong className="text-red-600">{courierFraudData[phone].totalCancelled}</strong></span>
+                                     </div>
+                                   </div>
+                                 )}
                                </div>
 
                                {/* Email */}

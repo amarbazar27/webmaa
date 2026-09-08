@@ -13,9 +13,17 @@ const STATIC_ASSETS = [
 
 // ── Install: pre-cache static assets ────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Webmaa Service Worker v4');
+  console.log('[SW] Installing Webmaa Service Worker');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.allSettled(
+        STATIC_ASSETS.map((url) =>
+          fetch(url).then((res) => {
+            if (res && res.status === 200) return cache.put(url, res);
+          }).catch(() => {})
+        )
+      );
+    })
   );
   self.skipWaiting();
 });

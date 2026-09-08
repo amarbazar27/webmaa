@@ -13,8 +13,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// ── Rate Limiting Store ──
+// ── Rate Limiting & Domain Cache Store ──
 const rateLimitMap = new Map<string, { count: number, startTime: number }>();
+const domainCache = new Map<string, { slug: string | null, expiresAt: number }>();
 
 function applySecurityHeaders(response: NextResponse, pathname: string): NextResponse {
   // Disabled security headers temporarily to debug Auth conflict
@@ -248,42 +249,57 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
+    // 1. Check in-memory edge cache first to save Serverless CPU & execution time
+    const cachedDomain = domainCache.get(host);
+    const now = Date.now();
+    if (cachedDomain && cachedDomain.expiresAt > now) {
+      if (cachedDomain.slug) {
+        const rewriteUrl = new URL(
+          `/shop/${cachedDomain.slug}${pathname === '/' ? '' : pathname}`,
+          request.url
+        );
+        rewriteUrl.search = request.nextUrl.search;
+        return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+      } else {
+        const notFoundUrl = new URL('/not-found-domain', request.url);
+        return applySecurityHeaders(NextResponse.rewrite(notFoundUrl), pathname);
+      }
+    }
+
     // Internal API call — domain → shop slug রেজোলিউশন
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdretailers.com';
     const lookupUrl = new URL('/api/domain-lookup', baseUrl);
     lookupUrl.searchParams.set('host', host);
-
-    console.log(`[Proxy] Calling domain-lookup for host=${host}`);
 
     const lookupResponse = await fetch(lookupUrl.toString(), {
       method: 'GET',
       headers: {
         'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '',
       },
-      cache: 'no-store',
+      next: { revalidate: 300 }, // Cache on edge
     });
-
-    console.log(`[Proxy] domain-lookup status=${lookupResponse.status}`);
 
     if (lookupResponse.ok) {
       const data = await lookupResponse.json();
-      console.log(`[Proxy] domain-lookup data=`, data);
 
       if (data.slug) {
+        // Cache result for 5 minutes
+        domainCache.set(host, { slug: data.slug, expiresAt: now + 300000 });
+
         // ✅ ডোমেইন পাওয়া গেছে — /shop/[slug] এ rewrite করো
         const rewriteUrl = new URL(
           `/shop/${data.slug}${pathname === '/' ? '' : pathname}`,
           request.url
         );
         rewriteUrl.search = request.nextUrl.search;
-
-        console.log(`[Proxy] Rewriting custom domain path to ${rewriteUrl.toString()}`);
         return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
       }
     }
 
+    // Cache not-found for 1 minute
+    domainCache.set(host, { slug: null, expiresAt: now + 60000 });
+
     // ❌ ডোমেইন পাওয়া যায়নি — কাস্টম not-found পেজ দেখাও
-    console.warn(`[Proxy] Domain not found for host=${host}`);
     const notFoundUrl = new URL('/not-found-domain', request.url);
     return applySecurityHeaders(NextResponse.rewrite(notFoundUrl), pathname);
   } catch (err) {
@@ -293,9 +309,16 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// ── Matcher Config ──────────────────────────────────────────────────────────
+// ── Matcher Config (Drastically saves Vercel CPU by ignoring static files) ────
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|robots\\.txt|sitemap\\.xml|icons/).*)',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon)
+     * - static assets (.svg, .png, .jpg, .jpeg, .gif, .webp, .ico, .woff, .woff2, .ttf, .css, .js)
+     */
+    '/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|.*-sitemap\\.xml|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|css|js|map)$).*)',
   ],
 };

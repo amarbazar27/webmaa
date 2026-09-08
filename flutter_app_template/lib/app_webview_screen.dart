@@ -28,6 +28,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
 
   bool _isAppReady = false;
   bool _hasError = false;
+  bool _hasLoadedAtLeastOnce = false;
   double _progress = 0.0;
   bool _showProgressBar = false;
   String _errorMessage = '';
@@ -177,12 +178,11 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
         body: SafeArea(
           child: Stack(
             children: [
-              // ── 1. Optimized Native WebView ──
-              if (!_hasError)
-                InAppWebView(
-                  initialUrlRequest: URLRequest(
-                    url: WebUri(AppConfig.targetUrl),
-                  ),
+              // ── 1. Optimized Native WebView (Always kept mounted for offline cache support) ──
+              InAppWebView(
+                initialUrlRequest: URLRequest(
+                  url: WebUri(AppConfig.targetUrl),
+                ),
                   initialSettings: InAppWebViewSettings(
                     useShouldOverrideUrlLoading: true,
                     mediaPlaybackRequiresUserGesture: false,
@@ -500,6 +500,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                   },
                   onPageCommitVisible: (controller, url) {
                     _injectNativeAppStyles(controller);
+                    _hasLoadedAtLeastOnce = true;
                     if (mounted && !_isAppReady) {
                       setState(() {
                         _isAppReady = true;
@@ -525,6 +526,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                   },
                   onLoadStop: (controller, url) async {
                     _injectNativeAppStyles(controller);
+                    _hasLoadedAtLeastOnce = true;
                     if (mounted) {
                       setState(() {
                         _progress = 1.0;
@@ -557,6 +559,19 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                   },
                   onReceivedError: (controller, request, error) {
                     if (request.isForMainFrame ?? true) {
+                      // If the web application has previously cached content, let the WebView render the offline preview
+                      if (_hasLoadedAtLeastOnce) {
+                        debugPrint('[WebView] Offline error encountered, relying on web offline cache: ${error.description}');
+                        if (mounted && !_isAppReady) {
+                          setState(() {
+                            _isAppReady = true;
+                            _showProgressBar = false;
+                            _hasError = false;
+                          });
+                        }
+                        return;
+                      }
+
                       if (mounted) {
                         setState(() {
                           _isAppReady = false;

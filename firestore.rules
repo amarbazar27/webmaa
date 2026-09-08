@@ -9,18 +9,20 @@ service cloud.firestore {
     }
     
     function isSuperAdmin() {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin') ||
+        (request.auth.token.email != null && request.auth.token.email == 'amarbazar27@gmail.com')
+      );
     }
 
     function isSubSuperAdmin() {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             (
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin' ||
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'sub_superadmin'
-             );
+      return isAuthenticated() && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'sub_superadmin') ||
+        (request.auth.token.email != null && exists(/databases/$(database)/documents/sub_superadmins/$(request.auth.token.email)))
+      );
     }
 
     function isShopOwner(shopId) {
