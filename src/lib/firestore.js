@@ -538,6 +538,10 @@ export const getAllUsers = async () => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
+export const updateUser = async (uid, data) => {
+  return updateDoc(doc(db, 'users', uid), data);
+};
+
 export const initializeShop = async (uid, email, displayName) => {
   const shopDoc = await getDoc(doc(db, 'shops', uid));
   if (!shopDoc.exists()) {

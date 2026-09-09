@@ -242,6 +242,28 @@ export default function SuperAdminPage() {
     }
   };
 
+  // ── Sub-Admin Subscription Visibility Controls (Root Superadmin) ──
+  const [subAdminFilter, setSubAdminFilter] = useState('all'); // 'all' | 'visible' | 'hidden'
+  const [togglingSubAdminShopId, setTogglingSubAdminShopId] = useState(null);
+
+  const handleToggleShowInSubAdmin = async (shopItem) => {
+    const newStatus = !shopItem.showInSubAdmin;
+    setTogglingSubAdminShopId(shopItem.id);
+    try {
+      await updateShop(shopItem.id, { showInSubAdmin: newStatus });
+      setShops(prev => prev.map(s => s.id === shopItem.id ? { ...s, showInSubAdmin: newStatus } : s));
+      toast.success(newStatus 
+        ? `'${shopItem.shopName}' এখন সাব-এডমিনে প্রদর্শিত হবে ✅` 
+        : `'${shopItem.shopName}' সাব-এডমিন থেকে লুকানো হয়েছে 🚫`
+      );
+    } catch (err) {
+      console.error('Failed to toggle sub-admin visibility:', err);
+      toast.error('সাব-এডমিন ভিজিবিলিটি আপডেট করতে সমস্যা হয়েছে');
+    } finally {
+      setTogglingSubAdminShopId(null);
+    }
+  };
+
   useEffect(() => {
     if (globalConfig?.steadfastApiKey) setGlobalSteadfastApiKey(globalConfig.steadfastApiKey);
     if (globalConfig?.steadfastSecretKey) setGlobalSteadfastSecretKey(globalConfig.steadfastSecretKey);
@@ -2456,11 +2478,12 @@ export default function SuperAdminPage() {
                       <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
                       <th className="pb-2 px-4 border-b border-slate-100">Subscription</th>
+                      {!isSubAdmin && <th className="pb-2 px-4 border-b border-slate-100 text-center">Sub-Admin</th>}
                       <th className="pb-2 px-4 border-b border-slate-100 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {shops.map((shop) => {
+                    {(isSubAdmin ? shops.filter(s => s.showInSubAdmin === true) : shops).map((shop) => {
                       // Estimate size: basic 2MB base + ~500kb per banner + assumed product footprint
                       const bannerFootprintMB = (shop.banners?.length || 0) * 0.5;
                       const productFootprintMB = (shop.orderCount || 0) * 0.1 + 5.2; 
@@ -2566,6 +2589,30 @@ export default function SuperAdminPage() {
                                 )}
                               </div>
                             </td>
+                            {!isSubAdmin && (
+                              <td className="p-4 text-center">
+                                <button
+                                  type="button"
+                                  disabled={togglingSubAdminShopId === shop.id}
+                                  onClick={() => handleToggleShowInSubAdmin(shop)}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border shadow-sm ${
+                                    shop.showInSubAdmin
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                                      : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                                  } disabled:opacity-50`}
+                                  title={shop.showInSubAdmin ? 'ক্লিক করে সাব-এডমিন থেকে লুকান' : 'ক্লিক করে সাব-এডমিনে দেখান'}
+                                >
+                                  {togglingSubAdminShopId === shop.id ? (
+                                    <Loader2 size={11} className="animate-spin" />
+                                  ) : shop.showInSubAdmin ? (
+                                    <Eye size={11} className="text-emerald-600" />
+                                  ) : (
+                                    <EyeOff size={11} className="text-slate-400" />
+                                  )}
+                                  <span>{shop.showInSubAdmin ? 'দৃশ্যমান' : 'লুকানো'}</span>
+                                </button>
+                              </td>
+                            )}
                             <td className="p-4 text-right last:rounded-r-2xl">
                               <div className="flex items-center justify-end gap-2 flex-wrap max-w-md">
                                 {/* 🔐 Login as Retailer Button (Root Superadmin only) */}
@@ -2900,7 +2947,7 @@ export default function SuperAdminPage() {
 
       {superadminTab === 'customers' && canAccess('view_customers') && (
         <div className="animate-fade-in">
-          <SuperadminCustomersPanel />
+          <SuperadminCustomersPanel isSubAdmin={isSubAdmin} />
         </div>
       )}
 
@@ -3587,131 +3634,228 @@ export default function SuperAdminPage() {
           <div className="lg:col-span-12 animate-slide-in">
             <Card
               title="মার্চেন্ট সাবস্ক্রিপশন ডিরেক্টরি"
-              subtitle="সকল রিটেইলারদের সাবস্ক্রিপশন মেয়াদ এবং পেমেন্ট রিকোয়েস্ট ম্যানেজ করুন"
+              subtitle={isSubAdmin ? "সুপারএডমিন কর্তৃক আপনার জন্য অনুমোদিত মার্চেন্টদের তালিকা ও সাবস্ক্রিপশন স্ট্যাটাস" : "সকল রিটেইলারদের সাবস্ক্রিপশন মেয়াদ, পেমেন্ট রিকোয়েস্ট এবং সাব-এডমিন অ্যাক্সেস নিয়ন্ত্রণ করুন"}
               icon={Store}
             >
-              <div className="overflow-x-auto w-full">
-                <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-2.5">
-                  <thead>
-                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      <th className="pb-2 px-4">রিটেইলার স্টোর</th>
-                      <th className="pb-2 px-4">প্যাকেজ</th>
-                      <th className="pb-2 px-4">মেয়াদ শেষ</th>
-                      <th className="pb-2 px-4">স্ট্যাটাস</th>
-                      <th className="pb-2 px-4">পেমেন্ট বিবরণ</th>
-                      <th className="pb-2 px-4 text-right">অ্যাকশন</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {shops.map((shopItem) => {
-                      const expiryDate = shopItem.subscriptionExpiresAt
-                        ? (shopItem.subscriptionExpiresAt.toDate ? shopItem.subscriptionExpiresAt.toDate() : new Date(shopItem.subscriptionExpiresAt))
-                        : null;
-                      
-                      const isExpired = expiryDate ? expiryDate.getTime() < Date.now() : true;
+              {/* ── Sub-Admin Filter Controls (Root Superadmin) ── */}
+              {!isSubAdmin && (
+                <div className="flex items-center gap-2 mb-4 p-1.5 bg-slate-100/80 rounded-2xl w-max flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setSubAdminFilter('all')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                      subAdminFilter === 'all'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    সকল মার্চেন্ট ({shops.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubAdminFilter('visible')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                      subAdminFilter === 'visible'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-emerald-700 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <Eye size={12} />
+                    <span>সাব-এডমিনে দৃশ্যমান ({shops.filter(s => s.showInSubAdmin).length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSubAdminFilter('hidden')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                      subAdminFilter === 'hidden'
+                        ? 'bg-slate-700 text-white shadow-sm'
+                        : 'text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <EyeOff size={12} />
+                    <span>সাব-এডমিনে লুকানো ({shops.filter(s => !s.showInSubAdmin).length})</span>
+                  </button>
+                </div>
+              )}
 
-                      return (
-                        <tr key={shopItem.id} className="bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 rounded-2xl group">
-                          {/* Store Info */}
-                          <td className="py-4 px-4 rounded-l-2xl">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 bg-purple-100 text-purple-700 font-black text-sm rounded-xl flex items-center justify-center">
-                                {shopItem.shopName?.[0] || 'S'}
-                              </div>
-                              <div>
-                                <span className="text-xs font-black text-slate-900 block">{shopItem.shopName}</span>
-                                <span className="text-[9px] text-slate-400 font-bold font-mono tracking-wider">{shopItem.subdomainSlug || shopItem.shopSlug}.bdretailers.com</span>
-                              </div>
-                            </div>
-                          </td>
+              {(() => {
+                const filteredSubscribers = shops.filter((shopItem) => {
+                  if (isSubAdmin) return shopItem.showInSubAdmin === true;
+                  if (subAdminFilter === 'visible') return shopItem.showInSubAdmin === true;
+                  if (subAdminFilter === 'hidden') return !shopItem.showInSubAdmin;
+                  return true;
+                });
 
-                          {/* Package */}
-                          <td className="py-4 px-4 text-xs font-black uppercase text-slate-600 tracking-wider">
-                            {shopItem.subscriptionPackage || 'None'}
-                          </td>
+                if (filteredSubscribers.length === 0) {
+                  return (
+                    <div className="py-16 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 my-4">
+                      <ShieldCheck size={36} className="mx-auto mb-3 text-purple-300" />
+                      <p className="text-xs font-black text-slate-700">
+                        {isSubAdmin 
+                          ? 'সুপারএডমিন কর্তৃক অনুমোদিত কোনো সাবস্ক্রিপশন এই মুহূর্তে নেই' 
+                          : 'নির্বাচিত ফিল্টারে কোনো মার্চেন্ট পাওয়া যায়নি'}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-bold mt-1">
+                        {isSubAdmin 
+                          ? 'রুট সুপারএডমিন যেসব ইউজারের সাবস্ক্রিপশন সাব-এডমিনে দেখানোর অনুমতি দেবেন, শুধু সেগুলোই এখানে প্রদর্শিত হবে।' 
+                          : 'অন্য ফিল্টার নির্বাচন করুন অথবা মার্চেন্টদের সাব-এডমিন দৃশ্যমানতা সক্রিয় করুন।'}
+                      </p>
+                    </div>
+                  );
+                }
 
-                          {/* Expiration */}
-                          <td className="py-4 px-4 text-xs font-bold text-slate-700">
-                            {expiryDate ? (
-                              <span className={isExpired ? 'text-red-500 font-extrabold' : 'text-emerald-600 font-extrabold'}>
-                                {expiryDate.toLocaleDateString('en-GB')}
-                                {isExpired && ' (Expired)'}
-                              </span>
-                            ) : (
-                              'N/A'
-                            )}
-                          </td>
-
-                          {/* Status */}
-                          <td className="py-4 px-4">
-                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
-                              shopItem.subscriptionStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              shopItem.subscriptionStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
-                              'bg-rose-50 text-rose-700 border-rose-200'
-                            }`}>
-                              {shopItem.subscriptionStatus || 'expired'}
-                            </span>
-                          </td>
-
-                          {/* Payment details */}
-                          <td className="py-4 px-4 text-[10px] text-slate-600 font-bold max-w-xs truncate" title={shopItem.subscriptionPendingTxn}>
-                            {shopItem.subscriptionPendingTxn || 'None'}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-4 px-4 rounded-r-2xl text-right">
-                            <div className="flex gap-2 justify-end">
-                              {shopItem.subscriptionStatus === 'pending' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleApproveSubscription(shopItem.id, shopItem.subscriptionPendingPackage || 'monthly')}
-                                  className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer"
-                                >
-                                  Approve
-                                </button>
-                              )}
-                              
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const packageSel = prompt('Enter package duration to extend (monthly / quarterly / yearly):', 'monthly');
-                                  if (packageSel && ['monthly', 'quarterly', 'yearly'].includes(packageSel.toLowerCase())) {
-                                    handleApproveSubscription(shopItem.id, packageSel.toLowerCase());
-                                  } else if (packageSel) {
-                                    alert('Invalid package type. Use: monthly, quarterly, or yearly.');
-                                  }
-                                }}
-                                className="px-2.5 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
-                              >
-                                Extend
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setHistoryModal({ isOpen: true, shop: shopItem })}
-                                className="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1"
-                              >
-                                <History size={12} />
-                                <span>হিস্ট্রি</span>
-                              </button>
-
-                              {shopItem.subscriptionStatus === 'active' && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleCancelSubscription(shopItem.id)}
-                                  className="px-2.5 py-1.5 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
-                                >
-                                  Cancel
-                                </button>
-                              )}
-                            </div>
-                          </td>
+                return (
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full min-w-[1000px] text-left border-separate border-spacing-y-2.5">
+                      <thead>
+                        <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                          <th className="pb-2 px-4">রিটেইলার স্টোর</th>
+                          <th className="pb-2 px-4">প্যাকেজ</th>
+                          <th className="pb-2 px-4">মেয়াদ শেষ</th>
+                          <th className="pb-2 px-4">স্ট্যাটাস</th>
+                          <th className="pb-2 px-4">পেমেন্ট বিবরণ</th>
+                          {!isSubAdmin && <th className="pb-2 px-4 text-center">সাব-এডমিনে দেখাবে?</th>}
+                          <th className="pb-2 px-4 text-right">অ্যাকশন</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+                      <tbody>
+                        {filteredSubscribers.map((shopItem) => {
+                          const expiryDate = shopItem.subscriptionExpiresAt
+                            ? (shopItem.subscriptionExpiresAt.toDate ? shopItem.subscriptionExpiresAt.toDate() : new Date(shopItem.subscriptionExpiresAt))
+                            : null;
+                          
+                          const isExpired = expiryDate ? expiryDate.getTime() < Date.now() : true;
+
+                          return (
+                            <tr key={shopItem.id} className="bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100 rounded-2xl group">
+                              {/* Store Info */}
+                              <td className="py-4 px-4 rounded-l-2xl">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 bg-purple-100 text-purple-700 font-black text-sm rounded-xl flex items-center justify-center">
+                                    {shopItem.shopName?.[0] || 'S'}
+                                  </div>
+                                  <div>
+                                    <span className="text-xs font-black text-slate-900 block">{shopItem.shopName}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold font-mono tracking-wider">{shopItem.subdomainSlug || shopItem.shopSlug}.bdretailers.com</span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Package */}
+                              <td className="py-4 px-4 text-xs font-black uppercase text-slate-600 tracking-wider">
+                                {shopItem.subscriptionPackage || 'None'}
+                              </td>
+
+                              {/* Expiration */}
+                              <td className="py-4 px-4 text-xs font-bold text-slate-700">
+                                {expiryDate ? (
+                                  <span className={isExpired ? 'text-red-500 font-extrabold' : 'text-emerald-600 font-extrabold'}>
+                                    {expiryDate.toLocaleDateString('en-GB')}
+                                    {isExpired && ' (Expired)'}
+                                  </span>
+                                ) : (
+                                  'N/A'
+                                )}
+                              </td>
+
+                              {/* Status */}
+                              <td className="py-4 px-4">
+                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
+                                  shopItem.subscriptionStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                  shopItem.subscriptionStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                                  'bg-rose-50 text-rose-700 border-rose-200'
+                                }`}>
+                                  {shopItem.subscriptionStatus || 'expired'}
+                                </span>
+                              </td>
+
+                              {/* Payment details */}
+                              <td className="py-4 px-4 text-[10px] text-slate-600 font-bold max-w-xs truncate" title={shopItem.subscriptionPendingTxn}>
+                                {shopItem.subscriptionPendingTxn || 'None'}
+                              </td>
+
+                              {/* Sub-Admin Visibility Toggle (Root Superadmin) */}
+                              {!isSubAdmin && (
+                                <td className="py-4 px-4 text-center">
+                                  <button
+                                    type="button"
+                                    disabled={togglingSubAdminShopId === shopItem.id}
+                                    onClick={() => handleToggleShowInSubAdmin(shopItem)}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border shadow-sm ${
+                                      shopItem.showInSubAdmin
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:shadow'
+                                        : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                                    } disabled:opacity-50`}
+                                    title={shopItem.showInSubAdmin ? 'ক্লিক করে সাব-এডমিন থেকে লুকান' : 'ক্লিক করে সাব-এডমিনে দেখান'}
+                                  >
+                                    {togglingSubAdminShopId === shopItem.id ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : shopItem.showInSubAdmin ? (
+                                      <Eye size={12} className="text-emerald-600" />
+                                    ) : (
+                                      <EyeOff size={12} className="text-slate-400" />
+                                    )}
+                                    <span>{shopItem.showInSubAdmin ? 'দৃশ্যমান ✅' : 'লুকানো 🚫'}</span>
+                                  </button>
+                                </td>
+                              )}
+
+                              {/* Actions */}
+                              <td className="py-4 px-4 rounded-r-2xl text-right">
+                                <div className="flex gap-2 justify-end">
+                                  {shopItem.subscriptionStatus === 'pending' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleApproveSubscription(shopItem.id, shopItem.subscriptionPendingPackage || 'monthly')}
+                                      className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer"
+                                    >
+                                      Approve
+                                    </button>
+                                  )}
+                                  
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const packageSel = prompt('Enter package duration to extend (monthly / quarterly / yearly):', 'monthly');
+                                      if (packageSel && ['monthly', 'quarterly', 'yearly'].includes(packageSel.toLowerCase())) {
+                                        handleApproveSubscription(shopItem.id, packageSel.toLowerCase());
+                                      } else if (packageSel) {
+                                        alert('Invalid package type. Use: monthly, quarterly, or yearly.');
+                                      }
+                                    }}
+                                    className="px-2.5 py-1.5 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                  >
+                                    Extend
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setHistoryModal({ isOpen: true, shop: shopItem })}
+                                    className="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1"
+                                  >
+                                    <History size={12} />
+                                    <span>হিস্ট্রি</span>
+                                  </button>
+
+                                  {shopItem.subscriptionStatus === 'active' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleCancelSubscription(shopItem.id)}
+                                      className="px-2.5 py-1.5 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                                    >
+                                      Cancel
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             </Card>
           </div>
         </div>

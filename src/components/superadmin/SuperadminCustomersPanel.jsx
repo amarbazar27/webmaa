@@ -8,22 +8,45 @@ import {
   TrendingUp, CreditCard, Store, Loader2, Sparkles, RefreshCw
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
-import { getAllUsers, getAllShops, getOrders, reportCustomerFraud } from '@/lib/firestore';
+import { getAllUsers, getAllShops, getOrders, reportCustomerFraud, updateUser } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 
-export default function SuperadminCustomersPanel() {
+export default function SuperadminCustomersPanel({ isSubAdmin = false }) {
   const [users, setUsers] = useState([]);
   const [shops, setShops] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'registered' | 'buyers' | 'vip' | 'reported'
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all' | 'subadmin_visible' | 'subadmin_hidden' | 'registered' | 'buyers' | 'vip' | 'reported'
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Report Modal
   const [reportModal, setReportModal] = useState({ open: false, phone: '', customerName: '', reason: 'fake_order', comment: '' });
   const [submittingReport, setSubmittingReport] = useState(false);
+
+  const handleToggleUserSubAdmin = async (customer) => {
+    if (!customer?.id) return;
+    const newStatus = !customer.showInSubAdmin;
+
+    // Optimistic update
+    setCustomers(prev => prev.map(c => c.id === customer.id ? { ...c, showInSubAdmin: newStatus } : c));
+    if (selectedCustomer && selectedCustomer.id === customer.id) {
+      setSelectedCustomer(prev => ({ ...prev, showInSubAdmin: newStatus }));
+    }
+
+    try {
+      await updateUser(customer.id, { showInSubAdmin: newStatus });
+      toast.success(newStatus ? 'ইউজার সাব-এডমিনে দৃশ্যমান করা হয়েছে' : 'ইউজার সাব-এডমিন থেকে লুকানো হয়েছে');
+    } catch (err) {
+      console.error('Failed to toggle customer subadmin status:', err);
+      toast.error('স্ট্যাটাস আপডেট ব্যর্থ হয়েছে');
+      setCustomers(prev => prev.map(c => c.id === customer.id ? { ...c, showInSubAdmin: !newStatus } : c));
+      if (selectedCustomer && selectedCustomer.id === customer.id) {
+        setSelectedCustomer(prev => ({ ...prev, showInSubAdmin: !newStatus }));
+      }
+    }
+  };
 
   const standardizePhone = (phone) => {
     if (!phone) return '';
@@ -78,6 +101,7 @@ export default function SuperadminCustomersPanel() {
           photoURL: u.photoURL || '',
           role: u.role || 'user',
           isRegistered: true,
+          showInSubAdmin: !!u.showInSubAdmin,
           registeredAt: u.createdAt,
           lastLogin: u.lastLogin,
           totalOrders: 0,
@@ -177,6 +201,9 @@ export default function SuperadminCustomersPanel() {
   // Filtered customers
   const filteredCustomers = useMemo(() => {
     return customers.filter(c => {
+      // Sub-admin visibility restriction: only show users flagged as showInSubAdmin === true
+      if (isSubAdmin && !c.showInSubAdmin) return false;
+
       // Search
       const term = searchTerm.toLowerCase().trim();
       const matchSearch = !term || 
@@ -189,12 +216,14 @@ export default function SuperadminCustomersPanel() {
       if (!matchSearch) return false;
 
       // Filter tab
+      if (activeFilter === 'subadmin_visible') return !!c.showInSubAdmin;
+      if (activeFilter === 'subadmin_hidden') return !c.showInSubAdmin;
       if (activeFilter === 'registered') return c.isRegistered;
       if (activeFilter === 'buyers') return c.totalOrders > 0;
       if (activeFilter === 'vip') return c.totalSpent >= 5000;
       return true;
     });
-  }, [customers, searchTerm, activeFilter]);
+  }, [customers, searchTerm, activeFilter, isSubAdmin]);
 
   // Overall platform statistics
   const stats = useMemo(() => {
@@ -364,6 +393,10 @@ export default function SuperadminCustomersPanel() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
             {[
               { id: 'all', label: `সকল কাস্টমার (${customers.length})` },
+              ...(!isSubAdmin ? [
+                { id: 'subadmin_visible', label: `সাব-এডমিনে দৃশ্যমান (${customers.filter(c => c.showInSubAdmin).length})` },
+                { id: 'subadmin_hidden', label: `সাব-এডমিনে লুকানো (${customers.filter(c => !c.showInSubAdmin).length})` },
+              ] : []),
               { id: 'registered', label: `রেজিস্টার্ড (${users.length})` },
               { id: 'buyers', label: `ক্রেতা (${stats.totalBuyersCount})` },
               { id: 'vip', label: `ভিআইপি (৳৫,০০০+)` }
@@ -402,6 +435,7 @@ export default function SuperadminCustomersPanel() {
                   <th className="py-3 px-4">কাস্টমার / ইউজার</th>
                   <th className="py-3 px-4">যোগাযোগ</th>
                   <th className="py-3 px-4 text-center">টাইপ / স্ট্যাটাস</th>
+                  {!isSubAdmin && <th className="py-3 px-4 text-center">সাব-এডমিন</th>}
                   <th className="py-3 px-4 text-center">অর্ডার সংখ্যা</th>
                   <th className="py-3 px-4 text-right">মোট ব্যয় (LTV)</th>
                   <th className="py-3 px-4">সংযুক্ত স্টোরসমূহ</th>
@@ -467,6 +501,37 @@ export default function SuperadminCustomersPanel() {
                         </span>
                       )}
                     </td>
+
+                    {/* Sub-Admin Visibility Toggle (Root Superadmin only) */}
+                    {!isSubAdmin && (
+                      <td className="py-3.5 px-4 text-center">
+                        {cust.isRegistered ? (
+                          <button
+                            onClick={() => handleToggleUserSubAdmin(cust)}
+                            title={cust.showInSubAdmin ? "সাব-এডমিন থেকে লুকাতে ক্লিক করুন" : "সাব-এডমিনে দেখাতে ক্লিক করুন"}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-wide border transition-all cursor-pointer inline-flex items-center gap-1 ${
+                              cust.showInSubAdmin
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 shadow-sm'
+                                : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                            }`}
+                          >
+                            {cust.showInSubAdmin ? (
+                              <>
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>দৃশ্যমান ✅</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                <span>লুকানো 🚫</span>
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-medium italic">গেস্ট</span>
+                        )}
+                      </td>
+                    )}
 
                     {/* Orders count */}
                     <td className="py-3.5 px-4 text-center">
@@ -582,6 +647,36 @@ export default function SuperadminCustomersPanel() {
                   <p className="text-xs font-bold text-slate-700 mt-1">{selectedCustomer.address || 'কোনো ঠিকানা সংরক্ষিত নেই'}</p>
                 </div>
               </div>
+
+              {/* Sub-Admin Visibility Setting in Modal (Root Superadmin only) */}
+              {!isSubAdmin && selectedCustomer.isRegistered && (
+                <div className="flex items-center justify-between p-3.5 bg-purple-50/60 rounded-2xl border border-purple-200/80">
+                  <div>
+                    <p className="text-xs font-black text-slate-800">সাব-এডমিন এক্সেস নিয়ন্ত্রণ</p>
+                    <p className="text-[10px] text-slate-500 font-bold mt-0.5">এই ইউজারকে সাব-এডমিন ড্যাশবোর্ডে দেখানো হবে কি না</p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleUserSubAdmin(selectedCustomer)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black border transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                      selectedCustomer.showInSubAdmin
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 shadow-sm'
+                        : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    {selectedCustomer.showInSubAdmin ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>সাব-এডমিনে দৃশ্যমান ✅</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span>সাব-এডমিনে লুকানো 🚫</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
 
               {/* Order History Section */}
               <div className="space-y-3">

@@ -12,5 +12,19 @@
         "08:6C:16:5D:1B:46:8F:AF:11:47:98:7D:BB:A6:B8:83:22:A2:D6:D8:C8:99:CC:93:82:8A:79:97:D7:56:62:D8"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.messerbazar",
+      "sha256_cert_fingerprints": [
+        "08:6C:16:5D:1B:46:8F:AF:11:47:98:7D:BB:A6:B8:83:22:A2:D6:D8:C8:99:CC:93:82:8A:79:97:D7:56:62:D8",
+        "E3:67:97:58:7A:B7:50:AA:FC:EE:88:9E:79:73:C2:28:E7:6E:71:B7:BE:C6:A6:53:1C:25:4E:91:D8:F7:43:9A",
+        "7A:2F:41:8B:2D:FB:CF:B9:42:D2:2E:61:94:56:6D:50:53:E2:D7:09:CA:5C:D9:6F:50:77:E9:3C:AE:C8:AB:37"
+      ]
+    }
   }
 ]

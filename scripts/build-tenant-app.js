@@ -288,8 +288,9 @@ async function build() {
           packageName = appConfig.packageName.trim();
         }
         
-        if (customDomain && shopData.domainStatus === 'active') {
-          targetUrl = `https://${customDomain}`;
+        if (customDomain && (shopData.domainStatus === 'active' || shopData.domainStatus === 'connected')) {
+          const cleanCustom = customDomain.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+          targetUrl = `https://${cleanCustom}`;
         } else {
           targetUrl = `https://bdretailers.com/${shopSlug}`;
         }
@@ -529,13 +530,55 @@ async function build() {
   const manifestPath = path.join(appWorkspace, 'android/app/src/main/AndroidManifest.xml');
   let manifestContent = fs.readFileSync(manifestPath, 'utf8');
   manifestContent = manifestContent.replace('android:label="BDRetailers"', `android:label="${shopName.replace(/"/g, '&quot;')}"`);
-  // If custom domain exists, insert custom host in AndroidManifest
-  if (customDomain) {
-    const deepLinkHook = `<data android:host="${customDomain}" />`;
-    manifestContent = manifestContent.replace('<data android:host="bdretailers.com" />', `<data android:host="bdretailers.com" />\n                ${deepLinkHook}`);
+  
+  if (shopSlug === 'main') {
+    // Platform main app verifies platform root and wildcard subdomains
+    const platformFilter = `            <!-- Deep linking integration to redirect store links to the app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="*.bdretailers.com" />
+                <data android:host="bdretailers.com" />
+                <data android:host="www.bdretailers.com" />
+            </intent-filter>`;
+    manifestContent = manifestContent.replace(/<!-- Deep linking integration[\s\S]*?<\/intent-filter>/, platformFilter);
+  } else if (customDomain) {
+    // Custom domain tenant app: ONLY verify tenant custom domain (never wildcard bdretailers.com!)
+    const cleanDomain = customDomain.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase();
+    const rootDomain = cleanDomain.replace(/^www\./i, '');
+    const tenantCustomFilter = `            <!-- Deep linking integration for custom domain tenant app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="${rootDomain}" />
+                <data android:host="www.${rootDomain}" />
+            </intent-filter>`;
+    manifestContent = manifestContent.replace(/<!-- Deep linking integration[\s\S]*?<\/intent-filter>/, tenantCustomFilter);
+  } else {
+    // Non-custom domain tenant app: only verify path/subdomain, not wildcard
+    const tenantPathFilter = `            <!-- Deep linking integration for tenant app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:host="bdretailers.com" android:pathPrefix="/${shopSlug}" />
+                <data android:host="www.bdretailers.com" android:pathPrefix="/${shopSlug}" />
+            </intent-filter>`;
+    manifestContent = manifestContent.replace(/<!-- Deep linking integration[\s\S]*?<\/intent-filter>/, tenantPathFilter);
   }
   fs.writeFileSync(manifestPath, manifestContent);
-  console.log('  └─ android/app/src/main/AndroidManifest.xml configured.');
+  console.log('  └─ android/app/src/main/AndroidManifest.xml configured with dedicated domain intent filters.');
 
   // E. Dynamic Kotlin Folder Structure & MainActivity package rename
   console.log('  └─ Restructuring MainActivity.kt package...');
