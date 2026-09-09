@@ -236,6 +236,8 @@ export default function Home() {
   const showPricing = sectionsConfig.pricing !== false;
   const showFaq = sectionsConfig.faq !== false;
   const showNewsletter = sectionsConfig.newsletter !== false;
+  const showSearchHero = sectionsConfig.searchHero !== false;
+  const showAiAssistant = sectionsConfig.aiAssistant !== false;
 
   // ── AI Product Clustering Helper ──
   const getProductType = (product) => {
@@ -364,11 +366,11 @@ export default function Home() {
 
       // ── Stepped category query parameters parser ──
       if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const shopParam = params.get('shop');
+        const shopParam = params.get('shop') || params.get('store');
         const catParam = params.get('category');
         const subcatParam = params.get('subcategory');
-        if (shopParam) setActiveShopFilter(shopParam);
+        if (shopParam === 'all') setActiveShopFilter('All');
+        else if (shopParam) setActiveShopFilter(shopParam);
         if (catParam) setActiveCategory(catParam);
         if (subcatParam) setActiveSubcategory(subcatParam);
 
@@ -1780,7 +1782,7 @@ export default function Home() {
         </div>
         
         {/* ── AI Shopping List Integration ── */}
-        {mainShopData && (
+        {showAiAssistant && mainShopData && (
           <div className="mb-4 md:mb-8">
             <AiShoppingList 
               shop={mainShopData} 
@@ -1804,25 +1806,45 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Search & Filters Card ── */}
-        <div className="glass-panel bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 backdrop-blur-xl p-4 sm:p-5 mb-8 rounded-3xl shadow-lg flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row gap-3">
-            {/* Search bar inset */}
-            <div className="flex-grow bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-white/10 rounded-2xl flex items-center px-4 py-2.5 shadow-inner focus-within:border-purple-400 dark:focus-within:border-purple-500/50 transition-all">
-              <Search className="text-purple-500 mr-3 shrink-0" size={18} />
+        {/* ── Standalone Central Search Hero Bar ── */}
+        {showSearchHero && (
+          <div className="w-full max-w-4xl mx-auto mb-6 px-1">
+            <div className="relative flex items-center bg-white dark:bg-slate-900 border-2 border-purple-200 hover:border-purple-400 dark:border-white/10 dark:hover:border-purple-500/50 rounded-2xl sm:rounded-full px-4 sm:px-6 py-3 sm:py-3.5 shadow-xl shadow-purple-500/5 focus-within:border-purple-600 focus-within:ring-4 focus-within:ring-purple-500/20 transition-all">
+              <Search className="text-purple-600 dark:text-purple-400 mr-3 sm:mr-4 shrink-0" size={20} />
               <input
                 id="search-input-field"
                 type="text"
-                placeholder="খুঁজুন (Search products by name, category, or English/Bangla transliteration...)"
-                className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 p-0 outline-none h-full animate-none"
+                placeholder="পণ্য বা ব্র্যান্ড খুঁজুন (Search products by name, category, or English/Bangla transliteration...)"
+                className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none"
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
               />
+              {productSearch && (
+                <button
+                  type="button"
+                  onClick={() => setProductSearch('')}
+                  className="ml-2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                  title="মুছে ফেলুন"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Filters & Store Details Card ── */}
+        <div className="glass-panel bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 backdrop-blur-xl p-4 sm:p-5 mb-8 rounded-3xl shadow-lg flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                ফিল্টার ও বাছাই:
+              </span>
             </div>
 
-            <div className="flex gap-3 shrink-0">
+            <div className="flex flex-wrap sm:flex-nowrap gap-3">
               {/* Store select */}
-              <div className="relative bg-white/90 hover:bg-white border border-purple-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[150px] cursor-pointer transition-all shadow-sm hover:shadow-md">
+              <div className="relative flex-1 sm:flex-none bg-white/90 hover:bg-white border border-purple-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[220px] cursor-pointer transition-all shadow-sm hover:shadow-md">
                 <select
                   value={activeShopFilter}
                   onChange={e => {
@@ -1832,17 +1854,19 @@ export default function Home() {
                   }}
                   className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                 >
-                  <option value="All">All Stores</option>
+                  <option value="All">🌐 মূল মার্কেটপ্লেস স্টোর (store.bdretailers.com - All Stores)</option>
                   {uniqueShops.filter(s => s !== 'All').map(shopName => (
                     <option key={shopName} value={shopName}>{shopName}</option>
                   ))}
                 </select>
-                <span className="text-xs font-black text-purple-700 truncate pr-4">🏪 {activeShopFilter === 'All' ? 'All Stores' : activeShopFilter}</span>
+                <span className="text-xs font-black text-purple-700 truncate pr-4">
+                  {activeShopFilter === 'All' ? '🌐 মূল মার্কেটপ্লেস স্টোর (store.bdretailers.com)' : `🏪 ${activeShopFilter}`}
+                </span>
                 <span className="text-[10px] text-purple-400">▼</span>
               </div>
 
               {/* Sort Options */}
-              <div className="relative bg-white/90 hover:bg-white border border-slate-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer transition-all shadow-sm hover:shadow-md">
+              <div className="relative flex-1 sm:flex-none bg-white/90 hover:bg-white border border-slate-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer transition-all shadow-sm hover:shadow-md">
                 <select
                   value={sortOption}
                   onChange={e => setSortOption(e.target.value)}

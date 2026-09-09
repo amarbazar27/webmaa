@@ -6,7 +6,10 @@ import { useAuth } from '@/context/AuthContext';
 import { loginWithGoogle } from '@/lib/auth';
 import { addRetailerRequest, getRetailerRequests } from '@/lib/firestore';
 import toast from 'react-hot-toast';
-import { ArrowLeft, User, Phone, Sparkles, ShieldCheck, CheckCircle2, ChevronRight, Zap } from 'lucide-react';
+import { 
+  ArrowLeft, User, Phone, Sparkles, ShieldCheck, CheckCircle2, 
+  ChevronRight, Zap, Store, Globe, Check, AlertCircle, Loader2 
+} from 'lucide-react';
 import Link from 'next/link';
 
 const countries = [
@@ -112,11 +115,87 @@ export default function BecomeRetailerPage() {
   const [userOtp, setUserOtp] = useState('');
   const [mockMode, setMockMode] = useState(false);
 
+  // Shop Name & Subdomain Availability Checker states
+  const [shopName, setShopName] = useState('');
+  const [shopSlug, setShopSlug] = useState('');
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [slugStatus, setSlugStatus] = useState({
+    checking: false,
+    available: null,
+    message: '',
+    reason: null
+  });
+
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [checkingExisting, setCheckingExisting] = useState(false);
   const [existingStatus, setExistingStatus] = useState(null); // 'pending' | 'approved' | 'denied' | null
   const [loginLoading, setLoginLoading] = useState(false);
+
+  // Helper to format slug cleanly
+  const toSlug = (text) => {
+    return (text || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
+  const handleShopNameChange = (e) => {
+    const val = e.target.value;
+    setShopName(val);
+    if (!slugManuallyEdited) {
+      setShopSlug(toSlug(val));
+    }
+  };
+
+  const handleSlugChange = (e) => {
+    setSlugManuallyEdited(true);
+    setShopSlug(toSlug(e.target.value));
+  };
+
+  // Debounced availability check
+  useEffect(() => {
+    const cleanSlug = toSlug(shopSlug);
+    if (!cleanSlug) {
+      setSlugStatus({ checking: false, available: null, message: '', reason: null });
+      return;
+    }
+
+    if (cleanSlug.length < 3) {
+      setSlugStatus({ 
+        checking: false, 
+        available: false, 
+        message: 'কমপক্ষে ৩ অক্ষরের সাবডোমেন দিন।', 
+        reason: 'too_short' 
+      });
+      return;
+    }
+
+    setSlugStatus(prev => ({ ...prev, checking: true }));
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/domain/check-availability?slug=${encodeURIComponent(cleanSlug)}`);
+        const data = await res.json();
+        setSlugStatus({
+          checking: false,
+          available: !!data.available,
+          message: data.message || '',
+          reason: data.reason || null
+        });
+      } catch (err) {
+        setSlugStatus({
+          checking: false,
+          available: null,
+          message: 'যাচাই করা সম্ভব হয়নি। আবার চেষ্টা করুন।',
+          reason: 'error'
+        });
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [shopSlug]);
 
   // Check if user has already submitted a request or is already a retailer
   const [selectedPlanParam, setSelectedPlanParam] = useState('');
@@ -225,8 +304,19 @@ export default function BecomeRetailerPage() {
       return;
     }
 
-    const codePrefix = selectedCountry.code === 'other' ? customCode.trim() : selectedCountry.code;
-    const fullPhoneNumber = codePrefix + cleanPhoneVal;
+    const cleanSlug = toSlug(shopSlug);
+    if (!cleanSlug) {
+      toast.error('দয়া করে আপনার শপের জন্য একটি সাবডোমেন লিংক দিন।');
+      return;
+    }
+    if (cleanSlug.length < 3) {
+      toast.error('সাবডোমেন লিংক কমপক্ষে ৩ অক্ষরের হতে হবে।');
+      return;
+    }
+    if (slugStatus.available === false) {
+      toast.error(slugStatus.message || 'নির্বাচিত সাবডোমেন লিংকটি ইতিমধ্যে ব্যবহৃত বা সংরক্ষিত। অনুগ্রহ করে অন্য নাম দিন।');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -238,7 +328,9 @@ export default function BecomeRetailerPage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          phone: fullPhoneNumber
+          phone: fullPhoneNumber,
+          desiredShopSlug: cleanSlug,
+          userShopName: shopName.trim() || undefined
         })
       });
       const resData = await response.json();
@@ -410,10 +502,86 @@ export default function BecomeRetailerPage() {
                   </div>
                 )}
 
+                {/* Shop Name Input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                    <Store size={13} className="text-purple-600" /> আপনার দোকানের নাম (Shop Name) *
+                  </label>
+                  <input
+                    type="text"
+                    value={shopName}
+                    onChange={handleShopNameChange}
+                    placeholder="যেমন: Dhaka Mart, Fashion Point, ইত্যাদি"
+                    required
+                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-300 focus:border-purple-500 bg-slate-50 text-slate-800 placeholder-slate-400 text-sm font-black transition-all outline-none focus:ring-2 focus:ring-purple-500/20"
+                  />
+                </div>
+
+                {/* Subdomain URL Input & Realtime Availability Checker */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between ml-1">
+                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
+                      <Globe size={13} className="text-purple-600" /> সাবডোমেন লিংক (Unique Store URL) *
+                    </label>
+                    {slugStatus.checking ? (
+                      <span className="text-[10px] text-purple-600 font-bold flex items-center gap-1">
+                        <Loader2 size={11} className="animate-spin" /> যাচাই করা হচ্ছে...
+                      </span>
+                    ) : slugStatus.available === true ? (
+                      <span className="text-[10px] text-emerald-600 font-black flex items-center gap-1">
+                        <Check size={12} className="stroke-[3]" /> খালি আছে (Available)
+                      </span>
+                    ) : slugStatus.available === false ? (
+                      <span className="text-[10px] text-rose-600 font-black flex items-center gap-1">
+                        <AlertCircle size={12} /> অনুপলব্ধ (Unavailable)
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className={`relative flex items-center rounded-2xl border transition-all ${
+                    slugStatus.checking 
+                      ? 'border-purple-400 bg-purple-50/20' 
+                      : slugStatus.available === true 
+                        ? 'border-emerald-500 bg-emerald-50/20 ring-2 ring-emerald-500/20' 
+                        : slugStatus.available === false 
+                          ? 'border-rose-500 bg-rose-50/20 ring-2 ring-rose-500/20' 
+                          : 'border-slate-300 bg-slate-50 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20'
+                  }`}>
+                    <input
+                      type="text"
+                      value={shopSlug}
+                      onChange={handleSlugChange}
+                      placeholder="mybrand"
+                      required
+                      className="flex-1 px-5 py-3.5 bg-transparent text-slate-800 placeholder-slate-400 text-sm font-black outline-none"
+                    />
+                    <span className="pr-5 text-xs font-black text-slate-500 select-none">
+                      .bdretailers.com
+                    </span>
+                  </div>
+
+                  {/* Status feedback message */}
+                  {slugStatus.message && (
+                    <p className={`text-[11px] font-bold px-1 flex items-center gap-1.5 ${
+                      slugStatus.available === true ? 'text-emerald-700' : 'text-rose-600'
+                    }`}>
+                      {slugStatus.available === true ? (
+                        <Check size={13} className="shrink-0 text-emerald-600" />
+                      ) : (
+                        <AlertCircle size={13} className="shrink-0 text-rose-600" />
+                      )}
+                      <span>{slugStatus.message}</span>
+                    </p>
+                  )}
+                  <p className="text-[10px] text-slate-400 font-bold px-1">
+                    💡 এটি আপনার স্টোরের নিজস্ব ওয়েব ঠিকানা হবে (যেমন: {shopSlug || 'yourbrand'}.bdretailers.com)।
+                  </p>
+                </div>
+
                 {/* Country Code and Phone input block */}
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                    <Phone size={12} /> মোবাইল নম্বর দিন
+                    <Phone size={12} /> মোবাইল নম্বর দিন *
                   </label>
                   <div className="flex gap-2">
                     <select 

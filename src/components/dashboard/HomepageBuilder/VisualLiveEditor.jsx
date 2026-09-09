@@ -5,8 +5,9 @@ import {
   Camera, Upload, Edit3, Image as ImageIcon, Type, 
   Sparkles, Save, Check, X, Smartphone, Monitor, 
   Trash2, Plus, ArrowRight, ShoppingBag, Eye, Globe,
-  ShieldCheck, Truck, Phone, Star, Layers, Sliders
+  ShieldCheck, Truck, Phone, Star, Layers, Sliders, ExternalLink
 } from 'lucide-react';
+import Link from 'next/link';
 import { updateShop } from '@/lib/firestore';
 import toast from 'react-hot-toast';
 
@@ -153,8 +154,29 @@ export default function VisualLiveEditor({
   };
 
   // Save Product Quick Edit
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!selectedProduct) return;
+    const shopId = shop?.id;
+    const isRealProduct = selectedProduct.id && !selectedProduct.id.startsWith('sample');
+
+    if (shopId && isRealProduct) {
+      try {
+        const { updateProduct } = await import('@/lib/firestore');
+        await updateProduct(shopId, selectedProduct.id, {
+          name: editProdName,
+          price: Number(editProdPrice),
+          originalPrice: Number(editProdOldPrice),
+          imageUrl: editProdImage
+        });
+        toast.success('প্রোডাক্ট সরাসরি আপনার শপে আপডেট হয়েছে! 🎉');
+      } catch (err) {
+        console.error('Failed to update product document:', err);
+        toast.error('প্রোডাক্ট সেভ করতে সমস্যা হয়েছে।');
+      }
+    } else {
+      toast.success('প্রোডাক্ট তথ্য সেভ হয়েছে!');
+    }
+
     const updatedProducts = products.map(p => {
       if (p.id === selectedProduct.id) {
         return {
@@ -169,8 +191,7 @@ export default function VisualLiveEditor({
     });
 
     if (onUpdateSections) {
-      // Refresh state
-      toast.success('প্রোডাক্ট তথ্য সেভ হয়েছে!');
+      // Trigger UI refresh
     }
     setEditModal(null);
   };
@@ -361,13 +382,26 @@ export default function VisualLiveEditor({
 
           {/* ── 3. EDITABLE PRODUCTS GRID ── */}
           <div className="px-3 sm:px-6 py-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-slate-900">
-                জনপ্রিয় পণ্যসমূহ (ক্লিক করে ছবি ও দাম এডিট করুন)
-              </h3>
-              <span className="text-[10px] text-purple-600 font-bold">
-                ✏️ ক্লিক টু এডিট
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-black text-slate-900">
+                  জনপ্রিয় পণ্যসমূহ (ক্লিক করে ছবি ও দাম এডিট করুন)
+                </h3>
+                <p className="text-[10px] text-slate-500 font-bold">
+                  যেকোনো পণ্যে ক্লিক করে সরাসরি দাম ও ছবি পরিবর্তন করুন।
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard/products/new"
+                  target="_blank"
+                  className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-black flex items-center gap-1.5 shadow-sm transition-all"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Plus size={13} />
+                  <span>নতুন প্রোডাক্ট যোগ করুন (Default Editor)</span>
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -636,6 +670,27 @@ export default function VisualLiveEditor({
             <div className="space-y-1">
               <h3 className="text-base font-black">প্রোডাক্ট তথ্য ও ছবি এডিট করুন</h3>
               <p className="text-xs text-slate-500">প্রোডাক্টের ছবি ও মূল্য সরাসরি ডিভাইস থেকে আপডেট করুন।</p>
+              <div className="pt-1">
+                {selectedProduct.id && !selectedProduct.id.startsWith('sample') ? (
+                  <Link
+                    href={`/dashboard/products/edit/${selectedProduct.id}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-black transition-colors"
+                  >
+                    <ExternalLink size={13} />
+                    <span>সম্পূর্ণ ডিটেইলস এডিটর ওপেন করুন (Default Product Editor)</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/dashboard/products/new"
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-[11px] font-black transition-colors"
+                  >
+                    <ExternalLink size={13} />
+                    <span>নতুন নিজস্ব প্রোডাক্ট যোগ করুন (Default Product System)</span>
+                  </Link>
+                )}
+              </div>
             </div>
 
             <div className="space-y-4 text-xs font-bold">

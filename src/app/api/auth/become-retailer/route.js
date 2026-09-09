@@ -22,11 +22,20 @@ export async function POST(req) {
     const email = decodedToken.email?.toLowerCase().trim() || '';
     const displayName = decodedToken.name || 'ব্যবহারকারী';
 
-    const { phone } = await req.json();
+    const { phone, desiredShopSlug, shopName: userShopName } = await req.json();
 
     if (!phone) {
       return NextResponse.json({ error: 'মোবাইল নম্বর প্রদান করুন।' }, { status: 400 });
     }
+
+    const RESERVED_SLUGS = new Set([
+      'store', 'main', 'admin', 'superadmin', 'dashboard', 'api', 'templates',
+      'login', 'register', 'showcase', 'checkout', 'cart', 'reviews', 'become-retailer',
+      'privacy-policy', 'privacy', 'account-delete', 'terms', 'terms-of-service',
+      'terms-and-conditions', 'demo', 'icons', 'shop', 'domain', 'support',
+      'help', 'billing', 'orders', 'products', 'settings', 'broadcast',
+      'messerbazar', 'camerakini', 'bdretailers', 'daripallah', 'webmaa'
+    ]);
 
     // Check if user is already approved as a retailer
     const userDoc = await adminDb.collection('users').doc(uid).get();
@@ -97,15 +106,29 @@ export async function POST(req) {
       const shopRef = adminDb.collection('shops').doc(uid);
       const shopDoc = await shopRef.get();
       const rawPrefix = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || 'shop';
-      const shopSlug = rawPrefix + '-' + Math.floor(Math.random() * 1000);
+      let shopSlug = '';
+      if (desiredShopSlug) {
+        const cleanSlug = desiredShopSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        if (cleanSlug.length >= 3 && !RESERVED_SLUGS.has(cleanSlug)) {
+          const collisionSnap = await adminDb.collection('shops').where('shopSlug', '==', cleanSlug).limit(1).get();
+          if (collisionSnap.empty) {
+            shopSlug = cleanSlug;
+          }
+        }
+      }
+      if (!shopSlug) {
+        shopSlug = rawPrefix + '-' + Math.floor(Math.random() * 1000);
+      }
 
-      let storeName = 'My Store';
-      if (displayName && displayName.trim() && displayName !== 'ব্যবহারকারী' && displayName !== 'User' && displayName !== 'Customer') {
-        const clean = displayName.trim();
-        storeName = clean.endsWith('Store') || clean.endsWith('স্টোর') ? clean : `${clean} Store`;
-      } else if (rawPrefix) {
-        const formattedPrefix = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
-        storeName = formattedPrefix.endsWith('Store') ? formattedPrefix : `${formattedPrefix} Store`;
+      let storeName = userShopName?.trim() || 'My Store';
+      if (!userShopName?.trim()) {
+        if (displayName && displayName.trim() && displayName !== 'ব্যবহারকারী' && displayName !== 'User' && displayName !== 'Customer') {
+          const clean = displayName.trim();
+          storeName = clean.endsWith('Store') || clean.endsWith('স্টোর') ? clean : `${clean} Store`;
+        } else if (rawPrefix) {
+          const formattedPrefix = rawPrefix.charAt(0).toUpperCase() + rawPrefix.slice(1);
+          storeName = formattedPrefix.endsWith('Store') ? formattedPrefix : `${formattedPrefix} Store`;
+        }
       }
 
       if (!shopDoc.exists) {

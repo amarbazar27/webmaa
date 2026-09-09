@@ -1750,69 +1750,45 @@ export default function SuperAdminPage() {
           </div>
         </div>
 
-        {/* Amazon-style Box View Toggle */}
-        <div className="mt-4 flex flex-col gap-3 p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
-          <div className="flex items-center justify-between">
+        {/* Section Configuration Panel (Homepage Builder Style) */}
+        <div className="mt-6 border-t pt-5" style={{borderColor:'var(--border-color)'}}>
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Show Amazon-style Box View</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Group products into cards on the homepage</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <input 
-                type="checkbox" 
-                checked={!!globalConfig.showAmazonBoxes} 
-                onChange={e => {
-                  const updated = {...globalConfig, showAmazonBoxes: e.target.checked};
-                  setGlobalConfig(updated);
-                  updateGlobalConfig(updated).catch(() => {});
-                }}
-                className="w-5 h-5 accent-purple-600 cursor-pointer"
-              />
+              <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Sparkles size={16} className="text-purple-600" />
+                <span>হোমপেজ ও মার্কেটপ্লেস সেকশন কনফিগারেশন (Section Configuration)</span>
+              </h4>
+              <p className="text-[11px] font-bold text-slate-500 mt-0.5">
+                রিটেইলারদের হোমপেজ বিল্ডারের মতো প্রতিটি সেকশনের নাম ও ভূমিকার পাশে ভিজিবিলিটি বাটন দিয়ে সরাসরি অন/অফ করুন:
+              </p>
             </div>
           </div>
           
-          {globalConfig.showAmazonBoxes && (
-            <div className="flex flex-col gap-1.5 border-t pt-3" style={{borderColor:'var(--border-color)'}}>
-              <label className="text-xs font-black tracking-widest uppercase" style={{color:'var(--text-3)'}}>Amazon Box Grouping Type</label>
-              <select
-                value={globalConfig.amazonBoxType || 'shop_recent'}
-                onChange={e => {
-                  const updated = {...globalConfig, amazonBoxType: e.target.value};
-                  setGlobalConfig(updated);
-                  updateGlobalConfig(updated).catch(() => {});
-                }}
-                className="p-3.5 rounded-xl border text-xs font-bold outline-none cursor-pointer focus:border-purple-500 transition-all select-none"
-                style={{borderColor:'var(--border-color)',background:'var(--input-bg)',color:'var(--text-color)'}}
-              >
-                <option value="shop_recent">Shop-wise (Recent Products)</option>
-                <option value="shop_featured">Shop-wise (Highlighted/Featured Products)</option>
-                <option value="product_type">Category-wise (Group by Product Category)</option>
-              </select>
-            </div>
-          )}
+          <SuperadminHomepageControls globalConfig={globalConfig} />
         </div>
 
-        {/* Show All Products Toggle */}
-        <div className="mt-4 flex items-center justify-between p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
-          <div>
-            <p className="text-sm font-black" style={{color:'var(--text-color)'}}>Show All Products Directly</p>
-            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{color:'var(--text-3)'}}>Display the full product feed below banners on initial load</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <input 
-              type="checkbox" 
-              checked={!!globalConfig.showAllProductsDirectly} 
+        {/* Amazon Box Grouping Configuration */}
+        {globalConfig.showAmazonBoxes && (
+          <div className="mt-4 flex flex-col gap-1.5 p-5 rounded-2xl border" style={{borderColor:'var(--border-color)',background:'var(--surface-2)'}}>
+            <label className="text-xs font-black tracking-widest uppercase" style={{color:'var(--text-3)'}}>Amazon Box Grouping Type</label>
+            <select
+              value={globalConfig.amazonBoxType || 'shop_recent'}
               onChange={e => {
-                const updated = {...globalConfig, showAllProductsDirectly: e.target.checked};
+                const updated = {...globalConfig, amazonBoxType: e.target.value};
                 setGlobalConfig(updated);
                 updateGlobalConfig(updated).catch(() => {});
               }}
-              className="w-5 h-5 accent-purple-600 cursor-pointer"
-            />
+              className="p-3.5 rounded-xl border text-xs font-bold outline-none cursor-pointer focus:border-purple-500 transition-all select-none"
+              style={{borderColor:'var(--border-color)',background:'var(--input-bg)',color:'var(--text-color)'}}
+            >
+              <option value="shop_recent">Shop-wise (Recent Products)</option>
+              <option value="shop_featured">Shop-wise (Highlighted/Featured Products)</option>
+              <option value="product_type">Category-wise (Group by Product Category)</option>
+            </select>
           </div>
-        </div>
+        )}
 
-        <p className="text-[10px] font-bold text-slate-400 mt-3 px-1">💡 Retailers can override this for their shop. Customers can further override for themselves.</p>
+        <p className="text-[10px] font-bold text-slate-400 mt-3 px-1">💡 পরিবর্তন সংরক্ষণ করতে উপরের &apos;পরিবর্তন সেভ করুন&apos; বাটনে ক্লিক করুন।</p>
       </Card>
 
       {/* ── Landing Page Banners Carousel Manager ── */}

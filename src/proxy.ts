@@ -33,7 +33,7 @@ const BYPASS_HOSTS = [
 ];
 
 const RESERVED_KEYWORDS = [
-  'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
+  'store', 'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
   'reviews', 'become-retailer', 'privacy-policy', 'privacy', 'account-delete',
   'terms', 'terms-of-service', 'terms-and-conditions', 'templates',
   '_next', 'robots.txt', 'sitemap.xml', 'shop-sitemap.xml', 'product-sitemap.xml', 'category-sitemap.xml', 'image-sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
@@ -214,6 +214,13 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // ── কেস ১: বাইপাস হোস্ট (যেমন main site `daripallah.com` বা `localhost`) ──────────────────────────
   if (!host || isBypassHost(host)) {
     if (pathParts.length >= 1) {
+      if (firstSegment === 'store') {
+        const rewriteUrl = new URL(request.url);
+        rewriteUrl.pathname = '/';
+        rewriteUrl.searchParams.set('store', 'all');
+        rewriteUrl.searchParams.set('view', 'marketplace');
+        return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+      }
       if (!RESERVED_KEYWORDS.includes(firstSegment)) {
         // Rewrite /[shopSlug]/... to /shop/[shopSlug]/...
         const remainingPath = pathParts.slice(1).join('/');
@@ -230,6 +237,16 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // ── কেস ২: টেন্যান্ট সাবডোমেন (যেমন `messerbazar.daripallah.com`) ──────────────────────────
   const tenantSlug = getTenantSlug(rawHost); // Use rawHost to split subdomains correctly
   if (tenantSlug) {
+    if (tenantSlug === 'store') {
+      // store.bdretailers.com is the permanent multi-vendor marketplace hub!
+      const rewriteUrl = new URL(request.url);
+      rewriteUrl.pathname = pathname === '/store' ? '/' : pathname;
+      rewriteUrl.searchParams.set('store', 'all');
+      rewriteUrl.searchParams.set('view', 'marketplace');
+      console.log(`[Proxy] Multi-vendor marketplace rewrite: ${rawHost}${pathname}`);
+      return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+    }
+
     if (RESERVED_KEYWORDS.includes(firstSegment)) {
       return applySecurityHeaders(NextResponse.next(), pathname);
     }

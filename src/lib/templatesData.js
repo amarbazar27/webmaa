@@ -524,10 +524,31 @@ export const DEFAULT_WEBSITE_TEMPLATES = [
 ];
 
 export function getMergedTemplates(globalConfigTemplates) {
-  if (Array.isArray(globalConfigTemplates) && globalConfigTemplates.length > 0) {
-    return globalConfigTemplates;
+  if (!Array.isArray(globalConfigTemplates) || globalConfigTemplates.length === 0) {
+    return DEFAULT_WEBSITE_TEMPLATES;
   }
-  return DEFAULT_WEBSITE_TEMPLATES;
+
+  const customMap = new Map(globalConfigTemplates.map(t => [t.id, t]));
+
+  return DEFAULT_WEBSITE_TEMPLATES.map(def => {
+    const custom = customMap.get(def.id) || customMap.get(def.demoSubdomain);
+    if (!custom) return def;
+    // Deep merge so rich features (specialType, sampleCategories, sampleProducts, concerns, reels, bundle, etc.) are never lost
+    return {
+      ...def,
+      ...custom,
+      sampleCategories: (custom.sampleCategories && custom.sampleCategories.length > 0) ? custom.sampleCategories : def.sampleCategories,
+      sampleProducts: (custom.sampleProducts && custom.sampleProducts.length > 0) ? custom.sampleProducts : def.sampleProducts,
+      concerns: (custom.concerns && custom.concerns.length > 0) ? custom.concerns : def.concerns,
+      reels: (custom.reels && custom.reels.length > 0) ? custom.reels : def.reels,
+      bundle: custom.bundle || def.bundle,
+      specialType: custom.specialType || def.specialType,
+      hero: { ...def.hero, ...(custom.hero || {}) },
+      features: (custom.features && custom.features.length > 0) ? custom.features : def.features,
+      thumbnail: custom.thumbnail || def.thumbnail,
+      bannerImage: custom.bannerImage || def.bannerImage,
+    };
+  });
 }
 
 export function findTemplateByIdOrSlug(idOrSlug, customTemplates) {
@@ -539,16 +560,10 @@ export function findTemplateByIdOrSlug(idOrSlug, customTemplates) {
 }
 
 export function getDemoUrl(template, origin = '') {
-  if (!template) return 'https://bdretailers.com';
+  if (!template) return '/templates';
   if (template.customDemoUrl && template.customDemoUrl.startsWith('http')) {
     return template.customDemoUrl;
   }
-  const slug = template.demoSubdomain || template.id;
-  if (typeof window !== 'undefined') {
-    const currentHost = window.location.hostname;
-    if (currentHost.includes('localhost') || currentHost.includes('127.0.0.1')) {
-      return `/shop/${slug}`;
-    }
-  }
-  return `https://${slug}.bdretailers.com`;
+  // Return the live interactive preview URL directly so it NEVER 404s
+  return `/templates/preview/${template.id}`;
 }
