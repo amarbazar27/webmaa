@@ -135,7 +135,19 @@ export default function BecomeRetailerPage() {
   useEffect(() => {
     if (user) {
       if (userData?.role === 'retailer' || userData?.role === 'superadmin') {
-        router.push(selectedPlanParam ? `/dashboard/billing?package=${selectedPlanParam}` : '/dashboard/billing');
+        let themeToApply = selectedThemeParam;
+        if (!themeToApply && typeof window !== 'undefined') {
+          try {
+            const saved = JSON.parse(localStorage.getItem('selected_theme_intent') || '{}');
+            if (saved?.id) themeToApply = saved.id;
+          } catch (_) {}
+        }
+
+        if (themeToApply) {
+          router.push(`/dashboard/homepage-builder?visual=true&template=${themeToApply}`);
+        } else {
+          router.push(selectedPlanParam ? `/dashboard/billing?package=${selectedPlanParam}` : '/dashboard/billing');
+        }
         return;
       }
 
@@ -238,6 +250,18 @@ export default function BecomeRetailerPage() {
       if (resData.autoApproved) {
         setExistingStatus('approved');
         toast.success('আপনার রিটেইলার অ্যাকাউন্ট সফলভাবে সক্রিয় করা হয়েছে! 🎉');
+        let themeToApply = selectedThemeParam;
+        if (!themeToApply && typeof window !== 'undefined') {
+          try {
+            const saved = JSON.parse(localStorage.getItem('selected_theme_intent') || '{}');
+            if (saved?.id) themeToApply = saved.id;
+          } catch (_) {}
+        }
+        if (themeToApply) {
+          setTimeout(() => {
+            router.push(`/dashboard/homepage-builder?visual=true&template=${themeToApply}`);
+          }, 1200);
+        }
       } else {
         setExistingStatus('pending');
         toast.success('আবেদনটি সফলভাবে জমা দেওয়া হয়েছে! 🚀');
@@ -317,9 +341,11 @@ export default function BecomeRetailerPage() {
               <p className="text-xs text-slate-600 leading-relaxed font-bold">
                 অভিনন্দন! আপনার আবেদনটি এডমিন দ্বারা অনুমোদিত হয়েছে। এখন আপনি আপনার BDRetailers রিটেইলার ড্যাশবোর্ডে প্রবেশ করতে পারবেন।
               </p>
-              
-              <Link href="/dashboard" className="inline-block px-8 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-full text-xs font-black uppercase tracking-wider text-white transition-all hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/20">
-                ড্যাশবোর্ডে প্রবেশ করুন <ChevronRight size={14} className="inline-block" />
+              <Link 
+                href={selectedThemeParam ? `/dashboard/homepage-builder?visual=true&template=${selectedThemeParam}` : "/dashboard"} 
+                className="inline-block px-8 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-full text-xs font-black uppercase tracking-wider text-white transition-all hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/20"
+              >
+                {selectedThemeParam ? 'আপনার নির্বাচিত ডিজাইন এডিট করুন ⚡' : 'ড্যাশবোর্ডে প্রবেশ করুন'} <ChevronRight size={14} className="inline-block" />
               </Link>
             </div>
           ) : (

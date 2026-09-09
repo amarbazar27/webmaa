@@ -2,12 +2,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getShop, getProducts } from '@/lib/firestore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import SectionList from './SectionList';
 import ThemeEditor, { THEME_PRESETS } from './ThemeEditor';
 import HeaderFooterEditor from './HeaderFooterEditor';
 import HomepagePreview from './HomepagePreview';
+import VisualLiveEditor from './VisualLiveEditor';
 import { 
   Eye, Save, Globe, Palette, LayoutDashboard, Loader2, 
   ArrowLeft, Smartphone, Monitor, Sparkles, Sliders, Check,
@@ -217,6 +218,18 @@ export const CATEGORY_TEMPLATES = {
     enabled: ['basic_storefront', 'hero', 'trust_strip', 'price_ladder', 'product_grid', 'price_tier_store', 'deal_of_the_day', 'brand_marquee'],
     gradient: 'from-slate-800 via-blue-900 to-slate-900',
   },
+  kids_baby: {
+    id: 'kids_baby',
+    category: 'kids',
+    label: '👶 Kids, Toys & Baby Care',
+    namebn: 'বেবি শপ, খেলনা ও কিডস কালেকশন',
+    desc: 'বাচ্চাদের খেলনা, জামাকাপড়, বেবি ফুড ও সেফটি আইটেম',
+    theme: { primaryColor: '#EC4899', secondaryColor: '#831843', font: 'Hind Siliguri', buttonRadius: '20px' },
+    headerStyle: 'classic',
+    footerStyle: 'classic_4col',
+    enabled: ['basic_storefront', 'hero', 'categories', 'product_grid', 'bundle_section', 'flash_sale', 'photo_reviews'],
+    gradient: 'from-pink-500 to-rose-600',
+  },
 };
 
 const DEFAULT_THEME = {
@@ -253,20 +266,24 @@ const DEFAULT_FOOTER = {
 export default function HomepageBuilder() {
   const { user, userData, activeShopId } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const visualParam = searchParams?.get('visual');
+  const templateParam = searchParams?.get('template');
+
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [theme, setTheme] = useState(DEFAULT_THEME);
   const [headerConfig, setHeaderConfig] = useState(DEFAULT_HEADER);
   const [footerConfig, setFooterConfig] = useState(DEFAULT_FOOTER);
-  const [activeTab, setActiveTab] = useState('sections'); // 'sections' | 'header_footer' | 'template' | 'theme'
+  const [activeTab, setActiveTab] = useState(visualParam === 'true' ? 'visual' : 'sections'); // 'visual' | 'sections' | 'header_footer' | 'template' | 'theme'
   const [previewMode, setPreviewMode] = useState('mobile'); // 'mobile' | 'desktop'
   const [highlightSectionId, setHighlightSectionId] = useState(null);
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState('all');
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [previewTemplateKey, setPreviewTemplateKey] = useState(null);
-  const [appliedTemplateKey, setAppliedTemplateKey] = useState('fashion_editorial');
+  const [appliedTemplateKey, setAppliedTemplateKey] = useState(templateParam || 'fashion_editorial');
   const [hasChanges, setHasChanges] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
 
@@ -401,7 +418,7 @@ export default function HomepageBuilder() {
     }, 2500);
   };
 
-  const applyTemplate = (key, tpl) => {
+  const applyTemplate = useCallback((key, tpl) => {
     setAppliedTemplateKey(key);
     setPreviewTemplateKey(null);
     const newSections = DEFAULT_SECTIONS.map(s => ({
@@ -414,7 +431,20 @@ export default function HomepageBuilder() {
     if (tpl.footerStyle) setFooterConfig(f => ({ ...f, style: tpl.footerStyle }));
     setHasChanges(true);
     toast.success(`✅ ${tpl.namebn} টেমপ্লেট ড্রাফটে অ্যাপ্লাই হয়েছে!`);
-  };
+  }, []);
+
+  // Auto-apply template and switch to visual editor if requested via URL
+  useEffect(() => {
+    if (templateParam && CATEGORY_TEMPLATES[templateParam]) {
+      const tpl = CATEGORY_TEMPLATES[templateParam];
+      applyTemplate(templateParam, tpl);
+      if (visualParam === 'true') {
+        setActiveTab('visual');
+      }
+    } else if (visualParam === 'true') {
+      setActiveTab('visual');
+    }
+  }, [templateParam, visualParam, applyTemplate]);
 
   const TEMPLATE_FILTER_CATEGORIES = [
     { id: 'all', label: 'সব টেমপ্লেট' },
@@ -424,6 +454,7 @@ export default function HomepageBuilder() {
     { id: 'beauty', label: 'বিউটি' },
     { id: 'home', label: 'হোম ডেকোর' },
     { id: 'sports', label: 'স্পোর্টস' },
+    { id: 'kids', label: 'কিডস ও বেবি' },
     { id: 'b2b', label: 'B2B' },
   ];
 
@@ -470,6 +501,70 @@ export default function HomepageBuilder() {
             </div>
           </div>
 
+          {/* Central Mode Switcher Bar */}
+          <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
+            <button
+              type="button"
+              onClick={() => setActiveTab('visual')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'visual'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Zap size={14} className={activeTab === 'visual' ? 'text-amber-300 fill-amber-300' : 'text-purple-600'} />
+              <span>⚡ লাইভ এডিটর</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('sections')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'sections'
+                  ? 'bg-white text-purple-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <LayoutDashboard size={13} />
+              <span>সেকশন কনফিগ</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('template')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'template'
+                  ? 'bg-white text-purple-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles size={13} />
+              <span>টেমপ্লেট</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('theme')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'theme'
+                  ? 'bg-white text-purple-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Palette size={13} />
+              <span>থিম ও কালার</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('header_footer')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'header_footer'
+                  ? 'bg-white text-purple-700 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sliders size={13} />
+              <span>হেডার/ফুটার</span>
+            </button>
+          </div>
+
           <div className="flex items-center gap-2.5">
             <button
               onClick={handleSaveDraft}
@@ -493,44 +588,79 @@ export default function HomepageBuilder() {
       </div>
 
       {/* Main Layout Container */}
-      <div className="max-w-[1700px] mx-auto flex gap-0 lg:gap-6 p-2 sm:p-4">
-        {/* Left Panel — Controls & Section List */}
-        <div className="w-full lg:w-96 xl:w-[420px] flex-shrink-0">
-          {/* Tab Navigation */}
-          <div className="flex bg-slate-200/70 rounded-2xl p-1 mb-4 shadow-2xs">
-            <button
-              onClick={() => setActiveTab('sections')}
-              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === 'sections' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
-              }`}
-            >
-              <LayoutDashboard size={13} /> Sections
-            </button>
-            <button
-              onClick={() => setActiveTab('header_footer')}
-              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === 'header_footer' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
-              }`}
-            >
-              <Sliders size={13} /> Header/Footer
-            </button>
-            <button
-              onClick={() => setActiveTab('template')}
-              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === 'template' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
-              }`}
-            >
-              <Sparkles size={13} /> Templates
-            </button>
-            <button
-              onClick={() => setActiveTab('theme')}
-              className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === 'theme' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
-              }`}
-            >
-              <Palette size={13} /> Theme
-            </button>
+      <div className="max-w-[1700px] mx-auto p-2 sm:p-4">
+        {activeTab === 'visual' ? (
+          <div className="w-full">
+            <VisualLiveEditor
+              shop={shop}
+              sections={sections}
+              theme={theme}
+              headerConfig={headerConfig}
+              footerConfig={footerConfig}
+              products={products}
+              onUpdateSections={updateSections}
+              onUpdateTheme={updateTheme}
+              onUpdateHeader={(newH) => { setHeaderConfig(newH); setHasChanges(true); }}
+              onUpdateFooter={(newF) => { setFooterConfig(newF); setHasChanges(true); }}
+              onUpdateShop={(newShop) => setShop(newShop)}
+              onSaveDraft={handleSaveDraft}
+              onPublish={handlePublish}
+              isSaving={isSaving}
+              isPublishing={isPublishing}
+            />
           </div>
+        ) : (
+          <div className="flex gap-0 lg:gap-6">
+            {/* Left Panel — Controls & Section List */}
+            <div className="w-full lg:w-96 xl:w-[420px] flex-shrink-0">
+              {/* Tab Navigation */}
+              <div className="flex bg-slate-200/70 rounded-2xl p-1 mb-4 shadow-2xs overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('visual')}
+                  className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'visual' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow' : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  <Zap size={13} className="text-amber-400 fill-amber-400" /> লাইভ এডিটর
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('sections')}
+                  className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'sections' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  <LayoutDashboard size={13} /> Sections
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('header_footer')}
+                  className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'header_footer' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  <Sliders size={13} /> Header/Footer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('template')}
+                  className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'template' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  <Sparkles size={13} /> Templates
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('theme')}
+                  className={`flex-1 flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'theme' ? 'bg-white shadow text-slate-900' : 'text-slate-600 hover:text-slate-800'
+                  }`}
+                >
+                  <Palette size={13} /> Theme
+                </button>
+              </div>
 
           {/* Template Tab Content — 14 Universal Templates */}
           {activeTab === 'template' && (
@@ -698,6 +828,8 @@ export default function HomepageBuilder() {
           />
         </div>
       </div>
-    </div>
+    )}
+  </div>
+</div>
   );
 }
