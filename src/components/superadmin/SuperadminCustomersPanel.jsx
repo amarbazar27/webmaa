@@ -62,8 +62,8 @@ export default function SuperadminCustomersPanel({ isSubAdmin = false }) {
     try {
       setRefreshing(true);
       const [allUsersData, allShopsData] = await Promise.all([
-        getAllUsers(),
-        getAllShops()
+        getAllUsers().catch(() => []),
+        getAllShops().catch(() => [])
       ]);
 
       setUsers(allUsersData || []);

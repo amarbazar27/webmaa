@@ -37,7 +37,7 @@ export async function generateMetadata({ params }) {
       shop.subdomainSlug,
     ].filter(Boolean).join(', ');
 
-    const faviconUrl = `/favicon.ico?v=${shop?.updatedAt || '1'}`;
+    const shopFavicon = shop?.faviconUrl || (shop?.logoUrl?.startsWith('http') ? shop.logoUrl : null) || logoUrl;
 
     return {
       title: { absolute: metaTitle },
@@ -46,9 +46,15 @@ export async function generateMetadata({ params }) {
       manifest: shop?.subdomainSlug ? `/api/manifest?shop=${shop.subdomainSlug}` : null,
       alternates: { canonical: canonicalUrl },
       icons: {
-        icon: faviconUrl,
-        shortcut: faviconUrl,
-        apple: rawLogo,
+        icon: [
+          { url: shopFavicon },
+          { url: shopFavicon, sizes: '16x16' },
+          { url: shopFavicon, sizes: '32x32' },
+        ],
+        shortcut: shopFavicon,
+        apple: [
+          { url: shopFavicon, sizes: '180x180' }
+        ],
       },
       robots: { index: true, follow: true },
       openGraph: {

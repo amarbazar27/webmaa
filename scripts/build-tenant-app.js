@@ -279,7 +279,7 @@ async function build() {
         appConfig = shopData.appConfig || {};
         appConfig.versionCode = shopData.appBuildVersionCode || appConfig.versionCode;
         appConfig.versionName = shopData.appBuildVersionName || appConfig.versionName;
-        shopName = appConfig.appName || shopData.shopName || shopName;
+        shopName = appConfig.appName || (shopSlug === 'messerbazar' ? 'Messer Bazar - মেসের বাজার' : shopData.shopName) || shopName;
         primaryColor = shopData.designOverrides?.primaryColor || primaryColor;
         logoUrl = appConfig.logoUrl || shopData.logoUrl || null;
         customDomain = shopData.customDomain || null;

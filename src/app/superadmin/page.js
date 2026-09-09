@@ -421,24 +421,37 @@ export default function SuperAdminPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [invitesData, shopsData, requestsData, usersData] = await Promise.all([
-        getRetailerInvites(),
-        getAllShops(),
-        getRetailerRequests(),
-        getAllUsers()
+      // 1. Fetch shops independently so shops always load even if sub-admin lacks permission for users/invites
+      let shopsData = [];
+      try {
+        shopsData = await getAllShops();
+      } catch (shopErr) {
+        console.error('Error fetching shops in superadmin:', shopErr);
+      }
+
+      // 2. Fetch peripheral collections safely with individual fallbacks
+      const [invitesData, requestsData, usersData] = await Promise.all([
+        getRetailerInvites().catch(err => { console.warn('Invites access note:', err.message); return []; }),
+        getRetailerRequests().catch(err => { console.warn('Requests access note:', err.message); return []; }),
+        getAllUsers().catch(err => { console.warn('Users access note:', err.message); return []; })
       ]);
       
       // Fetch metrics for each shop in parallel
       const shopsWithMetrics = await Promise.all(shopsData.map(async (shop) => {
         try {
-          const orders = await getOrders(shop.id);
+          let orders = [];
+          try {
+            orders = await getOrders(shop.id);
+          } catch (_) {
+            orders = [];
+          }
           const completedOrders = orders.filter(o => o.status === 'completed');
           const totalSales = completedOrders.length;
           const totalRevenue = completedOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
           
           // Match owner email & phone from requests & users
-          const owner = requestsData.find(r => r.id === shop.id);
-          const user = usersData.find(u => u.id === shop.id || u.id === shop.ownerId);
+          const owner = (requestsData || []).find(r => r.id === shop.id);
+          const user = (usersData || []).find(u => u.id === shop.id || u.id === shop.ownerId);
 
           const effectivePercent = shop.customRevenuePercent !== undefined && shop.customRevenuePercent !== null
             ? Number(shop.customRevenuePercent)
@@ -460,9 +473,9 @@ export default function SuperAdminPage() {
         }
       }));
 
-      setInvites(invitesData);
-      setShops(shopsWithMetrics);
-      setRequests(requestsData);
+      setInvites(invitesData || []);
+      setShops(shopsWithMetrics || []);
+      setRequests(requestsData || []);
 
       if (userData?.role !== 'sub_superadmin') {
         try {
@@ -473,7 +486,7 @@ export default function SuperAdminPage() {
         }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to complete loadData:', err);
     }
     setLoading(false);
   };
@@ -2483,7 +2496,7 @@ export default function SuperAdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(isSubAdmin ? shops.filter(s => s.showInSubAdmin === true) : shops).map((shop) => {
+                    {(isSubAdmin ? shops.filter(s => s.showInSubAdmin === true || s.showInSubAdmin === 'true') : shops).map((shop) => {
                       // Estimate size: basic 2MB base + ~500kb per banner + assumed product footprint
                       const bannerFootprintMB = (shop.banners?.length || 0) * 0.5;
                       const productFootprintMB = (shop.orderCount || 0) * 0.1 + 5.2; 
@@ -3679,10 +3692,11 @@ export default function SuperAdminPage() {
               )}
 
               {(() => {
+                const isShopVisibleInSubAdmin = (s) => s.showInSubAdmin === true || s.showInSubAdmin === 'true';
                 const filteredSubscribers = shops.filter((shopItem) => {
-                  if (isSubAdmin) return shopItem.showInSubAdmin === true;
-                  if (subAdminFilter === 'visible') return shopItem.showInSubAdmin === true;
-                  if (subAdminFilter === 'hidden') return !shopItem.showInSubAdmin;
+                  if (isSubAdmin) return isShopVisibleInSubAdmin(shopItem);
+                  if (subAdminFilter === 'visible') return isShopVisibleInSubAdmin(shopItem);
+                  if (subAdminFilter === 'hidden') return !isShopVisibleInSubAdmin(shopItem);
                   return true;
                 });
 

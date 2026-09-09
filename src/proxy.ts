@@ -318,9 +318,9 @@ export const config = {
      * Match all request paths except:
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon)
-     * - static assets (.svg, .png, .jpg, .jpeg, .gif, .webp, .ico, .woff, .woff2, .ttf, .css, .js)
+     * - static assets (.svg, .png, .jpg, .jpeg, .gif, .webp, .woff, .woff2, .ttf, .css, .js)
+     * - Note: favicon.ico is explicitly allowed through so tenant domain rewrites can serve shop logos!
      */
-    '/((?!_next/static|_next/image|favicon\\.ico|robots\\.txt|.*-sitemap\\.xml|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|css|js|map)$).*)',
+    '/((?!_next/static|_next/image|robots\\.txt|.*-sitemap\\.xml|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot|css|js|map)$).*)',
   ],
 };

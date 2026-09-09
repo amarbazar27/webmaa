@@ -565,7 +565,9 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
       const svgFavicon = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="100%" height="100%" fill="${encodeURIComponent(color)}" rx="8"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-size="18" font-family="system-ui, sans-serif" font-weight="900">${firstLetter}</text></svg>`;
 
-      const faviconUrl = `/favicon.ico?v=${shop?.logoUrl ? encodeURIComponent(shop.logoUrl) : 'default'}`;
+      // Use shop logo directly if available, otherwise use unique dynamic SVG
+      const rawLogo = shop?.faviconUrl || shop?.logoUrl;
+      const faviconUrl = rawLogo || svgFavicon;
 
       // Remove all existing icon links to prevent any conflict or caching of the main site icon
       const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");
@@ -574,13 +576,21 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       // Create new clean favicon link
       const iconLink = document.createElement('link');
       iconLink.rel = 'icon';
+      iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
       iconLink.href = faviconUrl;
       document.head.appendChild(iconLink);
+
+      // Create new clean shortcut icon link
+      const shortcutLink = document.createElement('link');
+      shortcutLink.rel = 'shortcut icon';
+      shortcutLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
+      shortcutLink.href = faviconUrl;
+      document.head.appendChild(shortcutLink);
 
       // Create new clean apple touch icon link
       const appleLink = document.createElement('link');
       appleLink.rel = 'apple-touch-icon';
-      appleLink.href = faviconUrl;
+      appleLink.href = rawLogo || faviconUrl;
       document.head.appendChild(appleLink);
 
       // 3. Cache shop logo and name for instant loading page display

@@ -44,6 +44,8 @@ export async function generateMetadata({ params }) {
       shopSlug,
     ].filter(Boolean).join(', ');
 
+    const shopFavicon = shop?.faviconUrl || (shop?.logoUrl?.startsWith('http') ? shop.logoUrl : null) || logoUrl;
+
     return {
       title: { absolute: metaTitle },
       description: metaDesc,
@@ -51,9 +53,15 @@ export async function generateMetadata({ params }) {
       manifest: `/api/manifest?shop=${shopSlug}`,
       alternates: { canonical: canonicalUrl },
       icons: {
-        icon: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
-        shortcut: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
-        apple: rawLogo,
+        icon: [
+          { url: shopFavicon },
+          { url: shopFavicon, sizes: '16x16' },
+          { url: shopFavicon, sizes: '32x32' },
+        ],
+        shortcut: shopFavicon,
+        apple: [
+          { url: shopFavicon, sizes: '180x180' }
+        ],
       },
       robots: { index: true, follow: true },
       openGraph: {

@@ -40,14 +40,22 @@ export async function generateMetadata({ params }) {
     const images = absoluteImage ? [{ url: absoluteImage, width: 800, height: 600 }] : [];
     const canonicalUrl = `${BASE_URL}/shop/${shopSlug}/product/${productId}`;
 
+    const shopFavicon = shop?.faviconUrl || (shop?.logoUrl?.startsWith('http') ? shop.logoUrl : null) || `${BASE_URL}/logo.png`;
+
     return {
       title,
       description,
       alternates: { canonical: canonicalUrl },
       icons: {
-        icon: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
-        shortcut: `/favicon.ico?v=${shop?.updatedAt || '1'}`,
-        apple: shop?.logoUrl || '/logo.png',
+        icon: [
+          { url: shopFavicon },
+          { url: shopFavicon, sizes: '16x16' },
+          { url: shopFavicon, sizes: '32x32' },
+        ],
+        shortcut: shopFavicon,
+        apple: [
+          { url: shopFavicon, sizes: '180x180' }
+        ],
       },
       openGraph: {
         title,
