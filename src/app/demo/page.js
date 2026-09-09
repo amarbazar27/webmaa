@@ -70,6 +70,15 @@ export default function DemoPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
+      {/* Templates Directory Promotion Banner */}
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-950 px-4 py-2 text-center text-xs font-bold border-b border-purple-500/20 flex items-center justify-center gap-2">
+        <Sparkles size={14} className="text-yellow-400 shrink-0" />
+        <span>গ্রোসারি, ফ্যাশন, রেস্টুরেন্ট, বিউটি ও অন্যান্য ১৫+ ক্যাটাগরির রেডিমেড ডিজাইন দেখতে চান?</span>
+        <Link href="/templates" className="underline text-yellow-300 hover:text-white font-black ml-1 flex items-center gap-0.5">
+          সব ডেমো দেখুন <ChevronRight size={13} />
+        </Link>
+      </div>
+
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">

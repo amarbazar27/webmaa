@@ -20,12 +20,13 @@ const SuperadminPricingCustomizer = dynamic(() => import('@/components/superadmi
 const SuperadminSubscribersPanel = dynamic(() => import('@/components/superadmin/SuperadminSubscribersPanel'), { ssr: false });
 const SuperadminSponsorsManager = dynamic(() => import('@/components/superadmin/SuperadminSponsorsManager'), { ssr: false });
 const SuperadminFaqManager = dynamic(() => import('@/components/superadmin/SuperadminFaqManager'), { ssr: false });
+const SuperadminTemplatesManager = dynamic(() => import('@/components/superadmin/SuperadminTemplatesManager'), { ssr: false });
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
   Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy, TrendingUp, Percent, DollarSign, Receipt, RefreshCw, AlertCircle, Bell,
-  Layout, HelpCircle, Handshake, Truck, Lock, Save
+  Layout, HelpCircle, Handshake, Truck, Lock, Save, Palette
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -1362,6 +1363,18 @@ export default function SuperAdminPage() {
                   <span>হোমপেজ ও সিএমএস কন্ট্রোল</span>
                 </p>
                 
+                <button
+                  onClick={() => setSuperadminTab('templates_manager')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                    superadminTab === 'templates_manager'
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Palette size={16} />
+                  <span>ওয়েবসাইট ডিজাইন ও টেমপ্লেট</span>
+                </button>
+
                 <button
                   onClick={() => setSuperadminTab('homepage_sections')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
@@ -4236,6 +4249,10 @@ export default function SuperAdminPage() {
           </div>
         </div>
       </>)}
+
+      {superadminTab === 'templates_manager' && canAccess('view_homepage_cms') && (
+        <SuperadminTemplatesManager globalConfig={globalConfig} />
+      )}
 
       {superadminTab === 'homepage_sections' && canAccess('view_homepage_cms') && (
         <SuperadminHomepageControls globalConfig={globalConfig} />

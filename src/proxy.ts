@@ -35,7 +35,7 @@ const BYPASS_HOSTS = [
 const RESERVED_KEYWORDS = [
   'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
   'reviews', 'become-retailer', 'privacy-policy', 'privacy', 'account-delete',
-  'terms', 'terms-of-service', 'terms-and-conditions',
+  'terms', 'terms-of-service', 'terms-and-conditions', 'templates',
   '_next', 'robots.txt', 'sitemap.xml', 'shop-sitemap.xml', 'product-sitemap.xml', 'category-sitemap.xml', 'image-sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
 ];
 

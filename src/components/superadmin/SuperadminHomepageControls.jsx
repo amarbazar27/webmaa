@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { 
   Layout, Eye, EyeOff, Save, RotateCcw, Sparkles, 
   ShoppingBag, Store, HelpCircle, Mail, DollarSign, 
-  Image, BarChart3, Handshake, CheckCircle2, AlertCircle 
+  Image, BarChart3, Handshake, CheckCircle2, AlertCircle, Palette 
 } from 'lucide-react';
 import { updateGlobalConfig } from '@/lib/firestore';
 import toast from 'react-hot-toast';
@@ -16,6 +16,14 @@ const SECTIONS = [
     description: 'প্ল্যাটফর্মের টাইটেল, ট্যাগলাইন, ১-ক্লিক রেজিস্ট্রেশন ও লগইন বাটন সমূহ।',
     icon: Layout,
     color: 'from-blue-500 to-indigo-600',
+    defaultState: true
+  },
+  {
+    key: 'templates',
+    title: 'রেডিমেড ওয়েবসাইট ডিজাইন শোকেস (Readymade Templates & Demos)',
+    description: 'বিভিন্ন ক্যাটাগরির রেডিমেড ওয়েবসাইট ডিজাইন গ্যালারি ও *.bdretailers.com লাইভ ডেমো সেকশন।',
+    icon: Palette,
+    color: 'from-fuchsia-500 to-pink-600',
     defaultState: true
   },
   {
@@ -96,6 +104,7 @@ export default function SuperadminHomepageControls({ globalConfig = {} }) {
   const initialSections = globalConfig?.homepageSections || {};
   const [sections, setSections] = useState({
     hero: initialSections.hero !== false,
+    templates: initialSections.templates !== false,
     stats: initialSections.stats !== false,
     banners: initialSections.banners !== false,
     marketplace: initialSections.marketplace !== false,

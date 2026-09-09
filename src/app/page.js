@@ -21,6 +21,7 @@ import PricingSection from '@/components/home/PricingSection';
 import FaqSection from '@/components/home/FaqSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import SponsorsSection from '@/components/home/SponsorsSection';
+import TemplatesSection from '@/components/home/TemplatesSection';
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
@@ -225,6 +226,7 @@ export default function Home() {
   // ── Homepage Sections Toggle Control (Configured from Superadmin) ──
   const sectionsConfig = globalConfig?.homepageSections || {};
   const showHero = sectionsConfig.hero !== false;
+  const showTemplates = sectionsConfig.templates !== false;
   const showStats = sectionsConfig.stats !== false;
   const showBanners = sectionsConfig.banners !== false;
   const showMarketplace = sectionsConfig.marketplace !== false;
@@ -1459,6 +1461,9 @@ export default function Home() {
             <a href="#marketplace" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
               <ShoppingBag size={14} className="text-[#6C63FF]" /> Marketplace
             </a>
+            <Link href="/templates" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
+              <Sparkles size={14} className="text-[#6C63FF]" /> রেডিমেড ডিজাইন
+            </Link>
             <a href="#pricing" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
               <Sparkles size={14} className="text-[#6C63FF]" /> প্যাকেজ ও মূল্য
             </a>
@@ -2451,6 +2456,9 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* ── Public Readymade Website Templates & Demos Showcase ── */}
+      {showTemplates && <TemplatesSection globalConfig={globalConfig} />}
 
       {/* ── Public Sponsors / Partners Section ── */}
       {showSponsors && <SponsorsSection globalConfig={globalConfig} />}

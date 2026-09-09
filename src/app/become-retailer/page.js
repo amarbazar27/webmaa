@@ -120,12 +120,15 @@ export default function BecomeRetailerPage() {
 
   // Check if user has already submitted a request or is already a retailer
   const [selectedPlanParam, setSelectedPlanParam] = useState('');
+  const [selectedThemeParam, setSelectedThemeParam] = useState('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const plan = urlParams.get('plan');
+      const theme = urlParams.get('selectedTheme');
       if (plan) setSelectedPlanParam(plan);
+      if (theme) setSelectedThemeParam(theme);
     }
   }, []);
 
@@ -333,6 +336,12 @@ export default function BecomeRetailerPage() {
                   <div className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-full text-xs font-black">
                     <Sparkles size={13} className="text-amber-600" />
                     প্যাকেজ: <span className="uppercase text-amber-700 font-extrabold">{selectedPlanParam} Plan</span>
+                  </div>
+                )}
+                {selectedThemeParam && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-full text-xs font-black">
+                    <Sparkles size={13} className="text-emerald-600" />
+                    নির্বাচিত থিম ডিজাইন: <span className="text-emerald-700 font-extrabold">{selectedThemeParam}</span>
                   </div>
                 )}
               </div>
