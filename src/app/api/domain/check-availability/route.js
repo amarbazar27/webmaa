@@ -7,13 +7,13 @@ const RESERVED_SLUGS = new Set([
   'login', 'register', 'showcase', 'checkout', 'cart', 'reviews', 'become-retailer',
   'privacy-policy', 'privacy', 'account-delete', 'terms', 'terms-of-service',
   'terms-and-conditions', 'demo', 'icons', 'shop', 'domain', 'support',
-  'help', 'billing', 'orders', 'products', 'settings', 'broadcast',
-  'messerbazar', 'camerakini', 'bdretailers', 'daripallah', 'webmaa'
+  'help', 'billing', 'orders', 'products', 'settings', 'broadcast'
 ]);
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const rawSlug = searchParams.get('slug') || '';
+  const currentShopId = searchParams.get('currentShopId') || '';
   
   // Normalize slug: lowercase, letters, numbers, hyphens only
   const slug = rawSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
@@ -52,11 +52,21 @@ export async function GET(request) {
     const q1 = query(shopsRef, where('shopSlug', '==', slug));
     const snap1 = await getDocs(q1);
     if (!snap1.empty) {
+      const matchedDoc = snap1.docs[0];
+      if (currentShopId && matchedDoc.id === currentShopId) {
+        return NextResponse.json({
+          available: true,
+          isCurrent: true,
+          slug,
+          subdomain: `${slug}.bdretailers.com`,
+          message: `✓ এটি আপনার বর্তমান সক্রিয় সাবডোমেন লিংক।`
+        });
+      }
       return NextResponse.json({
         available: false,
         reason: 'taken',
         slug,
-        message: `"${slug}.bdretailers.com" ইতিমধ্যে একজন রিটেইলার ব্যবহার করছেন। অন্য একটি নাম দিন।`
+        message: `"${slug}.bdretailers.com" ইতিমধ্যে অন্য একজন রিটেইলার ব্যবহার করছেন। অনুগ্রহ করে অন্য নাম বেছে নিন।`
       });
     }
 
@@ -64,11 +74,21 @@ export async function GET(request) {
     const q2 = query(shopsRef, where('subdomainSlug', '==', slug));
     const snap2 = await getDocs(q2);
     if (!snap2.empty) {
+      const matchedDoc = snap2.docs[0];
+      if (currentShopId && matchedDoc.id === currentShopId) {
+        return NextResponse.json({
+          available: true,
+          isCurrent: true,
+          slug,
+          subdomain: `${slug}.bdretailers.com`,
+          message: `✓ এটি আপনার বর্তমান সক্রিয় সাবডোমেন লিংক।`
+        });
+      }
       return NextResponse.json({
         available: false,
         reason: 'taken',
         slug,
-        message: `"${slug}.bdretailers.com" ইতিমধ্যে একজন রিটেইলার ব্যবহার করছেন। অন্য একটি নাম দিন।`
+        message: `"${slug}.bdretailers.com" ইতিমধ্যে অন্য একজন রিটেইলার ব্যবহার করছেন। অনুগ্রহ করে অন্য নাম বেছে নিন।`
       });
     }
 

@@ -11,7 +11,8 @@ import {
   Store, Globe, Phone, Text, Save, Image as ImageIcon, ShieldCheck, 
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
   MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette, Tag,
-  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock, CreditCard
+  Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock, CreditCard,
+  Copy, CheckCheck, Loader2, AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -157,6 +158,43 @@ export default function SettingsPage() {
   const [slugInput, setSlugInput] = useState('');
   const [slugEditing, setSlugEditing] = useState(false);
   const [slugError, setSlugError] = useState('');
+  const [slugChecking, setSlugChecking] = useState(false);
+  const [slugAvailability, setSlugAvailability] = useState(null);
+  const [copiedDns, setCopiedDns] = useState('');
+
+  // Live real-time Subdomain Availability Checker
+  useEffect(() => {
+    if (!slugEditing || !slugInput) {
+      setSlugAvailability(null);
+      setSlugChecking(false);
+      return;
+    }
+    const clean = slugInput.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (clean.length < 3) {
+      setSlugAvailability({ available: false, message: 'সাবডোমেন কমপক্ষে ৩ অক্ষরের হতে হবে।' });
+      setSlugChecking(false);
+      return;
+    }
+
+    setSlugChecking(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/domain/check-availability?slug=${encodeURIComponent(clean)}&currentShopId=${shop?.id || user?.uid || ''}`);
+        const data = await res.json();
+        setSlugAvailability({
+          available: !!data.available,
+          isCurrent: !!data.isCurrent,
+          message: data.message || ''
+        });
+      } catch (_) {
+        setSlugAvailability({ available: null, message: 'যাচাই করা সম্ভব হয়নি।' });
+      } finally {
+        setSlugChecking(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [slugInput, slugEditing, shop?.id, user?.uid]);
   
   const [staffEmails, setStaffEmails] = useState([]);
   const [newStaffEmail, setNewStaffEmail] = useState('');
@@ -554,6 +592,10 @@ export default function SettingsPage() {
     }
     const err = validateSlug(slugInput);
     if (err) { setSlugError(err); return; }
+    if (slugAvailability && slugAvailability.available === false && !slugAvailability.isCurrent) {
+      toast.error(slugAvailability.message || 'এই সাবডোমেনটি অনুপলব্ধ। অন্য নাম দিন।');
+      return;
+    }
     setSlugError('');
     setSaving(true);
     try {
@@ -1095,22 +1137,77 @@ export default function SettingsPage() {
                 {slugEditing ? (
                   <div className="space-y-3">
                     <div>
-                      <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block mb-1">কাস্টম সাবডোমেইন প্রিফিক্স:</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-500 font-mono font-bold">https://</span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block">
+                          কাস্টম সাবডোমেইন প্রিফিক্স:
+                        </span>
+                        {slugChecking ? (
+                          <span className="text-[10px] text-purple-600 font-bold flex items-center gap-1">
+                            <Loader2 size={11} className="animate-spin" /> যাচাই হচ্ছে...
+                          </span>
+                        ) : slugAvailability?.isCurrent ? (
+                          <span className="text-[10px] text-indigo-600 font-black flex items-center gap-1 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                            <Check size={11} className="stroke-[3]" /> বর্তমান সাবডোমেন
+                          </span>
+                        ) : slugAvailability?.available === true ? (
+                          <span className="text-[10px] text-emerald-600 font-black flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                            <Check size={11} className="stroke-[3]" /> খালি আছে (Available)
+                          </span>
+                        ) : slugAvailability?.available === false ? (
+                          <span className="text-[10px] text-rose-600 font-black flex items-center gap-1 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+                            <AlertCircle size={11} /> অনুপলব্ধ / ব্যবহৃত
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className={`flex items-center gap-1 p-1 rounded-2xl border-2 transition-all bg-white ${
+                        slugChecking 
+                          ? 'border-purple-300 ring-2 ring-purple-100' 
+                          : slugAvailability?.isCurrent || slugAvailability?.available === true 
+                            ? 'border-emerald-500 ring-2 ring-emerald-100' 
+                            : slugAvailability?.available === false 
+                              ? 'border-rose-500 ring-2 ring-rose-100' 
+                              : 'border-purple-200'
+                      }`}>
+                        <span className="text-xs text-slate-400 font-mono font-bold pl-2">https://</span>
                         <input
                           type="text"
                           value={slugInput}
-                          placeholder="try"
-                          onChange={e => { setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setSlugError(''); }}
-                          className="flex-1 bg-white border-2 border-purple-200 rounded-xl px-3 py-2 text-sm font-black outline-none focus:border-purple-600 transition-all text-slate-900 font-mono"
+                          placeholder="yourshop"
+                          onChange={e => { 
+                            setSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); 
+                            setSlugError(''); 
+                          }}
+                          className="flex-1 bg-transparent px-2 py-2 text-sm font-black outline-none text-slate-900 font-mono"
                         />
-                        <span className="text-xs text-slate-500 font-mono font-bold">.bdretailers.com</span>
+                        <span className="text-xs text-slate-500 font-mono font-bold pr-3">.bdretailers.com</span>
                       </div>
+
+                      {/* Status message */}
+                      {slugAvailability?.message && (
+                        <p className={`text-[11px] font-bold mt-1.5 px-1 flex items-center gap-1.5 ${
+                          slugAvailability.available || slugAvailability.isCurrent ? 'text-emerald-700' : 'text-rose-600'
+                        }`}>
+                          {slugAvailability.available || slugAvailability.isCurrent ? (
+                            <Check size={12} className="shrink-0 text-emerald-600" />
+                          ) : (
+                            <AlertCircle size={12} className="shrink-0 text-rose-600" />
+                          )}
+                          <span>{slugAvailability.message}</span>
+                        </p>
+                      )}
                     </div>
                     {slugError && <p className="text-[10px] text-red-500 font-bold">{slugError}</p>}
                     <div className="flex gap-2">
-                       <button type="button" onClick={handleSlugSave} disabled={saving} className="flex-1 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer">সেভ সাবডোমেইন</button>
+                       <button 
+                         type="button" 
+                         onClick={handleSlugSave} 
+                         disabled={saving || slugChecking || (slugAvailability?.available === false && !slugAvailability?.isCurrent)} 
+                         className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-purple-500/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                       >
+                         {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                         <span>সেভ সাবডোমেইন</span>
+                       </button>
                        <button type="button" onClick={() => setSlugEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all cursor-pointer">বাতিল</button>
                     </div>
                   </div>
@@ -1142,19 +1239,84 @@ export default function SettingsPage() {
             <div>
               <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Globe size={14}/> Custom Domain Mapping (Pro)</p>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Connect your own .com / .shop domain</p>
-              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 shadow-inner relative">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 sm:p-5 shadow-inner relative space-y-4">
                 {customDomainEditing ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      placeholder="e.g. rahimshop.com"
-                      value={customDomainInput}
-                      onChange={e => setCustomDomainInput(e.target.value.toLowerCase())}
-                      className="w-full bg-white border-2 border-emerald-200 rounded-xl px-3 py-2 text-sm font-black outline-none focus:border-emerald-600 transition-all text-slate-900"
-                    />
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-emerald-800 block mb-1">
+                        আপনার কাস্টম ডোমেইন লিখুন (Custom Domain)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="যেমন: mystore.com বা shop.mystore.com"
+                        value={customDomainInput}
+                        onChange={e => setCustomDomainInput(e.target.value.toLowerCase())}
+                        className="w-full bg-white border-2 border-emerald-200 rounded-xl px-4 py-2.5 text-sm font-black outline-none focus:border-emerald-600 transition-all text-slate-900"
+                      />
+                    </div>
+
+                    {/* Live DNS Setup Instructions during Domain Editing */}
+                    <div className="p-4 bg-white rounded-2xl border border-emerald-200 text-xs space-y-3">
+                      <p className="font-black text-slate-900 flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-emerald-600" />
+                        ডোমেইন নেমসার্ভার / DNS সেটিংস গাইড (DNS Configuration Guide):
+                      </p>
+                      <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                        আপনার ডোমেইন প্রোভাইডার (Cloudflare, Namecheap, GoDaddy, DianaHost, ইত্যাদি) এর DNS ম্যানেজমেন্ট প্যানেলে গিয়ে নিচের ২টি রেকর্ড হুবহু যুক্ত করুন:
+                      </p>
+
+                      <div className="space-y-2 font-mono text-[11px]">
+                        <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                          <div>
+                            <span className="text-slate-500 font-bold mr-2">Type:</span><span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-black">A</span>
+                            <span className="text-slate-500 font-bold mx-2">Name:</span><span className="font-bold text-slate-800">@</span>
+                            <span className="text-slate-500 font-bold mx-2">Value:</span><span className="text-emerald-700 font-black">216.198.79.1</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText('216.198.79.1');
+                              setCopiedDns('A');
+                              toast.success('A রেকর্ড ভ্যালু (216.198.79.1) কপি করা হয়েছে!');
+                              setTimeout(() => setCopiedDns(''), 2000);
+                            }}
+                            className="p-1.5 hover:bg-emerald-50 text-emerald-700 rounded-lg flex items-center gap-1 text-[10px] font-sans font-bold"
+                          >
+                            {copiedDns === 'A' ? <CheckCheck size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                            <span>{copiedDns === 'A' ? 'কপি হয়েছে' : 'কপি'}</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                          <div>
+                            <span className="text-slate-500 font-bold mr-2">Type:</span><span className="bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-black">CNAME</span>
+                            <span className="text-slate-500 font-bold mx-2">Name:</span><span className="font-bold text-slate-800">www</span>
+                            <span className="text-slate-500 font-bold mx-2">Value:</span><span className="text-purple-700 font-black truncate max-w-[180px] sm:max-w-none inline-block align-bottom">dc8755a5e5802d38.vercel-dns-017.com.</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText('dc8755a5e5802d38.vercel-dns-017.com.');
+                              setCopiedDns('CNAME');
+                              toast.success('CNAME ভ্যালু কপি করা হয়েছে!');
+                              setTimeout(() => setCopiedDns(''), 2000);
+                            }}
+                            className="p-1.5 hover:bg-purple-50 text-purple-700 rounded-lg flex items-center gap-1 text-[10px] font-sans font-bold"
+                          >
+                            {copiedDns === 'CNAME' ? <CheckCheck size={14} className="text-purple-600" /> : <Copy size={14} />}
+                            <span>{copiedDns === 'CNAME' ? 'কপি হয়েছে' : 'কপি'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-amber-700 font-bold">
+                        ⏱ DNS পরিবর্তন কার্যকর হতে সাধারণত ১০–৩০ মিনিট সময় লাগে।
+                      </p>
+                    </div>
+
                     <div className="flex gap-2">
-                       <button onClick={handleCustomDomainSave} disabled={saving} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 active:scale-95 transition-all">Save Domain</button>
-                       <button onClick={() => setCustomDomainEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all">Cancel</button>
+                       <button onClick={handleCustomDomainSave} disabled={saving} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer">Save Domain</button>
+                       <button onClick={() => setCustomDomainEditing(false)} className="flex-1 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-50 active:scale-95 transition-all cursor-pointer">Cancel</button>
                     </div>
                   </div>
                 ) : (
@@ -1184,38 +1346,76 @@ export default function SettingsPage() {
                           )}
                         </div>
 
-                        {/* DNS Instructions — only show when not yet connected */}
-                        {domainStatus !== 'connected' && (
-                          <div className="p-3 bg-white rounded-xl border border-emerald-200 text-xs">
-                            <p className="font-bold text-slate-800 mb-2">DNS Instructions (Add in your Domain Panel):</p>
-                            <div className="space-y-2 font-mono text-[10px]">
-                              <div className="flex justify-between bg-slate-50 p-2 rounded">
-                                 <span className="text-slate-500 font-bold">Type: A</span>
-                                 <span className="text-slate-500 font-bold">Name: @</span>
-                                 <span className="text-emerald-700 font-black select-all">76.76.21.21</span>
-                              </div>
-                              <div className="flex justify-between bg-slate-50 p-2 rounded">
-                                 <span className="text-slate-500 font-bold">Type: CNAME</span>
-                                 <span className="text-slate-500 font-bold">Name: www</span>
-                                 <span className="text-emerald-700 font-black select-all">cname.vercel-dns.com</span>
-                              </div>
-                            </div>
-                            <p className="text-[9px] text-amber-600 font-bold mt-2">
-                              ⏱ DNS changes take 10–30 minutes. This page auto-checks every 30 seconds.
+                        {/* DNS Instructions Guide */}
+                        <div className="p-3.5 bg-white rounded-xl border border-emerald-200 text-xs space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                              <Sparkles size={13} className="text-emerald-600" /> DNS Instructions (ডোমেইন প্যানেলে যুক্ত করুন):
                             </p>
+                            <span className="text-[10px] text-slate-400 font-bold">Nameserver / DNS Records</span>
                           </div>
-                        )}
+                          
+                          <div className="space-y-2 font-mono text-[10px]">
+                            <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200">
+                               <div>
+                                 <span className="text-slate-500 font-bold mr-2">Type:</span><span className="bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-black">A</span>
+                                 <span className="text-slate-500 font-bold mx-2">Name:</span><span className="font-bold text-slate-800">@</span>
+                                 <span className="text-slate-500 font-bold mx-2">Value:</span><span className="text-emerald-700 font-black">216.198.79.1</span>
+                               </div>
+                               <button
+                                 type="button"
+                                 onClick={() => {
+                                   navigator.clipboard.writeText('216.198.79.1');
+                                   setCopiedDns('A');
+                                   toast.success('A রেকর্ড ভ্যালু (216.198.79.1) কপি করা হয়েছে!');
+                                   setTimeout(() => setCopiedDns(''), 2000);
+                                 }}
+                                 className="p-1 hover:bg-emerald-50 text-emerald-700 rounded flex items-center gap-1 text-[9px] font-sans font-bold cursor-pointer"
+                               >
+                                 {copiedDns === 'A' ? <CheckCheck size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                                 <span>{copiedDns === 'A' ? 'কপি হয়েছে' : 'কপি'}</span>
+                               </button>
+                            </div>
+
+                            <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-200">
+                               <div>
+                                 <span className="text-slate-500 font-bold mr-2">Type:</span><span className="bg-purple-100 text-purple-800 px-1 py-0.5 rounded font-black">CNAME</span>
+                                 <span className="text-slate-500 font-bold mx-2">Name:</span><span className="font-bold text-slate-800">www</span>
+                                 <span className="text-slate-500 font-bold mx-2">Value:</span><span className="text-purple-700 font-black truncate max-w-[160px] sm:max-w-none inline-block align-bottom">dc8755a5e5802d38.vercel-dns-017.com.</span>
+                               </div>
+                               <button
+                                 type="button"
+                                 onClick={() => {
+                                   navigator.clipboard.writeText('dc8755a5e5802d38.vercel-dns-017.com.');
+                                   setCopiedDns('CNAME');
+                                   toast.success('CNAME ভ্যালু কপি করা হয়েছে!');
+                                   setTimeout(() => setCopiedDns(''), 2000);
+                                 }}
+                                 className="p-1 hover:bg-purple-50 text-purple-700 rounded flex items-center gap-1 text-[9px] font-sans font-bold cursor-pointer"
+                               >
+                                 {copiedDns === 'CNAME' ? <CheckCheck size={12} className="text-purple-600" /> : <Copy size={12} />}
+                                 <span>{copiedDns === 'CNAME' ? 'কপি হয়েছে' : 'কপি'}</span>
+                               </button>
+                            </div>
+                          </div>
+                          
+                          <p className="text-[9px] text-amber-700 font-medium">
+                            ⏱ DNS রেকর্ড যোগ করার পর কার্যকর হতে ১০–৩০ মিনিট সময় লাগে। সিস্টেম প্রতি ৩০ সেকেন্ড পর পর স্বয়ংক্রিয়ভাবে যাচাই করে।
+                          </p>
+                        </div>
+
                         {domainStatus === 'connected' && (
-                          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[10px] font-bold text-emerald-700">
-                            ✅ Your custom domain is live with SSL! Customers can now access your store via <span className="underline">{shop.customDomain}</span>.
+                          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[10px] font-bold text-emerald-700 flex items-center gap-1.5">
+                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                            <span>আপনার কাস্টম ডোমেইন লাইভ ও SSL সক্রিয়! গ্রাহকরা এখন <span className="underline">{shop.customDomain}</span> দিয়ে আপনার স্টোরে ঢুকতে পারবেন।</span>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs font-bold text-slate-400">No custom domain linked. Connect your own .com or .shop domain below.</p>
+                      <p className="text-xs font-bold text-slate-400">এখনো কোনো কাস্টম ডোমেইন যুক্ত করা হয়নি। নিচে ক্লিক করে আপনার .com বা .shop ডোমেইন যুক্ত করুন।</p>
                     )}
-                    <button onClick={() => setCustomDomainEditing(true)} className="mt-1 w-full py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
-                       {shop?.customDomain ? 'Change Domain' : 'Connect Custom Domain'}
+                    <button onClick={() => setCustomDomainEditing(true)} className="mt-1 w-full py-2.5 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                       {shop?.customDomain ? 'ডোমেইন পরিবর্তন করুন (Change Domain)' : 'কাস্টম ডোমেইন যুক্ত করুন (Connect Custom Domain)'}
                     </button>
                   </div>
                 )}

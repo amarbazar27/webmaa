@@ -2,8 +2,8 @@
 // Comprehensive Website Templates & Category-Smart Storefront Data for bdretailers.com
 
 export const TEMPLATE_CATEGORIES = [
-  { id: 'all', label: 'সব ডিজাইন (All)', labelEn: 'All Designs', icon: 'Sparkles', count: 12 },
-  { id: 'grocery', label: 'গ্রোসারি ও কাঁচাবাজার', labelEn: 'Grocery & Organic', icon: 'ShoppingBag', count: 2 },
+  { id: 'all', label: 'সব ডিজাইন (All 15)', labelEn: 'All Designs (15)', icon: 'Sparkles', count: 15 },
+  { id: 'grocery', label: 'গ্রোসারি ও সুপারমার্কেট', labelEn: 'Grocery & Supermarket', icon: 'ShoppingBag', count: 2 },
   { id: 'fashion', label: 'পোশাক ও ফ্যাশন', labelEn: 'Fashion & Boutique', icon: 'Shirt', count: 2 },
   { id: 'tech', label: 'গ্যাজেট ও টেক', labelEn: 'Gadgets & Tech', icon: 'Laptop', count: 2 },
   { id: 'beauty', label: 'বিউটি ও স্কিনকেয়ার', labelEn: 'Beauty & Skincare', icon: 'Sparkle', count: 1 },
@@ -11,6 +11,9 @@ export const TEMPLATE_CATEGORIES = [
   { id: 'luxury', label: 'জুয়েলারি ও লাক্সারি', labelEn: 'Luxury & Jewelry', icon: 'Crown', count: 1 },
   { id: 'pharmacy', label: 'ফার্মেসি ও হেলথ', labelEn: 'Health & Pharmacy', icon: 'HeartPulse', count: 1 },
   { id: 'kids', label: 'কিডস ও বেবি আইটেম', labelEn: 'Baby & Kids', icon: 'Baby', count: 1 },
+  { id: 'home', label: 'হোম ও ফার্নিচার', labelEn: 'Home & Living', icon: 'Home', count: 1 },
+  { id: 'sports', label: 'স্পোর্টস ও ফিটনেস', labelEn: 'Sports & Fitness', icon: 'Activity', count: 1 },
+  { id: 'books', label: 'বই ও স্টেশনারি', labelEn: 'Books & Stationery', icon: 'BookOpen', count: 1 },
   { id: 'b2b', label: 'পাইকারি ও বিটুবি', labelEn: 'B2B & Wholesale', icon: 'Building2', count: 1 },
 ];
 
@@ -520,35 +523,463 @@ export const DEFAULT_WEBSITE_TEMPLATES = [
       { id: 'ws3', name: 'ফাস্ট চার্জিং ব্রেডেড টাইপ-সি ক্যাবল (১০০ পিসের হোলসেল বক্স)', price: 7500, oldPrice: 9500, image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400&q=80', unit: '১০০ পিস বক্স', badge: 'MOQ ১০০ পিস' },
       { id: 'ws4', name: 'কসমেটিক ভেলভেট ম্যাট লিপস্টিক সেট (২৪ পিসের মাস্টার কার্টন)', price: 4200, oldPrice: 5200, image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&q=80', unit: '২৪ পিস কার্টন', badge: 'MOQ ২৪ পিস' }
     ]
+  },
+
+  // ── 9. SUPERMARKET & DAILY DEALS ──
+  {
+    id: 'supermarket_deals',
+    title: 'Mega Mart Superstore & Daily Savings',
+    titleBn: 'মেগামার্ট সুপারস্টোর ও সুপার সেভিংস বাজার',
+    category: 'grocery',
+    categoryBn: 'মুদি ও কাঁচাবাজার',
+    demoSubdomain: 'supermarket',
+    themePresetId: 'fresh_grocery',
+    headerStyle: 'search_first',
+    footerStyle: 'classic_4col',
+    primaryColor: '#16A34A',
+    secondaryColor: '#14532D',
+    accentColor: '#4ADE80',
+    bgColor: '#F0FDF4',
+    textColor: '#14532D',
+    font: 'Inter',
+    buttonRadius: '24px',
+    cardRadius: '16px',
+    badge: 'মেগা ভলিউম সেভিংস',
+    badgeTheme: 'emerald',
+    description: 'হাজারো পণ্যের ইনস্ট্যান্ট সার্চ, ডিল অফ দ্য ডে, ভলিউম সেভিংস ও দ্রুততম হোম ডেলিভারি।',
+    bannerImage: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1200&q=80',
+    thumbnail: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=800&q=80',
+    specialType: 'grocery',
+    features: [
+      'ডিল অফ দ্য ডে লাইভ স্টক কাউন্টার',
+      'মাল্টি-ক্যাটাগরি সুপারস্টোর নেভিগেশন',
+      'সুপার-ফাস্ট হোম ডেলিভারি ও স্লট বুকিং',
+      'ডিজিটাল ক্যাশ অন ডেলিভারি ও বিকাশ পেমেন্ট'
+    ],
+    rating: 4.9,
+    storesCount: 142,
+    isActive: true,
+    featuredOnHome: true,
+    hero: {
+      tag: 'মেগা সেভিংস সুপারস্টোর',
+      title: 'বাজারের সেরা দামে কিনুন প্রাত্যহিক গৃহস্থালি ও সুপারমার্কেট পণ্য',
+      subtitle: 'এক ক্লিকেই প্রয়োজনীয় সব মুদি, প্রসাধন ও স্ন্যাকস অর্ডার করুন ঘরে বসেই।',
+      ctaPrimary: 'অফারগুলো দেখুন',
+      ctaSecondary: 'ডিল অফ দ্য ডে',
+      imageUrl: 'https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=600&q=80'
+    },
+    tickerText: '🔥 মেগা ডিল: বাসমতি চাল ৫ কেজি ৳৫২০ | সূর্যমুখী তেল ৫ লিটার ৳৮৯০ | গুড়ো দুধ ১ কেজি ৳৭৫০',
+    sampleCategories: [
+      { id: 'sm1', name: 'রাইস ও ফ্লাওয়ার', icon: 'Package', count: '৫০+ আইটেম' },
+      { id: 'sm2', name: 'কুকিং অয়েল ও ঘি', icon: 'Flame', count: '৩০+ ব্র্যান্ড' },
+      { id: 'sm3', name: 'বেভারেজ ও জুস', icon: 'Coffee', count: '৪০+ ফ্লেভার' },
+      { id: 'sm4', name: 'স্ন্যাকস ও বিস্কুট', icon: 'Sparkles', count: '৬০+ প্রকার' }
+    ],
+    sampleProducts: [
+      { id: 'sm_p1', name: 'ফরচুন প্রিমিয়াম বাসমতি চাল (৫ কেজি প্যাক)', price: 540, oldPrice: 620, image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80', unit: '৫ কেজি', badge: 'মেগা সেভার' },
+      { id: 'sm_p2', name: 'রূপচাঁদা ফর্টিফাইড সয়াবিন তেল (৫ লিটার জার)', price: 890, oldPrice: 960, image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&q=80', unit: '৫ লিটার', badge: '১০% ছাড়' },
+      { id: 'sm_p3', name: 'ডানো ডেইলি পুষ্টি ফুল ক্রিম মিল্ক পাউডার (১ কেজি)', price: 780, oldPrice: 850, image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&q=80', unit: '১ কেজি', badge: 'জনপ্রিয়' },
+      { id: 'sm_p4', name: 'নেসক্যাফে ক্লাসিক কফি জার (২০০ গ্রাম)', price: 620, oldPrice: 700, image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&q=80', unit: '২০০ গ্রাম', badge: 'ইনস্ট্যান্ট' }
+    ]
+  },
+
+  // ── 10. MODERN STREETWEAR & GEN-Z APPAREL ──
+  {
+    id: 'modern_streetwear',
+    title: 'Urban Streetwear & Gen-Z Drops',
+    titleBn: 'আরবান স্ট্রিটওয়্যার ও ট্রেন্ডি ড্রপস',
+    category: 'fashion',
+    categoryBn: 'পোশাক ও ফ্যাশন',
+    demoSubdomain: 'streetwear',
+    themePresetId: 'modern_minimal',
+    headerStyle: 'classic',
+    footerStyle: 'fashion_lifestyle',
+    primaryColor: '#E11D48',
+    secondaryColor: '#4C0519',
+    accentColor: '#FB7185',
+    bgColor: '#FFF1F2',
+    textColor: '#1E293B',
+    font: 'Montserrat',
+    buttonRadius: '16px',
+    cardRadius: '20px',
+    badge: 'লিমিটেড ড্রপ',
+    badgeTheme: 'rose',
+    description: 'তারুণ্যের ট্রেন্ডি স্ট্রিট ফ্যাশন, ওভারসাইজড গ্রাফিক টিজ, কার্গো প্যান্টস ও স্নিকার্স কালেকশন।',
+    bannerImage: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=1200&q=80',
+    thumbnail: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=800&q=80',
+    specialType: 'fashion',
+    features: [
+      'এক্সক্লুসিভ লিমিটেড এডিশন ড্রপস',
+      'ইনস্টাগ্রাম লুকবুক ও শর্ট ভিডিও ফিড',
+      'সাইজ চার্ট ও পারফেক্ট ফিট গাইড',
+      'সারাদেশে ২-৩ দিনে ফাস্ট ক্যাশ অন ডেলিভারি'
+    ],
+    rating: 4.9,
+    storesCount: 178,
+    isActive: true,
+    featuredOnHome: true,
+    hero: {
+      tag: 'NEW DROP 2026',
+      title: 'তারুণ্যের স্টাইলিশ স্ট্রিটওয়্যার ও ওভারসাইজড ড্রপস',
+      subtitle: 'প্রিমিয়াম ২২০+ জিএসএম কম্বড কটন, নিখুঁত স্ক্রিন প্রিন্ট ও আর্বান কাট। নিজের ফ্যাশনে থাকুন সবার চেয়ে আলাদা।',
+      ctaPrimary: 'নতুন ড্রপ দেখুন',
+      ctaSecondary: 'লুকবুক ব্রাউজ করুন',
+      imageUrl: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80'
+    },
+    sampleCategories: [
+      { id: 'st1', name: 'ওভারসাইজড টি-শার্ট', icon: 'Shirt', count: '৬০+ ডিজাইন' },
+      { id: 'st2', name: 'ট্যাকটিক্যাল কার্গো', icon: 'Package', count: '২০+ কালার' },
+      { id: 'st3', name: 'হুডি ও জ্যাকেট', icon: 'Zap', count: '৩০+ মডেল' },
+      { id: 'st4', name: 'ক্যাপ ও স্নিকার্স', icon: 'Sparkles', count: '২৫+ স্টাইল' }
+    ],
+    sampleProducts: [
+      { id: 'st_p1', name: 'সাইবারপাঙ্ক হেভিওয়েট ওভারসাইজড টি-শার্ট (২২০ জিএসএম)', price: 790, oldPrice: 990, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&q=80', unit: '১ পিস', badge: 'হট ড্রপ' },
+      { id: 'st_p2', name: 'আরবান মাল্টি-পকেট ট্যাকটিক্যাল কার্গো প্যান্ট', price: 1450, oldPrice: 1750, image: 'https://images.unsplash.com/photo-1517445312882-bc9910d016b7?w=400&q=80', unit: '১ পিস', badge: 'ট্রেন্ডিং' },
+      { id: 'st_p3', name: 'মিনিমালিস্ট এম্ব্রয়ডারি হুডি উইথ ক্যাঙ্গারু পকেট', price: 1650, oldPrice: 1950, image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=400&q=80', unit: '১ পিস', badge: 'বেস্টসেলার' },
+      { id: 'st_p4', name: 'ক্লাসিক রেট্রো হাই-টপ স্ট্রিটওয়্যার স্নিকার্স', price: 2850, oldPrice: 3400, image: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&q=80', unit: '১ জোড়া', badge: 'প্রিমিয়াম' }
+    ]
+  },
+
+  // ── 11. SMART GADGETS & AUDIO GEAR ──
+  {
+    id: 'gadgets_audio',
+    title: 'SoundWave Smart Gadgets & Audio',
+    titleBn: 'সাউন্ডওয়েভ স্মার্ট গ্যাজেটস ও হাই-ফাই অডিও',
+    category: 'tech',
+    categoryBn: 'গ্যাজেট ও টেক',
+    demoSubdomain: 'gadgets',
+    themePresetId: 'midnight_dark',
+    headerStyle: 'electronics',
+    footerStyle: 'electronics_tech',
+    primaryColor: '#06B6D4',
+    secondaryColor: '#0F172A',
+    accentColor: '#22D3EE',
+    bgColor: '#0B1120',
+    textColor: '#F8FAFC',
+    font: 'Inter',
+    buttonRadius: '14px',
+    cardRadius: '18px',
+    badge: 'অফিসিয়াল ওয়্যারেন্টি',
+    badgeTheme: 'cyan',
+    description: 'এএনসি ওয়্যারলেস ইয়ারবাডস, ব্লুটুথ স্পিকার, স্মার্টওয়াচ ও গেমিং এক্সেসরিজ সরাসরি অফিসিয়াল ওয়্যারেন্টি সহ।',
+    bannerImage: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=1200&q=80',
+    thumbnail: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&q=80',
+    specialType: 'tech',
+    features: [
+      'অ্যাক্টিভ নয়েজ ক্যান্সেলেশন (ANC) অডিও শোকেস',
+      '১০০% অথেনটিক গ্যাজেটস ও অফিসিয়াল ওয়ারেন্টি',
+      'রিয়েলটাইম আনবক্সিং ভিডিও রিলস ফিড',
+      'ফাস্ট ডেলিভারি ও ইনস্ট্যান্ট রিপ্লেসমেন্ট গ্যারান্টি'
+    ],
+    rating: 4.9,
+    storesCount: 165,
+    isActive: true,
+    featuredOnHome: true,
+    hero: {
+      tag: 'HI-RES AUDIO & TECH',
+      title: 'স্মার্ট লাইফস্টাইলের সেরা প্রিমিয়াম সাউন্ড ও গ্যাজেটস',
+      subtitle: 'ডিপ বাস, অ্যাক্টিভ নয়েজ ক্যান্সেলেশন ও লং ব্যাটারি লাইফ। প্রতিটি মিউজিক নোট শুনুন স্টুডিও কোয়ালিটিতে।',
+      ctaPrimary: 'গ্যাজেটস এক্সপ্লোর করুন',
+      ctaSecondary: 'অডিও কালেকশন',
+      imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80'
+    },
+    sampleCategories: [
+      { id: 'gd1', name: 'TWS ইয়ারবাডস', icon: 'Zap', count: '৪০+ মডেল' },
+      { id: 'gd2', name: 'হেডফোন ও হেডসেট', icon: 'Sparkles', count: '২৫+ মডেল' },
+      { id: 'gd3', name: 'স্মার্ট ওয়াচ', icon: 'Activity', count: '৩৫+ মডেল' },
+      { id: 'gd4', name: 'পাওয়ার ব্যাংক ও চার্জার', icon: 'Battery', count: '৩০+ আইটেম' }
+    ],
+    sampleProducts: [
+      { id: 'gd_p1', name: 'SoundWave প্রো অ্যাক্টিভ নয়েজ ক্যান্সেলেশন TWS বাডস', price: 2950, oldPrice: 3500, image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&q=80', unit: '১ কিট', badge: 'ANC 35dB' },
+      { id: 'gd_p2', name: 'হাই-ফাই স্টুডিও ব্লুটুথ ওভার-ইয়ার হেডফোন (৫০ ঘণ্টা ব্যাটারি)', price: 4200, oldPrice: 4800, image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400&q=80', unit: '১ পিস', badge: 'Hi-Res অডিও' },
+      { id: 'gd_p3', name: 'আল্ট্রা-স্লিম AMOLED ডিসপ্লে ব্লুটুথ কলিং স্মার্টওয়াচ', price: 3400, oldPrice: 3950, image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80', unit: '১ পিস', badge: 'AMOLED' },
+      { id: 'gd_p4', name: '৬৫ ওয়াট GaN সুপার-ফাস্ট ট্রিপল পোর্ট চার্জার', price: 1850, oldPrice: 2200, image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=400&q=80', unit: '১ পিস', badge: 'GaN ফাস্ট' }
+    ]
+  },
+
+  // ── 12. HOME LIVING & DECOR ──
+  {
+    id: 'home_living',
+    title: 'Nordic Living & Home Aesthetics',
+    titleBn: 'নর্ডিক লিভিং ও আধুনিক হোম ডেকর',
+    category: 'home',
+    categoryBn: 'হোম ও ফার্নিচার',
+    demoSubdomain: 'homeliving',
+    themePresetId: 'modern_minimal',
+    headerStyle: 'classic',
+    footerStyle: 'modern_split',
+    primaryColor: '#CC5500',
+    secondaryColor: '#7C2D12',
+    accentColor: '#F97316',
+    bgColor: '#FFFBEB',
+    textColor: '#1E293B',
+    font: 'Montserrat',
+    buttonRadius: '12px',
+    cardRadius: '18px',
+    badge: 'হস্তশিল্প ও নান্দনিক',
+    badgeTheme: 'amber',
+    description: 'IKEA অনুপ্রাণিত নর্ডিক মিনিমালিজম, হোম ডেকর, কিচেনওয়্যার, কিউরেটেড হ্যান্ডমেড আর্ট ও প্রিমিয়াম ফার্নিচার।',
+    bannerImage: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1200&q=80',
+    thumbnail: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80',
+    specialType: 'home',
+    features: [
+      '৫০/৫০ স্প্লিট স্ক্রিন ইন্টেরিয়র শোকেস',
+      'হস্তশিল্প কাঠের পণ্য ও সিরামিক ভেস',
+      '১০০% কটন বেডিং ও অর্থোপেডিক পিলো',
+      'নিরাপদ ও সুরক্ষিত হোম ডেলিভারি প্যাকেজিং'
+    ],
+    rating: 4.8,
+    storesCount: 88,
+    isActive: true,
+    featuredOnHome: true,
+    hero: {
+      tag: 'AESTHETIC LIVING',
+      title: 'আপনার ঘরকে সাজিয়ে তুলুন স্নিগ্ধ ও নান্দনিক শৈলীতে',
+      subtitle: 'প্রাকৃতিক কাঠ, নরম টেক্সটাইল ও আধুনিক ডিজাইনের মেলবন্ধনে তৈরি হোম ডেকর কালেকশন।',
+      ctaPrimary: 'হোম কালেকশন দেখুন',
+      ctaSecondary: 'মুড বোর্ড এক্সপ্লোর করুন',
+      imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80'
+    },
+    sampleCategories: [
+      { id: 'hl1', name: 'লিভিং রুম ডেকর', icon: 'Home', count: '৪৫+ আইটেম' },
+      { id: 'hl2', name: 'বেডশিট ও কুশন', icon: 'Package', count: '৩০+ ডিজাইন' },
+      { id: 'hl3', name: 'কিচেন ও ডাইনিং', icon: 'Utensils', count: '৩৫+ পণ্য' },
+      { id: 'hl4', name: 'ল্যাম্প ও লাইটিং', icon: 'Zap', count: '২০+ স্টাইল' }
+    ],
+    sampleProducts: [
+      { id: 'hl_p1', name: 'মিনিমালিস্ট নর্ডিক হ্যান্ডমেড সিরামিক ফ্লাওয়ার ভেস', price: 850, oldPrice: 1100, image: 'https://images.unsplash.com/photo-1581783342308-f792dbdd27c5?w=400&q=80', unit: '১ পিস', badge: 'হ্যান্ডমেড' },
+      { id: 'hl_p2', name: '১০০% পিওর কটন কিং সাইজ ডিজাইনার বেডশিট সেট (৪ পার্ট)', price: 1850, oldPrice: 2250, image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400&q=80', unit: '১ সেট', badge: '১০০% কটন' },
+      { id: 'hl_p3', name: 'ন্যাচারাল ব্যাম্বু উডেন ল্যাম্প উইথ ওয়ার্ম লাইটিং', price: 1450, oldPrice: 1800, image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400&q=80', unit: '১ পিস', badge: 'ওয়ার্ম লাইট' },
+      { id: 'hl_p4', name: 'বোোহো স্টাইল হ্যান্ড-ওভেন ম্যাক্রাম কুশন কভার (সেট অব ২)', price: 950, oldPrice: 1200, image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400&q=80', unit: '২ পিস সেট', badge: 'নান্দনিক' }
+    ]
+  },
+
+  // ── 13. SPORTS & FITNESS ATHLETICS ──
+  {
+    id: 'sports_fitness',
+    title: 'IronCore Fitness & Activewear Gear',
+    titleBn: 'আয়রনকোর ফিটনেস গিয়ার ও স্পোর্টস নিউট্রিশন',
+    category: 'sports',
+    categoryBn: 'স্পোর্টস ও ফিটনেস',
+    demoSubdomain: 'fitness',
+    themePresetId: 'modern_minimal',
+    headerStyle: 'classic',
+    footerStyle: 'classic_4col',
+    primaryColor: '#EA580C',
+    secondaryColor: '#18181B',
+    accentColor: '#F97316',
+    bgColor: '#FFF7ED',
+    textColor: '#18181B',
+    font: 'Outfit',
+    buttonRadius: '24px',
+    cardRadius: '16px',
+    badge: '১০০% অথেনটিক নিউট্রিশন',
+    badgeTheme: 'orange',
+    description: 'জিম ও হোম ওয়ার্কআউট ইকুইপমেন্ট, ড্রাই-ফিট অ্যাক্টিভওয়্যার ও বিশ্বমানের প্রোটিন সাপ্লিমেন্ট।',
+    bannerImage: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1200&q=80',
+    thumbnail: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&q=80',
+    specialType: 'sports',
+    features: [
+      '১০০% জেনুইন আন্তর্জাতিক সাপ্লিমেন্ট ভেরিফিকেশন',
+      'ড্রাই-ফিট ব্রিদেবল অ্যাথলেটিক টি-শার্ট ও জগার্স',
+      'প্রফেশনাল ডাম্বেল, রেজিস্ট্যান্স ব্যান্ড ও ইকুইপমেন্ট',
+      'ফিটনেস ট্রেইনার রিকমেন্ডেড বান্ডেল প্যাক'
+    ],
+    rating: 4.9,
+    storesCount: 75,
+    isActive: true,
+    featuredOnHome: false,
+    hero: {
+      tag: 'FUEL YOUR PASSION',
+      title: 'সেরা ফিটনেস গিয়ার ও সাপ্লিমেন্টে গড়ুন আপনার পারফেক্ট বডি',
+      subtitle: 'আন্তর্জাতিক সার্টিফাইড নিউট্রিশন ও টেকসই ওয়ার্কআউট গিয়ার। নিজের ফিটনেস লক্ষ্যে পৌঁছান দ্রুত।',
+      ctaPrimary: 'গিয়ার ব্রাউজ করুন',
+      ctaSecondary: 'সাপ্লিমেন্ট দেখুন',
+      imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80'
+    },
+    sampleCategories: [
+      { id: 'sp1', name: 'হুই প্রোটিন ও ক্রিয়েটিন', icon: 'Flame', count: '৩০+ ব্র্যান্ড' },
+      { id: 'sp2', name: 'ড্রাই-ফিট স্পোর্টসওয়্যার', icon: 'Shirt', count: '৫০+ আইটেম' },
+      { id: 'sp3', name: 'ডাম্বেল ও কেটলবেল', icon: 'Activity', count: '২০+ ওজন' },
+      { id: 'sp4', name: 'জিম এক্সেসরিজ ও গ্লাভস', icon: 'Sparkles', count: '২৫+ পণ্য' }
+    ],
+    sampleProducts: [
+      { id: 'sp_p1', name: 'গোল্ড স্ট্যান্ডার্ড ১০০% হুই প্রোটিন আইসোলেট (৫ পাউন্ড)', price: 8200, oldPrice: 9200, image: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=400&q=80', unit: '৫ পাউন্ড', badge: 'অথেনটিক' },
+      { id: 'sp_p2', name: 'প্রো ড্রাই-ফিট অ্যান্টি-সয়েট জিম টি-শার্ট ও শর্টস কম্বো', price: 850, oldPrice: 1100, image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=400&q=80', unit: '১ সেট', badge: 'ড্রাই-ফিট' },
+      { id: 'sp_p3', name: 'এডজাস্টেবল রাবার-কোটেড ডাম্বেল সেট (২০ কেজি)', price: 3400, oldPrice: 4000, image: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=400&q=80', unit: '২০ কেজি সেট', badge: 'হেভি ডিউটি' },
+      { id: 'sp_p4', name: 'মাইক্রোনাইজড ক্রিয়েটিন পাউডার (৩০০ গ্রাম)', price: 2100, oldPrice: 2450, image: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=400&q=80', unit: '৩০০ গ্রাম', badge: 'পিউর পাওয়ার' }
+    ]
+  },
+
+  // ── 14. BOOKS & STATIONERY ──
+  {
+    id: 'books_stationery',
+    title: 'Boipoka Bookhouse & Creative Stationery',
+    titleBn: 'বইপোকা বুকহাউস ও ক্রিয়েটিভ স্টেশনারি',
+    category: 'books',
+    categoryBn: 'বই ও স্টেশনারি',
+    demoSubdomain: 'books',
+    themePresetId: 'clean_commerce',
+    headerStyle: 'mega_nav',
+    footerStyle: 'classic_4col',
+    primaryColor: '#4338CA',
+    secondaryColor: '#1E1B4B',
+    accentColor: '#6366F1',
+    bgColor: '#EEF2FF',
+    textColor: '#1E1B4B',
+    font: 'Hind Siliguri',
+    buttonRadius: '8px',
+    cardRadius: '14px',
+    badge: 'রকমারি বই ও স্টেশনারি',
+    badgeTheme: 'indigo',
+    description: 'বেস্টসেলার সাহিত্য, অনুবাদ, আত্মউন্নয়ন, ইসলামিক বই ও প্রিমিয়াম আর্ট স্টেশনারি কালেকশন।',
+    bannerImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=1200&q=80',
+    thumbnail: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80',
+    specialType: 'books',
+    features: [
+      'লেখক ও ক্যাটাগরি অনুযায়ী স্মার্ট বুক ফিল্টার',
+      'প্রিমিয়াম পেপারব্যাক ও হার্ডকভার এডিশন',
+      'আর্ট জার্নাল, ফাউন্টেন পেন ও ক্যালিগ্রাফি কিট',
+      'বইপ্রেমীদের জন্য বিশেষ বুকমার্ক ও গিফট প্যাকেজিং'
+    ],
+    rating: 4.9,
+    storesCount: 110,
+    isActive: true,
+    featuredOnHome: false,
+    hero: {
+      tag: 'জ্ঞান ও সাহিত্যের ভুবন',
+      title: 'প্রিয় লেখকের পছন্দের বই ও নান্দনিক স্টেশনারি অর্ডার করুন',
+      subtitle: 'উপন্যাস, মোটিভেশনাল, ধর্মীয় ও ক্যারিয়ারের বইয়ের বিশাল সমাহার সরাসরি আপনার ঠিকানায়।',
+      ctaPrimary: 'বইয়ের তালিকা দেখুন',
+      ctaSecondary: 'বেস্টসেলার বই',
+      imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600&q=80'
+    },
+    sampleCategories: [
+      { id: 'bk1', name: 'উপন্যাস ও সাহিত্য', icon: 'BookOpen', count: '২০০+ বই' },
+      { id: 'bk2', name: 'আত্মউন্নয়ন ও ক্যারিয়ার', icon: 'Sparkles', count: '৮০+ বই' },
+      { id: 'bk3', name: 'ইসলামিক ও দ্বীনি বই', icon: 'Heart', count: '১২০+ বই' },
+      { id: 'bk4', name: 'আর্ট ডায়েরি ও পেন', icon: 'Edit3', count: '৫০+ আইটেম' }
+    ],
+    sampleProducts: [
+      { id: 'bk_p1', name: 'প্যারাডক্সিক্যাল সাজিদ ১ ও ২ কম্বো সেট (আরিফ আজাদ)', price: 580, oldPrice: 700, image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&q=80', unit: '২ বই সেট', badge: 'বেস্টসেলার' },
+      { id: 'bk_p2', name: 'পারমাণবিক অভ্যাস (Atomic Habits বাংলা অনুবাদ)', price: 320, oldPrice: 400, image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80', unit: '১ বই', badge: 'অনুবাদ' },
+      { id: 'bk_p3', name: 'ভিন্টেজ লেদার কাভারড হার্ডবাউন্ড ব্ল্যাঙ্ক আর্ট জার্নাল', price: 480, oldPrice: 600, image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80', unit: '১ পিস', badge: 'ভিন্টেজ' },
+      { id: 'bk_p4', name: 'লাক্সারি মেটালিক ফাউন্টেন পেন উইথ ব্ল্যাক ইঙ্ক পট', price: 850, oldPrice: 1100, image: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=400&q=80', unit: '১ সেট', badge: 'লাক্সারি' }
+    ]
+  },
+
+  // ── 15. BABY & KIDS TOYS WONDERLAND ──
+  {
+    id: 'baby_kids',
+    title: 'LittleAngels Baby Care & Kids Toys',
+    titleBn: 'লিটলঅ্যাঞ্জেলস বেবি কেয়ার ও কিডস টয়স',
+    category: 'kids',
+    categoryBn: 'কিডস ও বেবি আইটেম',
+    demoSubdomain: 'babykids',
+    themePresetId: 'clean_commerce',
+    headerStyle: 'grocery_quick',
+    footerStyle: 'classic_4col',
+    primaryColor: '#F43F5E',
+    secondaryColor: '#881337',
+    accentColor: '#FB7185',
+    bgColor: '#FFF1F2',
+    textColor: '#881337',
+    font: 'Hind Siliguri',
+    buttonRadius: '20px',
+    cardRadius: '20px',
+    badge: '১০০% শিশুর জন্য নিরাপদ',
+    badgeTheme: 'rose',
+    description: 'বিপিএ-মুক্ত ফিডিং বোতল, ডায়াপার বান্ডেল, স্কিনকেয়ার লোশন, শিক্ষণীয় খেলনা ও বেবি ক্লোথিং।',
+    bannerImage: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=1200&q=80',
+    thumbnail: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80',
+    specialType: 'kids',
+    features: [
+      '১০০% বিপিএ-মুক্ত ও শিশু বান্ধব উপাদান গ্যারান্টি',
+      'মাসিক ডায়াপার ও বেবি ওয়াইপস মেগা সেভিংস প্যাক',
+      'শিক্ষণীয় ও বুদ্ধি বিকাশের মন্টেসরি টয়স কালেকশন',
+      'সংবেদনশীল ত্বকের জন্য চর্মরোগ বিশেষজ্ঞ অনুমোদিত লোশন'
+    ],
+    rating: 4.9,
+    storesCount: 118,
+    isActive: true,
+    featuredOnHome: true,
+    hero: {
+      tag: 'আপনার সোনামণির সেরা যত্ন',
+      title: 'শিশুর আরাম ও সুরক্ষায় প্রিমিয়াম বেবি কেয়ার ও খেলনা',
+      subtitle: 'নবজাতক থেকে শুরু করে বাড়ন্ত শিশুদের জন্য সেরা ব্র্যান্ডের জামাকাপড়, নিরাপদ খাবার সামগ্রী ও খেলনা।',
+      ctaPrimary: 'বেবি আইটেম দেখুন',
+      ctaSecondary: 'ডায়াপার বান্ডেল',
+      imageUrl: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&q=80'
+    },
+    sampleCategories: [
+      { id: 'kd1', name: 'ডায়াপার ও ওয়াইপস', icon: 'Package', count: '৩০+ ব্র্যান্ড' },
+      { id: 'kd2', name: 'ফিডিং ও বোতল', icon: 'Sparkles', count: '৪০+ আইটেম' },
+      { id: 'kd3', name: 'বেবি লোশন ও তেল', icon: 'Heart', count: '২৫+ প্রোডাক্ট' },
+      { id: 'kd4', name: 'শিক্ষণীয় খেলনা', icon: 'Zap', count: '৫০+ খেলনা' }
+    ],
+    sampleProducts: [
+      { id: 'kd_p1', name: 'প্যাম্পার্স অ্যাক্টিভ বেবি ডায়াপার লার্জ সাইজ (৫৬ পিস প্যাক)', price: 1750, oldPrice: 1950, image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&q=80', unit: '৫৬ পিস প্যাক', badge: 'মেগা সেভার' },
+      { id: 'kd_p2', name: 'ফিলিপস এভেন্ট বিপিএ-ফ্রি অ্যান্টি-কোলিক ফিডিং বোতল (২৬০ মিলি)', price: 950, oldPrice: 1150, image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&q=80', unit: '১ পিস', badge: 'বিপিএ মুক্ত' },
+      { id: 'kd_p3', name: 'মন্টেসরি কাঠের শিক্ষণীয় জিগস পাজল ও সেভ ট্র্যাকার', price: 650, oldPrice: 800, image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&q=80', unit: '১ সেট', badge: 'লার্নিং' },
+      { id: 'kd_p4', name: 'সেবাফার্ম বেবি ক্লেনজিং বার ও শ্যাম্পু কম্বো প্যাক', price: 820, oldPrice: 950, image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=80', unit: '১ কম্বো', badge: 'ডাক্তার পছন্দ' }
+    ]
   }
 ];
 
-export function getMergedTemplates(globalConfigTemplates) {
-  if (!Array.isArray(globalConfigTemplates) || globalConfigTemplates.length === 0) {
-    return DEFAULT_WEBSITE_TEMPLATES;
+export function getMergedTemplates(templatesOrConfig, maybeDeletedIds = []) {
+  let globalConfigTemplates = templatesOrConfig;
+  let deletedTemplateIds = maybeDeletedIds;
+
+  // If caller passed full globalConfig object instead of just websiteTemplates array
+  if (templatesOrConfig && typeof templatesOrConfig === 'object' && !Array.isArray(templatesOrConfig)) {
+    if ('websiteTemplates' in templatesOrConfig || 'deletedTemplateIds' in templatesOrConfig) {
+      globalConfigTemplates = templatesOrConfig.websiteTemplates;
+      deletedTemplateIds = templatesOrConfig.deletedTemplateIds || [];
+    }
   }
 
-  const customMap = new Map(globalConfigTemplates.map(t => [t.id, t]));
+  const deletedSet = new Set(Array.isArray(deletedTemplateIds) ? deletedTemplateIds : []);
 
-  return DEFAULT_WEBSITE_TEMPLATES.map(def => {
-    const custom = customMap.get(def.id) || customMap.get(def.demoSubdomain);
-    if (!custom) return def;
-    // Deep merge so rich features (specialType, sampleCategories, sampleProducts, concerns, reels, bundle, etc.) are never lost
-    return {
-      ...def,
-      ...custom,
-      sampleCategories: (custom.sampleCategories && custom.sampleCategories.length > 0) ? custom.sampleCategories : def.sampleCategories,
-      sampleProducts: (custom.sampleProducts && custom.sampleProducts.length > 0) ? custom.sampleProducts : def.sampleProducts,
-      concerns: (custom.concerns && custom.concerns.length > 0) ? custom.concerns : def.concerns,
-      reels: (custom.reels && custom.reels.length > 0) ? custom.reels : def.reels,
-      bundle: custom.bundle || def.bundle,
-      specialType: custom.specialType || def.specialType,
-      hero: { ...def.hero, ...(custom.hero || {}) },
-      features: (custom.features && custom.features.length > 0) ? custom.features : def.features,
-      thumbnail: custom.thumbnail || def.thumbnail,
-      bannerImage: custom.bannerImage || def.bannerImage,
-    };
+  const customList = Array.isArray(globalConfigTemplates) ? globalConfigTemplates : [];
+  customList.forEach(t => {
+    if (t && (t.isDeleted || t.deleted)) {
+      deletedSet.add(t.id);
+    }
   });
+
+  const customMap = new Map();
+  customList.forEach(t => {
+    if (t && t.id) customMap.set(t.id, t);
+  });
+
+  // 1. Process default templates excluding deleted ones
+  const mergedDefaults = DEFAULT_WEBSITE_TEMPLATES
+    .filter(def => !deletedSet.has(def.id))
+    .map(def => {
+      const custom = customMap.get(def.id) || customMap.get(def.demoSubdomain);
+      if (!custom) return def;
+      // Deep merge so rich features (specialType, sampleCategories, sampleProducts, concerns, reels, bundle, etc.) are never lost
+      return {
+        ...def,
+        ...custom,
+        sampleCategories: (custom.sampleCategories && custom.sampleCategories.length > 0) ? custom.sampleCategories : def.sampleCategories,
+        sampleProducts: (custom.sampleProducts && custom.sampleProducts.length > 0) ? custom.sampleProducts : def.sampleProducts,
+        concerns: (custom.concerns && custom.concerns.length > 0) ? custom.concerns : def.concerns,
+        reels: (custom.reels && custom.reels.length > 0) ? custom.reels : def.reels,
+        bundle: custom.bundle || def.bundle,
+        specialType: custom.specialType || def.specialType,
+        hero: { ...def.hero, ...(custom.hero || {}) },
+        features: (custom.features && custom.features.length > 0) ? custom.features : def.features,
+        thumbnail: custom.thumbnail || def.thumbnail,
+        bannerImage: custom.bannerImage || def.bannerImage,
+      };
+    });
+
+  // 2. Add brand-new custom templates created in Superadmin that aren't in DEFAULT_WEBSITE_TEMPLATES
+  const defaultIds = new Set(DEFAULT_WEBSITE_TEMPLATES.map(d => d.id));
+  const brandNewCustoms = customList.filter(t => t && t.id && !defaultIds.has(t.id) && !deletedSet.has(t.id));
+
+  return [...mergedDefaults, ...brandNewCustoms];
 }
 
 export function findTemplateByIdOrSlug(idOrSlug, customTemplates) {

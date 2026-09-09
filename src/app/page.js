@@ -229,6 +229,7 @@ export default function Home() {
   const showTemplates = sectionsConfig.templates !== false;
   const showStats = sectionsConfig.stats !== false;
   const showBanners = sectionsConfig.banners !== false;
+  const showMarketplaceGateway = sectionsConfig.marketplaceGateway !== false;
   const showMarketplace = sectionsConfig.marketplace !== false;
   const showFeaturedModels = sectionsConfig.featuredModels !== false;
   const showShowcase = sectionsConfig.showcase !== false;
@@ -1671,6 +1672,72 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── Central Marketplace Store Gateway Banner (store.bdretailers.com) ── */}
+      {showMarketplaceGateway && (
+        <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 border border-purple-500/30 p-6 sm:p-10 text-white shadow-2xl shadow-purple-950/40">
+            {/* Background ambient light */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+
+            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+              <div className="space-y-4 max-w-2xl text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-purple-300 text-xs font-black uppercase tracking-wider">
+                  <Store size={14} className="text-amber-400" />
+                  <span>কেন্দ্রীয় মার্কেটপ্লেস স্টোর • Central Store</span>
+                </div>
+
+                <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
+                  সব পণ্য এক ছাতার নিচে —{' '}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-300 to-amber-300">
+                    store.bdretailers.com
+                  </span>
+                </h2>
+
+                <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
+                  গ্রোসারি, ফ্যাশন, ডিজিটাল গ্যাজেট ও নিত্যপ্রয়োজনীয় সামগ্রী। সারা দেশের ভেরিফায়েড রিটেইলারদের সেরা পণ্য সরাসরি ক্যাশ অন ডেলিভারিতে অর্ডার করুন।
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1 text-[11px] text-slate-300 font-bold">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white/5 border border-white/10">
+                    🚚 স্টেডফাস্ট কুরিয়ার ডেলিভারি
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white/5 border border-white/10">
+                    💳 ক্যাশ অন ডেলিভারি ও বিকাশ
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white/5 border border-white/10">
+                    ✓ ১০০% জেনুইন রিটেইলার্স
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row lg:flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
+                <a
+                  href="https://store.bdretailers.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ShoppingBag size={16} />
+                  <span>মূল স্টোরে প্রবেশ করুন (store.bdretailers.com)</span>
+                  <ArrowRight size={15} />
+                </a>
+
+                {showMarketplace && (
+                  <a
+                    href="#marketplace"
+                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Search size={14} />
+                    <span>নিচে পণ্য ব্রাউজ করুন</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Marketplace Section ── */}
       {showMarketplace && (

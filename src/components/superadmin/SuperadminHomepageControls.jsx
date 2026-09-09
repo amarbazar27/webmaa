@@ -75,6 +75,15 @@ const SECTIONS = [
     defaultState: true
   },
   {
+    key: 'marketplaceGateway',
+    title: 'কেন্দ্রীয় মার্কেটপ্লেস গেটওয়ে ব্যানার (store.bdretailers.com Gateway Card)',
+    description: 'হোমপেজে store.bdretailers.com এ প্রবেশ করার প্রিমিয়াম ব্যানার/কার্ড। এটি অন রাখলে ভিজিটররা এক ক্লিকেই মূল সেন্ট্রাল স্টোরে কেনাকাটা করতে পারবে।',
+    icon: Store,
+    color: 'from-emerald-500 to-teal-600',
+    category: 'commerce',
+    defaultState: true
+  },
+  {
     key: 'marketplace',
     title: 'মার্কেটপ্লেস প্রোডাক্ট ফিড (Marketplace Products Grid)',
     description: 'সরাসরি পণ্য ব্রাউজিং, ফিল্টার, ক্যাটাগরি ও ইনস্ট্যান্ট চেকআউট গ্রিড।',
@@ -148,6 +157,7 @@ export default function SuperadminHomepageControls({ globalConfig = {} }) {
     banners: initialSections.banners !== false,
     aiAssistant: initialSections.aiAssistant !== false,
     searchHero: initialSections.searchHero !== false,
+    marketplaceGateway: initialSections.marketplaceGateway !== false,
     amazonBoxes: initialSections.amazonBoxes !== false && globalConfig?.showAmazonBoxes !== false,
     marketplace: initialSections.marketplace !== false,
     featuredModels: initialSections.featuredModels !== false,

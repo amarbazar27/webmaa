@@ -15,7 +15,7 @@ import {
 
 export default function TemplatesSection({ globalConfig = {} }) {
   const [activeCategory, setActiveCategory] = useState('all');
-  const templates = getMergedTemplates(globalConfig?.websiteTemplates);
+  const templates = getMergedTemplates(globalConfig?.websiteTemplates, globalConfig?.deletedTemplateIds);
 
   const filteredTemplates = templates.filter(tpl => {
     const matchCategory = activeCategory === 'all' || tpl.category === activeCategory;

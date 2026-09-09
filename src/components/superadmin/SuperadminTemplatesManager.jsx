@@ -53,7 +53,7 @@ export default function SuperadminTemplatesManager({ globalConfig = {} }) {
   });
 
   useEffect(() => {
-    setTemplates(getMergedTemplates(globalConfig?.websiteTemplates));
+    setTemplates(getMergedTemplates(globalConfig?.websiteTemplates, globalConfig?.deletedTemplateIds));
   }, [globalConfig]);
 
   const filtered = templates.filter(t => {
@@ -167,12 +167,17 @@ export default function SuperadminTemplatesManager({ globalConfig = {} }) {
     if (!confirm('আপনি কি নিশ্চিত যে এই ওয়েবসাইট টেমপ্লেটটি ডিলিট করতে চান?')) return;
 
     const updated = templates.filter(t => t.id !== id);
+    const currentDeleted = Array.isArray(globalConfig?.deletedTemplateIds) ? globalConfig.deletedTemplateIds : [];
+    const updatedDeleted = Array.from(new Set([...currentDeleted, id]));
     setTemplates(updated);
     
     setSaving(true);
     const toastId = toast.loading('টেমপ্লেট ডিলিট হচ্ছে...');
     try {
-      await updateGlobalConfig({ websiteTemplates: updated });
+      await updateGlobalConfig({ 
+        websiteTemplates: updated,
+        deletedTemplateIds: updatedDeleted
+      });
       toast.success('টেমপ্লেট ডিলিট করা হয়েছে', { id: toastId });
     } catch (err) {
       toast.error('ব্যর্থ হয়েছে: ' + err.message, { id: toastId });
@@ -204,7 +209,10 @@ export default function SuperadminTemplatesManager({ globalConfig = {} }) {
     setSaving(true);
     const toastId = toast.loading('ডিফল্ট টেমপ্লেট রিস্টোর হচ্ছে...');
     try {
-      await updateGlobalConfig({ websiteTemplates: DEFAULT_WEBSITE_TEMPLATES });
+      await updateGlobalConfig({ 
+        websiteTemplates: DEFAULT_WEBSITE_TEMPLATES,
+        deletedTemplateIds: []
+      });
       toast.success('সব ডিফল্ট ডিজাইন সফলভাবে রিস্টোর হয়েছে!', { id: toastId });
     } catch (err) {
       toast.error('রিস্টোর ব্যর্থ হয়েছে: ' + err.message, { id: toastId });

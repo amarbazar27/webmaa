@@ -37,7 +37,7 @@ export default function TemplatesPage() {
   useEffect(() => {
     const unsub = subscribeGlobalConfig((config) => {
       setGlobalConfig(config);
-      setTemplates(getMergedTemplates(config?.websiteTemplates));
+      setTemplates(getMergedTemplates(config?.websiteTemplates, config?.deletedTemplateIds));
     });
     return () => unsub();
   }, []);
