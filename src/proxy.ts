@@ -215,11 +215,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (!host || isBypassHost(host)) {
     if (pathParts.length >= 1) {
       if (firstSegment === 'store') {
-        const rewriteUrl = new URL(request.url);
-        rewriteUrl.pathname = '/';
-        rewriteUrl.searchParams.set('store', 'all');
-        rewriteUrl.searchParams.set('view', 'marketplace');
-        return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
+        // Dedicated multi-vendor marketplace store page (/store)
+        return applySecurityHeaders(NextResponse.next(), pathname);
       }
       if (!RESERVED_KEYWORDS.includes(firstSegment)) {
         // Rewrite /[shopSlug]/... to /shop/[shopSlug]/...
@@ -239,11 +236,13 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (tenantSlug) {
     if (tenantSlug === 'store') {
       // store.bdretailers.com is the permanent multi-vendor marketplace hub!
-      const rewriteUrl = new URL(request.url);
-      rewriteUrl.pathname = pathname === '/store' ? '/' : pathname;
-      rewriteUrl.searchParams.set('store', 'all');
-      rewriteUrl.searchParams.set('view', 'marketplace');
-      console.log(`[Proxy] Multi-vendor marketplace rewrite: ${rawHost}${pathname}`);
+      if (pathname.startsWith('/shop/') || (RESERVED_KEYWORDS.includes(firstSegment) && firstSegment !== 'store')) {
+        return applySecurityHeaders(NextResponse.next(), pathname);
+      }
+      const targetPath = pathname === '/' ? '/store' : (pathname.startsWith('/store') ? pathname : `/store${pathname}`);
+      const rewriteUrl = new URL(targetPath, request.url);
+      rewriteUrl.search = request.nextUrl.search;
+      console.log(`[Proxy] Multi-vendor marketplace rewrite: ${rawHost}${pathname} -> ${targetPath}`);
       return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
     }
 

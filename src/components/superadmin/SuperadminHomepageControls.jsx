@@ -75,6 +75,24 @@ const SECTIONS = [
     defaultState: true
   },
   {
+    key: 'platformAuthority',
+    title: 'বিডি রিটেইলার অথরিটি ও ট্রাস্ট ব্যানার (BD Retailers Trust & Authority)',
+    description: '"বিডি রিটেইলার (BD Retailers) — নির্ভরযোগ্য অনলাইন শপিং ও বিশ্বস্ত মার্কেটপ্লেস" এবং স্টেডফাস্ট কুরিয়ার, বিকাশ-নগদ পেমেন্ট ভেরিফাইড ব্যাজ সম্বলিত হেডার ব্যানার।',
+    icon: CheckCircle2,
+    color: 'from-emerald-500 to-teal-600',
+    category: 'core',
+    defaultState: true
+  },
+  {
+    key: 'descriptionBox',
+    title: 'প্ল্যাটফর্ম পরিচিতি ও বিবরণী বক্স (Platform Description Box)',
+    description: '"✨ BDRetailers প্ল্যাটফর্ম: [বিবরণী] 🤝 মার্চেন্ট বা রিটেইলার হোন →" বক্স। এটি অল প্রোডাক্টসের উপর নির্ভর না করে সম্পূর্ণ আলাদাভাবে অন/অফ করা যাবে।',
+    icon: Layout,
+    color: 'from-purple-500 to-indigo-600',
+    category: 'commerce',
+    defaultState: true
+  },
+  {
     key: 'marketplaceGateway',
     title: 'কেন্দ্রীয় মার্কেটপ্লেস গেটওয়ে ব্যানার (store.bdretailers.com Gateway Card)',
     description: 'হোমপেজে store.bdretailers.com এ প্রবেশ করার প্রিমিয়াম ব্যানার/কার্ড। এটি অন রাখলে ভিজিটররা এক ক্লিকেই মূল সেন্ট্রাল স্টোরে কেনাকাটা করতে পারবে।',
@@ -152,11 +170,13 @@ export default function SuperadminHomepageControls({ globalConfig = {} }) {
   const initialSections = globalConfig?.homepageSections || {};
   const [sections, setSections] = useState({
     hero: initialSections.hero !== false,
+    platformAuthority: initialSections.platformAuthority !== false,
     templates: initialSections.templates !== false,
     stats: initialSections.stats !== false,
     banners: initialSections.banners !== false,
     aiAssistant: initialSections.aiAssistant !== false,
     searchHero: initialSections.searchHero !== false,
+    descriptionBox: initialSections.descriptionBox !== false,
     marketplaceGateway: initialSections.marketplaceGateway !== false,
     amazonBoxes: initialSections.amazonBoxes !== false && globalConfig?.showAmazonBoxes !== false,
     marketplace: initialSections.marketplace !== false,

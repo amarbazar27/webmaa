@@ -13,6 +13,7 @@ import {
   findTemplateByIdOrSlug, 
   getDemoUrl 
 } from '@/lib/templatesData';
+import { getSectionsForTemplate } from '@/lib/templateSectionPresets';
 import { subscribeGlobalConfig, updateShop, getAllShops } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
@@ -96,6 +97,8 @@ export default function TemplatePreviewPage({ params }) {
         cardRadius: activeTemplate.cardRadius
       };
 
+      const defaultSections = getSectionsForTemplate(activeTemplate.id, activeTemplate.category, activeTemplate);
+
       await updateShop(selectedShopId, {
         theme: themePayload,
         headerConfig: {
@@ -107,6 +110,11 @@ export default function TemplatePreviewPage({ params }) {
         footerConfig: {
           style: activeTemplate.footerStyle || 'classic_4col',
           showNewsletter: true
+        },
+        homepageSections: defaultSections,
+        homepageConfig: {
+          sections: defaultSections,
+          templateId: activeTemplate.id
         }
       });
 

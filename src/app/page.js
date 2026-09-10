@@ -226,10 +226,12 @@ export default function Home() {
   // ── Homepage Sections Toggle Control (Configured from Superadmin) ──
   const sectionsConfig = globalConfig?.homepageSections || {};
   const showHero = sectionsConfig.hero !== false;
+  const showPlatformAuthority = sectionsConfig.platformAuthority !== false;
   const showTemplates = sectionsConfig.templates !== false;
   const showStats = sectionsConfig.stats !== false;
   const showBanners = sectionsConfig.banners !== false;
   const showMarketplaceGateway = sectionsConfig.marketplaceGateway !== false;
+  const showDescriptionBox = sectionsConfig.descriptionBox !== false;
   const showMarketplace = sectionsConfig.marketplace !== false;
   const showFeaturedModels = sectionsConfig.featuredModels !== false;
   const showShowcase = sectionsConfig.showcase !== false;
@@ -1646,32 +1648,34 @@ export default function Home() {
       )}
 
       {/* ── SEO & Platform Authority Section: 100% crawlable & visible ── */}
-      <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
-        <div className="neo-card p-4 sm:p-6 rounded-3xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 via-indigo-500/5 to-pink-500/5">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="space-y-1 text-center md:text-left">
-              <h2 className="text-base sm:text-lg font-black text-[#3D4852] dark:text-slate-100 flex items-center justify-center md:justify-start gap-2">
-                <Sparkles className="text-[#6C63FF]" size={18} />
-                <span>বিডি রিটেইলার (BD Retailers) — নির্ভরযোগ্য অনলাইন শপিং ও বিশ্বস্ত মার্কেটপ্লেস</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-3xl">
-                মাত্র ১ মিনিটে আপনার নিজের অনলাইন স্টোর খুলুন অথবা সাশ্রয়ী মূল্যে কেনাকাটা করুন। Steadfast কুরিয়ার, বিকাশ, নগদ পেমেন্ট সমর্থিত বাংলাদেশের শীর্ষ ই-কমার্স প্ল্যাটফর্ম — bdretailers.com।
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
-              <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                🚚 স্টেডফাস্ট কুরিয়ার পার্টনার
-              </span>
-              <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                💳 বিকাশ ও নগদ পেমেন্ট
-              </span>
-              <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                ✓ ভেরিফাইড রিটেইলার্স
-              </span>
+      {showPlatformAuthority && (
+        <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+          <div className="neo-card p-4 sm:p-6 rounded-3xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 via-indigo-500/5 to-pink-500/5">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="space-y-1 text-center md:text-left">
+                <h2 className="text-base sm:text-lg font-black text-[#3D4852] dark:text-slate-100 flex items-center justify-center md:justify-start gap-2">
+                  <Sparkles className="text-[#6C63FF]" size={18} />
+                  <span>বিডি রিটেইলার (BD Retailers) — নির্ভরযোগ্য অনলাইন শপিং ও বিশ্বস্ত মার্কেটপ্লেস</span>
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-3xl">
+                  মাত্র ১ মিনিটে আপনার নিজের অনলাইন স্টোর খুলুন অথবা সাশ্রয়ী মূল্যে কেনাকাটা করুন। Steadfast কুরিয়ার, বিকাশ, নগদ পেমেন্ট সমর্থিত বাংলাদেশের শীর্ষ ই-কমার্স প্ল্যাটফর্ম — bdretailers.com।
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
+                <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                  🚚 স্টেডফাস্ট কুরিয়ার পার্টনার
+                </span>
+                <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                  💳 বিকাশ ও নগদ পেমেন্ট
+                </span>
+                <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                  ✓ ভেরিফাইড রিটেইলার্স
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Central Marketplace Store Gateway Banner (store.bdretailers.com) ── */}
       {showMarketplaceGateway && (
@@ -1735,6 +1739,24 @@ export default function Home() {
                 )}
               </div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Main Site Description Box (Independent Toggle) ── */}
+      {showDescriptionBox && (
+        <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-2">
+          <div className="py-4 px-6 rounded-2xl border border-purple-200 dark:border-purple-800/40 bg-gradient-to-r from-purple-50/80 via-white to-indigo-50/80 dark:from-purple-950/40 dark:via-slate-900 dark:to-indigo-950/40 relative shadow-sm">
+            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed">
+              ✨ <strong className="text-purple-700 dark:text-purple-400 font-black">{globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম:</strong>{' '}
+              {renderClickableText(globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক।')}
+              <Link 
+                href="/become-retailer"
+                className="inline-flex items-center gap-1 ml-2 text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:underline font-black whitespace-nowrap"
+              >
+                🤝 মার্চেন্ট বা রিটেইলার হোন →
+              </Link>
+            </p>
           </div>
         </section>
       )}
@@ -1834,20 +1856,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Main Site Description Box (Editable via Superadmin) ── */}
-        <div className="mb-6 py-4 px-6 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50/80 via-white to-indigo-50/80 relative shadow-sm">
-          <p className="text-xs sm:text-sm font-bold text-slate-800 leading-relaxed">
-            ✨ <strong className="text-purple-700 font-black">{globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম:</strong>{' '}
-            {renderClickableText(globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক।')}
-            <Link 
-              href="/become-retailer"
-              className="inline-flex items-center gap-1 ml-2 text-purple-700 hover:text-purple-900 hover:underline font-black whitespace-nowrap"
-            >
-              🤝 মার্চেন্ট বা রিটেইলার হোন →
-            </Link>
-          </p>
-        </div>
-        
+
         {/* ── AI Shopping List Integration ── */}
         {showAiAssistant && mainShopData && (
           <div className="mb-4 md:mb-8">
