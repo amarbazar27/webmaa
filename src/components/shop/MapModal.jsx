@@ -361,7 +361,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
   const getGpsPosition = useCallback((showToast = false) => {
     setLocating(true);
 
-    const handleSuccessPosition = (latitude, longitude, source = 'GPS') => {
+    const handleSuccessPosition = (latitude, longitude, accuracy = 0, source = 'GPS') => {
       // Validate if inside Bangladesh
       if (!isWithinBangladesh(latitude, longitude)) {
         // Detected outside BD (e.g. overseas ISP IP/China)
@@ -375,19 +375,36 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
       setLocating(false);
 
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.setView([latitude, longitude], 16);
+        // If accuracy is poor (e.g. > 5km from laptop ISP IP routing), zoom out to district overview (zoom 12)
+        const zoomLevel = accuracy > 5000 ? 12 : 16;
+        mapInstanceRef.current.setView([latitude, longitude], zoomLevel);
       }
       if (markerInstanceRef.current) {
         markerInstanceRef.current.setLatLng([latitude, longitude]);
       }
       reverseGeocode(latitude, longitude);
-      if (showToast) toast.success(`বর্তমান অবস্থান চিহ্নিত হয়েছে! 📍 (${source})`);
+
+      if (showToast) {
+        if (accuracy > 5000) {
+          toast(
+            `⚠️ ল্যাপটপ/ওয়াইফাই সংযোগে জিপিএস না থাকায় আনুমানিক লোকেশন (±${Math.round(accuracy / 1000)} কিমি) চিহ্নিত হয়েছে। প্রয়োজনে ম্যাপে পিন ড্র্যাগ করুন বা শহর বাটন থেকে বেছে নিন।`,
+            { duration: 6000, icon: '📍' }
+          );
+        } else {
+          toast.success(`বর্তমান অবস্থান চিহ্নিত হয়েছে! 📍 (${source})`);
+        }
+      }
     };
 
     if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          handleSuccessPosition(position.coords.latitude, position.coords.longitude, 'GPS');
+          handleSuccessPosition(
+            position.coords.latitude, 
+            position.coords.longitude, 
+            position.coords.accuracy || 0, 
+            'GPS'
+          );
         },
         async (err) => {
           // Hardware GPS failed -> Try Server / IP Geolocation
@@ -396,7 +413,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             if (ipRes.ok) {
               const ipData = await ipRes.json();
               if (ipData.coordinates?.lat && ipData.coordinates?.lon) {
-                handleSuccessPosition(ipData.coordinates.lat, ipData.coordinates.lon, 'IP Geolocation');
+                handleSuccessPosition(ipData.coordinates.lat, ipData.coordinates.lon, 25000, 'IP Geolocation');
                 return;
               }
             }
@@ -637,6 +654,32 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                   </div>
                 )}
               </form>
+
+              {/* Quick City/Division Jump Buttons */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
+                <span className="text-[10px] font-black text-slate-400 shrink-0 uppercase tracking-wider">শহর:</span>
+                {BD_DISTRICT_CENTROIDS.slice(0, 8).map((city) => (
+                  <button
+                    key={city.name}
+                    type="button"
+                    onClick={() => {
+                      const newCoords = { lat: city.lat, lng: city.lng };
+                      setSelectedCoords(newCoords);
+                      if (mapInstanceRef.current) {
+                        mapInstanceRef.current.setView([city.lat, city.lng], 14);
+                      }
+                      if (markerInstanceRef.current) {
+                        markerInstanceRef.current.setLatLng([city.lat, city.lng]);
+                      }
+                      reverseGeocode(city.lat, city.lng);
+                      toast.success(`${city.name} নির্বাচিত হয়েছে! 📍`);
+                    }}
+                    className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 font-black shrink-0 transition-colors cursor-pointer"
+                  >
+                    {city.name}
+                  </button>
+                ))}
+              </div>
 
               {/* Map Canvas Container */}
               <div className="relative rounded-2xl overflow-hidden border-2 border-slate-200 shadow-inner bg-slate-100 h-64 sm:h-72 w-full">

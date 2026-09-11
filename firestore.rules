@@ -59,7 +59,7 @@ service cloud.firestore {
     }
 
     function isShopAdmin(shopId) {
-      return isShopOwner(shopId) || isSuperAdmin() || isStaffOf(shopId);
+      return isShopOwner(shopId) || isSuperAdmin() || isSubSuperAdmin() || isStaffOf(shopId);
     }
 
     function isUnchanged(field) {

@@ -1558,7 +1558,18 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
     toast.loading('লোকেশন বের করা হচ্ছে...', { id: 'geo' });
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const { latitude, longitude } = position.coords;
+        const { latitude, longitude, accuracy } = position.coords;
+
+        // In Bangladesh, laptops/PCs on broadband Wi-Fi lack GPS hardware and route via distant upstream ISP gateways (e.g. Netrokona/Dhaka) with accuracy > 5km.
+        if (accuracy && accuracy > 5000) {
+          toast.dismiss('geo');
+          toast(`⚠️ ল্যাপটপ বা ব্রডব্যান্ড ওয়াইফাইয়ে জিপিএস না থাকায় আনুমানিক লোকেশন (±${Math.round(accuracy/1000)} কিমি) পাওয়া গেছে। সঠিক এলাকার জন্য ম্যাপে পিন করুন বা ঠিকানা লিখুন।`, {
+            duration: 6000
+          });
+          setIsMapOpen(true);
+          return;
+        }
+
         const link = `https://maps.google.com/?q=${latitude},${longitude}`;
         
         let readableAddress = '';
@@ -1580,7 +1591,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         toast.success('লোকেশন সফলভাবে যুক্ত হয়েছে!', { id: 'geo' });
       },
       (error) => {
-        toast.error('লোকেশন অ্যাক্সেস করা যায়নি। দয়া করে জিপিএস চালু করে পারমিশন দিন।', { id: 'geo' });
+        toast.error('লোকেশন অ্যাক্সেস করা যায়নি। দয়া করে জিপিএস চালু করে পারমিশন দিন বা ম্যাপে এলাকা সিলেক্ট করুন।', { id: 'geo' });
+        setIsMapOpen(true);
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
     );
@@ -1842,24 +1854,34 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
   const saveDraftLead = useCallback((immediate = false, stepOverride = null) => {
     if (!localId || !shop?.id) return;
-    if (!orderForm.name && !orderForm.phone && cart.length === 0) return;
+    if (!orderForm.name && !orderForm.phone && !orderForm.address && cart.length === 0) return;
+
+    let customerName = (orderForm.name || '').trim();
+    let customerPhone = (orderForm.phone || '').trim();
+
+    // Smart auto-detection: if customer entered phone number into name field
+    const bdPhoneRegex = /^(\+?88)?01[3-9]\d{8}$/;
+    const cleanedName = customerName.replace(/[\s-]/g, '');
+    if (!customerPhone && bdPhoneRegex.test(cleanedName)) {
+      customerPhone = cleanedName.startsWith('+88') ? cleanedName : ('+88' + cleanedName.replace(/^0/, '0'));
+    }
 
     const draftPayload = {
       shopId: shop.id,
       localId,
-      customerName: orderForm.name || '',
-      customerPhone: orderForm.phone || '',
+      customerName,
+      customerPhone,
       customerEmail: user?.email || '',
       customerAddress: orderForm.address || '',
       customerNote: orderForm.note || '',
       district: orderForm.selectedDistrict || '',
-      step: stepOverride || (orderForm.address ? 'address_entered' : (orderForm.phone ? 'phone_entered' : (isOrderOpen ? 'checkout_open' : 'cart'))),
+      step: stepOverride || (orderForm.address ? 'address_entered' : (customerPhone ? 'phone_entered' : (isOrderOpen ? 'checkout_open' : 'cart'))),
       device: getDeviceType(),
       source: typeof window !== 'undefined' ? (document.referrer ? (new URL(document.referrer, window.location.origin)).hostname : 'direct') : 'direct',
       total: Number(cartTotal) || 0,
       items: cart.map(i => ({
-        id: String(i.productId || i.id || ''),
-        name: String(i.name || ''),
+        id: String(i.productId || i.id || 'item'),
+        name: String(i.name || 'পণ্য'),
         quantity: Number(i.quantity) || 1,
         price: Number(i.price) || 0
       }))

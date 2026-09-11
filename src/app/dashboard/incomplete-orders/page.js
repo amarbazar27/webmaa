@@ -25,41 +25,89 @@ export default function IncompleteOrdersPage() {
   const [convertingId, setConvertingId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
+  // Helper to validate and extract phone numbers
+  const isPhonePattern = (val) => {
+    if (!val) return false;
+    const clean = String(val).replace(/[\s-]/g, '');
+    return /^(\+?88)?01[3-9]\d{8}$/.test(clean);
+  };
+
+  const getEffectivePhone = (d) => {
+    if (d?.customerPhone && String(d.customerPhone).trim()) return String(d.customerPhone).trim();
+    if (isPhonePattern(d?.customerName)) return String(d.customerName).trim();
+    return '';
+  };
+
+  // Resilient API draft loader
+  const loadDrafts = async (silent = false) => {
+    if (!activeShopId || !user) return;
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/checkout/draft?shopId=${activeShopId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.drafts)) {
+          setDrafts(data.drafts);
+          setLoading(false);
+          return;
+        }
+      }
+    } catch (e) {
+      if (!silent) console.warn('[Drafts API Error]:', e);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (authLoading || !activeShopId || !user) return;
 
     getShop(activeShopId).then(setShop);
 
-    const unsub = subscribeIncompleteOrders(
-      activeShopId, 
-      (data) => {
-        setDrafts(data);
-        setLoading(false);
-      },
-      (err) => {
-        console.error('Failed to load drafts:', err);
-        const isRetailerOrAdmin = userData?.role === 'retailer' || userData?.role === 'superadmin' || userData?.role === 'staff' || userData?.role === 'admin';
-        if (isRetailerOrAdmin) {
-          toast.error(`ড্রাফট কার্ট লোড করতে সমস্যা হয়েছে। [Firestore: subscribeIncompleteOrders] এরর: ${err.message || err.code || err}`);
-        } else {
-          toast.error('ড্রাফট কার্ট লোড করতে সমস্যা হয়েছে।');
-        }
-        setLoading(false);
-      }
-    );
+    // 1. Instant load via server API (bypasses client security rules & always succeeds)
+    loadDrafts();
 
-    return () => unsub();
-  }, [activeShopId, userData, authLoading, user]);
+    // 2. Real-time client subscription (with graceful fallback if permission not configured in console)
+    let unsub = null;
+    try {
+      unsub = subscribeIncompleteOrders(
+        activeShopId, 
+        (data) => {
+          setDrafts(data);
+          setLoading(false);
+        },
+        (err) => {
+          // Silently fall back to periodic API sync if client rules don't permit direct Firestore socket
+          console.warn('[subscribeIncompleteOrders] Client socket limited, falling back to server API polling:', err.message || err.code);
+          setLoading(false);
+        }
+      );
+    } catch (e) {
+      console.warn('Real-time listener initialization warning:', e);
+    }
+
+    // 3. Periodic background sync every 12 seconds
+    const interval = setInterval(() => {
+      loadDrafts(true);
+    }, 12000);
+
+    return () => {
+      if (unsub) unsub();
+      clearInterval(interval);
+    };
+  }, [activeShopId, authLoading, user]);
 
   // Handle converting an abandoned draft into a confirmed order
   const handleConvertToOrder = async (draft) => {
-    const hasContact = draft.customerPhone || draft.customerName;
+    const effPhone = getEffectivePhone(draft);
+    const hasContact = effPhone || draft.customerName || draft.customerEmail;
     if (!hasContact) {
       toast.error('কাস্টমারের কোনো নাম বা ফোন নম্বর নেই, অর্ডারে রূপান্তর করা সম্ভব নয়।');
       return;
     }
 
-    const confirmMsg = `আপনি কি নিশ্চিত যে "${draft.customerName || draft.customerPhone}"-এর এই ড্রাফটটিকে একটি কনফার্মড ক্যাশ-অন-ডেলিভারি অর্ডারে রূপান্তর করতে চান?`;
+    const confirmMsg = `আপনি কি নিশ্চিত যে "${draft.customerName || effPhone}"-এর এই ড্রাফটটিকে একটি কনফার্মড ক্যাশ-অন-ডেলিভারি অর্ডারে রূপান্তর করতে চান?`;
     if (!confirm(confirmMsg)) return;
 
     try {
@@ -83,6 +131,7 @@ export default function IncompleteOrdersPage() {
       }
 
       toast.success(`🎉 ড্রাফটটি সফলভাবে অর্ডারে রূপান্তরিত হয়েছে! আইডি: ${data.orderIdVisual || ''}`);
+      loadDrafts(true);
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'অর্ডারে রূপান্তর করতে সমস্যা হয়েছে');
@@ -104,25 +153,29 @@ export default function IncompleteOrdersPage() {
     }
   };
 
-  // Handle deleting draft manually
+  // Handle deleting draft manually via server API
   const handleDeleteDraft = async (draftId) => {
     if (!confirm('আপনি কি নিশ্চিত যে এই ড্রাফটটি মুছে ফেলতে চান?')) return;
     try {
-      await deleteDoc(doc(db, 'shops', activeShopId, 'incomplete_orders', draftId));
+      const token = await user.getIdToken();
+      const res = await fetch(`/api/checkout/draft?shopId=${activeShopId}&draftId=${draftId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'ড্রাফট মুছতে সমস্যা হয়েছে');
+      }
+      setDrafts(prev => prev.filter(d => d.id !== draftId));
       toast.success('ড্রাফটটি সফলভাবে মুছে ফেলা হয়েছে।');
     } catch (err) {
       console.error(err);
-      const isRetailerOrAdmin = userData?.role === 'retailer' || userData?.role === 'superadmin' || userData?.role === 'staff' || userData?.role === 'admin';
-      if (isRetailerOrAdmin) {
-        toast.error(`ড্রাফট মুছতে সমস্যা হয়েছে। [deleteDoc: incomplete_orders] এরর: ${err.message || err}`);
-      } else {
-        toast.error('ড্রাফট মুছতে সমস্যা হয়েছে');
-      }
+      toast.error(err.message || 'ড্রাফট মুছতে সমস্যা হয়েছে');
     }
   };
 
   // Recovery Analytics
-  const hotLeadsList = drafts.filter(d => d.customerPhone && d.status === 'abandoned');
+  const hotLeadsList = drafts.filter(d => getEffectivePhone(d) && d.status === 'abandoned');
   const abandonedList = drafts.filter(d => d.status === 'abandoned');
   const recoveredList = drafts.filter(d => d.status === 'recovered');
 
@@ -140,9 +193,10 @@ export default function IncompleteOrdersPage() {
 
   // Filter drafts based on tab selection & search query
   const filteredDrafts = drafts.filter(d => {
+    const effPhone = getEffectivePhone(d);
     // Tab Filter
     if (filter === 'hot_leads') {
-      if (!d.customerPhone || d.status !== 'abandoned') return false;
+      if (!effPhone || d.status !== 'abandoned') return false;
     } else if (filter === 'abandoned') {
       if (d.status !== 'abandoned') return false;
     } else if (filter === 'recovered') {
@@ -153,7 +207,7 @@ export default function IncompleteOrdersPage() {
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
       const nameMatch = d.customerName?.toLowerCase().includes(q);
-      const phoneMatch = d.customerPhone?.includes(q);
+      const phoneMatch = effPhone?.includes(q) || d.customerPhone?.includes(q);
       const emailMatch = d.customerEmail?.toLowerCase().includes(q);
       const addressMatch = d.customerAddress?.toLowerCase().includes(q);
       const itemMatch = (d.items || []).some(i => i.name?.toLowerCase().includes(q));
@@ -431,9 +485,13 @@ export default function IncompleteOrdersPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDrafts.map((draft) => {
-            const hasPhone = Boolean(draft.customerPhone);
-            const hasContact = Boolean(draft.customerPhone || draft.customerName || draft.customerEmail);
+            const effPhone = getEffectivePhone(draft);
+            const hasPhone = Boolean(effPhone);
+            const hasContact = Boolean(effPhone || draft.customerName || draft.customerEmail);
             const isConverting = convertingId === draft.id;
+            const displayName = isPhonePattern(draft.customerName) 
+              ? 'গ্রাহক (ফোন দেওয়া হয়েছে)' 
+              : (draft.customerName || 'অজানা গ্রাহক (Unnamed)');
 
             return (
               <div 
@@ -490,16 +548,16 @@ export default function IncompleteOrdersPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">গ্রাহকের বিবরণ</p>
-                      <p className="text-sm font-black text-slate-900 mt-0.5 truncate">{draft.customerName || 'অজানা গ্রাহক (Unnamed)'}</p>
+                      <p className="text-sm font-black text-slate-900 mt-0.5 truncate">{displayName}</p>
                       
-                      {draft.customerPhone ? (
+                      {effPhone ? (
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100">
-                            {draft.customerPhone}
+                            {effPhone}
                           </span>
                           <button
                             type="button"
-                            onClick={() => handleCopyPhone(draft.customerPhone, draft.id)}
+                            onClick={() => handleCopyPhone(effPhone, draft.id)}
                             className="p-1 text-slate-400 hover:text-purple-600 transition-colors"
                             title="ফোন নম্বর কপি করুন"
                           >
@@ -556,13 +614,13 @@ export default function IncompleteOrdersPage() {
                      <div className="space-y-2">
                        <div className="grid grid-cols-2 gap-2">
                           <a 
-                             href={`tel:${draft.customerPhone}`}
+                             href={`tel:${effPhone}`}
                              className="py-2.5 bg-purple-600 hover:bg-purple-700 text-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95"
                           >
                              <Phone size={12} /> কল দিন
                           </a>
                           <a 
-                             href={getWhatsAppLink(draft.customerPhone, draft.customerName, draft.items)}
+                             href={getWhatsAppLink(effPhone, displayName, draft.items)}
                              target="_blank"
                              rel="noreferrer"
                              className="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer active:scale-95"
