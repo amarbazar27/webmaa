@@ -4,6 +4,14 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# 🚨 CRITICAL DATABASE & DATA PROTECTION RULE (ABSOLUTE RESTRICTION)
+- NEVER, under any circumstance, delete, wipe, drop, clear, or bulk-remove any database, collection, document, table, user profile, or order data.
+- NEVER run scripts, Firebase/Firestore batch deletes, SQL drop commands, or write code that purges live database records without:
+  1. Giving a LARGE, PROMINENT WARNING to the user in Bengali explaining exactly what is at risk.
+  2. Clearly listing all potential losses (users, orders, financial records, irreversible damage).
+  3. Obtaining explicit, clear, manual written permission from the user specifically authorizing the deletion.
+- Even with Turbo Mode or auto-proceed active, DATA DELETION / DATABASE PURGING IS STRICTLY FORBIDDEN without prior explicit user confirmation. Protecting the database and user data is the #1 highest priority at all times.
+
 # White-Label Mobile App Build & Versioning Rules
 - Maintain persistent per-shop app version codes in `scripts/app-versions.json`.
 - Every time an app is built for a shop (e.g. `messerbazar`, `camerakini`, `main`), `scripts/build-tenant-app.js` MUST automatically auto-increment the version code (e.g. 3 -> 4 -> 5).

@@ -3,7 +3,7 @@ const nextConfig = {
   // ⚡ TASK 1: Performance - Image Optimization
   images: {
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 3600,
+    minimumCacheTTL: 2592000, // 30 days — prevents CPU-heavy image re-transformations on Vercel
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -96,12 +96,37 @@ const nextConfig = {
           { key: 'Access-Control-Allow-Origin', value: '*' },
         ],
       },
-      // API routes — no cache, CORS restricted
+      // API routes — default no cache for dynamic mutations
       {
         source: '/api/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
+        ],
+      },
+      // ⚡ High-traffic read-only API routes — Edge CDN cached to eliminate Serverless CPU & Invocations
+      {
+        source: '/api/manifest(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' },
+        ],
+      },
+      {
+        source: '/api/domain-lookup(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=300, stale-while-revalidate=3600' },
+        ],
+      },
+      {
+        source: '/api/geo(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/api/location(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
         ],
       },
       // ✅ Android App Links — Digital Asset Links verification (no redirect allowed)

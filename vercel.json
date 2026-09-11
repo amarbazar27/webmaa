@@ -4,8 +4,16 @@
   "regions": ["sin1"],
   "functions": {
     "src/app/api/checkout/route.js": {
-      "memory": 1024,
+      "memory": 512,
       "maxDuration": 30
+    },
+    "src/app/api/checkout/draft/route.js": {
+      "memory": 256,
+      "maxDuration": 10
+    },
+    "src/app/api/checkout/recover-draft/route.js": {
+      "memory": 256,
+      "maxDuration": 15
     },
     "src/app/api/ai/route.js": {
       "memory": 512,

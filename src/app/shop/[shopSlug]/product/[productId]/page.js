@@ -1,6 +1,8 @@
 import { getShopServer, getProductsServer } from '@/lib/server-fetch';
 import ProductDetailClient from './ProductDetailClient';
 
+export const revalidate = 60; // Cache product page for 60 seconds (ISR)
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 
 // 🚨 Fail-safe serialization utility moved outside component
