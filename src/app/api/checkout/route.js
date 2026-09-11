@@ -577,6 +577,8 @@ export async function POST(req) {
         .doc(localId)
         .update({
           status: 'recovered',
+          orderId: newOrderRef.id,
+          orderIdVisual: orderIdVisual || '',
           recoveredAt: admin.firestore.FieldValue.serverTimestamp()
         })
         .catch(err => console.warn('[Incomplete Order] Failed to update draft status:', err.message));

@@ -51,7 +51,7 @@ const navGroups = [
     staffAllowed: true,
     subItems: [
       { href: '/dashboard/orders', label: 'All Orders' },
-      { href: '/dashboard/incomplete-orders', label: 'Incomplete Orders' }
+      { href: '/dashboard/incomplete-orders', label: 'Leads & Abandoned Carts' }
     ]
   },
   { 

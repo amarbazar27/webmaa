@@ -901,17 +901,21 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [orderImage, setOrderImage] = useState(null);
   const [localId, setLocalId] = useState(null);
 
-  // Initialize unique checkout session ID
+  // Initialize unique checkout session ID per shop
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      let lid = localStorage.getItem('webmaa_checkout_session_id');
+      const sessionKey = shop?.id ? `webmaa_checkout_session_${shop.id}` : 'webmaa_checkout_session_id';
+      let lid = localStorage.getItem(sessionKey);
       if (!lid) {
-        lid = `ch_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
-        localStorage.setItem('webmaa_checkout_session_id', lid);
+        lid = localStorage.getItem('webmaa_checkout_session_id');
+        if (!lid) {
+          lid = `ch_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
+        }
+        try { localStorage.setItem(sessionKey, lid); } catch (e) {}
       }
       setLocalId(lid);
     }
-  }, []);
+  }, [shop?.id]);
 
   const handleDirectOrderFromAi = (items, image) => {
     setCart(items);
@@ -1524,8 +1528,19 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
        val = val.replace(/\D/g, '').slice(0, 11);
     }
     setOrderForm(f => ({ ...f, phone: val }));
-    if (val.length >= 11 && !validatePhone(val)) setPhoneError('বৈধ ১১ ডিজিটের নম্বর লিখুন (যেমন: 017...)');
-    else setPhoneError('');
+    if (val.length >= 11) {
+      if (!validatePhone(val)) {
+        setPhoneError('বৈধ ১১ ডিজিটের নম্বর লিখুন (যেমন: 017...)');
+      } else {
+        setPhoneError('');
+        // Immediately capture lead as soon as customer finishes entering valid phone
+        try {
+          saveDraftRef.current?.(true, 'phone_entered');
+        } catch (e) {}
+      }
+    } else {
+      setPhoneError('');
+    }
   };
 
   // ── Cart Actions ───────────────────────────────
@@ -1816,47 +1831,90 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
   const hasPaymentGateway = shop?.manualPaymentEnabled !== false || shop?.piprapayEnabled === true;
   const isAdvanceRequired = hasPaymentGateway && (!isCOD || (shop.deliveryConfig?.advanceFee && shop.deliveryConfig.advanceFee !== '0'));
 
-  // Auto-save draft order (Incomplete order tracking)
+  // ── Intelligent Real-Time Lead & Abandoned Checkout Capture ──
+  const getDeviceType = () => {
+    if (typeof window === 'undefined') return 'unknown';
+    const ua = navigator.userAgent;
+    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return 'tablet';
+    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/i.test(ua)) return 'mobile';
+    return 'desktop';
+  };
+
+  const saveDraftLead = useCallback((immediate = false, stepOverride = null) => {
+    if (!localId || !shop?.id) return;
+    if (!orderForm.name && !orderForm.phone && cart.length === 0) return;
+
+    const draftPayload = {
+      shopId: shop.id,
+      localId,
+      customerName: orderForm.name || '',
+      customerPhone: orderForm.phone || '',
+      customerEmail: user?.email || '',
+      customerAddress: orderForm.address || '',
+      customerNote: orderForm.note || '',
+      district: orderForm.selectedDistrict || '',
+      step: stepOverride || (orderForm.address ? 'address_entered' : (orderForm.phone ? 'phone_entered' : (isOrderOpen ? 'checkout_open' : 'cart'))),
+      device: getDeviceType(),
+      source: typeof window !== 'undefined' ? (document.referrer ? (new URL(document.referrer, window.location.origin)).hostname : 'direct') : 'direct',
+      total: Number(cartTotal) || 0,
+      items: cart.map(i => ({
+        id: String(i.productId || i.id || ''),
+        name: String(i.name || ''),
+        quantity: Number(i.quantity) || 1,
+        price: Number(i.price) || 0
+      }))
+    };
+
+    fetch('/api/checkout/draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(draftPayload),
+      keepalive: true
+    }).catch(err => console.warn('[Lead draft save error]', err));
+  }, [localId, shop?.id, orderForm, cart, cartTotal, isOrderOpen, user?.email]);
+
+  const saveDraftRef = useRef(saveDraftLead);
+  useEffect(() => {
+    saveDraftRef.current = saveDraftLead;
+  }, [saveDraftLead]);
+
+  // Guaranteed lead capture when user navigates away, switches apps, or closes tab
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleUnloadOrHide = () => {
+      if (saveDraftRef.current) {
+        saveDraftRef.current(true, 'abandoned_on_exit');
+      }
+    };
+
+    window.addEventListener('pagehide', handleUnloadOrHide);
+    window.addEventListener('beforeunload', handleUnloadOrHide);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        handleUnloadOrHide();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('pagehide', handleUnloadOrHide);
+      window.removeEventListener('beforeunload', handleUnloadOrHide);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
+  // Responsive typing debounce (750ms)
   useEffect(() => {
     if (!localId || !shop?.id) return;
     if (!orderForm.name && !orderForm.phone && cart.length === 0) return;
 
     const timer = setTimeout(() => {
-      const draftPayload = {
-        shopId: shop.id,
-        localId,
-        customerName: orderForm.name || '',
-        customerPhone: orderForm.phone || '',
-        customerAddress: orderForm.address || '',
-        total: Number(cartTotal) || 0,
-        items: cart.map(i => ({
-          id: String(i.productId || i.id || ''),
-          name: String(i.name || ''),
-          quantity: Number(i.quantity) || 1,
-          price: Number(i.price) || 0
-        }))
-      };
-
-      fetch('/api/checkout/draft', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(draftPayload)
-      })
-      .then(async (res) => {
-        if (!res.ok) {
-          try {
-            const errData = await res.json();
-            console.error('[Draft save failed]', res.status, errData);
-          } catch (e) {
-            console.error('[Draft save failed with status]', res.status);
-          }
-        }
-      })
-      .catch(err => console.warn('[Draft save network error]', err));
-    }, 2000);
+      saveDraftLead(false);
+    }, 750);
 
     return () => clearTimeout(timer);
-  }, [orderForm.name, orderForm.phone, orderForm.address, cart, localId, shop?.id, cartTotal]);
+  }, [orderForm.name, orderForm.phone, orderForm.address, orderForm.note, cart, localId, shop?.id, cartTotal, saveDraftLead]);
 
   const { hasFreeDelivery } = getUserStreak(userOrders);
   const effectiveDelivery = hasFreeDelivery ? 0 : deliveryAdvanceFee;
@@ -2150,9 +2208,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       
       // Clear draft checkout session from localStorage and generate a new one
       try {
+        const sessionKey = shop?.id ? `webmaa_checkout_session_${shop.id}` : 'webmaa_checkout_session_id';
         localStorage.removeItem('webmaa_checkout_session_id');
+        localStorage.removeItem(sessionKey);
         const newLid = `ch_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
-        localStorage.setItem('webmaa_checkout_session_id', newLid);
+        localStorage.setItem(sessionKey, newLid);
         setLocalId(newLid);
       } catch (sessErr) {
         console.warn('[Session reset error]', sessErr);
@@ -4419,6 +4479,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     }
                     setIsOrderOpen(true);
                     setIsCartOpen(false);
+                    setTimeout(() => {
+                      try { saveDraftRef.current?.(true, 'checkout_open'); } catch (e) {}
+                    }, 50);
                   }} 
                   className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]"
                 >
@@ -4470,11 +4533,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">পূর্নাঙ্গ নাম *</label>
-                  <input required type="text" placeholder="আপনার নাম লিখুন..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm" value={orderForm.name} onChange={e => setOrderForm(f => ({ ...f, name: e.target.value }))} />
+                  <input required type="text" placeholder="আপনার নাম লিখুন..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm" value={orderForm.name} onChange={e => setOrderForm(f => ({ ...f, name: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'name_entered'); } catch (e) {} }} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ফোন নম্বর *</label>
-                  <input required type="tel" maxLength={11} placeholder="01XXXXXXXXX" className={`w-full p-3.5 rounded-xl bg-slate-50 border-2 ${phoneError ? 'border-red-500' : 'border-slate-200 focus:border-purple-600'} text-sm font-black text-slate-900 outline-none focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm`} value={orderForm.phone} onChange={handlePhoneChange} />
+                  <input required type="tel" maxLength={11} placeholder="01XXXXXXXXX" className={`w-full p-3.5 rounded-xl bg-slate-50 border-2 ${phoneError ? 'border-red-500' : 'border-slate-200 focus:border-purple-600'} text-sm font-black text-slate-900 outline-none focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm`} value={orderForm.phone} onChange={handlePhoneChange} onBlur={() => { try { saveDraftRef.current?.(true, 'phone_entered'); } catch (e) {} }} />
                   {phoneError && <p className="text-[11px] text-red-600 font-bold pl-1">{phoneError}</p>}
                 </div>
                 <div className="space-y-1.5">
@@ -4496,11 +4559,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <span>{orderForm.coordinates ? 'ম্যাপে চিহ্নিত ✅' : 'ম্যাপ/এলাকা নির্বাচন 📍'}</span>
                     </button>
                   </div>
-                  <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} />
+                  <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'address_entered'); } catch (e) {} }} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">রিটেইলারকে নোট (ঐচ্ছিক)</label>
-                  <textarea rows={2} placeholder="বিশেষ অনুরোধ, সাইজ, রং বা যেকোনো নির্দেশনা..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.note} onChange={e => setOrderForm(f => ({ ...f, note: e.target.value }))} />
+                  <textarea rows={2} placeholder="বিশেষ অনুরোধ, সাইজ, রং বা যেকোনো নির্দেশনা..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.note} onChange={e => setOrderForm(f => ({ ...f, note: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true); } catch (e) {} }} />
                 </div>
               </div>
 
