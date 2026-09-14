@@ -22,6 +22,7 @@ import FaqSection from '@/components/home/FaqSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import SponsorsSection from '@/components/home/SponsorsSection';
 import TemplatesSection from '@/components/home/TemplatesSection';
+import AboutModal from '@/components/home/AboutModal';
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
@@ -222,6 +223,7 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStoresMenuOpen, setIsStoresMenuOpen] = useState(false);
   const [showPwaBanner, setShowPwaBanner] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
 
   // ── Homepage Sections Toggle Control (Configured from Superadmin) ──
   const sectionsConfig = globalConfig?.homepageSections || {};
@@ -1395,368 +1397,373 @@ export default function Home() {
         .animate-float { animation: float 4s ease-in-out infinite; }
       `}} />
 
-      {/* ── Sleek High-Contrast Navigation Header ── */}
-      <header className="sticky top-0 z-50 px-3 sm:px-6 py-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-sm transition-all duration-300">
+      {/* ── Fixed Clean Top Bar ── */}
+      <header className="sticky top-0 z-50 px-3 sm:px-6 py-2.5 sm:py-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-xs transition-all duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2 sm:gap-4">
-          {/* Left Area: Stores Drawer on Far Left, Mobile Login/Workspace, Mobile Pricing, and Brand Logo */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Stores Drawer Trigger (FAR LEFT on Mobile and Desktop) */}
+          {/* Left: Hamburger Drawer Menu Button & Brand Identity */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            {/* Hamburger Button (Opens Navigation Drawer) */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="px-3 py-2 neo-btn text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-1.5 cursor-pointer shrink-0"
-              title="মেনু ও স্টোরসমূহ খুলুন"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-purple-50 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer border border-slate-200/80 dark:border-slate-700 active:scale-95 shrink-0"
+              title="মেনু ও নেভিগেশন খুলুন"
+              aria-label="Open Navigation Menu"
             >
-              <Store size={16} className="text-[#6C63FF] shrink-0" />
-              <span className="font-mono tracking-wider text-[11px] sm:text-xs">Stores</span>
+              <Menu size={20} strokeWidth={2.5} className="text-slate-800 dark:text-white" />
             </button>
-
-            {/* Mobile Actions: Login/Workspace & Pricing (ALWAYS VISIBLE ON MOBILE & TABLET) */}
-            <div className="md:hidden flex items-center gap-1.5">
-              {user ? (
-                <div>
-                  {getDashboardHref() ? (
-                    <Link href={getDashboardHref()} className="px-2.5 py-1.5 bg-[#6C63FF] text-white font-extrabold text-[11px] rounded-xl neo-extruded-sm flex items-center gap-1">
-                      <Briefcase size={12} /> Workspace
-                    </Link>
-                  ) : (
-                    <button onClick={() => setIsProfileOpen(true)} className="px-2.5 py-1.5 neo-btn text-[#6C63FF] font-extrabold text-[11px] rounded-xl">
-                      Profile
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <button 
-                  onClick={handleSmartLogin} 
-                  disabled={loggingIn} 
-                  className="px-3 py-1.5 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-[11px] rounded-xl neo-extruded-sm active:neo-inset-sm transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <LogIn size={12} /> {loggingIn ? "..." : "Login"}
-                </button>
-              )}
-
-              {/* Mobile Pricing Button */}
-              <a 
-                href="#pricing" 
-                className="px-2.5 py-1.5 neo-btn text-[#6C63FF] font-bold text-xs rounded-xl flex items-center gap-1 shrink-0"
-              >
-                <Sparkles size={11} /> প্যাকেজ
-              </a>
-            </div>
             
-            {/* Logo */}
+            {/* Logo + Brand Name */}
             <Link 
               href="/"
-              className="flex items-center gap-2 sm:gap-3 group select-none"
+              className="flex items-center gap-2 sm:gap-2.5 group select-none"
             >
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
-                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-7 sm:h-10 object-contain" alt="Logo" />
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9 object-contain" alt="BD Retailers" />
               ) : (
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl neo-inset-deep flex items-center justify-center text-[#6C63FF] font-black text-xs">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-sm">
                   BD
                 </div>
               )}
-              <span className="text-base sm:text-xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight whitespace-nowrap hidden sm:block">
-                {globalConfig?.brandName || 'BDRetailers'}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-base sm:text-lg font-black text-slate-950 dark:text-white tracking-tight leading-none">
+                  {globalConfig?.brandName || 'BD Retailers'}
+                </span>
+                <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 tracking-tight leading-tight mt-0.5 hidden xs:block">
+                  Verified Stores • Store Maker
+                </span>
+              </div>
             </Link>
           </div>
 
           {/* Center Links (Desktop only) */}
-          <nav className="hidden md:flex items-center gap-6 font-bold text-xs text-[#6B7280] dark:text-slate-300">
-            <a href="#marketplace" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
-              <ShoppingBag size={14} className="text-[#6C63FF]" /> Marketplace
+          <nav className="hidden lg:flex items-center gap-6 font-bold text-xs text-slate-700 dark:text-slate-200">
+            <a href="#marketplace" className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors">
+              <ShoppingBag size={14} className="text-purple-600" /> Marketplace
             </a>
-            <Link href="/templates" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
-              <Sparkles size={14} className="text-[#6C63FF]" /> রেডিমেড ডিজাইন
+            <Link href="/templates" className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors">
+              <Sparkles size={14} className="text-purple-600" /> রেডিমেড ডিজাইন
             </Link>
-            <a href="#pricing" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
-              <Sparkles size={14} className="text-[#6C63FF]" /> প্যাকেজ ও মূল্য
+            <a href="#pricing" className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors">
+              <Sparkles size={14} className="text-purple-600" /> প্যাকেজ ও মূল্য
             </a>
-            <a href="#sponsors" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
-              <ShieldCheck size={14} className="text-[#6C63FF]" /> পার্টনার্স
-            </a>
-            <a href="#faq" className="hover:text-[#6C63FF] flex items-center gap-1.5 transition-colors">
-              <MessageCircle size={14} className="text-[#6C63FF]" /> FAQ
-            </a>
+            <button onClick={() => setIsAboutModalOpen(true)} className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors cursor-pointer">
+              <Store size={14} className="text-purple-600" /> আমাদের সম্পর্কে
+            </button>
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             <ThemeToggleButton size="sm" />
 
-            {/* PWA App Download */}
-            {!pwaInstalled && (
-              <button 
-                onClick={handleAppDownload} 
-                className="px-3 py-1.5 neo-btn text-xs font-bold text-[#6C63FF] rounded-xl cursor-pointer hidden xs:flex items-center gap-1.5 transition-all"
-              >
-                <Download size={13} /> App
-              </button>
-            )}
+            {/* User Profile / Login Icon Button */}
+            <div className="flex items-center">
+              {user ? (
+                <button
+                  onClick={() => setIsProfileOpen(true)}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer border border-slate-200/80 dark:border-slate-700 overflow-hidden"
+                  title="আমার অ্যাকাউন্ট ও অর্ডার"
+                  aria-label="User Profile"
+                >
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-purple-600 font-bold text-white text-xs flex items-center justify-center">
+                      {user.displayName?.[0] || 'U'}
+                    </div>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleSmartLogin}
+                  disabled={loggingIn}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-purple-50 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 transition-all cursor-pointer border border-slate-200/80 dark:border-slate-700"
+                  title="লগইন করুন"
+                  aria-label="Login"
+                >
+                  <User size={18} />
+                </button>
+              )}
+            </div>
 
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="p-2.5 neo-btn text-[#6C63FF] rounded-xl flex items-center justify-center relative cursor-pointer active:scale-95"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:hover:bg-purple-900/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shadow-xs"
+              title="শপিং কার্ট"
+              aria-label="Shopping Cart"
             >
-              <ShoppingCart size={17} />
+              <ShoppingCart size={18} />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#6C63FF] text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-md animate-bounce">
+                <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 bg-purple-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-md animate-bounce">
                   {cartItemCount}
                 </span>
               )}
             </button>
 
-            {/* Desktop User Profile / Login */}
-            <div className="hidden md:flex items-center gap-2.5">
-              {user ? (
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <button
-                    onClick={() => setIsProfileOpen(true)}
-                    className="px-3 py-1.5 neo-btn text-xs font-bold text-[#3D4852] dark:text-slate-200 rounded-xl flex items-center gap-2 active:scale-95 transition-all cursor-pointer"
-                  >
-                    <div className="w-5 h-5 rounded-full overflow-hidden neo-inset-sm flex items-center justify-center bg-[#6C63FF] font-bold text-white text-[10px] shrink-0">
-                      {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user.displayName?.[0] || 'U'}
-                    </div>
-                    <span>My Orders</span>
-                  </button>
-
-                  {getDashboardHref() && (
-                    <Link href={getDashboardHref()} className="px-3.5 py-1.5 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-bold text-xs rounded-xl active:scale-95 transition-all shrink-0 flex items-center gap-1.5 neo-extruded-sm">
-                      <Briefcase size={13} className="shrink-0" /> Dashboard
-                    </Link>
-                  )}
-
-                  <button 
-                    type="button"
-                    onClick={() => setShowLogoutConfirm(true)} 
-                    className="px-2.5 py-1.5 neo-btn text-red-500 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
-                  >
-                    <LogOut size={12} /> Exit
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={handleSmartLogin} 
-                  disabled={loggingIn} 
-                  className="px-4 py-2 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-xs rounded-2xl neo-extruded active:neo-inset-sm transition-all shrink-0 cursor-pointer"
-                >
-                  {loggingIn ? "Connecting..." : "Login"}
-                </button>
-              )}
+            {/* Desktop Dashboard / Become Retailer CTA */}
+            <div className="hidden sm:flex items-center gap-2 pl-1">
+              <Link 
+                href="/become-retailer" 
+                className="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Store size={13} />
+                <span>স্টোর খুলুন</span>
+              </Link>
             </div>
           </div>
         </div>
       </header>
 
-      {/* ── Neumorphic Hero Section ── */}
+      {/* ── Prominent Mobile-First Search Bar (Below Header) ── */}
+      <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 pt-3 pb-1">
+        <div className="relative flex items-center bg-white dark:bg-slate-900 border-2 border-purple-200 hover:border-purple-400 dark:border-slate-800 dark:hover:border-purple-500/50 rounded-2xl px-3.5 sm:px-5 py-2.5 shadow-sm focus-within:border-purple-600 focus-within:ring-2 focus-within:ring-purple-500/20 transition-all">
+          <Search className="text-purple-600 dark:text-purple-400 mr-2.5 shrink-0" size={18} />
+          <input
+            id="search-input-field"
+            type="text"
+            placeholder="আপনার প্রয়োজনীয় পণ্য, ক্যাটাগরি বা স্টোর খুঁজুন..."
+            className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 outline-none"
+            value={productSearch}
+            onChange={e => setProductSearch(e.target.value)}
+          />
+          {productSearch && (
+            <button
+              type="button"
+              onClick={() => setProductSearch('')}
+              className="mr-2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors text-xs font-bold cursor-pointer"
+              title="মুছে ফেলুন"
+            >
+              ✕
+            </button>
+          )}
+          <button 
+            onClick={() => {
+              document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer shadow-xs active:scale-95"
+          >
+            খুঁজুন
+          </button>
+        </div>
+      </div>
+
+      {/* ── Marketplace & Retailer Store-Maker Hero Section ── */}
       {showHero && (
-        <section className="relative z-20 pt-10 pb-16 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              {/* Left Headline & Content */}
-              <div className="lg:col-span-7 space-y-6 text-left">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full neo-extruded-sm">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="text-xs font-black text-[#6C63FF] uppercase tracking-wider">
-                    Verified BD Retailers & Wholesale Hub
-                  </span>
-                </div>
-                
-                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight leading-[1.1]">
-                  <span className="text-[#6C63FF]">BD Retailers (বিডি রিটেইলার)</span> — বাংলাদেশের সেরা অনলাইন শপিং ও ই-কমার্স মার্কেটপ্লেস
-                </h1>
-                
-                <p className="text-sm sm:text-base text-[#6B7280] dark:text-slate-400 font-medium leading-relaxed max-w-2xl">
-                  বিডি রিটেইলার (BD Retailers) এ সরাসরি ভেরিফাইড মার্চেন্ট নেটওয়ার্ক থেকে সুলভ মূল্যে কিনুন সেরা মানের পণ্য। ক্যাশ অন ডেলিভারি, দ্রুত স্টেডফাস্ট কুরিয়ার ডেলিভারি ও নিরাপদ বিকাশ পেমেন্ট সুবিধা। উদ্যোক্তারা মাত্র ১ মিনিটে খুলুন নিজস্ব ফ্রি অনলাইন স্টোর।
-                </p>
+        <section className="relative z-20 pt-4 pb-6 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6">
+            <div className="relative rounded-3xl bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-6 sm:p-10 shadow-xl overflow-hidden border border-purple-500/20">
+              {/* Background ambient lighting */}
+              <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+              <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none -ml-16 -mb-16" />
 
-                {/* Standardized Hero CTAs */}
-                <div className="flex flex-wrap items-center gap-3.5 pt-2">
-                  <a 
-                    href="#marketplace" 
-                    className="px-6 py-4 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-sm rounded-2xl neo-extruded active:neo-inset-sm transition-all flex items-center gap-2 cursor-pointer hover:-translate-y-0.5"
-                  >
-                    <ShoppingBag size={16} /> পণ্যসমূহ এক্সপ্লোর করুন
-                  </a>
-                  <a 
-                    href="#pricing" 
-                    className="px-5 py-4 neo-btn text-[#6C63FF] font-black text-sm rounded-2xl transition-all flex items-center gap-2 cursor-pointer hover:-translate-y-0.5"
-                  >
-                    <Sparkles size={16} /> সাবস্ক্রিপশন প্যাকেজ
-                  </a>
-                  <Link 
-                    href="/become-retailer" 
-                    className="px-5 py-4 neo-btn text-[#3D4852] dark:text-slate-200 font-black text-sm rounded-2xl transition-all flex items-center gap-2 cursor-pointer hover:-translate-y-0.5"
-                  >
-                    <Store size={16} className="text-[#6C63FF]" /> মার্চেন্ট হন
-                  </Link>
-                </div>
-              </div>
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                {/* Left Text */}
+                <div className="lg:col-span-8 space-y-4 text-left">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-purple-200 font-black text-[11px] sm:text-xs uppercase tracking-wider">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>🇧🇩 বাংলাদেশের রিটেইলারদের বিশেষ অনলাইন স্টোর মেকার ও মার্কেটপ্লেস</span>
+                  </div>
 
-              {/* Right — Stats + CTA Card */}
-              {showStats && (
-                <div className="lg:col-span-5 relative">
-                  <div className="neo-card p-7 sm:p-8 rounded-[32px] relative overflow-hidden text-[#3D4852] dark:text-slate-100 space-y-6">
-                    {/* Concentric Decorative Rings */}
-                    <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full neo-inset-deep pointer-events-none opacity-30" />
-                    <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full neo-extruded pointer-events-none opacity-40" />
+                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.15]">
+                    বিশ্বস্ত রিটেইলার, নিরাপদ কেনাকাটা <br className="hidden sm:inline" />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300">
+                      ও ৫ মিনিটে নিজস্ব অনলাইন স্টোর
+                    </span>
+                  </h1>
 
-                    <div className="relative z-10 space-y-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl neo-inset-deep text-[#6C63FF] flex items-center justify-center">
-                          <Store size={22} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-black uppercase tracking-widest text-[#6C63FF]">BDRetailers Platform</p>
-                          <p className="text-sm font-black text-[#3D4852] dark:text-slate-100 leading-tight">বাংলাদেশের সেরা মার্কেটপ্লেস</p>
-                        </div>
-                      </div>
+                  <p className="text-xs sm:text-sm text-purple-100 font-medium leading-relaxed max-w-2xl">
+                    বাংলাদেশের সেরা ভেরিফাইড মার্চেন্টদের পণ্য সরাসরি কিনুন সাশ্রয়ী মূল্যে। আর উদ্যোক্তারা কোনো কোডিং ছাড়াই মাত্র ৫ মিনিটে চালু করুন আপনার ব্র্যান্ডের সম্পূর্ণ ইকমার্স স্টোর — কাস্টম ডোমেইন, স্টেডফাস্ট কুরিয়ার ও বিকাশ পেমেন্ট সুবিধা সহ।
+                  </p>
 
-                      <div className="grid grid-cols-2 gap-3.5">
-                        <div className="neo-inset rounded-2xl p-4">
-                          <p className="text-2xl font-black font-mono tabular-nums text-[#6C63FF]">{allShops.length}+</p>
-                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
-                        </div>
-                        <div className="neo-inset rounded-2xl p-4">
-                          <p className="text-2xl font-black font-mono tabular-nums text-[#6C63FF]">{products.length}+</p>
-                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
-                        </div>
-                        <div className="neo-inset rounded-2xl p-4">
-                          <p className="text-2xl font-black font-mono tabular-nums text-[#38B2AC]">99.8%</p>
-                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">সন্তুষ্টি হার</p>
-                        </div>
-                        <div className="neo-inset rounded-2xl p-4">
-                          <p className="text-2xl font-black font-mono tabular-nums text-[#6C63FF]">24/7</p>
-                          <p className="text-[10px] font-bold text-[#6B7280] dark:text-slate-400 uppercase tracking-wider mt-0.5">AI সহায়তা</p>
-                        </div>
-                      </div>
+                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-2">
+                    <Link
+                      href="/become-retailer"
+                      className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Sparkles size={16} />
+                      <span>ফ্রি স্টোর তৈরি করুন</span>
+                      <ArrowRight size={14} />
+                    </Link>
 
-                      <Link
-                        href="/become-retailer"
-                        className="w-full py-4 bg-[#6C63FF] hover:bg-[#5a52ea] text-white font-black text-xs uppercase tracking-wider rounded-2xl neo-extruded active:neo-inset-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <ShoppingBag size={14} /> আজই মার্চেন্ট হোন →
-                      </Link>
-                    </div>
+                    <a
+                      href="#marketplace"
+                      className="px-5 py-3 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/20 text-white font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <ShoppingBag size={16} />
+                      <span>পণ্য ব্রাউজ করুন</span>
+                    </a>
+
+                    <Link
+                      href="/templates"
+                      className="px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-purple-200 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>🎨 রেডিমেড ডিজাইন</span>
+                    </Link>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
 
-      {/* ── SEO & Platform Authority Section: 100% crawlable & visible ── */}
-      {showPlatformAuthority && (
-        <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
-          <div className="neo-card p-4 sm:p-6 rounded-3xl border border-purple-500/20 bg-gradient-to-r from-purple-500/5 via-indigo-500/5 to-pink-500/5">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="space-y-1 text-center md:text-left">
-                <h2 className="text-base sm:text-lg font-black text-[#3D4852] dark:text-slate-100 flex items-center justify-center md:justify-start gap-2">
-                  <Sparkles className="text-[#6C63FF]" size={18} />
-                  <span>বিডি রিটেইলার (BD Retailers) — নির্ভরযোগ্য অনলাইন শপিং ও বিশ্বস্ত মার্কেটপ্লেস</span>
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-3xl">
-                  মাত্র ১ মিনিটে আপনার নিজের অনলাইন স্টোর খুলুন অথবা সাশ্রয়ী মূল্যে কেনাকাটা করুন। Steadfast কুরিয়ার, বিকাশ, নগদ পেমেন্ট সমর্থিত বাংলাদেশের শীর্ষ ই-কমার্স প্ল্যাটফর্ম — bdretailers.com।
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
-                <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                  🚚 স্টেডফাস্ট কুরিয়ার পার্টনার
-                </span>
-                <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                  💳 বিকাশ ও নগদ পেমেন্ট
-                </span>
-                <span className="px-3 py-1.5 rounded-xl neo-inset-sm text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                  ✓ ভেরিফাইড রিটেইলার্স
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+                {/* Right Stat / Badge Box */}
+                <div className="lg:col-span-4">
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/30 flex items-center justify-center text-purple-200">
+                        <Store size={20} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-300">Live Ecosystem</p>
+                        <h3 className="text-sm font-black text-white">মার্কেটপ্লেস ও স্টোর পরিসংখ্যান</h3>
+                      </div>
+                    </div>
 
-      {/* ── Central Marketplace Store Gateway Banner (store.bdretailers.com) ── */}
-      {showMarketplaceGateway && (
-        <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 border border-purple-500/30 p-6 sm:p-10 text-white shadow-2xl shadow-purple-950/40">
-            {/* Background ambient light */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+                        <p className="text-xl sm:text-2xl font-black text-purple-300 font-mono tabular-nums">{allShops.length}+</p>
+                        <p className="text-[10px] text-purple-200/80 font-bold uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-black/20 border border-white/5">
+                        <p className="text-xl sm:text-2xl font-black text-purple-300 font-mono tabular-nums">{products.length}+</p>
+                        <p className="text-[10px] text-purple-200/80 font-bold uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
+                      </div>
+                    </div>
 
-            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
-              <div className="space-y-4 max-w-2xl text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-purple-300 text-xs font-black uppercase tracking-wider">
-                  <Store size={14} className="text-amber-400" />
-                  <span>কেন্দ্রীয় মার্কেটপ্লেস স্টোর • Central Store</span>
-                </div>
-
-                <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-                  সব পণ্য এক ছাতার নিচে —{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-300 to-amber-300">
-                    store.bdretailers.com
-                  </span>
-                </h2>
-
-                <p className="text-xs sm:text-sm text-slate-300 font-medium leading-relaxed">
-                  গ্রোসারি, ফ্যাশন, ডিজিটাল গ্যাজেট ও নিত্যপ্রয়োজনীয় সামগ্রী। সারা দেশের ভেরিফায়েড রিটেইলারদের সেরা পণ্য সরাসরি ক্যাশ অন ডেলিভারিতে অর্ডার করুন।
-                </p>
-
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1 text-[11px] text-slate-300 font-bold">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white/5 border border-white/10">
-                    🚚 স্টেডফাস্ট কুরিয়ার ডেলিভারি
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white/5 border border-white/10">
-                    💳 ক্যাশ অন ডেলিভারি ও বিকাশ
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-white/5 border border-white/10">
-                    ✓ ১০০% জেনুইন রিটেইলার্স
-                  </span>
+                    <button
+                      onClick={() => setIsAboutModalOpen(true)}
+                      className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer border border-white/10"
+                    >
+                      <Store size={13} className="text-purple-300" />
+                      <span>বিডি রিটেইলার্স কীভাবে কাজ করে?</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex flex-col sm:flex-row lg:flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
-                <a
-                  href="https://store.bdretailers.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <ShoppingBag size={16} />
-                  <span>মূল স্টোরে প্রবেশ করুন (store.bdretailers.com)</span>
-                  <ArrowRight size={15} />
-                </a>
-
-                {showMarketplace && (
-                  <a
-                    href="#marketplace"
-                    className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Search size={14} />
-                    <span>নিচে পণ্য ব্রাউজ করুন</span>
-                  </a>
-                )}
-              </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* ── Main Site Description Box (Independent Toggle) ── */}
-      {showDescriptionBox && (
-        <section className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 py-2">
-          <div className="py-4 px-6 rounded-2xl border border-purple-200 dark:border-purple-800/40 bg-gradient-to-r from-purple-50/80 via-white to-indigo-50/80 dark:from-purple-950/40 dark:via-slate-900 dark:to-indigo-950/40 relative shadow-sm">
-            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed">
-              ✨ <strong className="text-purple-700 dark:text-purple-400 font-black">{globalConfig?.brandName || 'BDRetailers'} প্ল্যাটফর্ম:</strong>{' '}
-              {renderClickableText(globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে গতিশীল ও আধুনিক ই-কমার্স হোলসেল এবং রিটেল নেটওয়ার্ক।')}
-              <Link 
-                href="/become-retailer"
-                className="inline-flex items-center gap-1 ml-2 text-purple-700 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 hover:underline font-black whitespace-nowrap"
+      {/* ── Dynamic Popular Categories Section ── */}
+      <section id="categories-section" className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-2">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Tag size={16} className="text-purple-600 dark:text-purple-400" />
+            <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+              জনপ্রিয় ক্যাটাগরি
+            </h2>
+          </div>
+          <button
+            onClick={() => {
+              setActiveCategory('All');
+              setActiveShopFilter('All');
+              document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+          >
+            <span>সব ক্যাটাগরি দেখুন</span>
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
+        {/* Categories Scrollable Strip */}
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-2">
+          {availableCategories.map(cat => {
+            const isSelected = activeCategory === cat;
+            const catCount = cat === 'All' 
+              ? products.length 
+              : products.filter(p => p.category === cat).length;
+
+            return (
+              <button
+                key={cat}
+                onClick={() => {
+                  setActiveCategory(cat);
+                  setActiveSubcategory('');
+                  document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`px-3.5 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 ${
+                  isSelected
+                    ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/20 scale-102'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-purple-300 dark:hover:border-purple-800 shadow-xs'
+                }`}
               >
-                🤝 মার্চেন্ট বা রিটেইলার হোন →
-              </Link>
-            </p>
+                <span>{cat === 'All' ? '🌐 সব পণ্য' : cat}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                }`}>
+                  {catCount}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── Dynamic Verified Retailers (Stores) Section ── */}
+      {allShops.filter(s => s.shopSlug !== 'test' && s.shopName?.toLowerCase() !== 'test' && s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store').length > 0 && (
+        <section id="retailers-section" className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Store size={16} className="text-purple-600 dark:text-purple-400" />
+              <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                যাচাইকৃত রিটেইলার্স (Verified Retailers)
+              </h2>
+            </div>
+            <button
+              onClick={() => {
+                setActiveShopFilter('All');
+                setIsStoresMenuOpen(true);
+              }}
+              className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+            >
+              <span>সব স্টোর দেখুন</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+            {allShops
+              .filter(s => s.shopSlug !== 'test' && s.shopName?.toLowerCase() !== 'test' && s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store')
+              .map(shop => {
+                const shopProds = products.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName);
+                const isShopActive = activeShopFilter === shop.shopName;
+
+                return (
+                  <div
+                    key={shop.id || shop.shopSlug}
+                    onClick={() => {
+                      setActiveShopFilter(shop.shopName);
+                      setActiveCategory('All');
+                      setActiveSubcategory('');
+                      document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className={`min-w-[160px] sm:min-w-[190px] p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-slate-900 border transition-all cursor-pointer shadow-xs hover:shadow-md flex items-center gap-3 shrink-0 ${
+                      isShopActive 
+                        ? 'border-purple-600 ring-2 ring-purple-500/20' 
+                        : 'border-slate-200 dark:border-slate-800 hover:border-purple-300'
+                    }`}
+                  >
+                    {shop.logoUrl ? (
+                      <img src={shop.logoUrl} alt={shop.shopName} className="w-10 h-10 rounded-xl object-contain border border-slate-100 dark:border-slate-800 bg-white p-0.5 shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 font-black text-sm flex items-center justify-center shrink-0">
+                        {shop.shopName?.[0] || 'S'}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1">
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate">{shop.shopName}</h4>
+                      </div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded-md">
+                          ✓ ভেরিফাইড
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-1">
+                        {shopProds.length}টি পণ্য
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </section>
       )}
@@ -1888,7 +1895,7 @@ export default function Home() {
             <div className="relative flex items-center bg-white dark:bg-slate-900 border-2 border-purple-200 hover:border-purple-400 dark:border-white/10 dark:hover:border-purple-500/50 rounded-2xl sm:rounded-full px-4 sm:px-6 py-3 sm:py-3.5 shadow-xl shadow-purple-500/5 focus-within:border-purple-600 focus-within:ring-4 focus-within:ring-purple-500/20 transition-all">
               <Search className="text-purple-600 dark:text-purple-400 mr-3 sm:mr-4 shrink-0" size={20} />
               <input
-                id="search-input-field"
+                id="marketplace-search-field"
                 type="text"
                 placeholder="পণ্য বা ব্র্যান্ড খুঁজুন (Search products by name, category, or English/Bangla transliteration...)"
                 className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-slate-800 dark:text-white placeholder-slate-400 outline-none"
@@ -2572,39 +2579,47 @@ export default function Home() {
       {/* ── Email Subscription Newsletter Section ── */}
       {showNewsletter && <NewsletterSection globalConfig={globalConfig} />}
 
-      {/* ── Bottom Navigation Bar (Mobile Only - Neumorphic & Full Login Support) ── */}
-      <nav className="fixed bottom-0 inset-x-0 z-50 lg:hidden flex justify-around items-center h-16 px-2 bg-[#E0E5EC]/95 dark:bg-[#1A202C]/95 backdrop-blur-xl neo-extruded border-none">
+      {/* ── Fixed Mobile Bottom Navigation Bar ── */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 lg:hidden flex justify-around items-center h-16 px-1 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-safe transition-all">
+        {/* Home */}
         <button 
           onClick={() => {
-            setActiveShopFilter('All');
-            setActiveCategory('All');
-            setActiveSubcategory('');
-            document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className="flex flex-col items-center justify-center text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-purple-600 dark:text-purple-400 font-bold rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer flex-1"
         >
           <ShoppingBag size={18} className="stroke-[2.5]" />
-          <span className="text-[10px] mt-0.5 tracking-tight">Marketplace</span>
+          <span className="text-[10px] mt-0.5 tracking-tight font-black">হোম</span>
         </button>
+
+        {/* Categories */}
         <button 
           onClick={() => {
-            document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+            const catEl = document.getElementById('categories-section');
+            if (catEl) {
+              catEl.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+            }
           }}
-          className="flex flex-col items-center justify-center text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 hover:text-purple-600 font-bold rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer flex-1"
         >
-          <Sparkles size={18} className="stroke-[2.5]" />
-          <span className="text-[10px] mt-0.5 tracking-tight">প্যাকেজ</span>
+          <Tag size={18} className="stroke-[2.5]" />
+          <span className="text-[10px] mt-0.5 tracking-tight font-black">ক্যাটাগরি</span>
         </button>
+
+        {/* Stores */}
         <button 
           onClick={() => {
-            document.getElementById('search-input-field')?.focus();
-            document.getElementById('search-input-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setIsStoresMenuOpen(true);
           }}
-          className="flex flex-col items-center justify-center text-[#6B7280] hover:text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 hover:text-purple-600 font-bold rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer flex-1"
         >
-          <Search size={18} className="stroke-[2.5]" />
-          <span className="text-[10px] mt-0.5 tracking-tight">Search</span>
+          <Store size={18} className="stroke-[2.5]" />
+          <span className="text-[10px] mt-0.5 tracking-tight font-black">স্টোরসমূহ</span>
         </button>
+
+        {/* Orders */}
         <button 
           onClick={() => {
             if (user) {
@@ -2613,12 +2628,13 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-[#6B7280] hover:text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 hover:text-purple-600 font-bold rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer flex-1"
         >
           <Package size={18} className="stroke-[2.5]" />
-          <span className="text-[10px] mt-0.5 tracking-tight">Orders</span>
+          <span className="text-[10px] mt-0.5 tracking-tight font-black">অর্ডার</span>
         </button>
-        {/* LOGIN / WORKSPACE (ALWAYS PROMINENT ON MOBILE) */}
+
+        {/* Account / Workspace */}
         <button 
           onClick={() => {
             if (user) {
@@ -2632,159 +2648,327 @@ export default function Home() {
               handleSmartLogin();
             }
           }}
-          className="flex flex-col items-center justify-center text-[#6C63FF] font-black rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer"
+          className="flex flex-col items-center justify-center text-purple-600 dark:text-purple-400 font-bold rounded-2xl py-1 px-2 active:scale-90 transition-all cursor-pointer flex-1"
         >
           <User size={18} className="stroke-[2.5]" />
           <span className="text-[10px] mt-0.5 tracking-tight font-black">
-            {user ? 'Workspace' : 'Login'}
+            {user ? 'একাউন্ট' : 'লগইন'}
           </span>
         </button>
       </nav>
-    {/* ── Stores Drawer (Left Side) ── */}
+
+      {/* ── Full Navigation Drawer Menu ── */}
       <div className={`fixed inset-0 z-[100] transition-all duration-300 ${isStoresMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setIsStoresMenuOpen(false)} />
-        <div className={`absolute top-0 left-0 h-full w-72 bg-slate-900 border-r border-white/10 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isStoresMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="p-5 border-b border-white/10 flex items-center justify-between bg-slate-950/50">
-            <h2 className="text-sm font-black text-white flex items-center gap-2">
-              <Store size={16} className="text-purple-400" /> মেনু ও স্টোরসমূহ
-            </h2>
-            <button onClick={() => setIsStoresMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer">
-              <X size={16} strokeWidth={3} />
+        <div className={`absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transition-transform duration-300 ease-out z-10 ${isStoresMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          {/* Drawer Header */}
+          <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 shrink-0">
+            <div className="flex items-center gap-2.5">
+              {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 object-contain" alt="BD Retailers" />
+              ) : (
+                <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-xs">
+                  BD
+                </div>
+              )}
+              <div>
+                <h2 className="text-sm font-black text-slate-950 dark:text-white leading-tight">BD Retailers</h2>
+                <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">Verified Stores • Store Maker</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setIsStoresMenuOpen(false)} 
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              aria-label="Close Menu"
+            >
+              <X size={16} strokeWidth={2.5} />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-            {/* Pricing Section Link inside Stores Drawer */}
+
+          {/* User Status Bar */}
+          <div className="p-3.5 bg-purple-50/70 dark:bg-purple-950/30 border-b border-slate-200 dark:border-slate-800 shrink-0">
+            {user ? (
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : (user.displayName?.[0] || 'U')}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-slate-900 dark:text-white truncate">{user.displayName || 'সম্মানিত ইউজার'}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {getDashboardHref() && (
+                    <Link
+                      href={getDashboardHref()}
+                      onClick={() => setIsStoresMenuOpen(false)}
+                      className="px-2.5 py-1 bg-purple-600 text-white text-[10px] font-black rounded-lg shadow-xs"
+                    >
+                      Workspace
+                    </Link>
+                  )}
+                  <button
+                    onClick={() => {
+                      setIsStoresMenuOpen(false);
+                      setShowLogoutConfirm(true);
+                    }}
+                    className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                    title="লগআউট"
+                  >
+                    <LogOut size={14} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsStoresMenuOpen(false);
+                  handleSmartLogin();
+                }}
+                disabled={loggingIn}
+                className="w-full py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <LogIn size={14} />
+                <span>{loggingIn ? 'লগইন হচ্ছে...' : 'লগইন করুন (Google Sign In)'}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Become a Retailer Highlight Button */}
+          <div className="p-3 pb-1 shrink-0">
+            <Link
+              href="/become-retailer"
+              onClick={() => setIsStoresMenuOpen(false)}
+              className="w-full py-2.5 px-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            >
+              <Sparkles size={14} />
+              <span>আপনার ফ্রি স্টোর তৈরি করুন →</span>
+            </Link>
+          </div>
+
+          {/* Drawer Navigation Links */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar text-slate-800 dark:text-slate-200">
+            {/* Home */}
+            <button
+              onClick={() => {
+                setIsStoresMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+            >
+              <ShoppingBag size={16} className="text-purple-600 shrink-0" />
+              <span>হোম পেজ</span>
+            </button>
+
+            {/* Marketplace */}
+            <a
+              href="#marketplace"
+              onClick={() => setIsStoresMenuOpen(false)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
+            >
+              <Search size={16} className="text-purple-600 shrink-0" />
+              <span>পণ্য মার্কেটপ্লেস</span>
+            </a>
+
+            {/* Templates */}
+            <Link
+              href="/templates"
+              onClick={() => setIsStoresMenuOpen(false)}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                <Sparkles size={16} className="text-purple-600 shrink-0" />
+                <span>রেডিমেড স্টোর ডিজাইন</span>
+              </div>
+              <span className="text-[10px] bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-black px-1.5 py-0.2 rounded-md">১৫+ ডিজাইন</span>
+            </Link>
+
+            {/* Pricing */}
             <a
               href="#pricing"
               onClick={() => setIsStoresMenuOpen(false)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 rounded-xl text-amber-300 font-black text-xs transition-all shadow-sm mb-3"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
             >
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-amber-400" />
-                <span>প্যাকেজ ও মূল্য (Pricing Plans)</span>
+              <div className="flex items-center gap-3">
+                <Tag size={16} className="text-amber-500 shrink-0" />
+                <span>প্যাকেজ ও সাবস্ক্রিপশন</span>
               </div>
-              <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full">০৳ শুরু</span>
+              <span className="text-[10px] bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-black px-1.5 py-0.2 rounded-md">০৳ শুরু</span>
             </a>
 
+            {/* Orders */}
             <button
               onClick={() => {
-                setActiveShopFilter('All');
-                setActiveCategory('All');
-                setActiveSubcategory('');
                 setIsStoresMenuOpen(false);
-                document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                if (user) {
+                  setIsProfileOpen(true);
+                } else {
+                  handleSmartLogin();
+                }
               }}
-              className={`w-full text-left px-4 py-3 rounded-xl font-bold text-xs transition-all ${
-                activeShopFilter === 'All'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white/5 text-white/70 hover:bg-white/10'
-              }`}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left cursor-pointer"
             >
-              সব স্টোর (All Stores)
+              <Package size={16} className="text-emerald-500 shrink-0" />
+              <span>আমার অর্ডারসমূহ (Orders)</span>
             </button>
-            
-            {allShops.filter(s => s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store').map(shop => {
-              const isShopActive = activeShopFilter === shop.shopName;
-              
-              // Get categories for this shop
-              const shopProducts = products.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName);
-              const shopCats = [...new Set(shopProducts.map(p => p.category).filter(Boolean))];
-              
-              return (
-                <div key={shop.id} className="space-y-1">
-                  <button
-                    onClick={() => {
-                      setActiveShopFilter(shop.shopName);
-                      setActiveCategory('All');
-                      setActiveSubcategory('');
-                      if (shopCats.length === 0) {
-                        setIsStoresMenuOpen(false);
-                        document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                      isShopActive
-                        ? 'bg-purple-600 text-white shadow-md'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      {shop.logoUrl ? (
-                        <img src={shop.logoUrl} className="w-5 h-5 rounded-md object-contain border border-white/10 bg-white" alt="" />
-                      ) : (
-                        <div className="w-5 h-5 rounded-md bg-purple-900/50 flex items-center justify-center text-[10px] text-purple-200 font-bold">{shop.shopName?.[0]}</div>
-                      )}
-                      <span className="truncate">{shop.shopName}</span>
-                    </div>
-                    {shopCats.length > 0 && <span className="text-[10px] text-white/40">{isShopActive ? '▲' : '▼'}</span>}
-                  </button>
-                  
-                  {isShopActive && shopCats.length > 0 && (
-                    <div className="pl-4 space-y-1 border-l border-white/10 ml-4">
-                      <button
-                        onClick={() => {
-                          setActiveCategory('All');
-                          setActiveSubcategory('');
+
+            {/* About BD Retailers */}
+            <button
+              onClick={() => {
+                setIsStoresMenuOpen(false);
+                setIsAboutModalOpen(true);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors text-left cursor-pointer border border-purple-200 dark:border-purple-800/60"
+            >
+              <Store size={16} className="text-purple-600 shrink-0" />
+              <span>বিডি রিটেইলার্স সম্পর্কে (About Us)</span>
+            </button>
+
+            {/* Platform Reviews */}
+            <Link
+              href="/reviews"
+              onClick={() => setIsStoresMenuOpen(false)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left"
+            >
+              <Star size={16} className="text-amber-500 shrink-0" />
+              <span>কাস্টমার রিভিউ ও রেটিং</span>
+            </Link>
+
+            {/* Expandable Stores Section */}
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+              <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                ভেরিফাইড স্টোরসমূহ:
+              </div>
+
+              <button
+                onClick={() => {
+                  setActiveShopFilter('All');
+                  setActiveCategory('All');
+                  setActiveSubcategory('');
+                  setIsStoresMenuOpen(false);
+                  document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`w-full text-left px-3 py-2 rounded-xl font-bold text-xs transition-all ${
+                  activeShopFilter === 'All'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                🌐 সব স্টোর (All Stores)
+              </button>
+
+              {allShops.filter(s => s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store' && s.shopSlug !== 'test' && s.shopName?.toLowerCase() !== 'test').map(shop => {
+                const isShopActive = activeShopFilter === shop.shopName;
+                const shopProducts = products.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName);
+                const shopCats = [...new Set(shopProducts.map(p => p.category).filter(Boolean))];
+
+                return (
+                  <div key={shop.id || shop.shopSlug} className="space-y-0.5">
+                    <button
+                      onClick={() => {
+                        setActiveShopFilter(shop.shopName);
+                        setActiveCategory('All');
+                        setActiveSubcategory('');
+                        if (shopCats.length === 0) {
                           setIsStoresMenuOpen(false);
                           document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-[11px] font-bold transition-all ${
-                          activeCategory === 'All' ? 'bg-purple-500/20 text-purple-300' : 'text-white/50 hover:bg-white/5'
-                        }`}
-                      >
-                        সব ক্যাটাগরি
-                      </button>
-                      {shopCats.map(cat => {
-                        const isCatActive = activeCategory === cat;
-                        const catProducts = shopProducts.filter(p => p.category === cat);
-                        const catSubs = [...new Set(catProducts.map(p => p.subcategory).filter(Boolean))];
-                        
-                        return (
-                          <div key={cat} className="space-y-1">
-                            <button
-                              onClick={() => {
-                                setActiveCategory(cat);
-                                setActiveSubcategory('');
-                                if (catSubs.length === 0) {
-                                  setIsStoresMenuOpen(false);
-                                  document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
-                                }
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-[11px] font-bold transition-all ${
-                                isCatActive ? 'bg-purple-500/20 text-purple-300' : 'text-white/50 hover:bg-white/5'
-                              }`}
-                            >
-                              <span className="truncate">{cat}</span>
-                              {catSubs.length > 0 && <span className="text-[9px] text-white/30">{isCatActive ? '▲' : '▼'}</span>}
-                            </button>
-                            
-                            {isCatActive && catSubs.length > 0 && (
-                              <div className="pl-3 space-y-1 border-l border-purple-500/30 ml-3">
-                                {catSubs.map(sub => (
-                                  <button
-                                    key={sub}
-                                    onClick={() => {
-                                      setActiveSubcategory(sub);
-                                      setIsStoresMenuOpen(false);
-                                      document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
-                                    }}
-                                    className={`w-full text-left px-2 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                                      activeSubcategory === sub ? 'text-purple-300 font-black' : 'text-white/40 hover:bg-white/5'
-                                    }`}
-                                  >
-                                    {sub}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
+                        }
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                        isShopActive
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        {shop.logoUrl ? (
+                          <img src={shop.logoUrl} className="w-5 h-5 rounded-md object-contain border border-slate-200 bg-white" alt="" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-md bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 flex items-center justify-center text-[10px] font-bold">
+                            {shop.shopName?.[0]}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                        )}
+                        <span className="truncate">{shop.shopName}</span>
+                      </div>
+                      <span className="text-[10px] opacity-70">
+                        {shopProducts.length}টি {shopCats.length > 0 && (isShopActive ? '▲' : '▼')}
+                      </span>
+                    </button>
+
+                    {isShopActive && shopCats.length > 0 && (
+                      <div className="pl-3 space-y-0.5 border-l-2 border-purple-500 ml-3 py-1">
+                        <button
+                          onClick={() => {
+                            setActiveCategory('All');
+                            setActiveSubcategory('');
+                            setIsStoresMenuOpen(false);
+                            document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                            activeCategory === 'All' ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          সব ক্যাটাগরি
+                        </button>
+                        {shopCats.map(cat => (
+                          <button
+                            key={cat}
+                            onClick={() => {
+                              setActiveCategory(cat);
+                              setActiveSubcategory('');
+                              setIsStoresMenuOpen(false);
+                              document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                              activeCategory === cat ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legal & Policies */}
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1">
+              <Link
+                href="/privacy-policy"
+                onClick={() => setIsStoresMenuOpen(false)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-purple-600 transition-colors text-left"
+              >
+                <ShieldCheck size={14} />
+                <span>গোপনীয়তা নীতি (Privacy Policy)</span>
+              </Link>
+              <Link
+                href="/terms"
+                onClick={() => setIsStoresMenuOpen(false)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-purple-600 transition-colors text-left"
+              >
+                <Store size={14} />
+                <span>ব্যবহারের শর্তাবলী (Terms of Service)</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Drawer Footer */}
+          <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex items-center justify-between shrink-0">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">© 2026 BD Retailers</span>
+            {!pwaInstalled && (
+              <button
+                onClick={() => {
+                  setIsStoresMenuOpen(false);
+                  handleAppDownload();
+                }}
+                className="px-2.5 py-1 rounded-lg bg-purple-600 text-white text-[10px] font-black flex items-center gap-1"
+              >
+                <Download size={11} /> App Install
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -2822,6 +3006,15 @@ export default function Home() {
               <div>
                  <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#3D4852] dark:text-slate-200 mb-6">Navigation</h4>
                  <ul className="space-y-3.5 text-xs font-bold text-[#6B7280] dark:text-slate-400">
+                    <li>
+                      <button
+                        onClick={() => setIsAboutModalOpen(true)}
+                        className="hover:text-[#6C63FF] transition-colors text-left font-bold cursor-pointer"
+                      >
+                        আমাদের সম্পর্কে (About BD Retailers)
+                      </button>
+                    </li>
+                    <li><Link href="/about" className="hover:text-[#6C63FF] transition-colors">About Us Details</Link></li>
                     <li><Link href="/showcase" className="hover:text-[#6C63FF] transition-colors">Live Showcase Registry</Link></li>
                     <li><a href="#marketplace" className="hover:text-[#6C63FF] transition-colors">All Products Marketplace</a></li>
                     <li><a href="#pricing" className="hover:text-[#6C63FF] transition-colors">Subscription Pricing</a></li>
@@ -3395,6 +3588,12 @@ export default function Home() {
           <ArrowDown size={16} className="stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
         </button>
       </div>
+
+      {/* ── About BD Retailers Platform Modal ── */}
+      <AboutModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
+      />
 
       {/* ── Unified Product Details Modal ── */}
       {selectedProduct && (
