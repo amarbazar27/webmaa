@@ -41,7 +41,11 @@ const CheckoutSchema = z.object({
     lat: z.number(),
     lng: z.number(),
     link: z.string()
-  }).optional().nullable()
+  }).optional().nullable(),
+  orderSource: z.string().max(50).optional().nullable(),
+  landingPageId: z.string().max(100).optional().nullable(),
+  landingPageTitle: z.string().max(200).optional().nullable(),
+  landingPageSlug: z.string().max(100).optional().nullable()
 });
 
 // Phase 5: Distributed rate limiter (Upstash Redis with in-memory fallback)
@@ -83,7 +87,11 @@ export async function POST(req) {
       items,
       customerId,
       coordinates,
-      couponCode
+      couponCode,
+      orderSource,
+      landingPageId,
+      landingPageTitle,
+      landingPageSlug
     } = parsed.data;
 
     // Extract customImage separately (not in strict destructure to avoid schema clash)
@@ -493,9 +501,28 @@ export async function POST(req) {
       clientIp: ip,
       fraudScore: fraudScan.score,
       fraudRiskLevel: fraudScan.riskLevel,
-      fraudReasons: fraudScan.reasons,
+      orderSource: orderSource || 'direct_website',
+      landingPageId: landingPageId || null,
+      landingPageTitle: landingPageTitle || null,
+      landingPageSlug: landingPageSlug || null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    // ── Increment Landing Page Order Count ───────────────
+    if (orderSource === 'landing_page' && landingPageId && adminDb) {
+      try {
+        await adminDb
+          .collection('shops')
+          .doc(shopId)
+          .collection('landingPages')
+          .doc(landingPageId)
+          .update({
+            ordersCount: admin.firestore.FieldValue.increment(1)
+          });
+      } catch (lpErr) {
+        console.warn('Could not update landing page counter:', lpErr.message);
+      }
+    }
 
     // ── Update Internal AI Fraud Database Profile (Layer 2) ──
     if (adminDb && customerPhone) {

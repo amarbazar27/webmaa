@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
   Settings, LogOut, ShieldCheck, Menu, X, Crown, Lock, Paintbrush, Radio,
-  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle
+  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle, Rocket
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -60,6 +60,13 @@ const navGroups = [
     icon: Paintbrush, 
     href: '/dashboard/homepage-builder', 
     staffAllowed: false 
+  },
+  { 
+    id: 'landing_pages', 
+    label: 'Landing Pages', 
+    icon: Rocket, 
+    href: '/dashboard/landing-pages', 
+    staffAllowed: true 
   },
   { 
     id: 'customers', 

@@ -37,17 +37,36 @@ export default function AboutModal({ isOpen, onClose }) {
 
         {/* Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-6 text-slate-800 dark:text-slate-200">
-          {/* Main Statement Box */}
-          <div className="p-5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/40">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🇧🇩</span>
-              <div className="space-y-1">
-                <h3 className="text-sm sm:text-base font-black text-purple-950 dark:text-purple-200">
-                  দেশি ব্যবসা, দেশের উন্নতি
-                </h3>
-                <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
-                  <strong className="text-purple-700 dark:text-purple-300">BD Retailers</strong> হলো বাংলাদেশের আধুনিক ই-কমার্স প্ল্যাটফর্ম ও স্টোর মেকার, যেখানে মাত্র ৫ মিনিটেই একটি পূর্ণাঙ্গ অনলাইন স্টোর তৈরি করে ব্যবসা পরিচালনা করা যায়।
-                </p>
+          {/* Main Statement Box from 2nd Image */}
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white border border-purple-500/30 shadow-lg space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-purple-200 font-black text-[10px] sm:text-xs uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>🇧🇩 বাংলাদেশের রিটেইলারদের বিশেষ অনলাইন স্টোর মেকার ও মার্কেটপ্লেস</span>
+            </div>
+
+            <h3 className="text-base sm:text-xl font-black text-white leading-snug tracking-tight">
+              বিশ্বস্ত রিটেইলার, নিরাপদ কেনাকাটা <br className="hidden sm:inline" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300">
+                ও ৫ মিনিটে নিজস্ব অনলাইন স্টোর
+              </span>
+            </h3>
+
+            <p className="text-xs sm:text-sm text-purple-100 font-medium leading-relaxed">
+              বাংলাদেশের সেরা ভেরিফাইড মার্চেন্টদের পণ্য সরাসরি কিনুন সাশ্রয়ী মূল্যে। আর উদ্যোক্তারা কোনো কোডিং ছাড়াই মাত্র ৫ মিনিটে চালু করুন আপনার ব্র্যান্ডের সম্পূর্ণ ইকমার্স স্টোর — কাস্টম ডোমেইন, স্টেডফাস্ট কুরিয়ার ও বিকাশ পেমেন্ট সুবিধা সহ।
+            </p>
+
+            <div className="grid grid-cols-3 gap-2 pt-2 text-center">
+              <div className="p-2 rounded-xl bg-white/10 border border-white/10">
+                <p className="text-xs sm:text-sm font-black text-emerald-400">১ ক্লিকে</p>
+                <p className="text-[10px] text-purple-200">ফ্রি স্টোর তৈরি</p>
+              </div>
+              <div className="p-2 rounded-xl bg-white/10 border border-white/10">
+                <p className="text-xs sm:text-sm font-black text-amber-300">১৫+ ডিজাইন</p>
+                <p className="text-[10px] text-purple-200">রেডিমেড টেমপ্লেট</p>
+              </div>
+              <div className="p-2 rounded-xl bg-white/10 border border-white/10">
+                <p className="text-xs sm:text-sm font-black text-pink-300">১০০% ভেরিফাইড</p>
+                <p className="text-[10px] text-purple-200">নিরাপদ কেনাকাটা</p>
               </div>
             </div>
           </div>

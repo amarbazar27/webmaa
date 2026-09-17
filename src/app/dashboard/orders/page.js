@@ -32,6 +32,7 @@ export default function OrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [orderScope, setOrderScope] = useState('all'); // 'all' | 'today' | 'custom_date'
   const [selectedDate, setSelectedDate] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('all'); // 'all' | 'landing_page' | 'direct_website'
   
   // States for advanced edits
   const [customNote, setCustomNote] = useState({});
@@ -574,11 +575,17 @@ export default function OrdersPage() {
   const todayStr = getTodayString();
   const todayOrders = orders.filter(o => getOrderDateString(o) === todayStr);
 
-  const filteredOrders = orderScope === 'today'
+  const scopeOrders = orderScope === 'today'
     ? todayOrders
     : orderScope === 'custom_date' && selectedDate
       ? orders.filter(o => getOrderDateString(o) === selectedDate)
       : orders;
+
+  const filteredOrders = scopeOrders.filter(o => {
+    if (sourceFilter === 'landing_page') return o.orderSource === 'landing_page';
+    if (sourceFilter === 'direct_website') return !o.orderSource || o.orderSource === 'direct_website';
+    return true;
+  });
 
   const groupedOrders = filteredOrders.reduce((acc, order) => {
      const identifier = (order?.customerPhone || order?.customerEmail || 'সম্মানিত কাস্টমার').toString();
@@ -708,6 +715,45 @@ export default function OrdersPage() {
               }`}
             >
               📋 সব অর্ডার ({orders.length})
+            </button>
+          </div>
+
+          {/* Source Switcher */}
+          <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm self-start md:self-auto">
+            <button
+              type="button"
+              onClick={() => setSourceFilter('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                sourceFilter === 'all'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              সব সোর্স
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceFilter('landing_page')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
+                sourceFilter === 'landing_page'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-purple-700 hover:bg-purple-50'
+              }`}
+            >
+              <span>🚀 ল্যান্ডিং পেজ</span>
+              <span className="text-[10px] opacity-80">({orders.filter(o => o.orderSource === 'landing_page').length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceFilter('direct_website')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1 ${
+                sourceFilter === 'direct_website'
+                  ? 'bg-slate-700 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <span>🌐 ওয়েবসাইট</span>
+              <span className="text-[10px] opacity-80">({orders.filter(o => !o.orderSource || o.orderSource === 'direct_website').length})</span>
             </button>
           </div>
 
@@ -938,11 +984,20 @@ export default function OrdersPage() {
                           <div className="xl:col-span-3 space-y-4">
                              <div className="flex justify-between items-start">
                                 <div>
-                                   <div className="flex items-center gap-2 mb-1">
+                                   <div className="flex items-center flex-wrap gap-1.5 mb-1">
                                       <h3 className="font-black text-slate-900 text-lg">Order #{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</h3>
                                       <div className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border ${STATUS_CONFIG[order.status || 'pending'].color}`}>
                                          {STATUS_CONFIG[order.status || 'pending'].label}
                                       </div>
+                                      {order.orderSource === 'landing_page' ? (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200 flex items-center gap-1">
+                                           🚀 ল্যান্ডিং পেজ {order.landingPageTitle ? `: ${order.landingPageTitle}` : ''}
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1">
+                                           🌐 ওয়েবসাইট
+                                        </span>
+                                      )}
                                    </div>
                                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5 mb-2">
                                       <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${

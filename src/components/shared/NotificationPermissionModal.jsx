@@ -17,64 +17,64 @@ import { isPushSupported, getPermissionStatus, requestPermission, getFCMToken } 
 const STORAGE_KEY = 'daripallah_notif_permission_asked';
 const ALLOWED_KEY = 'daripallah_notif_allowed';
 // কতদিন পর আবার জিজ্ঞেস করবে (deny করলে)
-const ASK_AGAIN_DAYS = 3;
+const ASK_AGAIN_DAYS = 5;
 
 export default function NotificationPermissionModal({ shopId = null, userId = null }) {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState('ask'); // 'ask' | 'success' | 'denied'
+  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [step, setStep] = useState('ask'); // 'ask' | 'success'
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!isPushSupported()) return;
 
-    // ইতিমধ্যে browser-এ granted — modal দরকার নেই
+    // ইতিমধ্যে browser-এ granted বা denied — modal দরকার নেই
     const perm = getPermissionStatus();
-    if (perm === 'granted') return;
-    if (perm === 'denied') return; // browser-level deny — আর কিছু করার নেই
+    if (perm === 'granted' || perm === 'denied') return;
 
     // User already clicked Allow
     if (localStorage.getItem(ALLOWED_KEY)) return;
 
-    // Check last asked time (deny হলে কতদিন পর আবার জিজ্ঞেস করব)
+    // Check last asked time
     const lastAsked = localStorage.getItem(STORAGE_KEY);
     if (lastAsked) {
       const daysSince = (Date.now() - parseInt(lastAsked)) / (1000 * 60 * 60 * 24);
       if (daysSince < ASK_AGAIN_DAYS) return;
     }
 
-    // Page load-এর ৩ সেকেন্ড পরে দেখাও (less annoying)
-    const timer = setTimeout(() => setShow(true), 3000);
+    // Page load-এর ৪ সেকেন্ড পরে দেখাও (সবার শেষে শান্তভাবে)
+    const timer = setTimeout(() => setShow(true), 4000);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleAllow = async () => {
+  const handleContinue = async () => {
     setLoading(true);
     try {
-      const result = await requestPermission();
-      if (result === 'granted') {
-        localStorage.setItem(ALLOWED_KEY, '1');
-        localStorage.removeItem(STORAGE_KEY);
-        if (shopId) {
-          await getFCMToken(shopId, userId);
+      if (agreeTerms) {
+        const result = await requestPermission();
+        if (result === 'granted') {
+          localStorage.setItem(ALLOWED_KEY, '1');
+          localStorage.removeItem(STORAGE_KEY);
+          if (shopId) {
+            await getFCMToken(shopId, userId);
+          }
+          setStep('success');
+          setTimeout(() => setShow(false), 2000);
+          setLoading(false);
+          return;
         }
-        setStep('success');
-        setTimeout(() => setShow(false), 2500);
-      } else {
-        // User clicked "Block" in browser dialog
-        localStorage.setItem(STORAGE_KEY, Date.now().toString());
-        setStep('denied');
-        setTimeout(() => setShow(false), 3000);
       }
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+      setShow(false);
     } catch (err) {
-      console.error('Permission request failed:', err);
+      console.warn('Consent handler error:', err);
       setShow(false);
     }
     setLoading(false);
   };
 
-  const handleDeny = () => {
-    // পরের visit-এ আবার জিজ্ঞেস করব
+  const handleDismiss = () => {
     localStorage.setItem(STORAGE_KEY, Date.now().toString());
     setShow(false);
   };
@@ -82,111 +82,78 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
   if (!show) return null;
 
   return (
-    <>
-      {/* Backdrop — subtle, not full block */}
-      <div
-        className="fixed inset-0 z-[150] pointer-events-none"
-        style={{ background: 'rgba(0,0,0,0.15)' }}
-      />
-
-      {/* Modal — bottom center */}
-      <div
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[160] w-full max-w-sm mx-4 animate-slide-up"
-        role="dialog"
-        aria-modal="true"
-        aria-label="নোটিফিকেশন অনুমতি"
-      >
-        <div
-          className="rounded-3xl shadow-2xl overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, #1e1b4b, #312e81)',
-            border: '1px solid rgba(139,92,246,0.3)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(108,71,255,0.2)',
-          }}
+    <aside
+      className="fixed bottom-3 left-3 right-3 sm:left-auto sm:right-5 sm:bottom-5 z-[80] max-w-sm sm:max-w-md animate-fade-in select-none"
+      role="dialog"
+      aria-label="শর্তাবলী ও নোটিফিকেশন সম্মতি"
+    >
+      <div className="relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800/90 shadow-2xl rounded-2xl p-3.5 sm:p-4 text-slate-800 dark:text-slate-100 transition-all">
+        {/* Dismiss 'X' */}
+        <button
+          onClick={handleDismiss}
+          className="absolute top-2.5 right-2.5 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="বন্ধ করুন"
+          aria-label="Close"
         >
-          {step === 'ask' && (
-            <div className="p-6">
-              {/* Close */}
+          <X size={15} />
+        </button>
+
+        {step === 'ask' ? (
+          <div className="space-y-2.5 pr-4">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                <Bell size={15} />
+              </div>
+              <h4 className="text-xs font-black text-slate-900 dark:text-white leading-tight">
+                শর্তাবলী ও নোটিফিকেশন আপডেট
+              </h4>
+            </div>
+
+            {/* Terms & Notifications Agreement Checkbox */}
+            <label className="flex items-start gap-2.5 cursor-pointer text-left group">
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 dark:border-slate-700 dark:bg-slate-800 cursor-pointer shrink-0"
+              />
+              <span className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-snug">
+                আমি ওয়েবসাইট ব্যবহারের <span className="underline font-bold">শর্তাবলী</span> মেনে নিচ্ছি এবং নতুন অর্ডার স্ট্যাটাস ও বিশেষ অফারের নোটিফিকেশন পেতে সম্মত।
+              </span>
+            </label>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 pt-1">
               <button
-                onClick={handleDeny}
-                className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-all"
+                onClick={handleContinue}
+                disabled={loading}
+                className="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
               >
-                <X size={14} />
+                {loading ? (
+                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Bell size={13} />
+                )}
+                <span>{agreeTerms ? 'সম্মত ও চালু করুন' : 'চালিয়ে যান'}</span>
               </button>
 
-              {/* Icon */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: 'rgba(139,92,246,0.3)', border: '1px solid rgba(139,92,246,0.5)' }}>
-                  <Bell size={22} className="text-violet-300" />
-                </div>
-                <div>
-                  <p className="text-white font-black text-sm leading-tight">নোটিফিকেশন চালু করুন</p>
-                  <p className="text-violet-300 text-[11px] font-bold mt-0.5">অর্ডার আপডেট পেতে</p>
-                </div>
-              </div>
-
-              {/* Description */}
-              <p className="text-violet-200 text-xs font-medium leading-relaxed mb-5">
-                নতুন অর্ডার, ডেলিভারি স্ট্যাটাস, এবং অফার সম্পর্কে তাৎক্ষণিক আপডেট পান। 
-                যেকোনো সময় বন্ধ করতে পারবেন।
-              </p>
-
-              {/* Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleAllow}
-                  disabled={loading}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-black transition-all disabled:opacity-70"
-                  style={{
-                    background: 'linear-gradient(135deg, #7C3AED, #6C47FF)',
-                    color: 'white',
-                    boxShadow: '0 4px 20px rgba(108,71,255,0.4)',
-                  }}
-                >
-                  {loading ? (
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <Bell size={15} />
-                  )}
-                  {loading ? 'অপেক্ষা করুন...' : 'হ্যাঁ, চালু করুন'}
-                </button>
-
-                <button
-                  onClick={handleDeny}
-                  className="px-4 py-3 rounded-2xl text-xs font-black text-violet-300 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  এখন না
-                </button>
-              </div>
-
-              <p className="text-center text-violet-400 text-[10px] font-bold mt-3">
-                ✨ একবার Allow করলে আর জিজ্ঞেস করব না
-              </p>
+              <button
+                onClick={handleDismiss}
+                className="py-2 px-3 text-[11px] font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                পরে
+              </button>
             </div>
-          )}
-
-          {step === 'success' && (
-            <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3">
-                <Sparkles size={24} className="text-emerald-400" />
-              </div>
-              <p className="text-white font-black text-sm mb-1">✅ নোটিফিকেশন চালু হয়েছে!</p>
-              <p className="text-emerald-300 text-xs font-bold">এখন থেকে সব আপডেট পাবেন</p>
-            </div>
-          )}
-
-          {step === 'denied' && (
-            <div className="p-6 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-red-500/20 border border-red-500/30 flex items-center justify-center mx-auto mb-3">
-                <BellOff size={24} className="text-red-400" />
-              </div>
-              <p className="text-white font-black text-sm mb-1">নোটিফিকেশন বন্ধ আছে</p>
-              <p className="text-red-300 text-xs font-bold">{ASK_AGAIN_DAYS} দিন পরে আবার জিজ্ঞেস করব</p>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 py-1">
+            <Sparkles size={18} className="text-emerald-500 shrink-0" />
+            <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+              ধন্যবাদ! আপনার নোটিফিকেশন ও আপডেট সক্রিয় হয়েছে।
+            </p>
+          </div>
+        )}
       </div>
-    </>
+    </aside>
   );
 }

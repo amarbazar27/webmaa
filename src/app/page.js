@@ -23,6 +23,7 @@ import NewsletterSection from '@/components/home/NewsletterSection';
 import SponsorsSection from '@/components/home/SponsorsSection';
 import TemplatesSection from '@/components/home/TemplatesSection';
 import AboutModal from '@/components/home/AboutModal';
+import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
@@ -1347,7 +1348,7 @@ export default function Home() {
   }
 
   return (
-    <div className="neo-root font-sans overflow-x-hidden pb-20 lg:pb-10 transition-colors duration-300">
+    <div className="neo-root font-sans overflow-x-hidden pt-16 pb-20 lg:pb-10 transition-colors duration-300">
       <style jsx global>{`
         body {
           background-color: #F8FAFC;
@@ -1398,7 +1399,7 @@ export default function Home() {
       `}} />
 
       {/* ── Fixed Clean Top Bar ── */}
-      <header className="sticky top-0 z-50 px-3 sm:px-6 py-2.5 sm:py-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-xs transition-all duration-300">
+      <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-2.5 sm:py-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800 shadow-xs transition-all duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center gap-2 sm:gap-4">
           {/* Left: Hamburger Drawer Menu Button & Brand Identity */}
           <div className="flex items-center gap-2.5 sm:gap-3.5">
@@ -1434,22 +1435,6 @@ export default function Home() {
               </div>
             </Link>
           </div>
-
-          {/* Center Links (Desktop only) */}
-          <nav className="hidden lg:flex items-center gap-6 font-bold text-xs text-slate-700 dark:text-slate-200">
-            <a href="#marketplace" className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors">
-              <ShoppingBag size={14} className="text-purple-600" /> Marketplace
-            </a>
-            <Link href="/templates" className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors">
-              <Sparkles size={14} className="text-purple-600" /> রেডিমেড ডিজাইন
-            </Link>
-            <a href="#pricing" className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors">
-              <Sparkles size={14} className="text-purple-600" /> প্যাকেজ ও মূল্য
-            </a>
-            <button onClick={() => setIsAboutModalOpen(true)} className="hover:text-purple-600 dark:hover:text-purple-400 flex items-center gap-1.5 transition-colors cursor-pointer">
-              <Store size={14} className="text-purple-600" /> আমাদের সম্পর্কে
-            </button>
-          </nav>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-2.5">
@@ -1547,99 +1532,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Marketplace & Retailer Store-Maker Hero Section ── */}
-      {showHero && (
-        <section className="relative z-20 pt-4 pb-6 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6">
-            <div className="relative rounded-3xl bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white p-6 sm:p-10 shadow-xl overflow-hidden border border-purple-500/20">
-              {/* Background ambient lighting */}
-              <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
-              <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none -ml-16 -mb-16" />
 
-              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                {/* Left Text */}
-                <div className="lg:col-span-8 space-y-4 text-left">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-purple-200 font-black text-[11px] sm:text-xs uppercase tracking-wider">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>🇧🇩 বাংলাদেশের রিটেইলারদের বিশেষ অনলাইন স্টোর মেকার ও মার্কেটপ্লেস</span>
-                  </div>
-
-                  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.15]">
-                    বিশ্বস্ত রিটেইলার, নিরাপদ কেনাকাটা <br className="hidden sm:inline" />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300">
-                      ও ৫ মিনিটে নিজস্ব অনলাইন স্টোর
-                    </span>
-                  </h1>
-
-                  <p className="text-xs sm:text-sm text-purple-100 font-medium leading-relaxed max-w-2xl">
-                    বাংলাদেশের সেরা ভেরিফাইড মার্চেন্টদের পণ্য সরাসরি কিনুন সাশ্রয়ী মূল্যে। আর উদ্যোক্তারা কোনো কোডিং ছাড়াই মাত্র ৫ মিনিটে চালু করুন আপনার ব্র্যান্ডের সম্পূর্ণ ইকমার্স স্টোর — কাস্টম ডোমেইন, স্টেডফাস্ট কুরিয়ার ও বিকাশ পেমেন্ট সুবিধা সহ।
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-2">
-                    <Link
-                      href="/become-retailer"
-                      className="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/25 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-                    >
-                      <Sparkles size={16} />
-                      <span>ফ্রি স্টোর তৈরি করুন</span>
-                      <ArrowRight size={14} />
-                    </Link>
-
-                    <a
-                      href="#marketplace"
-                      className="px-5 py-3 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/20 text-white font-black text-xs sm:text-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-                    >
-                      <ShoppingBag size={16} />
-                      <span>পণ্য ব্রাউজ করুন</span>
-                    </a>
-
-                    <Link
-                      href="/templates"
-                      className="px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-purple-200 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <span>🎨 রেডিমেড ডিজাইন</span>
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Right Stat / Badge Box */}
-                <div className="lg:col-span-4">
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/15 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/30 flex items-center justify-center text-purple-200">
-                        <Store size={20} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-300">Live Ecosystem</p>
-                        <h3 className="text-sm font-black text-white">মার্কেটপ্লেস ও স্টোর পরিসংখ্যান</h3>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-                        <p className="text-xl sm:text-2xl font-black text-purple-300 font-mono tabular-nums">{allShops.length}+</p>
-                        <p className="text-[10px] text-purple-200/80 font-bold uppercase tracking-wider mt-0.5">ভেরিফাইড স্টোর</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-black/20 border border-white/5">
-                        <p className="text-xl sm:text-2xl font-black text-purple-300 font-mono tabular-nums">{products.length}+</p>
-                        <p className="text-[10px] text-purple-200/80 font-bold uppercase tracking-wider mt-0.5">লাইভ পণ্য</p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => setIsAboutModalOpen(true)}
-                      className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer border border-white/10"
-                    >
-                      <Store size={13} className="text-purple-300" />
-                      <span>বিডি রিটেইলার্স কীভাবে কাজ করে?</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ── Dynamic Popular Categories Section ── */}
       <section id="categories-section" className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-2">
@@ -3569,8 +3462,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── Sleek Scroll To Top / Bottom Floating Pills (Bottom-Left) ── */}
-      <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8 select-none">
+      {/* ── Sleek Scroll To Top / Bottom Floating Pills (Desktop Only) ── */}
+      <div className="fixed left-4 bottom-24 z-40 hidden md:flex flex-col gap-2 md:bottom-8 select-none">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="group w-10 h-10 rounded-2xl bg-white/90 hover:bg-purple-600 text-slate-700 hover:text-white shadow-lg hover:shadow-purple-500/30 border border-slate-200/80 hover:border-purple-500 backdrop-blur-md transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
@@ -3588,6 +3481,9 @@ export default function Home() {
           <ArrowDown size={16} className="stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
         </button>
       </div>
+
+      {/* ── Compact Terms & Notification Consent Banner ── */}
+      <NotificationPermissionModal />
 
       {/* ── About BD Retailers Platform Modal ── */}
       <AboutModal
