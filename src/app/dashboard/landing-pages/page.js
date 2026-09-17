@@ -49,7 +49,23 @@ export default function LandingPagesDashboard() {
     getShop(activeShopId).then(data => setShop(data));
     getProducts(activeShopId).then(data => setProducts(data || []));
 
-    // Listen to landing pages
+    // Load landing pages via API first (safe from client rules), then listen if possible
+    const fetchLps = async () => {
+      try {
+        const res = await fetch(`/api/landing-pages?shopId=${activeShopId}`);
+        const data = await res.json();
+        if (data.landingPages) {
+          setLandingPages(data.landingPages);
+        }
+      } catch (err) {
+        console.warn('API landing pages fetch failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLps();
+
+    // Also listen to landing pages if client rules permit
     const lpRef = collection(db, 'shops', activeShopId, 'landingPages');
     const unsubscribe = onSnapshot(lpRef, (snap) => {
       const list = [];
@@ -58,10 +74,9 @@ export default function LandingPagesDashboard() {
       });
       list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       setLandingPages(list);
-      setLoading(false);
     }, (err) => {
-      console.error('Failed to load landing pages:', err);
-      setLoading(false);
+      // Quietly ignore client permission errors since API handles fetching
+      console.warn('Direct Firestore snapshot restricted, using API data');
     });
 
     return () => unsubscribe();
@@ -182,20 +197,32 @@ export default function LandingPagesDashboard() {
         deliveryFeeOutside: parseFloat(formData.deliveryFeeOutside) || 120,
         status: formData.status,
         shopId: activeShopId,
-        updatedAt: serverTimestamp(),
       };
 
-      if (editingLp) {
-        await updateDoc(doc(db, 'shops', activeShopId, 'landingPages', editingLp.id), payload);
-        toast.success('ল্যান্ডিং পেজ আপডেট হয়েছে ✓');
-      } else {
-        payload.createdAt = serverTimestamp();
-        payload.views = 0;
-        payload.ordersCount = 0;
-        await addDoc(collection(db, 'shops', activeShopId, 'landingPages'), payload);
-        toast.success('নতুন ল্যান্ডিং পেজ সফলভাবে তৈরি হয়েছে! 🎉');
+      const method = editingLp ? 'PUT' : 'POST';
+      const bodyData = editingLp ? { ...payload, id: editingLp.id } : payload;
+
+      const res = await fetch('/api/landing-pages', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyData)
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || 'সংরক্ষণ ব্যর্থ হয়েছে');
       }
+
+      toast.success(editingLp ? 'ল্যান্ডিং পেজ আপডেট হয়েছে ✓' : 'নতুন ল্যান্ডিং পেজ সফলভাবে তৈরি হয়েছে! 🎉');
       setModalOpen(false);
+
+      // Refresh list
+      fetch(`/api/landing-pages?shopId=${activeShopId}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.landingPages) setLandingPages(d.landingPages);
+        })
+        .catch(() => {});
     } catch (err) {
       console.error('Save landing page error:', err);
       toast.error('সংরক্ষণ ব্যর্থ হয়েছে: ' + err.message);
@@ -207,8 +234,14 @@ export default function LandingPagesDashboard() {
   const handleDelete = async (id, title) => {
     if (!confirm(`আপনি কি নিশ্চিত যে "${title}" ল্যান্ডিং পেজটি মুছে ফেলতে চান?`)) return;
     try {
-      await deleteDoc(doc(db, 'shops', activeShopId, 'landingPages', id));
+      const res = await fetch(`/api/landing-pages?id=${id}&shopId=${activeShopId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'মুছে ফেলা সম্ভব হয়নি');
+      
       toast.success('ল্যান্ডিং পেজ মুছে ফেলা হয়েছে');
+      setLandingPages(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       toast.error('মুছে ফেলা সম্ভব হয়নি: ' + err.message);
     }

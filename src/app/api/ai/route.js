@@ -123,11 +123,11 @@ export async function POST(req) {
 
       try {
         if (isGemini) {
-          // 🚀 Gemini models to try in sequence
+          // 🚀 Fast Gemini models in order of speed & availability
           const modelsToTry = [
-            'gemini-2.5-flash',
             'gemini-2.0-flash',
             'gemini-1.5-flash',
+            'gemini-2.5-flash',
           ];
 
           const chatMessages = [];

@@ -16,7 +16,6 @@ import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug, getAll
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
-import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import PricingSection from '@/components/home/PricingSection';
 import FaqSection from '@/components/home/FaqSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
@@ -27,6 +26,7 @@ import NotificationPermissionModal from '@/components/shared/NotificationPermiss
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
+const MainStoreAiModal = dynamic(() => import('@/components/home/MainStoreAiModal'), { ssr: false });
 const AiShoppingList = dynamic(() => import('@/components/shop/AiShoppingList'), { ssr: false });
 const AiVoicePanel = dynamic(() => import('@/components/shop/AiVoicePanel'), { ssr: false });
 const ReviewSection = dynamic(() => import('@/components/shop/ReviewSection'), { ssr: false });
@@ -960,13 +960,48 @@ export default function Home() {
     });
   };
 
+  // ── Smart Showcase Curation (Superadmin Controlled Whitelist) ──
+  const isCurationActive = globalConfig?.showcaseCuration?.enabled === true;
+  const allowedShopsList = globalConfig?.showcaseCuration?.allowedShops || [];
+  const allowedCategoriesList = globalConfig?.showcaseCuration?.allowedCategories || [];
+  const allowedSubcategoriesList = globalConfig?.showcaseCuration?.allowedSubcategories || [];
+
+  // 1. Curated Shops: strictly follows whitelist if curation is active
+  const curatedShops = allShops.filter(s => {
+    if (s.shopSlug === 'test' || s.shopName?.toLowerCase() === 'test' || s.shopSlug === 'daripallah-store' || s.shopSlug === 'webmaa-store') {
+      return false;
+    }
+    if (isCurationActive && allowedShopsList.length > 0) {
+      return allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName);
+    }
+    return true;
+  });
+
+  // 2. Curated Products: strictly follows whitelist if curation is active
+  const curatedProducts = products.filter(p => {
+    if (p.showOnMainSite === false) return false;
+    if (isCurationActive) {
+      if (allowedShopsList.length > 0) {
+        const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
+        if (!matchesShop) return false;
+      }
+      if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
+        return false;
+      }
+      if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
   // ── Merchant-Category Filter Double Flow ──
-  const uniqueShops = ['All', ...Array.from(new Set(products.map(p => p.shopName).filter(Boolean)))];
+  const uniqueShops = ['All', ...Array.from(new Set(curatedProducts.map(p => p.shopName).filter(Boolean)))];
 
   const uniqueTypes = ['All', 'মাংস ও ডিম (Poultry & Eggs)', 'সবজি ও ফল (Vegetables & Fruits)', 'মুদি ও নিত্যপ্রয়োজনীয় (Groceries)', 'পানীয় ও দুগ্ধজাত (Drinks & Dairy)', 'অন্যান্য পণ্য (Others)'];
 
   const availableCategories = ['All', ...Array.from(new Set(
-    products
+    curatedProducts
       .filter(p => {
         if (filterMode === 'merchant') {
           return activeShopFilter === 'All' || p.shopName === activeShopFilter;
@@ -979,7 +1014,7 @@ export default function Home() {
   ))];
 
   const availableSubcategories = Array.from(new Set(
-    products
+    curatedProducts
       .filter(p => {
         if (filterMode === 'merchant') {
           return (activeShopFilter === 'All' || p.shopName === activeShopFilter) &&
@@ -998,13 +1033,13 @@ export default function Home() {
     if (!availableCategories.includes(activeCategory)) {
       setActiveCategory('All');
     }
-  }, [activeShopFilter, activeTypeFilter, filterMode, products]);
+  }, [activeShopFilter, activeTypeFilter, filterMode, curatedProducts]);
 
   useEffect(() => {
     if (!availableSubcategories.includes(activeSubcategory)) {
       setActiveSubcategory('');
     }
-  }, [activeCategory, activeShopFilter, activeTypeFilter, filterMode, products]);
+  }, [activeCategory, activeShopFilter, activeTypeFilter, filterMode, curatedProducts]);
 
   // Reset all filters when filterMode changes
   useEffect(() => {
@@ -1101,20 +1136,8 @@ export default function Home() {
   };
 
   // Compile active products list based on hierarchy & search options
-  let filteredProducts = products.filter(p => {
-    if (p.showOnMainSite === false) return false;
-    // 1. Curation Whitelist Filters
-    if (globalConfig?.showcaseCuration?.enabled) {
-      const allowedShops = globalConfig.showcaseCuration.allowedShops || [];
-      const allowedCategories = globalConfig.showcaseCuration.allowedCategories || [];
-      const allowedSubcategories = globalConfig.showcaseCuration.allowedSubcategories || [];
-      
-      if (allowedShops.length > 0 && !allowedShops.includes(p.shopId)) return false;
-      if (allowedCategories.length > 0 && !allowedCategories.includes(p.category)) return false;
-      if (allowedSubcategories.length > 0 && p.subcategory && !allowedSubcategories.includes(p.subcategory)) return false;
-    }
-
-    // 2. Interactive Selection Filters
+  let filteredProducts = curatedProducts.filter(p => {
+    // Interactive Selection Filters
     const matchesShop = filterMode === 'merchant'
       ? (activeShopFilter === 'All' || p.shopName === activeShopFilter)
       : true;
@@ -1271,20 +1294,8 @@ export default function Home() {
   // Calculate Amazon style groups if enabled
   const shopGroups = {};
   if (globalConfig?.showAmazonBoxes) {
-    products.forEach(p => {
-      if (p.showOnMainSite === false) return;
-      // 1. Curation Whitelist Filters
-      if (globalConfig?.showcaseCuration?.enabled) {
-        const allowedShops = globalConfig.showcaseCuration.allowedShops || [];
-        const allowedCategories = globalConfig.showcaseCuration.allowedCategories || [];
-        const allowedSubcategories = globalConfig.showcaseCuration.allowedSubcategories || [];
-        
-        if (allowedShops.length > 0 && !allowedShops.includes(p.shopId)) return;
-        if (allowedCategories.length > 0 && !allowedCategories.includes(p.category)) return;
-        if (allowedSubcategories.length > 0 && p.subcategory && !allowedSubcategories.includes(p.subcategory)) return;
-      }
-
-      // 2. Search & Filters
+    curatedProducts.forEach(p => {
+      // Search & Filters
       const matchesSearch = !productSearch || matchPhoneticSearch(p, productSearch);
       const matchesType = filterMode === 'type'
         ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
@@ -1438,7 +1449,6 @@ export default function Home() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <ThemeToggleButton size="sm" />
 
             {/* User Profile / Login Icon Button */}
             <div className="flex items-center">
@@ -1499,40 +1509,64 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Prominent Mobile-First Search Bar (Below Header) ── */}
-      <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 pt-3 pb-1">
-        <div className="relative flex items-center bg-white dark:bg-slate-900 border-2 border-purple-200 hover:border-purple-400 dark:border-slate-800 dark:hover:border-purple-500/50 rounded-2xl px-3.5 sm:px-5 py-2.5 shadow-sm focus-within:border-purple-600 focus-within:ring-2 focus-within:ring-purple-500/20 transition-all">
-          <Search className="text-purple-600 dark:text-purple-400 mr-2.5 shrink-0" size={18} />
-          <input
-            id="search-input-field"
-            type="text"
-            placeholder="আপনার প্রয়োজনীয় পণ্য, ক্যাটাগরি বা স্টোর খুঁজুন..."
-            className="bg-transparent border-none focus:ring-0 w-full text-xs sm:text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 outline-none"
-            value={productSearch}
-            onChange={e => setProductSearch(e.target.value)}
-          />
-          {productSearch && (
-            <button
-              type="button"
-              onClick={() => setProductSearch('')}
-              className="mr-2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors text-xs font-bold cursor-pointer"
-              title="মুছে ফেলুন"
-            >
-              ✕
-            </button>
-          )}
-          <button 
-            onClick={() => {
-              document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer shadow-xs active:scale-95"
-          >
-            খুঁজুন
-          </button>
+      {/* ── Sleek Platform Description & Action Banner (Below Header) ── */}
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 pb-2">
+        <div className="relative rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-pink-50/40 border border-purple-200/80 p-4 sm:p-5 shadow-xs overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Left: Platform Overview Details */}
+            <div className="space-y-1.5 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-600/10 border border-purple-600/20 text-purple-700 dark:text-purple-300 text-[11px] font-black uppercase tracking-wider">
+                <Sparkles size={12} />
+                <span>🇧🇩 বাংলাদেশের বিশ্বস্ত রিটেইলার মার্কেটপ্লেস ও স্টোর মেকার</span>
+              </div>
+              <h1 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">
+                বিশ্বস্ত মার্চেন্টদের সেরা পণ্য সরাসরি কিনুন, অথবা ৫ মিনিটে নিজস্ব অনলাইন স্টোর চালু করুন
+              </h1>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                কোনো কোডিং ছাড়াই মাত্র ৫ মিনিটে তৈরি করুন আপনার ব্র্যান্ডের ইকমার্স ওয়েবসাইট ও ১-ক্লিক সেলস ফানেল। সাথে থাকছে বিকাশ গেটওয়ে ও স্টেডফাস্ট কুরিয়ার স্বয়ংক্রিয় ট্র্যাকিং।
+              </p>
+              
+              {/* Feature Tags */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
+                  <CheckCircle size={12} className="text-emerald-600" /> ভেরিফাইড শপ
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
+                  <Truck size={12} className="text-purple-600" /> ক্যাশ অন ডেলিভারি
+                </span>
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
+                  <Store size={12} className="text-indigo-600" /> ০৳ তে ফ্রি স্টোর মেকার
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Quick Action CTAs */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+              <button
+                onClick={() => document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <ShoppingBag size={14} />
+                <span>পণ্য দেখুন</span>
+              </button>
+              <Link
+                href="/become-retailer"
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-purple-50 text-purple-700 font-black text-xs border border-purple-200 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Store size={14} />
+                <span>স্টোর খুলুন</span>
+              </Link>
+              <button
+                onClick={() => setIsAboutModalOpen(true)}
+                className="p-2.5 rounded-xl bg-white/80 hover:bg-white text-slate-700 hover:text-purple-700 font-bold text-xs border border-slate-200 shadow-xs transition-all cursor-pointer"
+                title="আমাদের সম্পর্কে জানুন"
+              >
+                ℹ️
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
-
 
       {/* ── Dynamic Popular Categories Section ── */}
       <section id="categories-section" className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-2">
@@ -1561,8 +1595,8 @@ export default function Home() {
           {availableCategories.map(cat => {
             const isSelected = activeCategory === cat;
             const catCount = cat === 'All' 
-              ? products.length 
-              : products.filter(p => p.category === cat).length;
+              ? curatedProducts.length 
+              : curatedProducts.filter(p => p.category === cat).length;
 
             return (
               <button
@@ -1591,7 +1625,7 @@ export default function Home() {
       </section>
 
       {/* ── Dynamic Verified Retailers (Stores) Section ── */}
-      {allShops.filter(s => s.shopSlug !== 'test' && s.shopName?.toLowerCase() !== 'test' && s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store').length > 0 && (
+      {curatedShops.length > 0 && (
         <section id="retailers-section" className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -1613,11 +1647,9 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
-            {allShops
-              .filter(s => s.shopSlug !== 'test' && s.shopName?.toLowerCase() !== 'test' && s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store')
-              .map(shop => {
-                const shopProds = products.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName);
-                const isShopActive = activeShopFilter === shop.shopName;
+            {curatedShops.map(shop => {
+              const shopProds = curatedProducts.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName || p.shopId === shop.id);
+              const isShopActive = activeShopFilter === shop.shopName;
 
                 return (
                   <div
@@ -2751,9 +2783,9 @@ export default function Home() {
                 🌐 সব স্টোর (All Stores)
               </button>
 
-              {allShops.filter(s => s.shopSlug !== 'daripallah-store' && s.shopSlug !== 'webmaa-store' && s.shopSlug !== 'test' && s.shopName?.toLowerCase() !== 'test').map(shop => {
+              {curatedShops.map(shop => {
                 const isShopActive = activeShopFilter === shop.shopName;
-                const shopProducts = products.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName);
+                const shopProducts = curatedProducts.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName || p.shopId === shop.id);
                 const shopCats = [...new Set(shopProducts.map(p => p.category).filter(Boolean))];
 
                 return (
@@ -3305,101 +3337,17 @@ export default function Home() {
 
       {/* ── Consolidated Floating Action Group (Bottom-Right) ── */}
 
-      {/* ── AI Modal (Chat + Voice + OCR + Text) ── */}
-      {isAiOpen && (
-        <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAiOpen(false)} />
-          <div className="relative w-full max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] max-h-[700px] border border-slate-200 animate-slide-in text-slate-800">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-tr from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-lg shadow-md shrink-0 animate-bounce">
-                  😊
-                </div>
-                <div>
-                  <h3 className="font-black text-sm tracking-tight leading-tight">{mainShopData?.aiConfig?.botName || (globalConfig?.brandName ? `${globalConfig.brandName} Bot` : 'BDRetailers Bot')}</h3>
-                  <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">AI Marketplace Assistant</p>
-                </div>
-              </div>
-              <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
-            </div>
-
-            {/* Tab Bar Removed - Kept only Chat tab view */}
-
-            {/* Chat Tab */}
-            {aiTab === 'chat' && (
-              <>
-                <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-3 overflow-y-auto relative pb-4">
-                  {chatMessages.map(msg => {
-                    const suggestedItems = getSuggestedProductsForMessage(msg);
-                    return (
-                      <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
-                        <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
-                          {msg && msg.text && typeof msg.text === 'string' 
-                            ? msg.text.replace(/PRODUCTS_JSON:.*$/s, '').trim() 
-                            : (msg ? msg.text : '')}
-                        </div>
-                        
-                        {/* AI Suggested Products list */}
-                        {suggestedItems && suggestedItems.length > 0 && (
-                          <div className="mt-1 flex flex-col gap-2 bg-slate-100/90 p-2.5 rounded-2xl border border-slate-200/60 max-w-full">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">AI সাজেস্টেড প্রোডাক্টস:</p>
-                            <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
-                              {suggestedItems.map(({ product, qty }) => {
-                                const inCart = cart?.find(item => item.productId === product.id);
-                                return (
-                                  <div key={product.id} className="bg-white p-2 rounded-xl border border-slate-200/50 flex items-center justify-between gap-3 shadow-xs">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      {product.imageUrl ? (
-                                        <img src={product.imageUrl} alt={product.name} className="w-8 h-8 rounded-lg object-cover bg-slate-50 shrink-0" />
-                                      ) : (
-                                        <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 text-xs font-black flex items-center justify-center shrink-0">🛍</div>
-                                      )}
-                                      <div className="min-w-0">
-                                        <h4 className="text-xs font-bold text-slate-800 truncate">{product.name}</h4>
-                                        <p className="text-[10px] text-slate-500 font-bold">
-                                          ৳{product.price} {qty > 1 && ` (qty: ${qty})`}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <button
-                                      onClick={() => {
-                                        for (let i = 0; i < qty; i++) {
-                                          handleAddToCart(product);
-                                        }
-                                      }}
-                                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shrink-0 ${inCart ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
-                                    >
-                                      {inCart ? 'যুক্ত আছে' : '+ কার্ট'}
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            
-                            <button onClick={() => addAllSuggestedToCart(msg.text)}
-                              className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl shadow-xs transition-colors uppercase tracking-wider">
-                              <ShoppingCart size={12} /> সব কার্টে যোগ করুন
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {isAiTyping && <div className="max-w-[85%] p-3.5 rounded-2xl bg-white border border-slate-200 self-start flex gap-1">{[0,1,2].map(i => <div key={i} className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:`${i*0.15}s`}} />)}</div>}
-                </div>
-                <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0">
-                  <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-xs font-black transition-colors" title="Clear">🗑</button>
-                  <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
-                  <button onClick={() => sendChatMessage(chatInput)} className="bg-purple-600 text-slate-50 w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-700 transition-all shadow-md shrink-0 cursor-pointer border-0"><MessageCircle size={20} strokeWidth={2.5}/></button>
-                </div>
-              </>
-            )}
-
-            {/* Other tabs (Voice/OCR/List) views removed */}
-          </div>
-        </div>
-      )}
+      {/* ── Enhanced Marketplace AI Shopping Assistant Modal (with local history & sessions) ── */}
+      <MainStoreAiModal
+        isOpen={isAiOpen}
+        onClose={() => setIsAiOpen(false)}
+        allShops={curatedShops}
+        products={curatedProducts}
+        globalConfig={globalConfig}
+        mainShopData={mainShopData}
+        onAddToCart={handleAddToCart}
+        onOpenCart={() => setIsCartOpen(true)}
+      />
 
       {/* ── Vertically Stacked Floating Action Buttons (Bottom-Right, safe above mobile nav) ── */}
       <div className="fixed bottom-24 sm:bottom-8 right-4 sm:right-6 z-[120] flex flex-col items-end gap-3 pointer-events-auto select-none animate-fade-in">

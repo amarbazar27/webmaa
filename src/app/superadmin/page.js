@@ -601,6 +601,8 @@ export default function SuperAdminPage() {
   }, []);
 
   const showcaseCuration = globalConfig?.showcaseCuration || { enabled: false, allowedShops: [], allowedCategories: [], allowedSubcategories: [] };
+  const [curationSearchShop, setCurationSearchShop] = useState('');
+  const [curationSearchCat, setCurationSearchCat] = useState('');
 
   const handleToggleCuration = async () => {
     const updated = {
@@ -636,6 +638,30 @@ export default function SuperAdminPage() {
     try {
       await updateGlobalConfig(updated);
       toast.success('Curation whitelist updated!');
+    } catch (err) {
+      toast.error('Failed to update whitelist');
+    }
+  };
+
+  const handleBulkWhitelist = async (type, itemsList, shouldSelectAll) => {
+    const currentList = showcaseCuration[type] || [];
+    let updatedList;
+    if (shouldSelectAll) {
+      updatedList = Array.from(new Set([...currentList, ...itemsList]));
+    } else {
+      updatedList = currentList.filter(x => !itemsList.includes(x));
+    }
+    const updated = {
+      ...globalConfig,
+      showcaseCuration: {
+        ...showcaseCuration,
+        [type]: updatedList
+      }
+    };
+    setGlobalConfig(updated);
+    try {
+      await updateGlobalConfig(updated);
+      toast.success(shouldSelectAll ? 'সব নির্বাচিত করা হয়েছে!' : 'সব ক্লিয়ার করা হয়েছে!');
     } catch (err) {
       toast.error('Failed to update whitelist');
     }
@@ -2984,69 +3010,171 @@ export default function SuperAdminPage() {
             {showcaseCuration.enabled && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
                 {/* 1. Shops Column */}
-                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm">
-                  <p className="text-xs font-black text-slate-800 border-b border-slate-100 pb-2 mb-3 uppercase tracking-wider flex items-center gap-1.5"><Store size={13}/> ১. অনুমোদিত শপ ({showcaseCuration.allowedShops?.length || 0})</p>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
-                    {shops.map(shop => {
-                      const isAllowed = (showcaseCuration.allowedShops || []).includes(shop.id);
-                      return (
-                        <label key={shop.id} className="flex items-center gap-3 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition-all border border-slate-100">
-                          <input
-                            type="checkbox"
-                            checked={isAllowed}
-                            onChange={() => handleToggleWhitelistItem('allowedShops', shop.id)}
-                            className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
-                          />
-                          <div className="overflow-hidden">
-                            <p className="text-xs font-bold text-slate-700 truncate">{shop.shopName}</p>
-                            <p className="text-[9px] text-slate-400 font-bold font-mono truncate">{shop.ownerEmail}</p>
-                          </div>
-                        </label>
-                      );
-                    })}
+                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm flex flex-col">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                    <p className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <Store size={13}/> ১. অনুমোদিত শপ ({showcaseCuration.allowedShops?.length || 0})
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleBulkWhitelist('allowedShops', shops.map(s => s.id), true)}
+                        className="text-[10px] font-bold text-purple-600 hover:underline cursor-pointer"
+                      >
+                        সব সিলেক্ট
+                      </button>
+                      <span className="text-slate-300">|</span>
+                      <button
+                        type="button"
+                        onClick={() => handleBulkWhitelist('allowedShops', shops.map(s => s.id), false)}
+                        className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
+                      >
+                        ক্লিয়ার
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Shop Search Filter */}
+                  <input
+                    type="text"
+                    placeholder="শপ খুঁজুন..."
+                    value={curationSearchShop}
+                    onChange={(e) => setCurationSearchShop(e.target.value)}
+                    className="w-full px-2.5 py-1.5 mb-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold outline-none focus:border-purple-600"
+                  />
+
+                  <div className="space-y-1.5 max-h-60 overflow-y-auto pr-2 scrollbar-thin flex-1">
+                    {shops
+                      .filter(s => !curationSearchShop || s.shopName?.toLowerCase().includes(curationSearchShop.toLowerCase()) || s.ownerEmail?.toLowerCase().includes(curationSearchShop.toLowerCase()))
+                      .map(shop => {
+                        const isAllowed = (showcaseCuration.allowedShops || []).includes(shop.id);
+                        return (
+                          <label key={shop.id} className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all border ${isAllowed ? 'bg-purple-50/60 border-purple-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'}`}>
+                            <input
+                              type="checkbox"
+                              checked={isAllowed}
+                              onChange={() => handleToggleWhitelistItem('allowedShops', shop.id)}
+                              className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                            />
+                            <div className="overflow-hidden">
+                              <p className="text-xs font-bold text-slate-800 truncate">{shop.shopName}</p>
+                              <p className="text-[9px] text-slate-400 font-bold font-mono truncate">{shop.ownerEmail}</p>
+                            </div>
+                          </label>
+                        );
+                      })}
                   </div>
                 </div>
 
                 {/* 2. Categories Column */}
-                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm">
-                  <p className="text-xs font-black text-slate-800 border-b border-slate-100 pb-2 mb-3 uppercase tracking-wider flex items-center gap-1.5"><Filter size={13}/> ২. অনুমোদিত ক্যাটাগরি ({showcaseCuration.allowedCategories?.length || 0})</p>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
-                    {Array.from(new Set(allProducts.map(p => p.category).filter(Boolean))).map(cat => {
-                      const isAllowed = (showcaseCuration.allowedCategories || []).includes(cat);
-                      return (
-                        <label key={cat} className="flex items-center gap-3 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition-all border border-slate-100">
-                          <input
-                            type="checkbox"
-                            checked={isAllowed}
-                            onChange={() => handleToggleWhitelistItem('allowedCategories', cat)}
-                            className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
-                          />
-                          <span className="text-xs font-bold text-slate-700">{cat}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm flex flex-col">
+                  {(() => {
+                    const allCatList = Array.from(new Set(allProducts.map(p => p.category).filter(Boolean)));
+                    return (
+                      <>
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                          <p className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <Filter size={13}/> ২. অনুমোদিত ক্যাটাগরি ({showcaseCuration.allowedCategories?.length || 0})
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleBulkWhitelist('allowedCategories', allCatList, true)}
+                              className="text-[10px] font-bold text-purple-600 hover:underline cursor-pointer"
+                            >
+                              সব সিলেক্ট
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                              type="button"
+                              onClick={() => handleBulkWhitelist('allowedCategories', allCatList, false)}
+                              className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
+                            >
+                              ক্লিয়ার
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Category Search Filter */}
+                        <input
+                          type="text"
+                          placeholder="ক্যাটাগরি খুঁজুন..."
+                          value={curationSearchCat}
+                          onChange={(e) => setCurationSearchCat(e.target.value)}
+                          className="w-full px-2.5 py-1.5 mb-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold outline-none focus:border-purple-600"
+                        />
+
+                        <div className="space-y-1.5 max-h-60 overflow-y-auto pr-2 scrollbar-thin flex-1">
+                          {allCatList
+                            .filter(cat => !curationSearchCat || cat.toLowerCase().includes(curationSearchCat.toLowerCase()))
+                            .map(cat => {
+                              const isAllowed = (showcaseCuration.allowedCategories || []).includes(cat);
+                              return (
+                                <label key={cat} className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all border ${isAllowed ? 'bg-purple-50/60 border-purple-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={isAllowed}
+                                    onChange={() => handleToggleWhitelistItem('allowedCategories', cat)}
+                                    className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                                  />
+                                  <span className="text-xs font-bold text-slate-800">{cat}</span>
+                                </label>
+                              );
+                            })}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* 3. Subcategories Column */}
-                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm">
-                  <p className="text-xs font-black text-slate-800 border-b border-slate-100 pb-2 mb-3 uppercase tracking-wider flex items-center gap-1.5"><ChevronRight size={13}/> ৩. অনুমোদিত সাবক্যাটাগরি ({showcaseCuration.allowedSubcategories?.length || 0})</p>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin">
-                    {Array.from(new Set(allProducts.map(p => p.subcategory).filter(Boolean))).map(sub => {
-                      const isAllowed = (showcaseCuration.allowedSubcategories || []).includes(sub);
-                      return (
-                        <label key={sub} className="flex items-center gap-3 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer transition-all border border-slate-100">
-                          <input
-                            type="checkbox"
-                            checked={isAllowed}
-                            onChange={() => handleToggleWhitelistItem('allowedSubcategories', sub)}
-                            className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
-                          />
-                          <span className="text-xs font-bold text-slate-700">{sub}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                <div className="bg-white border border-slate-150 rounded-2xl p-4 shadow-sm flex flex-col">
+                  {(() => {
+                    const allSubList = Array.from(new Set(allProducts.map(p => p.subcategory).filter(Boolean)));
+                    return (
+                      <>
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                          <p className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <ChevronRight size={13}/> ৩. অনুমোদিত সাবক্যাটাগরি ({showcaseCuration.allowedSubcategories?.length || 0})
+                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleBulkWhitelist('allowedSubcategories', allSubList, true)}
+                              className="text-[10px] font-bold text-purple-600 hover:underline cursor-pointer"
+                            >
+                              সব সিলেক্ট
+                            </button>
+                            <span className="text-slate-300">|</span>
+                            <button
+                              type="button"
+                              onClick={() => handleBulkWhitelist('allowedSubcategories', allSubList, false)}
+                              className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
+                            >
+                              ক্লিয়ার
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 max-h-60 overflow-y-auto pr-2 scrollbar-thin flex-1 mt-2">
+                          {allSubList.map(sub => {
+                            const isAllowed = (showcaseCuration.allowedSubcategories || []).includes(sub);
+                            return (
+                              <label key={sub} className={`flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all border ${isAllowed ? 'bg-purple-50/60 border-purple-200' : 'bg-slate-50 hover:bg-slate-100 border-slate-100'}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={isAllowed}
+                                  onChange={() => handleToggleWhitelistItem('allowedSubcategories', sub)}
+                                  className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                                />
+                                <span className="text-xs font-bold text-slate-800">{sub}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}

@@ -23,27 +23,27 @@ export default function TemplatesSection({ globalConfig = {} }) {
   }).slice(0, 6);
 
   return (
-    <section id="templates" className="relative z-20 py-20 scroll-mt-20 overflow-hidden bg-slate-900/40 dark:bg-black/40 border-y border-slate-200/50 dark:border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <section id="templates" className="relative z-20 py-8 sm:py-12 scroll-mt-20 overflow-hidden bg-gradient-to-b from-purple-50/60 via-white to-indigo-50/40 border-y border-purple-100/80">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6">
         
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="text-left space-y-3">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full neo-extruded-sm bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 font-black text-xs uppercase tracking-widest">
-              <Sparkles size={14} /> READYMADE STORE DESIGNS
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+          <div className="text-left space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-purple-600/10 border border-purple-600/20 text-purple-700 dark:text-purple-400 font-black text-[11px] uppercase tracking-wider">
+              <Sparkles size={13} /> READYMADE STORE DESIGNS
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-              রেডিমেড ওয়েবসাইট <span className="text-[#6C63FF]">ডিজাইন ও লাইভ ডেমো</span>
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              রেডিমেড ওয়েবসাইট <span className="text-purple-600">ডিজাইন ও লাইভ ডেমো</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium max-w-xl leading-relaxed">
-              আপনার ব্যবসার ধরণ অনুযায়ী আকর্ষণীয় ওয়েবসাইট বেছে নিন। সরাসরি *.bdretailers.com এ ডেমো চালান এবং ১ ক্লিকেই চালু করুন আপনার ব্র্যান্ড।
+              আপনার ব্যবসার ক্যাটাগরি অনুযায়ী পছন্দসই ওয়েবসাইট নির্বাচন করুন। সরাসরি *.bdretailers.com এ ডেমো চালান এবং ১ ক্লিকেই চালু করুন নিজস্ব ইকমার্স শপ।
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               href="/templates"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs shadow-lg shadow-purple-600/25 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs shadow-md shadow-purple-600/20 transition-all cursor-pointer active:scale-95"
             >
               <span>সব ১৫+ ডিজাইন দেখুন</span>
               <ArrowRight size={14} />
@@ -52,17 +52,17 @@ export default function TemplatesSection({ globalConfig = {} }) {
         </div>
 
         {/* Category Pills Bar */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-6">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3.5">
           {TEMPLATE_CATEGORIES.slice(0, 7).map((cat) => {
             const isSelected = activeCategory === cat.id;
             return (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border ${
                   isSelected
-                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-600/30 scale-105'
-                    : 'bg-white/80 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10'
+                    ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/25 scale-102'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-purple-50/50 hover:border-purple-300'
                 }`}
               >
                 <span>{cat.label}</span>
@@ -179,13 +179,13 @@ export default function TemplatesSection({ globalConfig = {} }) {
         </div>
 
         {/* View All Callout */}
-        <div className="mt-12 text-center">
+        <div className="mt-6 text-center">
           <Link
             href="/templates"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-purple-500 text-slate-900 dark:text-white font-black text-xs uppercase tracking-wider shadow-lg hover:shadow-xl transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-purple-200 hover:border-purple-500 text-slate-900 hover:text-purple-600 font-black text-xs uppercase tracking-wider shadow-sm hover:shadow-md transition-all active:scale-95"
           >
             <span>সকল রেডিমেড ওয়েবসাইট ও ডিজাইন ব্রাউজ করুন</span>
-            <ArrowRight size={14} className="text-purple-500" />
+            <ArrowRight size={14} className="text-purple-600" />
           </Link>
         </div>
 

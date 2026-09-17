@@ -35,16 +35,11 @@ export default function PublicLandingPage({ params }) {
   useEffect(() => {
     async function fetchLandingPage() {
       try {
-        const q = query(
-          collectionGroup(db, 'landingPages'),
-          where('slug', '==', slug),
-          limit(1)
-        );
-        const snap = await getDocs(q);
+        const res = await fetch(`/api/landing-pages?slug=${encodeURIComponent(slug)}`);
+        const data = await res.json();
 
-        if (!snap.empty) {
-          const lpDoc = snap.docs[0];
-          const lpData = { id: lpDoc.id, ...lpDoc.data(), _ref: lpDoc.ref };
+        if (res.ok && data.landingPage) {
+          const lpData = data.landingPage;
           setLandingPage(lpData);
 
           if (lpData.countdownMinutes) {
@@ -56,18 +51,12 @@ export default function PublicLandingPage({ params }) {
             const sData = await getShop(lpData.shopId);
             setShop(sData);
           }
-
-          // Track view count safely
-          try {
-            await updateDoc(lpDoc.ref, { views: increment(1) });
-          } catch (vErr) {
-            // view increment is non-fatal
-          }
         } else {
           setLandingPage(null);
         }
       } catch (err) {
         console.error('Failed to load landing page:', err);
+        setLandingPage(null);
       } finally {
         setLoading(false);
       }
