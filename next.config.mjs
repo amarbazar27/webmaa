@@ -14,7 +14,9 @@ const nextConfig = {
     ],
   },
 
-  // ⚡ TASK 1: Performance - Bundle Optimization
+  // ⚡ TASK 1: Performance - Bundle & Payload Optimization
+  compress: true,
+  poweredByHeader: false,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
@@ -23,14 +25,10 @@ const nextConfig = {
     'firebase-admin',
     'nodemailer',
     'bcryptjs',
-    'express',
-    'helmet',
     'jspdf',
     'html2canvas',
     'sharp',
-    'protobufjs',
-    '@upstash/ratelimit',
-    '@upstash/redis'
+    'protobufjs'
   ],
 
   // ⚡ Performance - Bundle Optimization (tree-shaking heavy packages)
@@ -40,6 +38,7 @@ const nextConfig = {
     optimizePackageImports: [
       'react-hot-toast',
       'zod',
+      'clsx'
     ],
   },
 

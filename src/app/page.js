@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo, useDeferredValue } from 'react';
 import Link from 'next/link';
 import {
   ShoppingBag, Search, Star, ArrowRight, Phone, Store,
@@ -170,8 +170,6 @@ export default function Home() {
   const globalWhatsapp = globalConfig?.whatsapp || globalConfig?.contactLinks?.find(link => 
     link.name?.toLowerCase().includes('whatsapp') || link.url?.includes('wa.me')
   )?.url || '';
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
- 
   // ── Online / Offline System State ──
   const [isOnline, setIsOnline] = useState(true);
   const [wasOffline, setWasOffline] = useState(false);
@@ -185,6 +183,7 @@ export default function Home() {
   const [activeShopFilter, setActiveShopFilter] = useState('All');
   const [activeSubcategory, setActiveSubcategory] = useState('');
   const [productSearch, setProductSearch] = useState('');
+  const deferredProductSearch = useDeferredValue(productSearch);
   const [sortOption, setSortOption] = useState('name_asc');
 
   // ── Product Details Modal & Customization States ──
@@ -580,15 +579,6 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [bannersList, mainShopData?.bannerInterval]);
 
-  // Update mouse position for glowing cursor effect
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
   const getDashboardHref = () => {
     if (userData?.role === 'superadmin' || userData?.role === 'sub_superadmin') return '/superadmin';
     if (userData?.role === 'retailer') return '/dashboard';
@@ -967,40 +957,44 @@ export default function Home() {
   const allowedSubcategoriesList = globalConfig?.showcaseCuration?.allowedSubcategories || [];
 
   // 1. Curated Shops: strictly follows whitelist if curation is active
-  const curatedShops = allShops.filter(s => {
-    if (s.shopSlug === 'test' || s.shopName?.toLowerCase() === 'test' || s.shopSlug === 'daripallah-store' || s.shopSlug === 'webmaa-store') {
-      return false;
-    }
-    if (isCurationActive && allowedShopsList.length > 0) {
-      return allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName);
-    }
-    return true;
-  });
+  const curatedShops = useMemo(() => {
+    return allShops.filter(s => {
+      if (s.shopSlug === 'test' || s.shopName?.toLowerCase() === 'test' || s.shopSlug === 'daripallah-store' || s.shopSlug === 'webmaa-store') {
+        return false;
+      }
+      if (isCurationActive && allowedShopsList.length > 0) {
+        return allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName);
+      }
+      return true;
+    });
+  }, [allShops, isCurationActive, allowedShopsList]);
 
   // 2. Curated Products: strictly follows whitelist if curation is active
-  const curatedProducts = products.filter(p => {
-    if (p.showOnMainSite === false) return false;
-    if (isCurationActive) {
-      if (allowedShopsList.length > 0) {
-        const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
-        if (!matchesShop) return false;
+  const curatedProducts = useMemo(() => {
+    return products.filter(p => {
+      if (p.showOnMainSite === false) return false;
+      if (isCurationActive) {
+        if (allowedShopsList.length > 0) {
+          const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
+          if (!matchesShop) return false;
+        }
+        if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
+          return false;
+        }
+        if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
+          return false;
+        }
       }
-      if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
-        return false;
-      }
-      if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
-        return false;
-      }
-    }
-    return true;
-  });
+      return true;
+    });
+  }, [products, isCurationActive, allowedShopsList, allowedCategoriesList, allowedSubcategoriesList]);
 
   // ── Merchant-Category Filter Double Flow ──
-  const uniqueShops = ['All', ...Array.from(new Set(curatedProducts.map(p => p.shopName).filter(Boolean)))];
+  const uniqueShops = useMemo(() => ['All', ...Array.from(new Set(curatedProducts.map(p => p.shopName).filter(Boolean)))], [curatedProducts]);
 
-  const uniqueTypes = ['All', 'মাংস ও ডিম (Poultry & Eggs)', 'সবজি ও ফল (Vegetables & Fruits)', 'মুদি ও নিত্যপ্রয়োজনীয় (Groceries)', 'পানীয় ও দুগ্ধজাত (Drinks & Dairy)', 'অন্যান্য পণ্য (Others)'];
+  const uniqueTypes = useMemo(() => ['All', 'মাংস ও ডিম (Poultry & Eggs)', 'সবজি ও ফল (Vegetables & Fruits)', 'মুদি ও নিত্যপ্রয়োজনীয় (Groceries)', 'পানীয় ও দুগ্ধজাত (Drinks & Dairy)', 'অন্যান্য পণ্য (Others)'], []);
 
-  const availableCategories = ['All', ...Array.from(new Set(
+  const availableCategories = useMemo(() => ['All', ...Array.from(new Set(
     curatedProducts
       .filter(p => {
         if (filterMode === 'merchant') {
@@ -1014,9 +1008,9 @@ export default function Home() {
       })
       .map(p => p.category?.trim())
       .filter(Boolean)
-  ))];
+  ))], [curatedProducts, filterMode, activeShopFilter, activeTypeFilter]);
 
-  const availableSubcategories = Array.from(new Set(
+  const availableSubcategories = useMemo(() => Array.from(new Set(
     curatedProducts
       .filter(p => {
         const matchesShop = filterMode === 'merchant'
@@ -1031,7 +1025,7 @@ export default function Home() {
       })
       .map(p => p.subcategory?.trim())
       .filter(Boolean)
-  ));
+  )), [curatedProducts, filterMode, activeShopFilter, activeTypeFilter, activeCategory]);
 
   // Reset category filters if active filter makes them invalid
   useEffect(() => {
@@ -1141,34 +1135,36 @@ export default function Home() {
   };
 
   // Compile active products list based on hierarchy & search options
-  let filteredProducts = curatedProducts.filter(p => {
-    // Interactive Selection Filters
-    const matchesShop = filterMode === 'merchant'
-      ? (activeShopFilter === 'All' || 
-         (p.shopName && p.shopName.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
-         (p.shopSlug && p.shopSlug.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
-         p.shopId === activeShopFilter)
-      : true;
-    const matchesType = filterMode === 'type'
-      ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
-      : true;
-    const matchesCategory = activeCategory === 'All' || 
-      (p.category && p.category.trim().toLowerCase() === activeCategory.trim().toLowerCase());
-    const matchesSubcategory = !activeSubcategory || 
-      (p.subcategory && p.subcategory.trim().toLowerCase() === activeSubcategory.trim().toLowerCase());
-    const matchesSearch = !productSearch || matchPhoneticSearch(p, productSearch);
-    
-    return matchesShop && matchesType && matchesCategory && matchesSubcategory && matchesSearch;
-  });
+  const filteredProducts = useMemo(() => {
+    let prods = curatedProducts.filter(p => {
+      // Interactive Selection Filters
+      const matchesShop = filterMode === 'merchant'
+        ? (activeShopFilter === 'All' || 
+           (p.shopName && p.shopName.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+           (p.shopSlug && p.shopSlug.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+           p.shopId === activeShopFilter)
+        : true;
+      const matchesType = filterMode === 'type'
+        ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
+        : true;
+      const matchesCategory = activeCategory === 'All' || 
+        (p.category && p.category.trim().toLowerCase() === activeCategory.trim().toLowerCase());
+      const matchesSubcategory = !activeSubcategory || 
+        (p.subcategory && p.subcategory.trim().toLowerCase() === activeSubcategory.trim().toLowerCase());
+      const matchesSearch = !deferredProductSearch || matchPhoneticSearch(p, deferredProductSearch);
+      
+      return matchesShop && matchesType && matchesCategory && matchesSubcategory && matchesSearch;
+    });
 
-  // Sort products
-  filteredProducts = filteredProducts.sort((a, b) => {
-    if (sortOption === 'price_asc') return parseFloat(a.price) - parseFloat(b.price);
-    if (sortOption === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
-    if (sortOption === 'name_desc') return b.name.localeCompare(a.name, 'bn');
-    if (sortOption === 'newest') return (b.createdAt ? new Date(b.createdAt) : 0) - (a.createdAt ? new Date(a.createdAt) : 0);
-    return a.name.localeCompare(b.name, 'bn');
-  });
+    // Sort products
+    return prods.sort((a, b) => {
+      if (sortOption === 'price_asc') return parseFloat(a.price) - parseFloat(b.price);
+      if (sortOption === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
+      if (sortOption === 'name_desc') return b.name.localeCompare(a.name, 'bn');
+      if (sortOption === 'newest') return (b.createdAt ? new Date(b.createdAt) : 0) - (a.createdAt ? new Date(a.createdAt) : 0);
+      return a.name.localeCompare(b.name, 'bn');
+    });
+  }, [curatedProducts, filterMode, activeShopFilter, activeTypeFilter, activeCategory, activeSubcategory, deferredProductSearch, sortOption]);
 
   // ── Swipe banner gestures ──
   const minSwipeDistance = 50;
@@ -1302,71 +1298,77 @@ export default function Home() {
   };
 
   // Calculate Amazon style groups if enabled
-  const shopGroups = {};
-  if (globalConfig?.showAmazonBoxes) {
-    curatedProducts.forEach(p => {
-      // Search & Filters
-      const matchesSearch = !productSearch || matchPhoneticSearch(p, productSearch);
-      const matchesType = filterMode === 'type'
-        ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
-        : true;
-      const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-      const matchesSubcategory = !activeSubcategory || p.subcategory === activeSubcategory;
+  const shopGroups = useMemo(() => {
+    const groups = {};
+    if (globalConfig?.showAmazonBoxes) {
+      curatedProducts.forEach(p => {
+        // Search & Filters
+        const matchesSearch = !deferredProductSearch || matchPhoneticSearch(p, deferredProductSearch);
+        const matchesType = filterMode === 'type'
+          ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
+          : true;
+        const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
+        const matchesSubcategory = !activeSubcategory || p.subcategory === activeSubcategory;
 
-      if (matchesSearch && matchesType && matchesCategory && matchesSubcategory) {
-        const groupType = globalConfig?.amazonBoxType || 'shop_recent';
-        
-        if (groupType === 'shop_featured' && !p.isFeatured && !p.featured) {
-          return; // skip non-featured products
-        }
+        if (matchesSearch && matchesType && matchesCategory && matchesSubcategory) {
+          const groupType = globalConfig?.amazonBoxType || 'shop_recent';
+          
+          if (groupType === 'shop_featured' && !p.isFeatured && !p.featured) {
+            return; // skip non-featured products
+          }
 
-        if (groupType === 'product_type') {
-          const key = p.category || 'Other Category';
-          if (!shopGroups[key]) {
-            shopGroups[key] = {
-              isCategory: true,
-              categoryName: key,
-              products: []
-            };
+          if (groupType === 'product_type') {
+            const key = p.category || 'Other Category';
+            if (!groups[key]) {
+              groups[key] = {
+                isCategory: true,
+                categoryName: key,
+                products: []
+              };
+            }
+            groups[key].products.push(p);
+          } else {
+            const key = p.shopName || 'Other Store';
+            if (!groups[key]) {
+              groups[key] = {
+                isCategory: false,
+                shopName: p.shopName,
+                shopSlug: p.shopSlug,
+                customDomain: p.customDomain,
+                domainStatus: p.domainStatus,
+                products: []
+              };
+            }
+            groups[key].products.push(p);
           }
-          shopGroups[key].products.push(p);
-        } else {
-          const key = p.shopName || 'Other Store';
-          if (!shopGroups[key]) {
-            shopGroups[key] = {
-              isCategory: false,
-              shopName: p.shopName,
-              shopSlug: p.shopSlug,
-              customDomain: p.customDomain,
-              domainStatus: p.domainStatus,
-              products: []
-            };
-          }
-          shopGroups[key].products.push(p);
         }
-      }
-    });
-  }
+      });
+    }
+    return groups;
+  }, [globalConfig, curatedProducts, deferredProductSearch, filterMode, activeTypeFilter, activeCategory, activeSubcategory]);
 
   // Group products by shop for the main list view when viewing "All Stores"
-  const flatGroupedByShop = {};
-  if (activeShopFilter === 'All') {
-    filteredProducts.forEach(p => {
-      const key = p.shopName || 'Other Store';
-      if (!flatGroupedByShop[key]) {
-        const matchingShop = allShops.find(s => s.shopSlug === p.shopSlug || s.shopName === p.shopName);
-        flatGroupedByShop[key] = {
-          shopName: key,
-          shopSlug: p.shopSlug,
-          shopLogoUrl: matchingShop?.logoUrl || '/logo.png',
-          customDomain: p.customDomain,
-          domainStatus: p.domainStatus,
-          products: []
-        };
-      }
-      flatGroupedByShop[key].products.push(p);
-    });
-  }
+  const flatGroupedByShop = useMemo(() => {
+    const grouped = {};
+    if (activeShopFilter === 'All') {
+      filteredProducts.forEach(p => {
+        const key = p.shopName || 'Other Store';
+        if (!grouped[key]) {
+          const matchingShop = allShops.find(s => s.shopSlug === p.shopSlug || s.shopName === p.shopName);
+          grouped[key] = {
+            shopName: key,
+            shopSlug: p.shopSlug,
+            shopLogoUrl: matchingShop?.logoUrl || '/logo.png',
+            customDomain: p.customDomain,
+            domainStatus: p.domainStatus,
+            products: []
+          };
+        }
+        grouped[key].products.push(p);
+      });
+    }
+    return grouped;
+  }, [activeShopFilter, filteredProducts, allShops]);
 
   return (
     <div className="neo-root font-sans overflow-x-hidden pt-16 pb-20 lg:pb-10 transition-colors duration-300">
@@ -1505,16 +1507,38 @@ export default function Home() {
               )}
             </button>
 
-            {/* Direct Dashboard CTA */}
+            {/* Direct Auth / Dashboard CTA — login er por dashboard show hobe */}
             <div className="flex items-center gap-2 pl-1">
-              <Link 
-                href={getDashboardHref() || '/dashboard'} 
-                className="px-3 sm:px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                title="রিটেইলার ড্যাশবোর্ড"
-              >
-                <LayoutDashboard size={14} />
-                <span>ড্যাশবোর্ড</span>
-              </Link>
+              {user ? (
+                getDashboardHref() ? (
+                  <Link 
+                    href={getDashboardHref()} 
+                    className="px-3 sm:px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    title="ড্যাশবোর্ড"
+                  >
+                    <LayoutDashboard size={14} />
+                    <span>ড্যাশবোর্ড</span>
+                  </Link>
+                ) : (
+                  <Link 
+                    href="/become-retailer" 
+                    className="px-3 sm:px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    title="স্টোর তৈরি করুন"
+                  >
+                    <Store size={14} />
+                    <span>স্টোর খুলুন</span>
+                  </Link>
+                )
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="px-3 sm:px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  title="লগইন করুন"
+                >
+                  <LogIn size={14} />
+                  <span>লগইন</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -1544,13 +1568,23 @@ export default function Home() {
                 <ShoppingBag size={14} />
                 <span>মূল মার্কেটপ্লেস স্টোর</span>
               </Link>
-              <Link
-                href={getDashboardHref() || '/dashboard'}
-                className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-slate-700 text-purple-700 dark:text-purple-300 font-black text-xs border border-purple-200 dark:border-purple-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <LayoutDashboard size={14} />
-                <span>ড্যাশবোর্ড</span>
-              </Link>
+              {user && getDashboardHref() ? (
+                <Link
+                  href={getDashboardHref()}
+                  className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-slate-700 text-purple-700 dark:text-purple-300 font-black text-xs border border-purple-200 dark:border-purple-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <LayoutDashboard size={14} />
+                  <span>ড্যাশবোর্ড</span>
+                </Link>
+              ) : (
+                <Link
+                  href={user ? "/become-retailer" : "/login"}
+                  className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-slate-700 text-purple-700 dark:text-purple-300 font-black text-xs border border-purple-200 dark:border-purple-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  {user ? <Store size={14} /> : <LogIn size={14} />}
+                  <span>{user ? "স্টোর তৈরি করুন" : "লগইন"}</span>
+                </Link>
+              )}
               <button
                 onClick={() => setIsAboutModalOpen(true)}
                 className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-purple-700 font-bold text-xs border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
@@ -2860,7 +2894,7 @@ export default function Home() {
                     <li><a href="#marketplace" className="hover:text-[#6C63FF] transition-colors">All Products Marketplace</a></li>
                     <li><a href="#pricing" className="hover:text-[#6C63FF] transition-colors">Subscription Pricing</a></li>
                     <li><a href="#faq" className="hover:text-[#6C63FF] transition-colors">Frequently Asked Questions</a></li>
-                    <li><Link href="/dashboard" className="hover:text-[#6C63FF] transition-colors">Store Admin Portal</Link></li>
+                    <li><Link href={user ? (getDashboardHref() || '/dashboard') : '/login?redirect=/dashboard'} className="hover:text-[#6C63FF] transition-colors">{user ? 'Store Admin Portal' : 'Retailer Login'}</Link></li>
                     <li><Link href="/become-retailer" className="text-[#6C63FF] hover:text-[#5a52ea] font-black uppercase tracking-wider transition-colors flex items-center gap-1">🤝 Become Retailer</Link></li>
                     <li><Link href="/reviews" className="text-[#6C63FF] hover:text-[#5a52ea] font-black uppercase tracking-wider transition-colors flex items-center gap-1">⭐ Platform Reviews</Link></li>
                     <li><Link href="/privacy-policy" className="hover:text-[#6C63FF] transition-colors">Privacy Policy</Link></li>

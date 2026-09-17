@@ -3,6 +3,30 @@ import { adminDb } from './firebase-admin';
 const FIRESTORE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const FIRESTORE_REST_BASE = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
 
+// ⚡ High-speed In-Memory Query Cache with TTL (Caches expensive queries & eliminates N+1 latency)
+const memoryCache = new Map();
+
+function getCached(key) {
+  const item = memoryCache.get(key);
+  if (!item) return null;
+  if (Date.now() > item.expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return item.value;
+}
+
+function setCached(key, value, ttlSeconds = 60) {
+  memoryCache.set(key, {
+    value,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+  if (memoryCache.size > 500) {
+    const oldestKey = memoryCache.keys().next().value;
+    memoryCache.delete(oldestKey);
+  }
+}
+
 /**
  * Robustly converts any Firestore values (Timestamps, etc) into serializable JSON.
  */
@@ -187,6 +211,11 @@ export async function getShopByDomainServer(host) {
     // Normalize host
     const normalizedHost = host.toLowerCase().trim().replace(/^www\./i, '');
     const lookupHost = normalizedHost === 'messbazar.com' ? 'messerbazar.com' : normalizedHost;
+    const cacheKey = `shop_domain_${lookupHost}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    let shop = null;
     if (adminDb) {
       const shopsRef = adminDb.collection('shops');
       let snap = await shopsRef.where('customDomain', '==', lookupHost).limit(1).get();
@@ -197,16 +226,20 @@ export async function getShopByDomainServer(host) {
       }
       if (snap.empty) return null;
       const doc = snap.docs[0];
-      return { id: doc.id, ...toPlainObject(doc.data()) };
+      shop = { id: doc.id, ...toPlainObject(doc.data()) };
     } else {
       console.log(`[getShopByDomainServer] Using REST API fallback for host: ${normalizedHost}`);
-      let shop = await firestoreRestQuery('shops', 'customDomain', 'EQUAL', normalizedHost);
+      shop = await firestoreRestQuery('shops', 'customDomain', 'EQUAL', normalizedHost);
       if (!shop) {
         const subdomain = normalizedHost.split('.')[0];
         shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', subdomain);
       }
-      return shop || null;
     }
+
+    if (shop) {
+      setCached(cacheKey, shop, 60);
+    }
+    return shop || null;
   } catch (err) {
     console.error(`[getShopByDomainServer] Error:`, err);
     return null;
@@ -257,16 +290,23 @@ export async function getCategoriesServer(shopId) {
 
 export async function getGlobalConfigServer() {
   try {
+    const cacheKey = 'global_config';
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    let config = {};
     if (adminDb) {
       const snap = await adminDb.collection('config').doc('global').get();
-      return snap.exists ? toPlainObject(snap.data()) : {};
+      config = snap.exists ? toPlainObject(snap.data()) : {};
     } else {
       const url = `${FIRESTORE_REST_BASE}/config/global`;
       const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) return {};
       const doc = await res.json();
-      return fromFirestoreRest(doc.fields) || {};
+      config = fromFirestoreRest(doc.fields) || {};
     }
+    setCached(cacheKey, config, 60);
+    return config;
   } catch (err) {
     console.error(`[getGlobalConfigServer] Error:`, err);
     return {};
@@ -275,13 +315,19 @@ export async function getGlobalConfigServer() {
 
 export async function getAllShopsServer() {
   try {
+    const cacheKey = 'all_shops';
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    let shops = [];
     if (adminDb) {
       const snap = await adminDb.collection('shops').get();
-      return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+      shops = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
     } else {
-      const shops = await firestoreRestCollection('shops');
-      return shops || [];
+      shops = await firestoreRestCollection('shops') || [];
     }
+    setCached(cacheKey, shops, 60);
+    return shops;
   } catch (err) {
     console.error('[getAllShopsServer] Error:', err);
     return [];
@@ -290,6 +336,10 @@ export async function getAllShopsServer() {
 
 export async function getAllMarketplaceProductsServer() {
   try {
+    const cacheKey = 'all_marketplace_products';
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     const shops = await getAllShopsServer();
     const activeShops = shops.filter(s => s.isActive !== false && s.showOnMainSite !== false);
     const productArrays = await Promise.all(
@@ -304,7 +354,9 @@ export async function getAllMarketplaceProductsServer() {
         }));
       })
     );
-    return productArrays.flat();
+    const flat = productArrays.flat();
+    setCached(cacheKey, flat, 120); // 120s TTL eliminates N+1 query loops
+    return flat;
   } catch (err) {
     console.error('[getAllMarketplaceProductsServer] Error:', err);
     return [];

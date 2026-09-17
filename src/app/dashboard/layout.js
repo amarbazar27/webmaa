@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/login?redirect=/dashboard');
+        router.replace('/login?redirect=/dashboard');
       } else if (
         userData?.role !== 'retailer' &&
         userData?.role !== 'superadmin' &&
@@ -26,10 +26,10 @@ export default function DashboardLayout({ children }) {
         userData?.role !== 'admin' &&
         !isImpersonating
       ) {
-        router.push('/become-retailer');
+        router.replace('/become-retailer');
       } else if (userData?.role === 'staff') {
         if (!userData?.accessShopId) {
-          router.push('/');
+          router.replace('/');
           return;
         }
         const noticeKey = `staff_notice_${user.uid}`;
@@ -56,7 +56,9 @@ export default function DashboardLayout({ children }) {
     userData?.role !== 'staff' &&
     userData?.role !== 'admin' &&
     !isImpersonating
-  )) return null;
+  )) {
+    return <LoadingScreen text="লগইন প্রয়োজন... রিডাইরেক্ট করা হচ্ছে" />;
+  }
 
   return (
     <div className="min-h-screen flex" style={{background:'var(--bg-color)',color:'var(--text-color)'}}>
