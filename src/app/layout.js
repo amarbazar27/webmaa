@@ -2,6 +2,7 @@ import './globals.css';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
+import ScrollProgress from '@/components/ui/ScrollProgress';
 
 // Decouple platform base URL from any tenant shop environment variables
 const BASE_URL = 'https://bdretailers.com';
@@ -232,11 +233,19 @@ export default function RootLayout({ children }) {
         <JsonLd />
       </head>
       <body className="font-sans antialiased">
+        {/* ♿ Accessibility: Skip to Content Link */}
+        <a 
+          href="#main-content" 
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-purple-600 focus:text-white focus:rounded-2xl focus:shadow-2xl focus:font-black focus:text-xs no-print transition-all"
+        >
+          মূল কনটেন্টে যান (Skip to content)
+        </a>
+        <ScrollProgress />
         <ThemeProvider>
           <AuthProvider>
             <div className="bg-blob blob-1"></div>
             <div className="bg-blob blob-2"></div>
-            <main className="relative z-10 min-h-screen">
+            <main id="main-content" className="relative z-10 min-h-screen">
               {children}
             </main>
             <Toaster 

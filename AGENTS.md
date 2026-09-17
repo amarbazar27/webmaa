@@ -42,3 +42,21 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - When in WebView: calls `NativeGoogleSignIn` JS handler → Flutter triggers native Android account picker
 - Flutter `google_sign_in` package uses serverClientId: `156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com`
 - SHA-1 registered in Firebase Console: `25:78:60:62:A1:A1:47:B8:84:46:7F:38:E0:3C:0B:36:AE:1A:A6:09`
+
+# ⚡ Ponytail Senior Developer Rules (YAGNI & Anti-Bloat)
+- The best code is the code you never wrote. Before generating code, stop at the first rung of the Decision Ladder:
+  1. **Does this need to exist?** (YAGNI) -> If speculative, skip it.
+  2. **Already in this codebase?** -> Search first. Reuse existing helpers, components, and hooks.
+  3. **Stdlib does it?** -> Use standard language/runtime built-ins.
+  4. **Native platform feature?** -> Prefer native HTML5/CSS/browser APIs over heavy external packages.
+  5. **Installed dependency?** -> Use existing packages in package.json.
+  6. **Can it be one line?** -> Keep it one line.
+  7. **Only then:** -> Write the minimum code that cleanly works.
+- **Lazy, not negligent:** Never compromise database & user data protection, input validation, authentication boundaries, security, or accessibility.
+- **Root cause over symptoms:** Fix issues at their shared origin, not by patching symptoms across multiple callers.
+- **Deletion over addition:** Remove dead code, avoid speculative boilerplate.
+
+# 🌟 Frontend Polish, SEO & High-Converting Copywriting Standards
+- **Frontend Polish:** Maintain WCAG AA contrast, clean dark mode, 60fps responsiveness, hover/active states on buttons, loading skeletons, and print stylesheet.
+- **Technical SEO:** Maintain comprehensive XML sitemaps, JSON-LD Schema markup, canonical tags, clean URL slugs, and exactly 1 H1 per page.
+- **High-Converting Copy:** On all CTAs, use explicit action verbs + clear outcomes (e.g. "১ মিনিটে ফ্রি স্টোর তৈরি করুন"). Keep copy scannable, honest, and benefit-driven before technical specifications.

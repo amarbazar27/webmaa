@@ -1209,3 +1209,22 @@ section#marketplace .text-white { color: var(--neo-text) !important; }
   box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.6), inset -3px -3px 6px rgba(255, 255, 255, 0.03);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   PRINT STYLESHEET (Checklist Item: Print style sheet)
+   Ensures receipts, invoices, and product details print cleanly
+   ════════════════════════════════════════════════════════════════ */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, nav, footer, .bg-blob, .no-print, [role="navigation"], button:not(.print-include) {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+}
+
