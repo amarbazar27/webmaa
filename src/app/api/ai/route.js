@@ -59,12 +59,15 @@ export async function POST(req) {
       keysToTry.push({ key: dbKey, source: 'Global Config Key' });
     }
 
-    // 3. Try environment keys third
-    const envKey = process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY || process.env.AI_API_KEY;
-    if (isValidApiKey(envKey)) {
-      keysToTry.push({ key: envKey, source: 'System Environment Key' });
-    } else if (envKey && envKey.trim()) {
-      keysToTry.push({ key: envKey.trim(), source: 'System Environment Key (Raw)' });
+    // 3. Try environment keys (prioritizing ultra-fast Groq LPU inference, then Gemini, then generic)
+    if (isValidApiKey(process.env.GROQ_API_KEY)) {
+      keysToTry.push({ key: process.env.GROQ_API_KEY.trim(), source: 'System Groq Key' });
+    }
+    if (isValidApiKey(process.env.GEMINI_API_KEY)) {
+      keysToTry.push({ key: process.env.GEMINI_API_KEY.trim(), source: 'System Gemini Key' });
+    }
+    if (isValidApiKey(process.env.AI_API_KEY)) {
+      keysToTry.push({ key: process.env.AI_API_KEY.trim(), source: 'System Generic AI Key' });
     }
 
     if (keysToTry.length === 0) {

@@ -35,7 +35,7 @@ const BYPASS_HOSTS = [
 const RESERVED_KEYWORDS = [
   'store', 'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
   'reviews', 'become-retailer', 'privacy-policy', 'privacy', 'account-delete',
-  'terms', 'terms-of-service', 'terms-and-conditions', 'templates',
+  'terms', 'terms-of-service', 'terms-and-conditions', 'templates', 'lp',
   '_next', 'robots.txt', 'sitemap.xml', 'shop-sitemap.xml', 'product-sitemap.xml', 'category-sitemap.xml', 'image-sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
 ];
 
@@ -214,8 +214,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // ── কেস ১: বাইপাস হোস্ট (যেমন main site `daripallah.com` বা `localhost`) ──────────────────────────
   if (!host || isBypassHost(host)) {
     if (pathParts.length >= 1) {
-      if (firstSegment === 'store') {
-        // Dedicated multi-vendor marketplace store page (/store)
+      if (firstSegment === 'store' || firstSegment === 'lp') {
+        // Dedicated multi-vendor marketplace store page (/store) or public landing page (/lp)
         return applySecurityHeaders(NextResponse.next(), pathname);
       }
       if (!RESERVED_KEYWORDS.includes(firstSegment)) {

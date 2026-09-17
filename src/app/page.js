@@ -1004,39 +1004,44 @@ export default function Home() {
     curatedProducts
       .filter(p => {
         if (filterMode === 'merchant') {
-          return activeShopFilter === 'All' || p.shopName === activeShopFilter;
+          return activeShopFilter === 'All' || 
+            (p.shopName && p.shopName.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+            (p.shopSlug && p.shopSlug.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+            p.shopId === activeShopFilter;
         } else {
           return activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter;
         }
       })
-      .map(p => p.category)
+      .map(p => p.category?.trim())
       .filter(Boolean)
   ))];
 
   const availableSubcategories = Array.from(new Set(
     curatedProducts
       .filter(p => {
-        if (filterMode === 'merchant') {
-          return (activeShopFilter === 'All' || p.shopName === activeShopFilter) &&
-                 (activeCategory === 'All' || p.category === activeCategory);
-        } else {
-          return (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter) &&
-                 (activeCategory === 'All' || p.category === activeCategory);
-        }
+        const matchesShop = filterMode === 'merchant'
+          ? (activeShopFilter === 'All' || 
+             (p.shopName && p.shopName.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+             (p.shopSlug && p.shopSlug.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+             p.shopId === activeShopFilter)
+          : (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter);
+        const matchesCat = activeCategory === 'All' || 
+          (p.category && p.category.trim().toLowerCase() === activeCategory.trim().toLowerCase());
+        return matchesShop && matchesCat;
       })
-      .map(p => p.subcategory)
+      .map(p => p.subcategory?.trim())
       .filter(Boolean)
   ));
 
   // Reset category filters if active filter makes them invalid
   useEffect(() => {
-    if (!availableCategories.includes(activeCategory)) {
+    if (activeCategory !== 'All' && !availableCategories.some(c => c.trim().toLowerCase() === activeCategory.trim().toLowerCase())) {
       setActiveCategory('All');
     }
   }, [activeShopFilter, activeTypeFilter, filterMode, curatedProducts]);
 
   useEffect(() => {
-    if (!availableSubcategories.includes(activeSubcategory)) {
+    if (activeSubcategory && !availableSubcategories.some(s => s.trim().toLowerCase() === activeSubcategory.trim().toLowerCase())) {
       setActiveSubcategory('');
     }
   }, [activeCategory, activeShopFilter, activeTypeFilter, filterMode, curatedProducts]);
@@ -1139,13 +1144,18 @@ export default function Home() {
   let filteredProducts = curatedProducts.filter(p => {
     // Interactive Selection Filters
     const matchesShop = filterMode === 'merchant'
-      ? (activeShopFilter === 'All' || p.shopName === activeShopFilter)
+      ? (activeShopFilter === 'All' || 
+         (p.shopName && p.shopName.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+         (p.shopSlug && p.shopSlug.trim().toLowerCase() === activeShopFilter.trim().toLowerCase()) ||
+         p.shopId === activeShopFilter)
       : true;
     const matchesType = filterMode === 'type'
       ? (activeTypeFilter === 'All' || getProductType(p) === activeTypeFilter)
       : true;
-    const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-    const matchesSubcategory = !activeSubcategory || p.subcategory === activeSubcategory;
+    const matchesCategory = activeCategory === 'All' || 
+      (p.category && p.category.trim().toLowerCase() === activeCategory.trim().toLowerCase());
+    const matchesSubcategory = !activeSubcategory || 
+      (p.subcategory && p.subcategory.trim().toLowerCase() === activeSubcategory.trim().toLowerCase());
     const matchesSearch = !productSearch || matchPhoneticSearch(p, productSearch);
     
     return matchesShop && matchesType && matchesCategory && matchesSubcategory && matchesSearch;
@@ -1511,33 +1521,17 @@ export default function Home() {
 
       {/* ── Sleek Platform Description & Action Banner (Below Header) ── */}
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-3 pb-2">
-        <div className="relative rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-pink-50/40 border border-purple-200/80 p-4 sm:p-5 shadow-xs overflow-hidden">
+        <div className="relative rounded-2xl bg-gradient-to-r from-purple-50/90 via-indigo-50/60 to-pink-50/40 dark:from-slate-800/90 dark:via-purple-950/40 dark:to-slate-900/90 border border-purple-200/80 dark:border-purple-800/40 p-4 sm:p-5 shadow-xs overflow-hidden">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Left: Platform Overview Details */}
-            <div className="space-y-1.5 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-600/10 border border-purple-600/20 text-purple-700 dark:text-purple-300 text-[11px] font-black uppercase tracking-wider">
+            <div className="space-y-2 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-600/10 dark:bg-purple-500/20 border border-purple-600/20 dark:border-purple-500/30 text-purple-700 dark:text-purple-300 text-[11px] font-black uppercase tracking-wider">
                 <Sparkles size={12} />
-                <span>🇧🇩 বাংলাদেশের বিশ্বস্ত রিটেইলার মার্কেটপ্লেস ও স্টোর মেকার</span>
+                <span>BD Retailers • আধুনিক ই-কমার্স প্ল্যাটফর্ম</span>
               </div>
-              <h1 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">
-                বিশ্বস্ত মার্চেন্টদের সেরা পণ্য সরাসরি কিনুন, অথবা ৫ মিনিটে নিজস্ব অনলাইন স্টোর চালু করুন
-              </h1>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                কোনো কোডিং ছাড়াই মাত্র ৫ মিনিটে তৈরি করুন আপনার ব্র্যান্ডের ইকমার্স ওয়েবসাইট ও ১-ক্লিক সেলস ফানেল। সাথে থাকছে বিকাশ গেটওয়ে ও স্টেডফাস্ট কুরিয়ার স্বয়ংক্রিয় ট্র্যাকিং।
+              <p className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 leading-relaxed">
+                BD Retailers বাংলাদেশের আধুনিক ই-কমার্স প্ল্যাটফর্ম, যেখানে মাত্র ১ মিনিটেই একটি পূর্ণাঙ্গ অনলাইন স্টোর তৈরি করা যায়। <span className="text-purple-700 dark:text-purple-400 font-extrabold">MesserBazar.com</span> ও <span className="text-indigo-700 dark:text-indigo-400 font-extrabold">CameraKini.com</span>-এর মতো ওয়েবসাইট ইতোমধ্যেই আমাদের প্ল্যাটফর্মে পরিচালিত হচ্ছে। আজই আপনার ব্যবসাকে ডিজিটাল রূপ দিন এবং আত্মবিশ্বাসের সঙ্গে অনলাইনে বিক্রি শুরু করুন।
               </p>
-              
-              {/* Feature Tags */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
-                  <CheckCircle size={12} className="text-emerald-600" /> ভেরিফাইড শপ
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
-                  <Truck size={12} className="text-purple-600" /> ক্যাশ অন ডেলিভারি
-                </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-800/80 px-2.5 py-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700">
-                  <Store size={12} className="text-indigo-600" /> ০৳ তে ফ্রি স্টোর মেকার
-                </span>
-              </div>
             </div>
 
             {/* Right: Quick Action CTAs */}
@@ -1592,40 +1586,48 @@ export default function Home() {
 
         {/* Categories Scrollable Strip */}
         <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-2">
-          {availableCategories.map(cat => {
-            const isSelected = activeCategory === cat;
-            const catCount = cat === 'All' 
-              ? curatedProducts.length 
-              : curatedProducts.filter(p => p.category === cat).length;
+          {productsLoading ? (
+            <div className="flex items-center gap-2.5 animate-pulse py-1">
+              {[1, 2, 3, 4, 5].map(n => (
+                <div key={n} className="h-8 w-24 bg-slate-200 dark:bg-slate-800 rounded-2xl shrink-0" />
+              ))}
+            </div>
+          ) : (
+            availableCategories.map(cat => {
+              const isSelected = activeCategory.trim().toLowerCase() === cat.trim().toLowerCase();
+              const catCount = cat === 'All' 
+                ? curatedProducts.length 
+                : curatedProducts.filter(p => p.category?.trim().toLowerCase() === cat.trim().toLowerCase()).length;
 
-            return (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveCategory(cat);
-                  setActiveSubcategory('');
-                  document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className={`px-3.5 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 ${
-                  isSelected
-                    ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/20 scale-102'
-                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-purple-300 dark:hover:border-purple-800 shadow-xs'
-                }`}
-              >
-                <span>{cat === 'All' ? '🌐 সব পণ্য' : cat}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                  isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                }`}>
-                  {catCount}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    setActiveSubcategory('');
+                    document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className={`px-3.5 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 ${
+                    isSelected
+                      ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/20 scale-102'
+                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-purple-300 dark:hover:border-purple-800 shadow-xs'
+                  }`}
+                >
+                  <span>{cat === 'All' ? '🌐 সব পণ্য' : cat}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                  }`}>
+                    {catCount}
+                  </span>
+                </button>
+              );
+            })
+          )}
         </div>
       </section>
 
       {/* ── Dynamic Verified Retailers (Stores) Section ── */}
-      {curatedShops.length > 0 && (
+      {(productsLoading || curatedShops.length > 0) && (
         <section id="retailers-section" className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -1647,9 +1649,20 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
-            {curatedShops.map(shop => {
-              const shopProds = curatedProducts.filter(p => p.shopSlug === shop.shopSlug || p.shopName === shop.shopName || p.shopId === shop.id);
-              const isShopActive = activeShopFilter === shop.shopName;
+            {productsLoading ? (
+              <div className="flex items-center gap-3 animate-pulse py-1">
+                {[1, 2, 3].map(n => (
+                  <div key={n} className="min-w-[170px] sm:min-w-[190px] h-16 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/60 dark:border-slate-800 shrink-0" />
+                ))}
+              </div>
+            ) : (
+              curatedShops.map(shop => {
+                const shopProds = curatedProducts.filter(p => 
+                  p.shopSlug?.toLowerCase() === shop.shopSlug?.toLowerCase() || 
+                  p.shopName?.toLowerCase() === shop.shopName?.toLowerCase() || 
+                  p.shopId === shop.id
+                );
+                const isShopActive = activeShopFilter.toLowerCase() === shop.shopName?.toLowerCase() || activeShopFilter === shop.shopSlug;
 
                 return (
                   <div
@@ -1688,7 +1701,8 @@ export default function Home() {
                     </div>
                   </div>
                 );
-              })}
+              })
+            )}
           </div>
         </section>
       )}
@@ -1862,13 +1876,13 @@ export default function Home() {
                   }}
                   className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
                 >
-                  <option value="All">🌐 মূল মার্কেটপ্লেস স্টোর (store.bdretailers.com - All Stores)</option>
+                  <option value="All">🌐 সব স্টোর (All Stores - {curatedProducts.length})</option>
                   {uniqueShops.filter(s => s !== 'All').map(shopName => (
                     <option key={shopName} value={shopName}>{shopName}</option>
                   ))}
                 </select>
-                <span className="text-xs font-black text-purple-700 truncate pr-4">
-                  {activeShopFilter === 'All' ? '🌐 মূল মার্কেটপ্লেস স্টোর (store.bdretailers.com)' : `🏪 ${activeShopFilter}`}
+                <span className="text-xs font-black text-purple-700 dark:text-purple-300 truncate pr-4">
+                  {activeShopFilter === 'All' ? `🌐 সব স্টোর (All Stores - ${curatedProducts.length})` : `🏪 ${activeShopFilter}`}
                 </span>
                 <span className="text-[10px] text-purple-400">▼</span>
               </div>
