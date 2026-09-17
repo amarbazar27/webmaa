@@ -555,6 +555,27 @@ export default function SettingsPage() {
   };
 
 
+  // Poll Vercel every 30s to see if custom domain DNS has been verified
+  useEffect(() => {
+    if (!shop?.customDomain || domainStatus === 'connected') return;
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`/api/domain?domain=${encodeURIComponent(shop.customDomain)}`);
+        const data = await res.json();
+        if (data.status === 'connected') {
+          setDomainStatus('connected');
+          await updateShop(user.uid, { domainStatus: 'connected' });
+          setShop(s => ({ ...s, domainStatus: 'connected' }));
+          toast.success(`✅ ${shop.customDomain} is now live!`);
+        }
+      } catch (e) { /* silent */ }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop?.customDomain, domainStatus]);
+
   // Protect page from staff users just in case they land here
   if (userData?.role === 'staff') {
      return <div className="p-20 text-center font-black text-slate-400">Settings restricted to Store Owner.</div>;
@@ -657,26 +678,6 @@ export default function SettingsPage() {
     }
   };
 
-  // Poll Vercel every 30s to see if custom domain DNS has been verified
-  useEffect(() => {
-    if (!shop?.customDomain || domainStatus === 'connected') return;
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`/api/domain?domain=${encodeURIComponent(shop.customDomain)}`);
-        const data = await res.json();
-        if (data.status === 'connected') {
-          setDomainStatus('connected');
-          await updateShop(user.uid, { domainStatus: 'connected' });
-          setShop(s => ({ ...s, domainStatus: 'connected' }));
-          toast.success(`✅ ${shop.customDomain} is now live!`);
-        }
-      } catch (e) { /* silent */ }
-    };
-    checkStatus();
-    const interval = setInterval(checkStatus, 30000);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shop?.customDomain, domainStatus]);
 
   const validateAndCrop169 = (file) => {
     return new Promise((resolve, reject) => {

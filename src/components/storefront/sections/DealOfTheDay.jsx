@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Flame, ShoppingCart, Clock } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
@@ -29,7 +29,8 @@ function useCountdown(endTime) {
 export default function DealOfTheDay({ data, themeVars, onAddToCart }) {
   const d = resolveSectionData('deal_of_the_day', data);
   const primary = themeVars?.primaryColor || '#6D28D9';
-  const countdown = useCountdown(d.endTime || new Date(Date.now() + 8 * 3600 * 1000));
+  const targetEndTime = useMemo(() => d.endTime || new Date(Date.now() + 8 * 3600 * 1000), [d.endTime]);
+  const countdown = useCountdown(targetEndTime);
 
   const sold = d.soldCount || 42;
   const total = d.totalStock || 60;

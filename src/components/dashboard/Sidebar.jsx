@@ -187,7 +187,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     };
   });
 
-  const SidebarContent = () => (
+  const renderSidebarContent = () => (
     <>
       {/* Brand Header */}
       <div className="p-6 pb-6 border-b border-slate-100">
@@ -371,7 +371,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
     <>
       {/* Desktop Sidebar */}
       <aside className="w-64 hidden lg:flex flex-col h-screen fixed left-0 top-0 border-r border-slate-100 z-50 shadow-xs bg-white">
-        <SidebarContent />
+        {renderSidebarContent()}
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -384,7 +384,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
           "absolute left-0 top-0 bottom-0 w-72 flex flex-col transition-transform duration-300 ease-out shadow-2xl bg-white",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}>
-          <SidebarContent />
+          {renderSidebarContent()}
         </aside>
       </div>
 

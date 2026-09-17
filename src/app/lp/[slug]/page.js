@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
+import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collectionGroup, query, where, getDocs, limit, doc, updateDoc, increment } from 'firebase/firestore';
 import { getShop } from '@/lib/firestore';
@@ -106,12 +107,12 @@ export default function PublicLandingPage({ params }) {
           <p className="text-xs text-slate-500 leading-relaxed">
             এই ল্যান্ডিং পেজের মেয়াদ শেষ হয়ে থাকতে পারে অথবা লিংকটি পরিবর্তিত হয়েছে।
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-xs rounded-xl shadow-md transition-all"
           >
             হোম পেজে ফিরে যান
-          </a>
+          </Link>
         </div>
       </div>
     );

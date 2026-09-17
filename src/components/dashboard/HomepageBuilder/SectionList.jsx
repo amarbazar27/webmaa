@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   GripVertical, Eye, EyeOff, ChevronDown, ChevronUp, Plus, Trash2,
   Sparkles, Layers, Zap, Grid, Video, LayoutGrid, Star,
@@ -114,7 +114,7 @@ export default function SectionList({
     }
   };
 
-  const addSection = (type) => {
+  const addSection = useCallback((type) => {
     const newId = `${type}_${Date.now()}`;
     const newSection = {
       id: newId,
@@ -127,7 +127,7 @@ export default function SectionList({
     setShowAddModal(false);
     setExpandedId(newId);
     onFocusSection?.(newId);
-  };
+  }, [sections, onChange, onFocusSection]);
 
   const removeSection = (id, e) => {
     e?.stopPropagation();

@@ -10,12 +10,9 @@ import { Card } from '@/components/ui';
 const COLORS = ['#9333EA', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function AnalyticsCharts({ orders = [] }) {
-  
-  // Parse orderIdVisual: "01#14042026"
-  const processSalesData = () => {
+  // Parse orderIdVisual: "01#14042026" and aggregate daily sales
+  const salesData = useMemo(() => {
     const dailySales = {};
-
-    // Orders are usually descending from DB
     orders.forEach(order => {
       let dateString = "Unknown";
       if (order.orderIdVisual && order.orderIdVisual.includes('#')) {
@@ -32,42 +29,35 @@ export default function AnalyticsCharts({ orders = [] }) {
       }
 
       if (dateString !== "Unknown") {
-         if (!dailySales[dateString]) dailySales[dateString] = 0;
-         dailySales[dateString] += parseFloat(order.total) || 0;
+        if (!dailySales[dateString]) dailySales[dateString] = 0;
+        dailySales[dateString] += parseFloat(order.total) || 0;
       }
     });
 
-    const result = Object.keys(dailySales).map(date => ({
+    return Object.keys(dailySales).map(date => ({
       name: date,
       sales: dailySales[date]
-    }));
-    
-    // Reverse to show oldest first (chronological left to right)
-    return result.reverse(); 
-  };
-
-  const salesData = useMemo(() => processSalesData(), [orders]);
+    })).reverse();
+  }, [orders]);
 
   // Aggregate Top Products from orders
-  const processTopProducts = () => {
-     const productCount = {};
-     orders.forEach(order => {
-        if (order.items) {
-           order.items.forEach(item => {
-              if (item.name) {
-                 productCount[item.name] = (productCount[item.name] || 0) + item.quantity;
-              }
-           });
-        }
-     });
+  const topProductsData = useMemo(() => {
+    const productCount = {};
+    orders.forEach(order => {
+      if (order.items) {
+        order.items.forEach(item => {
+          if (item.name) {
+            productCount[item.name] = (productCount[item.name] || 0) + item.quantity;
+          }
+        });
+      }
+    });
 
-     return Object.keys(productCount)
-       .map(key => ({ name: key, value: productCount[key] }))
-       .sort((a, b) => b.value - a.value)
-       .slice(0, 5);
-  };
-
-  const topProductsData = useMemo(() => processTopProducts(), [orders]);
+    return Object.keys(productCount)
+      .map(key => ({ name: key, value: productCount[key] }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [orders]);
 
   if (orders.length === 0) return null;
 

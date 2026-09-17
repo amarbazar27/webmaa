@@ -1,5 +1,6 @@
-﻿'use client';
+'use client';
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 
 export default function Error({ error, reset }) {
@@ -20,9 +21,9 @@ export default function Error({ error, reset }) {
         <button onClick={() => reset()} className="flex-1 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border-0">
           <RefreshCw size={18} strokeWidth={2.5} /> Retry
         </button>
-        <a href="/" className="flex-1 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+        <Link href="/" className="flex-1 py-4 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
           <Home size={18} strokeWidth={2.5} /> Home
-        </a>
+        </Link>
       </div>
       <div className="mt-12 pt-8 border-t border-slate-200 w-full max-w-sm">
         <p className="text-xs font-black text-slate-400 uppercase tracking-widest">
