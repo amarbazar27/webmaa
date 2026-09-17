@@ -37,6 +37,18 @@ export default function LoginPage() {
 
   // Redirection logic
   const handleRedirection = useCallback((currUser, role) => {
+    let redirectParam = null;
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      redirectParam = sp.get('redirect');
+    }
+
+    if (redirectParam && (role === 'retailer' || role === 'superadmin' || role === 'staff' || role === 'admin')) {
+      toast.success(`Dashboard access authorized 🚀`);
+      router.push(redirectParam);
+      return;
+    }
+
     if (role === 'superadmin') {
       toast.success(`Welcome back Admin! 👑`);
       router.push('/superadmin');
@@ -45,9 +57,16 @@ export default function LoginPage() {
       router.push('/dashboard');
     } else {
       toast.success(`স্বাগতম, ${currUser.displayName || 'User'}! 🎉`);
-      router.push('/');
+      router.push(redirectParam || '/');
     }
   }, [router]);
+
+  // Auto-redirect if user already logged in
+  useEffect(() => {
+    if (!authLoading && authUser && authData) {
+      handleRedirection(authUser, authData.role || 'user');
+    }
+  }, [authUser, authData, authLoading, handleRedirection]);
 
   // Check Redirect login on mount (For mobile in-app webview redirect callback)
   useEffect(() => {

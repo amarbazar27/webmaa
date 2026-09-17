@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.push('/');
+        router.push('/login?redirect=/dashboard');
       } else if (
         userData?.role !== 'retailer' &&
         userData?.role !== 'superadmin' &&
@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }) {
         userData?.role !== 'admin' &&
         !isImpersonating
       ) {
-        router.push('/');
+        router.push('/become-retailer');
       } else if (userData?.role === 'staff') {
         if (!userData?.accessShopId) {
           router.push('/');
