@@ -20,13 +20,15 @@ import toast from 'react-hot-toast';
 
 export default function TemplatePreviewPage({ params }) {
   const unwrappedParams = use(params);
-  const templateId = unwrappedParams?.id || 'health_pharmacy';
+  const templateId = unwrappedParams?.id || 'fresh_grocery';
   const router = useRouter();
   const { user } = useAuth();
 
   const [deviceMode, setDeviceMode] = useState('desktop'); // 'desktop' | 'tablet' | 'mobile'
   const [globalConfig, setGlobalConfig] = useState(null);
-  const [template, setTemplate] = useState(null);
+  const [template, setTemplate] = useState(() => {
+    return DEFAULT_WEBSITE_TEMPLATES.find(t => t.id === templateId || t.demoSubdomain === templateId) || DEFAULT_WEBSITE_TEMPLATES[0];
+  });
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [userShops, setUserShops] = useState([]);
   const [selectedShopId, setSelectedShopId] = useState('');
@@ -38,7 +40,7 @@ export default function TemplatePreviewPage({ params }) {
     const unsub = subscribeGlobalConfig((config) => {
       setGlobalConfig(config);
       const found = findTemplateByIdOrSlug(templateId, config?.websiteTemplates);
-      setTemplate(found);
+      if (found) setTemplate(found);
     });
     return () => unsub();
   }, [templateId]);
@@ -56,7 +58,7 @@ export default function TemplatePreviewPage({ params }) {
     }
   }, [user]);
 
-  const activeTemplate = template || DEFAULT_WEBSITE_TEMPLATES[0];
+  const activeTemplate = template || DEFAULT_WEBSITE_TEMPLATES.find(t => t.id === templateId || t.demoSubdomain === templateId) || DEFAULT_WEBSITE_TEMPLATES[0];
   const demoUrl = getDemoUrl(activeTemplate);
 
   const handleApplyTheme = async () => {
@@ -237,15 +239,19 @@ export default function TemplatePreviewPage({ params }) {
       </header>
 
       {/* ── Main Preview Canvas Area with Real Responsive Iframes ── */}
-      <main className="flex-1 overflow-auto flex items-start justify-center p-2 sm:p-6 bg-[radial-gradient(#1e1e2f_1px,transparent_1px)] [background-size:16px_16px]">
+      <main className={`flex-1 ${
+        deviceMode === 'desktop' 
+          ? 'w-full h-[calc(100vh-61px)] overflow-hidden bg-white p-0 m-0' 
+          : 'overflow-auto flex items-start justify-center p-2 sm:p-6 bg-[radial-gradient(#1e1e2f_1px,transparent_1px)] [background-size:16px_16px]'
+      }`}>
         
         {deviceMode === 'desktop' ? (
-          // Desktop: 100% full-width iframe
-          <div className="w-full max-w-7xl h-[88vh] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-white">
+          // Desktop: 100% true full-width edge-to-edge iframe (no side margins, no dark background)
+          <div className="w-full h-full bg-white">
             <iframe
               key={`desktop-${iframeKey}-${activeTemplate.id}`}
               src={`/templates/embed/${activeTemplate.id}`}
-              className="w-full h-full border-0"
+              className="w-full h-full border-0 block"
               title={`${activeTemplate.titleBn} Desktop Preview`}
             />
           </div>

@@ -44,15 +44,26 @@ export default function BundleSection({ data, themeVars, onAddBundle }) {
                     {bundle.description}
                   </p>
                 )}
-                {bundle.items && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {bundle.items.split(',').map((item, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold">
-                        {item.trim()}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* Items chips */}
+                {(() => {
+                  const rawItems = bundle.itemsList || bundle.items;
+                  if (!rawItems) return null;
+                  const list = Array.isArray(rawItems)
+                    ? rawItems
+                    : typeof rawItems === 'string'
+                      ? rawItems.split(',')
+                      : [];
+                  if (!list.length) return null;
+                  return (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {list.map((item, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold">
+                          {String(item).trim()}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-50">

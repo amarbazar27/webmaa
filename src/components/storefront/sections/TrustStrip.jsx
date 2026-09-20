@@ -24,21 +24,27 @@ export default function TrustStrip({ data, themeVars }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {items.map((item, idx) => {
             const Icon = ICON_MAP[item.icon] || ShieldCheck;
+            const isEmoji = typeof item.icon === 'string' && !ICON_MAP[item.icon] && item.icon.length <= 4;
+            const subtitleText = item.subtitle || item.desc;
             return (
               <div key={idx} className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3.5">
                 <div 
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm text-xl"
                   style={{ background: `${primary}15`, color: primary }}
                 >
-                  <Icon size={22} strokeWidth={2.2} />
+                  {isEmoji ? (
+                    <span>{item.icon}</span>
+                  ) : (
+                    <Icon size={22} strokeWidth={2.2} />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
                     {item.title}
                   </h4>
-                  {item.subtitle && (
+                  {subtitleText && (
                     <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5 leading-relaxed">
-                      {item.subtitle}
+                      {subtitleText}
                     </p>
                   )}
                 </div>

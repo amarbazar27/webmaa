@@ -10,17 +10,17 @@ export default function PriceLadder({ data, themeVars, onAddToCart }) {
   const [selectedTier, setSelectedTier] = useState(tiers[1] || tiers[0]);
 
   const basePrice = d.basePrice || 380;
-  const currentQty = selectedTier?.qty || 1;
+  const currentQty = selectedTier?.qty || selectedTier?.minQty || 1;
   const unitPrice = selectedTier?.pricePerUnit || basePrice;
   const totalPrice = unitPrice * currentQty;
   const regularTotal = basePrice * currentQty;
-  const savings = regularTotal - totalPrice;
+  const savings = Math.max(0, regularTotal - totalPrice);
 
   const handleAdd = () => {
     if (onAddToCart) {
       onAddToCart({
         id: 'bulk-tier-item',
-        name: `${d.productName} (${selectedTier.label})`,
+        name: `${d.productName || 'বাল্ক প্রোডাক্ট'} (${selectedTier?.label || ''})`,
         price: totalPrice,
         quantity: currentQty,
         imageUrl: d.imageUrl,
@@ -65,7 +65,9 @@ export default function PriceLadder({ data, themeVars, onAddToCart }) {
 
             <div className="space-y-2.5">
               {tiers.map((tier, idx) => {
-                const isSelected = selectedTier?.qty === tier.qty;
+                const tierQty = tier.qty || tier.minQty || 1;
+                const isSelected = (selectedTier?.qty || selectedTier?.minQty || 1) === tierQty;
+                const tierTotal = (tier.pricePerUnit || basePrice) * tierQty;
                 return (
                   <button
                     key={idx}
@@ -104,7 +106,7 @@ export default function PriceLadder({ data, themeVars, onAddToCart }) {
 
                     <div className="text-right">
                       <p className="text-base font-black" style={{ color: primary }}>
-                        ৳{Number(tier.pricePerUnit * tier.qty).toLocaleString()}
+                        ৳{Number(tierTotal).toLocaleString()}
                       </p>
                     </div>
                   </button>

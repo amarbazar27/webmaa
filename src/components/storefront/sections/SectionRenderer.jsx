@@ -31,45 +31,71 @@ import DealOfTheDay from './DealOfTheDay';
 import PriceLadder from './PriceLadder';
 
 import BasicStorefront from './BasicStorefront';
+import React, { Component } from 'react';
+
+class SectionErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.warn(`[SectionErrorBoundary] Suppressed render error in section "${this.props.sectionType}":`, error);
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
 
 export default function SectionRenderer({ section, products, themeVars, callbacks, isPreview = false }) {
   if (!section?.enabled) return null;
   const props = { data: section.data, themeVars, products, isPreview, ...callbacks };
 
-  switch (section.type) {
-    // Core & Existing
-    case 'basic_storefront':  return <BasicStorefront {...props} />;
-    case 'hero_carousel':     return <HeroCarousel {...props} />;
-    case 'category_scroller':  return <CategoryScroller {...props} />;
-    case 'flash_sale':        return <FlashSale {...props} />;
-    case 'product_grid':      return <ProductGrid {...props} />;
-    case 'video_reels':       return <VideoReels {...props} />;
-    case 'banner_row':        return <BannerRow {...props} />;
-    case 'concern_grid':      return <ConcernGrid {...props} />;
-    case 'brand_marquee':     return <BrandMarquee {...props} />;
-    case 'bundle_section':    return <BundleSection {...props} />;
-    case 'photo_reviews':     return <PhotoReviews {...props} />;
-    case 'price_tier_store':  return <PriceTierStore {...props} />;
-    case 'instagram_feed':    return <InstagramFeed {...props} />;
-    case 'popup_banner':      return <PopupBanner {...props} />;
+  const renderContent = () => {
+    switch (section.type) {
+      // Core & Existing
+      case 'basic_storefront':  return <BasicStorefront {...props} />;
+      case 'hero_carousel':     return <HeroCarousel {...props} />;
+      case 'category_scroller':  return <CategoryScroller {...props} />;
+      case 'flash_sale':        return <FlashSale {...props} />;
+      case 'product_grid':      return <ProductGrid {...props} />;
+      case 'video_reels':       return <VideoReels {...props} />;
+      case 'banner_row':        return <BannerRow {...props} />;
+      case 'concern_grid':      return <ConcernGrid {...props} />;
+      case 'brand_marquee':     return <BrandMarquee {...props} />;
+      case 'bundle_section':    return <BundleSection {...props} />;
+      case 'photo_reviews':     return <PhotoReviews {...props} />;
+      case 'price_tier_store':  return <PriceTierStore {...props} />;
+      case 'instagram_feed':    return <InstagramFeed {...props} />;
+      case 'popup_banner':      return <PopupBanner {...props} />;
 
-    // New High-Converting Sections
-    case 'split_showcase':    return <SplitShowcase {...props} />;
-    case 'editorial_story':   return <EditorialStory {...props} />;
-    case 'shop_the_look':     return <ShopTheLook {...props} />;
-    case 'bento_mosaic':      return <BentoMosaic {...props} />;
-    case 'product_spotlight': return <ProductSpotlight {...props} />;
-    case 'mood_board':        return <MoodBoard {...props} />;
-    case 'tabbed_collection': return <TabbedCollection {...props} />;
-    case 'lookbook':          return <Lookbook {...props} />;
-    case 'scroll_story':      return <ScrollStory {...props} />;
-    case 'shoppable_video':   return <ShoppableVideo {...props} />;
-    case 'before_after':      return <BeforeAfter {...props} />;
-    case 'trust_strip':       return <TrustStrip {...props} />;
-    case 'customer_ugc':      return <CustomerUgc {...props} />;
-    case 'deal_of_the_day':   return <DealOfTheDay {...props} />;
-    case 'price_ladder':      return <PriceLadder {...props} />;
+      // New High-Converting Sections
+      case 'split_showcase':    return <SplitShowcase {...props} />;
+      case 'editorial_story':   return <EditorialStory {...props} />;
+      case 'shop_the_look':     return <ShopTheLook {...props} />;
+      case 'bento_mosaic':      return <BentoMosaic {...props} />;
+      case 'product_spotlight': return <ProductSpotlight {...props} />;
+      case 'mood_board':        return <MoodBoard {...props} />;
+      case 'tabbed_collection': return <TabbedCollection {...props} />;
+      case 'lookbook':          return <Lookbook {...props} />;
+      case 'scroll_story':      return <ScrollStory {...props} />;
+      case 'shoppable_video':   return <ShoppableVideo {...props} />;
+      case 'before_after':      return <BeforeAfter {...props} />;
+      case 'trust_strip':       return <TrustStrip {...props} />;
+      case 'customer_ugc':      return <CustomerUgc {...props} />;
+      case 'deal_of_the_day':   return <DealOfTheDay {...props} />;
+      case 'price_ladder':      return <PriceLadder {...props} />;
 
-    default: return null;
-  }
+      default: return null;
+    }
+  };
+
+  return (
+    <SectionErrorBoundary sectionType={section.type}>
+      {renderContent()}
+    </SectionErrorBoundary>
+  );
 }

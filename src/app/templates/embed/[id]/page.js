@@ -15,9 +15,11 @@ import toast from 'react-hot-toast';
 
 export default function TemplateEmbedPage({ params }) {
   const unwrappedParams = use(params);
-  const templateId = unwrappedParams?.id || 'modern_streetwear';
+  const templateId = unwrappedParams?.id || 'fresh_grocery';
 
-  const [template, setTemplate] = useState(null);
+  const [template, setTemplate] = useState(() => {
+    return DEFAULT_WEBSITE_TEMPLATES.find(t => t.id === templateId || t.demoSubdomain === templateId) || DEFAULT_WEBSITE_TEMPLATES[0];
+  });
   const [cartItems, setCartItems] = useState([]);
   const [showCart, setShowCart] = useState(false);
   const [search, setSearch] = useState('');
@@ -27,12 +29,12 @@ export default function TemplateEmbedPage({ params }) {
   useEffect(() => {
     const unsub = subscribeGlobalConfig((config) => {
       const found = findTemplateByIdOrSlug(templateId, config?.websiteTemplates);
-      setTemplate(found);
+      if (found) setTemplate(found);
     });
     return () => unsub();
   }, [templateId]);
 
-  const activeTemplate = template || DEFAULT_WEBSITE_TEMPLATES.find(t => t.id === templateId) || DEFAULT_WEBSITE_TEMPLATES[0];
+  const activeTemplate = template || DEFAULT_WEBSITE_TEMPLATES.find(t => t.id === templateId || t.demoSubdomain === templateId) || DEFAULT_WEBSITE_TEMPLATES[0];
 
   // Resolve category-smart dynamic sections from Picture 2
   const dynamicSections = useMemo(() => {

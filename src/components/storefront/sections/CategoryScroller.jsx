@@ -5,7 +5,16 @@ import { resolveSectionData } from '@/lib/homepageDemoData';
 export default function CategoryScroller({ data, themeVars, onCategoryClick }) {
   const d = resolveSectionData('category_scroller', data);
   const scrollRef = useRef(null);
-  const items = d.items || [];
+  const rawList = (d.items && d.items.length > 0) 
+    ? d.items 
+    : (d.categories && d.categories.length > 0)
+      ? d.categories.map(c => ({
+          label: c.name || c.label || c.title,
+          imageUrl: c.imageUrl || c.image,
+          emoji: c.emoji || c.icon,
+        }))
+      : [];
+  const items = rawList;
   const primary = themeVars?.primaryColor || '#6D28D9';
 
   if (!items.length) return null;
