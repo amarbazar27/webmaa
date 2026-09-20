@@ -7,8 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "ocr:check": "node scripts/ocr-check.js",
+    "review": "node scripts/ocr-check.js",
     "sign-aab": "node scripts/auto-sign-aab.js",
-    "deploy": "git add . && git commit -m \"chore: auto deploy update\" && git push origin HEAD:main"
+    "deploy": "node scripts/ocr-check.js && git add . && git commit -m \"chore: auto deploy update\" && git push origin HEAD:main"
   },
   "allowScripts": {
     "@firebase/util": true,

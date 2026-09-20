@@ -1,0 +1,52 @@
+name: Alibaba OpenCodeReview CI
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  code-review:
+    name: Alibaba OpenCodeReview & Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Alibaba OpenCodeReview Deterministic Scanner
+        run: |
+          node scripts/ocr-check.js
+
+      - name: Check for Optional AI Reviewer Key
+        id: check-llm
+        run: |
+          if [ -n "${{ secrets.OCR_LLM_KEY }}" ] || [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "has_llm=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_llm=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Deep AI Code Review (Optional)
+        if: steps.check-llm.outputs.has_llm == 'true' && github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OCR_LLM_KEY || secrets.OPENAI_API_KEY }}
+        run: |
+          npx -y @alibaba-group/open-code-review review \
+            --provider openai \
+            --model gpt-4o-mini || true
