@@ -135,9 +135,9 @@ export default function TemplatePreviewPage({ params }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090E] text-white flex flex-col font-sans selection:bg-purple-600 selection:text-white">
+    <div className="h-screen max-h-screen bg-[#07090E] text-white flex flex-col font-sans selection:bg-purple-600 selection:text-white overflow-hidden">
       {/* ── Top Floating Navigation & Device Switcher Bar ── */}
-      <header className="sticky top-0 z-50 bg-[#0B0F19]/95 backdrop-blur-xl border-b border-white/10 px-4 py-3 shadow-2xl">
+      <header className="shrink-0 sticky top-0 z-50 bg-[#0B0F19]/95 backdrop-blur-xl border-b border-white/10 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Left: Back & Template Info */}
@@ -239,22 +239,27 @@ export default function TemplatePreviewPage({ params }) {
       </header>
 
       {/* ── Main Preview Canvas Area with Real Responsive Iframes ── */}
-      <main className={`flex-1 ${
+      <main className={`flex-1 min-h-0 ${
         deviceMode === 'desktop' 
-          ? 'w-full h-[calc(100vh-61px)] overflow-hidden bg-white p-0 m-0' 
+          ? 'w-full h-full overflow-hidden p-0 m-0 bg-transparent flex flex-col' 
           : 'overflow-auto flex items-start justify-center p-2 sm:p-6 bg-[radial-gradient(#1e1e2f_1px,transparent_1px)] [background-size:16px_16px]'
       }`}>
         
         {deviceMode === 'desktop' ? (
-          // Desktop: 100% true full-width edge-to-edge iframe (no side margins, no dark background)
-          <div className="w-full h-full bg-white">
-            <iframe
-              key={`desktop-${iframeKey}-${activeTemplate.id}`}
-              src={`/templates/embed/${activeTemplate.id}`}
-              className="w-full h-full border-0 block"
-              title={`${activeTemplate.titleBn} Desktop Preview`}
-            />
-          </div>
+          // Desktop: 100% true full-width and full-height edge-to-edge iframe
+          <iframe
+            key={`desktop-${iframeKey}-${activeTemplate.id}`}
+            src={`/templates/embed/${activeTemplate.id}`}
+            className="w-full flex-1 min-h-0 border-0 block"
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              minHeight: '100%',
+              display: 'block',
+              border: 'none'
+            }}
+            title={`${activeTemplate.titleBn} Desktop Preview`}
+          />
         ) : deviceMode === 'tablet' ? (
           // Tablet: 768px realistic iPad mockup frame
           <div className="w-[768px] h-[920px] max-h-[90vh] my-4 rounded-[36px] p-3 bg-slate-800 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] border-4 border-slate-700 flex flex-col relative">
@@ -263,11 +268,12 @@ export default function TemplatePreviewPage({ params }) {
               <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
             </div>
             {/* Iframe Viewport */}
-            <div className="flex-1 w-full rounded-[24px] overflow-hidden bg-white">
+            <div className="flex-1 min-h-0 w-full rounded-[24px] overflow-hidden bg-white">
               <iframe
                 key={`tablet-${iframeKey}-${activeTemplate.id}`}
                 src={`/templates/embed/${activeTemplate.id}`}
-                className="w-full h-full border-0"
+                className="w-full h-full border-0 block"
+                style={{ width: '100%', height: '100%', display: 'block' }}
                 title={`${activeTemplate.titleBn} Tablet Preview`}
               />
             </div>
@@ -283,11 +289,12 @@ export default function TemplatePreviewPage({ params }) {
             </div>
 
             {/* True Mobile Iframe Viewport (window.innerWidth = 366px inside frame) */}
-            <div className="flex-1 w-full rounded-[36px] overflow-hidden bg-white shadow-inner">
+            <div className="flex-1 min-h-0 w-full rounded-[36px] overflow-hidden bg-white shadow-inner">
               <iframe
                 key={`mobile-${iframeKey}-${activeTemplate.id}`}
                 src={`/templates/embed/${activeTemplate.id}`}
-                className="w-full h-full border-0"
+                className="w-full h-full border-0 block"
+                style={{ width: '100%', height: '100%', display: 'block' }}
                 title={`${activeTemplate.titleBn} Mobile Preview`}
               />
             </div>
