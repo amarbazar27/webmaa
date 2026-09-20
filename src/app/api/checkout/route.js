@@ -33,7 +33,7 @@ const CheckoutSchema = z.object({
     customizedText: z.string().max(200).optional(),
     baseUnit: z.string().max(50).optional(),
     clientPrice: z.number().positive().optional()
-  })).min(1), // MED-2 Fix: Require at least 1 item (customImage-only orders handled separately below)
+  })), // Can be empty if customImage prescription/photo order is placed
   customerId: z.string().min(1),
   customImage: z.string().max(2000000).optional().nullable(),
   couponCode: z.string().max(50).optional().nullable(),
@@ -91,14 +91,15 @@ export async function POST(req) {
       orderSource,
       landingPageId,
       landingPageTitle,
-      landingPageSlug
+      landingPageSlug,
+      customImage: schemaCustomImage
     } = parsed.data;
 
-    // Extract customImage separately (not in strict destructure to avoid schema clash)
-    const customImage = body.customImage || null;
+    // Extract customImage (from validated schema or fallback)
+    const customImage = schemaCustomImage || body.customImage || null;
 
     // 🚨 Custom validation: Either items or customImage must be present
-    if (items.length === 0 && !customImage) {
+    if ((!items || items.length === 0) && !customImage) {
       return NextResponse.json({ error: 'Please add items or upload an image to order.' }, { status: 400 });
     }
 

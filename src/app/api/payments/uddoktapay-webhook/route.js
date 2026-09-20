@@ -98,13 +98,23 @@ export async function POST(req) {
       return NextResponse.json({ error: `Payment not completed. Status: ${verifyData.status}` }, { status: 400 });
     }
 
+    const resolvedTxnId = verifyData.transaction_id || invoiceId;
+
     if (isDuePayment) {
+      // 🔒 Idempotency check: prevent duplicate payouts on gateway retries
+      const existingHistory = Array.isArray(shopData.sharedRevenueHistory) ? shopData.sharedRevenueHistory : [];
+      const alreadyProcessed = existingHistory.some(item => item.transactionId === resolvedTxnId || item.id === `pay_uddokta_${invoiceId}`);
+      if (alreadyProcessed) {
+        console.log(`[UddoktaPay Webhook] Duplicate webhook: Commission due already processed for txn ${resolvedTxnId}`);
+        return NextResponse.json({ success: true, verified: true, due_payment: true, duplicate: true });
+      }
+
       const paidAmt = Number(verifyData.amount) || Number(metadata.amount) || 0;
       const historyItem = {
-        id: `pay_uddokta_${Date.now()}`,
+        id: `pay_uddokta_${invoiceId}`,
         amount: paidAmt,
         paymentMethod: 'automated_uddoktapay',
-        transactionId: verifyData.transaction_id || invoiceId,
+        transactionId: resolvedTxnId,
         note: `Automated Commission Payout (${verifyData.payment_method || 'bKash/Nagad'})`,
         recordedBy: 'automated_system',
         createdAt: new Date().toISOString()
@@ -121,6 +131,14 @@ export async function POST(req) {
     }
 
     if (isSubscription) {
+      // 🔒 Idempotency check: prevent duplicate subscription extensions on gateway retries
+      const existingSubHistory = Array.isArray(shopData.subscriptionHistory) ? shopData.subscriptionHistory : [];
+      const alreadySubProcessed = existingSubHistory.some(item => item.transactionId === resolvedTxnId || item.id === `sub_uddokta_${invoiceId}`);
+      if (alreadySubProcessed) {
+        console.log(`[UddoktaPay Webhook] Duplicate webhook: Subscription already processed for txn ${resolvedTxnId}`);
+        return NextResponse.json({ success: true, verified: true, subscription: true, duplicate: true });
+      }
+
       const packageType = metadata.packageType || 'monthly';
       let days = 30;
       if (packageType === 'quarterly') days = 90;
@@ -138,11 +156,11 @@ export async function POST(req) {
       }
 
       const historyItem = {
-        id: `sub_uddokta_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        id: `sub_uddokta_${invoiceId}`,
         package: packageType,
         amount: Number(verifyData.amount) || (packageType === 'monthly' ? 500 : packageType === 'quarterly' ? 1350 : 5000),
         paymentMethod: 'automated_uddoktapay',
-        transactionId: verifyData.transaction_id || invoiceId,
+        transactionId: resolvedTxnId,
         status: 'active',
         createdAt: new Date().toISOString(),
         expiresAt: new Date(newExpiry).toISOString(),
