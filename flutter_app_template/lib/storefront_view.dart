@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import 'models.dart';
 import 'database_service.dart';
 import 'cart_provider.dart';
 import 'product_detail_view.dart';
 import 'checkout_view.dart';
-import 'web_shop_view.dart';
+import 'order_tracking_view.dart';
+import 'theme.dart';
+import 'config.dart';
 
 class StorefrontView extends StatefulWidget {
   final String shopId;
@@ -24,29 +27,51 @@ class StorefrontView extends StatefulWidget {
 class _StorefrontViewState extends State<StorefrontView> {
   final DatabaseService _db = DatabaseService();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   Shop? _shop;
   List<Category> _categories = [];
   List<Product> _products = [];
-  List<Product> _filteredProducts = [];
-
   bool _isLoading = true;
+  String? _errorMessage;
+
   String _selectedCategoryId = 'all';
   String _selectedSubcategory = 'all';
   String _searchQuery = '';
-  int _currentBottomNavIndex = 0;
-  String? _errorMessage;
+  int _currentTab = 0;
+
+  // Banner carousel
+  final PageController _bannerController = PageController();
+  int _currentBannerIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _loadStoreData();
+    _startBannerAutoScroll();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
+    _bannerController.dispose();
     super.dispose();
+  }
+
+  void _startBannerAutoScroll() {
+    Future.delayed(const Duration(seconds: 4), () {
+      if (!mounted || _shop == null || _shop!.bannerUrls.length <= 1) return;
+      if (_bannerController.hasClients) {
+        final nextPage = (_currentBannerIndex + 1) % _shop!.bannerUrls.length;
+        _bannerController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+      _startBannerAutoScroll();
+    });
   }
 
   Future<void> _loadStoreData() async {
@@ -58,22 +83,23 @@ class _StorefrontViewState extends State<StorefrontView> {
     try {
       final shop = await _db.getShop(widget.shopId);
       if (shop != null) {
-        final categories = await _db.getCategories(shop.id);
-        final products = await _db.getProducts(shop.id);
+        final results = await Future.wait([
+          _db.getCategories(shop.id),
+          _db.getProducts(shop.id),
+        ]);
         if (mounted) {
           setState(() {
             _shop = shop;
-            _categories = categories;
-            _products = products;
+            _categories = results[0] as List<Category>;
+            _products = results[1] as List<Product>;
             _isLoading = false;
           });
-          _filterProducts();
         }
       } else {
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _errorMessage = 'স্টোর খুঁজে পাওয়া যায়নি! (ID: ${widget.shopId})';
+            _errorMessage = 'স্টোর খুঁজে পাওয়া যায়নি! (ID: ${widget.shopId})';
           });
         }
       }
@@ -81,61 +107,51 @@ class _StorefrontViewState extends State<StorefrontView> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'নেটওয়ার্ক বা ডাটাবেজ কানেকশনে সমস্যা হয়েছে।';
+          _errorMessage = 'নেটওয়ার্ক বা ডাটাবেজ কানেকশনে সমস্যা হয়েছে।';
         });
       }
     }
   }
 
-  void _filterProducts() {
+  List<Product> get _filteredProducts {
     final query = _searchQuery.trim().toLowerCase();
-
-    setState(() {
-      _filteredProducts = _products.where((p) {
-        // 1. Category Matching
-        bool matchesCategory = _selectedCategoryId == 'all';
-        if (!matchesCategory) {
-          final pCat = p.categoryId.trim().toLowerCase();
-          final selCat = _selectedCategoryId.trim().toLowerCase();
-
-          matchesCategory = (pCat == selCat);
-
-          if (!matchesCategory) {
-            for (final c in _categories) {
-              final cId = c.id.trim().toLowerCase();
-              final cName = c.name.trim().toLowerCase();
-              if (cId == selCat || cName == selCat) {
-                if (pCat == cId || pCat == cName) {
-                  matchesCategory = true;
-                  break;
-                }
-              }
+    return _products.where((p) {
+      // Category match
+      bool matchCat = _selectedCategoryId == 'all';
+      if (!matchCat) {
+        final pCat = p.categoryId.trim().toLowerCase();
+        final sel = _selectedCategoryId.trim().toLowerCase();
+        matchCat = pCat == sel;
+        if (!matchCat) {
+          for (final c in _categories) {
+            if ((c.id.trim().toLowerCase() == sel || c.name.trim().toLowerCase() == sel) &&
+                (pCat == c.id.trim().toLowerCase() || pCat == c.name.trim().toLowerCase())) {
+              matchCat = true;
+              break;
             }
           }
         }
+      }
 
-        // 2. Subcategory Matching
-        bool matchesSubcategory = _selectedSubcategory == 'all';
-        if (!matchesSubcategory && p.subcategory.isNotEmpty) {
-          matchesSubcategory = p.subcategory.trim().toLowerCase() == _selectedSubcategory.trim().toLowerCase();
-        }
+      // Subcategory match
+      bool matchSub = _selectedSubcategory == 'all';
+      if (!matchSub && p.subcategory.isNotEmpty) {
+        matchSub = p.subcategory.trim().toLowerCase() == _selectedSubcategory.trim().toLowerCase();
+      }
 
-        // 3. Search Query Matching (Name, Description, Category, Subcategory)
-        bool matchesSearch = query.isEmpty;
-        if (!matchesSearch) {
-          final nameMatch = p.name.toLowerCase().contains(query);
-          final descMatch = p.description.toLowerCase().contains(query);
-          final catMatch = p.categoryId.toLowerCase().contains(query);
-          final subcatMatch = p.subcategory.toLowerCase().contains(query);
-          matchesSearch = nameMatch || descMatch || catMatch || subcatMatch;
-        }
+      // Search match
+      bool matchSearch = query.isEmpty;
+      if (!matchSearch) {
+        matchSearch = p.name.toLowerCase().contains(query) ||
+            p.description.toLowerCase().contains(query) ||
+            p.categoryId.toLowerCase().contains(query) ||
+            p.subcategory.toLowerCase().contains(query);
+      }
 
-        return matchesCategory && matchesSubcategory && matchesSearch;
-      }).toList();
-    });
+      return matchCat && matchSub && matchSearch;
+    }).toList();
   }
 
-  // Get active subcategories for current selected category
   List<String> get _currentSubcategories {
     if (_selectedCategoryId == 'all') return [];
     final catObj = _categories.firstWhere(
@@ -145,151 +161,46 @@ class _StorefrontViewState extends State<StorefrontView> {
     return catObj.subcategories;
   }
 
-  void _launchWhatsApp(String message) async {
-    final phone = _shop?.whatsappPhone.isNotEmpty == true ? _shop!.whatsappPhone : _shop?.contactPhone ?? '';
+  void _launchWhatsApp() async {
+    final phone = _shop?.whatsappPhone.isNotEmpty == true
+        ? _shop!.whatsappPhone
+        : _shop?.contactPhone ?? '';
     if (phone.isEmpty) return;
     final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    final uri = Uri.parse("https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}");
+    final msg = 'হ্যালো! ${_shop!.name}-এর পণ্য সম্পর্কে জানতে চাই।';
+    final uri = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(msg)}');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
+  // ─── BUILD ─────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text(
-                'স্টোর ডাটা লোড হচ্ছে...',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_shop == null) {
-      return Scaffold(
-        backgroundColor: Colors.grey[50],
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.store_mall_directory_outlined, size: 64, color: Colors.grey),
-                const SizedBox(height: 16),
-                Text(
-                  _errorMessage ?? 'স্টোর খুঁজে পাওয়া যায়নি!',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'দয়া করে ইন্টারনেট কানেকশন চেক করে পুনরায় চেষ্টা করুন।',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _loadStoreData,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('আবার চেষ্টা করুন (Retry)'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF9333EA),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final themeColor = HexColor.fromHex(_shop!.primaryColorHex);
+    final primary = Theme.of(context).primaryColor;
     final cart = context.watch<CartProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (_shop!.logoUrl.isNotEmpty)
-              CachedNetworkImage(
-                imageUrl: _shop!.logoUrl,
-                height: 32,
-                placeholder: (context, url) => const SizedBox(width: 32),
-                errorWidget: (context, url, error) => const Icon(Icons.store),
-              ),
-            const SizedBox(width: 8),
-            Text(
-              _shop!.name,
-              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.black87),
-            onPressed: () => _openCartBottomSheet(context, themeColor),
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(primary, cart),
       body: IndexedStack(
-        index: _currentBottomNavIndex,
+        index: _currentTab,
         children: [
-          // Tab 0: Native Storefront Catalog
-          _buildNativeStorefront(themeColor, cart),
-
-          // Tab 1: Embedded Web Shop (100% Website Features)
-          WebShopView(url: _shop!.targetUrl, title: '${_shop!.name} (ফুল ওয়েবসাইট)'),
+          _buildHomeTab(primary),
+          _buildCartTab(primary, cart),
+          OrderTrackingView(shopId: _shop?.id ?? widget.shopId),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentBottomNavIndex,
-        selectedItemColor: themeColor,
+        currentIndex: _currentTab,
+        selectedItemColor: primary,
         unselectedItemColor: Colors.grey[600],
         type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          if (index == 2) {
-            // WhatsApp Direct Action
-            _launchWhatsApp("হ্যালো! ${_shop!.name}-এর পণ্য সম্পর্কে জানতে চাই।");
-          } else if (index == 3) {
-            // Open Cart Bottom Sheet directly
-            _openCartBottomSheet(context, themeColor);
-          } else {
-            setState(() {
-              _currentBottomNavIndex = index;
-            });
-          }
-        },
+        onTap: (i) => setState(() => _currentTab = i),
         items: [
           const BottomNavigationBarItem(
             icon: Icon(Icons.storefront),
-            label: 'স্টোর',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.language),
-            label: 'ফুল শপ',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: 'WhatsApp',
+            label: 'হোম',
           ),
           BottomNavigationBarItem(
             icon: Badge(
@@ -299,223 +210,328 @@ class _StorefrontViewState extends State<StorefrontView> {
             ),
             label: 'কার্ট',
           ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.local_shipping_outlined),
+            label: 'অর্ডার',
+          ),
         ],
       ),
-      // Floating Shopping Cart Bubble
-      floatingActionButton: cart.itemCount > 0 && _currentBottomNavIndex == 0
-          ? FloatingActionButton.extended(
-              onPressed: () => _openCartBottomSheet(context, themeColor),
-              backgroundColor: themeColor,
-              icon: const Icon(Icons.shopping_cart, color: Colors.white),
-              label: Text(
-                '${cart.itemCount} টি প্রোডাক্ট | ৳${cart.subtotalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
+      floatingActionButton: _currentTab == 0 && _shop != null && _shop!.whatsappPhone.isNotEmpty
+          ? FloatingActionButton(
+              onPressed: _launchWhatsApp,
+              backgroundColor: const Color(0xFF25D366),
+              child: const Icon(Icons.chat, color: Colors.white),
             )
           : null,
     );
   }
 
-  Widget _buildNativeStorefront(Color themeColor, CartProvider cart) {
+  PreferredSizeWidget _buildAppBar(Color primary, CartProvider cart) {
+    switch (_currentTab) {
+      case 1:
+        return AppBar(
+          title: Text('কার্ট (${cart.itemCount} টি পণ্য)'),
+          actions: [
+            if (cart.items.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () {
+                  cart.clearCart();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('কার্ট খালি করা হয়েছে')),
+                  );
+                },
+              ),
+          ],
+        );
+      case 2:
+        return AppBar(title: const Text('অর্ডার ট্র্যাকিং'));
+      default:
+        return AppBar(
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_shop?.logoUrl.isNotEmpty == true)
+                CachedNetworkImage(
+                  imageUrl: _shop!.logoUrl,
+                  height: 32,
+                  width: 32,
+                  placeholder: (_, __) => const SizedBox(width: 32),
+                  errorWidget: (_, __, ___) => const Icon(Icons.store),
+                ),
+              if (_shop?.logoUrl.isNotEmpty == true) const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  _shop?.name ?? AppConfig.appName,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              onPressed: () {
+                if (_shop != null) {
+                  SharePlus.instance.share(
+                    ShareParams(text: '${_shop!.name}\n${_shop!.targetUrl}'),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+    }
+  }
+
+  // ─── HOME TAB ──────────────────────────────────────────────────
+
+  Widget _buildHomeTab(Color primary) {
+    if (_isLoading) return _buildShimmerGrid();
+    if (_errorMessage != null) return _buildErrorView(primary);
+
+    final filtered = _filteredProducts;
     final subcats = _currentSubcategories;
 
     return RefreshIndicator(
       onRefresh: _loadStoreData,
-      child: Column(
-        children: [
-          // Banner / Announcement Notice
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Notice banner
           if (_shop!.notice.isNotEmpty)
-            Container(
-              width: double.infinity,
-              color: themeColor.withOpacity(0.08),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Icon(Icons.campaign, size: 18, color: themeColor),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _shop!.notice,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: themeColor),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            SliverToBoxAdapter(child: _buildNotice(primary)),
 
-          // Search Bar with Clear Icon (X)
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'পণ্য, ক্যাটাগরি বা বিবরণ লিখে খুঁজুন...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                          _filterProducts();
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
-                ),
+          // Search bar
+          SliverToBoxAdapter(child: _buildSearchBar()),
+
+          // Category chips
+          if (_categories.isNotEmpty)
+            SliverToBoxAdapter(child: _buildCategoryChips(primary)),
+
+          // Subcategory chips
+          if (subcats.isNotEmpty)
+            SliverToBoxAdapter(child: _buildSubcategoryChips(subcats, primary)),
+
+          // Banner carousel
+          if (_shop!.bannerUrls.isNotEmpty &&
+              _selectedCategoryId == 'all' &&
+              _searchQuery.isEmpty)
+            SliverToBoxAdapter(child: _buildBannerCarousel()),
+
+          // Product count header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Text(
+                '${filtered.length} টি পণ্য',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
-              onChanged: (val) {
-                setState(() {
-                  _searchQuery = val;
-                });
-                _filterProducts();
-              },
             ),
           ),
 
-          // Main Categories Tabs Bar
-          if (_categories.isNotEmpty)
-            Container(
-              height: 42,
-              margin: const EdgeInsets.only(bottom: 6),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  _buildCategoryChip('all', 'সব প্রোডাক্ট', themeColor),
-                  ..._categories.map((c) => _buildCategoryChip(c.id, c.name, themeColor)),
-                ],
-              ),
-            ),
-
-          // Subcategories Chips Bar (If selected category has subcategories)
-          if (subcats.isNotEmpty)
-            Container(
-              height: 34,
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  _buildSubcategoryChip('all', 'সব সাব-ক্যাটাগরি', themeColor),
-                  ...subcats.map((sub) => _buildSubcategoryChip(sub, sub, themeColor)),
-                ],
-              ),
-            ),
-
-          // Banner Carousel / Image header if available
-          if (_shop!.bannerUrls.isNotEmpty && _selectedCategoryId == 'all' && _searchQuery.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: _shop!.bannerUrls.first,
-                  height: 140,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(height: 140, color: Colors.grey[200]),
-                  errorWidget: (context, url, error) => const SizedBox.shrink(),
+          // Product grid or empty state
+          if (filtered.isEmpty)
+            SliverFillRemaining(child: _buildEmptyProducts(primary))
+          else
+            SliverPadding(
+              padding: const EdgeInsets.all(12),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.66,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (ctx, i) => _buildProductCard(filtered[i], primary),
+                  childCount: filtered.length,
                 ),
               ),
             ),
 
-          // Products Catalog Grid
+          // Bottom padding
+          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.66,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemCount: 6,
+      itemBuilder: (_, __) => const ProductCardSkeleton(),
+    );
+  }
+
+  Widget _buildErrorView(Color primary) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.store_mall_directory_outlined, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage ?? 'স্টোর খুঁজে পাওয়া যায়নি!',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'দয়া করে ইন্টারনেট কানেকশন চেক করে পুনরায় চেষ্টা করুন।',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _loadStoreData,
+              icon: const Icon(Icons.refresh),
+              label: const Text('আবার চেষ্টা করুন'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotice(Color primary) {
+    return Container(
+      width: double.infinity,
+      color: primary.withOpacity(0.08),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(Icons.campaign, size: 18, color: primary),
+          const SizedBox(width: 8),
           Expanded(
-            child: _filteredProducts.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search_off, size: 50, color: Colors.grey[400]),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'কোনো প্রোডাক্ট পাওয়া যায়নি।',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          if (_searchQuery.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              '"$_searchQuery"-এর সাথে মেলে এমন কোনো পণ্য পাওয়া যায়নি।',
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                  _selectedCategoryId = 'all';
-                                  _selectedSubcategory = 'all';
-                                });
-                                _filterProducts();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: themeColor,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('সব ফিল্টার ক্লিয়ার করুন'),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  )
-                : GridView.builder(
-                    padding: const EdgeInsets.all(12),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.66,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
-                    itemCount: _filteredProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = _filteredProducts[index];
-                      return _buildProductCard(product, themeColor);
-                    },
-                  ),
+            child: Text(
+              _shop!.notice,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primary),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryChip(String id, String label, Color themeColor) {
-    final isSelected = _selectedCategoryId == id;
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'পণ্য, ক্যাটাগরি বা বিবরণ লিখে খুঁজুন...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 20),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        onChanged: (val) => setState(() => _searchQuery = val),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChips(Color primary) {
+    return Container(
+      height: 42,
+      margin: const EdgeInsets.only(bottom: 6),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          _chip('all', 'সব প্রোডাক্ট', _selectedCategoryId == 'all', primary, () {
+            setState(() {
+              _selectedCategoryId = 'all';
+              _selectedSubcategory = 'all';
+            });
+          }),
+          ..._categories.map((c) => _chip(
+                c.id,
+                c.name,
+                _selectedCategoryId == c.id,
+                primary,
+                () {
+                  setState(() {
+                    _selectedCategoryId = c.id;
+                    _selectedSubcategory = 'all';
+                  });
+                },
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubcategoryChips(List<String> subcats, Color primary) {
+    return Container(
+      height: 34,
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          _chip('all', 'সব সাব-ক্যাটাগরি', _selectedSubcategory == 'all', primary, () {
+            setState(() => _selectedSubcategory = 'all');
+          }),
+          ...subcats.map((sub) => _chip(
+                sub,
+                sub,
+                _selectedSubcategory == sub,
+                primary,
+                () => setState(() => _selectedSubcategory = sub),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String id, String label, bool selected, Color primary, VoidCallback onTap) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedCategoryId = id;
-          _selectedSubcategory = 'all';
-        });
-        _filterProducts();
-      },
+      onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? themeColor : Colors.white,
+          color: selected ? primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? themeColor : Colors.grey[200]!),
+          border: Border.all(color: selected ? primary : Colors.grey[200]!),
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black87,
+              color: selected ? Colors.white : Colors.black87,
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
@@ -525,38 +541,81 @@ class _StorefrontViewState extends State<StorefrontView> {
     );
   }
 
-  Widget _buildSubcategoryChip(String id, String label, Color themeColor) {
-    final isSelected = _selectedSubcategory == id;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedSubcategory = id;
-        });
-        _filterProducts();
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 3),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? themeColor.withOpacity(0.15) : Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: isSelected ? themeColor : Colors.grey[300]!),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? themeColor : Colors.black54,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 11,
-            ),
-          ),
+  Widget _buildBannerCarousel() {
+    final banners = _shop!.bannerUrls;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          height: 150,
+          child: banners.length == 1
+              ? CachedNetworkImage(
+                  imageUrl: banners.first,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(color: Colors.grey[200]),
+                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                )
+              : PageView.builder(
+                  controller: _bannerController,
+                  itemCount: banners.length,
+                  onPageChanged: (i) => setState(() => _currentBannerIndex = i),
+                  itemBuilder: (_, i) => CachedNetworkImage(
+                    imageUrl: banners[i],
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(color: Colors.grey[200]),
+                    errorWidget: (_, __, ___) => Container(color: Colors.grey[200]),
+                  ),
+                ),
         ),
       ),
     );
   }
 
-  Widget _buildProductCard(Product product, Color themeColor) {
+  Widget _buildEmptyProducts(Color primary) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 50, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            const Text('কোনো প্রোডাক্ট পাওয়া যায়নি।',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            if (_searchQuery.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                '"$_searchQuery"-এর সাথে মেলে এমন কোনো পণ্য পাওয়া যায়নি।',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                    _selectedCategoryId = 'all';
+                    _selectedSubcategory = 'all';
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('সব ফিল্টার ক্লিয়ার করুন'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductCard(Product product, Color primary) {
     final hasDiscount = product.originalPrice > product.price;
     final discountPercent = hasDiscount
         ? (((product.originalPrice - product.price) / product.originalPrice) * 100).round()
@@ -566,7 +625,7 @@ class _StorefrontViewState extends State<StorefrontView> {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => ProductDetailView(product: product, shop: _shop!),
+            builder: (_) => ProductDetailView(product: product, shop: _shop!),
           ),
         );
       },
@@ -574,50 +633,51 @@ class _StorefrontViewState extends State<StorefrontView> {
         color: Colors.white,
         elevation: 0.5,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Product Image
+                // Product image
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                  child: Hero(
+                    tag: 'product_${product.id}',
                     child: CachedNetworkImage(
                       imageUrl: product.images.isNotEmpty ? product.images.first : '',
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.grey[100]),
-                      errorWidget: (context, url, error) => Container(
+                      placeholder: (_, __) => Container(color: Colors.grey[100]),
+                      errorWidget: (_, __, ___) => Container(
                         color: Colors.grey[100],
                         child: const Icon(Icons.broken_image, color: Colors.grey),
                       ),
                     ),
                   ),
                 ),
-                // Title & Pricing
+                // Title & pricing
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (product.subcategory.isNotEmpty)
                         Text(
                           product.subcategory,
-                          style: TextStyle(fontSize: 9, color: themeColor, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 9, color: primary, fontWeight: FontWeight.bold),
                         ),
                       Text(
                         product.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Text(
                             '৳${product.price.toStringAsFixed(0)}',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: themeColor, fontSize: 14),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: primary, fontSize: 14),
                           ),
                           if (hasDiscount) ...[
                             const SizedBox(width: 6),
@@ -633,7 +693,6 @@ class _StorefrontViewState extends State<StorefrontView> {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      // Add Button
                       SizedBox(
                         width: double.infinity,
                         height: 28,
@@ -642,14 +701,14 @@ class _StorefrontViewState extends State<StorefrontView> {
                             context.read<CartProvider>().addItem(product);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('${product.name} কার্টে যোগ করা হয়েছে।'),
+                                content: Text('${product.name} কার্টে যোগ করা হয়েছে'),
                                 duration: const Duration(milliseconds: 600),
-                                backgroundColor: themeColor,
+                                backgroundColor: primary,
                               ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: themeColor,
+                            backgroundColor: primary,
                             padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                           ),
@@ -664,7 +723,7 @@ class _StorefrontViewState extends State<StorefrontView> {
                 ),
               ],
             ),
-            // Discount Tag
+            // Discount badge
             if (hasDiscount && discountPercent > 0)
               Positioned(
                 top: 6,
@@ -681,122 +740,181 @@ class _StorefrontViewState extends State<StorefrontView> {
                   ),
                 ),
               ),
+            // Out of stock overlay
+            if (!product.inStock || product.stock <= 0)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.white60,
+                  child: const Center(
+                    child: Text('স্টক আউট', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  void _openCartBottomSheet(BuildContext context, Color themeColor) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return Consumer<CartProvider>(
-          builder: (context, cart, child) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              height: 450,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  // ─── CART TAB ──────────────────────────────────────────────────
+
+  Widget _buildCartTab(Color primary, CartProvider cart) {
+    if (cart.items.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            const Text('আপনার কার্ট খালি!', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('পণ্য যোগ করতে স্টোরে ব্রাউজ করুন', style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => setState(() => _currentTab = 0),
+              style: ElevatedButton.styleFrom(backgroundColor: primary, foregroundColor: Colors.white),
+              child: const Text('শপিং করুন'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: cart.items.length,
+            itemBuilder: (ctx, i) {
+              final item = cart.items[i];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
                     children: [
-                      const Text(
-                        'শপিং কার্ট (Shopping Cart)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      // Product image
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: item.product.images.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: item.product.images.first,
+                                width: 64,
+                                height: 64,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                width: 64, height: 64,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.image, color: Colors.grey),
+                              ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close),
+                      const SizedBox(width: 12),
+                      // Details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.product.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '৳${item.product.price.toStringAsFixed(0)}'
+                              '${item.selectedSize.isNotEmpty ? " | ${item.selectedSize}" : ""}'
+                              '${item.selectedColor.isNotEmpty ? " | ${item.selectedColor}" : ""}',
+                              style: TextStyle(fontSize: 12, color: primary),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '৳${item.totalPrice.toStringAsFixed(0)}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Quantity controls
+                      Column(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, size: 22),
+                            onPressed: () => cart.updateQuantity(item, item.quantity + 1),
+                            constraints: const BoxConstraints(),
+                            padding: const EdgeInsets.all(4),
+                          ),
+                          Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          IconButton(
+                            icon: Icon(
+                              item.quantity > 1 ? Icons.remove_circle_outline : Icons.delete_outline,
+                              size: 22,
+                              color: item.quantity > 1 ? null : Colors.red,
+                            ),
+                            onPressed: () => cart.updateQuantity(item, item.quantity - 1),
+                            constraints: const BoxConstraints(),
+                            padding: const EdgeInsets.all(4),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  const Divider(),
-                  Expanded(
-                    child: cart.items.isEmpty
-                        ? const Center(child: Text('আপনার কার্টটি খালি!'))
-                        : ListView.builder(
-                            itemCount: cart.items.length,
-                            itemBuilder: (c, index) {
-                              final item = cart.items[index];
-                              return ListTile(
-                                leading: item.product.images.isNotEmpty
-                                    ? Image.network(item.product.images.first, width: 40, height: 40, fit: BoxFit.cover)
-                                    : const Icon(Icons.image),
-                                title: Text(item.product.name, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                subtitle: Text(
-                                  '৳${item.product.price.toStringAsFixed(0)} ${item.selectedSize.isNotEmpty ? " | Size: " + item.selectedSize : ""}',
-                                  style: TextStyle(color: themeColor, fontSize: 12),
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      onPressed: () => cart.updateQuantity(item, item.quantity - 1),
-                                      icon: const Icon(Icons.remove_circle_outline, size: 20),
-                                    ),
-                                    Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    IconButton(
-                                      onPressed: () => cart.updateQuantity(item, item.quantity + 1),
-                                      icon: const Icon(Icons.add_circle_outline, size: 20),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  const Divider(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('সর্বমোট (Subtotal):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        Text('৳${cart.subtotalAmount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: themeColor)),
-                      ],
-                    ),
-                  ),
-                  if (cart.items.isNotEmpty)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => CheckoutView(shop: _shop!),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: themeColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text('চেকআউট করতে এগিয়ে যান', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
+                ),
+              );
+            },
+          ),
+        ),
 
-class HexColor {
-  static Color fromHex(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
+        // Total + Checkout bottom bar
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('সর্বমোট:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      '৳${cart.subtotalAmount.toStringAsFixed(0)}',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: primary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _shop != null
+                        ? () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => CheckoutView(shop: _shop!)),
+                            )
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text(
+                      'চেকআউট করুন',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

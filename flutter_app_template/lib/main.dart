@@ -9,10 +9,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'config.dart';
 import 'cart_provider.dart';
-import 'app_webview_screen.dart';
+import 'storefront_view.dart';
+import 'theme.dart';
 
 // Local Notifications Plugin setup for background messages
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 bool _firebaseInitialized = false;
 
@@ -52,7 +54,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Set system UI layout styling immediately
-  Color primaryColor = HexColor.fromHex(AppConfig.primaryColorHex);
+  Color primaryColor = appPrimaryColor;
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: primaryColor,
     statusBarIconBrightness: Brightness.light,
@@ -75,11 +77,13 @@ void main() {
     try {
       await Firebase.initializeApp();
       _firebaseInitialized = true;
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+
       // Set up Android notification channel
       await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(const AndroidNotificationChannel(
             'bdretailers_channel',
             'BDRetailers Notifications',
@@ -89,7 +93,8 @@ void main() {
       debugPrint("Firebase initialized in background.");
     } catch (e) {
       _firebaseInitialized = false;
-      debugPrint("Firebase init failed (non-critical): $e. App will work without push notifications.");
+      debugPrint(
+          "Firebase init failed (non-critical): $e. App will work without push notifications.");
     }
   });
 }
@@ -99,26 +104,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color primaryColor = HexColor.fromHex(AppConfig.primaryColorHex);
     return MaterialApp(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: primaryColor,
-        colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
-        useMaterial3: true,
-      ),
-      home: const AppWebViewScreen(),
+      theme: buildAppTheme(),
+      // ★ THE KEY CHANGE: Native StorefrontView instead of AppWebViewScreen
+      // This is what fixes the laggy/non-responsive WebView issue.
+      // The app now renders native Flutter widgets directly from Firestore,
+      // giving 60fps performance instead of loading a website in a browser.
+      home: StorefrontView(shopId: AppConfig.shopId),
     );
-  }
-}
-
-// Utility to parse Hex styling variables dynamically
-class HexColor {
-  static Color fromHex(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
   }
 }

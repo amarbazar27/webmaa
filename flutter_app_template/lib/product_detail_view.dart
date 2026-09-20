@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
 import 'models.dart';
 import 'cart_provider.dart';
+import 'theme.dart';
 
 class ProductDetailView extends StatefulWidget {
   final Product product;
@@ -27,7 +29,6 @@ class _ProductDetailViewState extends State<ProductDetailView> {
   @override
   void initState() {
     super.initState();
-    // Default select first size and color if available
     if (widget.product.sizes.isNotEmpty) {
       _selectedSize = widget.product.sizes.first;
     }
@@ -38,24 +39,32 @@ class _ProductDetailViewState extends State<ProductDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = HexColor.fromHex(widget.shop.primaryColorHex);
+    final primary = HexColor.fromHex(widget.shop.primaryColorHex);
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
         title: Text(
           widget.product.name,
-          style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        iconTheme: const IconThemeData(color: Colors.black87),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () {
+              SharePlus.instance.share(
+                ShareParams(
+                  text: '${widget.product.name}\n৳${widget.product.price.toStringAsFixed(0)}\n${widget.shop.targetUrl}',
+                ),
+              );
+            },
+          ),
+        ],
       ),
-      backgroundColor: Colors.grey[50],
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Product Images Carousel/PageViewer
+            // Product images with Hero animation
             if (widget.product.images.isNotEmpty)
               Stack(
                 alignment: Alignment.bottomCenter,
@@ -65,23 +74,27 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     child: PageView.builder(
                       itemCount: widget.product.images.length,
                       onPageChanged: (index) {
-                        setState(() {
-                          _currentImageIndex = index;
-                        });
+                        setState(() => _currentImageIndex = index);
                       },
                       itemBuilder: (context, index) {
-                        return CachedNetworkImage(
+                        final child = CachedNetworkImage(
                           imageUrl: widget.product.images[index],
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
+                          width: double.infinity,
+                          placeholder: (_, __) => Container(
                             color: Colors.grey[200],
                             child: const Center(child: CircularProgressIndicator()),
                           ),
-                          errorWidget: (context, url, error) => Container(
+                          errorWidget: (_, __, ___) => Container(
                             color: Colors.grey[200],
                             child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
                           ),
                         );
+                        // Hero only on first image (matches storefront grid)
+                        if (index == 0) {
+                          return Hero(tag: 'product_${widget.product.id}', child: child);
+                        }
+                        return child;
                       },
                     ),
                   ),
@@ -98,7 +111,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                             width: _currentImageIndex == index ? 16 : 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: _currentImageIndex == index ? themeColor : Colors.white70,
+                              color: _currentImageIndex == index ? primary : Colors.white70,
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -108,7 +121,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                 ],
               ),
 
-            // Product Details Block
+            // Product details
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
@@ -117,14 +130,14 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                 children: [
                   Text(
                     widget.product.name,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Text(
                         '৳${widget.product.price.toStringAsFixed(0)}',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: themeColor),
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primary),
                       ),
                       if (widget.product.originalPrice > widget.product.price) ...[
                         const SizedBox(width: 10),
@@ -136,7 +149,41 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '-${(((widget.product.originalPrice - widget.product.price) / widget.product.originalPrice) * 100).round()}%',
+                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
                       ],
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // Stock indicator
+                  Row(
+                    children: [
+                      Icon(
+                        widget.product.stock > 5 ? Icons.check_circle : Icons.warning_amber,
+                        size: 14,
+                        color: widget.product.stock > 5 ? Colors.green : Colors.orange,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.product.stock > 5
+                            ? 'স্টকে আছে'
+                            : 'মাত্র ${widget.product.stock.toInt()} টি বাকি!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: widget.product.stock > 5 ? Colors.green : Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -144,14 +191,14 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             ),
             const SizedBox(height: 10),
 
-            // Options Block (Size, Color, Qty)
+            // Options (Size, Color, Quantity)
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Size Selector
+                  // Size selector
                   if (widget.product.sizes.isNotEmpty) ...[
                     const Text('Size / সাইজ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 8),
@@ -162,13 +209,9 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                         return ChoiceChip(
                           label: Text(size, style: TextStyle(color: isSelected ? Colors.white : Colors.black87)),
                           selected: isSelected,
-                          selectedColor: themeColor,
+                          selectedColor: primary,
                           onSelected: (selected) {
-                            if (selected) {
-                              setState(() {
-                                _selectedSize = size;
-                              });
-                            }
+                            if (selected) setState(() => _selectedSize = size);
                           },
                         );
                       }).toList(),
@@ -176,7 +219,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Color Selector
+                  // Color selector
                   if (widget.product.colors.isNotEmpty) ...[
                     const Text('Color / কালার', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 8),
@@ -187,13 +230,9 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                         return ChoiceChip(
                           label: Text(color, style: TextStyle(color: isSelected ? Colors.white : Colors.black87)),
                           selected: isSelected,
-                          selectedColor: themeColor,
+                          selectedColor: primary,
                           onSelected: (selected) {
-                            if (selected) {
-                              setState(() {
-                                _selectedColor = color;
-                              });
-                            }
+                            if (selected) setState(() => _selectedColor = color);
                           },
                         );
                       }).toList(),
@@ -201,7 +240,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     const SizedBox(height: 16),
                   ],
 
-                  // Quantity Selector
+                  // Quantity selector
                   const Text('Quantity / পরিমাণ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 8),
                   Row(
@@ -232,7 +271,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             ),
             const SizedBox(height: 10),
 
-            // Description Block
+            // Description
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(16),
@@ -241,73 +280,67 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Product Description / বিবরণ',
+                    'বিবরণ',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     widget.product.description.isNotEmpty
                         ? widget.product.description
-                        : 'No description provided.',
+                        : 'কোনো বিবরণ দেওয়া হয়নি।',
                     style: const TextStyle(color: Colors.black54, height: 1.5),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 80), // Padding for bottom bar
+            const SizedBox(height: 80),
           ],
         ),
       ),
+      // Sticky bottom bar
       bottomSheet: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, -2)),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  // Add to Cart
-                  context.read<CartProvider>().addItem(
-                        widget.product,
-                        size: _selectedSize,
-                        color: _selectedColor,
-                        quantity: _quantity,
-                      );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${widget.product.name} কার্টে যোগ করা হয়েছে।'),
-                      duration: const Duration(seconds: 1),
-                      backgroundColor: themeColor,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: themeColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: SafeArea(
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    context.read<CartProvider>().addItem(
+                          widget.product,
+                          size: _selectedSize,
+                          color: _selectedColor,
+                          quantity: _quantity,
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${widget.product.name} কার্টে যোগ করা হয়েছে'),
+                        duration: const Duration(seconds: 1),
+                        backgroundColor: primary,
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text(
+                    'কার্টে যোগ করুন — ৳${(widget.product.price * _quantity).toStringAsFixed(0)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
                 ),
-                child: const Text('কার্টে যোগ করুন (Add to Cart)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
-  }
-}
-
-// Hex Helper inside file as fallback
-class HexColor {
-  static Color fromHex(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
   }
 }

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Shop {
   final String id;
   final String name;
@@ -117,6 +119,7 @@ class Product {
   final String subcategory;
   final bool inStock;
   final double stock;
+  final double weight;
 
   Product({
     required this.id,
@@ -131,6 +134,7 @@ class Product {
     this.subcategory = '',
     required this.inStock,
     this.stock = 1,
+    this.weight = 0,
   });
 
   factory Product.fromFirestore(String docId, Map<String, dynamic> data) {
@@ -174,6 +178,7 @@ class Product {
       subcategory: data['subcategory'] ?? data['subCategory'] ?? '',
       inStock: inStockBool,
       stock: stockNum,
+      weight: double.tryParse(data['weight']?.toString() ?? '0') ?? 0,
     );
   }
 }
@@ -192,4 +197,100 @@ class CartItem {
   });
 
   double get totalPrice => product.price * quantity;
+}
+
+/// Order model for tracking customer orders.
+class Order {
+  final String id;
+  final String orderIdVisual;
+  final String status;
+  final List<Map<String, dynamic>> items;
+  final double subtotal;
+  final double deliveryFee;
+  final double total;
+  final String customerName;
+  final String customerPhone;
+  final String customerAddress;
+  final String city;
+  final String paymentMethod;
+  final String paymentStatus;
+  final String? trackingCode;
+  final String? deliveryETA;
+  final DateTime? createdAt;
+
+  Order({
+    required this.id,
+    required this.orderIdVisual,
+    required this.status,
+    required this.items,
+    required this.subtotal,
+    required this.deliveryFee,
+    required this.total,
+    required this.customerName,
+    required this.customerPhone,
+    required this.customerAddress,
+    this.city = '',
+    required this.paymentMethod,
+    this.paymentStatus = 'pending',
+    this.trackingCode,
+    this.deliveryETA,
+    this.createdAt,
+  });
+
+  factory Order.fromFirestore(String docId, Map<String, dynamic> data) {
+    DateTime? created;
+    if (data['createdAt'] is Timestamp) {
+      created = (data['createdAt'] as Timestamp).toDate();
+    }
+
+    return Order(
+      id: docId,
+      orderIdVisual: data['orderIdVisual'] ?? docId.substring(0, 6).toUpperCase(),
+      status: data['status'] ?? 'pending',
+      items: List<Map<String, dynamic>>.from(data['items'] ?? []),
+      subtotal: (data['subtotal'] as num?)?.toDouble() ?? 0,
+      deliveryFee: (data['deliveryFee'] as num?)?.toDouble() ?? 0,
+      total: (data['total'] as num?)?.toDouble() ?? 0,
+      customerName: data['customerName'] ?? '',
+      customerPhone: data['customerPhone'] ?? '',
+      customerAddress: data['customerAddress'] ?? '',
+      city: data['city'] ?? '',
+      paymentMethod: data['paymentMethod'] ?? 'cod',
+      paymentStatus: data['paymentStatus'] ?? 'pending',
+      trackingCode: data['trackingCode'],
+      deliveryETA: data['deliveryETA'],
+      createdAt: created,
+    );
+  }
+
+  /// Human-readable Bengali status label.
+  String get statusLabel {
+    switch (status) {
+      case 'pending':
+        return 'অপেক্ষমাণ';
+      case 'confirmed':
+        return 'নিশ্চিত করা হয়েছে';
+      case 'processing':
+        return 'প্রস্তুত হচ্ছে';
+      case 'shipped':
+        return 'ডেলিভারিতে পাঠানো হয়েছে';
+      case 'delivered':
+        return 'ডেলিভারি সম্পন্ন';
+      case 'completed':
+        return 'সম্পন্ন';
+      case 'cancelled':
+        return 'বাতিল করা হয়েছে';
+      case 'returned':
+        return 'রিটার্ন করা হয়েছে';
+      default:
+        return status;
+    }
+  }
+
+  /// Status icon for timeline display.
+  int get statusStep {
+    const steps = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+    final idx = steps.indexOf(status);
+    return idx >= 0 ? idx : 0;
+  }
 }
