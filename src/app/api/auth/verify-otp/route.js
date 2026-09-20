@@ -1,8 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 const MAX_OTP_ATTEMPTS = 5; // Lock out after 5 failed attempts
 
 export async function POST(req) {
@@ -40,7 +38,7 @@ export async function POST(req) {
     // Check match
     if (data.otp !== cleanOtp) {
       // Increment attempt counter
-      await otpDocRef.update({ attempts: admin.firestore.FieldValue.increment(1) });
+      await otpDocRef.update({ attempts: FieldValue.increment(1) });
       const remaining = MAX_OTP_ATTEMPTS - attempts - 1;
       return NextResponse.json({ 
         error: `ভুল ওটিপি কোড। আরও ${remaining} বার চেষ্টা করা যাবে।` 

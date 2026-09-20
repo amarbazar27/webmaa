@@ -1,9 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 // Get GitHub owner and repo from env vars only (no git shell commands — not available in Vercel)
 function getGitRepoDetails() {
   return {
@@ -26,7 +24,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'অনুমতি নেই। লগইন করুন।' }, { status: 401 });
     }
 
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    const decodedToken = await adminAuth.verifyIdToken(token);
     const callerUid = decodedToken.uid;
 
     let userRole = decodedToken.role || 'user';
@@ -75,7 +73,7 @@ export async function POST(request) {
     await adminDb.collection('shops').doc(shopId).set({
       appBuildStatus: 'building',
       appBuildError: null,
-      appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      appBuildUpdatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
 
     if (shopSlug === 'main') {
@@ -83,7 +81,7 @@ export async function POST(request) {
         await adminDb.collection('config').doc('global').set({
           appBuildStatus: 'building',
           appBuildError: null,
-          appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          appBuildUpdatedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
       } catch (e) {}
     }
@@ -151,7 +149,7 @@ export async function POST(request) {
         await adminDb.collection('shops').doc(shopId).update({
           appBuildStatus: 'failed',
           appBuildError: `GitHub Action trigger failed: ${response.statusText} (${errText})`,
-          appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          appBuildUpdatedAt: FieldValue.serverTimestamp(),
         });
 
         return NextResponse.json({ 

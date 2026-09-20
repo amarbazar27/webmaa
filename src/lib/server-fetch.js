@@ -1,4 +1,5 @@
 import { adminDb } from './firebase-admin';
+import { adminDb } from '@/lib/firebase-admin';
 
 const FIRESTORE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const FIRESTORE_REST_BASE = `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;

@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib/ruflo';
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 
 export async function POST(req) {
   try {
@@ -121,9 +120,9 @@ export async function POST(req) {
       };
 
       await adminDb.collection('shops').doc(shopId).update({
-        sharedRevenuePaid: admin.firestore.FieldValue.increment(paidAmt),
-        sharedRevenuePendingTxn: admin.firestore.FieldValue.delete(),
-        sharedRevenueHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+        sharedRevenuePaid: FieldValue.increment(paidAmt),
+        sharedRevenuePendingTxn: FieldValue.delete(),
+        sharedRevenueHistory: FieldValue.arrayUnion(historyItem)
       });
 
       console.log(`[UddoktaPay Webhook] Commission due paid ৳${paidAmt} for shop ${shopId}`);
@@ -171,9 +170,9 @@ export async function POST(req) {
         subscriptionStatus: 'active',
         subscriptionPackage: packageType,
         subscriptionExpiresAt: new Date(newExpiry),
-        subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-        subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
-        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+        subscriptionPendingTxn: FieldValue.delete(),
+        subscriptionPendingPackage: FieldValue.delete(),
+        subscriptionHistory: FieldValue.arrayUnion(historyItem)
       });
 
       // 🔔 Notify Superadmin of paid subscription
@@ -220,7 +219,7 @@ export async function POST(req) {
         paymentStatus: 'paid',
         status: 'confirmed',
         transactionId: verifyData.transaction_id || invoiceId,
-        confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+        confirmedAt: FieldValue.serverTimestamp(),
         paymentCommission: commissionAmount,
         paymentNetEarning: netEarning,
         paymentCommissionPercent: commissionPercent,
@@ -230,8 +229,8 @@ export async function POST(req) {
       // Update shop stats: increment orderCount and totalRevenue
       try {
         await adminDb.collection('shops').doc(shopId).update({
-          orderCount: admin.firestore.FieldValue.increment(1),
-          totalRevenue: admin.firestore.FieldValue.increment(orderTotal)
+          orderCount: FieldValue.increment(1),
+          totalRevenue: FieldValue.increment(orderTotal)
         });
       } catch (err) {
         console.error("Failed to update shop stats from webhook:", err);

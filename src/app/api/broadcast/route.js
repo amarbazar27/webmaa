@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import nodemailer from 'nodemailer';
+import { FieldValue, adminAuth, adminDb, adminMessaging } from '@/lib/firebase-admin';
 
 // HIGH-2 Fix: HTML-encode user input before email template injection
 function escapeHtml(str) {
@@ -53,7 +52,7 @@ export async function POST(request) {
     let decoded;
     try {
       const idToken = authHeader.split('Bearer ')[1];
-      decoded = await admin.auth().verifyIdToken(idToken);
+      decoded = await adminAuth.verifyIdToken(idToken);
     } catch (authErr) {
       return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
     }
@@ -158,7 +157,7 @@ export async function POST(request) {
         sentByName: activeSenderName,
         senderRole: 'retailer',
         broadcastId: broadcastId || null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
 
       return NextResponse.json({ success: true, sent, failed, total: emails.length });
@@ -181,7 +180,7 @@ export async function POST(request) {
       shopId: shopId || null,
       senderName: senderName || 'System',
       active: true,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     };
     await adminDb.collection('broadcasts').add(broadcastDoc);
 
@@ -224,7 +223,7 @@ export async function POST(request) {
             tokens,
           };
 
-          const response = await admin.messaging().sendEachForMulticast(payload);
+          const response = await adminMessaging.sendEachForMulticast(payload);
           
           if (response.failureCount > 0) {
             const failedTokens = [];
@@ -263,7 +262,7 @@ export async function POST(request) {
           const batchSize = 500;
           for (let i = 0; i < allTokens.length; i += batchSize) {
             const batch = allTokens.slice(i, i + batchSize);
-            await admin.messaging().sendEachForMulticast({
+            await adminMessaging.sendEachForMulticast({
               notification: { title: 'Daripallah', body: notifMessage.trim(), icon: '/logo.png' },
               webpush: {
                 notification: {
@@ -302,7 +301,7 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
     try {
-      await admin.auth().verifyIdToken(token);
+      await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -358,7 +357,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'লগইন করুন' }, { status: 401 });
     }
 
-    const decodedToken = await admin.auth().verifyIdToken(token);
+    const decodedToken = await adminAuth.verifyIdToken(token);
     const callerUid = decodedToken.uid;
 
     // Fetch broadcast first to check owner

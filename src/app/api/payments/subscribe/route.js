@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import { verifyAuth } from '@/lib/verifyAuth';
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 
 
 export async function POST(req) {
@@ -68,9 +67,9 @@ export async function POST(req) {
         subscriptionStatus: 'active',
         subscriptionPackage: 'starter',
         subscriptionExpiresAt: null,
-        subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-        subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
-        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+        subscriptionPendingTxn: FieldValue.delete(),
+        subscriptionPendingPackage: FieldValue.delete(),
+        subscriptionHistory: FieldValue.arrayUnion(historyItem)
       });
 
       // 🔔 Notify Superadmin of Starter plan activation
@@ -142,7 +141,7 @@ export async function POST(req) {
 
         await adminDb.collection('shops').doc(shopId).update({
           sharedRevenuePendingTxn: `Method: manual, Sender: ${cleanedNumber}, Txn: ${transactionId.trim()}, Amount: ৳${dueAmount}`,
-          sharedRevenueHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+          sharedRevenueHistory: FieldValue.arrayUnion(historyItem)
         });
 
         return NextResponse.json({ 
@@ -270,9 +269,9 @@ export async function POST(req) {
         subscriptionStatus: 'active',
         subscriptionPackage: packageType,
         subscriptionExpiresAt: new Date(newExpiry),
-        subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-        subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
-        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+        subscriptionPendingTxn: FieldValue.delete(),
+        subscriptionPendingPackage: FieldValue.delete(),
+        subscriptionHistory: FieldValue.arrayUnion(historyItem)
       });
       
       return NextResponse.json({ success: true, isFree: true, message: 'Subscription activated for free using coupon code! 🎉' });
@@ -307,7 +306,7 @@ export async function POST(req) {
         subscriptionStatus: 'pending',
         subscriptionPendingPackage: packageType,
         subscriptionPendingTxn: `Method: manual, Sender: ${cleanedNumber}, Txn: ${transactionId.trim()}`,
-        subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+        subscriptionHistory: FieldValue.arrayUnion(historyItem)
       });
 
       // 🔔 Notify Superadmin of manual payment submission

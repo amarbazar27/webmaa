@@ -1,5 +1,4 @@
-import { adminDb } from '../../firebase-admin';
-
+import { adminDb } from '@/lib/firebase-admin';
 const DISPOSABLE_EMAIL_REGEX = /@(yopmail\.com|mailinator\.com|tempmail\.com|dispostable\.com|guerrillamail.*|sharklasers\.com|10minutemail.*|trashmail.*|getairmail\.com|burnermail\.io|temp-mail\.org|generator\.email|tempmailaddress\.com)/i;
 const GIBBERISH_NAME_REGEX = /^(asdf|qwer|zxcv|1234|abcd|test|none|null|spam|fake|qwerty)/i;
 const ADDRESS_KEYWORDS = [

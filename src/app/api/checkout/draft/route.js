@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import admin from 'firebase-admin';
 import { z } from 'zod';
 import { createRateLimiter } from '@/lib/rate-limit';
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 
 // Rate limiter: 120 requests per 10 minutes per IP/session to support active typing & prevent CGNAT blocking
 const draftLimiter = createRateLimiter({ maxRequests: 120, windowMs: 600000, prefix: 'checkout_draft' });
@@ -256,12 +255,12 @@ export async function POST(req) {
       status: existingData?.status || 'abandoned',
       clientIp: ip.split(',')[0].trim(),
       visitCount: (existingData?.visitCount || 0) + 1,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     };
 
     // Only set createdAt if newly created, so original visit timestamp is never wiped out
     if (!docSnap.exists || !existingData?.createdAt) {
-      draftData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      draftData.createdAt = FieldValue.serverTimestamp();
     }
 
     await draftRef.set(draftData, { merge: true });

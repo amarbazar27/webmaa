@@ -1,9 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 /**
  * Superadmin endpoint: 1-Click Copy all store media from main site Cloudinary to retailer's dedicated Cloudinary account.
  * Replaces main site URLs in Firestore with retailer's Cloudinary URLs, while keeping original files intact on main site.
@@ -19,7 +17,7 @@ export async function POST(request) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(token);
+      decoded = await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }

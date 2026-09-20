@@ -1,8 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 // ═══════════════════════════════════════════════════════════════
 // 🔐 AUTH API — Token verification & user profile
 // GET  (with Authorization header) → Verify token, return user data
@@ -18,7 +16,7 @@ export async function GET(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ authenticated: false, error: 'Invalid token' }, { status: 401 });
     }
@@ -50,7 +48,7 @@ export async function POST(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }

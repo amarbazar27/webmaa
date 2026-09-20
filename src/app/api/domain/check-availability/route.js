@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
 
 const RESERVED_SLUGS = new Set([
   'store', 'main', 'admin', 'superadmin', 'dashboard', 'api', 'templates',
@@ -94,8 +95,7 @@ export async function GET(request) {
 
     // Fallback: Admin SDK check if available
     try {
-      const { adminDb } = await import('@/lib/firebase-admin');
-      if (adminDb) {
+            if (adminDb) {
         const adminSnap = await adminDb.collection('shops').where('shopSlug', '==', slug).limit(1).get();
         if (!adminSnap.empty) {
           return NextResponse.json({

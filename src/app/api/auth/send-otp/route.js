@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import { sendOTPEmail } from '@/lib/ruflo';
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 
 // CRIT-7 Fix: Rate limit OTP requests (Firestore-based, works on serverless)
 const OTP_RATE_LIMIT = 5;       // max requests per window
@@ -30,7 +29,7 @@ async function isOtpRateLimited(email) {
       return true; // Rate limited
     }
 
-    await rateLimitRef.update({ count: admin.firestore.FieldValue.increment(1) });
+    await rateLimitRef.update({ count: FieldValue.increment(1) });
     return false;
   } catch (err) {
     console.warn('[OTP Rate Limit] Check failed:', err.message);
@@ -64,7 +63,7 @@ export async function POST(req) {
       otp,
       expiresAt,
       attempts: 0, // Track verification attempts for brute-force protection
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     });
 
     // Send OTP email - AWAITED (not fire-and-forget) so we can detect failures

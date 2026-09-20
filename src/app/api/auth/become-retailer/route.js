@@ -1,8 +1,7 @@
+import { Timestamp } from 'firebase-admin/firestore';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 export async function POST(req) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -78,7 +77,7 @@ export async function POST(req) {
     // ── Limit: Maximum 10 registrations per day globally ──
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
-    const dayStart = admin.firestore.Timestamp.fromDate(todayDate);
+    const dayStart = Timestamp.fromDate(todayDate);
     
     const dailyRegistrationsCount = await adminDb.collection('retailer_requests')
       .where('requestedAt', '>=', dayStart)
@@ -139,7 +138,7 @@ export async function POST(req) {
           subdomainSlug: shopSlug,
           isActive: true,
           showOnMainSite: false,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
           staffEmails: [],
           aiConfig: {
             enableAiShoppingList: false,
@@ -161,7 +160,7 @@ export async function POST(req) {
       photoURL: decodedToken.picture || '',
       phone: phone.trim(),
       status,
-      requestedAt: admin.firestore.FieldValue.serverTimestamp()
+      requestedAt: FieldValue.serverTimestamp()
     }, { merge: true });
 
     // 🔔 Send Superadmin Alert Email asynchronously

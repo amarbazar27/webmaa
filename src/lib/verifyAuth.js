@@ -1,3 +1,4 @@
+import { adminAuth } from '@/lib/firebase-admin';
 /**
  * 🔐 verifyAuth.js — Firebase Token Verification Middleware
  * 
@@ -9,9 +10,6 @@
  * CRIT-3 Fix: Uses Firebase Admin SDK verifyIdToken() for full
  * cryptographic verification instead of the insecure REST API.
  */
-
-import admin from 'firebase-admin';
-import '@/lib/firebase-admin'; // ensure initialized
 
 /**
  * Verify Firebase ID token from request headers
@@ -29,7 +27,7 @@ export async function verifyAuth(request) {
 
   try {
     // 🔒 Firebase Admin SDK — full cryptographic token verification
-    const decoded = await admin.auth().verifyIdToken(token);
+    const decoded = await adminAuth.verifyIdToken(token);
 
     return {
       uid: decoded.uid,

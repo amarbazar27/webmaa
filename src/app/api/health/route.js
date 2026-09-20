@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     // Check if Firebase Admin is initialized
-    const admin = (await import('firebase-admin')).default;
+    
     const isFirebaseReady = admin.apps.length > 0;
 
     if (!isFirebaseReady) {

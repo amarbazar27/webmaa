@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import { verifyAuth } from '@/lib/verifyAuth';
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 
 
 export async function POST(req) {
@@ -89,9 +88,9 @@ export async function POST(req) {
       subscriptionPackage: packageType,
       subscriptionExpiresAt: new Date(newExpiry),
       trialClaimed: true,
-      subscriptionPendingTxn: admin.firestore.FieldValue.delete(),
-      subscriptionPendingPackage: admin.firestore.FieldValue.delete(),
-      subscriptionHistory: admin.firestore.FieldValue.arrayUnion(historyItem)
+      subscriptionPendingTxn: FieldValue.delete(),
+      subscriptionPendingPackage: FieldValue.delete(),
+      subscriptionHistory: FieldValue.arrayUnion(historyItem)
     });
 
     console.log(`[Trial API] Shop ${shopId} claimed free trial for ${packageType} (${trialDays} days)`);

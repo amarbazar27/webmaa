@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import admin from 'firebase-admin';
-
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 export async function POST(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -91,7 +89,7 @@ export async function POST(req) {
     // Map Steadfast status to e-commerce statuses
     const updates = {
       courierStatus: status,
-      courierUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+      courierUpdatedAt: FieldValue.serverTimestamp()
     };
 
     if (delivery_charge) {
@@ -108,10 +106,10 @@ export async function POST(req) {
     if (status === 'delivered' || status === 'partial_delivered') {
       newSystemStatus = 'completed';
       updates.paymentStatus = 'paid';
-      updates.deliveredAt = admin.firestore.FieldValue.serverTimestamp();
+      updates.deliveredAt = FieldValue.serverTimestamp();
     } else if (status === 'cancelled') {
       newSystemStatus = 'cancelled';
-      updates.rejectedAt = admin.firestore.FieldValue.serverTimestamp();
+      updates.rejectedAt = FieldValue.serverTimestamp();
       
       // Stock Auto Release Logic
       // If we mark the order cancelled, we can increment product stocks back
@@ -123,7 +121,7 @@ export async function POST(req) {
             const pData = pSnap.data();
             if (pData.stock !== undefined && pData.stock !== null) {
               await productsRef.doc(item.id).update({
-                stock: admin.firestore.FieldValue.increment(item.quantity)
+                stock: FieldValue.increment(item.quantity)
               });
             }
           }
@@ -142,7 +140,7 @@ export async function POST(req) {
       status: status,
       trackingMessage: tracking_message || '',
       rawPayload: body,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     });
 
     // Loyalty Point Logic if transitioned to completed
@@ -155,7 +153,7 @@ export async function POST(req) {
           const todayStr = new Date().toISOString().split('T')[0];
           if (userData.lastLoyaltyDate !== todayStr) {
             await userRef.update({
-              loyaltyPoints: admin.firestore.FieldValue.increment(1),
+              loyaltyPoints: FieldValue.increment(1),
               lastLoyaltyDate: todayStr
             });
           }

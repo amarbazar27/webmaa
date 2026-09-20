@@ -1,8 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 // ═══════════════════════════════════════════════════════════════
 // 🎨 DESIGN API — 10 Theme Presets + Real-time Updates
 // GET  ?shopId=xxx          → Get current theme
@@ -111,7 +109,7 @@ export async function POST(req) {
     if (!authHeader?.startsWith('Bearer ')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     let decoded;
-    try { decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]); }
+    try { decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]); }
     catch { return NextResponse.json({ error: 'Invalid token' }, { status: 401 }); }
 
     const body = await req.json();
@@ -129,7 +127,7 @@ export async function POST(req) {
       }
     }
 
-    const updateData = { designPreset: preset, updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+    const updateData = { designPreset: preset, updatedAt: FieldValue.serverTimestamp() };
     if (overrides && typeof overrides === 'object') {
       updateData.designOverrides = overrides;
     }

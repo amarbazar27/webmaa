@@ -1,8 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { sendOTPEmail } from '@/lib/ruflo';
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 
 const MAX_OTP_ATTEMPTS = 5;
 
@@ -98,7 +97,7 @@ export async function POST(req) {
       }
 
       if (data.otp !== code.trim()) {
-        await otpDocRef.update({ attempts: admin.firestore.FieldValue.increment(1) });
+        await otpDocRef.update({ attempts: FieldValue.increment(1) });
         const remaining = MAX_OTP_ATTEMPTS - attempts - 1;
         return NextResponse.json({ 
           error: `ভুল ভেরিফিকেশন কোড। আরও ${remaining} বার চেষ্টা করা যাবে।` 

@@ -1,9 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -47,7 +45,7 @@ export async function GET(req) {
       const data = { id: docSnap.id, ...docSnap.data() };
       
       // Increment view counter safely in background
-      docSnap.ref.update({ views: admin.firestore.FieldValue.increment(1) }).catch(() => {});
+      docSnap.ref.update({ views: FieldValue.increment(1) }).catch(() => {});
       
       return NextResponse.json({ landingPage: data });
     }
@@ -112,8 +110,8 @@ export async function POST(req) {
       views: 0,
       ordersCount: 0,
       shopId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     const docRef = await adminDb.collection('shops').doc(shopId).collection('landingPages').add(payload);
@@ -145,7 +143,7 @@ export async function PUT(req) {
     if (updates.slug) {
       updates.slug = updates.slug.toLowerCase().trim().replace(/[^a-z0-9-]+/g, '-');
     }
-    updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    updates.updatedAt = FieldValue.serverTimestamp();
 
     await adminDb.collection('shops').doc(shopId).collection('landingPages').doc(id).update(updates);
 

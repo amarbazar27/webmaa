@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb as db, adminAuth } from '@/lib/firebase-admin';
-
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 // Default homepage config template
 const DEFAULT_SECTIONS = [
   { id: 'basic_storefront', type: 'basic_storefront', enabled: true, order: 0, isPinned: true, data: { showDesc: true, showSearch: true, showCategories: true, showProducts: true } },

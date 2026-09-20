@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 import { createRateLimiter } from '@/lib/rate-limit';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 // Phase 5: Distributed rate limiter (Upstash Redis with in-memory fallback)
 const visionLimiter = createRateLimiter({ maxRequests: 15, windowMs: 60000, prefix: 'ai_vision' });
@@ -88,8 +87,8 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
     try {
-      const admin = (await import('firebase-admin')).default;
-      await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      
+      await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }

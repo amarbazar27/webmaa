@@ -1,9 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 // ═══════════════════════════════════════════════════════════════
 // 📝 REVIEW API — Verified Buyer Reviews
 //
@@ -72,7 +70,7 @@ export async function POST(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -157,7 +155,7 @@ export async function POST(req) {
       orderCount,
       trackingId: latestOrderId || '',
       pinned: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return NextResponse.json({ success: true, reviewId: reviewRef.id });
@@ -177,7 +175,7 @@ export async function PATCH(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -236,7 +234,7 @@ export async function PATCH(req) {
       await reviewRef.update({
         rating: Math.round(rating),
         text: (text || '').trim().slice(0, 500),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       });
       return NextResponse.json({ success: true, edited: true });
     }

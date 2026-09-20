@@ -1,3 +1,4 @@
+import { adminDb } from '@/lib/firebase-admin';
 /**
  * 🔔 RUFLO — Daripallah & BDRetailers Automation Engine
  * Non-blocking, async email system using Nodemailer + Gmail SMTP / Custom SMTP
@@ -78,8 +79,7 @@ async function sendWithRetry(mailOptions, maxRetries = 3) {
 // ── Helper to resolve superadmin notification email ────
 export async function getSuperadminNotificationEmail() {
   try {
-    const { adminDb } = await import('./firebase-admin');
-    if (adminDb) {
+        if (adminDb) {
       const configDoc = await adminDb.collection('config').doc('global').get();
       if (configDoc.exists) {
         const c = configDoc.data();
@@ -106,8 +106,7 @@ export async function getSuperadminNotificationEmail() {
 async function getRealtimeShopName(shopId, defaultShopName) {
   if (!shopId) return defaultShopName || 'Shop';
   try {
-    const { adminDb } = await import('./firebase-admin');
-    if (adminDb) {
+        if (adminDb) {
       const shopSnap = await adminDb.collection('shops').doc(shopId).get();
       if (shopSnap.exists) {
         return shopSnap.data().shopName || defaultShopName || 'Shop';

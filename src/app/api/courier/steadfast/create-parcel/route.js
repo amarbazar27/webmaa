@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
 import { createSteadfastParcel } from '@/lib/steadfast';
-import admin from 'firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 /**
  * 🔐 Robust auth check using Firebase Admin SDK directly.
  * Supports: direct retailer, superadmin (by role or email), staff, admin.
@@ -22,7 +20,7 @@ async function isAuthorizedShopAdmin(req, shopId) {
     // Step 2: Verify token using Firebase Admin SDK (more reliable than REST)
     let decodedToken;
     try {
-      decodedToken = await admin.auth().verifyIdToken(token);
+      decodedToken = await adminAuth.verifyIdToken(token);
     } catch (tokenErr) {
       console.error('[STEADFAST AUTH] Admin SDK token verification failed:', tokenErr.message);
       // If token is expired or malformed, deny
@@ -205,7 +203,7 @@ export async function POST(req) {
       courierStatus: consignment.status || 'pending',
       courierCharge: consignment.delivery_charge || 0,
       courierCOD: consignment.cod_amount || 0,
-      courierUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+      courierUpdatedAt: FieldValue.serverTimestamp()
     };
 
     await orderRef.update(updateData);
@@ -217,7 +215,7 @@ export async function POST(req) {
       trackingCode: consignment.tracking_code || '',
       status: consignment.status || 'pending',
       rawResponse: sfResponse,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     });
 
     return NextResponse.json({

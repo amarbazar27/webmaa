@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import nodemailer from 'nodemailer';
 
 export const dynamic = 'force-dynamic';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 function createTransporter() {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -46,7 +45,7 @@ export async function POST(request) {
     }
 
     const idToken = authHeader.split('Bearer ')[1];
-    const decoded = await admin.auth().verifyIdToken(idToken);
+    const decoded = await adminAuth.verifyIdToken(idToken);
 
     // Verify user is superadmin
     const userDoc = await adminDb.collection('users').doc(decoded.uid).get();

@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import admin from 'firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 export async function POST(req) {
   try {
     const authHeader = req.headers.get('authorization') || '';
@@ -93,8 +91,8 @@ export async function POST(req) {
       status: 'pending',
       isRecoveredLead: true,
       recoveredLeadId: draftId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
     };
 
     await newOrderRef.set(orderData);
@@ -104,13 +102,13 @@ export async function POST(req) {
       status: 'recovered',
       orderId: newOrderRef.id,
       orderIdVisual,
-      recoveredAt: admin.firestore.FieldValue.serverTimestamp()
+      recoveredAt: FieldValue.serverTimestamp()
     });
 
     // Update shop stats
     await adminDb.collection('shops').doc(shopId).update({
-      orderCount: admin.firestore.FieldValue.increment(1),
-      totalRevenue: admin.firestore.FieldValue.increment(total)
+      orderCount: FieldValue.increment(1),
+      totalRevenue: FieldValue.increment(total)
     }).catch(err => console.warn('[Recover Draft] Shop stats increment failed:', err));
 
     return NextResponse.json({

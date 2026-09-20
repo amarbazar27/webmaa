@@ -1,11 +1,14 @@
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
+import { getMessaging } from 'firebase-admin/messaging';
 
 const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-if (!admin.apps.length && projectId) {
+if (!getApps().length && projectId) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
+    initializeApp({
+      credential: cert({
         projectId: projectId,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         // Handle escaped newlines in the exact format Vercel injects
@@ -20,5 +23,9 @@ if (!admin.apps.length && projectId) {
 }
 
 // Export singletons — init must run before these lines
-export const adminDb = admin.apps.length ? admin.firestore() : null;
-export const adminAuth = admin.apps.length ? admin.auth() : null;
+export const adminDb = getApps().length ? getFirestore() : null;
+export const adminAuth = getApps().length ? getAuth() : null;
+export const adminMessaging = getApps().length ? getMessaging() : null;
+
+// Re-export FieldValue for routes that need serverTimestamp, increment, etc.
+export { FieldValue };

@@ -2,6 +2,7 @@ import {
   collection, getDocs, query, where
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { adminDb } from '@/lib/firebase-admin';
 
 /**
  * getShopByDomain — Resolve a hostname to a shop document
@@ -47,8 +48,7 @@ export const getShopByDomain = async (rawDomain) => {
 
     // 5. If client SDK returns nothing, try Admin SDK as final fallback
     try {
-      const { adminDb } = await import('./firebase-admin');
-      if (adminDb) {
+            if (adminDb) {
         for (const variant of variants) {
           const adminSnap = await adminDb.collection('shops')
             .where('domains', 'array-contains', variant)

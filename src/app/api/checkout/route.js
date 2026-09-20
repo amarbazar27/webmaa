@@ -2,14 +2,13 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib/ruflo';
 import { sendTelegramAlert } from '@/lib/telegram';
 import { runEnterpriseFraudScan, standardizePhone, calculateRiskScore } from '@/lib/fraud/detector';
 import { trackMetaServerEvent } from '@/lib/serverTracking';
 import { createRateLimiter } from '@/lib/rate-limit';
 import { calculateDeliveryFee } from '@/lib/deliveryFee';
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 
 // ── Strict Payload Validation ───────────────────────────
 const CheckoutSchema = z.object({
@@ -133,7 +132,7 @@ export async function POST(req) {
       }
       const idToken = authHeader.split('Bearer ')[1];
       try {
-        decodedToken = await admin.auth().verifyIdToken(idToken);
+        decodedToken = await adminAuth.verifyIdToken(idToken);
       } catch (err) {
         return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
       }
@@ -147,7 +146,7 @@ export async function POST(req) {
       if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
           const idToken = authHeader.split('Bearer ')[1];
-          decodedToken = await admin.auth().verifyIdToken(idToken);
+          decodedToken = await adminAuth.verifyIdToken(idToken);
         } catch (err) {
           // ignore error for guests
         }
@@ -506,7 +505,7 @@ export async function POST(req) {
       landingPageId: landingPageId || null,
       landingPageTitle: landingPageTitle || null,
       landingPageSlug: landingPageSlug || null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     // ── Increment Landing Page Order Count ───────────────
@@ -518,7 +517,7 @@ export async function POST(req) {
           .collection('landingPages')
           .doc(landingPageId)
           .update({
-            ordersCount: admin.firestore.FieldValue.increment(1)
+            ordersCount: FieldValue.increment(1)
           });
       } catch (lpErr) {
         console.warn('Could not update landing page counter:', lpErr.message);
@@ -553,7 +552,7 @@ export async function POST(req) {
             totalOrders,
             addresses: Array.from(uniqueAddresses),
             stores: Array.from(uniqueStores),
-            lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+            lastUpdated: FieldValue.serverTimestamp()
           };
           
           const riskResult = calculateRiskScore(updatedProfile, updatedProfile.externalStats || {});
@@ -607,7 +606,7 @@ export async function POST(req) {
           status: 'recovered',
           orderId: newOrderRef.id,
           orderIdVisual: orderIdVisual || '',
-          recoveredAt: admin.firestore.FieldValue.serverTimestamp()
+          recoveredAt: FieldValue.serverTimestamp()
         })
         .catch(err => console.warn('[Incomplete Order] Failed to update draft status:', err.message));
     }
@@ -617,8 +616,8 @@ export async function POST(req) {
     if (!isAutomatedPayment) {
       try {
         await adminDb.collection('shops').doc(shopId).update({
-          orderCount: admin.firestore.FieldValue.increment(1),
-          totalRevenue: admin.firestore.FieldValue.increment(finalTotal)
+          orderCount: FieldValue.increment(1),
+          totalRevenue: FieldValue.increment(finalTotal)
         });
       } catch (err) {
         console.error("Failed to update shop stats:", err);
@@ -651,7 +650,7 @@ export async function POST(req) {
             shopId,
             orderId: orderIdVisual,
             error: e.message,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
+            createdAt: FieldValue.serverTimestamp()
           });
         });
       }
@@ -673,7 +672,7 @@ export async function POST(req) {
               shopId,
               orderId: orderIdVisual,
               error: e.message,
-              createdAt: admin.firestore.FieldValue.serverTimestamp()
+              createdAt: FieldValue.serverTimestamp()
             });
           });
         }

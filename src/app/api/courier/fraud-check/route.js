@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
 import { checkSteadfastFraud } from '@/lib/steadfast';
+import { adminDb } from '@/lib/firebase-admin';
 
 export async function GET(request) {
   try {

@@ -3,6 +3,7 @@ import { getShopByDomain } from '@/lib/firestore-server';
 import { verifyAuth, AuthError } from '@/lib/verifyAuth';
 import dns from 'dns';
 import { promisify } from 'util';
+import { adminDb } from '@/lib/firebase-admin';
 
 const resolve4 = promisify(dns.resolve4);
 const resolveCname = promisify(dns.resolveCname);
@@ -140,8 +141,7 @@ export async function GET(req) {
       try {
         const shop = await getShopByDomain(domain);
         if (shop && shop.id && shop.domainStatus !== 'connected') {
-          const { adminDb } = await import('@/lib/firebase-admin');
-          if (adminDb) {
+                    if (adminDb) {
             await adminDb.collection('shops').doc(shop.id).update({
               domainStatus: 'connected'
             });

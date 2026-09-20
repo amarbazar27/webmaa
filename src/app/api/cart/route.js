@@ -1,8 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 // ═══════════════════════════════════════════════════════════════
 // 🛒 CART API — Server-side cart with stock validation
 // GET  ?shopId=xxx (+ auth header) → Get user's saved cart
@@ -18,7 +16,7 @@ export async function GET(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ items: [] });
     }
@@ -46,7 +44,7 @@ export async function POST(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -120,7 +118,7 @@ export async function POST(req) {
     // ── Save validated cart ──────────────────────────────────
     await adminDb.collection('users').doc(decoded.uid).collection('carts').doc(shopId).set({
       items: validatedItems,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
 
     return NextResponse.json({

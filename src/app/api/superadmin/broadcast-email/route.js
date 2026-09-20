@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import nodemailer from 'nodemailer';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 // ── Auth Guard: Verifies Firebase ID token + superadmin role ──
 async function verifySuperAdmin(request) {
@@ -13,7 +12,7 @@ async function verifySuperAdmin(request) {
   }
   try {
     const idToken = authHeader.split('Bearer ')[1];
-    const decoded = await admin.auth().verifyIdToken(idToken);
+    const decoded = await adminAuth.verifyIdToken(idToken);
     // Check Firestore for superadmin role
     const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
     if (!userDoc.exists || userDoc.data()?.role !== 'superadmin') {

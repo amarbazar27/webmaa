@@ -1,9 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 // PEN-C2 Fix: Use collectionGroup query instead of scanning ALL shops (O(n²) → O(1))
 // Previously: loaded every shop doc then queried each shop's orders subcollection
 async function getUserCompletedOrderCount(uid, email) {
@@ -62,7 +60,7 @@ export async function POST(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -103,7 +101,7 @@ export async function POST(req) {
       text: (text || '').trim().slice(0, 1000),
       screenshotUrl: screenshotUrl || '',
       orderCount,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: FieldValue.serverTimestamp()
     });
 
     return NextResponse.json({ success: true, reviewId: reviewRef.id });
@@ -123,7 +121,7 @@ export async function DELETE(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -161,7 +159,7 @@ export async function PATCH(req) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(authHeader.split('Bearer ')[1]);
+      decoded = await adminAuth.verifyIdToken(authHeader.split('Bearer ')[1]);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }

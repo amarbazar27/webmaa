@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-
 // ═══════════════════════════════════════════════════════════════
 // 🛍️ PRODUCTS API — Public product listing
 // GET ?shopId=xxx                → All products for a shop

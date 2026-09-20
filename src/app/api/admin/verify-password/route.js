@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { adminDb } from '@/lib/firebase-admin';
 import nodemailer from 'nodemailer';
-import admin from 'firebase-admin';
-
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 // Gmail SMTP transporter — uses env vars set in Vercel + .env.local
 function createTransporter() {
   return nodemailer.createTransport({
@@ -25,7 +23,7 @@ export async function POST(request) {
     }
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(token);
+      decoded = await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
     }

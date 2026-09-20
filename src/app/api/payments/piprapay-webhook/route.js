@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import { sendOrderConfirmationEmail, sendRetailerNotificationEmail } from '@/lib/ruflo';
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 
 export async function POST(req) {
   try {
@@ -102,7 +101,7 @@ export async function POST(req) {
         paymentStatus: 'paid',
         status: 'confirmed',
         transactionId: pp_id,
-        confirmedAt: admin.firestore.FieldValue.serverTimestamp(),
+        confirmedAt: FieldValue.serverTimestamp(),
         paymentCommission: commissionAmount,
         paymentNetEarning: netEarning,
         paymentCommissionPercent: commissionPercent
@@ -111,8 +110,8 @@ export async function POST(req) {
       // Update shop stats: increment orderCount and totalRevenue
       try {
         await adminDb.collection('shops').doc(shopId).update({
-          orderCount: admin.firestore.FieldValue.increment(1),
-          totalRevenue: admin.firestore.FieldValue.increment(orderTotal)
+          orderCount: FieldValue.increment(1),
+          totalRevenue: FieldValue.increment(orderTotal)
         });
       } catch (err) {
         console.error("Failed to update shop stats from webhook:", err);

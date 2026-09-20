@@ -1,6 +1,5 @@
-import { adminDb } from '../firebase-admin';
 import { checkProviders } from './providers';
-import admin from 'firebase-admin';
+import { FieldValue, adminDb } from '@/lib/firebase-admin';
 
 /**
  * Standardizes a phone number to exactly 11 digits starting with 01.
@@ -240,7 +239,7 @@ export async function runEnterpriseFraudScan(orderData, clientIp, countryCode) {
         stores: Array.from(uniqueStores),
         externalStats,
         lastProvider: providerUsed,
-        lastLookup: admin.firestore.FieldValue.serverTimestamp(),
+        lastLookup: FieldValue.serverTimestamp(),
         riskScore: riskResult.score,
         riskLevel: riskResult.riskLevel,
         // Keep existing statistics

@@ -1,9 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
-
+import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
 // ── Auth Guard: Verifies Firebase ID token + superadmin privileges ──
 async function verifySuperAdmin(request) {
   const authHeader = request.headers.get('authorization');
@@ -13,7 +11,7 @@ async function verifySuperAdmin(request) {
 
   try {
     const idToken = authHeader.split('Bearer ')[1];
-    const decoded = await admin.auth().verifyIdToken(idToken);
+    const decoded = await adminAuth.verifyIdToken(idToken);
     const callerEmail = (decoded.email || '').toLowerCase().trim();
 
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
@@ -109,8 +107,8 @@ export async function POST(request) {
       permissions,
       isActive: true,
       addedBy: auth.email,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     await docRef.set(newSubAdmin);
@@ -145,7 +143,7 @@ export async function PUT(request) {
     }
 
     const updates = {
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     if (body.permissions && Array.isArray(body.permissions)) {

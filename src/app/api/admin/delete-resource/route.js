@@ -1,9 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebase-admin';
 import crypto from 'crypto';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 /**
  * Helper to delete main site Cloudinary images associated with a deleted shop.
@@ -89,7 +88,7 @@ export async function POST(request) {
 
     let decoded;
     try {
-      decoded = await admin.auth().verifyIdToken(token);
+      decoded = await adminAuth.verifyIdToken(token);
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
