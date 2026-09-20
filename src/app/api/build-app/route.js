@@ -95,7 +95,7 @@ export async function POST(request) {
     if (!isProductionBuild) {
       // Local development context: spawn child process runner in background
       console.log('[Build App] Triggering LOCAL build process in background...');
-      const cp = eval("require('child_process')");
+      const cp = await import(/* webpackIgnore: true */ 'node:child_process');
       const scriptPath = 'scripts/build-tenant-app.js';
 
       const runnerArgs = [scriptPath, shopSlug];
