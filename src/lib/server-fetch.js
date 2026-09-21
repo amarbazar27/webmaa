@@ -180,6 +180,11 @@ async function firestoreRestCollection(path) {
 
 export async function getShopServer(slug) {
   try {
+    const cacheKey = `shop_slug_${slug}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    let shop = null;
     if (adminDb) {
       // Admin SDK path (preferred - when env vars are set)
       const shopsRef = adminDb.collection('shops');
@@ -187,18 +192,20 @@ export async function getShopServer(slug) {
       if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
       if (snap.empty) {
         const doc = await shopsRef.doc(slug).get();
-        if (doc.exists) return { id: doc.id, ...toPlainObject(doc.data()) };
-        return null;
+        if (doc.exists) shop = { id: doc.id, ...toPlainObject(doc.data()) };
+      } else {
+        const doc = snap.docs[0];
+        shop = { id: doc.id, ...toPlainObject(doc.data()) };
       }
-      const doc = snap.docs[0];
-      return { id: doc.id, ...toPlainObject(doc.data()) };
     } else {
       // REST API fallback (when admin SDK env vars are missing)
       console.log(`[getShopServer] Using REST API fallback for slug: ${slug}`);
-      let shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', slug);
+      shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', slug);
       if (!shop) shop = await firestoreRestQuery('shops', 'shopSlug', 'EQUAL', slug);
-      return shop || null;
     }
+
+    if (shop) setCached(cacheKey, shop, 60);
+    return shop || null;
   } catch (err) {
     console.error(`[getShopServer] Error:`, err);
     return null;
@@ -249,23 +256,25 @@ export async function getShopByDomainServer(host) {
 export async function getProductsServer(shopId) {
   try {
     if (!shopId) return [];
+    const cacheKey = `products_${shopId}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    let products;
     if (adminDb) {
       const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
-      const products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
-      return products.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
     } else {
       console.log(`[getProductsServer] Using REST API fallback for shopId: ${shopId}`);
-      const products = await firestoreRestCollection(`shops/${shopId}/products`);
-      return products.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
+      products = await firestoreRestCollection(`shops/${shopId}/products`);
     }
+    products.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+    setCached(cacheKey, products, 60);
+    return products;
   } catch (err) {
     console.error(`[getProductsServer] Error:`, err);
     return [];
@@ -275,13 +284,20 @@ export async function getProductsServer(shopId) {
 export async function getCategoriesServer(shopId) {
   try {
     if (!shopId) return [];
+    const cacheKey = `categories_${shopId}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
+    let categories;
     if (adminDb) {
       const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
-      return snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+      categories = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
     } else {
       console.log(`[getCategoriesServer] Using REST API fallback for shopId: ${shopId}`);
-      return await firestoreRestCollection(`shops/${shopId}/categories`);
+      categories = await firestoreRestCollection(`shops/${shopId}/categories`);
     }
+    setCached(cacheKey, categories, 60);
+    return categories;
   } catch (err) {
     console.error(`[getCategoriesServer] Error:`, err);
     return [];

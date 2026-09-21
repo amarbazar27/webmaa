@@ -1,8 +1,15 @@
 import './globals.css';
+import { Outfit } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import ScrollProgress from '@/components/ui/ScrollProgress';
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+});
 
 // Decouple platform base URL from any tenant shop environment variables
 const BASE_URL = 'https://bdretailers.com';
@@ -225,14 +232,14 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="bn" translate="no" suppressHydrationWarning>
+    <html lang="bn" translate="no" suppressHydrationWarning className={outfit.variable}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="google" content="notranslate" />
         <JsonLd />
       </head>
-      <body className="font-sans antialiased">
+      <body className={`${outfit.className} antialiased`}>
         {/* ♿ Accessibility: Skip to Content Link */}
         <a 
           href="#main-content" 
