@@ -2,12 +2,9 @@
 <resources>
     <style name="LaunchTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
-        <!-- Android 15+: Replace deprecated SHORT_EDGES with 'always' -->
-        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>
     <style name="NormalTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>
 </resources>
 

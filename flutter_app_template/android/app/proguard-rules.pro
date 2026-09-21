@@ -14,6 +14,21 @@
 -keep class io.flutter.view.** { *; }
 -keep class io.flutter.embedding.** { *; }
 -keep class io.flutter.provider.** { *; }
+-keep class io.flutter.plugins.** { *; }
+
+# InAppWebView Plugin
+-keep class com.pichillilorenzo.flutter_inappwebview_android.** { *; }
+-dontwarn com.pichillilorenzo.flutter_inappwebview_android.**
+
+# Local Notifications Plugin
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+-dontwarn com.dexterous.flutterlocalnotifications.**
+
+# Flutter Community Plugins (share_plus, url_launcher, etc.)
+-keep class dev.fluttercommunity.** { *; }
+-dontwarn dev.fluttercommunity.**
+-keep class com.baseflow.** { *; }
+-dontwarn com.baseflow.**
 
 # Firebase Core, Firestore, Messaging & Analytics
 -keep class com.google.firebase.** { *; }
@@ -31,3 +46,4 @@
 -keep class android.support.v4.app.** { *; }
 -keep class androidx.** { *; }
 -keep class **.R$* { *; }
+

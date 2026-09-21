@@ -2,15 +2,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'config.dart';
-import 'cart_provider.dart';
-import 'storefront_view.dart';
 import 'theme.dart';
+import 'app_webview_screen.dart';
 
 // Local Notifications Plugin setup for background messages
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -36,7 +34,7 @@ void _showNotification(RemoteMessage message) async {
       notification.hashCode,
       notification.title,
       notification.body,
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'bdretailers_channel',
           'BDRetailers Notifications',
@@ -50,56 +48,43 @@ void _showNotification(RemoteMessage message) async {
   }
 }
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Enable edge-to-edge system UI layout for Android 15 compatibility
+  // Enable edge-to-edge system UI layout
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   // Set system UI layout styling immediately
-  Color primaryColor = appPrimaryColor;
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
     systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.light,
+    systemNavigationBarIconBrightness: Brightness.dark,
   ));
 
-  // Run application instantly (Zero Cold Start Delay)
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => CartProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  // Initialize Firebase safely before runApp so plugins are ready
+  try {
+    await Firebase.initializeApp();
+    _firebaseInitialized = true;
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Background initialization of Firebase & Notifications (non-blocking)
-  Future.microtask(() async {
-    try {
-      await Firebase.initializeApp();
-      _firebaseInitialized = true;
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
+    // Set up Android notification channel
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(const AndroidNotificationChannel(
+          'bdretailers_channel',
+          'BDRetailers Notifications',
+          description: 'Notifications for BDRetailers stores',
+          importance: Importance.max,
+        ));
+    debugPrint("Firebase initialized successfully.");
+  } catch (e) {
+    _firebaseInitialized = false;
+    debugPrint("Firebase init failed (non-critical): $e. App will work without push notifications.");
+  }
 
-      // Set up Android notification channel
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(const AndroidNotificationChannel(
-            'bdretailers_channel',
-            'BDRetailers Notifications',
-            description: 'Notifications for BDRetailers stores',
-            importance: Importance.max,
-          ));
-      debugPrint("Firebase initialized in background.");
-    } catch (e) {
-      _firebaseInitialized = false;
-      debugPrint(
-          "Firebase init failed (non-critical): $e. App will work without push notifications.");
-    }
-  });
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -111,11 +96,8 @@ class MyApp extends StatelessWidget {
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      // ★ THE KEY CHANGE: Native StorefrontView instead of AppWebViewScreen
-      // This is what fixes the laggy/non-responsive WebView issue.
-      // The app now renders native Flutter widgets directly from Firestore,
-      // giving 60fps performance instead of loading a website in a browser.
-      home: StorefrontView(shopId: AppConfig.shopId),
+      home: const AppWebViewScreen(),
     );
   }
 }
+

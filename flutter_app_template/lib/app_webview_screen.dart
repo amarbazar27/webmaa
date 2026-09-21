@@ -8,6 +8,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
+import 'theme.dart';
 
 class AppWebViewScreen extends StatefulWidget {
   const AppWebViewScreen({super.key});
@@ -907,12 +908,3 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
   }
 }
 
-// Local helper for parsing dynamic Hex colors
-class HexColor {
-  static Color fromHex(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
-    buffer.write(hexString.replaceFirst('#', ''));
-    return Color(int.parse(buffer.toString(), radix: 16));
-  }
-}
