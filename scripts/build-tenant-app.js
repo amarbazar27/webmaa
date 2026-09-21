@@ -590,10 +590,16 @@ async function build() {
   const newKotlinPath = path.join(newKotlinDir, 'MainActivity.kt');
   
   const mainActivityContent = `package ${packageName}
- 
+
+import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
 import io.flutter.embedding.android.FlutterActivity
- 
+
 class MainActivity: FlutterActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+    }
 }
 `;
   fs.writeFileSync(newKotlinPath, mainActivityContent);
