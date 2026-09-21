@@ -17,7 +17,7 @@ class OrderTrackingView extends StatefulWidget {
 class _OrderTrackingViewState extends State<OrderTrackingView> {
   final _db = DatabaseService();
   final _phoneController = TextEditingController();
-  List<Order>? _orders;
+  List<ShopOrder>? _orders;
   bool _isLoading = false;
   String? _error;
 
@@ -159,7 +159,7 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
     );
   }
 
-  Widget _buildOrderCard(Order order, Color primary) {
+  Widget _buildOrderCard(ShopOrder order, Color primary) {
     final statusColor = _getStatusColor(order.status);
 
     return Card(
@@ -269,7 +269,7 @@ class _OrderTrackingViewState extends State<OrderTrackingView> {
     );
   }
 
-  Widget _buildStatusTimeline(Order order, Color primary) {
+  Widget _buildStatusTimeline(ShopOrder order, Color primary) {
     const steps = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
     const labels = ['অপেক্ষমাণ', 'নিশ্চিত', 'প্রস্তুত', 'শিপড', 'ডেলিভারি'];
 

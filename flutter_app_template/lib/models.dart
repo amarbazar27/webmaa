@@ -200,7 +200,8 @@ class CartItem {
 }
 
 /// Order model for tracking customer orders.
-class Order {
+/// Named ShopOrder to avoid conflict with cloud_firestore_platform_interface's Order.
+class ShopOrder {
   final String id;
   final String orderIdVisual;
   final String status;
@@ -218,7 +219,7 @@ class Order {
   final String? deliveryETA;
   final DateTime? createdAt;
 
-  Order({
+  ShopOrder({
     required this.id,
     required this.orderIdVisual,
     required this.status,
@@ -237,13 +238,13 @@ class Order {
     this.createdAt,
   });
 
-  factory Order.fromFirestore(String docId, Map<String, dynamic> data) {
+  factory ShopOrder.fromFirestore(String docId, Map<String, dynamic> data) {
     DateTime? created;
     if (data['createdAt'] is Timestamp) {
       created = (data['createdAt'] as Timestamp).toDate();
     }
 
-    return Order(
+    return ShopOrder(
       id: docId,
       orderIdVisual: data['orderIdVisual'] ?? docId.substring(0, 6).toUpperCase(),
       status: data['status'] ?? 'pending',

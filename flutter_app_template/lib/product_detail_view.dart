@@ -51,10 +51,8 @@ class _ProductDetailViewState extends State<ProductDetailView> {
           IconButton(
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
-              SharePlus.instance.share(
-                ShareParams(
-                  text: '${widget.product.name}\n৳${widget.product.price.toStringAsFixed(0)}\n${widget.shop.targetUrl}',
-                ),
+              Share.share(
+                '${widget.product.name}\n৳${widget.product.price.toStringAsFixed(0)}\n${widget.shop.targetUrl}',
               );
             },
           ),

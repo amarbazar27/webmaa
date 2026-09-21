@@ -245,7 +245,7 @@ class DatabaseService {
   // ─── Order Queries ─────────────────────────────────────────────
 
   /// Look up orders by customer phone number (most recent first).
-  Future<List<Order>> getOrdersByPhone(String shopId, String phone) async {
+  Future<List<ShopOrder>> getOrdersByPhone(String shopId, String phone) async {
     try {
       // Try with ordering (needs composite index)
       final snapshot = await _db
@@ -257,7 +257,7 @@ class DatabaseService {
           .limit(20)
           .get();
       return snapshot.docs
-          .map((doc) => Order.fromFirestore(doc.id, doc.data()))
+          .map((doc) => ShopOrder.fromFirestore(doc.id, doc.data()))
           .toList();
     } catch (e) {
       // Fallback: query without ordering (no index needed), sort client-side
@@ -270,7 +270,7 @@ class DatabaseService {
             .limit(20)
             .get();
         final orders = snapshot.docs
-            .map((doc) => Order.fromFirestore(doc.id, doc.data()))
+            .map((doc) => ShopOrder.fromFirestore(doc.id, doc.data()))
             .toList();
         orders.sort((a, b) =>
             (b.createdAt ?? DateTime(2000)).compareTo(a.createdAt ?? DateTime(2000)));
@@ -283,7 +283,7 @@ class DatabaseService {
   }
 
   /// Real-time stream for a single order (live tracking).
-  Stream<Order?> getOrderStream(String shopId, String orderId) {
+  Stream<ShopOrder?> getOrderStream(String shopId, String orderId) {
     return _db
         .collection('shops')
         .doc(shopId)
@@ -292,7 +292,7 @@ class DatabaseService {
         .snapshots()
         .map((doc) {
       if (!doc.exists || doc.data() == null) return null;
-      return Order.fromFirestore(doc.id, doc.data()!);
+      return ShopOrder.fromFirestore(doc.id, doc.data()!);
     });
   }
 }

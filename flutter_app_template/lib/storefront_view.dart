@@ -274,9 +274,7 @@ class _StorefrontViewState extends State<StorefrontView> {
               icon: const Icon(Icons.share_outlined),
               onPressed: () {
                 if (_shop != null) {
-                  SharePlus.instance.share(
-                    ShareParams(text: '${_shop!.name}\n${_shop!.targetUrl}'),
-                  );
+                  Share.share('${_shop!.name}\n${_shop!.targetUrl}');
                 }
               },
             ),
