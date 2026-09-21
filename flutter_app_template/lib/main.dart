@@ -53,12 +53,15 @@ void _showNotification(RemoteMessage message) async {
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Enable edge-to-edge system UI layout for Android 15 compatibility
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   // Set system UI layout styling immediately
   Color primaryColor = appPrimaryColor;
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarColor: primaryColor,
+    statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.black,
+    systemNavigationBarColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
