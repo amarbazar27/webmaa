@@ -60,3 +60,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Frontend Polish:** Maintain WCAG AA contrast, clean dark mode, 60fps responsiveness, hover/active states on buttons, loading skeletons, and print stylesheet.
 - **Technical SEO:** Maintain comprehensive XML sitemaps, JSON-LD Schema markup, canonical tags, clean URL slugs, and exactly 1 H1 per page.
 - **High-Converting Copy:** On all CTAs, use explicit action verbs + clear outcomes (e.g. "১ মিনিটে ফ্রি স্টোর তৈরি করুন"). Keep copy scannable, honest, and benefit-driven before technical specifications.
+
+# 🛡️ Alibaba OpenCodeReview (OCR) & Security Standards
+- Always enforce Alibaba code review standards: zero `var`, strict equality `===`, defensive null checking, zero unsanitized `innerHTML` or script injection vulnerabilities, and verified error boundaries.
+- Run or verify with `scripts/ocr-check.js` on code changes.
+
+# 🧠 Autonomous 280+ Agency Agents Coordination (Zero Manual Overhead)
+- The entire 280+ Agency Agents repository is permanently installed locally at `C:\Users\missi\.gemini\agency-agents` and `C:\Users\missi\.claude\agents`.
+- The user does not need to invoke agents manually. The AI autonomously detects the task domain and assumes the specialist persona (Frontend Developer, UI Designer, Backend Architect, Security Auditor, Growth Marketer, QA Engineer) while strictly adhering to Ponytail anti-bloat and Alibaba quality rules.
+
