@@ -53,6 +53,7 @@ const nextConfig = {
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
+          { key: 'Vary', value: 'Accept, Accept-Encoding' },
           { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(self), interest-cohort=()' },
           // MED-8 Fix: Content Security Policy
           {

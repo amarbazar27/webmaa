@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Store, Sparkles, ShieldCheck, Truck, CreditCard, Bot, Globe, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, Store, ShieldCheck, Truck, CreditCard, Bot, Globe, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AboutModal({ isOpen, onClose }) {
@@ -79,7 +79,7 @@ export default function AboutModal({ isOpen, onClose }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
                 <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
-                  <Sparkles size={14} className="text-purple-600 shrink-0" />
+                  <Store size={14} className="text-emerald-600 shrink-0" />
                   <span>৫ মিনিটে অনলাইন স্টোর</span>
                 </div>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">

@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, X, Sparkles } from 'lucide-react';
+import { Bell, BellOff, X, CheckCircle2 } from 'lucide-react';
 import { isPushSupported, getPermissionStatus, requestPermission, getFCMToken } from '@/lib/fcm';
 
 const STORAGE_KEY = 'daripallah_notif_permission_asked';
@@ -101,10 +101,10 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
         {step === 'ask' ? (
           <div className="space-y-2.5 pr-4">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                 <Bell size={15} />
               </div>
-              <h4 className="text-xs font-black text-slate-900 dark:text-white leading-tight">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                 শর্তাবলী ও নোটিফিকেশন আপডেট
               </h4>
             </div>
@@ -115,7 +115,7 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
                 type="checkbox"
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300 dark:border-slate-700 dark:bg-slate-800 cursor-pointer shrink-0"
+                className="mt-0.5 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 dark:bg-slate-800 cursor-pointer shrink-0"
               />
               <span className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-snug">
                 আমি ওয়েবসাইট ব্যবহারের <span className="underline font-bold">শর্তাবলী</span> মেনে নিচ্ছি এবং নতুন অর্ডার স্ট্যাটাস ও বিশেষ অফারের নোটিফিকেশন পেতে সম্মত।
@@ -127,7 +127,7 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
               <button
                 onClick={handleContinue}
                 disabled={loading}
-                className="flex-1 py-2 px-3 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
               >
                 {loading ? (
                   <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -147,8 +147,8 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
           </div>
         ) : (
           <div className="flex items-center gap-2.5 py-1">
-            <Sparkles size={18} className="text-emerald-500 shrink-0" />
-            <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
               ধন্যবাদ! আপনার নোটিফিকেশন ও আপডেট সক্রিয় হয়েছে।
             </p>
           </div>

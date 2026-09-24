@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { HelpCircle, ChevronDown, Sparkles, MessageCircleQuestion } from 'lucide-react';
+import { HelpCircle, ChevronDown, MessageCircleQuestion } from 'lucide-react';
 
 const DEFAULT_FAQS = [
   {
@@ -47,70 +47,65 @@ export default function FaqSection({ globalConfig = null }) {
     <section id="faq" className="relative z-20 py-16 md:py-24 scroll-mt-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
-        {/* Section Header with Neumorphic Badge */}
+        {/* Section Header */}
         <div className="text-center space-y-4 mb-12">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full neo-extruded-sm text-[#6C63FF] font-black text-xs uppercase tracking-widest">
-            <Sparkles size={14} className="animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
+            <HelpCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
             <span>সচরাচর জিজ্ঞাসিত প্রশ্নাবলী</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight leading-tight">
-            Frequently Asked <span className="text-[#6C63FF]">Questions</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+            Frequently Asked <span className="text-emerald-600 dark:text-emerald-400">Questions</span>
           </h2>
-          <p className="text-sm sm:text-base text-[#6B7280] dark:text-slate-400 font-medium max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal max-w-xl mx-auto">
             BDRetailers প্ল্যাটফর্ম, সাবস্ক্রিপশন প্ল্যান ও সার্ভিস সম্পর্কে সাধারণ প্রশ্নগুলোর উত্তর জেনে নিন।
           </p>
         </div>
 
         {/* FAQ Accordion List */}
-        <div className="space-y-5">
+        <div className="space-y-4">
           {rawFaqs.map((faq, index) => {
             const isOpen = openIndex === index;
             return (
               <div
                 key={faq.id || index}
-                className={`neo-card transition-all duration-300 overflow-hidden ${
-                  isOpen ? 'p-6 sm:p-7' : 'p-5 sm:p-6'
-                }`}
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-200 overflow-hidden shadow-xs"
               >
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? -1 : index)}
-                  className="w-full flex items-center justify-between text-left gap-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#6C63FF] rounded-2xl"
+                  className="w-full flex items-center justify-between text-left gap-4 p-5 sm:p-6 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-600 rounded-2xl"
                   aria-expanded={isOpen}
                 >
                   <div className="flex items-center gap-3 sm:gap-4 flex-1">
-                    {/* Icon Well (Inset Deep when open, Extruded when closed) */}
                     <div
-                      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 ${
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-200 ${
                         isOpen
-                          ? 'neo-inset-deep text-[#6C63FF]'
-                          : 'neo-extruded-sm text-[#6B7280] dark:text-slate-300'
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
                       }`}
                     >
                       <HelpCircle size={18} />
                     </div>
-                    <span className="text-sm sm:text-base font-bold text-[#3D4852] dark:text-slate-200 leading-snug">
+                    <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 leading-snug">
                       {faq.question}
                     </span>
                   </div>
 
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 ${
                       isOpen
-                        ? 'rotate-180 neo-inset-sm text-[#6C63FF]'
-                        : 'neo-extruded-sm text-[#6B7280] dark:text-slate-400'
+                        ? 'rotate-180 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                     }`}
                   >
                     <ChevronDown size={16} strokeWidth={2.5} />
                   </div>
                 </button>
 
-                {/* Animated Inset Answer Box */}
+                {/* Flat, Non-nested Answer Box */}
                 {isOpen && (
-                  <div className="mt-4 pt-4 border-t border-slate-300/40 dark:border-white/5 animate-fade-in">
-                    <div className="neo-inset p-4 sm:p-5 rounded-2xl text-xs sm:text-sm text-[#3D4852] dark:text-slate-300 leading-relaxed">
-                      {faq.answer}
-                    </div>
+                  <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800">
+                    {faq.answer}
                   </div>
                 )}
               </div>
@@ -120,13 +115,13 @@ export default function FaqSection({ globalConfig = null }) {
 
         {/* Need more help CTA */}
         <div className="mt-10 text-center">
-          <div className="inline-flex flex-wrap items-center justify-center gap-3 p-4 rounded-2xl neo-inset-sm text-xs font-bold text-[#6B7280] dark:text-slate-400">
+          <div className="inline-flex flex-wrap items-center justify-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>আরও কোনো প্রশ্ন আছে? আমাদের সাপোর্ট টিম সবসময় প্রস্তুত।</span>
             <a
               href={`https://wa.me/88${(globalConfig?.whatsapp || '01734763306').replace(/[^0-9]/g, '').replace(/^88/, '')}`}
               target="_blank"
               rel="noreferrer"
-              className="neo-btn px-4 py-2 text-[#6C63FF] font-black rounded-xl hover:text-[#5248e5] transition-all cursor-pointer inline-flex items-center gap-1.5"
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
             >
               <MessageCircleQuestion size={14} /> সরাসরি হোয়াটসঅ্যাপে কথা বলুন
             </a>

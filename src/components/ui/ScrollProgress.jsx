@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function ScrollProgress() {
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showScrollControls, setShowScrollControls] = useState(false);
 
   useEffect(() => {
     let ticking = false;
@@ -16,7 +16,7 @@ export default function ScrollProgress() {
           const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
           const currentProgress = totalHeight > 0 ? (window.scrollY / totalHeight) * 100 : 0;
           setScrollProgress(currentProgress);
-          setShowScrollTop(window.scrollY > 350);
+          setShowScrollControls(window.scrollY > 300);
           ticking = false;
         });
         ticking = true;
@@ -31,11 +31,15 @@ export default function ScrollProgress() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const scrollToBottom = () => {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+  };
+
   return (
     <>
-      {/* ⚡ Scroll Progress Indicator (Top 2px Line) */}
+      {/* ⚡ Scroll Progress Indicator (Top 2px Solid Line) */}
       <div 
-        className="fixed top-0 left-0 h-1 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-500 z-[100] transition-all duration-75 pointer-events-none no-print"
+        className="fixed top-0 left-0 h-0.5 bg-emerald-600 dark:bg-emerald-500 z-[100] transition-all duration-75 pointer-events-none no-print"
         style={{ width: `${scrollProgress}%` }}
         role="progressbar"
         aria-valuenow={Math.round(scrollProgress)}
@@ -43,17 +47,31 @@ export default function ScrollProgress() {
         aria-valuemax={100}
       />
 
-      {/* 🚀 Scroll Back To Top Button */}
-      {showScrollTop && (
-        <button
-          type="button"
-          onClick={scrollToTop}
-          className="fixed bottom-20 sm:bottom-6 right-5 z-40 w-11 h-11 rounded-2xl bg-white/90 dark:bg-slate-900/90 hover:bg-purple-600 dark:hover:bg-purple-600 text-slate-700 dark:text-slate-200 hover:text-white dark:hover:text-white border border-slate-200 dark:border-slate-800 hover:border-purple-600 shadow-xl shadow-purple-900/10 backdrop-blur-md flex items-center justify-center transition-all cursor-pointer active:scale-95 group no-print animate-fade-in"
-          title="উপরে যান (Scroll to top)"
-          aria-label="Scroll to top"
+      {/* 🚀 Smart Left-Docked Quick Scroller (Non-overlapping with right-side Cart/Chat) */}
+      {showScrollControls && (
+        <aside 
+          aria-label="Page navigation"
+          className="fixed left-3 sm:left-6 bottom-20 sm:bottom-8 z-40 flex flex-col gap-1.5 p-1 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg text-slate-700 dark:text-slate-300 no-print animate-fade-in select-none"
         >
-          <ChevronUp size={20} className="group-hover:-translate-y-0.5 transition-transform stroke-[2.5]" />
-        </button>
+          <button
+            type="button"
+            onClick={scrollToTop}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center transition-colors cursor-pointer active:scale-90"
+            title="উপরে যান (Scroll to top)"
+            aria-label="Scroll to top"
+          >
+            <ChevronUp size={18} className="stroke-[2.5]" />
+          </button>
+          <button
+            type="button"
+            onClick={scrollToBottom}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center transition-colors cursor-pointer active:scale-90"
+            title="নিচে যান (Scroll to bottom)"
+            aria-label="Scroll to bottom"
+          >
+            <ChevronDown size={18} className="stroke-[2.5]" />
+          </button>
+        </aside>
       )}
     </>
   );

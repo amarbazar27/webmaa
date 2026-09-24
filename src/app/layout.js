@@ -75,6 +75,9 @@ export const metadata = {
   },
   alternates: {
     canonical: BASE_URL,
+    types: {
+      'text/markdown': `${BASE_URL}/index.md`,
+    },
   },
 };
 
@@ -237,21 +240,21 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="google" content="notranslate" />
+        <link rel="alternate" type="text/markdown" href={`${BASE_URL}/index.md`} title="Agent-readable markdown twin" />
+        <link rel="design-system" type="text/markdown" href={`${BASE_URL}/DESIGN.md`} title="Design System Tokens" />
         <JsonLd />
       </head>
       <body className={`${outfit.className} antialiased`}>
         {/* ♿ Accessibility: Skip to Content Link */}
         <a 
           href="#main-content" 
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-purple-600 focus:text-white focus:rounded-2xl focus:shadow-2xl focus:font-black focus:text-xs no-print transition-all"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-emerald-600 focus:text-white focus:rounded-2xl focus:shadow-2xl focus:font-black focus:text-xs no-print transition-all"
         >
           মূল কনটেন্টে যান (Skip to content)
         </a>
         <ScrollProgress />
         <ThemeProvider>
           <AuthProvider>
-            <div className="bg-blob blob-1"></div>
-            <div className="bg-blob blob-2"></div>
             <main id="main-content" className="relative z-10 min-h-screen">
               {children}
             </main>

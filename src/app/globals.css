@@ -9,17 +9,17 @@
    ════════════════════════════════════════════════════════════════ */
 
 @theme {
-  --color-primary: #6C47FF;
-  --color-primary-dark: #5035CC;
-  --color-primary-light: #C4B5FD;
-  --color-secondary: #8B5CF6;
+  --color-primary: #059669;
+  --color-primary-dark: #047857;
+  --color-primary-light: #A7F3D0;
+  --color-secondary: #0F172A;
   --color-success: #10B981;
   --color-error: #EF4444;
   --color-warning: #F59E0B;
   --color-info: #3B82F6;
   --color-bg-light: #F8FAFC;
   --color-bg-white: #ffffff;
-  --color-text-main: #111827;
+  --color-text-main: #0F172A;
   --color-text-muted: #4B5563;
   --font-sans: 'Outfit', 'Inter', sans-serif;
 }
@@ -47,9 +47,9 @@
     --panel-bg: #ffffff;
 
     /* Brand */
-    --brand-primary:   #6C47FF;
-    --brand-secondary: #8B5CF6;
-    --brand-accent:    #F59E0B;
+    --brand-primary:   #059669;
+    --brand-secondary: #0F172A;
+    --brand-accent:    #10B981;
 
     /* Status */
     --color-success: #10B981;
@@ -64,14 +64,14 @@
     --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
 
     /* Storefront variables (defaults, overridden by SHOP_THEME_PRESETS) */
-    --sp-primary:     #6C47FF;
-    --sp-accent:      #8B5CF6;
+    --sp-primary:     #059669;
+    --sp-accent:      #10B981;
     --sp-bg:          #F8FAFC;
     --sp-text:        #0F172A;
     --sp-card:        #ffffff;
     --sp-border:      #E2E8F0;
     --sp-radius:      16px;
-    --sp-header-bg:   #6C47FF;
+    --sp-header-bg:   #059669;
     --sp-header-text: #ffffff;
     --sp-btn-text:    #ffffff;
     --sp-font:        'Outfit', sans-serif;
@@ -152,27 +152,25 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Shimmer gradient headline text */
+  /* Solid contrast headline text */
   .gradient-shimmer-text {
-    background: linear-gradient(135deg, #6C47FF 0%, #A855F7 50%, #EC4899 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #0f172a;
   }
 
-  /* Spotlight Glass Card with border glow */
+  /* Spotlight Card with clean 1px border */
   .spotlight-card {
     position: relative;
     background: var(--surface);
     border: 1px solid var(--border-color);
-    border-radius: 1.25rem;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
 
   .spotlight-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(108, 71, 255, 0.4);
-    box-shadow: 0 20px 40px -12px rgba(108, 71, 255, 0.18), 0 0 25px -5px rgba(168, 85, 247, 0.15);
+    transform: translateY(-2px);
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   /* Floating blur glass navigation bar */
@@ -494,13 +492,13 @@
    SELECTION, SCROLLBAR, ANIMATIONS
    ════════════════════════════════════════════════════════════════ */
 ::selection {
-  background-color: rgba(108, 71, 255, 0.2);
-  color: #4C1D95;
+  background-color: rgba(5, 150, 105, 0.2);
+  color: #065F46;
 }
 
 ::-moz-selection {
-  background-color: rgba(108, 71, 255, 0.2);
-  color: #4C1D95;
+  background-color: rgba(5, 150, 105, 0.2);
+  color: #065F46;
 }
 
 .custom-scrollbar::-webkit-scrollbar       { width: 4px; }
@@ -588,13 +586,13 @@ body {
   --neo-shadow-raised: 6px 6px 16px var(--neo-shadow-dark), -4px -4px 12px var(--neo-shadow-light);
   --neo-shadow-pressed: inset 4px 4px 10px var(--neo-shadow-dark), inset -3px -3px 8px var(--neo-shadow-light);
   --neo-shadow-navbar: 0 4px 24px rgba(160,165,185,0.4), 0 1px 4px rgba(160,165,185,0.2);
-  --neo-accent: #6C47FF;
-  --neo-accent-2: #8B5CF6;
-  --neo-text: #1e2030;
-  --neo-text-2: #555b7a;
-  --neo-text-3: #8890aa;
+  --neo-accent: #059669;
+  --neo-accent-2: #10B981;
+  --neo-text: #0f172a;
+  --neo-text-2: #334155;
+  --neo-text-3: #64748b;
   --neo-border: rgba(200,205,220,0.6);
-  --neo-active-glow: 0 0 0 3px rgba(108,71,255,0.18), 6px 6px 16px var(--neo-shadow-dark), -4px -4px 12px var(--neo-shadow-light);
+  --neo-active-glow: 0 0 0 3px rgba(5,150,105,0.18), 6px 6px 16px var(--neo-shadow-dark), -4px -4px 12px var(--neo-shadow-light);
 }
 
 /* ── Root neo wrapper ── */
@@ -658,29 +656,30 @@ body {
 
 /* ── Primary accent button ── */
 .neo-btn-primary {
-  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  background: #059669;
   color: #fff;
   border-radius: 12px;
-  box-shadow: 4px 4px 12px rgba(108,71,255,0.35), -2px -2px 6px rgba(255,255,255,0.6);
+  box-shadow: 0 4px 12px rgba(5,150,105,0.25);
   border: none;
   transition: all 0.18s ease;
   cursor: pointer;
   font-weight: 800;
 }
 .neo-btn-primary:hover {
-  box-shadow: 5px 5px 16px rgba(108,71,255,0.5), -2px -2px 8px rgba(255,255,255,0.7);
+  background: #047857;
+  box-shadow: 0 6px 16px rgba(5,150,105,0.35);
   transform: translateY(-1px);
 }
 .neo-btn-primary:active {
-  box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2);
+  box-shadow: inset 2px 2px 6px rgba(0,0,0,0.2);
   transform: translateY(0);
 }
 
 /* ── Active filter pill ── */
 .neo-active {
-  background: linear-gradient(135deg, #6C47FF, #8B5CF6) !important;
+  background: #059669 !important;
   color: #fff !important;
-  box-shadow: 3px 3px 8px rgba(108,71,255,0.3), -2px -2px 6px rgba(255,255,255,0.6) !important;
+  box-shadow: 0 2px 8px rgba(5,150,105,0.25) !important;
 }
 
 /* ── Category sidebar item ── */
@@ -701,9 +700,9 @@ body {
   box-shadow: inset 2px 2px 6px var(--neo-shadow-dark), inset -2px -2px 5px var(--neo-shadow-light);
 }
 .neo-sidebar-item.active {
-  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  background: #059669;
   color: #fff;
-  box-shadow: 3px 3px 8px rgba(108,71,255,0.3), -1px -1px 4px rgba(255,255,255,0.5);
+  box-shadow: 0 2px 8px rgba(5,150,105,0.25);
 }
 
 /* ── Product card neo ── */
@@ -796,26 +795,25 @@ body {
   border: 1px solid transparent;
 }
 .neo-tag:hover, .neo-tag.active {
-  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  background: #059669;
   color: #fff;
-  box-shadow: 2px 2px 6px rgba(108,71,255,0.3), -1px -1px 4px rgba(255,255,255,0.6);
+  box-shadow: 0 2px 6px rgba(5,150,105,0.25);
 }
 
 /* ── Description box ── */
 .neo-info-card {
-  background: linear-gradient(135deg, #f0f2f7, #eaecf3);
+  background: #ffffff;
   border-radius: 18px;
-  box-shadow: 5px 5px 14px var(--neo-shadow-dark), -4px -4px 10px var(--neo-shadow-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   border: 1px solid var(--neo-border);
 }
 
 /* ── Section divider ── */
 .neo-section-header {
   color: var(--neo-text);
-  font-weight: 900;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: normal;
   padding: 6px 0 10px;
   border-bottom: 2px solid var(--neo-border);
   margin-bottom: 12px;
@@ -836,13 +834,13 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #6C47FF, #8B5CF6);
+  background: #059669;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 2px 2px 5px rgba(108,71,255,0.3);
+  box-shadow: 0 2px 5px rgba(5,150,105,0.25);
   border: none;
   transition: all 0.15s ease;
   flex-shrink: 0;

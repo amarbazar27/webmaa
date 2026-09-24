@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Sparkles, CheckCircle2, ArrowRight, ShieldCheck, Zap, Crown } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Crown } from 'lucide-react';
 
 const DEFAULT_PLANS = {
   starter: {
@@ -153,22 +153,22 @@ export default function PricingSection({ globalConfig = null }) {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12 md:mb-16">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full neo-extruded-sm text-[#6C63FF] font-black text-xs uppercase tracking-widest">
-            <Sparkles size={14} className="animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
+            <Zap size={14} />
             <span>স্বচ্ছ ও সাশ্রয়ী সাবস্ক্রিপশন প্ল্যান</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#3D4852] dark:text-slate-100 tracking-tight leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
             আপনার অনলাইন ব্যবসার জন্য{' '}
-            <span className="text-[#6C63FF]">সেরা প্যাকেজটি</span> বেছে নিন
+            <span className="text-emerald-600 dark:text-emerald-400">সেরা প্যাকেজটি</span> বেছে নিন
           </h2>
 
-          <p className="text-sm sm:text-base text-[#6B7280] dark:text-slate-400 font-medium leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
             কোনো লুকানো চার্জ নেই। নতুনদের জন্য ০৳ অগ্রিম খরচে রেভিনিউ শেয়ার থেকে শুরু করে বড় ব্যবসার জন্য আনলিমিটেড ফিক্সড প্যাকেজ।
           </p>
         </div>
 
-        {/* 4 Columns Grid — Neumorphic Cards */}
+        {/* 4 Columns Grid — Clean Modern Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
           {plans.map(({ key, data }) => {
             const isSelected = selectedPlan === key;
@@ -178,20 +178,20 @@ export default function PricingSection({ globalConfig = null }) {
               <div
                 key={key}
                 onClick={() => setSelectedPlan(key)}
-                className={`neo-card p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 cursor-pointer relative group ${
+                className={`bg-white dark:bg-slate-900 border rounded-2xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 cursor-pointer relative group ${
                   isSelected
-                    ? 'ring-2 ring-[#6C63FF] -translate-y-1.5 shadow-[12px_12px_22px_rgba(163,177,198,0.7),-12px_-12px_22px_rgba(255,255,255,0.7)]'
-                    : 'hover:-translate-y-1'
+                    ? 'border-emerald-500 ring-2 ring-emerald-500 shadow-md -translate-y-1'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs'
                 }`}
               >
                 {/* Top Badge */}
                 <div className="flex justify-center -mt-2 mb-4">
-                  <span className={`px-4 py-1.5 rounded-full text-xs font-black neo-inset-sm ${
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                     isStarter
-                      ? 'text-amber-700 dark:text-amber-400'
+                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60'
                       : key === 'yearly'
-                      ? 'text-indigo-700 dark:text-indigo-400'
-                      : 'text-[#6C63FF]'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700'
                   }`}>
                     {data.badge}
                   </span>
@@ -200,42 +200,42 @@ export default function PricingSection({ globalConfig = null }) {
                 <div className="space-y-4">
                   {/* Plan Info */}
                   <div>
-                    <p className="text-[11px] font-black text-[#6B7280] dark:text-slate-400 uppercase tracking-wider">
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
                       {data.bengaliTitle}
                     </p>
-                    <h3 className="text-xl font-black text-[#3D4852] dark:text-slate-100 leading-tight mt-0.5">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 leading-tight mt-0.5">
                       {data.name}
                     </h3>
-                    <p className="text-xs text-[#6B7280] dark:text-slate-400 font-medium mt-1">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-1">
                       {data.subtitle}
                     </p>
                   </div>
 
-                  {/* Price Box — Inset Well */}
-                  <div className="p-4 rounded-2xl neo-inset space-y-1">
+                  {/* Price Block — Single elevation layout, no nested cards */}
+                  <div className="py-3 border-y border-slate-100 dark:border-slate-800 space-y-1">
                     <div className="flex items-baseline gap-1">
-                      <span className={`text-3xl sm:text-4xl font-black ${
-                        isStarter ? 'text-amber-600 dark:text-amber-400' : 'text-[#6C63FF]'
+                      <span className={`text-3xl sm:text-4xl font-black font-mono tabular-nums ${
+                        isStarter ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
                       }`}>
                         ৳{data.price.toLocaleString()}
                       </span>
-                      <span className="text-xs text-[#6B7280] dark:text-slate-400 font-medium">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                         {data.period}
                       </span>
                     </div>
                     {data.commissionText && (
-                      <p className="text-[11px] font-black text-[#3D4852] dark:text-slate-300 pt-1">
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 pt-1">
                         {data.commissionText}
                       </p>
                     )}
                   </div>
 
-                  {/* Feature Lines List (Dynamic Line-by-Line) */}
-                  <div className="space-y-2.5 pt-2 border-t border-slate-300/30 dark:border-white/5 text-xs font-medium text-[#3D4852] dark:text-slate-200">
+                  {/* Feature Lines List */}
+                  <div className="space-y-2.5 pt-1 text-xs font-medium text-slate-700 dark:text-slate-200">
                     {data.features.map((feat, idx) => (
                       <div key={idx} className="flex items-start gap-2.5">
-                        <div className="w-5 h-5 rounded-full neo-inset-sm flex items-center justify-center shrink-0 mt-0.5 text-[#38B2AC]">
-                          <CheckCircle2 size={13} className="stroke-[2.5]" />
+                        <div className="w-4 h-4 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                          <CheckCircle2 size={12} className="stroke-[2.5]" />
                         </div>
                         <span className="leading-tight">{feat}</span>
                       </div>
@@ -244,20 +244,20 @@ export default function PricingSection({ globalConfig = null }) {
                 </div>
 
                 {/* Tactile CTA Button */}
-                <div className="mt-6 pt-4 border-t border-slate-300/30 dark:border-white/5">
+                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handlePlanSelect(key);
                     }}
-                    className={`w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 ${
+                    className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 active:scale-95 ${
                       isSelected
-                        ? 'bg-[#6C63FF] hover:bg-[#5a52ea] text-white neo-extruded active:translate-y-0.5 active:neo-inset-sm'
-                        : 'neo-btn text-[#3D4852] dark:text-slate-200 hover:text-[#6C63FF]'
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
-                    <span>{isStarter ? '🚀 শেয়ার করে শুরু করুন' : 'প্যাকেজটি বেছে নিন'}</span>
+                    <span>{isStarter ? 'শেয়ার করে শুরু করুন' : 'প্যাকেজটি বেছে নিন'}</span>
                     <ArrowRight size={14} />
                   </button>
                 </div>
