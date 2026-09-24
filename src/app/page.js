@@ -289,7 +289,7 @@ export default function Home() {
             href={href} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="text-purple-400 hover:text-purple-300 underline font-black transition-colors cursor-pointer"
+            className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold transition-colors cursor-pointer"
           >
             {part}
           </a>
@@ -1651,7 +1651,7 @@ export default function Home() {
                       className="absolute inset-0 w-full h-full object-cover object-center brightness-90 group-hover:scale-105 transition-transform duration-700"
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-950" />
                   )}
                   
                   {/* Gradient Overlay for high readability */}
@@ -1752,8 +1752,8 @@ export default function Home() {
         {/* ── Standalone Central Search Hero Bar ── */}
         {showSearchHero && (
           <div className="w-full max-w-4xl mx-auto mb-6 px-1">
-            <div className="relative flex items-center bg-white dark:bg-slate-900 border-2 border-purple-200 hover:border-purple-400 dark:border-white/10 dark:hover:border-purple-500/50 rounded-2xl sm:rounded-full px-4 sm:px-6 py-3 sm:py-3.5 shadow-xl shadow-purple-500/5 focus-within:border-purple-600 focus-within:ring-4 focus-within:ring-purple-500/20 transition-all">
-              <Search className="text-purple-600 dark:text-purple-400 mr-3 sm:mr-4 shrink-0" size={20} />
+            <div className="relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 hover:border-emerald-500/60 dark:border-white/10 dark:hover:border-emerald-500/50 rounded-2xl sm:rounded-full px-4 sm:px-6 py-3 sm:py-3.5 shadow-sm focus-within:border-emerald-600 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+              <Search className="text-emerald-600 dark:text-emerald-400 mr-3 sm:mr-4 shrink-0" size={20} />
               <input
                 id="marketplace-search-field"
                 type="text"
@@ -1777,17 +1777,17 @@ export default function Home() {
         )}
 
         {/* ── Filters & Store Details Card ── */}
-        <div className="glass-panel bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 backdrop-blur-xl p-4 sm:p-5 mb-8 rounded-3xl shadow-lg flex flex-col gap-4">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-4 sm:p-5 mb-8 rounded-2xl shadow-sm flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 ফিল্টার ও বাছাই:
               </span>
             </div>
 
             <div className="flex flex-wrap sm:flex-nowrap gap-3">
               {/* Store select */}
-              <div className="relative flex-1 sm:flex-none bg-white/90 hover:bg-white border border-purple-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[220px] cursor-pointer transition-all shadow-sm hover:shadow-md">
+              <div className="relative flex-1 sm:flex-none bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200 hover:border-emerald-500/50 rounded-xl px-4 py-2.5 flex items-center justify-between min-w-[220px] cursor-pointer transition-all">
                 <select
                   value={activeShopFilter}
                   onChange={e => {
@@ -1802,14 +1802,14 @@ export default function Home() {
                     <option key={shopName} value={shopName}>{shopName}</option>
                   ))}
                 </select>
-                <span className="text-xs font-black text-purple-700 dark:text-purple-300 truncate pr-4">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate pr-4">
                   {activeShopFilter === 'All' ? `🌐 সব স্টোর (All Stores - ${curatedProducts.length})` : `🏪 ${activeShopFilter}`}
                 </span>
-                <span className="text-[10px] text-purple-400">▼</span>
+                <span className="text-[10px] text-slate-400">▼</span>
               </div>
 
               {/* Sort Options */}
-              <div className="relative flex-1 sm:flex-none bg-white/90 hover:bg-white border border-slate-200 hover:border-purple-400 rounded-2xl px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer transition-all shadow-sm hover:shadow-md">
+              <div className="relative flex-1 sm:flex-none bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200 hover:border-emerald-500/50 rounded-xl px-4 py-2.5 flex items-center justify-between min-w-[140px] cursor-pointer transition-all">
                 <select
                   value={sortOption}
                   onChange={e => setSortOption(e.target.value)}
@@ -1821,7 +1821,7 @@ export default function Home() {
                   <option value="name_desc">Name (Z→A)</option>
                   <option value="newest">New Arrivals</option>
                 </select>
-                <span className="text-xs font-bold text-slate-700 truncate pr-4">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate pr-4">
                   {sortOption === 'name_asc' ? 'Name (A→Z)' :
                    sortOption === 'price_asc' ? 'Price (Low→High)' :
                    sortOption === 'price_desc' ? 'Price (High→Low)' :
@@ -1834,8 +1834,8 @@ export default function Home() {
 
           {/* Compact categories row (Horizontal scroll) */}
           {activeShopFilter !== 'All' && (
-            <div className="flex gap-2 overflow-x-auto pb-0.5 mt-0.5 scrollbar-none items-center border-t border-black/5 pt-2">
-              <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest shrink-0">Categories:</span>
+            <div className="flex gap-2 overflow-x-auto pb-0.5 mt-0.5 scrollbar-none items-center border-t border-slate-100 dark:border-white/5 pt-2">
+              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 shrink-0">ক্যাটাগরি:</span>
               {availableCategories.map(cat => {
                 const isSelected = activeCategory === cat;
                 return (
@@ -1845,11 +1845,11 @@ export default function Home() {
                       setActiveCategory(cat);
                       setActiveSubcategory('');
                     }}
-                    className={`px-3 py-1 rounded-lg text-[10px] font-black transition-all shrink-0 cursor-pointer neo-button ${
-                      isSelected ? 'neo-button-active text-indigo-600 font-extrabold' : 'text-slate-500 hover:text-slate-700'
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                      isSelected ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
-                    {cat === 'All' ? 'All' : cat}
+                    {cat === 'All' ? 'সব' : cat}
                   </button>
                 );
               })}
@@ -1903,7 +1903,7 @@ export default function Home() {
                 return (
                   <div 
                     key={uniqueKey}
-                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-5 hover:border-purple-500/40 hover:shadow-xl dark:hover:shadow-[0_0_50px_rgba(139,92,246,0.1)] transition-all duration-500 flex flex-col justify-between cursor-pointer shadow-sm"
+                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-5 hover:border-emerald-500/50 hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer"
                     onClick={() => {
                       if (isCat) {
                         setActiveCategory(group.categoryName);
@@ -1923,18 +1923,18 @@ export default function Home() {
                         <div className="flex items-center gap-2.5 max-w-[85%]">
                           <div className="w-8 h-8 rounded-full border border-slate-200 dark:border-white/10 overflow-hidden bg-slate-100 dark:bg-white/5 shrink-0 flex items-center justify-center">
                             {isCat ? (
-                              <div className="w-full h-full flex items-center justify-center font-black text-purple-600 dark:text-purple-400 text-sm">📁</div>
+                              <div className="w-full h-full flex items-center justify-center font-bold text-emerald-600 dark:text-emerald-400 text-sm">📁</div>
                             ) : (
                               <img src={shopLogo} alt={group.shopName} className="w-full h-full object-cover" />
                             )}
                           </div>
-                          <h2 className="font-extrabold text-slate-900 dark:text-white text-sm tracking-tight truncate">{headerTitle}</h2>
+                          <h2 className="font-bold text-slate-900 dark:text-white text-sm tracking-tight truncate">{headerTitle}</h2>
                         </div>
                         <div className="flex items-center gap-2">
                           {!isCat && (
                             <button
                               onClick={(e) => handleCopyShopSectorLink(e, group.shopName)}
-                              className="p-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:bg-purple-100 dark:hover:bg-purple-600/30 text-slate-500 dark:text-white/60 hover:text-purple-600 dark:hover:text-purple-300 rounded-lg transition-all cursor-pointer flex items-center justify-center"
+                              className="p-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-slate-500 dark:text-white/60 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition-all cursor-pointer flex items-center justify-center"
                               title={`"${group.shopName}" স্টোরের লিংক কপি করুন`}
                             >
                               <Share2 size={12} />
@@ -1943,12 +1943,12 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* 2 Spacious Preview Cards (Resolves Density & Truncation Heuristics) */}
+                      {/* 2 Preview Items (No redundant inner card borders = Eliminates nested_cards) */}
                       <div className="grid grid-cols-2 gap-3">
                         {displayProducts.slice(0, 2).map(p => (
                           <div 
                             key={p.id}
-                            className="relative rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 group/item hover:border-purple-500/40 transition-all flex flex-col justify-between shadow-sm"
+                            className="relative rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-850 group/item transition-all flex flex-col justify-between"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedProduct(p);
@@ -1958,14 +1958,14 @@ export default function Home() {
                             <div className="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-950">
                               <img src={p.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'} alt={p.name} className="w-full h-full object-cover opacity-90 group-hover/item:opacity-100 group-hover/item:scale-105 transition-transform duration-500" />
                             </div>
-                            <div className="bg-white dark:bg-slate-950 p-2.5 text-xs border-t border-slate-100 dark:border-white/10 flex flex-col justify-between">
-                              <p className="font-bold text-slate-800 dark:text-slate-100 text-xs line-clamp-2 min-h-[32px]">{p.name}</p>
-                              <p className="font-black text-emerald-600 dark:text-emerald-400 mt-1 text-xs">৳ {Number(p.price).toLocaleString()}</p>
+                            <div className="p-2 text-xs flex flex-col justify-between">
+                              <p className="font-medium text-slate-800 dark:text-slate-100 text-xs line-clamp-2 min-h-[32px]">{p.name}</p>
+                              <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-1 text-xs">৳ {Number(p.price).toLocaleString()}</p>
                             </div>
                           </div>
                         ))}
                         {displayProducts.length < 2 && Array.from({ length: 2 - displayProducts.length }).map((_, idx) => (
-                          <div key={idx} className="aspect-square rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-dashed border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 text-xs font-bold">
+                          <div key={idx} className="aspect-square rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-dashed border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 text-xs font-bold">
                             Empty Slot
                           </div>
                         ))}
@@ -1973,9 +1973,9 @@ export default function Home() {
                     </div>
 
                     {/* Footer view link */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
-                      <span className="truncate">{isCat ? 'ক্যাটাগরি এক্সপ্লোর' : 'স্টোর এক্সপ্লোর'}</span>
-                      <span className="shrink-0 text-xs text-purple-700 dark:text-purple-300 font-bold bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800/40 px-2.5 py-0.5 rounded-lg transition-all">{group.products.length} টি পণ্য</span>
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs font-semibold text-emerald-700 dark:text-emerald-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-300 transition-colors">
+                      <span className="truncate">{isCat ? 'ক্যাটাগরি দেখুন' : 'স্টোর দেখুন'}</span>
+                      <span className="shrink-0 text-xs text-emerald-800 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-0.5 rounded-lg transition-all">{group.products.length} টি পণ্য</span>
                     </div>
                   </div>
                 );
@@ -2025,7 +2025,7 @@ export default function Home() {
                         setFilterMode('merchant');
                         setActiveShopFilter(group.shopName);
                       }}
-                      className="px-4 py-2 bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white dark:bg-purple-600/20 dark:hover:bg-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 rounded-xl text-xs font-black transition-all cursor-pointer"
+                      className="px-4 py-2 bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white dark:bg-emerald-950/40 dark:hover:bg-emerald-600 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-xs font-bold transition-all cursor-pointer"
                     >
                       স্টোর ভিজিট করুন →
                     </button>
@@ -2040,7 +2040,7 @@ export default function Home() {
                       return (
                         <div
                           key={product.id}
-                          className="group border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-purple-500/40 hover:shadow-xl dark:hover:shadow-purple-950/40 transition-all duration-300 flex flex-col justify-between bg-white dark:bg-slate-900 shadow-sm"
+                          className="group border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden hover:border-emerald-500/40 hover:shadow-md transition-all duration-300 flex flex-col justify-between bg-white dark:bg-slate-900 shadow-sm"
                         >
                           <div 
                             onClick={() => {
@@ -2052,10 +2052,10 @@ export default function Home() {
                             <img
                               src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
                               alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 opacity-95 group-hover:opacity-100"
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
                             />
                             {(product.shopSlug === 'daripallah-store' || product.shopSlug === 'webmaa-store') && (
-                              <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-[8px] font-black text-slate-950 uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
+                              <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-amber-500 text-[8px] font-bold text-slate-950 rounded-md shadow-sm flex items-center gap-1">
                                 👑 Primary Store
                               </span>
                             )}
@@ -2069,12 +2069,12 @@ export default function Home() {
                           <div className="p-3.5 flex-1 flex flex-col justify-between">
                             <div className="space-y-1 mb-3">
                               <div className="flex justify-between items-center gap-2">
-                                <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
+                                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 truncate max-w-[80px]">{product.category || 'General'}</span>
                                 <a 
                                   href={storeLinkOfProduct} 
                                   target="_blank" 
                                   rel="noreferrer" 
-                                  className="text-[9px] font-black text-slate-500 hover:text-purple-600 dark:text-slate-400 dark:hover:text-purple-300 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                                  className="text-[10px] font-medium text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-300 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
                                 >
                                   🏪 {product.shopName} <ArrowUpRight size={8} />
                                 </a>
@@ -2084,7 +2084,7 @@ export default function Home() {
                                   setSelectedProduct(product);
                                   setCustomizationNote('');
                                 }}
-                                className="font-extrabold text-slate-900 dark:text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-purple-600 dark:hover:text-purple-300 transition-colors"
+                                className="font-bold text-slate-900 dark:text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors"
                               >
                                 {product.name}
                               </h3>
@@ -2097,13 +2097,13 @@ export default function Home() {
                               </div>
 
                               {product.stock === 0 ? (
-                                <div className="w-full py-2 rounded-xl font-black text-[9px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
+                                <div className="w-full py-2 rounded-xl font-bold text-[9px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
                                   🚫 স্টক শেষ (Out of Stock)
                                 </div>
                               ) : (
                                 cartItem ? (
-                                  <div className="flex items-center justify-between bg-purple-50 dark:bg-purple-950/80 rounded-xl p-1 border border-purple-200 dark:border-purple-500/40">
-                                    <button onClick={() => updateCartQty(product.id, -1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-500 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                  <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 rounded-xl p-1 border border-emerald-200 dark:border-emerald-800/40">
+                                    <button onClick={() => updateCartQty(product.id, -1)} className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center text-white hover:bg-emerald-500 transition-colors shadow-sm font-bold shrink-0 cursor-pointer">
                                       <Minus size={11} strokeWidth={2.5} />
                                     </button>
                                     <input
@@ -2112,18 +2112,18 @@ export default function Home() {
                                       step="any"
                                       value={cartItem.quantity}
                                       onChange={e => setCartQtyDirect(product.id, e.target.value)}
-                                      className="font-mono tabular-nums font-black text-slate-900 dark:text-white text-xs w-full text-center bg-transparent outline-none border-none"
+                                      className="font-mono tabular-nums font-bold text-slate-900 dark:text-white text-xs w-full text-center bg-transparent outline-none border-none"
                                     />
-                                    <button onClick={() => updateCartQty(product.id, 1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-500 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                                    <button onClick={() => updateCartQty(product.id, 1)} className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center text-white hover:bg-emerald-500 transition-colors shadow-sm font-bold shrink-0 cursor-pointer">
                                       <Plus size={11} strokeWidth={2.5} />
                                     </button>
                                   </div>
                                 ) : (
                                   <button
                                     onClick={() => handleAddToCart(product)}
-                                    className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95"
+                                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
                                   >
-                                    <ShoppingCart size={12} /> Add to Cart
+                                    <ShoppingCart size={13} /> Add to Cart
                                   </button>
                                 )
                               )}
@@ -2158,7 +2158,7 @@ export default function Home() {
                 return (
                   <div
                     key={product.id}
-                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden hover:border-purple-500/40 hover:shadow-xl dark:hover:shadow-[0_0_50px_rgba(139,92,246,0.08)] transition-all duration-500 flex flex-col justify-between shadow-sm"
+                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden hover:border-emerald-500/40 hover:shadow-md transition-all duration-300 flex flex-col justify-between shadow-sm"
                   >
                     <div 
                       onClick={() => {
@@ -2173,7 +2173,7 @@ export default function Home() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
                       />
                       {(product.shopSlug === 'daripallah-store' || product.shopSlug === 'webmaa-store') && (
-                        <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500/95 text-[8px] font-black text-black uppercase tracking-wider rounded-md shadow-md flex items-center gap-1">
+                        <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-500 text-[8px] font-bold text-black rounded-md shadow-sm flex items-center gap-1">
                           👑 Primary Store
                         </span>
                       )}
@@ -2182,12 +2182,12 @@ export default function Home() {
                     <div className="p-3.5 flex-1 flex flex-col justify-between">
                       <div className="space-y-1 mb-3">
                         <div className="flex justify-between items-center gap-2">
-                          <span className="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest truncate max-w-[80px]">{product.category || 'General'}</span>
+                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 truncate max-w-[80px]">{product.category || 'General'}</span>
                           <a 
                             href={storeLink} 
                             target="_blank" 
                             rel="noreferrer" 
-                            className="text-[9px] font-black text-slate-500 hover:text-purple-600 dark:text-white/40 dark:hover:text-purple-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
+                            className="text-[10px] font-medium text-slate-500 hover:text-emerald-600 dark:text-white/60 dark:hover:text-emerald-400 truncate max-w-[100px] transition-colors flex items-center gap-0.5"
                           >
                             🏪 {product.shopName} <ArrowUpRight size={8} />
                           </a>
@@ -2197,26 +2197,26 @@ export default function Home() {
                             setSelectedProduct(product);
                             setCustomizationNote('');
                           }}
-                          className="font-extrabold text-slate-900 dark:text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                          className="font-bold text-slate-900 dark:text-white text-xs tracking-tight leading-tight line-clamp-2 min-h-[2.2rem] cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                         >
                           {product.name}
                         </h3>
                       </div>
 
-                      <div className="space-y-2.5 pt-2.5 border-t border-slate-100 dark:border-white/5">
+                      <div className="space-y-2.5 pt-2.5 border-t border-slate-100 dark:border-white/10">
                         <div className="flex justify-between items-center">
                           <span className="text-slate-500 dark:text-slate-400 text-[9px] font-bold">দাম (Price)</span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-mono tabular-nums font-black text-sm">৳ {Number(product.price).toLocaleString()}</span>
                         </div>
 
                         {product.stock === 0 ? (
-                          <div className="w-full py-2 rounded-xl font-black text-[9px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
+                          <div className="w-full py-2 rounded-xl font-bold text-[9px] bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center justify-center gap-1 cursor-not-allowed">
                             🚫 স্টক শেষ (Stock Out)
                           </div>
                         ) : (
                           cartItem ? (
-                            <div className="flex items-center justify-between bg-purple-50 dark:bg-purple-900/40 rounded-xl p-1 border border-purple-200 dark:border-purple-500/30">
-                              <button onClick={() => updateCartQty(product.id, -1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                            <div className="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/40 rounded-xl p-1 border border-emerald-200 dark:border-emerald-800/40">
+                              <button onClick={() => updateCartQty(product.id, -1)} className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center text-white hover:bg-emerald-500 transition-colors shadow-sm font-bold shrink-0 cursor-pointer">
                                 <Minus size={11} strokeWidth={2.5} />
                               </button>
                               <input
@@ -2225,18 +2225,18 @@ export default function Home() {
                                 step="any"
                                 value={cartItem.quantity}
                                 onChange={e => setCartQtyDirect(product.id, e.target.value)}
-                                className="font-mono tabular-nums font-black text-slate-900 dark:text-white text-xs w-full text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                className="font-mono tabular-nums font-bold text-slate-900 dark:text-white text-xs w-full text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
-                              <button onClick={() => updateCartQty(product.id, 1)} className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0 cursor-pointer">
+                              <button onClick={() => updateCartQty(product.id, 1)} className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center text-white hover:bg-emerald-500 transition-colors shadow-sm font-bold shrink-0 cursor-pointer">
                                 <Plus size={11} strokeWidth={2.5} />
                               </button>
                             </div>
                           ) : (
                             <button
                               onClick={() => handleAddToCart(product)}
-                              className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95"
+                              className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
                             >
-                              <ShoppingCart size={12} /> Add to Cart
+                              <ShoppingCart size={13} /> Add to Cart
                             </button>
                           )
                         )}
@@ -2259,13 +2259,13 @@ export default function Home() {
               })}
             </div>
 
-            {/* Glassmorphic Numbered Pagination Controls */}
+            {/* Pagination Controls */}
             {Math.ceil(filteredProducts.length / itemsPerPage) > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-12 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl p-3 w-max mx-auto shadow-md animate-fade-in">
+              <div className="flex justify-center items-center gap-2 mt-12 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-3 w-max mx-auto shadow-sm">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-slate-200 dark:border-white/5"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-slate-200 dark:border-white/5"
                 >
                   Prev
                 </button>
@@ -2276,9 +2276,9 @@ export default function Home() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-xl text-xs font-black transition-all flex items-center justify-center cursor-pointer border ${
+                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all flex items-center justify-center cursor-pointer border ${
                         isActive
-                          ? 'bg-purple-600 border-purple-500 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]'
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
                           : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-700 dark:text-white/60 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
@@ -2290,7 +2290,7 @@ export default function Home() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredProducts.length / itemsPerPage), prev + 1))}
                   disabled={currentPage === Math.ceil(filteredProducts.length / itemsPerPage)}
-                  className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-slate-200 dark:border-white/5"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-white/50 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer border border-slate-200 dark:border-white/5"
                 >
                   Next
                 </button>
@@ -2528,13 +2528,13 @@ export default function Home() {
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
                 <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 object-contain" alt="BD Retailers" />
               ) : (
-                <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black text-xs">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
                   BD
                 </div>
               )}
               <div>
-                <h2 className="text-sm font-black text-slate-950 dark:text-white leading-tight">BD Retailers</h2>
-                <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold">Verified Stores • Store Maker</p>
+                <h2 className="text-sm font-bold text-slate-950 dark:text-white leading-tight">BD Retailers</h2>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Verified Stores • Store Maker</p>
               </div>
             </div>
             <button 
@@ -2547,15 +2547,15 @@ export default function Home() {
           </div>
 
           {/* User Status Bar */}
-          <div className="p-3.5 bg-purple-50/70 dark:bg-purple-950/30 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <div className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border-b border-slate-200 dark:border-slate-800 shrink-0">
             {user ? (
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                     {user.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : (user.displayName?.[0] || 'U')}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-black text-slate-900 dark:text-white truncate">{user.displayName || 'সম্মানিত ইউজার'}</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.displayName || 'সম্মানিত ইউজার'}</p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
                   </div>
                 </div>
@@ -2564,7 +2564,7 @@ export default function Home() {
                     <Link
                       href={getDashboardHref()}
                       onClick={() => setIsStoresMenuOpen(false)}
-                      className="px-2.5 py-1 bg-purple-600 text-white text-[10px] font-black rounded-lg shadow-xs flex items-center gap-1"
+                      className="px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-lg shadow-xs flex items-center gap-1"
                     >
                       <LayoutDashboard size={12} />
                       <span>ড্যাশবোর্ড</span>
@@ -2589,7 +2589,7 @@ export default function Home() {
                   handleSmartLogin();
                 }}
                 disabled={loggingIn}
-                className="w-full py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <LogIn size={14} />
                 <span>{loggingIn ? 'লগইন হচ্ছে...' : 'লগইন করুন (Google Sign In)'}</span>
@@ -2694,9 +2694,9 @@ export default function Home() {
                 setIsStoresMenuOpen(false);
                 setIsAboutModalOpen(true);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors text-left cursor-pointer border border-purple-200 dark:border-purple-800/60"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors text-left cursor-pointer border border-emerald-200 dark:border-emerald-800/60"
             >
-              <Store size={16} className="text-purple-600 shrink-0" />
+              <Store size={16} className="text-emerald-600 shrink-0" />
               <span>বিডি রিটেইলার্স সম্পর্কে (About Us)</span>
             </button>
 
@@ -2712,7 +2712,7 @@ export default function Home() {
 
             {/* Expandable Stores Section */}
             <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-              <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <div className="px-3 py-1 text-[10px] font-bold text-slate-500 dark:text-slate-400">
                 ভেরিফাইড স্টোরসমূহ:
               </div>
 
@@ -2726,7 +2726,7 @@ export default function Home() {
                 }}
                 className={`w-full text-left px-3 py-2 rounded-xl font-bold text-xs transition-all ${
                   activeShopFilter === 'All'
-                    ? 'bg-purple-600 text-white shadow-sm'
+                    ? 'bg-emerald-600 text-white shadow-sm'
                     : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
@@ -2752,7 +2752,7 @@ export default function Home() {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                         isShopActive
-                          ? 'bg-purple-600 text-white shadow-sm'
+                          ? 'bg-emerald-600 text-white shadow-sm'
                           : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}
                     >
@@ -2760,7 +2760,7 @@ export default function Home() {
                         {shop.logoUrl ? (
                           <img src={shop.logoUrl} className="w-5 h-5 rounded-md object-contain border border-slate-200 bg-white" alt="" />
                         ) : (
-                          <div className="w-5 h-5 rounded-md bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 flex items-center justify-center text-[10px] font-bold">
+                          <div className="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-[10px] font-bold">
                             {shop.shopName?.[0]}
                           </div>
                         )}
@@ -2772,7 +2772,7 @@ export default function Home() {
                     </button>
 
                     {isShopActive && shopCats.length > 0 && (
-                      <div className="pl-3 space-y-0.5 border-l-2 border-purple-500 ml-3 py-1">
+                      <div className="pl-3 space-y-0.5 border-l-2 border-emerald-500 ml-3 py-1">
                         <button
                           onClick={() => {
                             setActiveCategory('All');
@@ -2781,7 +2781,7 @@ export default function Home() {
                             document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
                           }}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                            activeCategory === 'All' ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            activeCategory === 'All' ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
                           }`}
                         >
                           সব ক্যাটাগরি
@@ -2796,7 +2796,7 @@ export default function Home() {
                               document.getElementById('marketplace')?.scrollIntoView({ behavior: 'smooth' });
                             }}
                             className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                              activeCategory === cat ? 'bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                              activeCategory === cat ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
                             }`}
                           >
                             {cat}
@@ -2814,7 +2814,7 @@ export default function Home() {
               <Link
                 href="/privacy-policy"
                 onClick={() => setIsStoresMenuOpen(false)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-purple-600 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors text-left"
               >
                 <ShieldCheck size={14} />
                 <span>গোপনীয়তা নীতি (Privacy Policy)</span>
@@ -2822,7 +2822,7 @@ export default function Home() {
               <Link
                 href="/terms"
                 onClick={() => setIsStoresMenuOpen(false)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-purple-600 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-600 transition-colors text-left"
               >
                 <Store size={14} />
                 <span>ব্যবহারের শর্তাবলী (Terms of Service)</span>
@@ -2839,7 +2839,7 @@ export default function Home() {
                   setIsStoresMenuOpen(false);
                   handleAppDownload();
                 }}
-                className="px-2.5 py-1 rounded-lg bg-purple-600 text-white text-[10px] font-black flex items-center gap-1"
+                className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-bold flex items-center gap-1"
               >
                 <Download size={11} /> App Install
               </button>
@@ -2979,12 +2979,12 @@ export default function Home() {
             {/* Header */}
             <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-white shadow-sm">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
-                  <ShoppingCart size={20} className="animate-pulse" />
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
+                  <ShoppingCart size={20} />
                 </div>
                 <div>
-                  <h3 className="font-black text-lg text-slate-900 tracking-tight">Shopping Cart</h3>
-                  <p className="text-[10px] font-black text-purple-700 uppercase tracking-widest">{cartItemCount} Products Selected</p>
+                  <h3 className="font-bold text-lg text-slate-900 tracking-tight">Shopping Cart</h3>
+                  <p className="text-xs font-semibold text-emerald-700">{cartItemCount} Products Selected</p>
                 </div>
               </div>
               <button onClick={() => setIsCartOpen(false)} className="p-2.5 hover:bg-slate-100 rounded-xl transition-all cursor-pointer text-slate-500 hover:text-slate-800 border border-slate-200">
@@ -2999,38 +2999,38 @@ export default function Home() {
                   <div className="w-20 h-20 mx-auto rounded-3xl bg-slate-100 flex items-center justify-center text-slate-300">
                     <ShoppingCart size={40} />
                   </div>
-                  <p className="text-slate-500 font-black uppercase tracking-wider text-xs">আপনার কার্ট খালি আছে (Your cart is empty)</p>
+                  <p className="text-slate-500 font-bold text-xs">আপনার কার্ট খালি আছে (Your cart is empty)</p>
                 </div>
               ) : (
                 <div className="space-y-6">
                   {/* 1. Primary Daripallah Store Section */}
                   {daripallahStoreItems.length > 0 && (
-                    <div className="bg-white border-2 border-purple-200 rounded-3xl p-4 space-y-3 shadow-sm">
-                      <div className="flex items-center justify-between pb-2 border-b border-purple-100">
-                        <p className="text-[11px] font-black text-purple-700 uppercase tracking-widest flex items-center gap-1.5">
+                    <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                           👑 {globalConfig?.brandName || 'BDRetailers'} Store Products
                         </p>
-                        <span className="text-[10px] font-extrabold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">{daripallahStoreItems.length} আইটেম</span>
+                        <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">{daripallahStoreItems.length} আইটেম</span>
                       </div>
-                      <div className="space-y-3 divide-y divide-purple-100">
+                      <div className="space-y-3 divide-y divide-slate-100">
                         {daripallahStoreItems.map(item => (
                           <div key={item.id} className="flex gap-3 pt-3 first:pt-0 items-center">
                             <img src={item.imageUrl} className="w-14 h-14 object-contain bg-slate-50 rounded-xl border border-slate-200 shrink-0 p-1" />
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-xs font-black text-slate-900 truncate leading-snug">{item.name}</h4>
-                              <p className="text-xs text-purple-700 font-extrabold mt-0.5">৳ {item.price.toLocaleString()} x {item.quantity}</p>
+                              <h4 className="text-xs font-bold text-slate-900 truncate leading-snug">{item.name}</h4>
+                              <p className="text-xs text-emerald-700 font-bold mt-0.5">৳ {item.price.toLocaleString()} x {item.quantity}</p>
                               
                               <div className="flex items-center gap-2 mt-2">
-                                <button onClick={() => updateCartQty(item.productId, -1)} className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-purple-100 rounded-lg border border-slate-300 text-slate-700 hover:text-purple-700 transition-colors shrink-0 cursor-pointer font-bold"><Minus size={12} strokeWidth={2.5} /></button>
+                                <button onClick={() => updateCartQty(item.productId, -1)} className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-emerald-50 rounded-lg border border-slate-300 text-slate-700 hover:text-emerald-700 transition-colors shrink-0 cursor-pointer font-bold"><Minus size={12} strokeWidth={2.5} /></button>
                                 <input 
                                   type="number" 
                                   min="1" 
                                   value={item.quantity} 
                                   onChange={(e) => setCartQtyDirect(item.productId, e.target.value)} 
-                                  className="w-12 bg-white border border-slate-300 rounded-lg py-0.5 text-center text-xs font-black focus:outline-none focus:border-purple-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 shrink-0 shadow-inner" 
+                                  className="w-12 bg-white border border-slate-300 rounded-lg py-0.5 text-center text-xs font-bold focus:outline-none focus:border-emerald-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 shrink-0 shadow-inner" 
                                 />
-                                <button onClick={() => updateCartQty(item.productId, 1)} className="w-7 h-7 flex items-center justify-center bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors shrink-0 cursor-pointer font-bold"><Plus size={12} strokeWidth={2.5} /></button>
-                                <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"><Trash2 size={11} /> remove</button>
+                                <button onClick={() => updateCartQty(item.productId, 1)} className="w-7 h-7 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white transition-colors shrink-0 cursor-pointer font-bold"><Plus size={12} strokeWidth={2.5} /></button>
+                                <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-bold text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"><Trash2 size={11} /> remove</button>
                               </div>
                             </div>
                           </div>
@@ -3043,32 +3043,32 @@ export default function Home() {
                   {Object.entries(thirdPartyItemsByShop).map(([shopId, shopData]) => {
                     const shopCheckoutUrl = getStoreLink(shopData.shopSlug, shopData.customDomain, shopData.domainStatus);
                     return (
-                      <div key={shopId} className="bg-white border border-slate-200 rounded-3xl p-4 space-y-3 shadow-sm">
+                      <div key={shopId} className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                          <p className="text-[11px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                             🏪 {shopData.shopName}
                           </p>
-                          <span className="text-[10px] font-extrabold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">{shopData.items.length} আইটেম</span>
+                          <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">{shopData.items.length} আইটেম</span>
                         </div>
                         <div className="space-y-3 divide-y divide-slate-100">
                           {shopData.items.map(item => (
                             <div key={item.id} className="flex gap-3 pt-3 first:pt-0 items-center">
                               <img src={item.imageUrl} className="w-14 h-14 object-contain bg-slate-50 rounded-xl border border-slate-200 shrink-0 p-1" />
                               <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-black text-slate-900 truncate leading-snug">{item.name}</h4>
-                                <p className="text-xs text-purple-700 font-extrabold mt-0.5">৳ {item.price.toLocaleString()} x {item.quantity}</p>
+                                <h4 className="text-xs font-bold text-slate-900 truncate leading-snug">{item.name}</h4>
+                                <p className="text-xs text-emerald-700 font-bold mt-0.5">৳ {item.price.toLocaleString()} x {item.quantity}</p>
                                 
                                 <div className="flex items-center gap-2 mt-2">
-                                  <button onClick={() => updateCartQty(item.productId, -1)} className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-purple-100 rounded-lg border border-slate-300 text-slate-700 hover:text-purple-700 transition-colors shrink-0 cursor-pointer font-bold"><Minus size={12} strokeWidth={2.5} /></button>
+                                  <button onClick={() => updateCartQty(item.productId, -1)} className="w-7 h-7 flex items-center justify-center bg-slate-100 hover:bg-emerald-50 rounded-lg border border-slate-300 text-slate-700 hover:text-emerald-700 transition-colors shrink-0 cursor-pointer font-bold"><Minus size={12} strokeWidth={2.5} /></button>
                                   <input 
                                     type="number" 
                                     min="1" 
                                     value={item.quantity} 
                                     onChange={(e) => setCartQtyDirect(item.productId, e.target.value)} 
-                                    className="w-12 bg-white border border-slate-300 rounded-lg py-0.5 text-center text-xs font-black focus:outline-none focus:border-purple-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 shrink-0 shadow-inner" 
+                                    className="w-12 bg-white border border-slate-300 rounded-lg py-0.5 text-center text-xs font-bold focus:outline-none focus:border-emerald-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none text-slate-900 shrink-0 shadow-inner" 
                                   />
-                                  <button onClick={() => updateCartQty(item.productId, 1)} className="w-7 h-7 flex items-center justify-center bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors shrink-0 cursor-pointer font-bold"><Plus size={12} strokeWidth={2.5} /></button>
-                                  <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-black text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"><Trash2 size={11} /> remove</button>
+                                  <button onClick={() => updateCartQty(item.productId, 1)} className="w-7 h-7 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white transition-colors shrink-0 cursor-pointer font-bold"><Plus size={12} strokeWidth={2.5} /></button>
+                                  <button onClick={() => removeFromCart(item.productId)} className="ml-auto text-[10px] font-bold text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded-md transition-colors"><Trash2 size={11} /> remove</button>
                                 </div>
                               </div>
                             </div>
@@ -3078,11 +3078,11 @@ export default function Home() {
                         <div className="pt-2">
                           <button
                             onClick={() => handleCheckoutThirdParty(shopData, shopCheckoutUrl)}
-                            className="w-full py-3 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-purple-500/20 active:scale-95 transition-all text-center cursor-pointer"
+                            className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all text-center cursor-pointer"
                           >
                             Checkout at {shopData.shopName} (৳ {shopData.items.reduce((t, i) => t + i.price * i.quantity, 0).toLocaleString()})
                           </button>
-                          <p className="text-[9px] text-center text-slate-500 font-bold mt-1.5">অন্যান্য স্টোরের চেকআউট ঐ স্টোরে গিয়ে করতে হবে</p>
+                          <p className="text-[9px] text-center text-slate-500 font-medium mt-1.5">অন্যান্য স্টোরের চেকআউট ঐ স্টোরে গিয়ে করতে হবে</p>
                         </div>
                       </div>
                     );
@@ -3141,7 +3141,7 @@ export default function Home() {
             {/* Header */}
             <div className="p-6 border-b border-slate-200 bg-white flex flex-col relative overflow-hidden shadow-sm">
               <div className="flex justify-between items-start mb-4 relative z-10">
-                <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-purple-200 bg-purple-100 flex items-center justify-center font-black text-2xl text-purple-700 shadow-sm">
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 bg-emerald-50 flex items-center justify-center font-bold text-2xl text-emerald-700 shadow-sm">
                   {user?.photoURL ? <img src={user.photoURL} alt="" className="w-full h-full object-cover" /> : user?.displayName?.[0] || 'U'}
                 </div>
                 <div className="flex items-center gap-2">
@@ -3149,7 +3149,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setShowLogoutConfirm(true)}
-                      className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer border border-red-200 active:scale-95"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer border border-red-200 active:scale-95"
                       title="লগআউট নিশ্চিতকরণ"
                     >
                       <LogOut size={14} />
@@ -3159,18 +3159,18 @@ export default function Home() {
                   <button onClick={() => setIsProfileOpen(false)} className="bg-slate-100 hover:bg-slate-200 p-2.5 rounded-xl border border-slate-200 text-slate-600 transition-colors cursor-pointer shrink-0"><X size={16} strokeWidth={2.5} /></button>
                 </div>
               </div>
-              <h3 className="text-xl font-black relative z-10 text-slate-900">{user?.displayName || 'সম্মানিত কাস্টমার'}</h3>
-              <p className="text-xs text-slate-500 font-bold relative z-10 mt-0.5">{user?.email}</p>
+              <h3 className="text-xl font-bold relative z-10 text-slate-900">{user?.displayName || 'সম্মানিত কাস্টমার'}</h3>
+              <p className="text-xs text-slate-500 font-medium relative z-10 mt-0.5">{user?.email}</p>
             </div>
 
             {/* Scrollable Content */}
             <div className="flex-1 p-6 space-y-6 overflow-y-auto min-h-0">
               {getDashboardHref() && (
-                <div className="p-1 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-purple-500/10 rounded-2xl border border-purple-200">
+                <div className="p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
                   <Link
                     href={getDashboardHref()}
                     onClick={() => setIsProfileOpen(false)}
-                    className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-800 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-between shadow-md shadow-purple-500/20 active:scale-98 transition-all"
+                    className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-between shadow-sm active:scale-98 transition-all"
                   >
                     <span className="flex items-center gap-2">
                       <LayoutDashboard size={16} />
@@ -3186,20 +3186,20 @@ export default function Home() {
               )}
 
               <div className="border-b border-slate-200 pb-2 flex items-center justify-between">
-                <h4 className="text-xs font-black uppercase tracking-widest text-purple-700">আমার সকল অর্ডার ইতিহাস</h4>
+                <h4 className="text-xs font-bold text-slate-800">আমার সকল অর্ডার ইতিহাস</h4>
                 <span className="text-[10px] text-slate-600 font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-xs">{userOrders.length} Orders</span>
               </div>
               
               <div className="space-y-4">
                 {loadingOrders ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
-                    <Loader2 className="animate-spin text-purple-600" size={24} />
-                    <p className="text-[10px] font-black uppercase tracking-widest">অর্ডার লোড হচ্ছে...</p>
+                    <Loader2 className="animate-spin text-emerald-600" size={24} />
+                    <p className="text-[10px] font-bold">অর্ডার লোড হচ্ছে...</p>
                   </div>
                 ) : userOrders.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200">
+                  <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200">
                     <ShoppingBag size={32} className="mx-auto text-slate-300 mb-2" />
-                    <p className="text-xs font-bold text-slate-500">কোনো অর্ডার ইতিহাস পাওয়া যায়নি</p>
+                    <p className="text-xs font-medium text-slate-500">কোনো অর্ডার ইতিহাস পাওয়া যায়নি</p>
                   </div>
                 ) : userOrders.map(order => {
                   const viewLink = order.customDomain && order.domainStatus === 'connected'
@@ -3207,21 +3207,21 @@ export default function Home() {
                     : `/shop/${order.shopSlug}/order/${order.id}`;
                     
                   return (
-                    <div key={order.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden hover:border-purple-300 transition-colors group shadow-sm">
+                    <div key={order.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-emerald-300 transition-colors group shadow-sm">
                       <div className="p-4 bg-white">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-[9px] font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
-                          <span className={`text-[9px] font-black px-2 py-0.5 rounded border ${order.status === 'completed' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : order.status === 'cancelled' ? 'text-red-700 bg-red-50 border-red-200' : 'text-amber-700 bg-amber-50 border-amber-200'}`}>{order.status || 'Pending'}</span>
+                          <span className="text-[9px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${order.status === 'completed' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : order.status === 'cancelled' ? 'text-red-700 bg-red-50 border-red-200' : 'text-amber-700 bg-amber-50 border-amber-200'}`}>{order.status || 'Pending'}</span>
                         </div>
-                        <p className="text-xs text-slate-500 font-bold truncate">শপ: <span className="text-slate-900 font-black">{order.shopName}</span></p>
-                        <p className="font-extrabold text-slate-900 text-sm mt-1">{order.items?.length || 0} Items <span className="text-purple-700 font-black">(৳{order.total?.toLocaleString()})</span></p>
+                        <p className="text-xs text-slate-500 font-medium truncate">শপ: <span className="text-slate-900 font-bold">{order.shopName}</span></p>
+                        <p className="font-bold text-slate-900 text-sm mt-1">{order.items?.length || 0} Items <span className="text-emerald-700 font-bold">(৳{order.total?.toLocaleString()})</span></p>
                       </div>
                       <div className="border-t border-slate-100 bg-slate-50">
                         <a 
                           href={viewLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="w-full py-2.5 text-[10px] font-black text-slate-700 hover:text-purple-700 hover:bg-purple-50 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                          className="w-full py-2.5 text-[10px] font-bold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Package size={11} /> মেমো দেখুন (View Invoice)
                         </a>
@@ -3447,7 +3447,7 @@ function LandingProductDetailModal({ product, onClose, cart, setCart }) {
 
         {loadingShop ? (
           <div className="py-20 flex items-center justify-center">
-            <Loader2 className="animate-spin text-purple-600" size={40} />
+            <Loader2 className="animate-spin text-emerald-600" size={40} />
           </div>
         ) : (
           <LandingProductDetailInner 

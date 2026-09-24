@@ -319,19 +319,19 @@ Rules:
       }`}>
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white p-3.5 sm:p-4 flex justify-between items-center border-b border-purple-600/50 shrink-0">
+        <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-950 text-white p-3.5 sm:p-4 flex justify-between items-center border-b border-emerald-900/50 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center text-white shadow-xs shrink-0">
               <Bot size={20} className="stroke-[2.5]" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="font-black text-sm tracking-tight leading-tight">
+                <h3 className="font-bold text-sm tracking-tight leading-tight">
                   {mainShopData?.aiConfig?.botName || 'BDRetailers AI Assistant'}
                 </h3>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               </div>
-              <p className="text-[10px] text-purple-200 font-bold tracking-wide">স্মার্ট মার্কেটপ্লেস সহকারী • লাইভ হিস্ট্রি</p>
+              <p className="text-[10px] text-emerald-300 font-medium tracking-wide">স্মার্ট মার্কেটপ্লেস সহকারী • লাইভ হিস্ট্রি</p>
             </div>
           </div>
 
@@ -340,7 +340,7 @@ Rules:
             <button
               onClick={() => setShowHistoryDrawer(!showHistoryDrawer)}
               className={`p-2 rounded-xl transition-colors text-xs font-bold flex items-center gap-1 cursor-pointer ${
-                showHistoryDrawer ? 'bg-white/30 text-white' : 'hover:bg-white/20 text-purple-100'
+                showHistoryDrawer ? 'bg-white/30 text-white' : 'hover:bg-white/20 text-emerald-100'
               }`}
               title="চ্যাট হিস্ট্রি দেখুন"
             >
@@ -351,7 +351,7 @@ Rules:
             {/* New Chat Button */}
             <button
               onClick={startNewSession}
-              className="p-2 rounded-xl hover:bg-white/20 text-purple-100 transition-colors cursor-pointer"
+              className="p-2 rounded-xl hover:bg-white/20 text-emerald-100 transition-colors cursor-pointer"
               title="নতুন চ্যাট শুরু করুন"
             >
               <Plus size={17} strokeWidth={2.5} />
@@ -360,7 +360,7 @@ Rules:
             {/* Fullscreen Toggle */}
             <button
               onClick={() => setIsFullScreen(!isFullScreen)}
-              className="hidden sm:block p-2 rounded-xl hover:bg-white/20 text-purple-100 transition-colors cursor-pointer"
+              className="hidden sm:block p-2 rounded-xl hover:bg-white/20 text-emerald-100 transition-colors cursor-pointer"
               title={isFullScreen ? 'ছোট করুন' : 'বড় করুন'}
             >
               {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -369,7 +369,7 @@ Rules:
             {/* Close Button */}
             <button 
               onClick={onClose} 
-              className="hover:bg-white/20 p-2 rounded-xl text-purple-100 hover:text-white transition-colors cursor-pointer"
+              className="hover:bg-white/20 p-2 rounded-xl text-emerald-100 hover:text-white transition-colors cursor-pointer"
               title="বন্ধ করুন"
             >
               <X size={19} strokeWidth={2.5} />
@@ -385,8 +385,8 @@ Rules:
             showHistoryDrawer ? 'translate-x-0' : '-translate-x-full'
           }`}>
             <div className="p-3.5 border-b border-slate-200 flex items-center justify-between bg-white">
-              <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
-                <MessageSquare size={14} className="text-purple-600" />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <MessageSquare size={14} className="text-emerald-600" />
                 <span>সংরক্ষিত চ্যাটসমূহ ({sessions.length})</span>
               </div>
               <button 
@@ -400,7 +400,7 @@ Rules:
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               <button
                 onClick={startNewSession}
-                className="w-full py-2.5 px-3 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-purple-200 cursor-pointer mb-2"
+                className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors border border-emerald-200 cursor-pointer mb-2"
               >
                 <Plus size={14} />
                 <span>নতুন কথোপকথন শুরু করুন</span>
@@ -414,20 +414,20 @@ Rules:
                     onClick={() => handleSwitchSession(s)}
                     className={`group w-full p-2.5 rounded-xl text-xs font-bold flex items-center justify-between gap-2 cursor-pointer transition-all ${
                       isActive 
-                        ? 'bg-purple-600 text-white shadow-xs' 
+                        ? 'bg-emerald-600 text-white shadow-xs' 
                         : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/80'
                     }`}
                   >
                     <div className="truncate min-w-0">
                       <p className="truncate text-xs">{s.title || 'কথোপকথন'}</p>
-                      <p className={`text-[9px] ${isActive ? 'text-purple-200' : 'text-slate-400'}`}>
+                      <p className={`text-[9px] ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>
                         {new Date(s.createdAt).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' })} • {s.messages?.length || 0} মেসেজ
                       </p>
                     </div>
                     <button
                       onClick={(e) => handleDeleteSession(e, s.id)}
                       className={`p-1 rounded-lg transition-colors cursor-pointer shrink-0 ${
-                        isActive ? 'text-purple-200 hover:bg-purple-700' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
+                        isActive ? 'text-emerald-100 hover:bg-emerald-700' : 'text-slate-400 hover:text-red-500 hover:bg-red-50'
                       }`}
                       title="মুছুন"
                     >
@@ -464,10 +464,10 @@ Rules:
                       <button
                         key={p.id}
                         onClick={() => sendMessage(p.text)}
-                        className="p-2 rounded-xl bg-white border border-purple-100 hover:border-purple-300 hover:bg-purple-50/60 text-slate-700 hover:text-purple-700 text-left text-xs font-bold transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer"
+                        className="p-2 rounded-xl bg-white border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/60 text-slate-700 hover:text-emerald-700 text-left text-xs font-bold transition-all shadow-2xs flex items-center justify-between gap-2 cursor-pointer"
                       >
                         <span className="truncate">{p.label}</span>
-                        <ArrowRight size={12} className="text-purple-400 shrink-0" />
+                        <ArrowRight size={12} className="text-emerald-500 shrink-0" />
                       </button>
                     ))}
                   </div>
@@ -483,14 +483,14 @@ Rules:
                   <div key={msg.id} className={`flex flex-col gap-1.5 max-w-[88%] ${isUser ? 'self-end' : 'self-start'}`}>
                     <div className={`group relative p-3 sm:p-3.5 rounded-2xl text-xs sm:text-sm font-medium leading-relaxed shadow-xs ${
                       isUser 
-                        ? 'bg-purple-600 text-white rounded-tr-none' 
+                        ? 'bg-emerald-600 text-white rounded-tr-none' 
                         : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
                     }`}>
                       {/* Copy message button */}
                       <button
                         onClick={() => handleCopyMessage(msg.id, msg.text)}
                         className={`absolute top-2 right-2 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${
-                          isUser ? 'hover:bg-purple-700 text-purple-200' : 'hover:bg-slate-100 text-slate-400'
+                          isUser ? 'hover:bg-emerald-700 text-emerald-100' : 'hover:bg-slate-100 text-slate-400'
                         }`}
                         title="কপি করুন"
                       >
@@ -500,7 +500,7 @@ Rules:
                       {/* Clean Text (removing JSON and action tags) */}
                       <div className="whitespace-pre-wrap pr-4">
                         {msg.text
-                          .replace(/PRODUCTS_JSON:.*$/s, '')
+                            .replace(/PRODUCTS_JSON:.*$/s, '')
                           .replace(/ACTION:OPEN_CART/g, '')
                           .trim()}
                       </div>
@@ -508,32 +508,32 @@ Rules:
 
                     {/* AI Suggested Product Cards */}
                     {suggestedItems && suggestedItems.length > 0 && (
-                      <div className="bg-purple-50/70 border border-purple-100 p-2.5 rounded-2xl space-y-2 mt-1">
+                      <div className="bg-emerald-50/70 border border-emerald-200/80 p-2.5 rounded-2xl space-y-2 mt-1">
                         <div className="flex items-center justify-between px-1">
-                          <span className="text-[10px] font-black text-purple-700 uppercase tracking-wider flex items-center gap-1">
-                            <Sparkles size={11} /> পণ্য প্রস্তাবনা ({suggestedItems.length}):
+                          <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
+                            <Sparkles size={12} /> পণ্য প্রস্তাবনা ({suggestedItems.length}):
                           </span>
                         </div>
 
                         <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                           {suggestedItems.map(({ product, qty }) => (
-                            <div key={product.id} className="bg-white p-2 rounded-xl border border-purple-100 flex items-center justify-between gap-2 shadow-2xs">
+                            <div key={product.id} className="bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-2xs">
                               <div className="flex items-center gap-2 min-w-0">
                                 {product.imageUrl ? (
                                   <img src={product.imageUrl} alt="" className="w-8 h-8 rounded-lg object-cover bg-slate-100 shrink-0" />
                                 ) : (
-                                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0">🛍</div>
+                                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">🛍</div>
                                 )}
                                 <div className="min-w-0">
                                   <p className="text-xs font-bold text-slate-800 truncate">{product.name}</p>
                                   <p className="text-[10px] text-slate-500 font-bold">
-                                    ৳{product.price} {product.shopName && <span className="text-purple-600">({product.shopName})</span>}
+                                    ৳{product.price} {product.shopName && <span className="text-emerald-600">({product.shopName})</span>}
                                   </p>
                                 </div>
                               </div>
                               <button
                                 onClick={() => onAddToCart && onAddToCart(product)}
-                                className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-[10px] font-black shrink-0 transition-colors shadow-2xs cursor-pointer active:scale-95"
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shrink-0 transition-colors shadow-2xs cursor-pointer active:scale-95"
                               >
                                 + কার্ট
                               </button>
@@ -543,9 +543,9 @@ Rules:
 
                         <button
                           onClick={() => handleAddAllSuggested(msg.text)}
-                          className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95"
+                          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-95"
                         >
-                          <ShoppingCart size={12} />
+                          <ShoppingCart size={13} />
                           <span>সব কার্টে যোগ করুন</span>
                         </button>
                       </div>
@@ -557,9 +557,9 @@ Rules:
               {/* Typing indicator */}
               {isTyping && (
                 <div className="p-3 rounded-2xl bg-white border border-slate-200 self-start flex items-center gap-1.5 shadow-2xs">
-                  <div className="w-2 h-2 rounded-full bg-purple-600 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-600 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '300ms' }} />
                   <span className="text-[10px] font-bold text-slate-400 ml-1">AI উত্তর তৈরি করছে...</span>
                 </div>
               )}
@@ -581,12 +581,12 @@ Rules:
                   placeholder="আপনার কাঙ্ক্ষিত পণ্য বা প্রশ্ন লিখুন..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="flex-1 bg-slate-100 border border-slate-200 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all placeholder:text-slate-400"
+                  className="flex-1 bg-slate-100 border border-slate-200 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-900 outline-none focus:border-emerald-600 focus:bg-white transition-all placeholder:text-slate-400"
                 />
                 <button
                   type="submit"
                   disabled={!input.trim() || isTyping}
-                  className="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center shadow-md active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none shrink-0 cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-md active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none shrink-0 cursor-pointer"
                 >
                   <Send size={16} />
                 </button>

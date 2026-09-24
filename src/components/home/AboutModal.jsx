@@ -17,14 +17,14 @@ export default function AboutModal({ isOpen, onClose }) {
       {/* Modal Box */}
       <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 text-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-950 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-black text-white text-base">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-white text-base">
               BD
             </div>
             <div>
-              <h2 className="text-lg font-black tracking-tight leading-tight">বিডি রিটেইলার্স সম্পর্কে</h2>
-              <p className="text-xs text-purple-200 font-medium">bdretailers.com • আধুনিক ই-কমার্স প্ল্যাটফর্ম</p>
+              <h2 className="text-lg font-bold tracking-tight leading-tight">বিডি রিটেইলার্স সম্পর্কে</h2>
+              <p className="text-xs text-emerald-300 font-medium">bdretailers.com • আধুনিক ই-কমার্স প্ল্যাটফর্ম</p>
             </div>
           </div>
           <button 
@@ -37,48 +37,48 @@ export default function AboutModal({ isOpen, onClose }) {
 
         {/* Scrollable Body */}
         <div className="p-6 overflow-y-auto space-y-6 text-slate-800 dark:text-slate-200">
-          {/* Main Statement Box from 2nd Image */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 text-white border border-purple-500/30 shadow-lg space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-purple-200 font-black text-[10px] sm:text-xs uppercase tracking-wider">
+          {/* Main Statement Box */}
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 text-white border border-slate-700/60 shadow-lg space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-emerald-300 font-bold text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>🇧🇩 বাংলাদেশের রিটেইলারদের বিশেষ অনলাইন স্টোর মেকার ও মার্কেটপ্লেস</span>
             </div>
 
-            <h3 className="text-base sm:text-xl font-black text-white leading-snug tracking-tight">
+            <h3 className="text-base sm:text-xl font-bold text-white leading-snug tracking-tight">
               বিশ্বস্ত রিটেইলার, নিরাপদ কেনাকাটা <br className="hidden sm:inline" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300">
+              <span className="text-emerald-400">
                 ও ৫ মিনিটে নিজস্ব অনলাইন স্টোর
               </span>
             </h3>
 
-            <p className="text-xs sm:text-sm text-purple-100 font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed">
               বাংলাদেশের সেরা ভেরিফাইড মার্চেন্টদের পণ্য সরাসরি কিনুন সাশ্রয়ী মূল্যে। আর উদ্যোক্তারা কোনো কোডিং ছাড়াই মাত্র ৫ মিনিটে চালু করুন আপনার ব্র্যান্ডের সম্পূর্ণ ইকমার্স স্টোর — কাস্টম ডোমেইন, স্টেডফাস্ট কুরিয়ার ও বিকাশ পেমেন্ট সুবিধা সহ।
             </p>
 
             <div className="grid grid-cols-3 gap-2 pt-2 text-center">
               <div className="p-2 rounded-xl bg-white/10 border border-white/10">
-                <p className="text-xs sm:text-sm font-black text-emerald-400">১ ক্লিকে</p>
-                <p className="text-[10px] text-purple-200">ফ্রি স্টোর তৈরি</p>
+                <p className="text-xs sm:text-sm font-bold text-emerald-400">১ ক্লিকে</p>
+                <p className="text-[10px] text-slate-300">ফ্রি স্টোর তৈরি</p>
               </div>
               <div className="p-2 rounded-xl bg-white/10 border border-white/10">
-                <p className="text-xs sm:text-sm font-black text-amber-300">১৫+ ডিজাইন</p>
-                <p className="text-[10px] text-purple-200">রেডিমেড টেমপ্লেট</p>
+                <p className="text-xs sm:text-sm font-bold text-amber-300">১৫+ ডিজাইন</p>
+                <p className="text-[10px] text-slate-300">রেডিমেড টেমপ্লেট</p>
               </div>
               <div className="p-2 rounded-xl bg-white/10 border border-white/10">
-                <p className="text-xs sm:text-sm font-black text-pink-300">১০০% ভেরিফাইড</p>
-                <p className="text-[10px] text-purple-200">নিরাপদ কেনাকাটা</p>
+                <p className="text-xs sm:text-sm font-bold text-emerald-300">১০০% ভেরিফাইড</p>
+                <p className="text-[10px] text-slate-300">নিরাপদ কেনাকাটা</p>
               </div>
             </div>
           </div>
 
           {/* Key Pillars for Retailers */}
           <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-3 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-1.5">
               <Store size={15} /> উদ্যোক্তা ও রিটেইলারদের জন্য বিশেষ সুবিধা
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+                <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
                   <Store size={14} className="text-emerald-600 shrink-0" />
                   <span>৫ মিনিটে অনলাইন স্টোর</span>
                 </div>
@@ -88,8 +88,8 @@ export default function AboutModal({ isOpen, onClose }) {
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
-                  <Globe size={14} className="text-indigo-600 shrink-0" />
+                <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
+                  <Globe size={14} className="text-emerald-600 shrink-0" />
                   <span>কাস্টম ডোমেইন সাপোর্ট</span>
                 </div>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
@@ -98,7 +98,7 @@ export default function AboutModal({ isOpen, onClose }) {
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+                <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
                   <Truck size={14} className="text-emerald-600 shrink-0" />
                   <span>স্টেডফাস্ট কুরিয়ার অটোমেশন</span>
                 </div>
@@ -108,8 +108,8 @@ export default function AboutModal({ isOpen, onClose }) {
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1">
-                <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
-                  <CreditCard size={14} className="text-pink-600 shrink-0" />
+                <div className="flex items-center gap-2 font-bold text-xs text-slate-900 dark:text-white">
+                  <CreditCard size={14} className="text-emerald-600 shrink-0" />
                   <span>বিকাশ, নগদ ও সিওডি</span>
                 </div>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
@@ -121,7 +121,7 @@ export default function AboutModal({ isOpen, onClose }) {
 
           {/* Key Pillars for Customers */}
           <div>
-            <h4 className="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-3 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-1.5">
               <ShieldCheck size={15} /> ক্রেতাদের জন্য নিরাপদ মার্কেটপ্লেস
             </h4>
             <div className="space-y-2 text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -152,7 +152,7 @@ export default function AboutModal({ isOpen, onClose }) {
           <Link
             href="/become-retailer"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-md shadow-purple-600/25 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <span>আপনার স্টোর তৈরি করুন</span>
             <ArrowRight size={14} />

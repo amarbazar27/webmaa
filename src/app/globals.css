@@ -953,9 +953,6 @@ section#marketplace .text-white { color: var(--neo-text) !important; }
 }
 
 /* Keep accent colors */
-.text-purple-400 { color: var(--neo-accent) !important; }
-.text-purple-300 { color: var(--neo-accent-2) !important; }
-.text-purple-200 { color: var(--neo-accent-2) !important; }
 .text-emerald-400 { color: #059669 !important; }
 
 /* ── Border overrides ── */

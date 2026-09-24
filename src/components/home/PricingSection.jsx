@@ -33,7 +33,7 @@ const DEFAULT_PLANS = {
     price: 500,
     period: '/ প্রতি মাস',
     badge: '🎁 ১ম মাস ফ্রি ট্রায়াল',
-    badgeTheme: 'purple',
+    badgeTheme: 'emerald',
     commissionText: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
     features: [
       '১০০% বিক্রয় লাভ আপনার (০% কমিশন)',
@@ -69,7 +69,7 @@ const DEFAULT_PLANS = {
     price: 5000,
     period: '/ ১ বছর',
     badge: '👑 সর্বোচ্চ লাভজনক (২ মাস ফ্রি)',
-    badgeTheme: 'indigo',
+    badgeTheme: 'emerald',
     commissionText: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
     features: [
       '১০০% বিক্রয় লাভ আপনার (০% কমিশন)',

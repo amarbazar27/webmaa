@@ -36,7 +36,8 @@ const RESERVED_KEYWORDS = [
   'store', 'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
   'reviews', 'become-retailer', 'privacy-policy', 'privacy', 'account-delete',
   'terms', 'terms-of-service', 'terms-and-conditions', 'templates', 'lp',
-  '_next', 'robots.txt', 'sitemap.xml', 'shop-sitemap.xml', 'product-sitemap.xml', 'category-sitemap.xml', 'image-sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain'
+  '_next', 'robots.txt', 'sitemap.xml', 'shop-sitemap.xml', 'product-sitemap.xml', 'category-sitemap.xml', 'image-sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain',
+  'DESIGN.md', 'index.md', 'llms.txt', 'llms-full.txt'
 ];
 
 /**
@@ -171,6 +172,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/robots') ||
     pathname.includes('sitemap') ||
     pathname.endsWith('.xml') ||
+    pathname.endsWith('.md') ||
+    pathname.endsWith('.txt') ||
+    pathname === '/DESIGN.md' ||
+    pathname === '/index.md' ||
+    pathname === '/llms.txt' ||
     pathname.startsWith('/sw.') ||
     pathname.startsWith('/sw.js') ||
     pathname.startsWith('/firebase-messaging-sw') ||
@@ -183,6 +189,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/.well-known/')  // ✅ Android App Links / Digital Asset Links
   ) {
     return applySecurityHeaders(NextResponse.next(), pathname);
+  }
+
+  // ── AEO (Agent Engine Optimization) Content Negotiation ─────────────
+  // If an AI agent, crawler, or scraper sends Accept: text/markdown for the root URL,
+  // serve the structured agent-readable /index.md directly.
+  if (pathname === '/' && request.headers.get('accept')?.includes('text/markdown')) {
+    const markdownUrl = new URL('/index.md', request.url);
+    return applySecurityHeaders(NextResponse.rewrite(markdownUrl), pathname);
   }
 
   // ── Canonical Domain Redirect (www -> apex) ─────────────────────────
@@ -337,6 +351,6 @@ export const config = {
      * - static assets (.svg, .png, .jpg, .jpeg, .gif, .webp, .woff, .woff2, .ttf, .css, .js)
      * - Note: favicon.ico is explicitly allowed through so tenant domain rewrites can serve shop logos!
      */
-    '/((?!_next/static|_next/image|robots\\.txt|.*-sitemap\\.xml|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot|css|js|map)$).*)',
+    '/((?!_next/static|_next/image|robots\\.txt|.*-sitemap\\.xml|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf|eot|css|js|map|md|txt)$).*)',
   ],
 };
