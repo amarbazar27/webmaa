@@ -186,19 +186,26 @@ export default function SponsorsSection({ globalConfig = null }) {
                 {/* Full-width Image Showcase Area with Direct Browse Link */}
                 <div className="relative w-full h-44 sm:h-48 rounded-xl overflow-hidden flex items-center justify-center p-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 group-hover:border-emerald-400 transition-colors">
                   {sponsor.logoUrl ? (
-                    <img
-                      src={sponsor.logoUrl}
-                      alt={sponsor.companyName}
-                      className="w-full h-full object-contain p-2 filter group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.parentElement.innerHTML = `<div class="flex flex-col items-center justify-center text-center p-4"><span class="text-base font-black text-emerald-600 tracking-tight">${sponsor.companyName}</span><span class="text-[11px] font-bold text-slate-400 mt-1">অফিসিয়াল পার্টনার</span></div>`;
-                      }}
-                    />
+                    <>
+                      <img
+                        src={sponsor.logoUrl}
+                        alt={sponsor.companyName}
+                        className="w-full h-full object-contain p-2 filter group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.sponsor-fallback');
+                          if (fallback) fallback.classList.remove('hidden');
+                        }}
+                      />
+                      <div className="sponsor-fallback hidden flex-col items-center justify-center text-center p-4">
+                        <span className="text-base font-bold text-emerald-600 tracking-tight">{sponsor.companyName}</span>
+                        <span className="text-[11px] font-medium text-slate-500 mt-1">অফিসিয়াল পার্টনার</span>
+                      </div>
+                    </>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-center p-4">
                       <Building2 size={36} className="text-emerald-600 mb-2 opacity-80" />
-                      <span className="text-sm font-black text-slate-800 dark:text-slate-100">{sponsor.companyName}</span>
+                      <span className="text-sm font-bold text-slate-800 dark:text-slate-100">{sponsor.companyName}</span>
                     </div>
                   )}
 
