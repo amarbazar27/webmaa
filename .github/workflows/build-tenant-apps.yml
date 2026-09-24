@@ -80,6 +80,17 @@ jobs:
         GITHUB_OWNER: ${{ github.repository_owner }}
         GITHUB_REPO: webmaa
 
+    - name: Upload App Bundle & APK Artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.event.client_payload.shopSlug }}-app-bundle-artifacts
+        path: |
+          public/builds/${{ github.event.client_payload.shopSlug }}/app-release.aab
+          public/builds/${{ github.event.client_payload.shopSlug }}/app-release.apk
+        retention-days: 30
+        if-no-files-found: warn
+
     - name: Commit & Push Version Code Updates
       run: |
         git config user.name "github-actions[bot]"
