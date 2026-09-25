@@ -233,7 +233,7 @@ export default function LoginPage() {
           {globalConfig?.googleAuth !== false && globalConfig?.emailPasswordAuth !== false && (
             <div className="flex items-center gap-4 my-8">
                <div className="flex-1 h-px bg-slate-100"></div>
-               <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">or</span>
+               <span className="text-xs font-semibold text-slate-400">or</span>
                <div className="flex-1 h-px bg-slate-100"></div>
             </div>
           )}
@@ -241,7 +241,7 @@ export default function LoginPage() {
           {globalConfig?.emailPasswordAuth !== false && !forgotPasswordMode && (
             <form onSubmit={handleEmailLogin} className="space-y-5 text-left">
                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <label className="text-xs font-semibold text-slate-600 ml-1">Email Address</label>
                   <input 
                      type="email" 
                      required
@@ -254,7 +254,7 @@ export default function LoginPage() {
                
                <div className="space-y-1.5">
                   <div className="flex justify-between items-center ml-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Password</label>
+                    <label className="text-xs font-semibold text-slate-600">Password</label>
                     <button 
                       type="button" 
                       onClick={() => setForgotPasswordMode(true)}
@@ -292,7 +292,7 @@ export default function LoginPage() {
                </div>
 
                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <label className="text-xs font-semibold text-slate-600 ml-1">Email Address</label>
                   <input 
                      type="email" 
                      required
@@ -338,7 +338,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                    <p className="font-extrabold text-slate-900 text-sm">One-Click Entry</p>
-                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Automated Entitlement Check</p>
+                   <p className="text-xs text-slate-500 font-normal mt-0.5">Automated entitlement check</p>
                 </div>
              </div>
              
@@ -348,14 +348,14 @@ export default function LoginPage() {
                 </div>
                 <div>
                    <p className="font-extrabold text-slate-900 text-sm">Secure Protocols</p>
-                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">End-to-End Managed Session</p>
+                   <p className="text-xs text-slate-500 font-normal mt-0.5">End-to-end managed session</p>
                 </div>
              </div>
           </div>
 
           <div className="mt-12 pt-8 border-t border-slate-50 flex flex-col gap-4">
-             <Link href="/register" className="text-xs font-black text-purple-600 uppercase tracking-widest hover:text-purple-700 transition-colors">Create Retailer Account</Link>
-             <p className="text-[10px] text-slate-300 uppercase tracking-[0.2em] font-black">
+             <Link href="/register" className="text-sm font-bold text-purple-600 hover:text-purple-700 transition-colors">Create Retailer Account →</Link>
+             <p className="text-xs text-slate-400 font-medium">
                 Daripallah Identity Services &bull; 2026
              </p>
           </div>

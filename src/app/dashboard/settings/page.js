@@ -949,7 +949,7 @@ export default function SettingsPage() {
     return (
       <div className="py-20 text-center">
         <div className="w-10 h-10 border-4 border-slate-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Loading configurations...</p>
+        <p className="text-slate-400 font-black font-semibold text-[10px]">Loading configurations...</p>
       </div>
     );
   }
@@ -983,7 +983,7 @@ export default function SettingsPage() {
           </div>
           <Link
             href="/dashboard/billing"
-            className="shrink-0 px-4 py-2 bg-white text-amber-700 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-amber-50 transition-all"
+            className="shrink-0 px-4 py-2 bg-white text-amber-700 rounded-xl text-xs font-black font-semibold hover:bg-amber-50 transition-all"
           >
             নবায়ন করুন →
           </Link>
@@ -1011,7 +1011,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-purple-200/80 font-medium">ধারাবাহিকভাবে নিচের ধাপগুলো সম্পূর্ণ করে আপনার অনলাইন শপ সাজিয়ে লাইভ করুন</p>
               </div>
             </div>
-            <span className="self-start sm:self-auto text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full">
+            <span className="self-start sm:self-auto text-[10px] font-black font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full">
               Full Store Ready
             </span>
           </div>
@@ -1095,7 +1095,7 @@ export default function SettingsPage() {
         {/* Sub-tab Left Sidebar Navigation */}
         <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
           <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">সেটিংস ক্যাটাগরি</p>
+            <p className="text-[10px] text-slate-400 font-black font-semibold px-3 mb-2">সেটিংস ক্যাটাগরি</p>
              {[
                 { id: 'store_info', label: '১. স্টোর পরিচিতি ও ডিজাইন', icon: Palette },
                 { id: 'courier_location', label: '২. কুরিয়ার ও ডেলিভারি', icon: Truck },
@@ -1139,7 +1139,7 @@ export default function SettingsPage() {
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] text-purple-600 font-black uppercase tracking-widest block">
+                        <span className="text-[10px] text-purple-600 font-black font-semibold block">
                           কাস্টম সাবডোমেইন প্রিফিক্স:
                         </span>
                         {slugChecking ? (
@@ -1216,7 +1216,7 @@ export default function SettingsPage() {
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white rounded-xl border border-slate-200">
                       <div>
-                        <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">🌟 আপনার লাইভ সাবডোমেইন লিংক:</p>
+                        <p className="text-[9px] font-black text-purple-600 font-semibold">🌟 আপনার লাইভ সাবডোমেইন লিংক:</p>
                         <a href={primarySubdomainUrl} target="_blank" rel="noreferrer" className="text-sm font-black font-mono text-purple-600 hover:text-purple-700 underline truncate block tracking-tight mt-0.5">
                           {primarySubdomainUrl}
                         </a>
@@ -1239,12 +1239,12 @@ export default function SettingsPage() {
             {/* Custom Domain Management UI */}
             <div>
               <p className="text-xs font-black text-slate-900 mb-1 flex items-center gap-2"><Globe size={14}/> Custom Domain Mapping (Pro)</p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Connect your own .com / .shop domain</p>
+              <p className="text-[10px] text-slate-500 font-bold font-semibold mb-2">Connect your own .com / .shop domain</p>
               <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 sm:p-5 shadow-inner relative space-y-4">
                 {customDomainEditing ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-emerald-800 block mb-1">
+                      <label className="text-[10px] font-black font-semibold text-emerald-800 block mb-1">
                         আপনার কাস্টম ডোমেইন লিখুন (Custom Domain)
                       </label>
                       <input
@@ -1331,17 +1331,17 @@ export default function SettingsPage() {
                           </a>
                           {/* Status Badge */}
                           {domainStatus === 'connected' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black font-semibold">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Connected
                             </span>
                           )}
                           {(domainStatus === 'pending_dns' || domainStatus === '') && shop?.customDomain && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[9px] font-black uppercase tracking-wider">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-[9px] font-black font-semibold">
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Pending DNS
                             </span>
                           )}
                           {domainStatus === 'pending_manual' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[9px] font-black uppercase tracking-wider">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[9px] font-black font-semibold">
                               <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Manual Required
                             </span>
                           )}
@@ -1678,7 +1678,7 @@ export default function SettingsPage() {
               </div>
               <div className="text-center">
                 <p className="font-black text-slate-900 text-sm">{userData?.name || 'Retailer'}</p>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">{userData?.role}</p>
+                <p className="text-[9px] text-slate-500 font-bold font-semibold mt-1">{userData?.role}</p>
               </div>
             </div>
           </Card>
@@ -1921,7 +1921,7 @@ export default function SettingsPage() {
                    placeholder="0 = no limit"
                  />
                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Default Delivery Time (Live Countdown)</label>
+                    <label className="text-[10px] font-black text-slate-400 font-semibold ml-1">Default Delivery Time (Live Countdown)</label>
                     <div className="grid grid-cols-3 gap-2">
                        <input type="number" placeholder="দিন" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border-2 border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={deliveryConfig.deliveryDays ?? ''} onChange={e => setDeliveryConfig({...deliveryConfig, deliveryDays: e.target.value})} />
                        <input type="number" placeholder="ঘণ্টা" className="w-full text-xs font-black text-slate-900 p-3 rounded-xl bg-slate-50 border-2 border-slate-200 outline-none focus:bg-white focus:border-purple-500" value={deliveryConfig.deliveryHours ?? ''} onChange={e => setDeliveryConfig({...deliveryConfig, deliveryHours: e.target.value})} />
@@ -1968,7 +1968,7 @@ export default function SettingsPage() {
                    </div>
 
                    <div className="bg-purple-50/50 rounded-2xl p-5 border border-purple-100 space-y-4">
-                      <h3 className="text-xs font-black text-purple-900 uppercase tracking-wider flex items-center gap-2">
+                      <h3 className="text-xs font-black text-purple-900 font-semibold flex items-center gap-2">
                         📋 UddoktaPay Setup Guide (ধাপসমূহ)
                       </h3>
                       <div className="space-y-3 pl-1 text-[11px] text-slate-600 font-medium leading-relaxed">
@@ -2025,7 +2025,7 @@ export default function SettingsPage() {
                    </div>
 
                    <div className="bg-blue-50/50 rounded-2xl p-5 border border-blue-100 space-y-3">
-                      <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider">
+                      <h3 className="text-xs font-black text-blue-900 font-semibold">
                         📋 SSLCommerz Setup Guide
                       </h3>
                       <div className="space-y-2 text-[11px] text-slate-600 font-medium leading-relaxed">
@@ -2076,7 +2076,7 @@ export default function SettingsPage() {
                    </div>
 
                    <div className="bg-orange-50/50 rounded-2xl p-5 border border-orange-100 space-y-3">
-                      <h3 className="text-xs font-black text-orange-900 uppercase tracking-wider">
+                      <h3 className="text-xs font-black text-orange-900 font-semibold">
                         📋 Shurjopay Setup Guide
                       </h3>
                       <div className="space-y-2 text-[11px] text-slate-600 font-medium leading-relaxed">
@@ -2133,7 +2133,7 @@ export default function SettingsPage() {
                    </div>
 
                    <div className="bg-pink-50/50 rounded-2xl p-5 border border-pink-100 space-y-3">
-                      <h3 className="text-xs font-black text-pink-900 uppercase tracking-wider">
+                      <h3 className="text-xs font-black text-pink-900 font-semibold">
                         📋 bKash Merchant API Setup Guide
                       </h3>
                       <div className="space-y-2 text-[11px] text-slate-600 font-medium leading-relaxed">
@@ -2172,7 +2172,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="w-36">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">ডিসকাউন্ট টাইপ</label>
+                      <label className="text-[10px] font-black text-slate-400 font-semibold pl-1">ডিসকাউন্ট টাইপ</label>
                       <select
                         value={shop.couponDiscountType || 'percent'}
                         onChange={e => setShop({ ...shop, couponDiscountType: e.target.value })}
@@ -2246,7 +2246,7 @@ export default function SettingsPage() {
                     placeholder="e.g. Bazar Bot"
                   />
                   <div className="md:col-span-2 space-y-2">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AI Conversation Tone</label>
+                     <label className="text-[10px] font-black text-slate-400 font-semibold ml-1">AI Conversation Tone</label>
                      <div className="flex gap-4">
                         <label className="flex-1 cursor-pointer">
                            <input type="radio" name="tone" value="funny" checked={aiConfig.botTone === 'funny'} onChange={e => setAiConfig({...aiConfig, botTone: e.target.value})} className="peer sr-only"/>
@@ -2311,7 +2311,7 @@ export default function SettingsPage() {
 
                   <div className="space-y-3 pt-4 border-t border-slate-100">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <label className="text-[10px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest ml-1">
+                      <label className="text-[10px] font-black text-slate-700 dark:text-slate-300 font-semibold ml-1">
                         Shop Banners (বাধ্যতামূলক ১৬:৯ / 16:9 রেশিও, সর্বোচ্চ ৫টি)
                       </label>
                       <span className="text-[9px] font-extrabold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/40 w-fit">
@@ -2353,7 +2353,7 @@ export default function SettingsPage() {
                                 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                                    <div className="space-y-1">
-                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Banner Title (টাইটেল)</label>
+                                      <label className="text-[9px] font-black text-slate-400 font-semibold ml-1">Banner Title (টাইটেল)</label>
                                       <input 
                                          type="text" 
                                          placeholder="উদা: ঈদের বিশেষ অফার!" 
@@ -2367,7 +2367,7 @@ export default function SettingsPage() {
                                       />
                                    </div>
                                    <div className="space-y-1">
-                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Button Text (বাটন টেক্সট)</label>
+                                      <label className="text-[9px] font-black text-slate-400 font-semibold ml-1">Button Text (বাটন টেক্সট)</label>
                                       <input 
                                          type="text" 
                                          placeholder="উদা: কেনাকাটা করুন" 
@@ -2381,7 +2381,7 @@ export default function SettingsPage() {
                                       />
                                    </div>
                                    <div className="space-y-1 sm:col-span-2">
-                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Redirect Link / Action URL</label>
+                                      <label className="text-[9px] font-black text-slate-400 font-semibold ml-1">Redirect Link / Action URL</label>
                                       <input 
                                          type="text" 
                                          placeholder="উদা: https://messerbazar.com/category/সবজি অথবা #marketplace" 
@@ -2395,7 +2395,7 @@ export default function SettingsPage() {
                                       />
                                    </div>
                                    <div className="space-y-1 sm:col-span-2">
-                                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Banner Description (সংক্ষিপ্ত বিবরণ)</label>
+                                      <label className="text-[9px] font-black text-slate-400 font-semibold ml-1">Banner Description (সংক্ষিপ্ত বিবরণ)</label>
                                       <textarea 
                                          rows={2}
                                          placeholder="উদা: সব পণ্যে ২০% পর্যন্ত বিশাল ছাড়!" 
@@ -2788,7 +2788,7 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {/* 1. Division */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">বিভাগ</label>
+                      <label className="text-[10px] font-black text-slate-400 font-semibold block pl-1">বিভাগ</label>
                       <select
                         value={geoSelections.division}
                         onChange={e => setGeoSelections({ ...geoSelections, division: e.target.value })}
@@ -2801,7 +2801,7 @@ export default function SettingsPage() {
 
                     {/* 2. District */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">জেলা</label>
+                      <label className="text-[10px] font-black text-slate-400 font-semibold block pl-1">জেলা</label>
                       <select
                         disabled={!geoSelections.division || !geoData.districts.length}
                         value={geoSelections.district}
@@ -2815,7 +2815,7 @@ export default function SettingsPage() {
 
                     {/* 3. Upazila */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">উপজেলা</label>
+                      <label className="text-[10px] font-black text-slate-400 font-semibold block pl-1">উপজেলা</label>
                       <select
                         disabled={!geoSelections.district || !geoData.upazilas.length}
                         value={geoSelections.upazila}
@@ -2832,7 +2832,7 @@ export default function SettingsPage() {
 
                     {/* 4. Ward / Union — label changes based on type returned by API */}
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block pl-1">
+                      <label className="text-[10px] font-black text-slate-400 font-semibold block pl-1">
                         {geoData.unionsType === 'wards' ? 'সিটি ওয়ার্ড' : 'ইউনিয়ন'}
                       </label>
                       <select
@@ -2952,7 +2952,7 @@ export default function SettingsPage() {
                   <Card title="User Tracking & Pixels (Analytics)" subtitle="Track multi-channel conversions and server-side events" icon={Users} className="border-2 border-slate-100 shadow-xl bg-white">
               <div className="space-y-6">
                 <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-wider">কনফিগারেশন ফিল্ডস</span>
+                  <span className="text-xs font-black text-slate-500 font-semibold">কনফিগারেশন ফিল্ডস</span>
                   <button 
                     type="button" 
                     onClick={() => setShowAnalyticsHelp(!showAnalyticsHelp)} 
@@ -3126,7 +3126,7 @@ export default function SettingsPage() {
             <Card title="Google Maps API & Location Settings" subtitle="Official Google Places and delivery zone radius checks" icon={MapPin} className="border-2 border-slate-100 shadow-xl bg-white">
                <div className="space-y-6">
                   <div className="flex justify-between items-center pb-4 border-b border-slate-100">
-                     <span className="text-xs font-black text-slate-500 uppercase tracking-wider">ডেলিভারি এরিয়া সেটিংস</span>
+                     <span className="text-xs font-black text-slate-500 font-semibold">ডেলিভারি এরিয়া সেটিংস</span>
                      <button 
                        type="button" 
                        onClick={() => setShowMapsHelp(!showMapsHelp)} 
@@ -3215,7 +3215,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h3 className="text-lg font-black text-slate-900">Google Play Store Upload Checklist</h3>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{shop?.shopName || 'App Details'}</p>
+                <p className="text-xs text-slate-500 font-bold font-semibold mt-0.5">{shop?.shopName || 'App Details'}</p>
               </div>
             </div>
 

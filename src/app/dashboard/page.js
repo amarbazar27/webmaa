@@ -112,7 +112,7 @@ export default function DashboardPage() {
     return (
       <div className="py-20 text-center">
         <div className="w-10 h-10 border-4 border-slate-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-4 shadowed-loader"></div>
-        <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Assembling Console...</p>
+        <p className="text-slate-400 font-bold text-xs">Assembling Console...</p>
       </div>
     );
   }
@@ -124,14 +124,14 @@ export default function DashboardPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Live Storefront Active
             </span>
             {globalConfig?.donationEnabled !== false && (
               <button
                 onClick={() => setIsDonateModalOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-full text-[10px] font-black uppercase transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-full text-xs font-bold transition-colors cursor-pointer"
                 title="Support Platform"
               >
                 <Heart size={11} className="fill-current text-rose-500" />
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                 <Globe size={20} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest flex items-center gap-1">
+                <p className="text-xs font-bold text-purple-600 flex items-center gap-1">
                   <span>🌟 লাইভ সাবডোমেইন লিংক</span>
                 </p>
                 <a 
@@ -196,7 +196,7 @@ export default function DashboardPage() {
       {showTrialOfferBanner && (
         <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-purple-400/30 animate-pulse">
           <div className="space-y-2 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-sm">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-bold shadow-sm">
               🎁 নতুন অ্যাকাউন্ট অফার
             </div>
             <h2 className="text-xl md:text-2xl font-black tracking-tight">
@@ -208,7 +208,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/dashboard/billing"
-            className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-400/20 shrink-0 flex items-center gap-2 hover:scale-105 active:scale-95"
+            className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-bold text-xs transition-all shadow-lg shadow-amber-400/20 shrink-0 flex items-center gap-2 hover:scale-105 active:scale-95"
           >
             <span>Claim 1 Month Free in Billing</span>
             <ArrowUpRight size={16} />
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                 <Zap size={24} className="fill-current text-yellow-300" />
               </div>
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/25 text-white text-[10px] font-black uppercase tracking-wider backdrop-blur-sm">
+                <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/25 text-white text-xs font-bold">
                   📢 সুপারএডমিন জরুরি নোটিশ
                 </div>
                 <div className="text-sm md:text-base font-black tracking-tight text-white leading-snug whitespace-pre-line">
@@ -244,7 +244,7 @@ export default function DashboardPage() {
             {shop?.subscriptionPackage === 'starter' && (
               <Link
                 href="/dashboard/billing"
-                className="px-5 py-3 bg-white hover:bg-amber-50 text-amber-900 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-lg shrink-0 flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                className="px-5 py-3 bg-white hover:bg-amber-50 text-amber-900 rounded-2xl font-bold text-xs transition-all shadow-lg shrink-0 flex items-center gap-1.5 hover:scale-105 active:scale-95"
               >
                 <span>বিলিং পেজ</span>
                 <ArrowUpRight size={15} />
@@ -303,7 +303,7 @@ export default function DashboardPage() {
               {orders.length === 0 ? (
                 <div className="py-20 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                   <ShoppingBag size={40} className="mx-auto mb-4 text-slate-300" />
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No orders received yet</p>
+                  <p className="text-slate-400 font-medium text-xs">No orders received yet</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-50">
@@ -315,17 +315,17 @@ export default function DashboardPage() {
                           </div>
                           <div>
                              <p className="font-bold text-sm text-slate-900">{order.customerName}</p>
-                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{order.status || 'Processing'}</p>
+                             <p className="text-xs text-slate-400 font-medium">{order.status || 'Processing'}</p>
                           </div>
                        </div>
                        <div className="text-right">
                           <p className="font-extrabold text-slate-900">৳{order.total}</p>
-                          <p className="text-[9px] text-green-600 font-black uppercase tracking-widest">Success</p>
+                          <p className="text-xs text-green-600 font-bold">Success</p>
                        </div>
                     </div>
                   ))}
                   <div className="pt-6">
-                    <Link href="/dashboard/orders" className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-xl text-[10px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-100 hover:text-purple-600 transition-all">
+                    <Link href="/dashboard/orders" className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 hover:text-purple-600 transition-all">
                        View Complete Order History <ArrowUpRight size={12} />
                     </Link>
                   </div>
@@ -342,11 +342,11 @@ export default function DashboardPage() {
               </p>
               <div className="space-y-3">
                  <Link href="/dashboard/products/new" className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-purple-200 transition-all group">
-                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Post New Product</span>
+                    <span className="text-xs font-bold text-slate-600">Post New Product</span>
                     <ArrowUpRight size={16} className="text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                  </Link>
                  <Link href="/dashboard/settings" className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-purple-200 transition-all group">
-                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Branding Setup</span>
+                    <span className="text-xs font-bold text-slate-600">Branding Setup</span>
                     <ArrowUpRight size={16} className="text-purple-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                  </Link>
               </div>
@@ -374,7 +374,7 @@ export default function DashboardPage() {
                   <Heart size={20} className="text-rose-500 fill-rose-500 animate-pulse" />
                   Donation Accounts (অনুদান অ্যাকাউন্টস)
                 </h3>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Select an account to copy details and send donation</p>
+                <p className="text-xs text-slate-500 font-medium mt-1">Select an account to copy details and send donation</p>
               </div>
               <button 
                 onClick={() => setIsDonateModalOpen(false)} 
@@ -389,7 +389,7 @@ export default function DashboardPage() {
               {!globalConfig?.bkashNumber && !globalConfig?.nagadNumber && !globalConfig?.rocketNumber && !globalConfig?.bankDetails ? (
                 <div className="text-center py-8">
                   <Heart size={32} className="text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No accounts configured by Admin yet.</p>
+                  <p className="text-xs font-medium text-slate-400">No accounts configured by Admin yet.</p>
                 </div>
               ) : (
                 <>
@@ -410,7 +410,7 @@ export default function DashboardPage() {
                           navigator.clipboard.writeText(globalConfig.bkashNumber);
                           toast.success('bKash Number copied to clipboard! 📋');
                         }}
-                        className="bg-white border border-pink-200 text-pink-600 hover:bg-pink-50 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl"
+                        className="bg-white border border-pink-200 text-pink-600 hover:bg-pink-50 text-xs font-bold h-8 px-4 rounded-xl"
                       >
                         Copy
                       </Button>
@@ -434,7 +434,7 @@ export default function DashboardPage() {
                           navigator.clipboard.writeText(globalConfig.nagadNumber);
                           toast.success('Nagad Number copied to clipboard! 📋');
                         }}
-                        className="bg-white border border-orange-200 text-orange-600 hover:bg-orange-50 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl"
+                        className="bg-white border border-orange-200 text-orange-600 hover:bg-orange-50 text-xs font-bold h-8 px-4 rounded-xl"
                       >
                         Copy
                       </Button>
@@ -458,7 +458,7 @@ export default function DashboardPage() {
                           navigator.clipboard.writeText(globalConfig.rocketNumber);
                           toast.success('Rocket Number copied to clipboard! 📋');
                         }}
-                        className="bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl"
+                        className="bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 text-xs font-bold h-8 px-4 rounded-xl"
                       >
                         Copy
                       </Button>
@@ -477,7 +477,7 @@ export default function DashboardPage() {
                           navigator.clipboard.writeText(globalConfig.bankDetails);
                           toast.success('Bank details copied to clipboard! 📋');
                         }}
-                        className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-[10px] font-black tracking-widest uppercase h-8 px-4 rounded-xl w-full"
+                        className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold h-8 px-4 rounded-xl w-full"
                       >
                         Copy Details
                       </Button>
