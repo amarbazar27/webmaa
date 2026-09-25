@@ -1776,8 +1776,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Filters & Store Details Card ── */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-4 sm:p-5 mb-8 rounded-2xl shadow-sm flex flex-col gap-4">
+        {/* ── Filters & Store Details Toolbar ── */}
+        <div className="p-3 sm:p-4 mb-8 border-b border-slate-200 dark:border-white/10 flex flex-col gap-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -1965,7 +1965,7 @@ export default function Home() {
                           </div>
                         ))}
                         {displayProducts.length < 2 && Array.from({ length: 2 - displayProducts.length }).map((_, idx) => (
-                          <div key={idx} className="aspect-square rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-dashed border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 text-xs font-bold">
+                          <div key={idx} className="aspect-square rounded-xl bg-slate-50/50 dark:bg-white/[0.02] flex items-center justify-center text-slate-400 dark:text-white/20 text-xs font-bold">
                             Empty Slot
                           </div>
                         ))}
@@ -2348,11 +2348,11 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-2 text-xs font-bold text-slate-700 dark:text-slate-200 border-t border-slate-100 dark:border-slate-800">
-                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-1.5">
+                      <div className="p-2 flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                         <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                         <span>কোয়ালিটি চেক</span>
                       </div>
-                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-1.5">
+                      <div className="p-2 flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
                         <Truck size={14} className="text-teal-600 dark:text-teal-400 shrink-0" />
                         <span>ক্যাশ অন ডেলিভারি</span>
                       </div>

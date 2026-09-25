@@ -184,7 +184,7 @@ export default function SponsorsSection({ globalConfig = null }) {
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between group transition-all duration-300 relative rounded-2xl overflow-hidden hover:border-emerald-500/50 hover:shadow-md shadow-xs"
               >
                 {/* Full-width Image Showcase Area with Direct Browse Link */}
-                <div className="relative w-full h-44 sm:h-48 rounded-xl overflow-hidden flex items-center justify-center p-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 group-hover:border-emerald-400 transition-colors">
+                <div className="relative w-full h-44 sm:h-48 rounded-xl overflow-hidden flex items-center justify-center p-3.5 bg-slate-50/70 dark:bg-slate-800/40">
                   {sponsor.logoUrl ? (
                     <>
                       <img
@@ -225,10 +225,10 @@ export default function SponsorsSection({ globalConfig = null }) {
                       className="absolute inset-0 bg-slate-950/75 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-white z-20 cursor-pointer"
                       title={`${sponsor.companyName} এর ওয়েবসাইট ব্রাউজ করুন`}
                     >
-                      <div className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transform translate-y-2 group-hover:translate-y-0 transition-transform">
+                      <span className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 transform translate-y-2 group-hover:translate-y-0 transition-transform">
                         <span>ব্রাউজ করুন</span>
                         <ExternalLink size={13} />
-                      </div>
+                      </span>
                       <span className="text-[10px] text-slate-200 font-bold max-w-[80%] truncate">
                         {sponsor.websiteUrl.replace(/^https?:\/\//i, '')}
                       </span>

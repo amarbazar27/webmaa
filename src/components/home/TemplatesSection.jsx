@@ -23,7 +23,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
   }).slice(0, 6);
 
   return (
-    <section id="templates" className="relative z-20 py-8 sm:py-12 scroll-mt-20 overflow-hidden bg-slate-50/60 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
+    <section id="templates" className="relative z-20 py-8 sm:py-12 scroll-mt-20 overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-6">
         
         {/* Section Header */}
