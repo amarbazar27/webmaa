@@ -272,13 +272,13 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
     <>
       {/* Upload Box */}
       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-4 sm:p-6 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-800/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-slate-800/5 rounded-full blur-3xl" />
 
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 justify-between">
           <div className="flex items-center gap-4 text-left">
             <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-purple-100 flex items-center justify-center shrink-0">
-              <SlidersHorizontal className="text-purple-600" size={28} />
+              <SlidersHorizontal className="text-slate-800" size={28} />
             </div>
             <div>
               <h3 className="font-black text-slate-900 text-lg">AI শপিং লিস্ট</h3>
@@ -300,7 +300,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className="flex-1 sm:flex-initial px-6 py-3 bg-purple-600 text-white font-black rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:transform-none"
+              className="flex-1 sm:flex-initial px-6 py-3 bg-slate-900 text-white font-black rounded-xl shadow-lg shadow-sm hover:bg-black hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:transform-none"
             >
               {isProcessing ? <><Loader2 className="animate-spin" size={18} /> প্রসেস হচ্ছে...</> : <><ImagePlus size={18} /> ছবি দিন</>}
             </button>
@@ -335,7 +335,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={handleStartAnalysis}
-                className="px-6 py-2.5 bg-indigo-600 text-white font-black text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                className="px-6 py-2.5 bg-slate-900 text-white font-black text-sm rounded-lg hover:bg-black transition-colors flex items-center justify-center gap-2"
               >
                 <SlidersHorizontal size={16} /> এনালাইজ করুন
               </button>
@@ -357,7 +357,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
           <div className="relative w-full sm:max-w-lg bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-slide-in">
             <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center sticky top-0 z-10">
               <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                <ListPlus className="text-purple-600" size={24} /> সনাক্তকৃত পণ্য ({detectedItems.length})
+                <ListPlus className="text-slate-800" size={24} /> সনাক্তকৃত পণ্য ({detectedItems.length})
               </h2>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-200 rounded-xl text-slate-500 transition-colors">
                 <X size={20} strokeWidth={2.5} />
@@ -384,7 +384,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
                         className="w-full text-left px-4 py-2.5 hover:bg-purple-50 flex items-center justify-between border-b border-slate-50 last:border-0"
                       >
                         <span className="text-sm font-bold text-slate-800 truncate">{p.name}</span>
-                        <span className="text-xs font-black text-purple-600 shrink-0 ml-2">৳{p.price}</span>
+                        <span className="text-xs font-black text-slate-800 shrink-0 ml-2">৳{p.price}</span>
                       </button>
                     ))}
                   </div>
@@ -395,7 +395,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isProcessing}
-                className="w-full py-2.5 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 font-black text-sm hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-2.5 border-2 border-dashed border-purple-300 rounded-xl text-slate-800 font-black text-sm hover:bg-purple-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <ImagePlus size={16} /> আরেকটা ছবি যোগ করুন
               </button>
@@ -414,7 +414,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
                     <div className="flex-1 min-w-0">
                       <h4 className="font-black text-sm text-slate-900 truncate">{product.name}</h4>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-xs font-bold text-purple-600">৳{product.price}</p>
+                        <p className="text-xs font-bold text-slate-800">৳{product.price}</p>
                         {confidenceBadge(item.confidence)}
                       </div>
                     </div>
@@ -449,7 +449,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
               <button
                 onClick={handleDirectOrder}
                 disabled={detectedItems.length === 0}
-                className="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-xl disabled:opacity-40"
+                className="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-slate-900 transition-colors shadow-xl disabled:opacity-40"
               >
                 <SlidersHorizontal size={20} /> সরাসরি অর্ডার ({detectedItems.length})
               </button>

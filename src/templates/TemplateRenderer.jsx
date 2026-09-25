@@ -84,7 +84,7 @@ class StorefrontErrorBoundary extends React.Component {
           <div className="flex gap-3">
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm shadow-md transition-all cursor-pointer border-0"
+              className="px-6 py-3 bg-slate-900 hover:bg-black text-white rounded-xl font-black text-sm shadow-md transition-all cursor-pointer border-0"
             >
               🔄 রিলোড করুন (Reload)
             </button>

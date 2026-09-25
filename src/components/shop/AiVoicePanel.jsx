@@ -251,7 +251,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                   }}
                   disabled={!isVoiceSupported || isVoiceProcessing}
                   className={`w-24 h-24 rounded-full flex items-center justify-center shadow-2xl transition-all select-none cursor-pointer
-                    ${isListening ? 'bg-red-500 animate-pulse scale-110 active:scale-105' : isVoiceProcessing ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700 active:scale-95'}
+                    ${isListening ? 'bg-red-500 animate-pulse scale-110 active:scale-105' : isVoiceProcessing ? 'bg-slate-700' : 'bg-slate-900 hover:bg-black active:scale-95'}
                     text-white disabled:opacity-50`}
                   title="কথা বলতে ক্লিক করুন অথবা চেপে রাখুন"
                 >
@@ -304,10 +304,10 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                   {voiceResult.map((item, i) => (
                     <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
                       <p className="text-sm font-bold text-slate-900">{item.product.name}</p>
-                      <span className="text-xs font-black text-purple-600">×{item.quantity}</span>
+                      <span className="text-xs font-black text-slate-800">×{item.quantity}</span>
                     </div>
                   ))}
-                  <button onClick={addVoiceResultToCart} className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors">
+                  <button onClick={addVoiceResultToCart} className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-colors">
                     <ShoppingCart size={16} /> কার্টে যোগ করুন
                   </button>
                 </div>
@@ -360,7 +360,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
 
               {detectedItems.length === 0 && (
                 <button onClick={analyzeImage} disabled={isProcessingImage}
-                  className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 disabled:opacity-50">
+                  className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black disabled:opacity-50">
                   {isProcessingImage
                     ? <><Loader2 size={16} className="animate-spin" /> AI বিশ্লেষণ হচ্ছে...</>
                     : <><SlidersHorizontal size={16} /> AI দিয়ে ফর্দ পড়ুন</>}
@@ -380,16 +380,16 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                     <div>
                       <p className="text-sm font-bold text-slate-900">{prod.name}</p>
                       {item.customizedText ? (
-                        <p className="text-[10px] text-purple-600 font-black">{item.customizedText}</p>
+                        <p className="text-[10px] text-slate-800 font-black">{item.customizedText}</p>
                       ) : (
-                        <p className="text-xs text-purple-600 font-black">৳{prod.price}</p>
+                        <p className="text-xs text-slate-800 font-black">৳{prod.price}</p>
                       )}
                     </div>
                     <span className="text-xs font-black bg-purple-100 text-purple-700 px-2 py-1 rounded-md">×{item.quantity}</span>
                   </div>
                 );
               })}
-              <button onClick={addAllDetectedToCart} className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700">
+              <button onClick={addAllDetectedToCart} className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black">
                 <ShoppingCart size={16} /> সব কার্টে দিন ({detectedItems.length})
               </button>
             </div>
@@ -408,7 +408,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
             className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 resize-none placeholder:text-slate-400"
           />
           <button onClick={analyzeText} disabled={isProcessingText || !textInput.trim()}
-            className="py-3 bg-purple-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 disabled:opacity-50">
+            className="py-3 bg-slate-900 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black disabled:opacity-50">
             {isProcessingText ? <><Loader2 size={16} className="animate-spin" /> বিশ্লেষণ হচ্ছে...</> : <><SlidersHorizontal size={16} /> AI দিয়ে বিশ্লেষণ করুন</>}
           </button>
 
@@ -423,16 +423,16 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                     <div>
                       <p className="text-sm font-bold text-slate-900">{prod.name}</p>
                       {item.customizedText ? (
-                        <p className="text-[10px] text-purple-600 font-black">{item.customizedText}</p>
+                        <p className="text-[10px] text-slate-800 font-black">{item.customizedText}</p>
                       ) : (
-                        <p className="text-xs text-purple-600 font-black">৳{prod.price}</p>
+                        <p className="text-xs text-slate-800 font-black">৳{prod.price}</p>
                       )}
                     </div>
                     <span className="text-xs font-black bg-purple-100 text-purple-700 px-2 py-1 rounded-md">×{item.quantity}</span>
                   </div>
                 );
               })}
-              <button onClick={addAllDetectedToCart} className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700">
+              <button onClick={addAllDetectedToCart} className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black">
                 <ShoppingCart size={16} /> সব কার্টে দিন ({detectedItems.length})
               </button>
             </div>

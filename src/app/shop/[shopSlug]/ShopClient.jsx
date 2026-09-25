@@ -209,17 +209,17 @@ const matchPhoneticSearch = (product, queryText) => {
 // ══════════════════════════════════════════════════════════════════
 const SHOP_THEME_PRESETS = {
   // Light bg presets — use dark text (#0f172a or similar)
-  classic:  { primary: '#4f46e5', accent: '#7c3aed', bg: '#ffffff',  text: '#0f172a', card: '#ffffff', border: '#e2e8f0', radius: '16px', font: 'Outfit', headerBg: '#4f46e5', headerText: '#ffffff',  btnText: '#ffffff' },
+  classic:  { primary: '#0F172A', accent: '#16A34A', bg: '#ffffff',  text: '#0f172a', card: '#ffffff', border: '#e2e8f0', radius: '16px', font: 'Outfit', headerBg: '#0F172A', headerText: '#ffffff',  btnText: '#ffffff' },
   forest:   { primary: '#059669', accent: '#34d399', bg: '#f0fdf4',  text: '#064e3b', card: '#ffffff', border: '#bbf7d0', radius: '12px', font: 'Outfit', headerBg: '#065f46', headerText: '#ecfdf5',  btnText: '#ffffff' },
   sunset:   { primary: '#ea580c', accent: '#f97316', bg: '#fff7ed',  text: '#431407', card: '#ffffff', border: '#fed7aa', radius: '24px', font: 'Outfit', headerBg: '#c2410c', headerText: '#ffffff',  btnText: '#ffffff' },
   ocean:    { primary: '#0284c7', accent: '#38bdf8', bg: '#f0f9ff',  text: '#0c4a6e', card: '#ffffff', border: '#bae6fd', radius: '16px', font: 'Outfit', headerBg: '#0369a1', headerText: '#ffffff',  btnText: '#ffffff' },
   rose:     { primary: '#be185d', accent: '#f43f5e', bg: '#fff1f2',  text: '#4c0519', card: '#ffffff', border: '#fecdd3', radius: '20px', font: 'Outfit', headerBg: '#9f1239', headerText: '#ffffff',  btnText: '#ffffff' },
-  minimal:  { primary: '#18181b', accent: '#71717a', bg: '#fafafa',  text: '#18181b', card: '#ffffff', border: '#e4e4e7', radius: '8px',  font: 'Outfit', headerBg: '#18181b',                                   headerText: '#fafafa',  btnText: '#ffffff' },
-  royal:    { primary: '#7c3aed', accent: '#a78bfa', bg: '#faf5ff',  text: '#2e1065', card: '#ffffff', border: '#ddd6fe', radius: '24px', font: 'Outfit', headerBg: '#5b21b6', headerText: '#ffffff',  btnText: '#ffffff' },
+  minimal:  { primary: '#0F172A', accent: '#71717a', bg: '#fafafa',  text: '#0F172A', card: '#ffffff', border: '#e4e4e7', radius: '8px',  font: 'Outfit', headerBg: '#0F172A',                                   headerText: '#fafafa',  btnText: '#ffffff' },
+  royal:    { primary: '#0F172A', accent: '#D97706', bg: '#faf5ff',  text: '#0f172a', card: '#ffffff', border: '#e2e8f0', radius: '24px', font: 'Outfit', headerBg: '#0F172A', headerText: '#ffffff',  btnText: '#ffffff' },
   earth:    { primary: '#92400e', accent: '#d97706', bg: '#fffbeb',  text: '#451a03', card: '#ffffff', border: '#fde68a', radius: '16px', font: 'Outfit', headerBg: '#78350f', headerText: '#ffffff',  btnText: '#ffffff' },
   // Dark bg presets — MUST use light text (#f8fafc or similar)
-  midnight: { primary: '#a5b4fc', accent: '#c084fc', bg: '#0f172a',  text: '#f8fafc', card: '#1e293b', border: '#334155', radius: '20px', font: 'Outfit', headerBg: '#1e1b4b', headerText: '#e0e7ff',  btnText: '#ffffff' },
-  neon:     { primary: '#22d3ee', accent: '#a855f7', bg: '#020617',  text: '#f0fdfa', card: '#0f172a', border: '#1e293b', radius: '20px', font: 'Outfit', headerBg: '#0e7490', headerText: '#f0fdfa',  btnText: '#ffffff' },
+  midnight: { primary: '#0284C7', accent: '#34D399', bg: '#0f172a',  text: '#f8fafc', card: '#1e293b', border: '#334155', radius: '20px', font: 'Outfit', headerBg: '#0F172A', headerText: '#f8fafc',  btnText: '#ffffff' },
+  neon:     { primary: '#06B6D4', accent: '#10B981', bg: '#020617',  text: '#f0fdfa', card: '#0f172a', border: '#1e293b', radius: '20px', font: 'Outfit', headerBg: '#0E7490', headerText: '#f0fdfa',  btnText: '#ffffff' },
 };
 
 /**
@@ -227,6 +227,37 @@ const SHOP_THEME_PRESETS = {
  * Merges preset + any retailer overrides saved in designOverrides.
  * SSR-safe: no window access.
  */
+
+function sanitizeStorefrontColor(color, fallback = '#0F172A') {
+  if (!color || typeof color !== 'string') return fallback;
+  const hex = color.trim().toLowerCase();
+  if (['#6366f1', '#4f46e5', '#8b5cf6', '#7c3aed', '#9333ea', '#7e22ce', '#6d28d9', '#a855f7', '#6c47ff', '#4338ca'].includes(hex)) {
+    return fallback;
+  }
+  if (/^#?[0-9a-f]{6}$/i.test(hex)) {
+    const raw = hex.replace('#', '');
+    const r = parseInt(raw.slice(0, 2), 16) / 255;
+    const g = parseInt(raw.slice(2, 4), 16) / 255;
+    const b = parseInt(raw.slice(4, 6), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const d = max - min;
+    let h = 0;
+    if (d > 0) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h = Math.round(h * 60);
+      if (h < 0) h += 360;
+    }
+    const l = (max + min) / 2;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    if (h >= 240 && h <= 295 && s > 0.2) {
+      return fallback;
+    }
+  }
+  return color;
+}
+
 function buildShopTheme(shop) {
   // If template is set, resolve using template configuration!
   if (shop?.templateId) {
@@ -242,7 +273,7 @@ function buildShopTheme(shop) {
         : 'Outfit';
 
       return {
-        primary:    merged.primaryColor || merged.primary || '#6D28D9',
+        primary:    merged.primaryColor || merged.primary || '#0F172A',
         accent:     merged.accentColor || merged.accent || '#F59E0B',
         bg:         merged.bgColor || merged.bg || '#FFFFFF',
         text:       merged.textColor || merged.text || '#0F172A',
@@ -257,7 +288,8 @@ function buildShopTheme(shop) {
     }
   }
 
-  const presetKey = shop?.designPreset || 'classic';
+  const rawPresetKey = shop?.designPreset || 'classic';
+  const presetKey = (rawPresetKey === 'royal' || rawPresetKey === 'classic') ? 'minimal' : rawPresetKey;
   const base = SHOP_THEME_PRESETS[presetKey] || SHOP_THEME_PRESETS.classic;
   const overrides = shop?.designOverrides || {};
   return { ...base, ...overrides };
@@ -273,14 +305,14 @@ function themeToVars(t) {
     : 'Outfit, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
   return {
-    '--sp-primary':     t.primary,
+    '--sp-primary':     sanitizeStorefrontColor(t.primary, '#0F172A'),
     '--sp-accent':      t.accent,
     '--sp-bg':          t.bg,
     '--sp-text':        t.text,
     '--sp-card':        t.card,
     '--sp-border':      t.border,
     '--sp-radius':      t.radius,
-    '--sp-header-bg':   t.headerBg,
+    '--sp-header-bg':   sanitizeStorefrontColor(t.headerBg, '#0F172A'),
     '--sp-header-text': t.headerText,
     '--sp-btn-text':    t.btnText || '#ffffff',
     '--sp-font':        fontVal,
@@ -321,7 +353,7 @@ function validatePhone(phone) {
 }
 
 // Deterministic bright colors for product fallbacks
-const FALLBACK_COLORS = ['bg-indigo-600', 'bg-emerald-600', 'bg-rose-600', 'bg-amber-600', 'bg-cyan-600', 'bg-fuchsia-600'];
+const FALLBACK_COLORS = ['bg-slate-700', 'bg-emerald-600', 'bg-rose-600', 'bg-amber-600', 'bg-cyan-600', 'bg-blue-600'];
 function getFallbackColor(name = '') {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -337,7 +369,7 @@ function StreakTracker({ orders }) {
   })();
 
   return (
-    <div className="bg-gradient-to-br from-purple-900 to-indigo-900 rounded-2xl p-4 text-white">
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-4 text-white">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Flame size={18} className="text-amber-400" />
@@ -2370,7 +2402,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <td style="padding:6px 4px;">
                 <div style="font-size:11px;font-weight:700">${item.name}</div>
                 ${item.note ? `<div style="font-size:9px;color:#666;font-style:italic">Note: ${item.note}</div>` : ''}
-                ${item.customizedText ? `<div style="font-size:9px;color:#7c3aed;font-weight:bold">${item.customizedText}</div>` : ''}
+                ${item.customizedText ? `<div style="font-size:9px;color:#0f172a;font-weight:bold">${item.customizedText}</div>` : ''}
               </td>
               <td style="padding:6px 4px;text-align:center;font-size:11px">${item.quantity}</td>
               <td style="padding:6px 4px;text-align:right;font-size:11px;font-weight:900">৳${(parseFloat(item.price)*item.quantity).toFixed(0)}</td>
@@ -2460,17 +2492,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           --sp-primary-mid: ${themeVars['--sp-primary']}55;
         }
         /* ── Primary color overrides ── */
-        .retailer-storefront .bg-purple-600,
+        .retailer-storefront .bg-slate-900,
         .retailer-storefront .bg-indigo-600 { background-color: var(--sp-primary) !important; }
-        .retailer-storefront .text-purple-600,
+        .retailer-storefront .text-slate-800,
         .retailer-storefront .text-indigo-600 { color: var(--sp-primary) !important; }
-        .retailer-storefront .bg-purple-50,
+        .retailer-storefront .bg-slate-50,
         .retailer-storefront .bg-indigo-50 { background-color: var(--sp-primary-light) !important; }
-        .retailer-storefront .text-purple-700,
+        .retailer-storefront .text-slate-900,
         .retailer-storefront .text-indigo-700 { color: var(--sp-primary) !important; }
-        .retailer-storefront .border-purple-200,
+        .retailer-storefront .border-slate-200,
         .retailer-storefront .border-indigo-200 { border-color: var(--sp-primary-mid) !important; }
-        .retailer-storefront .border-purple-600,
+        .retailer-storefront .border-slate-800,
         .retailer-storefront .border-indigo-600 { border-color: var(--sp-primary) !important; }
         .retailer-storefront .from-purple-600,
         .retailer-storefront .from-indigo-600 { --tw-gradient-from: var(--sp-primary) !important; }
@@ -2528,7 +2560,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         <div className="absolute inset-0 bg-slate-900/60" onClick={() => setIsCategoryMenuOpen(false)} />
         <div className={`absolute top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isCategoryMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-            <h2 className="text-lg font-black text-slate-900 flex items-center gap-2"><Tag size={18} className="text-purple-600" /> ক্যাটাগরি সমূহ</h2>
+            <h2 className="text-lg font-black text-slate-900 flex items-center gap-2"><Tag size={18} className="text-slate-800" /> ক্যাটাগরি সমূহ</h2>
             <button onClick={() => setIsCategoryMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 hover:bg-slate-900 transition-colors">
               <X size={16} strokeWidth={3} />
             </button>
@@ -2536,7 +2568,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
             <button
               onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); setIsCategoryMenuOpen(false); }}
-              className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === 'All' ? 'bg-purple-600 text-white shadow-md shadow-sm scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
+              className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === 'All' ? 'bg-slate-900 text-white shadow-md shadow-sm scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
             >সব ক্যাটাগরি</button>
             <div className="flex items-center gap-2">
               {/* static logo - no navigation to prevent 'No store found' error */}
@@ -2554,22 +2586,22 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div key={c.id} className="space-y-1">
                   <button
                     onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); if (!hasSubs) setIsCategoryMenuOpen(false); }}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all ${isActive ? 'bg-purple-600 text-white shadow-md shadow-sm scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all ${isActive ? 'bg-slate-900 text-white shadow-md shadow-sm scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-slate-50 hover:text-slate-900'}`}
                   >
                     <span>{c.name}</span>
                     {hasSubs && <span className={`text-xs ${isActive ? 'text-white/70' : 'text-slate-400'}`}>{isActive ? '▲' : '▼'}</span>}
                   </button>
                   {isActive && hasSubs && (
-                    <div className="pl-4 space-y-1 border-l-2 border-purple-200 ml-4">
+                    <div className="pl-4 space-y-1 border-l-2 border-slate-200 ml-4">
                       <button
                         onClick={() => setActiveSubcategory('')}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeSubcategory === '' ? 'bg-purple-100 text-purple-700 font-black' : 'text-slate-500 hover:bg-slate-100'}`}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeSubcategory === '' ? 'bg-slate-100 text-slate-900 font-black' : 'text-slate-500 hover:bg-slate-100'}`}
                       >সব</button>
                       {c.subcategories.map((sub, i) => (
                         <button
                           key={i}
                           onClick={() => { setActiveSubcategory(sub); setIsCategoryMenuOpen(false); }}
-                          className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeSubcategory === sub ? 'bg-purple-100 text-purple-700 font-black' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeSubcategory === sub ? 'bg-slate-100 text-slate-900 font-black' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
                         >{sub}</button>
                       ))}
                     </div>
@@ -2626,7 +2658,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {/* ── Marquee Notice ── */}
       {shop.notices && (
-        <div className="bg-purple-600 text-white py-2 overflow-hidden flex whitespace-nowrap border-b border-purple-700">
+        <div className="bg-slate-900 text-white py-2 overflow-hidden flex whitespace-nowrap border-b border-slate-800">
           <div className="animate-marquee font-bold text-sm tracking-wide">{shop.notices}</div>
         </div>
       )}
@@ -2708,7 +2740,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       {banner.linkUrl && (
                         <a 
                           href={banner.linkUrl} 
-                          className="inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-lg shadow-sm active:scale-95 cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-slate-900 hover:bg-black text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-lg shadow-sm active:scale-95 cursor-pointer"
                         >
                           {banner.buttonText || 'এখনই কিনুন'}
                         </a>
@@ -2763,7 +2795,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               if (cat === 'electronics') {
                 return (
-                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F0F8FF] bg-gradient-to-r from-blue-100/80 via-sky-50 to-indigo-50 flex items-center px-6 md:px-12">
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F0F8FF] bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-50 flex items-center px-6 md:px-12">
                     <div className="relative z-10 max-w-2xl text-slate-900">
                       <span className="inline-block px-3.5 py-1 bg-blue-100 border border-blue-300 text-blue-800 rounded-full text-xs font-black mb-3">New Arrivals</span>
                       <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-slate-900">{shop.welcomeMessage || 'Next-Gen Gadgets.'}</h1>
@@ -2776,7 +2808,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               if (cat === 'beauty') {
                 return (
-                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FFF5F7] bg-gradient-to-r from-pink-100/70 via-rose-50 to-purple-50 flex items-center justify-center text-center px-6">
+                  <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FFF5F7] bg-gradient-to-r from-pink-100/70 via-rose-50 to-rose-50 flex items-center justify-center text-center px-6">
                     <div className="relative z-10 max-w-2xl text-slate-900">
                       <span className="inline-block px-3.5 py-1 bg-rose-100 text-[#B76E79] rounded-full text-xs font-black mb-3">Radiant Skincare</span>
                       <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight text-slate-900">{shop.welcomeMessage || 'Glow from Within'}</h1>
@@ -3016,7 +3048,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   >
                     <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
                       <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
-                        <Clock size={13} className="text-purple-600" />
+                        <Clock size={13} className="text-slate-800" />
                         <span>সাম্প্রতিক অনুসন্ধান (Recent Searches)</span>
                       </div>
                       <button
@@ -3037,9 +3069,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                             saveRecentSearch(term);
                             setIsSearchFocused(false);
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-700 text-xs font-bold transition-all cursor-pointer group"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-50 hover:text-slate-900 text-slate-700 text-xs font-bold transition-all cursor-pointer group"
                         >
-                          <Search size={11} className="text-slate-400 group-hover:text-purple-600" />
+                          <Search size={11} className="text-slate-400 group-hover:text-slate-800" />
                           <span>{term}</span>
                           <button
                             type="button"
@@ -3110,13 +3142,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="hidden md:flex flex-wrap gap-2 -mt-2 animate-slide-in">
               <button
                 onClick={() => setActiveSubcategory('')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
               >সব</button>
               {activeCat.subcategories.map((sub, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveSubcategory(sub)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === sub ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-purple-700'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === sub ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-900'}`}
                 >{sub}</button>
               ))}
             </div>
@@ -3132,13 +3164,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="md:hidden flex flex-wrap gap-2 -mt-2 animate-slide-in">
               <button
                 onClick={() => setActiveSubcategory('')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === '' ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200'}`}
               >সব</button>
               {activeCat.subcategories.map((sub, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveSubcategory(sub)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === sub ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-purple-700'}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-colors border ${activeSubcategory === sub ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-900'}`}
                 >{sub}</button>
               ))}
             </div>
@@ -3196,7 +3228,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             const cartItem = cart.find(i => i.id === product.id);
             const btnStyleMap = {
               luxury: 'bg-[#C9A84C] hover:bg-amber-400 text-black font-serif ',
-              electronics: 'bg-[#1565C0] hover:bg-blue-700 text-white shadow-[0_0_12px_rgba(21,101,192,0.4)]',
+              electronics: 'bg-[#1565C0] hover:bg-blue-700 text-white shadow-sm',
               beauty: 'bg-[#B76E79] hover:bg-rose-700 text-white rounded-full',
               home: 'bg-[#CC5500] hover:bg-orange-700 text-white',
               sports: 'bg-[#FF5722] hover:bg-orange-600 text-white shadow-md shadow-sm',
@@ -3210,7 +3242,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               sports: 'text-[#FF5722]',
               grocery: 'text-[#2E7D32]',
             };
-            const cardBtnClass = btnStyleMap[catStyle] || 'bg-purple-600 hover:bg-purple-700 text-white';
+            const cardBtnClass = btnStyleMap[catStyle] || 'bg-slate-900 hover:bg-black text-white';
             const priceClass = priceColorMap[catStyle] || 'text-slate-900';
 
             return (
@@ -3241,7 +3273,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   )}
                   {product.allowCustomize && (
-                    <div className="absolute top-2.5 left-2.5 bg-purple-600 text-white px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                    <div className="absolute top-2.5 left-2.5 bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-sm">
                       <SlidersHorizontal size={10} /> কাস্টম
                     </div>
                   )}
@@ -3260,7 +3292,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     className={`font-extrabold text-[14px] leading-tight transition-colors line-clamp-2 mb-3 cursor-pointer ${
                       catStyle === 'luxury' ? 'text-white group-hover:text-[#C9A84C]' :
                       catStyle === 'electronics' ? 'text-white group-hover:text-[#00E5FF]' :
-                      'text-slate-900 group-hover:text-purple-700'
+                      'text-slate-900 group-hover:text-slate-900'
                     }`}
                   >
                     {product.name}
@@ -3286,9 +3318,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                               min="1"
                               value={cartItem.quantity}
                               onChange={e => setQuantityDirect(product.id, e.target.value)}
-                              className="font-black text-purple-700 text-sm w-full text-center bg-transparent outline-none border-none"
+                              className="font-black text-slate-900 text-sm w-full text-center bg-transparent outline-none border-none"
                             />
-                            <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0">
+                            <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-black transition-colors shadow-sm font-black shrink-0">
                               <Plus size={14} strokeWidth={2.5} />
                             </button>
                           </div>
@@ -3313,9 +3345,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           min="1"
                           value={cartItem.quantity}
                           onChange={e => setQuantityDirect(product.id, e.target.value)}
-                          className="font-black text-purple-700 text-sm w-full text-center bg-transparent outline-none border-none"
+                          className="font-black text-slate-900 text-sm w-full text-center bg-transparent outline-none border-none"
                         />
-                        <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-sm font-black shrink-0">
+                        <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-black transition-colors shadow-sm font-black shrink-0">
                           <Plus size={14} strokeWidth={2.5} />
                         </button>
                       </div>
@@ -3327,7 +3359,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
                       <button
                         onClick={() => setSelectedProductForModal(product)}
-                        className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"
+                        className="w-full py-2 rounded-xl font-black text-xs border-2 border-slate-200 text-slate-900 hover:bg-slate-50 hover:border-slate-800 transition-colors flex items-center justify-center gap-1.5"
                       >
                         <SlidersHorizontal size={13} /> কাস্টমাইজ
                       </button>
@@ -3945,7 +3977,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8 select-none">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="group w-10 h-10 rounded-2xl bg-white hover:bg-purple-600 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-purple-500 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          className="group w-10 h-10 rounded-2xl bg-white hover:bg-slate-900 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-slate-800 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
           title="উপরে যান (Scroll to Top)"
           aria-label="Scroll to top"
         >
@@ -3953,7 +3985,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </button>
         <button
           onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-          className="group w-10 h-10 rounded-2xl bg-white hover:bg-purple-600 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-purple-500 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          className="group w-10 h-10 rounded-2xl bg-white hover:bg-slate-900 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-slate-800 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
           title="নিচে যান (Scroll to Bottom)"
           aria-label="Scroll to bottom"
         >
@@ -3967,7 +3999,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         {/* Floating Cart Button */}
         <button 
           onClick={() => setIsCartOpen(true)} 
-          className="relative w-14 h-14 bg-purple-600 hover:bg-purple-700 !text-white rounded-full shadow-lg shadow-slate-900/20 flex items-center justify-center hover:scale-105 transition-all group cursor-pointer"
+          className="relative w-14 h-14 bg-slate-900 hover:bg-black !text-white rounded-full shadow-lg shadow-slate-900/20 flex items-center justify-center hover:scale-105 transition-all group cursor-pointer"
           style={{ color: '#ffffff' }}
         >
           <ShoppingCart size={22} style={{ color: '#ffffff' }} className="group-hover:rotate-12 transition-transform" />
@@ -3994,22 +4026,22 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {/* ── Mobile Bottom Nav Bar (hamburger + cart) ── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-slate-200 shadow-xl flex items-center justify-around px-4 py-3 safe-bottom">
-        <button onClick={() => setIsCategoryMenuOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+        <button onClick={() => setIsCategoryMenuOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
           <Menu size={22} strokeWidth={2} />
           <span className="text-[10px] font-bold">মেনু</span>
         </button>
-        <button onClick={() => setIsCartOpen(true)} className="relative flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+        <button onClick={() => setIsCartOpen(true)} className="relative flex flex-col items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
           <ShoppingCart size={22} strokeWidth={2} />
           {cartCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>
           )}
           <span className="text-[10px] font-bold">কার্ট</span>
         </button>
-        <button onClick={() => setIsAiOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+        <button onClick={() => setIsAiOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
           <svg width="22" height="22" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#a855f7" /><circle cx="35" cy="45" r="5" fill="white" /><circle cx="65" cy="45" r="5" fill="white" /><path d="M40,65 Q50,72 60,65" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg>
           <span className="text-[10px] font-bold">এআই</span>
         </button>
-        <button onClick={() => setIsProfileOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
+        <button onClick={() => setIsProfileOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
           {user?.photoURL ? (
             <img src={user.photoURL} className="w-6 h-6 rounded-full object-cover" alt="" />
           ) : (
@@ -4053,11 +4085,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-4xl">🎉</div>
             <div>
               <h2 className="text-2xl font-black text-slate-900">অর্ডার সফল!</h2>
-              <p className="text-sm text-slate-500 font-bold mt-1">Order ID: <span className="text-purple-700 font-black">#{orderSuccess.orderIdVisual}</span></p>
+              <p className="text-sm text-slate-500 font-bold mt-1">Order ID: <span className="text-slate-900 font-black">#{orderSuccess.orderIdVisual}</span></p>
             </div>
             <button
               onClick={() => generatePDF(orderSuccess)}
-              className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+              className="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
             >
               <Download size={20} /> PDF ডাউনলোড করুন
             </button>
@@ -4073,8 +4105,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/75" onClick={() => setShowLoginModal(false)} />
           <div className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 text-center animate-slide-in space-y-5">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
-              <User size={28} className="text-purple-600" />
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto">
+              <User size={28} className="text-slate-800" />
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900">লগইন প্রয়োজন</h2>
@@ -4105,7 +4137,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
                     disabled={otpSent || otpLoading}
                     value={loginEmail}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 disabled:opacity-60"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800 disabled:opacity-60"
                     onChange={(e) => setLoginEmail(e.target.value)}
                   />
                   
@@ -4117,7 +4149,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         placeholder="৬ সংখ্যার ওটিপি কোড লিখুন" 
                         disabled={otpLoading}
                         value={otpCode}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 text-center tracking-widest"
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800 text-center tracking-widest"
                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                       />
                       <div className="flex justify-between items-center text-xs font-bold px-1">
@@ -4127,7 +4159,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         <button 
                           onClick={handleSendOTP} 
                           disabled={otpLoading || otpTimer > 0}
-                          className="text-purple-600 hover:underline active:scale-95 disabled:opacity-50 disabled:no-underline"
+                          className="text-slate-800 hover:underline active:scale-95 disabled:opacity-50 disabled:no-underline"
                         >
                           আবার পাঠান (Resend)
                         </button>
@@ -4141,7 +4173,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <button 
                     onClick={otpSent ? handleVerifyOTP : handleSendOTP}
                     disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
-                    className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                    className="w-full py-3.5 bg-slate-900 hover:bg-black text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                   >
                     {otpLoading ? (
                       <>
@@ -4163,14 +4195,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <button 
                       type="button"
                       onClick={() => setLoginMode(loginMode === 'login' ? 'signup' : 'login')}
-                      className="text-xs font-extrabold text-purple-600 hover:underline"
+                      className="text-xs font-extrabold text-slate-800 hover:underline"
                     >
                       {loginMode === 'login' ? 'অ্যাকাউন্ট নেই?' : 'লগইন করুন'}
                     </button>
                   </div>
 
                   {loginMode === 'forgot' && (
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed bg-purple-50 p-2.5 rounded-xl border border-purple-100">
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                       আপনার অ্যাকাউন্টের ইমেইল দিন, পাসওয়ার্ড রিসেট লিংক পাঠিয়ে দেওয়া হবে।
                     </p>
                   )}
@@ -4180,7 +4212,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       type="text" 
                       placeholder="আপনার নাম" 
                       value={customerRegName}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
                       onChange={(e) => setCustomerRegName(e.target.value)}
                     />
                   )}
@@ -4189,7 +4221,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     type="email" 
                     placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
                     value={loginEmail}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
                     onChange={(e) => setLoginEmail(e.target.value)}
                   />
                   
@@ -4198,7 +4230,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       type="password" 
                       placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
                       value={loginPassword}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
                       onChange={(e) => setLoginPassword(e.target.value)}
                     />
                   )}
@@ -4208,7 +4240,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <button 
                         type="button"
                         onClick={() => setLoginMode('forgot')}
-                        className="text-[11px] font-extrabold text-purple-600 hover:text-purple-700 hover:underline"
+                        className="text-[11px] font-extrabold text-slate-800 hover:text-slate-900 hover:underline"
                       >
                         পাসওয়ার্ড ভুলে গেছেন?
                       </button>
@@ -4218,7 +4250,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <button 
                     onClick={loginMode === 'signup' ? handleEmailSignUp : loginMode === 'forgot' ? handleResetPassword : handleEmailLogin}
                     disabled={loginLoading}
-                    className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                    className="w-full py-3.5 bg-slate-900 hover:bg-black text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                   >
                     {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট লিংক পাঠান' : 'লগইন করুন')}
                   </button>
@@ -4255,14 +4287,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsAiOpen(false)} />
           <div className="relative w-full max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] max-h-[700px] border border-slate-200 animate-slide-in">
             {/* Header */}
-            <div className="bg-purple-700 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
+            <div className="bg-slate-900 text-white p-4 flex justify-between items-center border-b-[4px] border-slate-800 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-purple-100 overflow-hidden" style={{transform:'scale(0.75)'}}>
+                <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-slate-100 overflow-hidden" style={{transform:'scale(0.75)'}}>
                   <CuteAIIcon />
                 </div>
                 <div>
                   <h3 className="font-black text-base tracking-tight leading-tight">{shop.aiConfig?.botName || 'Bazar Bot'}</h3>
-                  <p className="text-[10px] uppercase font-black text-purple-300 tracking-widest">AI Shopping Assistant</p>
+                  <p className="text-[10px] uppercase font-black text-slate-300 tracking-widest">AI Shopping Assistant</p>
                 </div>
               </div>
               <button onClick={() => setIsAiOpen(false)} className="hover:bg-white/20 p-2 rounded-xl text-slate-300 hover:text-white transition-colors"><X size={20} strokeWidth={2.5}/></button>
@@ -4277,7 +4309,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   const suggestedItems = getSuggestedProductsForMessage(msg);
                   return (
                     <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
-                      <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-purple-600 text-white rounded-tr-none'}`}>
+                      <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-slate-900 text-white rounded-tr-none'}`}>
                         {msg && msg.text && typeof msg.text === 'string' 
                           ? msg.text.replace(/PRODUCTS_JSON:.*$/s, '').trim() 
                           : (msg ? msg.text : '')}
@@ -4296,7 +4328,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                                     {product.image ? (
                                       <img src={product.image} alt={product.name} className="w-8 h-8 rounded-lg object-cover bg-slate-50 shrink-0" />
                                     ) : (
-                                      <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 text-xs font-black flex items-center justify-center shrink-0">🛍</div>
+                                      <div className="w-8 h-8 rounded-lg bg-slate-50 text-slate-800 text-xs font-black flex items-center justify-center shrink-0">🛍</div>
                                     )}
                                     <div className="min-w-0">
                                       <h4 className="text-xs font-bold text-slate-800 truncate">{product.name}</h4>
@@ -4312,7 +4344,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                                       addToCart(product, qty, customizedText, note);
                                       toast.success(`${product.name} কার্টে যোগ হয়েছে!`);
                                     }}
-                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black  transition-all shrink-0 ${inCart ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black  transition-all shrink-0 ${inCart ? 'bg-slate-100 text-slate-900 hover:bg-slate-200' : 'bg-slate-900 text-white hover:bg-black'}`}
                                   >
                                     {inCart ? 'যুক্ত আছে' : '+ কার্ট'}
                                   </button>
@@ -4342,24 +4374,24 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   </div>
                 )}
                 <button onClick={() => setChatMessages([{ id: 1, role: 'bot', text: 'নতুন চ্যাট শুরু হলো!' }])} className="px-2 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 text-[10px] font-black transition-colors" title="Clear">🗑</button>
-                <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
-                <button onClick={() => sendChatMessage(chatInput)} className="bg-purple-600 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-purple-700 transition-colors shadow-md active:scale-95"><MessageCircle size={20} strokeWidth={2.5}/></button>
+                <input type="text" placeholder="ম্যাসেজ লিখুন..." className="flex-1 bg-slate-100 border border-slate-200 px-4 py-3 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-slate-800 focus:bg-white transition-colors placeholder:text-slate-400" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChatMessage(chatInput)} />
+                <button onClick={() => sendChatMessage(chatInput)} className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:bg-black transition-colors shadow-md active:scale-95"><MessageCircle size={20} strokeWidth={2.5}/></button>
               </div>
               
               {showAiSuggestionModal && (
                 <div className="absolute inset-0 bg-slate-900/75 flex items-end justify-center p-4 z-50 rounded-2xl pb-16">
-                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border border-purple-100 flex flex-col gap-4 animate-in zoom-in-95">
+                  <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border border-slate-100 flex flex-col gap-4 animate-in zoom-in-95">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><Flame size={16}/></div>
+                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center"><Flame size={16}/></div>
                         <h3 className="font-black text-sm text-slate-800">AI স্মার্ট সাজেশন</h3>
                       </div>
                       <button onClick={() => setShowAiSuggestionModal(false)} className="text-slate-400 hover:text-slate-700"><X size={20}/></button>
                     </div>
                     <p className="text-xs text-slate-500 font-bold leading-relaxed">আপনার মেসের সাইজ এবং বাজেট অনুযায়ী বেস্ট ভ্যালু ফর মানি বাজার লিস্ট তৈরি করে দিবে AI।</p>
                     <div className="space-y-3">
-                      <input type="number" placeholder="মেসের বর্ডার কয়জন? (যেমন: ৫)" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600" value={suggestionForm.members} onChange={e => setSuggestionForm({...suggestionForm, members: e.target.value})} />
-                      <input type="number" placeholder="মোট বাজেট কত টাকা? (যেমন: ২০০০)" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-purple-600" value={suggestionForm.budget} onChange={e => setSuggestionForm({...suggestionForm, budget: e.target.value})} />
+                      <input type="number" placeholder="মেসের বর্ডার কয়জন? (যেমন: ৫)" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-slate-800" value={suggestionForm.members} onChange={e => setSuggestionForm({...suggestionForm, members: e.target.value})} />
+                      <input type="number" placeholder="মোট বাজেট কত টাকা? (যেমন: ২০০০)" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 outline-none focus:border-slate-800" value={suggestionForm.budget} onChange={e => setSuggestionForm({...suggestionForm, budget: e.target.value})} />
                     </div>
                     <button 
                       onClick={() => {
@@ -4373,7 +4405,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 এই নিয়মে সেরা ভ্যালু ফর মানি এবং টপ সেল বাজার লিস্ট তৈরি করো।`);
                         setSuggestionForm({ members: '', budget: '' });
                       }}
-                      className="w-full py-3 bg-purple-600 text-white rounded-xl font-black text-sm hover:bg-purple-700 transition-colors">
+                      className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-sm hover:bg-black transition-colors">
                       সাজেশন নিন
                     </button>
                   </div>
@@ -4392,7 +4424,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsCartOpen(false)} />
           <div className="relative w-full max-w-sm h-full bg-white shadow-2xl flex flex-col overflow-hidden animate-slide-in border-l border-slate-200">
             <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 bg-slate-50">
-              <h2 className="text-xl font-black text-slate-900 flex items-center gap-3"><ShoppingCart size={22} className="text-purple-600"/> আমার কার্ট</h2>
+              <h2 className="text-xl font-black text-slate-900 flex items-center gap-3"><ShoppingCart size={22} className="text-slate-800"/> আমার কার্ট</h2>
               <div className="flex items-center gap-2">
                 {cart.length > 0 && (
                   <button 
@@ -4423,11 +4455,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-black text-sm text-slate-900 truncate">{item.name}</h4>
-                    {item.note && <p className="text-[10px] font-bold text-purple-600 truncate mt-0.5 italic">নোট: {item.note}</p>}
+                    {item.note && <p className="text-[10px] font-bold text-slate-800 truncate mt-0.5 italic">নোট: {item.note}</p>}
                     
                     {/* Read-Only Total Price Badge & Unit Price Display */}
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                      <span className="px-2.5 py-1 text-xs font-black text-purple-700 bg-purple-50 border border-purple-200 rounded-xl shadow-xs">
+                      <span className="px-2.5 py-1 text-xs font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl shadow-xs">
                         ৳{Math.round(parseFloat(item.price || 0) * (parseFloat(item.quantity) || 0)).toLocaleString()}
                       </span>
                       <span className="text-[10px] font-bold text-slate-400">মোট</span>
@@ -4455,10 +4487,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         step="any" 
                         value={item.quantity} 
                         onChange={e => setQuantityDirect(item.id, e.target.value)} 
-                        className="w-20 h-9 text-center text-sm sm:text-base font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-purple-500 px-2 shadow-inner" 
+                        className="w-20 h-9 text-center text-sm sm:text-base font-black text-slate-900 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-slate-800 px-2 shadow-inner" 
                       />
                       
-                      <button onClick={() => updateQuantity(item.id, 1)} className="w-9 h-9 bg-purple-600 text-white rounded-xl flex items-center justify-center hover:bg-purple-700 transition-all"><Plus size={14} strokeWidth={2.5}/></button>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="w-9 h-9 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-black transition-all"><Plus size={14} strokeWidth={2.5}/></button>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">
@@ -4487,7 +4519,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 )}
                 <div className="flex justify-between items-end">
                   <span className="text-sm font-black text-slate-900">মোট (ডেলিভারি বাদে)</span>
-                  <span className="text-2xl font-black text-purple-700">৳{cartTotal}</span>
+                  <span className="text-2xl font-black text-slate-900">৳{cartTotal}</span>
                 </div>
                 <button 
                   onClick={() => {
@@ -4510,7 +4542,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       try { saveDraftRef.current?.(true, 'checkout_open'); } catch (e) {}
                     }, 50);
                   }} 
-                  className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]"
+                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]"
                 >
                   পরবর্তী ধাপ <ArrowRight size={20} strokeWidth={2.5}/>
                 </button>
@@ -4541,8 +4573,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             )}
 
             {orderImage && (
-              <div className="relative bg-slate-50 border-2 border-dashed border-purple-200 rounded-2xl p-4 space-y-3">
-                <p className="text-[10px] font-black text-purple-600 text-center">📷 সংযুক্ত ছবি (অর্ডারের সাথে যাবে)</p>
+              <div className="relative bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 space-y-3">
+                <p className="text-[10px] font-black text-slate-800 text-center">📷 সংযুক্ত ছবি (অর্ডারের সাথে যাবে)</p>
                 <div className="relative w-full h-40 rounded-xl overflow-hidden shadow-inner bg-white">
                   <img src={orderImage} className="w-full h-full object-contain" alt="Custom Order" />
                   <button 
@@ -4560,11 +4592,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 block pl-1">পূর্নাঙ্গ নাম *</label>
-                  <input required type="text" placeholder="আপনার নাম লিখুন..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm" value={orderForm.name} onChange={e => setOrderForm(f => ({ ...f, name: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'name_entered'); } catch (e) {} }} />
+                  <input required type="text" placeholder="আপনার নাম লিখুন..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-slate-800 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm" value={orderForm.name} onChange={e => setOrderForm(f => ({ ...f, name: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'name_entered'); } catch (e) {} }} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 block pl-1">ফোন নম্বর *</label>
-                  <input required type="tel" maxLength={11} placeholder="01XXXXXXXXX" className={`w-full p-3.5 rounded-xl bg-slate-50 border-2 ${phoneError ? 'border-red-500' : 'border-slate-200 focus:border-purple-600'} text-sm font-black text-slate-900 outline-none focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm`} value={orderForm.phone} onChange={handlePhoneChange} onBlur={() => { try { saveDraftRef.current?.(true, 'phone_entered'); } catch (e) {} }} />
+                  <input required type="tel" maxLength={11} placeholder="01XXXXXXXXX" className={`w-full p-3.5 rounded-xl bg-slate-50 border-2 ${phoneError ? 'border-red-500' : 'border-slate-200 focus:border-slate-800'} text-sm font-black text-slate-900 outline-none focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm`} value={orderForm.phone} onChange={handlePhoneChange} onBlur={() => { try { saveDraftRef.current?.(true, 'phone_entered'); } catch (e) {} }} />
                   {phoneError && <p className="text-[11px] text-red-600 font-bold pl-1">{phoneError}</p>}
                 </div>
                 <div className="space-y-1.5">
@@ -4577,8 +4609,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         orderForm.coordinates 
                           ? 'bg-emerald-50 border-emerald-300 text-emerald-700' 
                           : shop.requireLocationForOrder === true 
-                            ? 'bg-purple-600 border-purple-600 text-white animate-pulse shadow-sm' 
-                            : 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100'
+                            ? 'bg-slate-900 border-slate-800 text-white animate-pulse shadow-sm' 
+                            : 'bg-slate-50 border-slate-200 text-slate-900 hover:bg-slate-100'
                       }`}
                       title="মানচিত্রে লোকেশন বা এলাকা চিহ্নিত করুন"
                     >
@@ -4586,11 +4618,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <span>{orderForm.coordinates ? 'ম্যাপে চিহ্নিত ✅' : 'ম্যাপ/এলাকা নির্বাচন 📍'}</span>
                     </button>
                   </div>
-                  <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'address_entered'); } catch (e) {} }} />
+                  <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-slate-800 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'address_entered'); } catch (e) {} }} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-700 block pl-1">রিটেইলারকে নোট (ঐচ্ছিক)</label>
-                  <textarea rows={2} placeholder="বিশেষ অনুরোধ, সাইজ, রং বা যেকোনো নির্দেশনা..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.note} onChange={e => setOrderForm(f => ({ ...f, note: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true); } catch (e) {} }} />
+                  <textarea rows={2} placeholder="বিশেষ অনুরোধ, সাইজ, রং বা যেকোনো নির্দেশনা..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-slate-800 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.note} onChange={e => setOrderForm(f => ({ ...f, note: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true); } catch (e) {} }} />
                 </div>
               </div>
 
@@ -4616,14 +4648,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <input 
                       type="text" 
                       placeholder="কুপন কোড..." 
-                      className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-600 text-sm font-black uppercase text-slate-900"
+                      className="flex-1 px-3 py-2 border-2 border-slate-200 rounded-xl outline-none focus:border-slate-800 text-sm font-black uppercase text-slate-900"
                       value={couponCodeInput}
                       onChange={e => { setCouponCodeInput(e.target.value); setCouponError(''); }}
                     />
                     <button 
                       type="button" 
                       onClick={handleApplyCoupon} 
-                      className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-colors shadow-sm active:scale-95"
+                      className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors shadow-sm active:scale-95"
                     >
                       প্রয়োগ
                     </button>
@@ -4633,11 +4665,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               </div>
 
               {isAdvanceRequired ? (
-                <div className="bg-purple-50 p-5 rounded-2xl border-2 border-purple-200 space-y-4">
+                <div className="bg-slate-50 p-5 rounded-2xl border-2 border-slate-200 space-y-4">
                   <div className="flex items-start gap-3">
-                    <AlertCircle size={20} className="text-purple-700 mt-0.5 shrink-0" strokeWidth={2.5} />
-                    <p className="text-sm font-bold text-purple-900 leading-snug">
-                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-purple-700">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-purple-700">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - getCouponDiscountAmount()) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
+                    <AlertCircle size={20} className="text-slate-900 mt-0.5 shrink-0" strokeWidth={2.5} />
+                    <p className="text-sm font-bold text-slate-900 leading-snug">
+                      {isCOD ? <>অর্ডার নিশ্চিত করতে ডেলিভারি চার্জ বাবদ <span className="font-black text-lg text-slate-900">৳{effectiveDelivery === 0 ? 'FREE' : effectiveDelivery}</span> অগ্রিম প্রদান করুন।</> : <>সর্বমোট <span className="font-black text-lg text-slate-900">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - getCouponDiscountAmount()) + effectiveDelivery}</span> পেমেন্ট করুন।</>}
                     </p>
                   </div>
                   
@@ -4648,7 +4680,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         onClick={() => setPaymentMethod('automated')}
                         className={`p-3.5 rounded-xl border-2 text-[11px] font-black transition-all flex flex-col items-center justify-center gap-1.5 ${
                           paymentMethod === 'automated'
-                            ? 'border-purple-600 bg-purple-100 text-purple-700 shadow-sm'
+                            ? 'border-slate-800 bg-slate-100 text-slate-900 shadow-sm'
                             : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
                         }`}
                       >
@@ -4660,7 +4692,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         onClick={() => setPaymentMethod('manual')}
                         className={`p-3.5 rounded-xl border-2 text-[11px] font-black transition-all flex flex-col items-center justify-center gap-1.5 ${
                           paymentMethod === 'manual'
-                            ? 'border-purple-600 bg-purple-100 text-purple-700 shadow-sm'
+                            ? 'border-slate-800 bg-slate-100 text-slate-900 shadow-sm'
                             : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
                         }`}
                       >
@@ -4672,24 +4704,24 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                   {paymentMethod === 'manual' && (
                     <>
-                      <div className="bg-white px-3 py-2 rounded-xl border border-purple-100 shadow-sm">
+                      <div className="bg-white px-3 py-2 rounded-xl border border-slate-100 shadow-sm">
                         <p className="text-[11px] font-black text-slate-600 mb-1">পেমেন্ট নাম্বার</p>
-                        <p className="text-sm font-black text-purple-700">{shop.deliveryConfig?.methods}</p>
+                        <p className="text-sm font-black text-slate-900">{shop.deliveryConfig?.methods}</p>
                       </div>
                       
                       <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
                           <label className="text-xs font-black text-slate-700 block pl-1">পেমেন্ট নাম্বার (যে নাম্বার থেকে টাকা পাঠিয়েছেন) *</label>
-                          <input required={paymentMethod === 'manual'} type="tel" maxLength={11} placeholder="01XXXXXXXXX" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 shadow-sm" value={orderForm.paymentNumber} onChange={e => setOrderForm(f => ({ ...f, paymentNumber: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
+                          <input required={paymentMethod === 'manual'} type="tel" maxLength={11} placeholder="01XXXXXXXXX" className="w-full p-3.5 rounded-xl bg-white border-2 border-slate-300 text-sm font-black text-slate-900 outline-none focus:border-slate-800 shadow-sm" value={orderForm.paymentNumber} onChange={e => setOrderForm(f => ({ ...f, paymentNumber: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-xs font-black text-slate-700 block pl-1">ট্রানজেকশন আইডি (TxnID) *</label>
-                          <input required={paymentMethod === 'manual'} type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
+                          <input required={paymentMethod === 'manual'} type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-slate-300 text-sm font-black text-slate-900 outline-none focus:border-slate-800 focus:ring-4 focus:ring-slate-900/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
                         </div>
                         {shop.deliveryConfig?.requirePaymentScreenshot && (
                           <div className="space-y-1.5 pt-2">
                             <label className="text-xs font-black text-slate-700 block pl-1 font-extrabold text-slate-800">পেমেন্ট প্রুফ স্ক্রিনশট আপলোড *</label>
-                            <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white hover:bg-purple-50/30 transition-colors relative cursor-pointer min-h-[110px]">
+                            <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white hover:bg-slate-50/30 transition-colors relative cursor-pointer min-h-[110px]">
                               <input 
                                 required 
                                 type="file" 
@@ -4699,7 +4731,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                               />
                               {paymentScreenshot ? (
                                 <div className="flex items-center gap-3 w-full z-10">
-                                  <img src={paymentScreenshot} className="w-12 h-12 object-cover rounded-lg border border-purple-200" />
+                                  <img src={paymentScreenshot} className="w-12 h-12 object-cover rounded-lg border border-slate-200" />
                                   <div className="flex-1 min-w-0">
                                     <p className="text-xs font-bold text-slate-700 truncate">স্ক্রিনশট আপলোড হয়েছে</p>
                                     <p className="text-[10px] text-slate-400 font-bold">ক্লিক করে পরিবর্তন করতে পারেন</p>
@@ -4718,7 +4750,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                                 </div>
                               ) : (
                                 <>
-                                  <ImagePlus size={24} className="text-purple-400 mb-1" />
+                                  <ImagePlus size={24} className="text-slate-400 mb-1" />
                                   <p className="text-xs font-bold text-slate-600 text-center">এখানে ক্লিক করে স্ক্রিনশট আপলোড করুন</p>
                                   <p className="text-[9px] text-slate-400 text-center">সর্বোচ্চ ২MB, JPG/PNG</p>
                                 </>
@@ -4760,11 +4792,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t-2 border-slate-200 font-black text-slate-900 text-xl">
                   <span>সর্বমোট</span>
-                  <span className="text-purple-700 text-2xl">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - getCouponDiscountAmount()) + effectiveDelivery}</span>
+                  <span className="text-slate-900 text-2xl">৳{Math.max(0, (cart.length === 0 && orderImage ? 1 : cartTotal) - getCouponDiscountAmount()) + effectiveDelivery}</span>
                 </div>
               </div>
 
-              <button disabled={placing} type="submit" className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 mt-4 active:scale-[0.98]">
+              <button disabled={placing} type="submit" className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 mt-4 active:scale-[0.98]">
                 {placing ? <><Loader2 className="animate-spin" size={20} /> প্রসেস হচ্ছে...</> : <><CheckCircle size={20} strokeWidth={2.5}/> অর্ডার প্লেস করুন</>}
               </button>
             </form>
@@ -4865,7 +4897,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                               type="number" 
                               step="any"
                               placeholder="পরিমাণ" 
-                              className="w-full pl-2 pr-7 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                              className="w-full pl-2 pr-7 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-slate-800 bg-slate-50/50 focus:bg-white transition-colors"
                               value={row.qty}
                               onChange={e => handleCommonOrderChange(product, 'qty', e.target.value)}
                             />
@@ -4879,7 +4911,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                             <input 
                               type="number" 
                               placeholder="৳ দাম" 
-                              className="w-full pl-5 pr-1 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                              className="w-full pl-5 pr-1 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-slate-800 bg-slate-50/50 focus:bg-white transition-colors"
                               value={row.price}
                               onChange={e => handleCommonOrderChange(product, 'price', e.target.value)}
                             />
@@ -4892,7 +4924,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           <input 
                             type="text" 
                             placeholder="উদা: ১০ পিস" 
-                            className="w-full px-2 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-purple-600 bg-slate-50/50 focus:bg-white transition-colors"
+                            className="w-full px-2 py-2 border-2 border-slate-200 rounded-xl text-xs font-black text-slate-900 outline-none focus:border-slate-800 bg-slate-50/50 focus:bg-white transition-colors"
                             value={row.piece}
                             onChange={e => handleCommonOrderChange(product, 'piece', e.target.value)}
                           />
@@ -4907,7 +4939,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         <div className="col-span-1 md:col-span-1 text-right">
                           <button 
                             onClick={() => addCommonOrderRowToCart(product)}
-                            className="w-full px-1 py-2 bg-purple-600 text-white rounded-xl text-[9px] font-black hover:bg-purple-700 transition-all uppercase tracking-tight active:scale-95 text-center shadow-sm"
+                            className="w-full px-1 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black hover:bg-black transition-all uppercase tracking-tight active:scale-95 text-center shadow-sm"
                           >
                             যোগ
                           </button>
@@ -4937,7 +4969,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 const commonOrderTotal = Object.values(commonOrderRows).reduce((sum, row) => sum + (parseFloat(row.finalPrice) || 0), 0);
                 return commonOrderTotal > 0 ? (
                   <div className="text-slate-900 font-extrabold text-sm flex items-center gap-1">
-                    মোট হিসাবকৃত দাম: <span className="text-purple-600 text-base font-black">৳{commonOrderTotal}</span>
+                    মোট হিসাবকৃত দাম: <span className="text-slate-800 text-base font-black">৳{commonOrderTotal}</span>
                   </div>
                 ) : null;
               })()}
@@ -4958,10 +4990,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         <div className="fixed inset-0 z-50 flex justify-end">
           <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsProfileOpen(false)} />
           <div className="relative w-full max-w-sm h-full bg-slate-50 shadow-2xl flex flex-col overflow-hidden animate-slide-in border-l border-slate-200">
-            <div className="p-6 bg-purple-700 text-white flex flex-col relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/20 rounded-full blur-3xl" />
+            <div className="p-6 bg-slate-900 text-white flex flex-col relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-800/20 rounded-full blur-3xl" />
               <div className="flex justify-between items-start mb-6 relative z-10">
-                <div className="w-16 h-16 aspect-square bg-white text-purple-700 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
+                <div className="w-16 h-16 aspect-square bg-white text-slate-900 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
                   {user?.photoURL ? <img src={user.photoURL} className="w-full h-full object-cover aspect-square" /> : <p className="text-3xl font-black">{user?.displayName?.[0] || 'U'}</p>}
                 </div>
                 <div className="flex items-center gap-2">
@@ -5014,7 +5046,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
                         disabled={otpSent || otpLoading}
                         value={loginEmail}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 disabled:opacity-60"
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800 disabled:opacity-60"
                         onChange={(e) => setLoginEmail(e.target.value)}
                       />
                       
@@ -5026,7 +5058,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                             placeholder="৬ সংখ্যার ওটিপি কোড লিখুন" 
                             disabled={otpLoading}
                             value={otpCode}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600 text-center tracking-widest"
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800 text-center tracking-widest"
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                           />
                           <div className="flex justify-between items-center text-xs font-bold px-1">
@@ -5036,7 +5068,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                             <button 
                               onClick={handleSendOTP} 
                               disabled={otpLoading || otpTimer > 0}
-                              className="text-purple-600 hover:underline active:scale-95 disabled:opacity-50 disabled:no-underline"
+                              className="text-slate-800 hover:underline active:scale-95 disabled:opacity-50 disabled:no-underline"
                             >
                               আবার পাঠান (Resend)
                             </button>
@@ -5050,7 +5082,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <button 
                         onClick={otpSent ? handleVerifyOTP : handleSendOTP}
                         disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
-                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                        className="w-full py-3.5 bg-slate-900 hover:bg-black text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                       >
                         {otpLoading ? (
                           <>
@@ -5072,14 +5104,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         <button 
                           type="button"
                           onClick={() => setLoginMode(loginMode === 'login' ? 'signup' : 'login')}
-                          className="text-xs font-extrabold text-purple-600 hover:underline"
+                          className="text-xs font-extrabold text-slate-800 hover:underline"
                         >
                           {loginMode === 'login' ? 'অ্যাকাউন্ট নেই?' : 'লগইন করুন'}
                         </button>
                       </div>
 
                       {loginMode === 'forgot' && (
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed bg-purple-50 p-2.5 rounded-xl border border-purple-100">
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                           আপনার অ্যাকাউন্টের ইমেইল দিন, পাসওয়ার্ড রিসেট লিংক পাঠিয়ে দেওয়া হবে।
                         </p>
                       )}
@@ -5089,7 +5121,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           type="text" 
                           placeholder="আপনার নাম" 
                           value={customerRegName}
-                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
                           onChange={(e) => setCustomerRegName(e.target.value)}
                         />
                       )}
@@ -5098,7 +5130,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         type="email" 
                         placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
                         value={loginEmail}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
                         onChange={(e) => setLoginEmail(e.target.value)}
                       />
                       
@@ -5107,7 +5139,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           type="password" 
                           placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
                           value={loginPassword}
-                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-purple-600"
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
                           onChange={(e) => setLoginPassword(e.target.value)}
                         />
                       )}
@@ -5117,7 +5149,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           <button 
                             type="button"
                             onClick={() => setLoginMode('forgot')}
-                            className="text-[11px] font-extrabold text-purple-600 hover:text-purple-700 hover:underline"
+                            className="text-[11px] font-extrabold text-slate-800 hover:text-slate-900 hover:underline"
                           >
                             পাসওয়ার্ড ভুলে গেছেন?
                           </button>
@@ -5127,7 +5159,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <button 
                         onClick={loginMode === 'signup' ? handleEmailSignUp : loginMode === 'forgot' ? handleResetPassword : handleEmailLogin}
                         disabled={loginLoading}
-                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                        className="w-full py-3.5 bg-slate-900 hover:bg-black text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                       >
                         {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট লিংক পাঠান' : 'লগইন করুন')}
                       </button>
@@ -5200,17 +5232,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       return (
                       <div
                         key={order.id}
-                        className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:border-purple-300 transition-colors group"
+                        className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:border-slate-300 transition-colors group"
                       >
                         <div
                           className="block p-4 bg-slate-50 cursor-pointer hover:bg-slate-100/80 transition-colors"
                           onClick={goToOrderDetail}
                         >
                           <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-[11px] font-black text-purple-700 bg-purple-100 px-2 py-1 rounded-md border border-purple-200">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
+                            <span className="text-[11px] font-black text-slate-900 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">#{order.orderIdVisual || order.id.slice(-6).toUpperCase()}</span>
                             <span className={`text-[11px] font-black px-2 py-1 rounded-md border ${order.status === 'completed' ? 'text-emerald-700 bg-emerald-100 border-emerald-200' : order.status === 'cancelled' ? 'text-red-700 bg-red-100 border-red-200' : 'text-amber-700 bg-amber-100 border-amber-200'}`}>{order.status || 'Pending'}</span>
                           </div>
-                          <p className="font-extrabold text-slate-900 text-base">{order.items?.length || 0} Items <span className="text-purple-600">(৳{order.total?.toLocaleString()})</span></p>
+                          <p className="font-extrabold text-slate-900 text-base">{order.items?.length || 0} Items <span className="text-slate-800">(৳{order.total?.toLocaleString()})</span></p>
                           <p className="text-[10px] font-bold text-slate-400 mt-1">{order.createdAt?.toDate ? order.createdAt.toDate().toLocaleDateString('en-GB') : (order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : '')}</p>
                         </div>
                         <div className="grid grid-cols-2 border-t border-slate-100">
@@ -5530,7 +5562,7 @@ function FaqAccordionItem({ question, answer }) {
         className="w-full flex items-center justify-between p-4 text-left font-black text-slate-800 text-sm hover:bg-slate-100 transition-colors"
       >
         <span>{question}</span>
-        <span className="text-purple-600 text-xs font-black">{isOpen ? '▲' : '▼'}</span>
+        <span className="text-slate-800 text-xs font-black">{isOpen ? '▲' : '▼'}</span>
       </button>
       {isOpen && (
         <div className="p-4 pt-0 text-slate-600 text-xs font-bold leading-relaxed border-t border-slate-100 bg-white">

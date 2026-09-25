@@ -132,7 +132,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-colors shadow-lg shadow-sm"
+            className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors shadow-lg shadow-sm"
           >
             রিভিউ লিখুন
           </button>
@@ -141,7 +141,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
 
       {/* Submit Form */}
       {showForm && (
-        <div className="bg-white border-2 border-purple-100 rounded-2xl p-6 space-y-4 shadow-sm">
+        <div className="bg-white border-2 border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
           <div className="flex items-center gap-1">
             <span className="text-xs font-black text-slate-500 mr-2">রেটিং:</span>
             {[1,2,3,4,5].map(i => (
@@ -162,7 +162,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
             placeholder="আপনার অভিজ্ঞতা শেয়ার করুন..."
             value={text}
             onChange={e => setText(e.target.value)}
-            className="w-full text-sm font-bold text-slate-900 p-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-purple-500 focus:bg-white transition-colors placeholder:text-slate-300 resize-none"
+            className="w-full text-sm font-bold text-slate-900 p-4 rounded-xl bg-slate-50 border border-slate-200 outline-none focus:border-slate-800 focus:bg-white transition-colors placeholder:text-slate-300 resize-none"
           />
           <div className="flex gap-3">
             <button
@@ -174,7 +174,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
             <button
               onClick={handleSubmit}
               disabled={submitting || rating === 0}
-              className="flex-1 py-3 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-colors shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black transition-colors shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               {submitting ? 'জমা হচ্ছে...' : 'জমা দিন'}
@@ -195,7 +195,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
             <div key={review.id} className={`bg-white border rounded-2xl p-5 shadow-sm ${review.pinned ? 'border-amber-200 bg-amber-50/30 ring-1 ring-amber-100' : 'border-slate-100'}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-sm font-black text-purple-600 border border-slate-200">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-sm font-black text-slate-700 border border-slate-200">
                     {review.name?.[0] || 'C'}
                   </div>
                   <div>
@@ -230,7 +230,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
                     {(isSuperAdmin || (user && user.uid === review.uid)) && (
                       <button
                         onClick={() => startEditing(review)}
-                        className="p-2 rounded-lg hover:bg-purple-50 text-slate-400 hover:text-purple-600 transition-colors"
+                        className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-colors"
                         title="Edit Review"
                       >
                         <Edit2 size={14} />
@@ -248,7 +248,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
               </div>
 
               {editingReviewId === review.id ? (
-                <div className="mt-4 bg-slate-50 rounded-xl p-4 border border-purple-100 space-y-3">
+                <div className="mt-4 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
                   <div className="flex items-center gap-1">
                     <span className="text-xs font-black text-slate-500 mr-2">নতুন রেটিং:</span>
                     {[1,2,3,4,5].map(i => (
@@ -266,7 +266,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
                     maxLength={500}
                     value={editText}
                     onChange={e => setEditText(e.target.value)}
-                    className="w-full text-xs font-bold text-slate-950 p-3 rounded-lg bg-white border border-slate-200 focus:border-purple-500 transition-colors resize-none outline-none"
+                    className="w-full text-xs font-bold text-slate-950 p-3 rounded-lg bg-white border border-slate-200 focus:border-slate-800 transition-colors resize-none outline-none"
                   />
                   <div className="flex gap-2 justify-end">
                     <button
@@ -278,7 +278,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
                     <button
                       onClick={() => handleSaveEdit(review.id)}
                       disabled={editSubmitting || editRating === 0}
-                      className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-[10px] font-black hover:bg-purple-700 transition-colors flex items-center gap-1 disabled:opacity-50"
+                      className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-black hover:bg-black transition-colors flex items-center gap-1 disabled:opacity-50"
                     >
                       {editSubmitting ? <Loader2 size={10} className="animate-spin animate-duration-500" /> : 'সংরক্ষণ'}
                     </button>

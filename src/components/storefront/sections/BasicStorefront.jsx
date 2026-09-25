@@ -4,7 +4,7 @@ import { Search, ArrowUpDown, Plus, Minus, SlidersHorizontal, Package, ShoppingC
 import Image from 'next/image';
 
 const FALLBACK_COLORS = [
-  'bg-purple-600',
+  'bg-slate-900',
   'bg-emerald-600',
   'bg-blue-600',
   'bg-amber-600',
@@ -231,7 +231,7 @@ export default function BasicStorefront({
                         </div>
                       )}
                       {prod.allowCustomize && (
-                        <div className="absolute top-2 left-2 bg-purple-600 text-white px-2 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1">
+                        <div className="absolute top-2 left-2 bg-slate-900 text-white px-2 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1">
                           <SlidersHorizontal size={9} /> কাস্টম
                         </div>
                       )}
@@ -241,7 +241,7 @@ export default function BasicStorefront({
                     <div className="p-3 sm:p-3.5 flex flex-col flex-1">
                       <h3
                         onClick={() => onProductClick?.(prod)}
-                        className="font-extrabold text-xs sm:text-sm text-slate-900 group-hover:text-purple-600 leading-tight transition-colors line-clamp-2 mb-2 cursor-pointer"
+                        className="font-extrabold text-xs sm:text-sm text-slate-900 group-hover:text-slate-800 leading-tight transition-colors line-clamp-2 mb-2 cursor-pointer"
                       >
                         {prod.name}
                       </h3>
@@ -265,12 +265,12 @@ export default function BasicStorefront({
                             >
                               <Minus size={12} strokeWidth={2.5} />
                             </button>
-                            <span className="font-black text-purple-700 text-xs w-full text-center select-none">
+                            <span className="font-black text-slate-900 text-xs w-full text-center select-none">
                               {qty}
                             </span>
                             <button
                               onClick={() => handleQtyChange(prod.id, 1, prod)}
-                              className="w-7 h-7 bg-purple-600 rounded-lg flex items-center justify-center text-white hover:bg-purple-700 transition-colors shadow-2xs font-black shrink-0 cursor-pointer"
+                              className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-black transition-colors shadow-2xs font-black shrink-0 cursor-pointer"
                             >
                               <Plus size={12} strokeWidth={2.5} />
                             </button>

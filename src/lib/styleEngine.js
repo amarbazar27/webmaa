@@ -19,14 +19,50 @@ import { buildContrastSafeThemeVars, getContrastText } from './contrastEngine';
  * @param {Object} mergedTheme - retailer-customized theme (defaultTheme + overrides)
  * @returns {{ style: Object, dataAttrs: Object }}
  */
+export function sanitizeAntiSlopColor(color, fallback = '#0F172A') {
+  if (!color || typeof color !== 'string') return fallback;
+  const hex = color.trim().toLowerCase();
+  if (['#6366f1', '#4f46e5', '#8b5cf6', '#7c3aed', '#9333ea', '#7e22ce', '#6d28d9', '#a855f7', '#6c47ff', '#4338ca'].includes(hex)) {
+    return fallback;
+  }
+  if (/^#?[0-9a-f]{6}$/i.test(hex)) {
+    const raw = hex.replace('#', '');
+    const r = parseInt(raw.slice(0, 2), 16) / 255;
+    const g = parseInt(raw.slice(2, 4), 16) / 255;
+    const b = parseInt(raw.slice(4, 6), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const d = max - min;
+    let h = 0;
+    if (d > 0) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h = Math.round(h * 60);
+      if (h < 0) h += 360;
+    }
+    const l = (max + min) / 2;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    // Saturated purple/indigo/violet: Hue between 240° and 295°, saturation > 20%
+    if (h >= 240 && h <= 295 && s > 0.2) {
+      return fallback;
+    }
+  }
+  return color;
+}
+
 export function buildStyleEngineOutput(template, mergedTheme = {}) {
+  const rawPrimary = mergedTheme.primaryColor || '#0F172A';
+  const rawSecondary = mergedTheme.secondaryColor || '#16A34A';
+  const rawHeaderBg = mergedTheme.headerBg || rawPrimary;
+
+  const primaryColor = sanitizeAntiSlopColor(rawPrimary, '#0F172A');
+  const secondaryColor = sanitizeAntiSlopColor(rawSecondary, '#16A34A');
+  const headerBg = sanitizeAntiSlopColor(rawHeaderBg, '#0F172A');
+
   const {
-    primaryColor   = '#6C47FF',
-    secondaryColor = '#8B5CF6',
     accentColor    = '#F59E0B',
     bgColor        = '#F8FAFC',
     textColor,
-    headerBg       = '#6C47FF',
     headerText,
     cardBg         = '#ffffff',
     cardBorder     = '#E2E8F0',

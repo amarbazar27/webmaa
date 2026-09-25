@@ -36,7 +36,7 @@ function LiveCountdown({ deliveryETA }) {
   return (
     <div className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center ${isExpired ? 'bg-amber-50 border-amber-200' : 'bg-purple-50 border-purple-200'}`}>
       <div className="flex items-center gap-2 mb-1.5">
-        <Clock size={16} className={isExpired ? 'text-amber-600' : 'text-purple-600'} />
+        <Clock size={16} className={isExpired ? 'text-amber-600' : 'text-slate-800'} />
         <p className={`text-[11px] font-black  ${isExpired ? 'text-amber-700' : 'text-purple-700'}`}>
           {isExpired ? 'ডেলিভারি সময়সীমা' : 'পৌঁছানোর সম্ভাব্য কাউন্টডাউন'}
         </p>
@@ -62,7 +62,7 @@ function DeliveryInfoCard({ order, shop }) {
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
             isCompleted ? 'bg-emerald-100 text-emerald-600' :
             isCancelled ? 'bg-red-100 text-red-600' :
-            isConfirmed ? 'bg-purple-100 text-purple-600' : 'bg-amber-100 text-amber-600'
+            isConfirmed ? 'bg-purple-100 text-slate-800' : 'bg-amber-100 text-amber-600'
           }`}>
             <Truck size={18} strokeWidth={2.5} />
           </div>
@@ -91,7 +91,7 @@ function DeliveryInfoCard({ order, shop }) {
 
       {deliveryTime && (
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex items-center gap-3">
-          <Clock size={18} className="text-purple-600 shrink-0" />
+          <Clock size={18} className="text-slate-800 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-black text-slate-400">সম্ভাব্য ডেলিভারি সময়</p>
             <p className="text-sm font-black text-slate-900 mt-0.5">{deliveryTime}</p>
@@ -105,7 +105,7 @@ function DeliveryInfoCard({ order, shop }) {
         ) : isCancelled ? (
           <><ShieldAlert size={16} className="text-red-600 shrink-0" /> দুঃখিত, অর্ডারটি বাতিল করা হয়েছে। কোনো জিজ্ঞাসা থাকলে দোকানে যোগাযোগ করুন।</>
         ) : isConfirmed ? (
-          <><CheckCircle2 size={16} className="text-purple-600 shrink-0" /> দোকানদার অর্ডারটি গ্রহণ করেছেন এবং ডেলিভারির কাজ চলমান রয়েছে।</>
+          <><CheckCircle2 size={16} className="text-slate-800 shrink-0" /> দোকানদার অর্ডারটি গ্রহণ করেছেন এবং ডেলিভারির কাজ চলমান রয়েছে।</>
         ) : (
           <><Clock size={16} className="text-amber-600 shrink-0" /> অর্ডারটি দোকানদারের অনুমোদনের অপেক্ষায় রয়েছে। শীঘ্রই কনফার্ম করা হবে।</>
         )}
@@ -262,7 +262,7 @@ export default function OrderSummaryPage({ params }) {
           <Link
             href={invoiceUrl}
             onClick={() => toast.dismiss(t.id)}
-            className="px-2.5 py-1.5 bg-purple-600 text-white rounded-lg font-black text-xs shrink-0 hover:bg-purple-700"
+            className="px-2.5 py-1.5 bg-slate-900 text-white rounded-lg font-black text-xs shrink-0 hover:bg-black"
           >
             ওপেন করুন
           </Link>
@@ -298,7 +298,7 @@ export default function OrderSummaryPage({ params }) {
   // ── Loading state ──
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <Loader2 className="animate-spin text-purple-600" size={32} />
+      <Loader2 className="animate-spin text-slate-800" size={32} />
     </div>
   );
 
@@ -313,7 +313,7 @@ export default function OrderSummaryPage({ params }) {
           <h2 className="text-lg font-black text-slate-900">অর্ডার দেখার অনুমতি নেই</h2>
           <p className="text-sm text-slate-500 font-bold mt-2">এই অর্ডারটি দেখতে আপনাকে সংশ্লিষ্ট ইমেইল দিয়ে লগইন করতে হবে।</p>
         </div>
-        <button onClick={handleBack} className="w-full py-3 bg-purple-600 text-white rounded-2xl font-black text-sm hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+        <button onClick={handleBack} className="w-full py-3 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-lg cursor-pointer">
           <ArrowLeft size={16} /> ফিরে যান
         </button>
       </div>
@@ -416,11 +416,11 @@ export default function OrderSummaryPage({ params }) {
           <button
             onClick={generatePDF}
             disabled={isGeneratingPdf}
-            className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors shadow-lg shadow-sm disabled:opacity-60 relative overflow-hidden cursor-pointer"
+            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-colors shadow-lg shadow-sm disabled:opacity-60 relative overflow-hidden cursor-pointer"
           >
             {isGeneratingPdf && (
               <div
-                className="absolute left-0 top-0 bottom-0 bg-purple-500/50 transition-all duration-500"
+                className="absolute left-0 top-0 bottom-0 bg-slate-800/50 transition-all duration-500"
                 style={{ width: `${pdfProgress}%` }}
               />
             )}
@@ -435,7 +435,7 @@ export default function OrderSummaryPage({ params }) {
             href={invoiceUrl}
             className="w-full py-4 bg-white text-slate-800 hover:bg-slate-50 border-2 border-slate-200 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-sm text-center"
           >
-            <Eye size={16} className="text-purple-600" strokeWidth={2.5} />
+            <Eye size={16} className="text-slate-800" strokeWidth={2.5} />
             ইনভয়েস ওপেন করুন (Open)
           </Link>
         </div>
@@ -480,7 +480,7 @@ export default function OrderSummaryPage({ params }) {
                   {item.customizedText && (
                     <div className="mt-1 space-y-0.5">
                       {item.baseUnit && <p className="text-[10px] text-slate-500 font-bold">→ Base: {item.baseUnit}</p>}
-                      <p className="text-[10px] text-purple-600 font-black">→ Customized: {item.customizedText}</p>
+                      <p className="text-[10px] text-slate-800 font-black">→ Customized: {item.customizedText}</p>
                     </div>
                   )}
                   {item.note && <p className="text-xs text-slate-500 font-bold italic mt-1">নোট: {item.note}</p>}
@@ -555,7 +555,7 @@ export default function OrderSummaryPage({ params }) {
               <tr key={idx} style={{ borderBottom: '1px dashed #ccc', fontSize: '11px' }}>
                 <td style={{ padding: '8px 0', fontWeight: 700 }}>
                   <div style={{ fontWeight: 900 }}>{item.name}</div>
-                  {item.customizedText && <div style={{ fontSize: '9px', fontWeight: 900, color: '#7c3aed' }}>→ {item.customizedText}</div>}
+                  {item.customizedText && <div style={{ fontSize: '9px', fontWeight: 900, color: '#0f172a' }}>→ {item.customizedText}</div>}
                   {item.note && <div style={{ fontSize: '9px', fontStyle: 'italic', marginTop: '2px', color: '#666' }}>Note: {item.note}</div>}
                 </td>
                 <td style={{ padding: '8px 0', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>

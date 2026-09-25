@@ -221,7 +221,7 @@ export default function StorefrontHeader({
         className={`relative ${buttonBaseClass} px-3 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100`}
         aria-label="Shopping Cart"
       >
-        <ShoppingBag size={16} className="text-purple-600" />
+        <ShoppingBag size={16} className="text-slate-800" />
         <span className="hidden sm:inline text-xs font-black ml-1">কার্ট</span>
         {cartCount > 0 && (
           <span 
@@ -356,7 +356,7 @@ export default function StorefrontHeader({
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <button 
               onClick={onOpenCategories}
-              className="flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-black shrink-0 hover:bg-purple-700 shadow-xs"
+              className="flex items-center gap-1 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-black shrink-0 hover:bg-black shadow-xs"
             >
               <Menu size={13} />
               <span>সকল ক্যাটাগরি</span>
@@ -367,7 +367,7 @@ export default function StorefrontHeader({
                 <button
                   key={typeof c === 'object' ? (c.id || catName) : catName}
                   onClick={() => onSearchChange?.(catName)}
-                  className="text-xs font-bold text-slate-600 hover:text-purple-600 hover:bg-white px-2.5 py-1 rounded-md shrink-0 transition-colors"
+                  className="text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-white px-2.5 py-1 rounded-md shrink-0 transition-colors"
                 >
                   {catName}
                 </button>
@@ -405,11 +405,11 @@ export default function StorefrontHeader({
                 value={searchQuery}
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 placeholder="🔍 দ্রুত যেকোনো পণ্য খুঁজে পেতে লিখুন..."
-                className="w-full pl-10 pr-24 py-2.5 bg-slate-50 focus:bg-white text-xs font-black text-slate-800 rounded-2xl border-2 border-purple-200 focus:border-purple-600 focus:ring-4 focus:ring-purple-100 outline-none transition-all shadow-xs"
+                className="w-full pl-10 pr-24 py-2.5 bg-slate-50 focus:bg-white text-xs font-black text-slate-800 rounded-2xl border-2 border-slate-200 focus:border-slate-800 focus:ring-4 focus:ring-slate-100 outline-none transition-all shadow-xs"
               />
               <button 
                 type="button" 
-                className="absolute right-1.5 px-3 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 shadow-xs"
+                className="absolute right-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black shadow-xs"
               >
                 Search
               </button>

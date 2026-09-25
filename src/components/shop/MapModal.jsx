@@ -236,7 +236,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
         // Custom High-Res SVG Marker Pin
         const customPinSvg = `
           <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#9333ea" width="42" height="42" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#dc2626" width="42" height="42" style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35));">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
             <div style="width:10px;height:4px;background:rgba(0,0,0,0.3);border-radius:50%;margin-top:-3px;"></div>
@@ -288,7 +288,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
         if (!isNaN(shopLat) && !isNaN(shopLng) && !isNaN(radiusLimit) && radiusLimit > 0) {
           L.circle([shopLat, shopLng], {
             radius: radiusLimit * 1000,
-            color: '#9333ea',
+            color: '#dc2626',
             fillColor: '#c084fc',
             fillOpacity: 0.1,
             weight: 2,
@@ -555,12 +555,12 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
   return (
     // ── Highest Z-Index (z-[99999]) to guarantee display OVER checkout modal ──
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/85 animate-fade-in">
-      <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border-2 border-purple-100 flex flex-col max-h-[94vh] relative z-[100000]">
+      <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-200 flex flex-col max-h-[94vh] relative z-[100000]">
         
         {/* ── Modal Header ── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-black shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-900 flex items-center justify-center font-black shadow-inner">
               <MapPin size={20} />
             </div>
             <div>
@@ -589,7 +589,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             }}
             className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'map'
-                ? 'bg-white text-purple-700 shadow-sm'
+                ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -601,7 +601,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             onClick={() => setActiveTab('geodata')}
             className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
               activeTab === 'geodata'
-                ? 'bg-white text-purple-700 shadow-sm'
+                ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -619,7 +619,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
               
               {/* Search Bar on Map */}
               <form onSubmit={handleSearch} className="relative">
-                <div className="flex items-center gap-2 bg-slate-50 border-2 border-slate-200 rounded-2xl px-3 py-1.5 focus-within:border-purple-600 focus-within:bg-white transition-all shadow-xs">
+                <div className="flex items-center gap-2 bg-slate-50 border-2 border-slate-200 rounded-2xl px-3 py-1.5 focus-within:border-slate-800 focus-within:bg-white transition-all shadow-xs">
                   <Search size={16} className="text-slate-400 shrink-0" />
                   <input
                     type="text"
@@ -631,7 +631,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                   <button
                     type="submit"
                     disabled={searching}
-                    className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50 shadow-sm"
+                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-black flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50 shadow-sm"
                   >
                     {searching ? <Loader2 size={13} className="animate-spin" /> : 'খুঁজুন'}
                   </button>
@@ -645,9 +645,9 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                         key={idx}
                         type="button"
                         onClick={() => selectSearchResult(item)}
-                        className="w-full text-left p-3 text-xs font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2"
+                        className="w-full text-left p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center gap-2"
                       >
-                        <MapPin size={14} className="shrink-0 text-purple-600" />
+                        <MapPin size={14} className="shrink-0 text-slate-700" />
                         <span className="truncate">{item.display_name}</span>
                       </button>
                     ))}
@@ -674,7 +674,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                       reverseGeocode(city.lat, city.lng);
                       toast.success(`${city.name} নির্বাচিত হয়েছে! 📍`);
                     }}
-                    className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-slate-700 font-black shrink-0 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-100 hover:text-slate-900 text-slate-700 font-black shrink-0 transition-colors cursor-pointer"
                   >
                     {city.name}
                   </button>
@@ -690,10 +690,10 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                   type="button"
                   onClick={() => getGpsPosition(true)}
                   disabled={locating}
-                  className="absolute bottom-4 right-4 z-[400] px-4 py-2.5 bg-white/95 hover:bg-white text-purple-700 rounded-2xl shadow-xl border-2 border-purple-200 font-black text-xs flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
+                  className="absolute bottom-4 right-4 z-[400] px-4 py-2.5 bg-white/95 hover:bg-white text-slate-900 rounded-2xl shadow-xl border-2 border-slate-200 font-black text-xs flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
                   title="আমার বর্তমান অবস্থান"
                 >
-                  <Crosshair size={16} className={`text-purple-600 ${locating ? 'animate-spin' : ''}`} />
+                  <Crosshair size={16} className={`text-slate-700 ${locating ? 'animate-spin' : ''}`} />
                   <span>{locating ? 'GPS খোঁজা হচ্ছে...' : 'আমার অবস্থান'}</span>
                 </button>
 
@@ -732,7 +732,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                   <select
                     value={selectedDivision}
                     onChange={(e) => setSelectedDivision(e.target.value)}
-                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-slate-800"
                   >
                     <option value="">-- বিভাগ নির্বাচন করুন --</option>
                     {divisions.map(d => (
@@ -750,7 +750,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                     value={selectedDistrict}
                     disabled={!selectedDivision}
                     onChange={(e) => setSelectedDistrict(e.target.value)}
-                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600 disabled:opacity-50"
+                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-slate-800 disabled:opacity-50"
                   >
                     <option value="">-- জেলা নির্বাচন করুন --</option>
                     {districts.map(d => (
@@ -768,7 +768,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                     value={selectedUpazila}
                     disabled={!selectedDistrict}
                     onChange={(e) => setSelectedUpazila(e.target.value)}
-                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600 disabled:opacity-50"
+                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-slate-800 disabled:opacity-50"
                   >
                     <option value="">-- উপজেলা/থানা নির্বাচন করুন --</option>
                     {upazilas.map(u => (
@@ -786,7 +786,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                     value={selectedUnion}
                     disabled={!selectedUpazila || unions.length === 0}
                     onChange={(e) => setSelectedUnion(e.target.value)}
-                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600 disabled:opacity-50"
+                    className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-slate-800 disabled:opacity-50"
                   >
                     <option value="">
                       {unions.length > 0 ? `-- এলাকা/ইউনিয়ন নির্বাচন করুন (${unions.length} টি প্রাপ্ত) --` : '-- ইউনিয়ন লোড হচ্ছে/উপজেলা বেছে নিন --'}
@@ -804,7 +804,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                 type="button"
                 onClick={handleApplyGeoData}
                 disabled={!selectedDistrict}
-                className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-sm active:scale-[0.99]"
+                className="w-full py-3.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-sm active:scale-[0.99]"
               >
                 <Check size={16} strokeWidth={2.5} />
                 <span>নির্বাচিত এলাকা ম্যাপে নিশ্চিত করুন</span>
@@ -819,10 +819,10 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             <div>
               <label className="text-[10px] font-black text-slate-500 block mb-1 flex items-center justify-between">
                 <span>চিহ্নিত লোকেশন (লোকেশন নাম)</span>
-                {geocoding && <span className="text-purple-600 flex items-center gap-1 font-bold"><Loader2 size={11} className="animate-spin"/> লোড হচ্ছে...</span>}
+                {geocoding && <span className="text-slate-700 flex items-center gap-1 font-bold"><Loader2 size={11} className="animate-spin"/> লোড হচ্ছে...</span>}
               </label>
-              <div className="p-3.5 bg-purple-50/60 border-2 border-purple-200 rounded-2xl text-xs font-black text-slate-900 flex items-start gap-2.5 shadow-xs">
-                <MapPin size={18} className="text-purple-600 shrink-0 mt-0.5" />
+              <div className="p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl text-xs font-black text-slate-900 flex items-start gap-2.5 shadow-xs">
+                <MapPin size={18} className="text-slate-700 shrink-0 mt-0.5" />
                 <span className="flex-1 break-words">{address}</span>
               </div>
             </div>
@@ -837,7 +837,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                 value={specificDetails}
                 onChange={(e) => setSpecificDetails(e.target.value)}
                 placeholder="যেমন: বাসা নং ১২, রোড নং ৪, ফ্ল্যাট ৩বি বা মসজিদের পাশে"
-                className="w-full p-3.5 bg-white border-2 border-slate-200 rounded-2xl text-xs font-bold text-slate-900 outline-none focus:border-purple-600 focus:bg-white transition-all placeholder:text-slate-400 shadow-xs"
+                className="w-full p-3.5 bg-white border-2 border-slate-200 rounded-2xl text-xs font-bold text-slate-900 outline-none focus:border-slate-800 focus:bg-white transition-all placeholder:text-slate-400 shadow-xs"
               />
             </div>
 

@@ -250,13 +250,13 @@ export default function StorefrontFooter({
           }}
           className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl border transition-all group shadow-xs hover:scale-[1.02] cursor-pointer"
         >
-          <div className="w-6 h-6 rounded-xl bg-purple-600 flex items-center justify-center text-white text-xs font-black shadow-xs group-hover:scale-110 transition-transform shrink-0">
+          <div className="w-6 h-6 rounded-xl bg-slate-900 flex items-center justify-center text-white text-xs font-black shadow-xs group-hover:scale-110 transition-transform shrink-0">
             ⚡
           </div>
           <div className="flex flex-col text-left">
             <span 
               style={{ color: palette.headingColor }}
-              className="text-xs font-black tracking-tight group-hover:text-purple-600 transition-colors"
+              className="text-xs font-black tracking-tight group-hover:text-slate-700 transition-colors"
             >
               {text}
             </span>

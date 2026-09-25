@@ -783,10 +783,10 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
       {/* Wizard Input Screen */}
       {step === 1 && (
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <div className="bg-purple-700 text-white rounded-2xl p-4 relative overflow-hidden">
-            <h4 className="font-bold text-sm text-purple-200">MesserBazar Meal Engine</h4>
+          <div className="bg-slate-900 text-white rounded-2xl p-4 relative overflow-hidden">
+            <h4 className="font-bold text-sm text-emerald-400">MesserBazar Meal Engine</h4>
             <h3 className="font-black text-base mt-1">স্মার্ট মেস বাজার প্ল্যানার</h3>
-            <p className="text-xs mt-1 text-purple-100 font-medium">রিয়েল-টাইম প্রোডাক্টের দাম ও স্টক দেখে মেসের বাজেট মেইনটেইন করার জন্য এটি তৈরি করা হয়েছে।</p>
+            <p className="text-xs mt-1 text-slate-300 font-medium">রিয়েল-টাইম প্রোডাক্টের দাম ও স্টক দেখে মেসের বাজেট মেইনটেইন করার জন্য এটি তৈরি করা হয়েছে।</p>
           </div>
 
           {error && (
@@ -805,7 +805,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                   <input
                     type="number"
                     min="1"
-                    className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                    className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:border-emerald-600 focus:bg-white transition-all"
                     value={membersInput}
                     onChange={e => setMembersInput(e.target.value)}
                     onBlur={() => {
@@ -820,7 +820,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                 <input
                   type="number"
                   min="1"
-                  className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                  className="w-full pl-3 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 outline-none focus:border-emerald-600 focus:bg-white transition-all"
                   value={budgetInput}
                   onChange={e => setBudgetInput(e.target.value)}
                   onBlur={() => {
@@ -844,7 +844,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                   onChange={e => setRiceEnabled(e.target.checked)} 
                   className="sr-only peer" 
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
               </label>
             </div>
 
@@ -861,12 +861,12 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                         onClick={() => setSelectedRiceId(rice.id)}
                         className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
                           selectedRiceId === rice.id
-                            ? 'border-purple-600 bg-purple-50/50'
+                            ? 'border-emerald-600 bg-emerald-50/50'
                             : 'border-slate-200 hover:border-slate-300 bg-slate-50'
                         }`}
                       >
                         <span className="text-xs font-black text-slate-800 truncate w-full">{rice.name}</span>
-                        <span className="text-[10px] font-black text-purple-600 mt-1">৳{rice.price}/কেজি</span>
+                        <span className="text-[10px] font-black text-emerald-700 mt-1">৳{rice.price}/কেজি</span>
                       </button>
                     ))}
                   </div>
@@ -891,7 +891,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                       type="number"
                       step="0.1"
                       min="0"
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-emerald-600 focus:bg-white transition-all"
                       value={riceMorningInput}
                       onChange={e => setRiceMorningInput(e.target.value)}
                       onBlur={() => {
@@ -909,7 +909,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                       type="number"
                       step="0.1"
                       min="0"
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-emerald-600 focus:bg-white transition-all"
                       value={riceLunchInput}
                       onChange={e => setRiceLunchInput(e.target.value)}
                       onBlur={() => {
@@ -927,7 +927,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                       type="number"
                       step="0.1"
                       min="0"
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-purple-500 focus:bg-white transition-all"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-black text-center text-slate-900 outline-none focus:border-emerald-600 focus:bg-white transition-all"
                       value={riceDinnerInput}
                       onChange={e => setRiceDinnerInput(e.target.value)}
                       onBlur={() => {
@@ -940,7 +940,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                 </div>
               </div>
               <div className="mt-2 text-[10px] font-bold text-slate-500 text-center bg-slate-50 py-1.5 rounded-lg border border-slate-100">
-                মোট দৈনন্দিন চাল: <span className="text-purple-600 font-black">{(Number(riceMorningInput || 0) + Number(riceLunchInput || 0) + Number(riceDinnerInput || 0)).toFixed(1)} কেজি</span> মেসের সবার জন্য।
+                মোট দৈনন্দিন চাল: <span className="text-emerald-700 font-black">{(Number(riceMorningInput || 0) + Number(riceLunchInput || 0) + Number(riceDinnerInput || 0)).toFixed(1)} কেজি</span> মেসের সবার জন্য।
               </div>
             </div>
           )}
@@ -949,7 +949,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
           <button
             onClick={generateMealPlan}
             disabled={isGenerating || availableRiceVariants.length === 0}
-            className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-base rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:transform-none cursor-pointer"
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:transform-none cursor-pointer"
           >
             {isGenerating ? (
               <>
@@ -999,23 +999,23 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
               </div>
               <div>
                 <span className="block text-[9px] font-bold text-slate-400">বাকি বাজেট</span>
-                <span className="text-sm font-black text-purple-300">৳{resolvedPlan.remainingBudget}</span>
+                <span className="text-sm font-black text-emerald-400">৳{resolvedPlan.remainingBudget}</span>
               </div>
             </div>
           </div>
 
           {/* AI Narrative Section */}
           {aiNarrative ? (
-            <div className="bg-purple-50/70 border border-purple-100 p-4 rounded-2xl text-xs font-bold leading-relaxed text-slate-700 flex gap-2.5 items-start">
-              <MessageSquare size={16} className="text-purple-600 shrink-0 mt-0.5" />
+            <div className="bg-emerald-50/70 border border-emerald-100 p-4 rounded-2xl text-xs font-bold leading-relaxed text-slate-700 flex gap-2.5 items-start">
+              <MessageSquare size={16} className="text-emerald-700 shrink-0 mt-0.5" />
               <div>
-                <span className="block text-[9px] text-purple-600 font-bold mb-1">AI Assistant:</span>
+                <span className="block text-[9px] text-emerald-700 font-bold mb-1">AI Assistant:</span>
                 <p className="font-bold">{aiNarrative}</p>
               </div>
             </div>
           ) : (
             <div className="bg-slate-100 p-4 rounded-2xl border border-slate-200 animate-pulse flex gap-2.5 items-center">
-              <Loader2 className="animate-spin text-purple-600 shrink-0" size={16} />
+              <Loader2 className="animate-spin text-emerald-700 shrink-0" size={16} />
               <div className="space-y-1.5 flex-1">
                 <div className="h-2 bg-slate-300 rounded w-1/4" />
                 <div className="h-2 bg-slate-300 rounded w-full" />
@@ -1089,8 +1089,8 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             {/* Dinner row */}
             <div className="pb-1">
               <div className="flex justify-between items-center mb-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200">🌙 রাত</span>
-                <span className="text-xs font-black text-indigo-600">৳{resolvedPlan.dinner.items.reduce((s,i) => s + i.cost, 0)}</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded-md border border-slate-200">🌙 রাত</span>
+                <span className="text-xs font-black text-slate-800">৳{resolvedPlan.dinner.items.reduce((s,i) => s + i.cost, 0)}</span>
               </div>
               {resolvedPlan.dinner.items.map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs font-bold text-slate-800 mb-1 last:mb-0">
