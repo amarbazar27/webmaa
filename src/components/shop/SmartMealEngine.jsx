@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sparkles, Calculator, ShoppingCart, Check, Loader2, AlertCircle, RefreshCw, ChevronRight, MessageSquare } from 'lucide-react';
+import { Calculator, ShoppingCart, Check, Loader2, AlertCircle, RefreshCw, ChevronRight, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // Dynamic unit formatter to avoid showing "kg" for eggs or prepackaged spice packets
@@ -783,9 +783,8 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
       {/* Wizard Input Screen */}
       {step === 1 && (
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <div className="bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-2xl p-4 shadow-md relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl" />
-            <h4 className="font-black text-sm uppercase tracking-wider text-purple-200">MesserBazar Meal Engine</h4>
+          <div className="bg-purple-700 text-white rounded-2xl p-4 relative overflow-hidden">
+            <h4 className="font-bold text-sm text-purple-200">MesserBazar Meal Engine</h4>
             <h3 className="font-black text-base mt-1">স্মার্ট মেস বাজার প্ল্যানার</h3>
             <p className="text-xs mt-1 text-purple-100 font-medium">রিয়েল-টাইম প্রোডাক্টের দাম ও স্টক দেখে মেসের বাজেট মেইনটেইন করার জন্য এটি তৈরি করা হয়েছে।</p>
           </div>
@@ -801,7 +800,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
           <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-black uppercase text-slate-500 mb-1">সদস্য সংখ্যা (খালাসহ)</label>
+                <label className="block text-[11px] font-bold text-slate-500 mb-1">সদস্য সংখ্যা (খালাসহ)</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -817,7 +816,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                 </div>
               </div>
               <div>
-                <label className="block text-[11px] font-black uppercase text-slate-500 mb-1">মোট বাজেট (৳)</label>
+                <label className="block text-[11px] font-bold text-slate-500 mb-1">মোট বাজেট (৳)</label>
                 <input
                   type="number"
                   min="1"
@@ -833,7 +832,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             </div>
 
             {/* Rice Enable/Disable Toggle */}
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+            <div className="bg-slate-50 rounded-xl p-3.5 flex items-center justify-between">
               <div>
                 <h4 className="font-black text-xs text-slate-800">🍚 চালের হিসাব যুক্ত করুন (Add Rice)</h4>
                 <p className="text-[10px] text-slate-400 font-bold mt-0.5">অফ করলে শুধু মেসের তরকারি/বাজার হিসাব করা হবে</p>
@@ -852,7 +851,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             {/* Rice Selector from Shop Database */}
             {riceEnabled && (
               <div className="pt-2">
-                <label className="block text-[11px] font-black uppercase text-slate-500 mb-1">চাল নির্বাচন করুন (শুধু Available)</label>
+                <label className="block text-[11px] font-bold text-slate-500 mb-1">চাল নির্বাচন করুন (শুধু Available)</label>
                 {availableRiceVariants.length > 0 ? (
                   <div className="grid grid-cols-2 gap-2">
                     {availableRiceVariants.map(rice => (
@@ -862,7 +861,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
                         onClick={() => setSelectedRiceId(rice.id)}
                         className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
                           selectedRiceId === rice.id
-                            ? 'border-purple-600 bg-purple-50/50 shadow-sm'
+                            ? 'border-purple-600 bg-purple-50/50'
                             : 'border-slate-200 hover:border-slate-300 bg-slate-50'
                         }`}
                       >
@@ -950,7 +949,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
           <button
             onClick={generateMealPlan}
             disabled={isGenerating || availableRiceVariants.length === 0}
-            className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-base rounded-2xl shadow-lg shadow-purple-100 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:transform-none cursor-pointer"
+            className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white font-black text-base rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 disabled:transform-none cursor-pointer"
           >
             {isGenerating ? (
               <>
@@ -959,7 +958,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
               </>
             ) : (
               <>
-                <Sparkles size={18} />
+                <Calculator size={18} />
                 বাজার সাজেস্ট করুন
               </>
             )}
@@ -971,16 +970,14 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
       {step === 2 && resolvedPlan && (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Header Dashboard card */}
-          <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg border-b-4 border-emerald-500 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl animate-pulse" />
-            
+          <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-sm border-b-4 border-emerald-500 relative overflow-hidden">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-black text-white flex items-center gap-1.5">
-                  <Sparkles className="text-emerald-400 animate-spin" size={18} style={{animationDuration:'3s'}} />
+                  <Check className="text-emerald-400" size={18} />
                   আজকের বাজার ({members} জন)
                 </h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">MesserBazar smart output</p>
+                <p className="text-[10px] text-slate-400 font-bold mt-0.5">MesserBazar smart output</p>
               </div>
               <button
                 onClick={() => setStep(1)}
@@ -993,15 +990,15 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
 
             <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/10 text-center">
               <div>
-                <span className="block text-[9px] uppercase font-bold text-slate-400">মোট বাজেট</span>
+                <span className="block text-[9px] font-bold text-slate-400">মোট বাজেট</span>
                 <span className="text-sm font-black text-white">৳{budget}</span>
               </div>
               <div>
-                <span className="block text-[9px] uppercase font-bold text-slate-400">মোট খরচ</span>
+                <span className="block text-[9px] font-bold text-slate-400">মোট খরচ</span>
                 <span className="text-sm font-black text-emerald-400">৳{resolvedPlan.totalCost}</span>
               </div>
               <div>
-                <span className="block text-[9px] uppercase font-bold text-slate-400">বাকি বাজেট</span>
+                <span className="block text-[9px] font-bold text-slate-400">বাকি বাজেট</span>
                 <span className="text-sm font-black text-purple-300">৳{resolvedPlan.remainingBudget}</span>
               </div>
             </div>
@@ -1009,10 +1006,10 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
 
           {/* AI Narrative Section */}
           {aiNarrative ? (
-            <div className="bg-purple-50/70 border border-purple-100 p-4 rounded-2xl shadow-sm text-xs font-bold leading-relaxed text-slate-700 flex gap-2.5 items-start">
+            <div className="bg-purple-50/70 border border-purple-100 p-4 rounded-2xl text-xs font-bold leading-relaxed text-slate-700 flex gap-2.5 items-start">
               <MessageSquare size={16} className="text-purple-600 shrink-0 mt-0.5" />
               <div>
-                <span className="block text-[9px] text-purple-600 font-black uppercase tracking-wider mb-1">AI Assistant:</span>
+                <span className="block text-[9px] text-purple-600 font-bold mb-1">AI Assistant:</span>
                 <p className="font-bold">{aiNarrative}</p>
               </div>
             </div>
@@ -1033,7 +1030,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             {resolvedPlan.rice && (
               <div className="border-b border-slate-100 pb-3">
                 <div className="flex justify-between items-center mb-1.5">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200">🍚 চাল নির্বাচন</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-200">🍚 চাল নির্বাচন</span>
                   <span className="text-xs font-black text-amber-600">৳{resolvedPlan.rice.cost}</span>
                 </div>
                 <div className="flex justify-between text-xs font-bold text-slate-800">
@@ -1047,7 +1044,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             {resolvedPlan.staples && resolvedPlan.staples.items.length > 0 && (
               <div className="border-b border-slate-100 pb-3">
                 <div className="flex justify-between items-center mb-1.5">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-300">🧂 মসলা ও নিত্যপ্রয়োজনীয়</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-300">🧂 মসলা ও নিত্যপ্রয়োজনীয়</span>
                   <span className="text-xs font-black text-slate-600">৳{resolvedPlan.staples.cost}</span>
                 </div>
                 <div className="max-h-[140px] overflow-y-auto space-y-1 pr-1">
@@ -1064,7 +1061,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             {/* Breakfast row */}
             <div className="border-b border-slate-100 pb-3">
               <div className="flex justify-between items-center mb-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">☀️ সকাল</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">☀️ সকাল</span>
                 <span className="text-xs font-black text-blue-600">৳{resolvedPlan.morning.items.reduce((s,i) => s + i.cost, 0)}</span>
               </div>
               {resolvedPlan.morning.items.map((item, idx) => (
@@ -1078,7 +1075,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             {/* Lunch row */}
             <div className="border-b border-slate-100 pb-3">
               <div className="flex justify-between items-center mb-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200">🍱 দুপুর</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200">🍱 দুপুর</span>
                 <span className="text-xs font-black text-emerald-600">৳{resolvedPlan.lunch.items.reduce((s,i) => s + i.cost, 0)}</span>
               </div>
               {resolvedPlan.lunch.items.map((item, idx) => (
@@ -1092,7 +1089,7 @@ ${riceEnabled && selectedRice ? `১. চাল: ${selectedRice.name} - ${totalR
             {/* Dinner row */}
             <div className="pb-1">
               <div className="flex justify-between items-center mb-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200">🌙 রাত</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200">🌙 রাত</span>
                 <span className="text-xs font-black text-indigo-600">৳{resolvedPlan.dinner.items.reduce((s,i) => s + i.cost, 0)}</span>
               </div>
               {resolvedPlan.dinner.items.map((item, idx) => (

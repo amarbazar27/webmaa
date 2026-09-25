@@ -14,7 +14,7 @@ const TemplateMarketplace = dynamic(
     loading: () => (
       <div className="py-20 text-center">
         <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-400 mb-3" />
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">টেমপ্লেট লোড হচ্ছে...</p>
+        <p className="text-slate-400 text-xs font-bold">টেমপ্লেট লোড হচ্ছে...</p>
       </div>
     ),
   }
@@ -27,7 +27,7 @@ const StoreCustomizationPanel = dynamic(
     loading: () => (
       <div className="py-20 text-center">
         <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-400 mb-3" />
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">কাস্টমাইজার লোড হচ্ছে...</p>
+        <p className="text-slate-400 text-xs font-bold">কাস্টমাইজার লোড হচ্ছে...</p>
       </div>
     ),
   }
@@ -66,7 +66,7 @@ export default function TemplatePageClient() {
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center gap-4">
-        <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl shadow-purple-500/20">
+        <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl shadow-sm">
           <LayoutTemplate size={26} className="text-white" />
         </div>
         <div>

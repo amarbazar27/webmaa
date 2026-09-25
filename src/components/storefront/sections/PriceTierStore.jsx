@@ -31,7 +31,7 @@ export default function PriceTierStore({ data, themeVars, onTierClick }) {
             >
               <Tag size={24} className="opacity-90" />
               <div className="text-center">
-                <p className="text-xs font-black opacity-90 uppercase tracking-wider">
+                <p className="text-xs font-bold opacity-90">
                   {isObj && tier.count ? 'বাজেট জোন' : 'Under'}
                 </p>
                 <p className="text-base sm:text-lg md:text-xl font-black leading-tight">

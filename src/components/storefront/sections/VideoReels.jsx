@@ -90,7 +90,7 @@ export default function VideoReels({ data, themeVars }) {
       {/* Video Modal */}
       {activeVideo && (
         <div 
-          className="fixed inset-0 z-[999999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4" 
+          className="fixed inset-0 z-[999999] bg-black/95 flex items-center justify-center p-4" 
           onClick={() => setActiveVideo(null)}
         >
           <div className="relative w-full max-w-sm aspect-[9/16]" onClick={e => e.stopPropagation()}>

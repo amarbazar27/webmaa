@@ -12,7 +12,7 @@ export default function ProductGrid({ data, products, themeVars, onAddToCart, on
 
   const tabLabels = {
     trending: '🔥 ট্রেন্ডিং',
-    new: '✨ নতুন',
+    new: 'নতুন',
     bestseller: '⭐ বেস্টসেলার',
     all: 'সব পণ্য',
   };
@@ -87,7 +87,7 @@ export default function ProductGrid({ data, products, themeVars, onAddToCart, on
                 )}
                 <button
                   onClick={e => e.stopPropagation()}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/85 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
                   aria-label="Wishlist"
                 >
                   <Heart size={14} className="text-slate-400 hover:text-red-500 transition-colors" />
@@ -97,7 +97,7 @@ export default function ProductGrid({ data, products, themeVars, onAddToCart, on
               <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between gap-2">
                 <div>
                   {product.brand && (
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-0.5">
+                    <p className="text-[10px] font-bold text-slate-400 mb-0.5">
                       {product.brand}
                     </p>
                   )}

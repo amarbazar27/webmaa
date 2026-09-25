@@ -37,7 +37,7 @@ function LiveCountdown({ deliveryETA }) {
     <div className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center ${isExpired ? 'bg-amber-50 border-amber-200' : 'bg-purple-50 border-purple-200'}`}>
       <div className="flex items-center gap-2 mb-1.5">
         <Clock size={16} className={isExpired ? 'text-amber-600' : 'text-purple-600'} />
-        <p className={`text-[11px] font-black uppercase tracking-wider ${isExpired ? 'text-amber-700' : 'text-purple-700'}`}>
+        <p className={`text-[11px] font-black  ${isExpired ? 'text-amber-700' : 'text-purple-700'}`}>
           {isExpired ? 'ডেলিভারি সময়সীমা' : 'পৌঁছানোর সম্ভাব্য কাউন্টডাউন'}
         </p>
       </div>
@@ -67,7 +67,7 @@ function DeliveryInfoCard({ order, shop }) {
             <Truck size={18} strokeWidth={2.5} />
           </div>
           <div>
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">ডেলিভারি সংক্রান্ত তথ্য</h3>
+            <h3 className="text-xs font-black text-slate-900">ডেলিভারি সংক্রান্ত তথ্য</h3>
             <p className="text-[11px] font-bold text-slate-500">
               {isCompleted ? 'ডেলিভারি সম্পন্ন হয়েছে' :
                isCancelled ? 'অর্ডার বাতিল করা হয়েছে' :
@@ -75,7 +75,7 @@ function DeliveryInfoCard({ order, shop }) {
             </p>
           </div>
         </div>
-        <span className={`px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider border ${
+        <span className={`px-3 py-1 rounded-lg text-xs font-black  border ${
           isCompleted ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
           isCancelled ? 'text-red-700 bg-red-50 border-red-200' :
           isConfirmed ? 'text-purple-700 bg-purple-50 border-purple-200' :
@@ -93,7 +93,7 @@ function DeliveryInfoCard({ order, shop }) {
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex items-center gap-3">
           <Clock size={18} className="text-purple-600 shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">সম্ভাব্য ডেলিভারি সময়</p>
+            <p className="text-[10px] font-black text-slate-400">সম্ভাব্য ডেলিভারি সময়</p>
             <p className="text-sm font-black text-slate-900 mt-0.5">{deliveryTime}</p>
           </div>
         </div>
@@ -371,7 +371,7 @@ export default function OrderSummaryPage({ params }) {
         {/* Retailer note */}
         {order.returnNote && (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-3xl">
-            <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">রিটেইলার বার্তা</p>
+            <p className="text-[10px] font-black text-amber-700 mb-1">রিটেইলার বার্তা</p>
             <p className="text-sm font-bold text-amber-900">{order.returnNote}</p>
           </div>
         )}
@@ -394,7 +394,7 @@ export default function OrderSummaryPage({ params }) {
                   href={order.piprapayCheckoutUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-red-500/20 active:scale-95 text-center"
+                  className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-colors shadow-lg shadow-sm active:scale-95 text-center"
                 >
                   পেমেন্ট সম্পন্ন করুন (Pay Now)
                 </a>
@@ -416,7 +416,7 @@ export default function OrderSummaryPage({ params }) {
           <button
             onClick={generatePDF}
             disabled={isGeneratingPdf}
-            className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20 disabled:opacity-60 relative overflow-hidden cursor-pointer"
+            className="w-full py-4 bg-purple-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors shadow-lg shadow-sm disabled:opacity-60 relative overflow-hidden cursor-pointer"
           >
             {isGeneratingPdf && (
               <div
@@ -442,13 +442,13 @@ export default function OrderSummaryPage({ params }) {
 
         {/* Customer Info */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-3">
-          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-2">ডেলিভারি ঠিকানা</h3>
-          <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">নাম</p><p className="text-sm font-bold text-slate-900">{order.customerName}</p></div>
-          <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ফোন</p><p className="text-sm font-black text-purple-700">{order.customerPhone}</p></div>
-          <div><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ঠিকানা</p><p className="text-sm font-bold text-slate-600">{order.customerAddress}</p></div>
+          <h3 className="text-sm font-black text-slate-900 border-b border-slate-100 pb-2">ডেলিভারি ঠিকানা</h3>
+          <div><p className="text-[10px] font-black text-slate-400">নাম</p><p className="text-sm font-bold text-slate-900">{order.customerName}</p></div>
+          <div><p className="text-[10px] font-black text-slate-400">ফোন</p><p className="text-sm font-black text-purple-700">{order.customerPhone}</p></div>
+          <div><p className="text-[10px] font-black text-slate-400">ঠিকানা</p><p className="text-sm font-bold text-slate-600">{order.customerAddress}</p></div>
           {order.transactionId && (
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transaction ID</p>
+              <p className="text-[10px] font-black text-slate-400">Transaction ID</p>
               <p className="text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-1 rounded mt-1 inline-block border border-emerald-200">{order.transactionId}</p>
             </div>
           )}
@@ -458,7 +458,7 @@ export default function OrderSummaryPage({ params }) {
         <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
             <Package size={16} className="text-slate-500" />
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">প্রোডাক্ট লিস্ট</h3>
+            <h3 className="text-sm font-black text-slate-900">প্রোডাক্ট লিস্ট</h3>
           </div>
           <div className="divide-y divide-slate-100">
             {order.items?.map((item, idx) => (
@@ -472,15 +472,15 @@ export default function OrderSummaryPage({ params }) {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-black text-slate-900 truncate">{item.name}</p>
                     {item.realBasePrice && (
-                      <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">
                         Base: ৳{item.realBasePrice}
                       </span>
                     )}
                   </div>
                   {item.customizedText && (
                     <div className="mt-1 space-y-0.5">
-                      {item.baseUnit && <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">→ Base: {item.baseUnit}</p>}
-                      <p className="text-[10px] text-purple-600 font-black uppercase tracking-widest">→ Customized: {item.customizedText}</p>
+                      {item.baseUnit && <p className="text-[10px] text-slate-500 font-bold">→ Base: {item.baseUnit}</p>}
+                      <p className="text-[10px] text-purple-600 font-black">→ Customized: {item.customizedText}</p>
                     </div>
                   )}
                   {item.note && <p className="text-xs text-slate-500 font-bold italic mt-1">নোট: {item.note}</p>}

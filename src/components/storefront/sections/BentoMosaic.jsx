@@ -1,5 +1,5 @@
 'use client';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function BentoMosaic({ data, themeVars }) {
@@ -39,7 +39,7 @@ export default function BentoMosaic({ data, themeVars }) {
             <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-between">
               {largeTile.tag && (
                 <span 
-                  className="self-start px-3 py-1 rounded-full text-xs font-black text-white shadow-md uppercase tracking-wider"
+                  className="self-start px-3 py-1 rounded-full text-xs font-bold text-white shadow-sm"
                   style={{ background: primary }}
                 >
                   {largeTile.tag}
@@ -48,7 +48,7 @@ export default function BentoMosaic({ data, themeVars }) {
               
               <div>
                 {largeTile.subtitle && (
-                  <p className="text-xs sm:text-sm font-bold text-white/80 uppercase tracking-widest mb-1">
+                  <p className="text-xs sm:text-sm font-medium text-white/80 mb-1">
                     {largeTile.subtitle}
                   </p>
                 )}
@@ -94,7 +94,7 @@ export default function BentoMosaic({ data, themeVars }) {
               <div className="relative z-10 w-full flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   {tile.tag && (
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 block mb-0.5">
+                    <span className="text-[10px] font-bold text-amber-400 block mb-0.5">
                       {tile.tag}
                     </span>
                   )}
@@ -108,7 +108,7 @@ export default function BentoMosaic({ data, themeVars }) {
                   )}
                 </div>
 
-                <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur text-white flex items-center justify-center flex-shrink-0 group-hover:bg-white group-hover:text-slate-900 transition-colors">
+                <div className="w-8 h-8 rounded-xl bg-white/30 text-white flex items-center justify-center flex-shrink-0 group-hover:bg-white group-hover:text-slate-900 transition-colors">
                   <ArrowUpRight size={14} strokeWidth={2.5} />
                 </div>
               </div>

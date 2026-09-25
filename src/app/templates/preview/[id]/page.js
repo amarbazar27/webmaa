@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   Monitor, Tablet, Smartphone, ExternalLink, ArrowLeft, 
-  Sparkles, CheckCircle2, ShoppingBag, Eye, Star, 
+  SlidersHorizontal, CheckCircle2, ShoppingBag, Eye, Star, 
   ShieldCheck, Truck, Zap, Plus, X, Heart, Phone, Store, ArrowRight, RotateCw
 } from 'lucide-react';
 import { 
@@ -137,7 +137,7 @@ export default function TemplatePreviewPage({ params }) {
   return (
     <div className="h-screen max-h-screen bg-[#07090E] text-white flex flex-col font-sans selection:bg-purple-600 selection:text-white overflow-hidden">
       {/* ── Top Floating Navigation & Device Switcher Bar ── */}
-      <header className="shrink-0 sticky top-0 z-50 bg-[#0B0F19]/95 backdrop-blur-xl border-b border-white/10 px-4 py-3 shadow-2xl">
+      <header className="shrink-0 sticky top-0 z-50 bg-[#0B0F19]/95 border-b border-white/10 px-4 py-3 shadow-2xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Left: Back & Template Info */}
@@ -173,7 +173,7 @@ export default function TemplatePreviewPage({ params }) {
               onClick={() => setDeviceMode('desktop')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 deviceMode === 'desktop'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
               title="ডেস্কটপ ভিউ (100% Full Width)"
@@ -185,7 +185,7 @@ export default function TemplatePreviewPage({ params }) {
               onClick={() => setDeviceMode('tablet')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 deviceMode === 'tablet'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
               title="ট্যাবলেট ভিউ (768px True Viewport)"
@@ -197,7 +197,7 @@ export default function TemplatePreviewPage({ params }) {
               onClick={() => setDeviceMode('mobile')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 deviceMode === 'mobile'
-                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/30'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
               title="মোবাইল ফোন ভিউ (390px True Viewport & Dynamic Island)"
@@ -229,9 +229,9 @@ export default function TemplatePreviewPage({ params }) {
 
             <button
               onClick={() => setShowApplyModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-lg shadow-sm active:scale-95 transition-all cursor-pointer"
             >
-              <Sparkles size={14} />
+              <SlidersHorizontal size={14} />
               <span>এই ডিজাইনটি সিলেক্ট করুন</span>
             </button>
           </div>
@@ -310,7 +310,7 @@ export default function TemplatePreviewPage({ params }) {
 
       {/* ── Theme Selection & Apply Modal ── */}
       {showApplyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-fade-in">
           <div className="bg-[#111625] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-white shadow-2xl relative space-y-6">
             <button 
               onClick={() => setShowApplyModal(false)}
@@ -321,7 +321,7 @@ export default function TemplatePreviewPage({ params }) {
 
             <div className="space-y-2 text-left">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-black">
-                <Sparkles size={13} />
+                <SlidersHorizontal size={13} />
                 <span>থিম ও ভিজ্যুয়াল বিল্ডার ইনস্টলার</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-black text-white">
@@ -372,7 +372,7 @@ export default function TemplatePreviewPage({ params }) {
                   disabled={applying}
                   className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <Sparkles size={16} />
+                  <SlidersHorizontal size={16} />
                   <span>{applying ? 'অ্যাপ্লাই হচ্ছে...' : 'এই ডিজাইন সেট করে লাইভ এডিটরে যান'}</span>
                 </button>
               </div>
@@ -381,7 +381,7 @@ export default function TemplatePreviewPage({ params }) {
               <div className="space-y-4 text-left">
                 <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
                   <p className="text-xs text-slate-300 font-medium">
-                    ✨ আপনি কি bdretailers.com এ নতুন? মাত্র ১ মিনিটে এই <strong className="text-white">{activeTemplate.titleBn}</strong> ডিজাইন সহ আপনার স্টোর চালু করুন!
+                     আপনি কি bdretailers.com এ নতুন? মাত্র ১ মিনিটে এই <strong className="text-white">{activeTemplate.titleBn}</strong> ডিজাইন সহ আপনার স্টোর চালু করুন!
                   </p>
                   <ul className="text-[11px] text-slate-400 space-y-1">
                     <li>✓ ফ্রি সাবডোমেন: <span className="text-emerald-400 font-mono">yourshop.bdretailers.com</span></li>

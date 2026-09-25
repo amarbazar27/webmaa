@@ -79,7 +79,7 @@ export default function DealOfTheDay({ data, themeVars, onAddToCart }) {
 
           {/* Deal Details Column */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
               <Flame size={14} />
               {d.title || 'Deal of the Day'}
             </div>

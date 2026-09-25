@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { 
   ShieldCheck, Truck, RotateCcw, Lock, Phone, 
   Mail, MessageCircle, Star, Heart, ExternalLink,
-  ChevronRight, ArrowRight, CheckCircle2, Sparkles
+  ChevronRight, ArrowRight, CheckCircle2
 } from 'lucide-react';
 
 export const FOOTER_PRESETS = [
@@ -93,7 +93,7 @@ export const FOOTER_PRESETS = [
     id: 'modern_split',
     label: 'Footer J — Modern Split Screen',
     desc: 'বামে ব্র্যান্ড ভিশন এবং ডানে দ্রুত নেভিগেশন ও সোশ্যাল হাব',
-    icon: '✨',
+    icon: '⚡',
     badge: 'Split Screen',
     defaultBg: '#0f172a',
     defaultIsDark: true
@@ -248,9 +248,9 @@ export default function StorefrontFooter({
             backgroundColor: palette.isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(15, 23, 42, 0.05)',
             borderColor: palette.isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(15, 23, 42, 0.12)',
           }}
-          className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl border backdrop-blur-md transition-all group shadow-xs hover:scale-[1.02] cursor-pointer"
+          className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl border transition-all group shadow-xs hover:scale-[1.02] cursor-pointer"
         >
-          <div className="w-6 h-6 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-white text-xs font-black shadow-xs group-hover:scale-110 transition-transform shrink-0">
+          <div className="w-6 h-6 rounded-xl bg-purple-600 flex items-center justify-center text-white text-xs font-black shadow-xs group-hover:scale-110 transition-transform shrink-0">
             ⚡
           </div>
           <div className="flex flex-col text-left">
@@ -262,7 +262,7 @@ export default function StorefrontFooter({
             </span>
             <span 
               style={{ color: palette.mutedTextColor }}
-              className="text-[9px] font-bold tracking-wider uppercase"
+              className="text-[10px] font-medium"
             >
               {sub} • <span className={`underline ${palette.isDark ? 'group-hover:text-amber-400' : 'group-hover:text-purple-700'}`}>bdretailers.com</span>
             </span>
@@ -367,7 +367,7 @@ export default function StorefrontFooter({
           {/* Col 2: Categories */}
           {footerConfig?.showCategories !== false && (
             <div className="space-y-3">
-              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">জনপ্রিয় ক্যাটাগরি</h4>
+              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">জনপ্রিয় ক্যাটাগরি</h4>
               <ul className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
                 {safeCategories.slice(0, 5).map(c => {
                   const catName = typeof c === 'object' ? (c.name || '') : String(c);
@@ -385,7 +385,7 @@ export default function StorefrontFooter({
 
           {/* Col 3: Customer Care */}
           <div className="space-y-3">
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">গ্রাহক সেবা ও নীতি</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">গ্রাহক সেবা ও নীতি</h4>
             <ul className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
               <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} style={{ color: palette.textColor }} className="hover:opacity-80 transition-opacity">প্রাইভেসি পলিসি</Link></li>
               <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/terms`} style={{ color: palette.textColor }} className="hover:opacity-80 transition-opacity">শর্তাবলী ও নিয়ম</Link></li>
@@ -397,7 +397,7 @@ export default function StorefrontFooter({
           {/* Col 4: Contact */}
           {footerConfig?.showContact !== false && (
             <div className="space-y-3">
-              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">যোগাযোগ</h4>
+              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">যোগাযোগ</h4>
               <div className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
                 <p className="flex items-center gap-2" style={{ color: palette.textColor }}><Phone size={13} className="text-emerald-500 shrink-0" /> {displayPhone}</p>
                 <p className="flex items-center gap-2" style={{ color: palette.textColor }}><Mail size={13} className="text-purple-500 shrink-0" /> {displayEmail}</p>
@@ -463,12 +463,12 @@ export default function StorefrontFooter({
           {/* Links Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="space-y-3">
-              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-widest">About Store</h4>
+              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">About Store</h4>
               <p style={{ color: palette.mutedTextColor }} className="text-xs leading-relaxed font-medium">{customTagline}</p>
               {renderSocials()}
             </div>
             <div className="space-y-3">
-              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-widest">Departments</h4>
+              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">Departments</h4>
               <ul className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
                 {safeCategories.slice(0, 6).map(c => {
                   const catName = typeof c === 'object' ? (c.name || '') : String(c);
@@ -483,7 +483,7 @@ export default function StorefrontFooter({
               </ul>
             </div>
             <div className="space-y-3">
-              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-widest">Support & Policy</h4>
+              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">Support & Policy</h4>
               <ul className="space-y-2 text-xs font-bold" style={{ color: palette.textColor }}>
                 <li><span className="opacity-90">অর্ডার ট্র্যাক করুন</span></li>
                 <li><span className="opacity-90">রিফান্ড ও রিটার্ন</span></li>
@@ -492,7 +492,7 @@ export default function StorefrontFooter({
               </ul>
             </div>
             <div className="space-y-3">
-              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-widest">Verified Merchant</h4>
+              <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">Verified Merchant</h4>
               <p style={{ color: palette.mutedTextColor }} className="text-xs font-medium">২৪/৭ অনলাইন অর্ডার ও দ্রুততম কুরিয়ার হোম ডেলিভারি সাপোর্ট।</p>
               {renderPaymentLogos()}
             </div>
@@ -555,7 +555,7 @@ export default function StorefrontFooter({
     return (
       <footer style={containerStyle} className="py-16 px-6 font-serif border-t transition-colors duration-200">
         <div className="max-w-4xl mx-auto text-center space-y-6">
-          <span style={{ color: palette.primaryColor }} className="text-xs uppercase tracking-widest font-sans font-black">OUR SIGNATURE PROMISE</span>
+          <span style={{ color: palette.primaryColor }} className="text-xs font-sans font-black">Our Signature Promise</span>
           <h2 style={{ color: palette.headingColor }} className="text-2xl sm:text-4xl font-normal leading-relaxed italic">
             "{customTagline}"
           </h2>
@@ -629,12 +629,12 @@ export default function StorefrontFooter({
             <div className="pt-2">{renderSocials()}</div>
           </div>
           <div className="space-y-2">
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">ডেলিভারি হটলাইন</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">ডেলিভারি হটলাইন</h4>
             <p style={{ color: palette.headingColor }} className="text-base font-black">{displayPhone}</p>
             <p style={{ color: palette.mutedTextColor }} className="text-xs">সকাল ৮টা থেকে রাত ১১টা পর্যন্ত খোলা</p>
           </div>
           <div className="space-y-2">
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">নিরাপদ পেমেন্ট</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">নিরাপদ পেমেন্ট</h4>
             {renderPaymentLogos()}
           </div>
         </div>
@@ -678,11 +678,11 @@ export default function StorefrontFooter({
             <p style={{ color: palette.mutedTextColor }} className="text-xs mt-2 leading-relaxed">{customTagline}</p>
           </div>
           <div>
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">অফিশিয়াল সেবা</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">অফিশিয়াল সেবা</h4>
             <p style={{ color: palette.mutedTextColor }} className="text-xs mt-1">১০০% ব্র্যান্ড নিউ পণ্য এবং অফিসিয়াল গ্যারান্টি রিপ্লেসমেন্ট সাপোর্ট।</p>
           </div>
           <div>
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">যোগাযোগ</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">যোগাযোগ</h4>
             <p style={{ color: palette.mutedTextColor }} className="text-xs mt-1">{displayPhone} • {displayEmail}</p>
           </div>
         </div>
@@ -744,7 +744,7 @@ export default function StorefrontFooter({
         {/* Right Side */}
         <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">ক্যাটাগরি</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">ক্যাটাগরি</h4>
             <ul className="space-y-1.5 text-xs font-bold" style={{ color: palette.textColor }}>
               {safeCategories.slice(0, 5).map(c => {
                 const catName = typeof c === 'object' ? (c.name || '') : String(c);
@@ -759,7 +759,7 @@ export default function StorefrontFooter({
             </ul>
           </div>
           <div className="space-y-2">
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">নীতি ও সেবা</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">নীতি ও সেবা</h4>
             <ul className="space-y-1.5 text-xs font-bold" style={{ color: palette.textColor }}>
               <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/privacy`} className="hover:opacity-80">প্রাইভেসি পলিসি</Link></li>
               <li><Link href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}/terms`} className="hover:opacity-80">সেবার শর্তাবলী</Link></li>
@@ -768,7 +768,7 @@ export default function StorefrontFooter({
             </ul>
           </div>
           <div className="space-y-2">
-            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black uppercase tracking-wider">হটলাইন</h4>
+            <h4 style={{ color: palette.primaryColor }} className="text-xs font-black">হটলাইন</h4>
             <p style={{ color: palette.headingColor }} className="text-xs font-bold">{displayPhone}</p>
             <p style={{ color: palette.mutedTextColor }} className="text-xs">{displayEmail}</p>
           </div>

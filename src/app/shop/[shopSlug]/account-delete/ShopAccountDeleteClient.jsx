@@ -83,17 +83,17 @@ export default function ShopAccountDeleteClient({ shop, shopSlug }) {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-red-100 blur-[120px] rounded-full pointer-events-none opacity-50"></div>
 
       <div className="max-w-2xl w-full mx-auto bg-white border border-slate-200/60 p-8 md:p-12 rounded-[2.5rem] shadow-2xl relative z-10">
-        <Link href={`/shop/${shopSlug}`} className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-purple-600 transition-colors uppercase tracking-wider mb-8">
+        <Link href={`/shop/${shopSlug}`} className="inline-flex items-center gap-2 text-xs font-black text-slate-500 hover:text-purple-600 transition-colors mb-8">
           <ArrowLeft size={16} /> Back to Store
         </Link>
 
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/10">
+          <div className="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-sm">
             <Trash2 size={28} />
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Delete Your {shopName} Account</h1>
-            <p className="text-xs font-black text-red-500 uppercase tracking-widest mt-1">Permanent Deletion Request</p>
+            <p className="text-xs font-black text-red-500 mt-1">Permanent Deletion Request</p>
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export default function ShopAccountDeleteClient({ shop, shopSlug }) {
                 <button
                   onClick={handleSendCode}
                   disabled={loading}
-                  className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-red-500/10 disabled:opacity-60 cursor-pointer"
+                  className="w-full py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-sm disabled:opacity-60 cursor-pointer"
                 >
                   {loading ? <Loader2 className="animate-spin" size={18} /> : 'ভেরিফিকেশন কোড পাঠান'}
                 </button>
@@ -127,7 +127,7 @@ export default function ShopAccountDeleteClient({ shop, shopSlug }) {
             ) : (
               <div className="space-y-4 pt-2">
                 <div className="space-y-1.5 text-left">
-                  <label className="text-[10px] font-black text-red-700 uppercase tracking-widest ml-1">৬ ডিজিট ভেরিফিকেশন কোড</label>
+                  <label className="text-[10px] font-black text-red-700 ml-1">৬ ডিজিট ভেরিফিকেশন কোড</label>
                   <input
                     type="text"
                     maxLength={6}
@@ -152,7 +152,7 @@ export default function ShopAccountDeleteClient({ shop, shopSlug }) {
                   <button
                     onClick={handleConfirmDelete}
                     disabled={submitting || code.length < 6}
-                    className="flex-2 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-red-500/10 disabled:opacity-60 cursor-pointer"
+                    className="flex-2 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg shadow-sm disabled:opacity-60 cursor-pointer"
                   >
                     {submitting ? <Loader2 className="animate-spin" size={18} /> : 'নিশ্চিত ও স্থায়ীভাবে মুছুন'}
                   </button>
@@ -197,14 +197,14 @@ export default function ShopAccountDeleteClient({ shop, shopSlug }) {
         )}
 
         <div className="border-t border-slate-100 pt-6 mt-8">
-          <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-widest mb-3">Data Retention Policy</h4>
+          <h4 className="font-extrabold text-slate-900 text-xs mb-3">Data Retention Policy</h4>
           <p className="text-[11px] text-slate-400 font-bold leading-relaxed">
             The following data may be retained where required by law: completed order invoices, tax records, and fraud prevention logs.
           </p>
         </div>
       </div>
 
-      <div className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-8">
+      <div className="text-center text-[10px] text-slate-400 font-bold mt-8">
         {shopName} Identity Services &bull; 2026
       </div>
     </div>

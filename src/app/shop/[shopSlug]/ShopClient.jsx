@@ -8,7 +8,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import { ShoppingBag, Search, X, Plus, Minus, Phone, MapPin, 
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2, ArrowUp, ArrowDown,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings, Trash2,
-  ChevronLeft, ChevronRight, Sparkles, Star, Flame, Gift, ExternalLink, Menu, Tag,
+  ChevronLeft, ChevronRight, Star, Flame, Gift, ExternalLink, Menu, Tag,
   Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle, Maximize2, Minimize2 } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
@@ -209,17 +209,17 @@ const matchPhoneticSearch = (product, queryText) => {
 // ══════════════════════════════════════════════════════════════════
 const SHOP_THEME_PRESETS = {
   // Light bg presets — use dark text (#0f172a or similar)
-  classic:  { primary: '#4f46e5', accent: '#7c3aed', bg: '#ffffff',  text: '#0f172a', card: '#ffffff', border: '#e2e8f0', radius: '16px', font: 'Inter',  headerBg: 'linear-gradient(135deg, #4f46e5, #7c3aed)', headerText: '#ffffff',  btnText: '#ffffff' },
-  forest:   { primary: '#059669', accent: '#34d399', bg: '#f0fdf4',  text: '#064e3b', card: '#ffffff', border: '#bbf7d0', radius: '12px', font: 'Inter',  headerBg: 'linear-gradient(135deg, #065f46, #047857)', headerText: '#ecfdf5',  btnText: '#ffffff' },
-  sunset:   { primary: '#ea580c', accent: '#f97316', bg: '#fff7ed',  text: '#431407', card: '#ffffff', border: '#fed7aa', radius: '24px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #c2410c, #ea580c)', headerText: '#ffffff',  btnText: '#ffffff' },
-  ocean:    { primary: '#0284c7', accent: '#38bdf8', bg: '#f0f9ff',  text: '#0c4a6e', card: '#ffffff', border: '#bae6fd', radius: '16px', font: 'Inter',  headerBg: 'linear-gradient(135deg, #0369a1, #0284c7)', headerText: '#ffffff',  btnText: '#ffffff' },
-  rose:     { primary: '#be185d', accent: '#f43f5e', bg: '#fff1f2',  text: '#4c0519', card: '#ffffff', border: '#fecdd3', radius: '20px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #9f1239, #be185d)', headerText: '#ffffff',  btnText: '#ffffff' },
-  minimal:  { primary: '#18181b', accent: '#71717a', bg: '#fafafa',  text: '#18181b', card: '#ffffff', border: '#e4e4e7', radius: '8px',  font: 'Inter',  headerBg: '#18181b',                                   headerText: '#fafafa',  btnText: '#ffffff' },
-  royal:    { primary: '#7c3aed', accent: '#a78bfa', bg: '#faf5ff',  text: '#2e1065', card: '#ffffff', border: '#ddd6fe', radius: '24px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #5b21b6, #7c3aed)', headerText: '#ffffff',  btnText: '#ffffff' },
-  earth:    { primary: '#92400e', accent: '#d97706', bg: '#fffbeb',  text: '#451a03', card: '#ffffff', border: '#fde68a', radius: '16px', font: 'Inter',  headerBg: 'linear-gradient(135deg, #78350f, #92400e)', headerText: '#ffffff',  btnText: '#ffffff' },
+  classic:  { primary: '#4f46e5', accent: '#7c3aed', bg: '#ffffff',  text: '#0f172a', card: '#ffffff', border: '#e2e8f0', radius: '16px', font: 'Outfit', headerBg: '#4f46e5', headerText: '#ffffff',  btnText: '#ffffff' },
+  forest:   { primary: '#059669', accent: '#34d399', bg: '#f0fdf4',  text: '#064e3b', card: '#ffffff', border: '#bbf7d0', radius: '12px', font: 'Outfit', headerBg: '#065f46', headerText: '#ecfdf5',  btnText: '#ffffff' },
+  sunset:   { primary: '#ea580c', accent: '#f97316', bg: '#fff7ed',  text: '#431407', card: '#ffffff', border: '#fed7aa', radius: '24px', font: 'Outfit', headerBg: '#c2410c', headerText: '#ffffff',  btnText: '#ffffff' },
+  ocean:    { primary: '#0284c7', accent: '#38bdf8', bg: '#f0f9ff',  text: '#0c4a6e', card: '#ffffff', border: '#bae6fd', radius: '16px', font: 'Outfit', headerBg: '#0369a1', headerText: '#ffffff',  btnText: '#ffffff' },
+  rose:     { primary: '#be185d', accent: '#f43f5e', bg: '#fff1f2',  text: '#4c0519', card: '#ffffff', border: '#fecdd3', radius: '20px', font: 'Outfit', headerBg: '#9f1239', headerText: '#ffffff',  btnText: '#ffffff' },
+  minimal:  { primary: '#18181b', accent: '#71717a', bg: '#fafafa',  text: '#18181b', card: '#ffffff', border: '#e4e4e7', radius: '8px',  font: 'Outfit', headerBg: '#18181b',                                   headerText: '#fafafa',  btnText: '#ffffff' },
+  royal:    { primary: '#7c3aed', accent: '#a78bfa', bg: '#faf5ff',  text: '#2e1065', card: '#ffffff', border: '#ddd6fe', radius: '24px', font: 'Outfit', headerBg: '#5b21b6', headerText: '#ffffff',  btnText: '#ffffff' },
+  earth:    { primary: '#92400e', accent: '#d97706', bg: '#fffbeb',  text: '#451a03', card: '#ffffff', border: '#fde68a', radius: '16px', font: 'Outfit', headerBg: '#78350f', headerText: '#ffffff',  btnText: '#ffffff' },
   // Dark bg presets — MUST use light text (#f8fafc or similar)
-  midnight: { primary: '#a5b4fc', accent: '#c084fc', bg: '#0f172a',  text: '#f8fafc', card: '#1e293b', border: '#334155', radius: '20px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #1e1b4b, #312e81)', headerText: '#e0e7ff',  btnText: '#ffffff' },
-  neon:     { primary: '#22d3ee', accent: '#a855f7', bg: '#020617',  text: '#f0fdfa', card: '#0f172a', border: '#1e293b', radius: '20px', font: 'Outfit', headerBg: 'linear-gradient(135deg, #0e7490, #7c3aed)', headerText: '#f0fdfa',  btnText: '#ffffff' },
+  midnight: { primary: '#a5b4fc', accent: '#c084fc', bg: '#0f172a',  text: '#f8fafc', card: '#1e293b', border: '#334155', radius: '20px', font: 'Outfit', headerBg: '#1e1b4b', headerText: '#e0e7ff',  btnText: '#ffffff' },
+  neon:     { primary: '#22d3ee', accent: '#a855f7', bg: '#020617',  text: '#f0fdfa', card: '#0f172a', border: '#1e293b', radius: '20px', font: 'Outfit', headerBg: '#0e7490', headerText: '#f0fdfa',  btnText: '#ffffff' },
 };
 
 /**
@@ -236,6 +236,11 @@ function buildShopTheme(shop) {
       const overrides = shop?.themeOverrides || {};
       const merged = { ...base, ...overrides };
       
+      const rawFont = merged.fontFamily || merged.font || 'Outfit';
+      const sanitizedFont = (rawFont && !rawFont.toLowerCase().includes('inter') && !rawFont.toLowerCase().includes('geist') && !rawFont.toLowerCase().includes('space grotesk')) 
+        ? rawFont 
+        : 'Outfit';
+
       return {
         primary:    merged.primaryColor || merged.primary || '#6D28D9',
         accent:     merged.accentColor || merged.accent || '#F59E0B',
@@ -244,7 +249,7 @@ function buildShopTheme(shop) {
         card:       merged.cardBg || merged.card || '#FFFFFF',
         border:     merged.cardBorder || merged.border || '#E2E8F0',
         radius:     merged.cardRadius || merged.radius || '16px',
-        font:       merged.fontFamily || merged.font || 'Inter',
+        font:       sanitizedFont,
         headerBg:   merged.headerBg,
         headerText: merged.headerText,
         btnText:    merged.btnText || '#ffffff',
@@ -263,6 +268,10 @@ function buildShopTheme(shop) {
  * Applied as style on root div so all child elements can use var(--sp-*)
  */
 function themeToVars(t) {
+  const fontVal = (t.font && !t.font.toLowerCase().includes('inter') && !t.font.toLowerCase().includes('geist') && !t.font.toLowerCase().includes('space grotesk'))
+    ? t.font
+    : 'Outfit, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
   return {
     '--sp-primary':     t.primary,
     '--sp-accent':      t.accent,
@@ -274,7 +283,7 @@ function themeToVars(t) {
     '--sp-header-bg':   t.headerBg,
     '--sp-header-text': t.headerText,
     '--sp-btn-text':    t.btnText || '#ffffff',
-    '--sp-font':        t.font || 'Inter',
+    '--sp-font':        fontVal,
   };
 }
 
@@ -409,7 +418,7 @@ function LiveCountdown({ deliveryETA }) {
 
   return (
     <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl">
-      <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1 flex items-center gap-1.5"><Clock size={12}/> লাইভ কাউন্টডাউন</p>
+      <p className="text-[10px] font-black text-blue-700 mb-1 flex items-center gap-1.5"><Clock size={12}/> লাইভ কাউন্টডাউন</p>
       <p className="text-sm font-black text-blue-900 font-mono tracking-wider">{timeLeft || 'হিসাব করা হচ্ছে...'}</p>
     </div>
   );
@@ -2516,7 +2525,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {/* ── Category Drawer (All Devices - Left Side) ── */}
       <div className={`fixed inset-0 z-[100] transition-all duration-300 ${isCategoryMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsCategoryMenuOpen(false)} />
+        <div className="absolute inset-0 bg-slate-900/60" onClick={() => setIsCategoryMenuOpen(false)} />
         <div className={`absolute top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isCategoryMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
             <h2 className="text-lg font-black text-slate-900 flex items-center gap-2"><Tag size={18} className="text-purple-600" /> ক্যাটাগরি সমূহ</h2>
@@ -2527,7 +2536,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
             <button
               onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); setIsCategoryMenuOpen(false); }}
-              className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === 'All' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
+              className={`w-full text-left px-4 py-3.5 rounded-2xl font-bold transition-all ${activeCategory === 'All' ? 'bg-purple-600 text-white shadow-md shadow-sm scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
             >সব ক্যাটাগরি</button>
             <div className="flex items-center gap-2">
               {/* static logo - no navigation to prevent 'No store found' error */}
@@ -2545,7 +2554,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div key={c.id} className="space-y-1">
                   <button
                     onClick={() => { setActiveCategory(c.name); setActiveSubcategory(''); if (!hasSubs) setIsCategoryMenuOpen(false); }}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all ${isActive ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20 scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold transition-all ${isActive ? 'bg-purple-600 text-white shadow-md shadow-sm scale-[1.02]' : 'bg-slate-50 text-slate-700 hover:bg-purple-50 hover:text-purple-700'}`}
                   >
                     <span>{c.name}</span>
                     {hasSubs && <span className={`text-xs ${isActive ? 'text-white/70' : 'text-slate-400'}`}>{isActive ? '▲' : '▼'}</span>}
@@ -2653,15 +2662,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Inline Smart Meal AI Planner (Top Storefront) ── */}
       {shop.enableSmartMeal && !isMesserBazar && (
         <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
-          <div className="bg-white border-2 border-purple-100 rounded-3xl shadow-xl shadow-purple-500/5 overflow-hidden">
-            <SmartMealEngine
-              shop={shop}
-              products={products}
-              onAddToCart={addToCart}
-              onClose={() => {}}
-              userOrders={userOrders}
-            />
-          </div>
+          <SmartMealEngine
+            shop={shop}
+            products={products}
+            onAddToCart={addToCart}
+            onClose={() => {}}
+            userOrders={userOrders}
+          />
         </div>
       )}
 
@@ -2701,7 +2708,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       {banner.linkUrl && (
                         <a 
                           href={banner.linkUrl} 
-                          className="inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-lg shadow-purple-500/20 active:scale-95 cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs md:text-sm font-bold rounded-xl transition-all shadow-lg shadow-sm active:scale-95 cursor-pointer"
                         >
                           {banner.buttonText || 'এখনই কিনুন'}
                         </a>
@@ -2713,10 +2720,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             ))}
             {normalizedBanners.length > 1 && (
               <>
-                <button onClick={() => setActiveBanner(prev => (prev === 0 ? normalizedBanners.length - 1 : prev - 1))} className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
+                <button onClick={() => setActiveBanner(prev => (prev === 0 ? normalizedBanners.length - 1 : prev - 1))} className="absolute left-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/50 text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
                   <ChevronLeft size={24} strokeWidth={3} />
                 </button>
-                <button onClick={() => setActiveBanner(prev => (prev === normalizedBanners.length - 1 ? 0 : prev + 1))} className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
+                <button onClick={() => setActiveBanner(prev => (prev === normalizedBanners.length - 1 ? 0 : prev + 1))} className="absolute right-6 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-black/50 text-white hover:bg-white/20 transition-all opacity-0 group-hover/banner:opacity-100 hover:scale-110 active:scale-95 shadow-lg">
                   <ChevronRight size={24} strokeWidth={3} />
                 </button>
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
@@ -2748,7 +2755,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <span className="text-xs text-[#967423] tracking-[0.3em] uppercase font-black mb-3 px-3 py-1 bg-amber-100/80 rounded-full border border-amber-300">Autumn / Winter Collection</span>
                       <h1 className="font-serif text-3xl md:text-5xl font-normal mb-4 tracking-tight leading-tight text-slate-900">{shop.welcomeMessage || 'The Art of Minimalist Elegance'}</h1>
                       <p className="text-sm md:text-base text-slate-700 mb-6 max-w-xl font-light leading-relaxed">{shop.slogan || 'Discover the new seasonal collection where architectural precision meets fluid drape.'}</p>
-                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#C9A84C] text-slate-900 px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest hover:bg-amber-400 shadow-md transition-colors">Explore Collection</button>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#C9A84C] text-slate-900 px-8 py-3 rounded-full text-xs font-black hover:bg-amber-400 shadow-md transition-colors">Explore Collection</button>
                     </div>
                   </div>
                 );
@@ -2758,10 +2765,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 return (
                   <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F0F8FF] bg-gradient-to-r from-blue-100/80 via-sky-50 to-indigo-50 flex items-center px-6 md:px-12">
                     <div className="relative z-10 max-w-2xl text-slate-900">
-                      <span className="inline-block px-3.5 py-1 bg-blue-100 border border-blue-300 text-blue-800 rounded-full text-xs font-black uppercase tracking-widest mb-3">New Arrivals</span>
+                      <span className="inline-block px-3.5 py-1 bg-blue-100 border border-blue-300 text-blue-800 rounded-full text-xs font-black mb-3">New Arrivals</span>
                       <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-slate-900">{shop.welcomeMessage || 'Next-Gen Gadgets.'}</h1>
                       <p className="text-sm md:text-base text-slate-700 mb-5 font-medium">{shop.slogan || 'Experience the bleeding edge of innovation. Discover devices designed to push the boundaries of what is possible.'}</p>
-                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#0066FF] hover:bg-blue-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all">Explore Collection</button>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#0066FF] hover:bg-blue-700 text-white px-8 py-3 rounded-full text-xs font-black shadow-lg shadow-sm transition-all">Explore Collection</button>
                     </div>
                   </div>
                 );
@@ -2771,10 +2778,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 return (
                   <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FFF5F7] bg-gradient-to-r from-pink-100/70 via-rose-50 to-purple-50 flex items-center justify-center text-center px-6">
                     <div className="relative z-10 max-w-2xl text-slate-900">
-                      <span className="inline-block px-3.5 py-1 bg-rose-100 text-[#B76E79] rounded-full text-xs font-black uppercase tracking-wider mb-3">Radiant Skincare</span>
+                      <span className="inline-block px-3.5 py-1 bg-rose-100 text-[#B76E79] rounded-full text-xs font-black mb-3">Radiant Skincare</span>
                       <h1 className="text-3xl md:text-5xl font-black mb-3 tracking-tight text-slate-900">{shop.welcomeMessage || 'Glow from Within'}</h1>
                       <p className="text-sm md:text-base text-slate-700 mb-5 max-w-lg mx-auto font-medium">{shop.slogan || 'Discover our curated collection of premium skincare, organic makeup, and signature fragrances.'}</p>
-                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#B76E79] hover:bg-rose-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-pink-500/20 transition-all">Shop the Collection</button>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#B76E79] hover:bg-rose-700 text-white px-8 py-3 rounded-full text-xs font-black shadow-lg shadow-sm transition-all">Shop the Collection</button>
                     </div>
                   </div>
                 );
@@ -2784,10 +2791,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 return (
                   <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#FAF4F0] bg-gradient-to-r from-orange-100/60 via-amber-50 to-stone-50 flex items-center px-6 md:px-12">
                     <div className="relative z-10 max-w-2xl text-stone-900">
-                      <span className="inline-block px-3.5 py-1 bg-orange-100 text-[#CC5500] rounded-full text-xs font-black uppercase tracking-wider mb-3">Modern Living</span>
+                      <span className="inline-block px-3.5 py-1 bg-orange-100 text-[#CC5500] rounded-full text-xs font-black mb-3">Modern Living</span>
                       <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-stone-900">{shop.welcomeMessage || 'Revitalize Your Space'}</h1>
                       <p className="text-sm md:text-base text-stone-700 mb-5 font-medium">{shop.slogan || 'Curated earthy tones and minimalist designs to bring warmth and comfort into your daily life.'}</p>
-                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#CC5500] hover:bg-orange-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg transition-all">Shop the Collection</button>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#CC5500] hover:bg-orange-700 text-white px-8 py-3 rounded-full text-xs font-black shadow-lg transition-all">Shop the Collection</button>
                     </div>
                   </div>
                 );
@@ -2800,7 +2807,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <span className="text-xs text-[#FF5722] font-black uppercase tracking-[0.2em] mb-2 inline-block px-3 py-1 bg-orange-100 rounded-full">New Pro Collection</span>
                       <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-slate-900">{shop.welcomeMessage || 'Push Your Limits. Defy Gravity.'}</h1>
                       <p className="text-sm md:text-base text-slate-700 mb-5 font-medium">{shop.slogan || 'High-performance gear engineered for the relentless. Equip yourself with the latest activewear and outdoor equipment.'}</p>
-                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#FF5722] hover:bg-orange-600 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-orange-500/20 transition-all">Shop Collection</button>
+                      <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#FF5722] hover:bg-orange-600 text-white px-8 py-3 rounded-full text-xs font-black shadow-lg shadow-sm transition-all">Shop Collection</button>
                     </div>
                   </div>
                 );
@@ -2810,10 +2817,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               return (
                 <div className="relative w-full h-full min-h-[350px] md:min-h-[420px] bg-[#F0FDF4] bg-gradient-to-r from-emerald-100/70 via-green-50 to-teal-50 flex items-center px-6 md:px-12">
                   <div className="relative z-10 max-w-2xl text-slate-900">
-                    <span className="inline-block px-3.5 py-1 bg-emerald-100 text-[#15803D] rounded-full text-xs font-black uppercase tracking-wider mb-3">Farm to Table</span>
+                    <span className="inline-block px-3.5 py-1 bg-emerald-100 text-[#15803D] rounded-full text-xs font-black mb-3">Farm to Table</span>
                     <h1 className="text-3xl md:text-5xl font-black mb-3 leading-tight text-slate-900">{shop.welcomeMessage || 'Fresh from Farm, Direct to You.'}</h1>
                     <p className="text-sm md:text-base text-slate-700 mb-5 font-medium">{shop.slogan || 'Discover our curated selection of organic, locally sourced produce and dairy. Harvested daily for maximum freshness.'}</p>
-                    <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#15803D] hover:bg-emerald-700 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all">Shop Fresh Harvest</button>
+                    <button onClick={() => { const el = document.getElementById('product-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#15803D] hover:bg-emerald-700 text-white px-8 py-3 rounded-full text-xs font-black shadow-lg shadow-sm transition-all">Shop Fresh Harvest</button>
                   </div>
                 </div>
               );
@@ -2825,15 +2832,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Inline Smart Meal AI Planner (For MesserBazar, rendered under banners) ── */}
       {shop.enableSmartMeal && isMesserBazar && (
         <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
-          <div className="bg-white border-2 border-purple-100 rounded-3xl shadow-xl shadow-purple-500/5 overflow-hidden">
-            <SmartMealEngine
-              shop={shop}
-              products={products}
-              onAddToCart={addToCart}
-              onClose={() => {}}
-              userOrders={userOrders}
-            />
-          </div>
+          <SmartMealEngine
+            shop={shop}
+            products={products}
+            onAddToCart={addToCart}
+            onClose={() => {}}
+            userOrders={userOrders}
+          />
         </div>
       )}
 
@@ -2952,7 +2957,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             {shop.enableCommonOrder && (
               <button
                 onClick={() => setIsCommonOrderOpen(true)}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all text-sm uppercase tracking-wider cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 px-6 rounded-2xl shadow-lg shadow-sm active:scale-95 transition-all text-sm cursor-pointer"
               >
                 📋 কমন অর্ডার শিট (Common Order Sheet)
               </button>
@@ -3190,11 +3195,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           const renderSingleProductCard = (product, index) => {
             const cartItem = cart.find(i => i.id === product.id);
             const btnStyleMap = {
-              luxury: 'bg-[#C9A84C] hover:bg-amber-400 text-black font-serif uppercase tracking-wider',
+              luxury: 'bg-[#C9A84C] hover:bg-amber-400 text-black font-serif ',
               electronics: 'bg-[#1565C0] hover:bg-blue-700 text-white shadow-[0_0_12px_rgba(21,101,192,0.4)]',
               beauty: 'bg-[#B76E79] hover:bg-rose-700 text-white rounded-full',
               home: 'bg-[#CC5500] hover:bg-orange-700 text-white',
-              sports: 'bg-[#FF5722] hover:bg-orange-600 text-white shadow-md shadow-orange-500/20',
+              sports: 'bg-[#FF5722] hover:bg-orange-600 text-white shadow-md shadow-sm',
               grocery: 'bg-[#2E7D32] hover:bg-emerald-700 text-white rounded-full',
             };
             const priceColorMap = {
@@ -3205,7 +3210,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               sports: 'text-[#FF5722]',
               grocery: 'text-[#2E7D32]',
             };
-            const cardBtnClass = btnStyleMap[catStyle] || 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white';
+            const cardBtnClass = btnStyleMap[catStyle] || 'bg-purple-600 hover:bg-purple-700 text-white';
             const priceClass = priceColorMap[catStyle] || 'text-slate-900';
 
             return (
@@ -3236,8 +3241,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   )}
                   {product.allowCustomize && (
-                    <div className="absolute top-2.5 left-2.5 bg-purple-600/90 text-white px-2 py-1 rounded-lg text-[10px] font-black backdrop-blur-sm flex items-center gap-1">
-                      <Sparkles size={10} /> কাস্টম
+                    <div className="absolute top-2.5 left-2.5 bg-purple-600 text-white px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-sm">
+                      <SlidersHorizontal size={10} /> কাস্টম
                     </div>
                   )}
                 </div>
@@ -3293,10 +3298,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           </button>
                         )
                       ) : (
-                        <div className="w-full py-2.5 rounded-xl font-black text-sm bg-red-50 text-red-500 border border-red-200 flex flex-col items-center justify-center gap-1 cursor-not-allowed">
+                        <button disabled className="w-full py-2.5 rounded-xl font-bold text-sm bg-red-50 text-red-600 flex flex-col items-center justify-center gap-0.5 cursor-not-allowed select-none">
                           <div className="flex items-center gap-1.5"><span className="text-base">🚫</span> স্টক আউট</div>
-                          <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Frozen — অর্ডার বন্ধ</span>
-                        </div>
+                          <span className="text-[9px] font-medium text-red-400">Frozen — অর্ডার বন্ধ</span>
+                        </button>
                       )
                     ) : cartItem ? (
                       <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1.5 border border-slate-200">
@@ -3324,7 +3329,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         onClick={() => setSelectedProductForModal(product)}
                         className="w-full py-2 rounded-xl font-black text-xs border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-600 transition-colors flex items-center justify-center gap-1.5"
                       >
-                        <Sparkles size={13} /> কাস্টমাইজ
+                        <SlidersHorizontal size={13} /> কাস্টমাইজ
                       </button>
                     )}
                   </div>
@@ -3360,7 +3365,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         <h3 className="text-2xl font-black">{p0?.name || 'Featured Spotlight Product'}</h3>
                       </div>
                     )}
-                    <span className="absolute top-4 left-4 bg-orange-600 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+                    <span className="absolute top-4 left-4 bg-orange-600 text-white text-[10px] font-black px-3.5 py-1 rounded-full shadow-md">
                       🔥 Featured Spotlight #1
                     </span>
                   </div>
@@ -3414,7 +3419,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           addToCart(p0);
                           setIsCartOpen(true);
                         }}
-                        className="flex-1 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl text-sm font-black uppercase tracking-wider shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
+                        className="flex-1 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl text-sm font-black shadow-lg shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
                       >
                         ⚡ এখনই অর্ডার করুন (Instant Buy Now)
                       </button>
@@ -3429,13 +3434,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                     {/* Specs / Guarantee badges */}
                     <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 text-center">
-                      <div className="bg-orange-50/60 p-2 rounded-xl border border-orange-100 text-[10px] font-bold text-orange-900">
-                        ✨ ১০০% আসল প্রোডাক্ট
+                      <div className="bg-orange-50/60 p-2 rounded-xl text-[10px] font-bold text-orange-900">
+                        ✓ ১০০% আসল প্রোডাক্ট
                       </div>
-                      <div className="bg-orange-50/60 p-2 rounded-xl border border-orange-100 text-[10px] font-bold text-orange-900">
+                      <div className="bg-orange-50/60 p-2 rounded-xl text-[10px] font-bold text-orange-900">
                         🚚 দ্রুত হোম ডেলিভারি
                       </div>
-                      <div className="bg-orange-50/60 p-2 rounded-xl border border-orange-100 text-[10px] font-bold text-orange-900">
+                      <div className="bg-orange-50/60 p-2 rounded-xl text-[10px] font-bold text-orange-900">
                         🔄 ক্যাশ অন ডেলিভারি
                       </div>
                     </div>
@@ -3537,7 +3542,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <div id="product-section" className="flex gap-4 md:gap-6">
                 {/* Sidebar */}
                 <div className="hidden md:flex flex-col gap-2 w-48 lg:w-56 shrink-0 sticky top-24 self-start">
-                  <h3 className="text-xs font-black uppercase tracking-wider mb-2" style={{color: themeVars['--sp-primary']}}>ক্যাটাগরি</h3>
+                  <h3 className="text-xs font-black mb-2" style={{color: themeVars['--sp-primary']}}>ক্যাটাগরি</h3>
                   <button
                     onClick={() => { setActiveCategory('All'); setActiveSubcategory(''); }}
                     className="text-left px-3 py-2 rounded-xl text-sm font-bold transition-all"
@@ -3712,7 +3717,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Essential Skincare</h2>
                     <p className="text-sm text-slate-500 font-medium">The foundation of every radiant look.</p>
                   </div>
-                  <span className="text-xs font-bold text-[#B76E79] uppercase tracking-wider cursor-pointer">View All →</span>
+                  <span className="text-xs font-bold text-[#B76E79] cursor-pointer">View All →</span>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -3726,7 +3731,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <div className="w-full h-full bg-rose-100 flex items-center justify-center p-6 text-center font-bold text-slate-700 text-2xl">{p0.name}</div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-slate-900 px-3.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Bestseller</div>
+                    <div className="absolute top-4 left-4 bg-white text-slate-900 px-3.5 py-1 rounded-full text-[10px] font-bold border border-slate-200">Bestseller</div>
                     <div className="absolute bottom-6 left-6 right-6 text-white">
                       <h3 className="text-2xl md:text-3xl font-bold mb-1 leading-tight drop-shadow-md">{p0.name}</h3>
                       <p className="text-lg font-black text-rose-200 mb-4">৳{p0.price}</p>
@@ -3777,7 +3782,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Flagship Devices</h2>
                     <p className="text-sm text-slate-500 font-medium">Power in the palm of your hand.</p>
                   </div>
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider cursor-pointer">View All →</span>
+                  <span className="text-xs font-bold text-blue-600 cursor-pointer">View All →</span>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -3788,7 +3793,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <div className="w-full h-full bg-[#0A192F] flex items-center justify-center p-6 text-center font-bold text-white text-2xl">{p0.name}</div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0A192F] via-[#0A192F]/40 to-transparent" />
-                    <div className="absolute top-4 left-4 bg-[#1565C0] text-white px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md">Just Released</div>
+                    <div className="absolute top-4 left-4 bg-[#1565C0] text-white px-3.5 py-1 rounded-full text-[10px] font-black shadow-md">Just Released</div>
                     <div className="absolute bottom-6 left-6 right-20 text-white">
                       <h3 className="text-2xl md:text-3xl font-black mb-1 drop-shadow-md">{p0.name}</h3>
                       <p className="text-[#00E5FF] text-xl font-black">৳{p0.price}</p>
@@ -3853,7 +3858,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <h2 className="text-2xl md:text-3xl font-serif text-slate-900 tracking-tight">Signature Collection</h2>
                     <p className="text-sm text-slate-500 font-light">Crafted with precision, designed for eternity.</p>
                   </div>
-                  <span className="text-xs font-bold text-[#C9A84C] uppercase tracking-widest cursor-pointer">View All →</span>
+                  <span className="text-xs font-bold text-[#C9A84C] cursor-pointer">View All →</span>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -3864,11 +3869,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <div className="w-full h-full bg-[#FAF9F6] flex items-center justify-center p-6 text-center font-serif text-slate-800 text-2xl">{p0.name}</div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                    <div className="absolute top-4 left-4 bg-[#C9A84C] text-slate-900 px-3.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded-md">Icon Collection</div>
+                    <div className="absolute top-4 left-4 bg-[#C9A84C] text-slate-900 px-3.5 py-1 text-[10px] font-bold rounded-md">Icon Collection</div>
                     <div className="absolute bottom-6 left-6 right-6 text-white">
                       <h3 className="font-serif text-2xl md:text-3xl font-normal mb-1 drop-shadow-md">{p0.name}</h3>
                       <p className="text-[#C9A84C] text-xl font-serif font-bold mb-3">৳{p0.price}</p>
-                      <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="bg-[#C9A84C] hover:bg-amber-400 text-slate-900 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all rounded-md">Add to Bag</button>
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(p0); }} className="bg-[#C9A84C] hover:bg-amber-400 text-slate-900 px-6 py-2.5 text-xs font-bold transition-all rounded-md">Add to Bag</button>
                     </div>
                   </div>
 
@@ -3940,7 +3945,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8 select-none">
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="group w-10 h-10 rounded-2xl bg-white/90 hover:bg-purple-600 text-slate-700 hover:text-white shadow-lg hover:shadow-purple-500/30 border border-slate-200/80 hover:border-purple-500 backdrop-blur-md transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          className="group w-10 h-10 rounded-2xl bg-white hover:bg-purple-600 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-purple-500 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
           title="উপরে যান (Scroll to Top)"
           aria-label="Scroll to top"
         >
@@ -3948,7 +3953,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </button>
         <button
           onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-          className="group w-10 h-10 rounded-2xl bg-white/90 hover:bg-purple-600 text-slate-700 hover:text-white shadow-lg hover:shadow-purple-500/30 border border-slate-200/80 hover:border-purple-500 backdrop-blur-md transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
+          className="group w-10 h-10 rounded-2xl bg-white hover:bg-purple-600 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-purple-500 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
           title="নিচে যান (Scroll to Bottom)"
           aria-label="Scroll to bottom"
         >
@@ -3962,12 +3967,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         {/* Floating Cart Button */}
         <button 
           onClick={() => setIsCartOpen(true)} 
-          className="relative w-[60px] h-[60px] bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 !text-white rounded-full shadow-[0_10px_25px_rgba(219,39,119,0.3)] flex items-center justify-center hover:scale-110 transition-all group"
+          className="relative w-14 h-14 bg-purple-600 hover:bg-purple-700 !text-white rounded-full shadow-lg shadow-slate-900/20 flex items-center justify-center hover:scale-105 transition-all group cursor-pointer"
           style={{ color: '#ffffff' }}
         >
-          <ShoppingCart size={24} style={{ color: '#ffffff' }} className="group-hover:rotate-12 transition-transform" />
+          <ShoppingCart size={22} style={{ color: '#ffffff' }} className="group-hover:rotate-12 transition-transform" />
           {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[12px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-pulse">
+            <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[11px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm animate-pulse">
               {cartCount}
             </span>
           )}
@@ -3975,11 +3980,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
         {/* AI Floating Companion (Stacked Below Cart) */}
         <div className="relative group flex flex-col items-end gap-3">
-          <button onClick={() => setIsAiOpen(true)} className="w-[60px] h-[60px] bg-white rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.1)] flex items-center justify-center hover:scale-110 transition-transform relative group border-2 border-purple-100">
+          <button onClick={() => setIsAiOpen(true)} className="w-14 h-14 bg-white rounded-full shadow-md shadow-slate-900/10 flex items-center justify-center hover:scale-105 transition-transform relative group border border-slate-200 cursor-pointer">
             <CuteAIIcon />
           </button>
-          <div className="bg-slate-900 px-5 py-3 rounded-2xl rounded-br-none shadow-2xl border border-slate-700 text-sm font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 absolute right-[75px] bottom-0 pointer-events-none">
-            প্রশ্ন করুন! ✨
+          <div className="bg-slate-900 px-4 py-2.5 rounded-2xl rounded-br-none shadow-xl border border-slate-700 text-xs font-black text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mb-2 absolute right-[70px] bottom-0 pointer-events-none">
+            প্রশ্ন করুন!
           </div>
         </div>
 
@@ -3991,18 +3996,18 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-slate-200 shadow-xl flex items-center justify-around px-4 py-3 safe-bottom">
         <button onClick={() => setIsCategoryMenuOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
           <Menu size={22} strokeWidth={2} />
-          <span className="text-[10px] font-black uppercase tracking-wide">মেনু</span>
+          <span className="text-[10px] font-bold">মেনু</span>
         </button>
         <button onClick={() => setIsCartOpen(true)} className="relative flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
           <ShoppingCart size={22} strokeWidth={2} />
           {cartCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">{cartCount}</span>
           )}
-          <span className="text-[10px] font-black uppercase tracking-wide">কার্ট</span>
+          <span className="text-[10px] font-bold">কার্ট</span>
         </button>
         <button onClick={() => setIsAiOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
           <svg width="22" height="22" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#a855f7" /><circle cx="35" cy="45" r="5" fill="white" /><circle cx="65" cy="45" r="5" fill="white" /><path d="M40,65 Q50,72 60,65" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg>
-          <span className="text-[10px] font-black uppercase tracking-wide">এআই</span>
+          <span className="text-[10px] font-bold">এআই</span>
         </button>
         <button onClick={() => setIsProfileOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-purple-700 transition-colors">
           {user?.photoURL ? (
@@ -4010,14 +4015,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           ) : (
             <User size={22} strokeWidth={2} />
           )}
-          <span className="text-[10px] font-black uppercase tracking-wide">প্রফাইল</span>
+          <span className="text-[10px] font-bold">প্রফাইল</span>
         </button>
       </div>
 
       {/* ── FAQ Interactive Modal ── */}
       {isFaqOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsFaqOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsFaqOpen(false)} />
           <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 flex flex-col max-h-[85vh] animate-slide-in">
             <div className="flex items-center justify-between border-b pb-4 mb-4">
               <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">❓ সাধারণ জিজ্ঞাসা (FAQ)</h2>
@@ -4043,7 +4048,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {orderSuccess && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" onClick={() => setOrderSuccess(null)} />
+          <div className="absolute inset-0 bg-slate-900/80" onClick={() => setOrderSuccess(null)} />
           <div className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 text-center animate-slide-in space-y-5">
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-4xl">🎉</div>
             <div>
@@ -4052,7 +4057,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             </div>
             <button
               onClick={() => generatePDF(orderSuccess)}
-              className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
+              className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
             >
               <Download size={20} /> PDF ডাউনলোড করুন
             </button>
@@ -4066,7 +4071,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Login Required Modal ── */}
       {showLoginModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowLoginModal(false)} />
+          <div className="absolute inset-0 bg-slate-900/75" onClick={() => setShowLoginModal(false)} />
           <div className="relative w-full max-w-sm bg-white rounded-3xl p-8 shadow-2xl border border-slate-200 text-center animate-slide-in space-y-5">
             <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
               <User size={28} className="text-purple-600" />
@@ -4094,7 +4099,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
               {shop.authSettings?.emailAuth && (
                 <div className="space-y-3 pt-2 border-t border-slate-100 text-left">
-                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest">ইমেইল দিয়ে ওটিপি লগইন</p>
+                  <p className="text-xs font-black text-slate-500">ইমেইল দিয়ে ওটিপি লগইন</p>
                   <input 
                     type="email" 
                     placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
@@ -4136,7 +4141,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <button 
                     onClick={otpSent ? handleVerifyOTP : handleSendOTP}
                     disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
-                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                    className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                   >
                     {otpLoading ? (
                       <>
@@ -4152,7 +4157,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               {shop.authSettings?.emailPasswordAuth && (
                 <div className="space-y-3 pt-2 border-t border-slate-100 text-left animate-slide-in">
                   <div className="flex justify-between items-center">
-                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                    <p className="text-xs font-black text-slate-500">
                       {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
                     </p>
                     <button 
@@ -4213,7 +4218,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <button 
                     onClick={loginMode === 'signup' ? handleEmailSignUp : loginMode === 'forgot' ? handleResetPassword : handleEmailLogin}
                     disabled={loginLoading}
-                    className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                    className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                   >
                     {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট লিংক পাঠান' : 'লগইন করুন')}
                   </button>
@@ -4247,10 +4252,10 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── AI Modal (Chat + Voice + OCR + Text) ── */}
       {isAiOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAiOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsAiOpen(false)} />
           <div className="relative w-full max-w-md bg-white sm:rounded-3xl rounded-t-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] max-h-[700px] border border-slate-200 animate-slide-in">
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
+            <div className="bg-purple-700 text-white p-4 flex justify-between items-center border-b-[4px] border-purple-600 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-purple-100 overflow-hidden" style={{transform:'scale(0.75)'}}>
                   <CuteAIIcon />
@@ -4281,7 +4286,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       {/* Individual Suggested Products card layout */}
                       {suggestedItems && Array.isArray(suggestedItems) && suggestedItems.length > 0 && (
                         <div className="mt-1 flex flex-col gap-2 bg-slate-100/90 p-2.5 rounded-2xl border border-slate-200/60 max-w-full">
-                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider px-1">AI সাজেস্টেড প্রোডাক্টস:</p>
+                          <p className="text-[10px] font-black text-slate-500 px-1">AI সাজেস্টেড প্রোডাক্টস:</p>
                           <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-1">
                             {suggestedItems.map(({ product, qty, customizedText, note }) => {
                               const inCart = cart && Array.isArray(cart) ? cart.find(item => item.id === product.id) : null;
@@ -4307,7 +4312,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                                       addToCart(product, qty, customizedText, note);
                                       toast.success(`${product.name} কার্টে যোগ হয়েছে!`);
                                     }}
-                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all shrink-0 ${inCart ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black  transition-all shrink-0 ${inCart ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
                                   >
                                     {inCart ? 'যুক্ত আছে' : '+ কার্ট'}
                                   </button>
@@ -4318,7 +4323,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                           
                           {/* All-in-one button option */}
                           <button onClick={() => addAllSuggestedToCart(msg.text)}
-                            className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl shadow-xs transition-colors uppercase tracking-wider">
+                            className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl shadow-xs transition-colors">
                             <ShoppingCart size={12} /> সব কার্টে যোগ করুন
                           </button>
                         </div>
@@ -4331,8 +4336,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <div className="p-3.5 bg-white border-t border-slate-200 flex gap-2 shrink-0 relative">
                 {isGroceryShop && (
                   <div className="absolute -top-10 right-4 z-10">
-                    <button onClick={() => setAiTab('meal')} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-colors">
-                      <Sparkles size={12}/> স্মার্ট সাজেশন
+                    <button onClick={() => setAiTab('meal')} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200 rounded-xl text-[10px] font-black shadow-sm transition-colors">
+                      <Flame size={12}/> স্মার্ট সাজেশন
                     </button>
                   </div>
                 )}
@@ -4342,11 +4347,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               </div>
               
               {showAiSuggestionModal && (
-                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end justify-center p-4 z-50 rounded-2xl pb-16">
+                <div className="absolute inset-0 bg-slate-900/75 flex items-end justify-center p-4 z-50 rounded-2xl pb-16">
                   <div className="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl border border-purple-100 flex flex-col gap-4 animate-in zoom-in-95">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><Sparkles size={16}/></div>
+                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center"><Flame size={16}/></div>
                         <h3 className="font-black text-sm text-slate-800">AI স্মার্ট সাজেশন</h3>
                       </div>
                       <button onClick={() => setShowAiSuggestionModal(false)} className="text-slate-400 hover:text-slate-700"><X size={20}/></button>
@@ -4384,7 +4389,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             {/* ── Cart Drawer ── */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsCartOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsCartOpen(false)} />
           <div className="relative w-full max-w-sm h-full bg-white shadow-2xl flex flex-col overflow-hidden animate-slide-in border-l border-slate-200">
             <div className="flex justify-between items-center px-6 py-5 border-b border-slate-200 bg-slate-50">
               <h2 className="text-xl font-black text-slate-900 flex items-center gap-3"><ShoppingCart size={22} className="text-purple-600"/> আমার কার্ট</h2>
@@ -4505,7 +4510,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       try { saveDraftRef.current?.(true, 'checkout_open'); } catch (e) {}
                     }, 50);
                   }} 
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]"
+                  className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]"
                 >
                   পরবর্তী ধাপ <ArrowRight size={20} strokeWidth={2.5}/>
                 </button>
@@ -4518,7 +4523,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Checkout Modal ── */}
       {isOrderOpen && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsOrderOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsOrderOpen(false)} />
           <div className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl h-[90vh] overflow-y-auto border border-slate-200 animate-slide-in">
             <div className="flex justify-between items-center sticky top-0 bg-white py-3 z-10 border-b-2 border-slate-100">
               <h2 className="text-2xl font-black text-slate-900 tracking-tight">চেকআউট</h2>
@@ -4537,7 +4542,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
             {orderImage && (
               <div className="relative bg-slate-50 border-2 border-dashed border-purple-200 rounded-2xl p-4 space-y-3">
-                <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest text-center">📷 সংযুক্ত ছবি (অর্ডারের সাথে যাবে)</p>
+                <p className="text-[10px] font-black text-purple-600 text-center">📷 সংযুক্ত ছবি (অর্ডারের সাথে যাবে)</p>
                 <div className="relative w-full h-40 rounded-xl overflow-hidden shadow-inner bg-white">
                   <img src={orderImage} className="w-full h-full object-contain" alt="Custom Order" />
                   <button 
@@ -4554,17 +4559,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <form onSubmit={handlePlaceOrder} className="space-y-5">
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">পূর্নাঙ্গ নাম *</label>
+                  <label className="text-xs font-black text-slate-700 block pl-1">পূর্নাঙ্গ নাম *</label>
                   <input required type="text" placeholder="আপনার নাম লিখুন..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm" value={orderForm.name} onChange={e => setOrderForm(f => ({ ...f, name: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'name_entered'); } catch (e) {} }} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ফোন নম্বর *</label>
+                  <label className="text-xs font-black text-slate-700 block pl-1">ফোন নম্বর *</label>
                   <input required type="tel" maxLength={11} placeholder="01XXXXXXXXX" className={`w-full p-3.5 rounded-xl bg-slate-50 border-2 ${phoneError ? 'border-red-500' : 'border-slate-200 focus:border-purple-600'} text-sm font-black text-slate-900 outline-none focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm`} value={orderForm.phone} onChange={handlePhoneChange} onBlur={() => { try { saveDraftRef.current?.(true, 'phone_entered'); } catch (e) {} }} />
                   {phoneError && <p className="text-[11px] text-red-600 font-bold pl-1">{phoneError}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ঠিকানা *</label>
+                    <label className="text-xs font-black text-slate-700 block pl-1">ঠিকানা *</label>
                     <button 
                       type="button" 
                       onClick={() => setIsMapOpen(true)} 
@@ -4572,7 +4577,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         orderForm.coordinates 
                           ? 'bg-emerald-50 border-emerald-300 text-emerald-700' 
                           : shop.requireLocationForOrder === true 
-                            ? 'bg-purple-600 border-purple-600 text-white animate-pulse shadow-purple-500/20' 
+                            ? 'bg-purple-600 border-purple-600 text-white animate-pulse shadow-sm' 
                             : 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100'
                       }`}
                       title="মানচিত্রে লোকেশন বা এলাকা চিহ্নিত করুন"
@@ -4584,14 +4589,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <textarea required rows={3} placeholder="বাসা/বাড়ি, রোড, এলাকা" className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.address} onChange={e => setOrderForm(f => ({ ...f, address: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true, 'address_entered'); } catch (e) {} }} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">রিটেইলারকে নোট (ঐচ্ছিক)</label>
+                  <label className="text-xs font-black text-slate-700 block pl-1">রিটেইলারকে নোট (ঐচ্ছিক)</label>
                   <textarea rows={2} placeholder="বিশেষ অনুরোধ, সাইজ, রং বা যেকোনো নির্দেশনা..." className="w-full p-3.5 rounded-xl bg-slate-50 border-2 border-slate-200 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:bg-white placeholder:font-bold placeholder:text-slate-400 transition-colors shadow-sm resize-none" value={orderForm.note} onChange={e => setOrderForm(f => ({ ...f, note: e.target.value }))} onBlur={() => { try { saveDraftRef.current?.(true); } catch (e) {} }} />
                 </div>
               </div>
 
               {/* Coupon Code Input */}
               <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 space-y-3">
-                <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ডিসকাউন্ট কুপন (Coupon Code)</label>
+                <label className="text-xs font-black text-slate-700 block pl-1">ডিসকাউন্ট কুপন (Coupon Code)</label>
                 {appliedCouponCode ? (
                   <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
                     <div>
@@ -4668,22 +4673,22 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   {paymentMethod === 'manual' && (
                     <>
                       <div className="bg-white px-3 py-2 rounded-xl border border-purple-100 shadow-sm">
-                        <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-1">পেমেন্ট নাম্বার</p>
+                        <p className="text-[11px] font-black text-slate-600 mb-1">পেমেন্ট নাম্বার</p>
                         <p className="text-sm font-black text-purple-700">{shop.deliveryConfig?.methods}</p>
                       </div>
                       
                       <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">পেমেন্ট নাম্বার (যে নাম্বার থেকে টাকা পাঠিয়েছেন) *</label>
+                          <label className="text-xs font-black text-slate-700 block pl-1">পেমেন্ট নাম্বার (যে নাম্বার থেকে টাকা পাঠিয়েছেন) *</label>
                           <input required={paymentMethod === 'manual'} type="tel" maxLength={11} placeholder="01XXXXXXXXX" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 shadow-sm" value={orderForm.paymentNumber} onChange={e => setOrderForm(f => ({ ...f, paymentNumber: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1">ট্রানজেকশন আইডি (TxnID) *</label>
+                          <label className="text-xs font-black text-slate-700 block pl-1">ট্রানজেকশন আইডি (TxnID) *</label>
                           <input required={paymentMethod === 'manual'} type="text" placeholder="বিকাশ/নগদ/রকেট TxnID" className="w-full p-3.5 rounded-xl bg-white border-2 border-purple-300 text-sm font-black text-slate-900 outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-600/20 shadow-sm" value={orderForm.txnId} onChange={e => setOrderForm(f => ({ ...f, txnId: e.target.value }))} />
                         </div>
                         {shop.deliveryConfig?.requirePaymentScreenshot && (
                           <div className="space-y-1.5 pt-2">
-                            <label className="text-xs font-black text-slate-700 uppercase tracking-widest block pl-1 font-extrabold text-slate-800">পেমেন্ট প্রুফ স্ক্রিনশট আপলোড *</label>
+                            <label className="text-xs font-black text-slate-700 block pl-1 font-extrabold text-slate-800">পেমেন্ট প্রুফ স্ক্রিনশট আপলোড *</label>
                             <div className="border-2 border-dashed border-purple-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white hover:bg-purple-50/30 transition-colors relative cursor-pointer min-h-[110px]">
                               <input 
                                 required 
@@ -4729,11 +4734,11 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-emerald-600 font-bold text-lg">🤝</span>
-                    <p className="text-xs font-black text-slate-700 uppercase tracking-widest">পেমেন্ট পদ্ধতি: ক্যাশ অন ডেলিভারি (Cash on Delivery)</p>
+                    <p className="text-xs font-black text-slate-700">পেমেন্ট পদ্ধতি: ক্যাশ অন ডেলিভারি (Cash on Delivery)</p>
                   </div>
                   {shop.deliveryConfig?.methods && (
                      <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-sm">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">যোগাযোগ নাম্বার / পেমেন্ট নাম্বার</p>
+                        <p className="text-[10px] font-black text-slate-500 mb-1">যোগাযোগ নাম্বার / পেমেন্ট নাম্বার</p>
                         <p className="text-sm font-black text-slate-700">{shop.deliveryConfig?.methods}</p>
                      </div>
                   )}
@@ -4759,7 +4764,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
               </div>
 
-              <button disabled={placing} type="submit" className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 mt-4 active:scale-[0.98]">
+              <button disabled={placing} type="submit" className="w-full py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 transition-all shadow-xl disabled:opacity-50 mt-4 active:scale-[0.98]">
                 {placing ? <><Loader2 className="animate-spin" size={20} /> প্রসেস হচ্ছে...</> : <><CheckCircle size={20} strokeWidth={2.5}/> অর্ডার প্লেস করুন</>}
               </button>
             </form>
@@ -4787,7 +4792,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Common Order Sheet Modal ── */}
       {isCommonOrderOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsCommonOrderOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsCommonOrderOpen(false)} />
           <div className="relative w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl h-[90vh] flex flex-col border border-slate-200 animate-slide-in">
             
             {/* Header */}
@@ -4808,7 +4813,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
             {/* Content (Table & Rows) */}
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-              <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider sticky top-0 z-10">
+              <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 sticky top-0 z-10">
                 <div className="col-span-4">পণ্য</div>
                 <div className="col-span-2 text-center">পরিমাণ / ওজন (Weight)</div>
                 <div className="col-span-2 text-center">মোট মূল্য ৳ (Price)</div>
@@ -4864,7 +4869,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                               value={row.qty}
                               onChange={e => handleCommonOrderChange(product, 'qty', e.target.value)}
                             />
-                            <span className="absolute right-2 top-2.5 text-[8px] font-black text-slate-400 uppercase tracking-widest">{baseUnit}</span>
+                            <span className="absolute right-2 top-2.5 text-[8px] font-black text-slate-400">{baseUnit}</span>
                           </div>
                         </div>
 
@@ -4924,7 +4929,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             <div className="pt-4 border-t-2 border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
               <button 
                 onClick={() => setIsCommonOrderOpen(false)}
-                className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-wider transition-colors"
+                className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-black transition-colors"
               >
                 বন্ধ করুন
               </button>
@@ -4938,7 +4943,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               })()}
               <button 
                 onClick={addAllCommonOrderToCart}
-                className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 active:scale-95"
+                className="w-full sm:w-auto px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all shadow-md shadow-sm active:scale-95"
               >
                 <ShoppingCart size={14} strokeWidth={2.5} /> সব একসাথে কার্টে যোগ করুন
               </button>
@@ -4951,9 +4956,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
       {/* ── Profile Drawer ── */}
       {isProfileOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsProfileOpen(false)} />
+          <div className="absolute inset-0 bg-slate-900/75" onClick={() => setIsProfileOpen(false)} />
           <div className="relative w-full max-w-sm h-full bg-slate-50 shadow-2xl flex flex-col overflow-hidden animate-slide-in border-l border-slate-200">
-            <div className="p-6 bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 text-white flex flex-col relative overflow-hidden">
+            <div className="p-6 bg-purple-700 text-white flex flex-col relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/20 rounded-full blur-3xl" />
               <div className="flex justify-between items-start mb-6 relative z-10">
                 <div className="w-16 h-16 aspect-square bg-white text-purple-700 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
@@ -5003,7 +5008,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                   {shop.authSettings?.emailAuth && (
                     <div className="w-full space-y-3 pt-2 border-t border-slate-100 text-left">
-                      <p className="text-xs font-black text-slate-500 uppercase tracking-widest">ইমেইল দিয়ে ওটিপি লগইন</p>
+                      <p className="text-xs font-black text-slate-500">ইমেইল দিয়ে ওটিপি লগইন</p>
                       <input 
                         type="email" 
                         placeholder="আপনার ইমেইল (যেমন: customer@gmail.com)" 
@@ -5045,7 +5050,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <button 
                         onClick={otpSent ? handleVerifyOTP : handleSendOTP}
                         disabled={otpLoading || !loginEmail || (otpSent && otpTimer === 0)}
-                        className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                       >
                         {otpLoading ? (
                           <>
@@ -5061,7 +5066,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   {shop.authSettings?.emailPasswordAuth && (
                     <div className="w-full space-y-3 pt-2 border-t border-slate-100 text-left animate-slide-in">
                       <div className="flex justify-between items-center">
-                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                        <p className="text-xs font-black text-slate-500">
                           {loginMode === 'signup' ? 'নতুন অ্যাকাউন্ট তৈরি' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট' : 'ইমেইল ও পাসওয়ার্ড লগইন'}
                         </p>
                         <button 
@@ -5122,7 +5127,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       <button 
                         onClick={loginMode === 'signup' ? handleEmailSignUp : loginMode === 'forgot' ? handleResetPassword : handleEmailLogin}
                         disabled={loginLoading}
-                        className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
+                        className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg disabled:opacity-60"
                       >
                         {loginLoading ? 'লোড হচ্ছে...' : (loginMode === 'signup' ? 'নিবন্ধন করুন' : loginMode === 'forgot' ? 'পাসওয়ার্ড রিসেট লিংক পাঠান' : 'লগইন করুন')}
                       </button>
@@ -5151,7 +5156,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 <div className="w-full space-y-5">
                   {/* Current Location Display */}
                   <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center gap-2 mb-2 text-slate-500 font-black text-[10px] uppercase tracking-widest">
+                    <div className="flex items-center gap-2 mb-2 text-slate-500 font-black text-[10px]">
                       <MapPin size={12} /> আপনার বর্তমান লোকেশন
                     </div>
                     <p className="text-sm font-black text-slate-900 leading-tight">
@@ -5168,12 +5173,12 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   {userOrders.length > 0 && <StreakTracker orders={userOrders} />}
 
                   {/* Purchase History */}
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500 border-b border-slate-200 pb-2">ক্রয় ইতিহাস</h4>
+                  <h4 className="text-xs font-black text-slate-500 border-b border-slate-200 pb-2">ক্রয় ইতিহাস</h4>
                   <div className="space-y-3">
                     {loadingOrders ? (
                       <div className="flex flex-col items-center justify-center py-10 gap-3 text-slate-400">
                         <Loader2 className="animate-spin" size={24} />
-                        <p className="text-[10px] font-black uppercase tracking-widest">লোড হচ্ছে...</p>
+                        <p className="text-[10px] font-black">লোড হচ্ছে...</p>
                       </div>
                     ) : userOrders.length === 0 ? (
                       <div className="text-center py-8 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-200">
@@ -5283,7 +5288,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
       {/* 🔴 Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 animate-fade-in">
           <div className="bg-white border border-slate-100 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in">
             <div className="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
               <LogOut size={26} />
@@ -5308,7 +5313,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   setShowLogoutConfirm(false);
                   await handleLogout();
                 }}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs transition-all shadow-md shadow-red-500/20 cursor-pointer active:scale-95"
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs transition-all shadow-md shadow-sm cursor-pointer active:scale-95"
               >
                 হ্যাঁ, লগআউট
               </button>
@@ -5353,7 +5358,7 @@ function ShopProductDetailModal({ product, shop, onClose, cart, setCart, addToCa
   return (
     <div 
       onClick={handleBackdropClick} 
-      className={`fixed inset-0 z-[150] flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-3 sm:p-4'} bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fade-in`}
+      className={`fixed inset-0 z-[150] flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-3 sm:p-4'} bg-slate-950/90 overflow-y-auto animate-fade-in`}
     >
       <div className={`relative w-full ${isFullScreen ? 'h-full max-h-screen rounded-none max-w-none p-4 sm:p-8 md:p-10 my-0' : 'md:w-3/4 max-w-5xl md:h-[75vh] rounded-3xl p-6 sm:p-8 max-h-[90vh] my-8'} bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl flex flex-col gap-6 animate-scale-in overflow-y-auto scrollbar-thin text-slate-900 dark:text-slate-100 transition-all duration-300`}>
         

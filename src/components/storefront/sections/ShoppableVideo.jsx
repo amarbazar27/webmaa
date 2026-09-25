@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Play, ShoppingCart, X, Sparkles } from 'lucide-react';
+import { Play, ShoppingCart, X } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function ShoppableVideo({ data, themeVars, onAddToCart }) {
@@ -53,7 +53,7 @@ export default function ShoppableVideo({ data, themeVars, onAddToCart }) {
         {!isPlaying && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div 
-              className="w-16 h-16 rounded-full flex items-center justify-center shadow-2xl text-white backdrop-blur-md transition-transform group-hover:scale-110"
+              className="w-16 h-16 rounded-full flex items-center justify-center shadow-2xl text-white transition-transform group-hover:scale-110"
               style={{ background: primary }}
             >
               <Play size={24} fill="currentColor" className="ml-1" />
@@ -63,7 +63,7 @@ export default function ShoppableVideo({ data, themeVars, onAddToCart }) {
 
         {/* Top Header Badge */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-          <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow">
+          <span className="px-3 py-1 rounded-full bg-black/80 text-white text-[10px] font-bold flex items-center gap-1.5 shadow">
             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             Shoppable Reel
           </span>
@@ -71,7 +71,7 @@ export default function ShoppableVideo({ data, themeVars, onAddToCart }) {
 
         {/* Floating Tagged Product Card Bottom Overlay */}
         <div className="absolute bottom-4 left-4 right-4 z-20">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/40 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-white rounded-2xl p-3 shadow-2xl border border-slate-200 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
             {taggedProduct.imageUrl && (
               <img
                 src={taggedProduct.imageUrl}

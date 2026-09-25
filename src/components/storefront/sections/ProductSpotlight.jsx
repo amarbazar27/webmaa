@@ -93,7 +93,7 @@ export default function ProductSpotlight({ data, themeVars, onAddToCart }) {
             {/* Variant Selector */}
             {d.variants && d.variants.length > 0 && (
               <div className="space-y-1.5 pt-1">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider block">
+                <label className="text-[11px] font-bold text-slate-500 block">
                   ভ্যারিয়েন্ট নির্বাচন করুন
                 </label>
                 <div className="flex flex-wrap gap-2">

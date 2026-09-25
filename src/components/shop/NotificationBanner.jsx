@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { X, Info, AlertTriangle, Sparkles, Bell } from 'lucide-react';
+import { X, Info, AlertTriangle, SlidersHorizontal, Bell } from 'lucide-react';
 import { subscribeBroadcasts } from '@/lib/firestore';
 
 const TYPE_CONFIG = {
   info: { icon: Info, bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', iconColor: 'text-blue-500' },
   warning: { icon: AlertTriangle, bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', iconColor: 'text-amber-500' },
-  promo: { icon: Sparkles, bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', iconColor: 'text-purple-500' },
+  promo: { icon: SlidersHorizontal, bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', iconColor: 'text-purple-500' },
 };
 
 export default function NotificationBanner({ shopId = null }) {
@@ -76,7 +76,7 @@ export default function NotificationBanner({ shopId = null }) {
           <p className={`flex-1 text-sm font-bold ${config.text}`}>
             {latestNotif.message}
           </p>
-          <span className="text-[9px] font-black uppercase tracking-widest opacity-40 hidden md:block">
+          <span className="text-[9px] font-black opacity-40 hidden md:block">
             {latestNotif.senderRole === 'superadmin' ? 'System' : 'Shop'}
           </span>
           <button

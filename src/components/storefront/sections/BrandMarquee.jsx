@@ -10,7 +10,7 @@ export default function BrandMarquee({ data }) {
   return (
     <div className="py-6 overflow-hidden border-y border-slate-100 bg-white">
       {d?.title && (
-        <p className="text-center text-xs font-black text-slate-400 uppercase tracking-widest mb-4">
+        <p className="text-center text-xs font-bold text-slate-400 mb-4">
           {d.title}
         </p>
       )}

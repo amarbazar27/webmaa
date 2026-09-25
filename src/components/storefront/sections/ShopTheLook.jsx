@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { ShoppingCart, Plus, X, Sparkles } from 'lucide-react';
+import { ShoppingCart, Plus, X, Tag } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function ShopTheLook({ data, themeVars, onAddToCart, onProductClick }) {
@@ -25,8 +25,8 @@ export default function ShopTheLook({ data, themeVars, onAddToCart, onProductCli
     <div className="px-4 py-6 md:py-10 max-w-[1400px] mx-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-4 gap-2">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider mb-1" style={{ color: primary }}>
-            <Sparkles size={13} />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold mb-1" style={{ color: primary }}>
+            <Tag size={13} />
             Visual Shopping
           </div>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
@@ -84,7 +84,7 @@ export default function ShopTheLook({ data, themeVars, onAddToCart, onProductCli
           {activeHotspot ? (
             <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-xl space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="flex items-start justify-between">
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-50 text-purple-700">
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700">
                   Featured in this look
                 </span>
                 <button 
@@ -123,7 +123,7 @@ export default function ShopTheLook({ data, themeVars, onAddToCart, onProductCli
 
               <button
                 onClick={(e) => handleAdd(activeHotspot, e)}
-                className="w-full py-3 rounded-2xl text-xs sm:text-sm font-black text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-purple-500/20"
+                className="w-full py-3 rounded-2xl text-xs sm:text-sm font-black text-white flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 shadow-md shadow-slate-900/10"
                 style={{ background: primary }}
               >
                 <ShoppingCart size={15} /> কার্টে যোগ করুন

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles } from 'lucide-react';
+import { X } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function PopupBanner({ data, themeVars, isPreview = false, onDismiss }) {
@@ -102,7 +102,7 @@ export default function PopupBanner({ data, themeVars, isPreview = false, onDism
           {d.buttonText && (
             <a
               href={d.linkUrl || '#'}
-              className="inline-block w-full py-3 px-6 rounded-2xl text-white font-black text-xs sm:text-sm uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-xl cursor-pointer"
+              className="inline-block w-full py-3 px-6 rounded-2xl text-white font-bold text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
               style={{ background: primary }}
             >
               {d.buttonText}

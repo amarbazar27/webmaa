@@ -32,7 +32,7 @@ export default function ReviewsClient({ shop }) {
         <div className="flex items-center justify-between">
           <Link 
             href={`/shop/${shop.shopSlug || shop.subdomainSlug}`} 
-            className="flex items-center gap-2 font-black text-xs uppercase tracking-wider opacity-70 hover:opacity-100 transition-opacity"
+            className="flex items-center gap-2 font-black text-xs opacity-70 hover:opacity-100 transition-opacity"
             style={{ color: primaryColor }}
           >
             <ArrowLeft size={16} />

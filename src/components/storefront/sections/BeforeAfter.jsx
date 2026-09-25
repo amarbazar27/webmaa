@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
-import { Sparkles, MoveHorizontal } from 'lucide-react';
+import { MoveHorizontal } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function BeforeAfter({ data, themeVars }) {
@@ -87,10 +87,10 @@ export default function BeforeAfter({ data, themeVars }) {
           </div>
 
           {/* Badges */}
-          <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow">
+          <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full bg-black/80 text-white text-[10px] sm:text-xs font-bold shadow">
             {d.beforeLabel || 'Before'}
           </div>
-          <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow">
+          <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full bg-black/80 text-white text-[10px] sm:text-xs font-bold shadow">
             {d.afterLabel || 'After'}
           </div>
         </div>

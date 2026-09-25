@@ -1,5 +1,5 @@
 'use client';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function Lookbook({ data, themeVars }) {
@@ -37,7 +37,7 @@ export default function Lookbook({ data, themeVars }) {
             <div className="relative z-10 space-y-2">
               <div className="flex items-center justify-between">
                 {look.tag && (
-                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 text-white backdrop-blur-md">
+                  <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-white/30 text-white">
                     {look.tag}
                   </span>
                 )}

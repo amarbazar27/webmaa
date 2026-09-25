@@ -1,5 +1,5 @@
 'use client';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function MoodBoard({ data, themeVars, onMoodClick }) {
@@ -39,14 +39,14 @@ export default function MoodBoard({ data, themeVars, onMoodClick }) {
 
             <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between">
               {mood.emoji && (
-                <div className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-lg shadow-md self-start">
+                <div className="w-9 h-9 rounded-2xl bg-white/30 text-white flex items-center justify-center text-lg shadow-md self-start">
                   {mood.emoji}
                 </div>
               )}
 
               <div>
                 {mood.subtitle && (
-                  <span className="text-[10px] sm:text-xs font-bold text-amber-300 uppercase tracking-wider block mb-1">
+                  <span className="text-[10px] sm:text-xs font-bold text-amber-300 block mb-1">
                     {mood.subtitle}
                   </span>
                 )}

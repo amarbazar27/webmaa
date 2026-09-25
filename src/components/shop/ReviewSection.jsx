@@ -55,7 +55,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      toast.success('রিভিউ সফলভাবে জমা হয়েছে! ✨');
+      toast.success('রিভিউ সফলভাবে জমা হয়েছে! ');
       setRating(0); setText(''); setShowForm(false);
       fetchReviews();
     } catch (err) {
@@ -97,7 +97,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed');
-      toast.success('রিভিউ আপডেট করা হয়েছে! ✨');
+      toast.success('রিভিউ আপডেট করা হয়েছে! ');
       setEditingReviewId(null);
       fetchReviews();
     } catch (err) {
@@ -132,7 +132,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20"
+            className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-xs font-black hover:bg-purple-700 transition-colors shadow-lg shadow-sm"
           >
             রিভিউ লিখুন
           </button>
@@ -287,7 +287,7 @@ export default function ReviewSection({ shopId, isRetailer = false }) {
               ) : (
                 <>
                   {review.text && <p className="mt-3 text-sm font-medium text-slate-600 leading-relaxed">{review.text}</p>}
-                  {review.trackingId && <p className="mt-2 text-[9px] font-black text-slate-400 uppercase tracking-widest">Order #{review.trackingId}</p>}
+                  {review.trackingId && <p className="mt-2 text-[9px] font-black text-slate-400">Order #{review.trackingId}</p>}
                 </>
               )}
             </div>

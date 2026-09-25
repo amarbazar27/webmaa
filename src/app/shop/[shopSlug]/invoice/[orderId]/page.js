@@ -109,7 +109,7 @@ export default function InvoicePage({ params }) {
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-100 gap-3">
       <Loader2 className="animate-spin text-purple-600" size={36} />
-      <p className="text-xs font-black text-slate-500 uppercase tracking-widest">ইনভয়েস লোড হচ্ছে...</p>
+      <p className="text-xs font-black text-slate-500">ইনভয়েস লোড হচ্ছে...</p>
     </div>
   );
 
@@ -188,13 +188,13 @@ export default function InvoicePage({ params }) {
                 )}
                 <div>
                   <h1 className="text-lg sm:text-xl font-black tracking-tight leading-tight">{shop.shopName}</h1>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <p className="text-[10px] font-bold text-slate-400">
                     {shop.customDomain || `bdretailers.com/${shopSlug}`}
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <span className="inline-block px-2.5 py-1 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-wider mb-1">
+                <span className="inline-block px-2.5 py-1 bg-slate-900 text-white rounded-lg text-xs font-black mb-1">
                   Invoice
                 </span>
                 <p className="font-black text-sm text-slate-900">
@@ -291,7 +291,7 @@ export default function InvoicePage({ params }) {
               <div className="text-right flex flex-col items-end justify-end">
                 <div className="w-28 h-px bg-slate-300 mb-1"></div>
                 <p className="uppercase text-[9px] tracking-wider font-black text-slate-400">অনুমোদিত স্বাক্ষর</p>
-                <p className="text-[10px] text-purple-700 font-bold">আমাদের সাথে থাকার জন্য ধন্যবাদ! ✨</p>
+                <p className="text-[10px] text-purple-700 font-bold">আমাদের সাথে থাকার জন্য ধন্যবাদ! </p>
               </div>
             </div>
           </div>

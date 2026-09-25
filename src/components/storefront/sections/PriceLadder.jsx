@@ -32,7 +32,7 @@ export default function PriceLadder({ data, themeVars, onAddToCart }) {
     <div className="px-4 py-6 md:py-10 max-w-[1400px] mx-auto">
       <div className="bg-white rounded-3xl p-6 sm:p-8 md:p-10 border border-slate-100 shadow-md">
         <div className="text-center max-w-xl mx-auto mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 mb-2">
             <Tag size={13} />
             পাইকারি ও বাল্ক সেভিংস
           </div>

@@ -3,7 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, MicOff, Loader2, ShoppingCart, X } from 'lucide-react';
 import useVoiceOrder from '@/hooks/useVoiceOrder';
 import toast from 'react-hot-toast';
-import { ImagePlus, Sparkles } from 'lucide-react';
+import { ImagePlus, SlidersHorizontal } from 'lucide-react';
 
 // Image compression helper
 function compressImage(file, maxWidth = 1200, quality = 0.75) {
@@ -259,7 +259,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                 </button>
               </div>
 
-              <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center leading-relaxed">
+              <p className="text-xs font-black text-slate-500 text-center leading-relaxed">
                 {isListening ? '🔴 শুনছি... কথা শেষ হলে আবার বোতামে ক্লিক করুন বা ছেড়ে দিন' : isVoiceProcessing ? 'AI বিশ্লেষণ করছে...' : 'কথা বলতে বোতামে ক্লিক করুন অথবা চেপে রাখুন'}
               </p>
 
@@ -300,7 +300,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
 
               {voiceResult && voiceResult.length > 0 && (
                 <div className="w-full space-y-2">
-                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest text-center">সনাক্তকৃত পণ্য:</p>
+                  <p className="text-xs font-black text-slate-500 text-center">সনাক্তকৃত পণ্য:</p>
                   {voiceResult.map((item, i) => (
                     <div key={i} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3">
                       <p className="text-sm font-bold text-slate-900">{item.product.name}</p>
@@ -316,7 +316,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           )}
           <button 
             onClick={onClose} 
-            className="mt-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-black rounded-xl transition-all uppercase tracking-wider"
+            className="mt-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 text-xs font-black rounded-xl transition-all"
           >
             ❌ ভয়েস প্যানেল বন্ধ করুন
           </button>
@@ -363,7 +363,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
                   className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 disabled:opacity-50">
                   {isProcessingImage
                     ? <><Loader2 size={16} className="animate-spin" /> AI বিশ্লেষণ হচ্ছে...</>
-                    : <><Sparkles size={16} /> AI দিয়ে ফর্দ পড়ুন</>}
+                    : <><SlidersHorizontal size={16} /> AI দিয়ে ফর্দ পড়ুন</>}
                 </button>
               )}
             </div>
@@ -371,7 +371,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
 
           {detectedItems.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{detectedItems.length}টি পণ্য সনাক্ত:</p>
+              <p className="text-xs font-black text-slate-500">{detectedItems.length}টি পণ্য সনাক্ত:</p>
               {detectedItems.map((item, i) => {
                 const prod = products.find(p => p.id === item.productId);
                 if (!prod) return null;
@@ -409,12 +409,12 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
           />
           <button onClick={analyzeText} disabled={isProcessingText || !textInput.trim()}
             className="py-3 bg-purple-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-purple-700 disabled:opacity-50">
-            {isProcessingText ? <><Loader2 size={16} className="animate-spin" /> বিশ্লেষণ হচ্ছে...</> : <><Sparkles size={16} /> AI দিয়ে বিশ্লেষণ করুন</>}
+            {isProcessingText ? <><Loader2 size={16} className="animate-spin" /> বিশ্লেষণ হচ্ছে...</> : <><SlidersHorizontal size={16} /> AI দিয়ে বিশ্লেষণ করুন</>}
           </button>
 
           {detectedItems.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{detectedItems.length}টি পণ্য পাওয়া গেছে:</p>
+              <p className="text-xs font-black text-slate-500">{detectedItems.length}টি পণ্য পাওয়া গেছে:</p>
               {detectedItems.map((item, i) => {
                 const prod = products.find(p => p.id === item.productId);
                 if (!prod) return null;
@@ -443,7 +443,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
       {/* ── Mic Help Modal (Placed globally at the root level) ── */}
       {showMicHelp && (
         <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowMicHelp(false)} />
+          <div className="absolute inset-0 bg-black/80" onClick={() => setShowMicHelp(false)} />
           <div className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 text-slate-800 animate-slide-in space-y-5">
             <div className="flex justify-between items-start">
               <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">🎤 মাইক্রোফোন হেল্প গাইড</h4>
@@ -472,7 +472,7 @@ export default function AiVoicePanel({ shop, products, onAddToCart, onDirectOrde
               </div>
             </div>
 
-            <button type="button" onClick={() => setShowMicHelp(false)} className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-md transition-colors uppercase tracking-wider cursor-pointer">
+            <button type="button" onClick={() => setShowMicHelp(false)} className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl shadow-md transition-colors cursor-pointer">
               ঠিক আছে, বুঝতে পেরেছি
             </button>
           </div>

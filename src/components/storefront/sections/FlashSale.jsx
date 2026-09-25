@@ -33,7 +33,7 @@ function TimeBox({ value, label }) {
       <div className="bg-slate-900 text-white text-xs sm:text-base md:text-xl font-black w-8 sm:w-11 md:w-13 h-8 sm:h-11 md:h-13 rounded-xl flex items-center justify-center tabular-nums shadow-md">
         {String(value).padStart(2, '0')}
       </div>
-      <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 mt-1 uppercase tracking-wider">{label}</span>
+      <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 mt-1">{label}</span>
     </div>
   );
 }

@@ -1,14 +1,14 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { Search, ArrowUpDown, Plus, Minus, Sparkles, Package, ShoppingCart } from 'lucide-react';
+import { Search, ArrowUpDown, Plus, Minus, SlidersHorizontal, Package, ShoppingCart } from 'lucide-react';
 import Image from 'next/image';
 
 const FALLBACK_COLORS = [
-  'bg-gradient-to-br from-purple-500 to-indigo-600',
-  'bg-gradient-to-br from-emerald-500 to-teal-600',
-  'bg-gradient-to-br from-blue-500 to-cyan-600',
-  'bg-gradient-to-br from-amber-500 to-orange-600',
-  'bg-gradient-to-br from-rose-500 to-pink-600',
+  'bg-purple-600',
+  'bg-emerald-600',
+  'bg-blue-600',
+  'bg-amber-600',
+  'bg-rose-600',
 ];
 
 function getFallbackColor(str = '') {
@@ -231,8 +231,8 @@ export default function BasicStorefront({
                         </div>
                       )}
                       {prod.allowCustomize && (
-                        <div className="absolute top-2 left-2 bg-purple-600/90 text-white px-2 py-0.5 rounded-lg text-[9px] font-black backdrop-blur-xs flex items-center gap-1">
-                          <Sparkles size={9} /> কাস্টম
+                        <div className="absolute top-2 left-2 bg-purple-600 text-white px-2 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1">
+                          <SlidersHorizontal size={9} /> কাস্টম
                         </div>
                       )}
                     </div>

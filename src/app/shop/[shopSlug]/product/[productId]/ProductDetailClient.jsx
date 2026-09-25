@@ -298,7 +298,7 @@ function Header({ router, product, shop }) {
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-wider truncate" style={{ color: 'var(--sp-header-text, #64748b)' }}>
+            <p className="text-[10px] font-black truncate" style={{ color: 'var(--sp-header-text, #64748b)' }}>
               {shop?.shopName || 'Store'}
             </p>
             <h1 className="font-black text-sm truncate leading-tight" style={{ color: 'var(--sp-header-text, #0f172a)' }}>

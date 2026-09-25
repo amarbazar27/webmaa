@@ -35,7 +35,7 @@ export default function Error({ error, reset }) {
       </div>
 
       <div className="mt-12 pt-8 border-t border-slate-200 w-full max-w-sm">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        <p className="text-[10px] font-black text-slate-400">
           Error Ref: {error.digest || 'Internal Runtime Exception'}
         </p>
       </div>

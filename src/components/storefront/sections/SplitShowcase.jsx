@@ -1,5 +1,5 @@
 'use client';
-import { ShoppingCart, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { ShoppingCart, ArrowRight, CheckCircle2, Star } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function SplitShowcase({ data, themeVars, onAddToCart, onProductClick }) {
@@ -50,8 +50,8 @@ export default function SplitShowcase({ data, themeVars, onAddToCart, onProductC
                 />
               )}
               {d.badgeText && (
-                <div className="absolute top-4 left-4 z-10 px-3.5 py-1.5 rounded-full bg-black/75 backdrop-blur-md text-white text-xs font-black tracking-wide flex items-center gap-1.5 shadow-lg">
-                  <Sparkles size={12} className="text-amber-400" />
+                <div className="absolute top-4 left-4 z-10 px-3.5 py-1.5 rounded-full bg-black/85 text-white text-xs font-bold tracking-wide flex items-center gap-1.5 shadow-md">
+                  <Star size={12} className="text-amber-400 fill-amber-400" />
                   {d.badgeText}
                 </div>
               )}
@@ -62,7 +62,7 @@ export default function SplitShowcase({ data, themeVars, onAddToCart, onProductC
           <div className={`w-full ${rightCol} p-6 sm:p-8 md:p-12 flex flex-col justify-center`}>
             {d.eyebrow && (
               <span 
-                className="inline-block text-[11px] md:text-xs font-black uppercase tracking-[0.2em] mb-2.5"
+                className="inline-block text-[11px] md:text-xs font-bold mb-2.5"
                 style={{ color: primary }}
               >
                 {d.eyebrow}

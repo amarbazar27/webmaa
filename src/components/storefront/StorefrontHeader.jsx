@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Search, ShoppingBag, Bell, Menu, X, Heart, 
-  MapPin, Phone, Sparkles, ChevronDown, User,
+  MapPin, Phone, ChevronDown, User,
   HelpCircle, Sun, Moon, Settings, Zap, ArrowRight, ShieldCheck
 } from 'lucide-react';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
@@ -76,7 +76,7 @@ export const HEADER_PRESETS = [
     id: 'transparent_hero',
     label: 'Header 10 — Transparent Hero Header',
     desc: 'হিরো ব্যানারের উপর স্বচ্ছ ফ্রস্টেড গ্লাস, স্ক্রলে সলিড হেডার',
-    icon: '✨',
+    icon: '💎',
     badge: 'Cinematic Glass'
   },
 ];
@@ -126,7 +126,7 @@ export default function StorefrontHeader({
 
   const buttonBaseClass = isWhitePill
     ? "p-2 rounded-xl bg-white text-slate-800 shadow-sm border border-slate-200 hover:bg-slate-50 transition-all font-bold cursor-pointer flex items-center justify-center"
-    : "p-2 rounded-xl bg-slate-100/90 text-slate-700 hover:bg-slate-200 backdrop-blur-md border border-slate-200/50 shadow-2xs transition-all font-bold cursor-pointer flex items-center justify-center";
+    : "p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/80 shadow-xs transition-all font-bold cursor-pointer flex items-center justify-center";
 
   // Render Announcement Bar
   const renderAnnouncementBar = () => {
@@ -134,10 +134,10 @@ export default function StorefrontHeader({
     return (
       <div 
         className="text-white text-xs py-1.5 px-4 font-bold overflow-hidden whitespace-nowrap flex items-center justify-between shadow-inner"
-        style={{ background: `linear-gradient(90deg, ${primary}, #4338ca)` }}
+        style={{ backgroundColor: primary }}
       >
         <div className="flex items-center gap-2 max-w-7xl mx-auto w-full justify-center text-center">
-          <Sparkles size={13} className="text-amber-300 animate-pulse shrink-0" />
+          <Zap size={13} className="text-amber-300 shrink-0" />
           <span className="truncate">{announcementText}</span>
         </div>
       </div>
@@ -159,7 +159,7 @@ export default function StorefrontHeader({
         />
       ) : (
         <div 
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-black shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform"
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-base font-black shadow-sm group-hover:scale-105 transition-transform"
           style={{ background: primary }}
         >
           {shopInitial}
@@ -207,7 +207,7 @@ export default function StorefrontHeader({
         <button
           type="button"
           onClick={onOpenFaq}
-          className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-amber-500 text-white text-[11px] font-black shadow-xs hover:opacity-90 transition-opacity"
+          className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black shadow-xs transition-colors"
         >
           <HelpCircle size={13} />
           <span>FAQ</span>
@@ -276,7 +276,7 @@ export default function StorefrontHeader({
   // ══════════════════════════════════════════════════════════════════
   if (hStyle === 'classic') {
     return (
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs transition-all">
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs transition-all">
         {renderAnnouncementBar()}
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -429,9 +429,9 @@ export default function StorefrontHeader({
   // ══════════════════════════════════════════════════════════════════
   if (hStyle === 'fashion_editorial') {
     return (
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-lg border-b border-stone-200/80 transition-all font-serif">
+      <header className="sticky top-0 z-40 bg-white border-b border-stone-200 transition-all font-serif">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-6">
-          <div className="hidden md:flex items-center gap-6 text-xs uppercase tracking-widest font-sans font-black text-stone-700">
+          <div className="hidden md:flex items-center gap-6 text-xs font-sans font-black text-stone-700">
             <button onClick={onOpenCategories} className="hover:text-stone-950 transition-colors">COLLECTIONS</button>
             <button onClick={() => onSearchChange?.('new')} className="hover:text-stone-950 transition-colors">NEW ARRIVALS</button>
             <button onClick={() => onSearchChange?.('trending')} className="hover:text-stone-950 transition-colors">EDITORIAL</button>
@@ -584,7 +584,7 @@ export default function StorefrontHeader({
   // ══════════════════════════════════════════════════════════════════
   if (hStyle === 'mobile_first') {
     return (
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs transition-all">
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs transition-all">
         <div className="max-w-4xl mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <button onClick={onOpenCategories} className="p-2 rounded-xl bg-slate-100 text-slate-800">
@@ -612,8 +612,8 @@ export default function StorefrontHeader({
   return (
     <header className={`sticky top-0 z-40 transition-all duration-300 ${
       isTransparent 
-        ? 'bg-black/30 backdrop-blur-md text-white border-b border-white/10' 
-        : 'bg-white/95 backdrop-blur-md text-slate-900 border-b border-slate-100 shadow-md'
+        ? 'bg-slate-950/90 text-white border-b border-white/10 shadow-xs' 
+        : 'bg-white text-slate-900 border-b border-slate-200 shadow-xs'
     }`}>
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -629,7 +629,7 @@ export default function StorefrontHeader({
         <div className="hidden md:flex flex-1 max-w-md mx-4">
           <div className={`w-full flex items-center rounded-2xl px-3.5 py-2 border transition-all ${
             isTransparent 
-              ? 'bg-white/20 border-white/30 text-white placeholder:text-white/70 backdrop-blur-md' 
+              ? 'bg-white/15 border-white/30 text-white placeholder:text-white/70' 
               : 'bg-slate-100 border-slate-200 text-slate-900'
           }`}>
             <Search size={14} className="mr-2 opacity-70" />

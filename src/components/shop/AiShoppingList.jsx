@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Loader2, ListPlus, X, ShoppingCart, Sparkles, RotateCcw, AlertTriangle, Search, ImagePlus } from 'lucide-react';
+import { Camera, Loader2, ListPlus, X, ShoppingCart, SlidersHorizontal, RotateCcw, AlertTriangle, Search, ImagePlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -278,7 +278,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-4 justify-between">
           <div className="flex items-center gap-4 text-left">
             <div className="w-14 h-14 bg-white rounded-2xl shadow-sm border border-purple-100 flex items-center justify-center shrink-0">
-              <Sparkles className="text-purple-600" size={28} />
+              <SlidersHorizontal className="text-purple-600" size={28} />
             </div>
             <div>
               <h3 className="font-black text-slate-900 text-lg">AI শপিং লিস্ট</h3>
@@ -337,13 +337,13 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
                 onClick={handleStartAnalysis}
                 className="px-6 py-2.5 bg-indigo-600 text-white font-black text-sm rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
               >
-                <Sparkles size={16} /> এনালাইজ করুন
+                <SlidersHorizontal size={16} /> এনালাইজ করুন
               </button>
               <button
                 onClick={() => onDirectOrder([], lastImage)}
                 className="px-6 py-2.5 bg-slate-900 text-white font-black text-sm rounded-lg hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-lg"
               >
-                <Sparkles size={16} className="text-purple-400" /> সরাসরি অর্ডার
+                <SlidersHorizontal size={16} className="text-purple-400" /> সরাসরি অর্ডার
               </button>
             </div>
           </div>
@@ -353,7 +353,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
       {/* Review Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="absolute inset-0 bg-slate-900/60" onClick={() => setShowModal(false)} />
           <div className="relative w-full sm:max-w-lg bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh] animate-slide-in">
             <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center sticky top-0 z-10">
               <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
@@ -451,7 +451,7 @@ export default function AiShoppingList({ shop, products, onAddToCart, onDirectOr
                 disabled={detectedItems.length === 0}
                 className="flex-[1.5] py-4 bg-slate-900 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-2 hover:bg-purple-600 transition-colors shadow-xl disabled:opacity-40"
               >
-                <Sparkles size={20} /> সরাসরি অর্ডার ({detectedItems.length})
+                <SlidersHorizontal size={20} /> সরাসরি অর্ডার ({detectedItems.length})
               </button>
             </div>
           </div>

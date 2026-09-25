@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, use } from 'react';
 import { 
   ShoppingBag, Search, Star, Phone, Truck, ShieldCheck, 
   CheckCircle2, ArrowRight, Heart, Share2, Eye, Flame, 
-  Clock, Zap, Sparkles, Upload, FileText, ChevronRight, 
+  Clock, Zap, SlidersHorizontal, Upload, FileText, ChevronRight, 
   X, Check, AlertCircle, Plus, Minus
 } from 'lucide-react';
 import { DEFAULT_WEBSITE_TEMPLATES, findTemplateByIdOrSlug } from '@/lib/templatesData';
@@ -128,7 +128,7 @@ export default function TemplateEmbedPage({ params }) {
       )}
 
       {/* ── 2. STOREFRONT HEADER ── */}
-      <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-sm border-b border-slate-100 dark:border-white/10 px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
+      <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 shadow-sm border-b border-slate-100 dark:border-white/10 px-3 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <div 
             className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-white font-black text-base sm:text-lg shadow-md shrink-0"
@@ -195,8 +195,8 @@ export default function TemplateEmbedPage({ params }) {
           }}
         >
           <div className="space-y-3 sm:space-y-4 max-w-xl text-left z-10">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur text-white text-[10px] sm:text-xs font-black">
-              <Sparkles size={12} />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] sm:text-xs font-black">
+              <SlidersHorizontal size={12} />
               <span>{activeTemplate.hero?.tag || activeTemplate.badge || 'NEW DROP 2026'}</span>
             </div>
             
@@ -315,7 +315,7 @@ export default function TemplateEmbedPage({ params }) {
       </footer>
 
       {/* ── 7. MOBILE FIXED BOTTOM NAVIGATION BAR ── */}
-      <div className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-white/10 py-1.5 px-3 flex items-center justify-around shadow-lg">
+      <div className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-white/10 py-1.5 px-3 flex items-center justify-around shadow-lg">
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="flex flex-col items-center text-[10px] font-bold text-slate-700 dark:text-slate-300"
@@ -345,7 +345,7 @@ export default function TemplateEmbedPage({ params }) {
 
       {/* ── 8. SHOPPING CART DRAWER ── */}
       {showCart && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 animate-fade-in">
           <div className="w-full max-w-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white h-full p-5 shadow-2xl flex flex-col justify-between border-l border-slate-200 dark:border-white/10">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">

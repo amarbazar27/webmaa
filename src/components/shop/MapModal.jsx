@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { 
   MapPin, X, Navigation, Loader2, Search, AlertCircle, Compass, 
   Layers, Check, ChevronRight, Building2, Map as MapIcon, Globe,
-  Crosshair, LocateFixed, Sparkles
+  Crosshair, LocateFixed, SlidersHorizontal
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import 'leaflet/dist/leaflet.css';
@@ -554,7 +554,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
   return (
     // ── Highest Z-Index (z-[99999]) to guarantee display OVER checkout modal ──
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/85 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-900/85 animate-fade-in">
       <div className="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border-2 border-purple-100 flex flex-col max-h-[94vh] relative z-[100000]">
         
         {/* ── Modal Header ── */}
@@ -657,7 +657,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
               {/* Quick City/Division Jump Buttons */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-[11px]">
-                <span className="text-[10px] font-black text-slate-400 shrink-0 uppercase tracking-wider">শহর:</span>
+                <span className="text-[10px] font-black text-slate-400 shrink-0">শহর:</span>
                 {BD_DISTRICT_CENTROIDS.slice(0, 8).map((city) => (
                   <button
                     key={city.name}
@@ -690,7 +690,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                   type="button"
                   onClick={() => getGpsPosition(true)}
                   disabled={locating}
-                  className="absolute bottom-4 right-4 z-[400] px-4 py-2.5 bg-white/95 hover:bg-white text-purple-700 rounded-2xl shadow-xl border-2 border-purple-200 font-black text-xs flex items-center gap-2 transition-all active:scale-95 cursor-pointer backdrop-blur-sm"
+                  className="absolute bottom-4 right-4 z-[400] px-4 py-2.5 bg-white/95 hover:bg-white text-purple-700 rounded-2xl shadow-xl border-2 border-purple-200 font-black text-xs flex items-center gap-2 transition-all active:scale-95 cursor-pointer"
                   title="আমার বর্তমান অবস্থান"
                 >
                   <Crosshair size={16} className={`text-purple-600 ${locating ? 'animate-spin' : ''}`} />
@@ -698,7 +698,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                 </button>
 
                 {/* Map helper tooltip */}
-                <div className="absolute top-3 left-3 z-[400] bg-slate-900/80 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl text-[10px] font-bold pointer-events-none">
+                <div className="absolute top-3 left-3 z-[400] bg-slate-900/80 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold pointer-events-none">
                   👆 ম্যাপে ক্লিক করে বা পিন ড্র্যাগ করে স্থান চিহ্নিত করুন
                 </div>
               </div>
@@ -726,7 +726,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                 
                 {/* 1. Division */}
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
+                  <label className="text-[10px] font-black text-slate-500 block mb-1">
                     ১. বিভাগ (Division) *
                   </label>
                   <select
@@ -743,7 +743,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
                 {/* 2. District */}
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
+                  <label className="text-[10px] font-black text-slate-500 block mb-1">
                     ২. জেলা (District) *
                   </label>
                   <select
@@ -761,7 +761,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
                 {/* 3. Upazila */}
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
+                  <label className="text-[10px] font-black text-slate-500 block mb-1">
                     ৩. উপজেলা / থানা (Upazila/Thana) *
                   </label>
                   <select
@@ -779,7 +779,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
                 {/* 4. Union / Ward (Supports both unions and city wards) */}
                 <div>
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
+                  <label className="text-[10px] font-black text-slate-500 block mb-1">
                     ৪. ইউনিয়ন / ওয়ার্ড / এলাকা (Union/Ward)
                   </label>
                   <select
@@ -804,7 +804,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
                 type="button"
                 onClick={handleApplyGeoData}
                 disabled={!selectedDistrict}
-                className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-purple-500/25 active:scale-[0.99]"
+                className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-sm active:scale-[0.99]"
               >
                 <Check size={16} strokeWidth={2.5} />
                 <span>নির্বাচিত এলাকা ম্যাপে নিশ্চিত করুন</span>
@@ -817,7 +817,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             
             {/* Detected Address Display */}
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1 flex items-center justify-between">
+              <label className="text-[10px] font-black text-slate-500 block mb-1 flex items-center justify-between">
                 <span>চিহ্নিত লোকেশন (লোকেশন নাম)</span>
                 {geocoding && <span className="text-purple-600 flex items-center gap-1 font-bold"><Loader2 size={11} className="animate-spin"/> লোড হচ্ছে...</span>}
               </label>
@@ -829,7 +829,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
 
             {/* Specific House / Road Details Input */}
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
+              <label className="text-[10px] font-black text-slate-500 block mb-1">
                 নির্দিষ্ট বাসা, রোড বা ল্যান্ডমার্ক (ঐচ্ছিক)
               </label>
               <input
@@ -859,7 +859,7 @@ export default function MapModal({ isOpen, onClose, onConfirm, initialCoordinate
             type="button"
             onClick={handleConfirmLocation}
             disabled={outOfRadius}
-            className="flex-1 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50"
+            className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-sm transition-all cursor-pointer active:scale-[0.98] disabled:opacity-50"
           >
             <Check size={18} strokeWidth={2.5} />
             <span>লোকেশন নিশ্চিত করুন (Confirm Location)</span>

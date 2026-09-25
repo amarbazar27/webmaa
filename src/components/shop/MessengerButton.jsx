@@ -47,7 +47,7 @@ export default function MessengerButton({ shop }) {
       <span className="absolute inset-0 rounded-full bg-blue-400/30 animate-ping pointer-events-none" />
       
       {/* Label tooltip */}
-      <span className="absolute right-16 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg uppercase tracking-widest">
+      <span className="absolute right-16 bg-slate-900 text-white text-[10px] font-black px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
         চ্যাট করুন
       </span>
     </a>

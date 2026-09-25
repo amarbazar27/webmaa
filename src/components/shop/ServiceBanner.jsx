@@ -175,7 +175,7 @@ export default function ServiceBanner({
         <X size={15} strokeWidth={2.5} />
       </button>
       <div className="max-w-7xl mx-auto space-y-2 pr-8">
-        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+        <div className="flex items-center gap-2 text-[10px] font-black text-slate-500">
            <MapPin size={12} className={shop.isStrictLocation ? 'text-red-600' : 'text-purple-600'} /> 
            {shop.isStrictLocation ? '🚨 সার্ভিস এরিয়া যাচাই করুন (অর্ডার করতে অবশ্যই এরিয়া সিলেক্ট করতে হবে)' : 'সার্ভিস এরিয়া যাচাই করুন'}
         </div>
@@ -251,7 +251,7 @@ export default function ServiceBanner({
 
         {manualInput && (
            <div className="bg-red-100/50 border border-red-200 rounded-xl p-2.5 text-center">
-              <p className="text-[11px] font-black text-red-600 uppercase tracking-wider">
+              <p className="text-[11px] font-black text-red-600">
                 আফসোস! {manualInput} এ আমাদের সার্ভিস নেই।
               </p>
               {shop.isStrictLocation && <p className="text-[9px] font-bold text-red-500 mt-0.5">দুঃখিত, আপনি অর্ডার করতে পারবেন না।</p>}

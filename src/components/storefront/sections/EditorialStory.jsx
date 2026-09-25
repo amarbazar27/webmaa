@@ -1,5 +1,5 @@
 'use client';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function EditorialStory({ data, themeVars }) {
@@ -40,13 +40,13 @@ export default function EditorialStory({ data, themeVars }) {
           <div className={`max-w-2xl flex flex-col ${alignClass}`}>
             {d.eyebrow && (
               <div 
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-[0.2em] mb-3 backdrop-blur-md"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-3"
                 style={{ 
                   background: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)',
                   color: isDark ? '#ffffff' : primary 
                 }}
               >
-                <Sparkles size={12} className="text-amber-400" />
+                <Star size={12} className="text-amber-400 fill-amber-400" />
                 {d.eyebrow}
               </div>
             )}

@@ -83,8 +83,8 @@ export default function HeroCarousel({ data, themeVars }) {
       {/* Controls */}
       {slides.length > 1 && (
         <>
-          <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/50 opacity-0 group-hover/banner:opacity-100 transition-all cursor-pointer"><ChevronLeft size={20} strokeWidth={3} /></button>
-          <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/30 backdrop-blur-md text-white hover:bg-black/50 opacity-0 group-hover/banner:opacity-100 transition-all cursor-pointer"><ChevronRight size={20} strokeWidth={3} /></button>
+          <button onClick={prev} className="absolute left-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/60 text-white hover:bg-black/80 opacity-0 group-hover/banner:opacity-100 transition-all cursor-pointer"><ChevronLeft size={20} strokeWidth={3} /></button>
+          <button onClick={next} className="absolute right-3 top-1/2 -translate-y-1/2 z-30 p-2.5 rounded-full bg-black/60 text-white hover:bg-black/80 opacity-0 group-hover/banner:opacity-100 transition-all cursor-pointer"><ChevronRight size={20} strokeWidth={3} /></button>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
             {slides.map((_, i) => (
               <button key={i} onClick={() => setActive(i)} className={`rounded-full transition-all cursor-pointer ${i === active ? 'w-6 h-2.5 bg-white' : 'w-2.5 h-2.5 bg-white/40 hover:bg-white/70'}`} />

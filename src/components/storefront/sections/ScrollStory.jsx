@@ -1,5 +1,5 @@
 'use client';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { resolveSectionData } from '@/lib/homepageDemoData';
 
 export default function ScrollStory({ data, themeVars }) {

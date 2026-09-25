@@ -35,7 +35,7 @@ export default function CustomerUgc({ data, themeVars, onAddToCart }) {
                 />
               )}
               {story.rating && (
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-amber-400 flex items-center gap-1 text-xs font-black">
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/80 text-amber-400 flex items-center gap-1 text-xs font-black">
                   <Star size={12} fill="currentColor" />
                   <span className="text-white text-[11px]">{story.rating}.0</span>
                 </div>
@@ -61,7 +61,7 @@ export default function CustomerUgc({ data, themeVars, onAddToCart }) {
               {story.productName && (
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                   <div className="min-w-0 pr-2">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ক্রয়কৃত পণ্য</p>
+                    <p className="text-[10px] text-slate-400 font-bold">ক্রয়কৃত পণ্য</p>
                     <p className="text-xs font-black text-slate-800 truncate">{story.productName}</p>
                   </div>
                   {story.productPrice && (

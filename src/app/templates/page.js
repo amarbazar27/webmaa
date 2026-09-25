@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  Sparkles, ShoppingBag, Eye, ArrowRight, CheckCircle2, 
+  SlidersHorizontal, ShoppingBag, Eye, ArrowRight, CheckCircle2, 
   Search, Star, ExternalLink, ShieldCheck, Zap, Store, 
   Smartphone, Filter, ChevronRight, X, Layers, Crown, Check
 } from 'lucide-react';
@@ -145,7 +145,7 @@ export default function TemplatesPage() {
       <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-[140px] pointer-events-none" />
 
       {/* ── Main Top Navbar ── */}
-      <nav className="sticky top-0 z-50 px-4 sm:px-6 py-3.5 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
+      <nav className="sticky top-0 z-50 px-4 sm:px-6 py-3.5 bg-white/95 border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Logo href="/" className="scale-105" text="bdretailers.com" />
@@ -159,7 +159,7 @@ export default function TemplatesPage() {
           <div className="flex items-center gap-3">
             <Link 
               href="/become-retailer"
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-purple-600/20 transition-all flex items-center gap-1.5 active:scale-95"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
             >
               <Store size={14} />
               <span>১ মিনিটে স্টোর খুলুন</span>
@@ -170,8 +170,8 @@ export default function TemplatesPage() {
 
       {/* ── Hero Section ── */}
       <header className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8 text-center space-y-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-200 text-purple-700 text-xs font-black uppercase tracking-wider">
-          <Sparkles size={14} />
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-200 text-purple-700 text-xs font-black">
+          <SlidersHorizontal size={14} />
           <span>প্রিমিয়াম রেডিমেড ওয়েবসাইট গ্যালারি</span>
         </div>
 
@@ -240,7 +240,7 @@ export default function TemplatesPage() {
                 onClick={() => setActiveCategory(cat.id)}
                 className={`px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border ${
                   isSelected
-                    ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-600/25 scale-102'
+                    ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-sm scale-102'
                     : 'bg-white border-slate-200 text-slate-700 hover:text-purple-700 hover:border-purple-300'
                 }`}
               >
@@ -286,19 +286,19 @@ export default function TemplatesPage() {
 
                       {/* Floating Badge */}
                       {tpl.badge && (
-                        <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-md bg-black/70 backdrop-blur-md border border-white/20">
+                        <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-black text-white shadow-md bg-black/70 border border-white/20">
                           {tpl.badge}
                         </div>
                       )}
 
                       {/* Demo Subdomain Pill */}
-                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-emerald-700 bg-white/95 backdrop-blur-md border border-emerald-500/30 flex items-center gap-1 shadow-xs">
+                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-emerald-700 bg-white/95 border border-emerald-500/30 flex items-center gap-1 shadow-xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         <span>{tpl.demoSubdomain}.bdretailers.com</span>
                       </div>
 
                       {/* Hover Quick Actions */}
-                      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 p-4">
+                      <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 p-4">
                         <Link
                           href={`/templates/preview/${tpl.id}`}
                           className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs shadow-lg transition-all flex items-center gap-1.5"
@@ -321,7 +321,7 @@ export default function TemplatesPage() {
                     {/* Card Body */}
                     <div className="p-5 sm:p-6 space-y-3.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-purple-600">
+                        <span className="text-[11px] font-black text-purple-600">
                           {tpl.categoryBn}
                         </span>
                         <div className="flex items-center gap-1 text-xs text-amber-500 font-bold">
@@ -341,7 +341,7 @@ export default function TemplatesPage() {
 
                       {/* Color Palette preview dots */}
                       <div className="flex items-center gap-2 pt-1">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">রং প্যালেট:</span>
+                        <span className="text-[10px] text-slate-400 font-bold">রং প্যালেট:</span>
                         <div className="flex items-center gap-1.5">
                           <span className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs" style={{ backgroundColor: tpl.primaryColor }} />
                           <span className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs" style={{ backgroundColor: tpl.secondaryColor }} />
@@ -376,7 +376,7 @@ export default function TemplatesPage() {
                       }}
                       className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      <Sparkles size={13} />
+                      <SlidersHorizontal size={13} />
                       <span>সিলেক্ট করুন</span>
                     </button>
                   </div>
@@ -435,7 +435,7 @@ export default function TemplatesPage() {
 
       {/* ── Selection Modal ── */}
       {selectedTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 animate-fade-in">
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-slate-900 shadow-2xl relative space-y-5">
             <button 
               onClick={() => setSelectedTemplate(null)}
@@ -446,7 +446,7 @@ export default function TemplatesPage() {
 
             <div className="space-y-1.5 text-left">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black">
-                <Sparkles size={13} />
+                <SlidersHorizontal size={13} />
                 <span>ডিজাইন সিলেকশন</span>
               </div>
               <h3 className="text-lg sm:text-xl font-black text-slate-900">
@@ -496,7 +496,7 @@ export default function TemplatesPage() {
                   disabled={applying}
                   className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  <Sparkles size={16} />
+                  <SlidersHorizontal size={16} />
                   <span>{applying ? 'অ্যাপ্লাই হচ্ছে...' : 'আমার স্টোরে এই ডিজাইন যুক্ত করুন'}</span>
                 </button>
               </div>
@@ -504,7 +504,7 @@ export default function TemplatesPage() {
               <div className="space-y-4 text-left">
                 <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 space-y-2">
                   <p className="text-xs text-slate-700 font-medium">
-                    ✨ মাত্র ১ মিনিটে এই <strong className="text-purple-800">{selectedTemplate.titleBn}</strong> ডিজাইন সহ আপনার ফুল ই-কমার্স স্টোর রেডি করুন!
+                     মাত্র ১ মিনিটে এই <strong className="text-purple-800">{selectedTemplate.titleBn}</strong> ডিজাইন সহ আপনার ফুল ই-কমার্স স্টোর রেডি করুন!
                   </p>
                   <ul className="text-[11px] text-slate-600 space-y-1">
                     <li>✓ ফ্রি সাবডোমেন: <span className="text-emerald-700 font-mono font-bold">yourshop.bdretailers.com</span></li>
