@@ -48,7 +48,7 @@ class _WebShopViewState extends State<WebShopView> {
               domStorageEnabled: true,
               databaseEnabled: true,
               useWideViewPort: true,
-              userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
+              userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 BDRetailersApp",
               cacheEnabled: true,
               cacheMode: CacheMode.LOAD_DEFAULT,
               hardwareAcceleration: true,
@@ -57,6 +57,14 @@ class _WebShopViewState extends State<WebShopView> {
             ),
             onWebViewCreated: (controller) {
               _webViewController = controller;
+              controller.evaluateJavascript(source: """
+                try {
+                  window.isNativeApp = true;
+                  window.__IS_BDRETAILERS_APP__ = true;
+                  localStorage.setItem('pwa_installed', 'true');
+                  localStorage.setItem('is_native_app', 'true');
+                } catch(e) {}
+              """);
             },
             onLoadStart: (controller, url) {
               setState(() {

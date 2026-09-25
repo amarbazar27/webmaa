@@ -27,12 +27,18 @@ export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
   const getInitialTheme = () => {
     if (typeof window === 'undefined') return 'light';
 
-    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('theme') || localStorage.getItem('wm_theme_global');
+    // Main platform (bdretailers.com) is strictly a light-mode human-designed experience
+    if (!shopId) {
+      const explicit = localStorage.getItem('wm_theme_global');
+      if (explicit === 'dark' || explicit === 'light') return explicit;
+      return 'light';
+    }
+
+    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('theme');
     if (saved === 'dark' || saved === 'light') return saved;
     if (shopTheme === 'dark' || shopTheme === 'light') return shopTheme;
     const systemSaved = localStorage.getItem('wm_system_theme');
     if (systemSaved === 'dark' || systemSaved === 'light') return systemSaved;
-    // Always default to light mode unless explicitly enabled by user
     return 'light';
   };
 

@@ -458,17 +458,56 @@ export default function Home() {
         .catch(err => console.error('[PWA] Service Worker registration failed:', err));
     }
 
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (isStandalone) {
+    // Main platform is strictly a clean, high-contrast light-mode experience
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+
+    const checkIsInstalled = () => {
+      if (typeof window === 'undefined') return false;
+      try {
+        if (window.isNativeApp || window.__IS_BDRETAILERS_APP__) return true;
+        if (window.flutter_inappwebview || window.__flutter_inappwebview__) return true;
+        if (window.Android || window.AndroidInterface) return true;
+        if (localStorage.getItem('pwa_installed') === 'true' || localStorage.getItem('is_native_app') === 'true') {
+          return true;
+        }
+        const ua = (window.navigator?.userAgent || '').toLowerCase();
+        if (ua.includes('bdretailers') || ua.includes('bdretailersapp') || ua.includes('wv') || (ua.includes('version/') && ua.includes('chrome/'))) {
+          return true;
+        }
+        if (window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches ||
+            window.matchMedia('(display-mode: minimal-ui)').matches ||
+            window.navigator.standalone === true) {
+          return true;
+        }
+        if (document.referrer && (document.referrer.includes('android-app://') || document.referrer.includes('com.bdretailers'))) {
+          return true;
+        }
+      } catch (_) {}
+      return false;
+    };
+
+    if (checkIsInstalled()) {
       setPwaInstalled(true);
+      setShowPwaBanner(false);
+      try {
+        localStorage.setItem('pwa_installed', 'true');
+        localStorage.setItem('is_native_app', 'true');
+      } catch (_) {}
       return;
     }
 
     const handler = (e) => {
+      if (checkIsInstalled()) {
+        setPwaInstalled(true);
+        setShowPwaBanner(false);
+        return;
+      }
       e.preventDefault();
       setDeferredPrompt(e);
-      setPwaInstalled(false);
-      localStorage.removeItem('pwa_installed'); // Clean if uninstalled
       
       const dismissed = sessionStorage.getItem('pwa-prompt-dismissed');
       if (!dismissed) {
@@ -477,23 +516,44 @@ export default function Home() {
     };
     window.addEventListener('beforeinstallprompt', handler);
 
-    const installed = localStorage.getItem('pwa_installed');
-    if (installed) setPwaInstalled(true);
+    // Check again after brief delay for asynchronous WebView bridge injection
+    const t1 = setTimeout(() => {
+      if (checkIsInstalled()) {
+        setPwaInstalled(true);
+        setShowPwaBanner(false);
+      }
+    }, 250);
+
+    const t2 = setTimeout(() => {
+      if (checkIsInstalled()) {
+        setPwaInstalled(true);
+        setShowPwaBanner(false);
+      }
+    }, 1000);
 
     const onInstall = () => {
       setPwaInstalled(true);
       setShowPwaBanner(false);
-      localStorage.setItem('pwa_installed', 'true');
+      try {
+        localStorage.setItem('pwa_installed', 'true');
+        localStorage.setItem('is_native_app', 'true');
+      } catch (_) {}
     };
     window.addEventListener('appinstalled', onInstall);
 
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
       window.removeEventListener('beforeinstallprompt', handler);
       window.removeEventListener('appinstalled', onInstall);
     };
   }, []);
 
   const handleAppDownload = async () => {
+    if (pwaInstalled) {
+      toast.success('আপনার ডিভাইসে বিডি রিটেইলার্স অ্যাপ ইতোমধ্যে ইন্সটল করা আছে! 🎉');
+      return;
+    }
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
@@ -1371,30 +1431,20 @@ export default function Home() {
   }, [activeShopFilter, filteredProducts, allShops]);
 
   return (
-    <div className="neo-root font-sans overflow-x-hidden pt-16 pb-20 lg:pb-10 transition-colors duration-300">
+    <div className="neo-root font-sans overflow-x-hidden pt-16 pb-20 lg:pb-10 transition-colors duration-300 bg-[#F8FAFC] text-[#0F172A]">
       <style jsx global>{`
         body {
-          background-color: #F8FAFC;
-          color: #0F172A;
+          background-color: #F8FAFC !important;
+          color: #0F172A !important;
           transition: background-color 0.3s ease, color 0.3s ease;
           -webkit-text-size-adjust: 100%;
         }
-        .dark body {
-          background-color: #0B0F19 !important;
-          color: #F8FAFC !important;
-        }
         .neo-root {
-          --bg-color: #F8FAFC;
-          --text-color: #0F172A;
-          background-color: #F8FAFC;
-          color: #0F172A;
+          --bg-color: #F8FAFC !important;
+          --text-color: #0F172A !important;
+          background-color: #F8FAFC !important;
+          color: #0F172A !important;
           min-height: 100vh;
-        }
-        .dark .neo-root {
-          --bg-color: #0B0F19 !important;
-          --text-color: #F8FAFC !important;
-          background-color: #0B0F19 !important;
-          color: #F8FAFC !important;
         }
       `}</style>
 
@@ -1599,17 +1649,17 @@ export default function Home() {
 
       {/* ── Main Marketplace Store Showcase Card (store.bdretailers.com) ── */}
       <section className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-3">
-        <div className="relative rounded-2xl sm:rounded-3xl bg-slate-900 text-white p-5 sm:p-7 shadow-xl overflow-hidden border border-slate-800">
+        <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-50/90 via-white to-slate-50 text-slate-900 p-5 sm:p-7 shadow-xs overflow-hidden border border-emerald-200/80">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-emerald-400 text-xs font-bold">
-                <Globe size={13} className="text-emerald-400" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/90 border border-emerald-300/80 text-emerald-800 text-xs font-bold shadow-2xs">
+                <Globe size={13} className="text-emerald-700" />
                 <span>store.bdretailers.com • মূল মার্কেটপ্লেস</span>
               </div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight leading-snug">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-snug">
                 সকল ভেরিফাইড শপের পণ্য এক জায়গায় ব্রাউজ ও কেনাকাটা করুন
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
                 আমাদের প্ল্যাটফর্মের সব বিশ্বস্ত রিটেইলারদের সেরা পণ্য সরাসরি দেখুন ও অর্ডার করুন আমাদের মূল মার্কেটপ্লেস স্টোর থেকে। ক্যাশ অন ডেলিভারি ও দ্রুত হোম ডেলিভারি সুবিধা।
               </p>
             </div>
@@ -1617,7 +1667,7 @@ export default function Home() {
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0">
               <Link
                 href="/store"
-                className="px-5 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                className="px-5 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
               >
                 <ShoppingBag size={16} />
                 <span>মার্কেটপ্লেস স্টোরে যান (store.bdretailers.com)</span>

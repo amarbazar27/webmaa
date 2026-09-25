@@ -138,6 +138,12 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
     try {
       await controller.evaluateJavascript(source: """
         (function() {
+          try {
+            window.isNativeApp = true;
+            window.__IS_BDRETAILERS_APP__ = true;
+            localStorage.setItem('pwa_installed', 'true');
+            localStorage.setItem('is_native_app', 'true');
+          } catch(e) {}
           if (document.getElementById('bdretailers-native-app-styles')) return;
           var style = document.createElement('style');
           style.id = 'bdretailers-native-app-styles';
@@ -197,7 +203,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     builtInZoomControls: false,
                     displayZoomControls: false,
                     mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
-                    userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
+                    userAgent: "Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 BDRetailersApp",
                     allowFileAccessFromFileURLs: true,
                     allowUniversalAccessFromFileURLs: true,
                     javaScriptCanOpenWindowsAutomatically: true,

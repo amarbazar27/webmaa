@@ -1042,18 +1042,50 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   }, []);
 
   useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (isStandalone) {
+    const checkIsInstalled = () => {
+      if (typeof window === 'undefined') return false;
+      try {
+        if (window.isNativeApp || window.__IS_BDRETAILERS_APP__) return true;
+        if (window.flutter_inappwebview || window.__flutter_inappwebview__) return true;
+        if (window.Android || window.AndroidInterface) return true;
+        if (localStorage.getItem('pwa_installed') === 'true' || localStorage.getItem('is_native_app') === 'true') {
+          return true;
+        }
+        const ua = (window.navigator?.userAgent || '').toLowerCase();
+        if (ua.includes('bdretailers') || ua.includes('bdretailersapp') || ua.includes('wv') || (ua.includes('version/') && ua.includes('chrome/'))) {
+          return true;
+        }
+        if (window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches ||
+            window.matchMedia('(display-mode: minimal-ui)').matches ||
+            window.navigator.standalone === true) {
+          return true;
+        }
+        if (document.referrer && (document.referrer.includes('android-app://') || document.referrer.includes('com.bdretailers'))) {
+          return true;
+        }
+      } catch (_) {}
+      return false;
+    };
+
+    if (checkIsInstalled()) {
       setPwaInstalled(true);
+      try {
+        localStorage.setItem('pwa_installed', 'true');
+        localStorage.setItem('is_native_app', 'true');
+      } catch (_) {}
       return;
     }
 
     const handler = (e) => {
+      if (checkIsInstalled()) {
+        setPwaInstalled(true);
+        setShowPwaBanner(false);
+        return;
+      }
       e.preventDefault();
       setDeferredPrompt(e);
       window.deferredPrompt = e; // Store globally as robust fallback
-      setPwaInstalled(false);
-      localStorage.removeItem('pwa_installed'); // Reset if uninstalled
       
       const dismissed = sessionStorage.getItem(`pwa-prompt-${shop.shopSlug}-dismissed`);
       if (!dismissed) {
@@ -1062,21 +1094,34 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     };
     window.addEventListener('beforeinstallprompt', handler);
 
-    const installed = localStorage.getItem('pwa_installed');
-    if (installed) {
-      setPwaInstalled(true);
-    } else {
-      setPwaInstalled(false);
-    }
+    // Delayed checks for asynchronous WebView bridge injection
+    const t1 = setTimeout(() => {
+      if (checkIsInstalled()) {
+        setPwaInstalled(true);
+        setShowPwaBanner(false);
+      }
+    }, 250);
+
+    const t2 = setTimeout(() => {
+      if (checkIsInstalled()) {
+        setPwaInstalled(true);
+        setShowPwaBanner(false);
+      }
+    }, 1000);
 
     const onInstall = () => {
       setPwaInstalled(true);
       setShowPwaBanner(false);
-      localStorage.setItem('pwa_installed', 'true');
+      try {
+        localStorage.setItem('pwa_installed', 'true');
+        localStorage.setItem('is_native_app', 'true');
+      } catch (_) {}
     };
     window.addEventListener('appinstalled', onInstall);
 
     return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
       window.removeEventListener('beforeinstallprompt', handler);
       window.removeEventListener('appinstalled', onInstall);
     };
