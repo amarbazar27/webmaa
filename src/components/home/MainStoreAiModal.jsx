@@ -307,7 +307,7 @@ Rules:
     <div className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" 
+        className="absolute inset-0 bg-slate-950/75 transition-opacity" 
         onClick={onClose} 
       />
 
@@ -321,7 +321,7 @@ Rules:
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-950 text-white p-3.5 sm:p-4 flex justify-between items-center border-b border-emerald-900/50 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center text-white shadow-xs shrink-0">
+            <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center text-white shadow-xs shrink-0">
               <Bot size={20} className="stroke-[2.5]" />
             </div>
             <div>

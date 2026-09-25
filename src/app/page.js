@@ -1444,8 +1444,8 @@ export default function Home() {
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
                 <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9 object-contain" alt="BD Retailers" />
               ) : (
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  BD
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <Store size={18} className="text-white" />
                 </div>
               )}
               <div className="flex flex-col">
@@ -2060,7 +2060,7 @@ export default function Home() {
                               </span>
                             )}
                             {product.stock !== 0 && (
-                              <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-white/90 dark:bg-slate-950/80 backdrop-blur-md text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 text-[8px] font-extrabold rounded-full flex items-center gap-1 shadow-sm">
+                              <span className="absolute bottom-2.5 left-2.5 px-2 py-0.5 bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 text-[8px] font-extrabold rounded-full flex items-center gap-1 shadow-xs">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> In Stock
                               </span>
                             )}
@@ -2520,7 +2520,7 @@ export default function Home() {
 
       {/* ── Full Navigation Drawer Menu ── */}
       <div className={`fixed inset-0 z-[100] transition-all duration-300 ${isStoresMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setIsStoresMenuOpen(false)} />
+        <div className="absolute inset-0 bg-slate-950/70" onClick={() => setIsStoresMenuOpen(false)} />
         <div className={`absolute top-0 left-0 h-full w-80 max-w-[85vw] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transition-transform duration-300 ease-out z-10 ${isStoresMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           {/* Drawer Header */}
           <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-950/50 shrink-0">
@@ -2528,8 +2528,8 @@ export default function Home() {
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
                 <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 object-contain" alt="BD Retailers" />
               ) : (
-                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
-                  BD
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <Store size={16} className="text-white" />
                 </div>
               )}
               <div>
@@ -2973,7 +2973,7 @@ export default function Home() {
       {/* ── Cart Drawer Overlay ── */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[150] flex justify-end">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsCartOpen(false)} />
+          <div className="absolute inset-0 bg-slate-950/70 animate-fade-in" onClick={() => setIsCartOpen(false)} />
           
           <div className="relative w-full max-w-md bg-slate-50 border-l border-slate-200 h-full flex flex-col justify-between shadow-2xl animate-slide-in text-slate-900 z-10 cart-drawer">
             {/* Header */}
@@ -3136,7 +3136,7 @@ export default function Home() {
       {/* ── Platform-Wide Purchases Profile Drawer ── */}
       {isProfileOpen && (
         <div className="fixed inset-0 z-[150] flex justify-end">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsProfileOpen(false)} />
+          <div className="absolute inset-0 bg-slate-950/70 animate-fade-in" onClick={() => setIsProfileOpen(false)} />
           <div className="relative w-full max-w-md bg-slate-50 border-l border-slate-200 h-full flex flex-col justify-between shadow-2xl animate-slide-in text-slate-900 z-10 profile-drawer">
             {/* Header */}
             <div className="p-6 border-b border-slate-200 bg-white flex flex-col relative overflow-hidden shadow-sm">
@@ -3249,7 +3249,7 @@ export default function Home() {
 
       {/* 🔴 Global Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/75 animate-fade-in">
           <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5 text-center animate-scale-in text-slate-900">
             <div className="w-14 h-14 bg-red-50 text-red-600 border border-red-200 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
               <LogOut size={26} />
@@ -3418,7 +3418,7 @@ function LandingProductDetailModal({ product, onClose, cart, setCart }) {
   return (
     <div 
       onClick={handleBackdropClick} 
-      className={`fixed inset-0 z-[150] flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-3 sm:p-4'} bg-slate-950/85 backdrop-blur-md overflow-y-auto animate-fade-in`}
+      className={`fixed inset-0 z-[150] flex items-center justify-center ${isFullScreen ? 'p-0' : 'p-3 sm:p-4'} bg-slate-950/90 overflow-y-auto animate-fade-in`}
     >
       <div className={`relative w-full ${isFullScreen ? 'h-full max-h-screen rounded-none max-w-none p-4 sm:p-8 md:p-10 my-0' : 'max-w-2xl rounded-[2.5rem] p-6 sm:p-8 max-h-[90vh] my-8'} bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl flex flex-col gap-6 animate-scale-in overflow-y-auto scrollbar-thin text-slate-900 dark:text-slate-100 transition-all duration-300`}>
         

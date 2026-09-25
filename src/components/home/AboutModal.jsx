@@ -10,7 +10,7 @@ export default function AboutModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-6 animate-fade-in">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity" 
+        className="absolute inset-0 bg-slate-950/75 transition-opacity" 
         onClick={onClose} 
       />
 
@@ -19,8 +19,8 @@ export default function AboutModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="px-6 py-5 bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-950 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-white text-base">
-              BD
+            <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center text-white">
+              <Store size={20} className="text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold tracking-tight leading-tight">বিডি রিটেইলার্স সম্পর্কে</h2>
@@ -39,7 +39,7 @@ export default function AboutModal({ isOpen, onClose }) {
         <div className="p-6 overflow-y-auto space-y-6 text-slate-800 dark:text-slate-200">
           {/* Main Statement Box */}
           <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 text-white border border-slate-700/60 shadow-lg space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-emerald-300 font-bold text-xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/15 text-emerald-300 font-bold text-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>🇧🇩 বাংলাদেশের রিটেইলারদের বিশেষ অনলাইন স্টোর মেকার ও মার্কেটপ্লেস</span>
             </div>
