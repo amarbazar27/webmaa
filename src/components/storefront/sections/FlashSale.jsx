@@ -100,7 +100,7 @@ export default function FlashSale({ data, products, themeVars, onAddToCart, onPr
               >
                 <div className="relative aspect-square bg-slate-50 overflow-hidden">
                   <img
-                    src={product.imageUrl || product.images?.[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'}
+                    src={product.imageUrl || product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500'}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"

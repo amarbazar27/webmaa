@@ -186,9 +186,17 @@ const nextConfig = {
     ];
   },
 
-  // ⚡ CRITICAL: Firebase Auth on custom domains
+  // ⚡ CRITICAL: Firebase Auth on custom domains & White-Label /admin rewrites
   async rewrites() {
     return [
+      {
+        source: '/admin',
+        destination: '/dashboard',
+      },
+      {
+        source: '/admin/:path*',
+        destination: '/dashboard/:path*',
+      },
       {
         source: '/__/auth/:path*',
         destination: `https://webmaa-app.firebaseapp.com/__/auth/:path*`,

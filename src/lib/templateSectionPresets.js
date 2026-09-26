@@ -326,8 +326,8 @@ export function getSectionsForTemplate(templateId, category, templateData = {}) 
     ];
   }
 
-  // 3. FRESH GROCERY & SUPERMARKET DEALS
-  if (templateId === 'fresh_grocery' || templateId === 'supermarket_deals') {
+  // 3. FRESH GROCERY & ORGANIC BAZAR
+  if (templateId === 'fresh_grocery') {
     return [
       {
         id: 'trust_strip',
@@ -463,8 +463,8 @@ export function getSectionsForTemplate(templateId, category, templateData = {}) 
     ];
   }
 
-  // 4. TECH ELECTRONICS & GADGETS AUDIO
-  if (templateId === 'tech_electronics' || templateId === 'gadgets_audio') {
+  // 4. TECH ELECTRONICS & GADGETS
+  if (templateId === 'tech_electronics') {
     return [
       {
         id: 'trust_strip',
@@ -1037,7 +1037,468 @@ export function getSectionsForTemplate(templateId, category, templateData = {}) 
     ];
   }
 
-  // DEFAULT / SPORTS / BOOKS / BABY FALLBACK (General Smart Commerce)
+  // 11. SPORTS FITNESS & NUTRITION
+  if (templateId === 'sports_fitness') {
+    return [
+      {
+        id: 'trust_strip',
+        type: 'trust_strip',
+        enabled: true,
+        order: 1,
+        data: {
+          items: [
+            { icon: '💪', title: '১০০% অথেনটিক ও ল্যাব টেস্টেড', desc: 'যুক্তরাষ্ট্র ও যুক্তরাজ্য থেকে আমদানিকৃত' },
+            { icon: '⚡', title: '২৪ ঘণ্টায় এক্সপ্রেস ডেলিভারি', desc: 'নিরাপদ ইন্ট্যাক্ট সিলপ্যাক পৌঁছানোর নিশ্চয়তা' },
+            { icon: '💵', title: 'ক্যাশ অন ডেলিভারি', desc: 'হাতে পেয়ে কিউআর কোড স্ক্যান করে পেমেন্ট' },
+            { icon: '🥗', title: 'ফ্রি নিউট্রিশন ও ডায়েট গাইড', desc: 'প্রতি অর্ডারে সার্টিফাইড এক্সপার্ট পরামর্শ' },
+          ]
+        }
+      },
+      {
+        id: 'product_spotlight',
+        type: 'product_spotlight',
+        enabled: true,
+        order: 2,
+        data: {
+          eyebrow: 'FLASGSHIP NUTRITION SPOTLIGHT',
+          title: 'গোল্ড স্ট্যান্ডার্ড ১০০% হুই প্রোটিন আইসোলেট',
+          subtitle: 'বিশ্ববিখ্যাত সর্বোচ্চ বিশুদ্ধতার ম্যাসেল বিল্ডিং ফর্মুলা',
+          description: 'প্রতি স্কুপে ২৪ গ্রাম আল্ট্রা-পিওর প্রোটিন, ৫.৫ গ্রাম প্রাকৃতিক বিসিএএ (BCAA) এবং মাত্র ১ গ্রাম কার্ব। পেশির দ্রুত রিকভারি ও ক্লিন ফ্যাট-ফ্রি মাসল গেইনের জন্য অতুলনীয়।',
+          price: 8200,
+          originalPrice: 9200,
+          discountPercent: 11,
+          imageUrl: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=800&q=80',
+          features: [
+            '২৪ গ্রাম প্রিমিয়াম মাইক্রো-ফিল্টার্ড প্রোটিন',
+            '৫.৫ গ্রাম ব্রাঞ্চড চেইন অ্যামিনো অ্যাসিড (BCAAs)',
+            'সহজে দ্রবণীয় ও সুস্বাদু ডাবল রিচ চকলেট ফ্লেভার',
+            '১০০% ডোপিং ও ব্যানড সাবস্ট্যান্স মুক্ত সার্টিফাইড'
+          ],
+          badge: 'বেস্টসেলার'
+        }
+      },
+      {
+        id: 'category_scroller',
+        type: 'category_scroller',
+        enabled: true,
+        order: 3,
+        data: {
+          title: '🏋️‍♂️ ফিটনেস ও নিউট্রিশন ক্যাটাগরি',
+        }
+      },
+      {
+        id: 'deal_of_the_day',
+        type: 'deal_of_the_day',
+        enabled: true,
+        order: 4,
+        data: {
+          eyebrow: 'আজকের সেরা ফিটনেস অফার',
+          title: 'এডজাস্টেবল রাবার-কোটেড ডাম্বেল সেট (২০ কেজি হোম জিম প্যাক)',
+          description: 'মরিচারোধক সলিড কাস্ট আয়রন কোর ও অ্যান্টি-স্লিপ গ্রিপ। ঘরে বসেই প্রফেশনাল বডিবিল্ডিং ও স্ট্রেংথ ট্রেনিংয়ের জন্য আদর্শ।',
+          price: 3400,
+          originalPrice: 4000,
+          discountPercent: 15,
+          imageUrl: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&q=80',
+          badge: 'হেভি ডিউটি'
+        }
+      },
+      {
+        id: 'bundle_section',
+        type: 'bundle_section',
+        enabled: true,
+        order: 5,
+        data: {
+          title: '🎁 আল্টিমেট মাসল বিল্ডার কম্বো প্যাক',
+          subtitle: 'প্রোটিন + ক্রিয়েটিন + শেকার একসাথে নিলে সরাসরি ৳৭৫০ ছাড়!',
+          bundles: [
+            {
+              id: 'sp_bdl_1',
+              title: 'ম্যাসেল গেইন পাওয়ার স্ট্যাক (হুই প্রোটিন + ক্রিয়েটিন + শেকার)',
+              price: 10450,
+              originalPrice: 11200,
+              saveAmount: 750,
+              badge: 'প্রো স্ট্যাক',
+              imageUrl: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=500&q=80',
+              itemsList: ['গোল্ড স্ট্যান্ডার্ড হুই প্রোটিন (৫ পাউন্ড)', 'মাইক্রোনাইজড ক্রিয়েটিন পাউডার (৩০০ গ্রাম)', 'লিক-প্রুফ ব্লেন্ডার শেকার বোতল (৭০০ মিলি)']
+            }
+          ]
+        }
+      },
+      {
+        id: 'product_grid',
+        type: 'product_grid',
+        enabled: true,
+        order: 6,
+        data: {
+          title: '⚡ অ্যাথলেটদের পছন্দের জনপ্রিয় পণ্যসমূহ',
+        }
+      },
+      {
+        id: 'customer_ugc',
+        type: 'customer_ugc',
+        enabled: true,
+        order: 7,
+        data: {
+          title: '🏆 অ্যাথলেট ও ট্রেইনারদের বাস্তব অভিজ্ঞতা ও ফিডব্যাক',
+          subtitle: 'হাজারো ফিটনেস প্রেমীদের পছন্দের বিশ্বস্ত ডেস্টিনেশন'
+        }
+      }
+    ];
+  }
+
+  // 12. BOOKS & STATIONERY
+  if (templateId === 'books_stationery') {
+    return [
+      {
+        id: 'trust_strip',
+        type: 'trust_strip',
+        enabled: true,
+        order: 1,
+        data: {
+          items: [
+            { icon: '📚', title: '১০০% অরিজিনাল পেপারব্যাক ও হার্ডবাউন্ড', desc: 'প্রকাশক থেকে সরাসরি সংগৃহীত ঝকঝকে ছাপা' },
+            { icon: '🎁', title: 'প্রতি বইয়ে প্রিমিয়াম বুকমার্ক ফ্রি', desc: 'উপহার হিসেবে আকর্ষণীয় মোড়ক' },
+            { icon: '🚚', title: 'সারাদেশে হোম ডেলিভারি ও ক্যাশ অন ডেলিভারি', desc: 'Steadfast কুরিয়ারে দ্রুততম পৌঁছানো' },
+            { icon: '🔄', title: 'ছেঁড়া বা মিসপ্রিন্টে তাৎক্ষণিক রিপ্লেসমেন্ট', desc: 'ঝামেলাহীন পরিবর্তনের সুবিধা' },
+          ]
+        }
+      },
+      {
+        id: 'editorial_story',
+        type: 'editorial_story',
+        enabled: true,
+        order: 2,
+        data: {
+          eyebrow: 'বইপোকার বিশেষ নিবেদন',
+          title: 'শব্দ ও চিন্তার অমর মহোৎসব — সেরা বেস্টসেলার বইমেলা',
+          subtitle: 'পাঠকের মননশীলতা ও আত্মউন্নয়নের অনন্য সঙ্গী',
+          description: 'বই কেবল কাগজ ও কালির মেলবন্ধন নয়, এটি আত্মিক ভ্রমণের পাসপোর্ট। সমকালীন পাঠকপ্রিয় উপন্যাস, দর্শন ও ক্যারিয়ারের শ্রেষ্ঠ বইগুলো সাজানো হয়েছে এক ঠিকানায়।',
+          buttonText: 'বইগুলো দেখুন',
+          buttonLink: '#section-product_grid',
+          imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=1000&q=80',
+          stats: [
+            { value: '৫,০০০+', label: 'সংগ্রহে থাকা বই' },
+            { value: '৯৯.৮%', label: 'পাঠক সন্তুষ্টি' },
+            { value: '২৪/৭', label: 'বুক ফাইন্ডার সহায়তা' }
+          ]
+        }
+      },
+      {
+        id: 'category_scroller',
+        type: 'category_scroller',
+        enabled: true,
+        order: 3,
+        data: {
+          title: '📖 প্রিয় বিষয়ের বই খুঁজুন',
+        }
+      },
+      {
+        id: 'bundle_section',
+        type: 'bundle_section',
+        enabled: true,
+        order: 4,
+        data: {
+          title: '🎁 বইপোকা বেস্টসেলার গিফট কম্বো',
+          subtitle: 'একসাথে সেট কিনলে আকর্ষণীয় ছাড় ও স্পেশাল বক্স প্যাকিং',
+          bundles: [
+            {
+              id: 'bk_bdl_1',
+              title: 'প্যারাডক্সিক্যাল সাজিদ ১ ও ২ কম্বো সেট (আরিফ আজাদ)',
+              price: 580,
+              originalPrice: 700,
+              saveAmount: 120,
+              badge: 'মেগা বেস্টসেলার',
+              imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500&q=80',
+              itemsList: ['প্যারাডক্সিক্যাল সাজিদ ১ (হার্ডবাউন্ড)', 'প্যারাডক্সিক্যাল সাজিদ ২ (হার্ডবাউন্ড)', '২টি কাস্টম মেটালিক বুকমার্ক', 'লাক্সারি গিফট বক্স']
+            },
+            {
+              id: 'bk_bdl_2',
+              title: 'ভিন্টেজ লেখক কিট (লেদার জার্নাল + লাক্সারি ফাউন্টেন পেন)',
+              price: 1250,
+              originalPrice: 1700,
+              saveAmount: 450,
+              badge: 'কালেক্টরস এডিশন',
+              imageUrl: 'https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?w=500&q=80',
+              itemsList: ['ভিন্টেজ লেদার কাভারড হার্ডবাউন্ড জার্নাল', 'মেটালিক ফাউন্টেন পেন উইথ গোল্ড নিব', 'রয়েল ব্ল্যাক ইঙ্ক পট (৫০ মিলি)']
+            }
+          ]
+        }
+      },
+      {
+        id: 'product_grid',
+        type: 'product_grid',
+        enabled: true,
+        order: 5,
+        data: {
+          title: '📚 জনপ্রিয় ও আলোড়ন সৃষ্টিকারী বইসমূহ',
+        }
+      },
+      {
+        id: 'photo_reviews',
+        type: 'photo_reviews',
+        enabled: true,
+        order: 6,
+        data: {
+          title: '⭐ বইপ্রেমীদের বুকশেলফ ও পাঠ প্রতিক্রিয়া',
+        }
+      }
+    ];
+  }
+
+  // 13. BABY CARE & KIDS TOYS
+  if (templateId === 'baby_kids') {
+    return [
+      {
+        id: 'trust_strip',
+        type: 'trust_strip',
+        enabled: true,
+        order: 1,
+        data: {
+          items: [
+            { icon: '👶', title: '১০০% টক্সিক-ফ্রি ও বিপিএ-মুক্ত', desc: 'শিশুদের সুরক্ষায় সার্টিফাইড নিরাপদ ম্যাটেরিয়াল' },
+            { icon: '🌿', title: 'ডার্মাটোলজিক্যালি টেস্টেড', desc: 'নবজাতকের সংবেদনশীল ত্বকে কোমল ও নিরাপদ' },
+            { icon: '⚡', title: 'জরুরি ডায়াপার ও বেবি ফুড ডেলিভারি', desc: 'আপনার দরজায় দ্রুততম সময়ে পৌঁছানো' },
+            { icon: '💵', title: 'ক্যাশ অন ডেলিভারি', desc: 'পণ্য দেখে নিশ্চিন্তে মূল্য পরিশোধ করুন' },
+          ]
+        }
+      },
+      {
+        id: 'deal_of_the_day',
+        type: 'deal_of_the_day',
+        enabled: true,
+        order: 2,
+        data: {
+          eyebrow: 'মা ও শিশুর সেরা সাশ্রয়ী অফার',
+          title: 'প্যাম্পার্স অ্যাক্টিভ বেবি ডায়াপার লার্জ সাইজ (৫৬ পিস মেগা সেভার প্যাক)',
+          description: '১২ ঘণ্টা পর্যন্ত সম্পূর্ণ লিকপ্রুফ সুরক্ষা ও নরম সুতির স্পর্শ। বাচ্চার কোমল ত্বক রাখবে শুকনা, সুরক্ষিত ও র‍্যাশমুক্ত।',
+          price: 1750,
+          originalPrice: 1950,
+          discountPercent: 10,
+          imageUrl: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80',
+          badge: 'মেগা সেভার'
+        }
+      },
+      {
+        id: 'category_scroller',
+        type: 'category_scroller',
+        enabled: true,
+        order: 3,
+        data: {
+          title: '🧸 শিশু ও নবজাতকের প্রয়োজনীয় ক্যাটাগরি',
+        }
+      },
+      {
+        id: 'bundle_section',
+        type: 'bundle_section',
+        enabled: true,
+        order: 4,
+        data: {
+          title: '🎁 নবজাতক ওয়েলকাম বেবি হ্যাম্পার',
+          subtitle: 'বাচ্চার সুরক্ষায় প্রয়োজনীয় সব উপকরণ একসাথে নিলে সরাসরি ৳৪০০ ছাড়!',
+          bundles: [
+            {
+              id: 'kd_bdl_1',
+              title: 'নিউবর্ন এসেনশিয়াল কেয়ার বক্স (বোতল + লোশন + শ্যাম্পু + ওয়াইপস)',
+              price: 2450,
+              originalPrice: 2850,
+              saveAmount: 400,
+              badge: 'সেরা উপহার',
+              imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=500&q=80',
+              itemsList: ['ফিলিপস এভেন্ট অ্যান্টি-কোলিক ফিডিং বোতল', 'সেবাফার্ম বেবি ক্লেনজিং বার ও শ্যাম্পু', 'অ্যালকোহলমুক্ত ওয়েট ওয়াইপস (৮০ পিস)', 'মন্টেসরি কাঠের সেভ পাজল খেলনা']
+            }
+          ]
+        }
+      },
+      {
+        id: 'product_grid',
+        type: 'product_grid',
+        enabled: true,
+        order: 5,
+        data: {
+          title: '🍼 শিশু ও বাচ্চাদের সর্বাধিক বিক্রিত সামগ্রী',
+        }
+      },
+      {
+        id: 'photo_reviews',
+        type: 'photo_reviews',
+        enabled: true,
+        order: 6,
+        data: {
+          title: '⭐ মা-বাবাদের বিশ্বস্ত রিভিউ ও বাচ্চাদের হাসিমুখ',
+        }
+      }
+    ];
+  }
+
+  // 14. SUPERMARKET DEALS (Dedicated Supermarket Preset)
+  if (templateId === 'supermarket_deals') {
+    return [
+      {
+        id: 'trust_strip',
+        type: 'trust_strip',
+        enabled: true,
+        order: 1,
+        data: {
+          items: [
+            { icon: '🏬', title: 'এক ছাদের নিচে সব নিত্যপণ্য', desc: 'গ্রোসারি, ক্লিনিং, পার্সোনাল কেয়ার ও স্ন্যাক্স' },
+            { icon: '💰', title: 'পাইকারি দরে মেগা সেভিংস', desc: 'প্রতিদিন বিশেষ ছাড় ও পয়েন্ট বোনাস' },
+            { icon: '⚡', title: 'সুপারফাস্ট হোম ডেলিভারি', desc: 'আপনার কাঙ্ক্ষিত সময়ে নিরাপদ পৌঁছানো' },
+            { icon: '💵', title: 'ক্যাশ অন ডেলিভারি', desc: 'পণ্য বুঝে পেয়ে মূল্য পরিশোধ করুন' },
+          ]
+        }
+      },
+      {
+        id: 'price_tier_store',
+        type: 'price_tier_store',
+        enabled: true,
+        order: 2,
+        data: {
+          title: '🏷️ মেগামার্ট বাজেট সুপারস্টোর — ফিক্সড প্রাইস জোন',
+          subtitle: 'আপনার বাজেট অনুযায়ী বেছে নিন সেরা নিত্যপ্রয়োজনীয় পণ্য',
+          tiers: [
+            { price: 99, label: '৯৯৳ কর্নার', desc: 'মশলা, বিস্কুট ও স্ন্যাক্স' },
+            { price: 199, label: '১৯৯৳ কর্নার', desc: 'গৃহস্থালি ও ক্লিনিং প্যাক' },
+            { price: 499, label: '৪৯৯৳ কর্নার', desc: 'তাজা তেল, ডাল ও চিনি কম্বো' },
+            { price: 999, label: '৯৯৯৳ মেগা জোন', desc: 'ফ্যামিলি সাইজ গ্রোসারি বাস্কেট' },
+          ]
+        }
+      },
+      {
+        id: 'flash_sale',
+        type: 'flash_sale',
+        enabled: true,
+        order: 3,
+        data: {
+          title: '⚡ মেগামার্ট উইকএন্ড সুপার সেভার সেল',
+          subtitle: 'স্টক দ্রুত ফুরিয়ে যাচ্ছে! এখনই সাশ্রয়ী মূল্যে অর্ডার করুন',
+        }
+      },
+      {
+        id: 'category_scroller',
+        type: 'category_scroller',
+        enabled: true,
+        order: 4,
+        data: {
+          title: '🛒 সুপারস্টোরের ক্যাটাগরি কালেকশন',
+        }
+      },
+      {
+        id: 'product_grid',
+        type: 'product_grid',
+        enabled: true,
+        order: 5,
+        data: {
+          title: '🌟 আজকের সুপার ডিল ও জনপ্রিয় পণ্যসমূহ',
+        }
+      },
+      {
+        id: 'photo_reviews',
+        type: 'photo_reviews',
+        enabled: true,
+        order: 6,
+        data: {
+          title: '⭐ সন্তুষ্ট গ্রাহকদের রিভিউ ও রেটিং',
+        }
+      }
+    ];
+  }
+
+  // 15. GADGETS & HI-FI AUDIO (Dedicated Audio & Gadgets Preset)
+  if (templateId === 'gadgets_audio') {
+    return [
+      {
+        id: 'trust_strip',
+        type: 'trust_strip',
+        enabled: true,
+        order: 1,
+        data: {
+          items: [
+            { icon: '🎧', title: '১০০% অরিজিনাল সাউন্ড গিয়ার', desc: 'Sony, JBL, Marshall ও Anker অফিসিয়াল ওয়ারেন্টি' },
+            { icon: '🛡️', title: '১ বছরের অফিসিয়াল রিপ্লেসমেন্ট', desc: 'যেকোনো ত্রুটিতে ঝামেলাহীন সেবা' },
+            { icon: '⚡', title: 'সেম-ডে সুপারফাস্ট ডেলিভারি', desc: 'ইনট্যাক্ট সিলপ্যাক বক্সে নিরাপদ পৌঁছানো' },
+            { icon: '💵', title: 'ক্যাশ অন ডেলিভারি', desc: 'চেক করে ও টেস্ট করে মূল্য পরিশোধ' },
+          ]
+        }
+      },
+      {
+        id: 'product_spotlight',
+        type: 'product_spotlight',
+        enabled: true,
+        order: 2,
+        data: {
+          eyebrow: 'AUDIOPHILE FLAGSHIP SPOTLIGHT',
+          title: 'সাউন্ডওয়েভ আল্ট্রা-সাইলেন্স ANC ওয়্যারলেস হেডফোন',
+          subtitle: 'স্টুডিও-গ্রেড হাই-রেস অডিও উইথ অ্যাক্টিভ নয়েজ ক্যানসেলেশন',
+          description: '৪০ মিমি কাস্টম ডায়নামিক ড্রাইভার ও হাইব্রিড এএনসি প্রযুক্তি। চারপাশের ৯৮% অনাকাঙ্ক্ষিত শব্দ মুছে দেবে নিখুঁত নিস্তব্ধতায়। একবার চার্জে একটানা ৫০ ঘণ্টার নন-স্টপ মিউজিক প্লেব্যাক।',
+          price: 5490,
+          originalPrice: 6500,
+          discountPercent: 15,
+          imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
+          features: [
+            'হাই-রেস ওয়্যারলেস অডিও ও LDAC কোডেক সাপোর্ট',
+            '-৪০ ডেসিবল হাইব্রিড অ্যাক্টিভ নয়েজ ক্যানসেলেশন (ANC)',
+            '৫০ ঘণ্টার মেগা ব্যাটারি লাইফ উইথ ফাস্ট টাইপ-সি চার্জিং',
+            'মাল্টিপয়েন্ট ব্লুটুথ ৫.৩ সংযোগ — ফোন ও ল্যাপটপ একসাথে'
+          ],
+          badge: 'ফ্ল্যাগশিপ অডিও'
+        }
+      },
+      {
+        id: 'category_scroller',
+        type: 'category_scroller',
+        enabled: true,
+        order: 3,
+        data: {
+          title: '🎵 প্রিমিয়াম অডিও ও গ্যাজেট ক্যাটাগরি',
+        }
+      },
+      {
+        id: 'deal_of_the_day',
+        type: 'deal_of_the_day',
+        enabled: true,
+        order: 4,
+        data: {
+          eyebrow: 'আজকের ফ্ল্যাশ অডিও অফার',
+          title: 'ট্রু ওয়্যারলেস ব্লুটুথ ৫.৪ গেমিং ইয়ারবাডস উইথ ৩০ms লো-লেটেন্সি',
+          description: 'কোয়াড-মাইক এনভায়রনমেন্টাল নয়েজ ক্যানসেলেশন (ENC) ও ক্রিস্টাল ক্লিয়ার কলিং সুবিধা।',
+          price: 1850,
+          originalPrice: 2400,
+          discountPercent: 23,
+          imageUrl: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&q=80',
+          badge: 'হট ডিল'
+        }
+      },
+      {
+        id: 'bento_mosaic',
+        type: 'bento_mosaic',
+        enabled: true,
+        order: 5,
+        data: {
+          title: '🍱 স্মার্ট সাউন্ড ও গ্যাজেট মোজাইক',
+        }
+      },
+      {
+        id: 'product_grid',
+        type: 'product_grid',
+        enabled: true,
+        order: 6,
+        data: {
+          title: '🔊 শীর্ষ রেটেড হাই-ফাই অডিও ও গ্যাজেটস',
+        }
+      },
+      {
+        id: 'brand_marquee',
+        type: 'brand_marquee',
+        enabled: true,
+        order: 7,
+        data: {
+          brands: ['Sony', 'Bose', 'JBL', 'Marshall', 'Anker', 'Sennheiser', 'Edifier']
+        }
+      }
+    ];
+  }
+
+  // DEFAULT FALLBACK (General Smart Commerce)
   return [
     {
       id: 'trust_strip',

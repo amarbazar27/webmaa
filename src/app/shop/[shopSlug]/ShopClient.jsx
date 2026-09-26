@@ -9,7 +9,7 @@ import { ShoppingBag, Search, X, Plus, Minus, Phone, MapPin,
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2, ArrowUp, ArrowDown,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings, Trash2,
   ChevronLeft, ChevronRight, Star, Flame, Gift, ExternalLink, Menu, Tag,
-  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle, Maximize2, Minimize2 } from 'lucide-react';
+  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -468,6 +468,19 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const googleMapsApiKey = shop?.googleMapsApiKey || globalConfig?.googleMapsApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   
   const isMesserBazar = shop?.subdomainSlug === 'messerbazar' || shop?.customDomain === 'messerbazar.com' || shop?.shopName === 'Messer Bazar' || shop?.shopName === 'মেসের বাজার';
+
+  const isShopAdminOrOwner = Boolean(
+    user && (
+      (shop?.ownerEmail && user.email?.toLowerCase() === shop.ownerEmail.toLowerCase()) ||
+      (Array.isArray(shop?.adminEmails) && shop.adminEmails.some(e => e?.toLowerCase() === user.email?.toLowerCase())) ||
+      (Array.isArray(shop?.staffEmails) && shop.staffEmails.some(e => e?.toLowerCase() === user.email?.toLowerCase())) ||
+      (userData && (
+        userData.role === 'superadmin' ||
+        (userData.role === 'retailer' && (userData.activeShopId === safeShopId || user.uid === safeShopId || user.uid === shop?.createdBy)) ||
+        ((userData.role === 'admin' || userData.role === 'staff') && userData.accessShopId === safeShopId)
+      ))
+    )
+  );
 
   const [categories] = useState(() => {
     const rawCats = initialCategories || props.categories || [];
@@ -2730,6 +2743,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         isPreview={false}
         user={user}
         userData={userData}
+        isShopAdminOrOwner={isShopAdminOrOwner}
         onOpenProfile={() => setIsProfileOpen(true)}
         onOpenFaq={() => setIsFaqOpen(true)}
       />
@@ -4094,6 +4108,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           )}
           <span className="text-[10px] font-bold">প্রফাইল</span>
         </button>
+        {isShopAdminOrOwner && (
+          <a
+            href="/admin"
+            className="flex flex-col items-center gap-1 text-purple-600 hover:text-purple-800 transition-colors font-black"
+            title="স্টোর অ্যাডমিন ড্যাশবোর্ড"
+          >
+            <SlidersHorizontal size={22} strokeWidth={2.5} />
+            <span className="text-[10px] font-black">ড্যাশবোর্ড</span>
+          </a>
+        )}
       </div>
 
       {/* ── FAQ Interactive Modal ── */}
@@ -5231,6 +5255,31 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
               ) : (
                 <div className="w-full space-y-5">
+                  {/* Retailer / Admin VIP Dashboard Access Banner */}
+                  {isShopAdminOrOwner && (
+                    <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900 border-2 border-purple-500/50 rounded-2xl p-4 text-white shadow-xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/30 text-purple-200 text-[10px] font-black border border-purple-400/40">
+                          🛡️ স্টোর অ্যাডমিন / ওনার
+                        </span>
+                        <span className="text-[10px] text-purple-300 font-mono font-bold truncate max-w-[130px]">
+                          {shop.shopName || 'এই শপ'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-purple-100 font-medium leading-relaxed">
+                        আপনি এই স্টোরের অনুমোদিত অ্যাডমিন। অ্যাপ ও ওয়েবসাইটের ড্যাশবোর্ড, পণ্য, অর্ডার এবং কাস্টমাইজেশন পরিচালনা করতে নিচের বাটনে চাপ দিন।
+                      </p>
+                      <a
+                        href="/admin"
+                        className="w-full py-3 px-4 rounded-xl bg-white hover:bg-purple-50 text-purple-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 cursor-pointer"
+                      >
+                        <SlidersHorizontal size={14} className="text-purple-600" />
+                        <span>এডমিন ড্যাশবোর্ড ও কাস্টমাইজেশন</span>
+                        <ArrowRight size={14} />
+                      </a>
+                    </div>
+                  )}
+
                   {/* Current Location Display */}
                   <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center gap-2 mb-2 text-slate-500 font-black text-[10px]">

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { 
   Search, ShoppingBag, Bell, Menu, X, Heart, 
   MapPin, Phone, ChevronDown, User,
-  HelpCircle, Sun, Moon, Settings, Zap, ArrowRight, ShieldCheck
+  HelpCircle, Sun, Moon, Settings, Zap, ArrowRight, ShieldCheck, SlidersHorizontal
 } from 'lucide-react';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 
@@ -94,6 +94,7 @@ export default function StorefrontHeader({
   isPreview = false,
   user = null,
   userData = null,
+  isShopAdminOrOwner = false,
   onOpenProfile,
   onOpenFaq,
 }) {
@@ -232,6 +233,18 @@ export default function StorefrontHeader({
           </span>
         )}
       </button>
+
+      {/* Retailer / Admin Quick Dashboard Link */}
+      {isShopAdminOrOwner && (
+        <a
+          href="/admin"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs shadow-md transition-all active:scale-95 shrink-0"
+          title="স্টোর অ্যাডমিন ড্যাশবোর্ড ও কাস্টমাইজেশন"
+        >
+          <SlidersHorizontal size={13} />
+          <span>ড্যাশবোর্ড</span>
+        </a>
+      )}
 
       {/* Profile Button */}
       {onOpenProfile && (

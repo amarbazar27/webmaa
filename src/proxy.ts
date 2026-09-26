@@ -33,7 +33,7 @@ const BYPASS_HOSTS = [
 ];
 
 const RESERVED_KEYWORDS = [
-  'store', 'dashboard', 'superadmin', 'login', 'register', 'showcase', 'api', 
+  'store', 'dashboard', 'admin', 'superadmin', 'login', 'register', 'showcase', 'api', 
   'reviews', 'become-retailer', 'privacy-policy', 'privacy', 'account-delete',
   'terms', 'terms-of-service', 'terms-and-conditions', 'templates', 'lp',
   '_next', 'robots.txt', 'sitemap.xml', 'shop-sitemap.xml', 'product-sitemap.xml', 'category-sitemap.xml', 'image-sitemap.xml', 'sw.js', 'manifest.json', 'demo', 'icons', 'test-auth', 'logo.png', 'favicon.ico', 'shop', 'domain',
@@ -189,6 +189,18 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith('/.well-known/')  // ✅ Android App Links / Digital Asset Links
   ) {
     return applySecurityHeaders(NextResponse.next(), pathname);
+  }
+
+  // ── /admin White-Label Store Admin Portal Route ─────────────────────
+  // Rewrites /admin (and /admin/*) directly to /dashboard (and /dashboard/*)
+  // across all custom domains (e.g. messerbazar.com/admin, camerakini.com/admin)
+  // and platform domains. Retailers feel they have their own private custom admin.
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const dashboardPath = pathname === '/admin' ? '/dashboard' : pathname.replace(/^\/admin/, '/dashboard');
+    const rewriteUrl = new URL(dashboardPath, request.url);
+    rewriteUrl.search = request.nextUrl.search;
+    console.log(`[Proxy] /admin white-label portal rewrite: ${rawHost}${pathname} -> ${dashboardPath}`);
+    return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
   }
 
   // ── AEO (Agent Engine Optimization) Content Negotiation ─────────────

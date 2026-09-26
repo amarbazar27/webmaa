@@ -75,7 +75,7 @@ export default function ProductGrid({ data, products, themeVars, onAddToCart, on
             >
               <div className="relative aspect-square bg-slate-50 overflow-hidden">
                 <img
-                  src={product.imageUrl || product.images?.[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500'}
+                  src={product.imageUrl || product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500'}
                   alt={product.name}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

@@ -63,7 +63,7 @@ export default function TabbedCollection({ data, products, themeVars, onAddToCar
             >
               <div className="relative aspect-square bg-slate-50 overflow-hidden">
                 <img
-                  src={product.imageUrl || product.images?.[0]}
+                  src={product.imageUrl || product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500'}
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"

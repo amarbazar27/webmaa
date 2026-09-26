@@ -202,7 +202,7 @@ export default function BasicStorefront({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {filteredProducts.map((prod, idx) => {
-                const img = prod.images?.[0] || prod.imageUrl;
+                const img = prod.images?.[0] || prod.imageUrl || prod.image;
                 const qty = quantities[prod.id] || 0;
 
                 return (

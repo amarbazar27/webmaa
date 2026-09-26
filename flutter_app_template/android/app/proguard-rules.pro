@@ -42,8 +42,11 @@
     @com.google.firebase.firestore.PropertyName <methods>;
 }
 
-# Android Native Components
--keep class android.support.v4.app.** { *; }
--keep class androidx.** { *; }
+# Android Native Components (optimized - allow R8 to obfuscate and shrink AndroidX)
+-keepclassmembers class * extends androidx.lifecycle.ViewModel {
+    <init>(...);
+}
+-keep class androidx.lifecycle.ReportFragment { *; }
+-keep class androidx.activity.ComponentActivity { *; }
 -keep class **.R$* { *; }
 
