@@ -5,7 +5,7 @@ import {
   Layout, Eye, EyeOff, Save, RotateCcw, Sparkles, 
   ShoppingBag, Store, HelpCircle, Mail, DollarSign, 
   Image, BarChart3, Handshake, CheckCircle2, AlertCircle, Palette,
-  Search, LayoutGrid
+  Search, LayoutGrid, Edit3, X, Check, Globe
 } from 'lucide-react';
 import { updateGlobalConfig } from '@/lib/firestore';
 import toast from 'react-hot-toast';
@@ -187,6 +187,8 @@ export default function SuperadminHomepageControls({ globalConfig = {} }) {
     faq: initialSections.faq !== false,
     newsletter: initialSections.newsletter !== false,
   });
+  const [sectionContent, setSectionContent] = useState(globalConfig?.sectionContent || {});
+  const [editingSection, setEditingSection] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [saving, setSaving] = useState(false);
 
@@ -198,16 +200,27 @@ export default function SuperadminHomepageControls({ globalConfig = {} }) {
     }));
   };
 
+  const updateSectionField = (key, field, value) => {
+    setSectionContent(prev => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] || {}),
+        [field]: value
+      }
+    }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
-    const toastId = toast.loading('হোমপেজ সেটিংস সেভ হচ্ছে...');
+    const toastId = toast.loading('হোমপেজ সেটিংস ও কনটেন্ট সেভ হচ্ছে...');
     try {
       await updateGlobalConfig({
         homepageSections: sections,
+        sectionContent: sectionContent,
         showAmazonBoxes: sections.amazonBoxes !== false,
         showAllProductsDirectly: sections.marketplace !== false
       });
-      toast.success('হোমপেজের সেকশন সেটিংস সফলভাবে আপডেট হয়েছে! 🎉', { id: toastId });
+      toast.success('হোমপেজের সেকশন ও টেক্সট কনফিগারেশন সফলভাবে আপডেট হয়েছে! 🎉', { id: toastId });
     } catch (err) {
       console.error(err);
       toast.error('সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।', { id: toastId });
@@ -337,6 +350,20 @@ export default function SuperadminHomepageControls({ globalConfig = {} }) {
                         </>
                       )}
                     </button>
+
+                    {/* Content Edit Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingSection(sec);
+                      }}
+                      className="px-2.5 py-0.5 rounded-full text-[11px] font-black flex items-center gap-1 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 transition-all cursor-pointer"
+                      title="সেকশনের লেখা ও ডিজাইন এডিট করুন"
+                    >
+                      <Edit3 size={11} className="text-purple-600" />
+                      <span>কনটেন্ট এডিট</span>
+                    </button>
                   </div>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     {sec.description}
@@ -374,6 +401,124 @@ export default function SuperadminHomepageControls({ globalConfig = {} }) {
           <span>{saving ? 'সংরক্ষণ হচ্ছে...' : 'পরিবর্তন সেভ করুন'}</span>
         </button>
       </div>
+      {/* ── Section Content & Text Customizer Modal ── */}
+      {editingSection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-purple-200 dark:border-slate-800 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-2xl bg-gradient-to-br ${editingSection.color} flex items-center justify-center text-white shrink-0 shadow-md`}>
+                  <editingSection.icon size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white">
+                    {editingSection.title}
+                  </h3>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 font-bold">
+                    কনটেন্ট ও টেক্সট কাস্টমাইজেশন
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingSection(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">
+                  সেকশন ব্যাজ / ট্যাগলাইন (Badge Text)
+                </label>
+                <input
+                  type="text"
+                  placeholder="যেমন: BD Retailers • আধুনিক ই-কমার্স তৈরির প্ল্যাটফর্ম"
+                  value={sectionContent[editingSection.key]?.badge || ''}
+                  onChange={(e) => updateSectionField(editingSection.key, 'badge', e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">
+                  সেকশন মূল শিরোনাম (Main Title / Heading)
+                </label>
+                <input
+                  type="text"
+                  placeholder="যেমন: সকল ভেরিফাইড শপের পণ্য এক জায়গায় ব্রাউজ ও কেনাকাটা করুন"
+                  value={sectionContent[editingSection.key]?.title || ''}
+                  onChange={(e) => updateSectionField(editingSection.key, 'title', e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">
+                  সেকশন সাবটাইটেল বা বিবরণী (Subtitle / Description)
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="যেমন: আমাদের প্ল্যাটফর্মের সব বিশ্বস্ত রিটেইলারদের সেরা পণ্য সরাসরি দেখুন ও অর্ডার করুন..."
+                  value={sectionContent[editingSection.key]?.subtitle || ''}
+                  onChange={(e) => updateSectionField(editingSection.key, 'subtitle', e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">
+                    বাটন ১ লেখা (CTA Text)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: আপনি ও ট্রাই করুন"
+                    value={sectionContent[editingSection.key]?.ctaText || ''}
+                    onChange={(e) => updateSectionField(editingSection.key, 'ctaText', e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">
+                    বাটন ১ লিংক (CTA Link)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: /become-retailer"
+                    value={sectionContent[editingSection.key]?.ctaLink || ''}
+                    onChange={(e) => updateSectionField(editingSection.key, 'ctaLink', e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-purple-500 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEditingSection(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingSection(null);
+                  toast.success('কনটেন্ট আপডেট প্রস্তুত! সংরক্ষণ করতে "পরিবর্তন সেভ করুন" বাটনে ক্লিক করুন।');
+                }}
+                className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer"
+              >
+                <Check size={14} />
+                <span>সম্পন্ন করুন</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

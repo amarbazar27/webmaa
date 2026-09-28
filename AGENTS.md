@@ -69,3 +69,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - The entire 280+ Agency Agents repository is permanently installed locally at `C:\Users\missi\.gemini\agency-agents` and `C:\Users\missi\.claude\agents`.
 - The user does not need to invoke agents manually. The AI autonomously detects the task domain and assumes the specialist persona (Frontend Developer, UI Designer, Backend Architect, Security Auditor, Growth Marketer, QA Engineer) while strictly adhering to Ponytail anti-bloat and Alibaba quality rules.
 
+# ⚡ ECC (Everything Claude Code) Agent Harness & Instincts Guidelines
+- **Research-First Hypothesis Testing**: Diagnose issues by reading code and runtime state before proposing edits. Check root causes over superficial caller patches.
+- **Minimal Blast Radius**: Modify only files directly related to the task. Avoid unsolicited refactoring of unaffected code or adding speculative boilerplate.
+- **Progressive Disclosure & Context Preservation**: Use sliced line reading and targeted grep instead of whole-file dumps.
+- **Rigorous Definition of Done (DoD)**:
+  1. Clean production build verification (`npm run build` or equivalent).
+  2. Zero lint/syntax regressions.
+  3. Git diff review before committing to eliminate accidental artifacts.
+  4. Automatic commit and push triggering deployment (`npm run deploy`).
+
+

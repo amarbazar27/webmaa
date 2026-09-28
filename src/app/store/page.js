@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ShoppingBag, Search, Store, ArrowRight, ArrowUpRight,
   ShoppingCart, Plus, Minus, X, Filter, Loader2, CheckCircle,
-  Tag, ExternalLink, ChevronRight, Eye, Sparkles, ArrowLeft
+  Tag, ExternalLink, ChevronRight, Eye, Sparkles, ArrowLeft, LogIn
 } from 'lucide-react';
 import { getAllMarketplaceProducts, getAllShops, subscribeGlobalConfig } from '@/lib/firestore';
 import toast from 'react-hot-toast';
@@ -50,6 +51,7 @@ function normalizePhonetic(text) {
 
 export default function StoreMarketplacePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -242,6 +244,78 @@ export default function StoreMarketplacePage() {
   const totalCartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
   const totalCartAmount = cart.reduce((sum, item) => sum + (Number(item.price || 0) * (item.quantity || 1)), 0);
 
+  // ── Secure Retailer Checkout Redirection Flow ──
+  const handleProceedToCheckout = (targetShopSlug = null) => {
+    // 1. Mandatory Login Check
+    if (!user) {
+      toast.error('অর্ডার সম্পন্ন করতে অনুগ্রহ করে প্রথমে আপনার একাউন্টে লগইন করুন!', {
+        icon: '🔐',
+        duration: 4000
+      });
+      setIsCartOpen(false);
+      router.push('/login?redirect=/store');
+      return;
+    }
+
+    if (cart.length === 0) {
+      toast.error('আপনার শপিং কার্ট খালি!');
+      return;
+    }
+
+    // 2. Identify target shop for checkout
+    const shopItems = targetShopSlug 
+      ? cart.filter(item => (item.shopSlug || 'main') === targetShopSlug)
+      : cart;
+
+    const primaryItem = shopItems[0] || cart[0];
+    const shopSlug = primaryItem?.shopSlug || 'main';
+    const shopName = primaryItem?.shopName || shopSlug;
+    const customDomain = primaryItem?.customDomain;
+    const domainStatus = primaryItem?.domainStatus;
+
+    // Filter items specific to this shop
+    const itemsForThisShop = cart.filter(item => (item.shopSlug || 'main') === shopSlug);
+
+    // Build cross-store import payload
+    const importPayload = JSON.stringify(itemsForThisShop.map(i => ({
+      productId: i.productId,
+      name: i.name,
+      price: i.price,
+      quantity: i.quantity || 1,
+      imageUrl: i.imageUrl || ''
+    })));
+
+    const searchParams = new URLSearchParams({
+      importCart: importPayload,
+      checkout: '1',
+      customerName: user.displayName || '',
+      customerEmail: user.email || '',
+      customerPhone: user.phoneNumber || ''
+    }).toString();
+
+    let targetUrl = '';
+    if (customDomain && (domainStatus === 'active' || domainStatus === 'verified' || !domainStatus)) {
+      targetUrl = `https://${customDomain}/?${searchParams}`;
+    } else {
+      targetUrl = `/shop/${shopSlug}?${searchParams}`;
+    }
+
+    // Remove checked out items from central store cart
+    const remainingCart = cart.filter(item => (item.shopSlug || 'main') !== shopSlug);
+    saveCart(remainingCart);
+    setIsCartOpen(false);
+
+    toast.success(`${shopName} এর অর্ডার চেকআউটে নিয়ে যাওয়া হচ্ছে... 🚀`, {
+      icon: '🛍️',
+      duration: 3500
+    });
+
+    // Directly navigate to the retailer's checkout page
+    setTimeout(() => {
+      window.location.href = targetUrl;
+    }, 350);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-slate-100 font-sans selection:bg-purple-600 selection:text-white pb-20">
       
@@ -402,12 +476,18 @@ export default function StoreMarketplacePage() {
 
         {/* ── 3. ALL PRODUCTS GRID ── */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
-              <div key={n} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-3 space-y-3">
-                <div className="aspect-square bg-slate-200 dark:bg-white/5 rounded-xl w-full" />
-                <div className="h-3 bg-slate-200 dark:bg-white/5 rounded w-3/4" />
-                <div className="h-4 bg-slate-200 dark:bg-white/5 rounded w-1/2" />
+              <div key={n} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2.5 sm:p-3 space-y-2.5 shadow-2xs">
+                <div className="aspect-square w-full rounded-xl skeleton" />
+                <div className="space-y-1.5 pt-0.5">
+                  <div className="h-3.5 w-11/12 rounded-full skeleton" />
+                  <div className="h-3 w-7/12 rounded-full skeleton opacity-75" />
+                </div>
+                <div className="flex items-center justify-between pt-1 gap-2">
+                  <div className="h-4 w-14 rounded-full skeleton" />
+                  <div className="h-7 w-16 rounded-xl skeleton" />
+                </div>
               </div>
             ))}
           </div>
@@ -438,6 +518,8 @@ export default function StoreMarketplacePage() {
                     <img
                       src={product.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80'}
                       alt={product.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
 
@@ -713,13 +795,21 @@ export default function StoreMarketplacePage() {
                   </p>
                   
                   <button
-                    onClick={() => {
-                      toast.success('চেকআউট সফলভাবে শুরু হয়েছে! অর্ডার প্রসেসিং সম্পন্ন করতে সংশ্লিষ্ট মার্চেন্টের সাথে যোগাযোগ করা হচ্ছে।');
-                      setIsCartOpen(false);
-                    }}
-                    className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer"
+                    onClick={() => handleProceedToCheckout()}
+                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 hover:opacity-95 text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
-                    চেকআউট সম্পন্ন করুন (৳ {totalCartAmount.toLocaleString()})
+                    {!user ? (
+                      <>
+                        <LogIn size={15} />
+                        <span>লগইন করে চেকআউট সম্পন্ন করুন (৳ {totalCartAmount.toLocaleString()})</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={15} />
+                        <span>চেকআউট সম্পন্ন করুন (৳ {totalCartAmount.toLocaleString()})</span>
+                        <ArrowRight size={14} />
+                      </>
+                    )}
                   </button>
 
                   <button

@@ -842,6 +842,18 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     }
   }, [user, cart.length]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get('checkout') === '1' || sp.get('order') === '1' || sp.get('checkout') === 'true') {
+        const timer = setTimeout(() => {
+          setIsOrderOpen(true);
+        }, 400);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [cart.length]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isOrderOpen, setIsOrderOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);

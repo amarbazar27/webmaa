@@ -21,12 +21,13 @@ const SuperadminSubscribersPanel = dynamic(() => import('@/components/superadmin
 const SuperadminSponsorsManager = dynamic(() => import('@/components/superadmin/SuperadminSponsorsManager'), { ssr: false });
 const SuperadminFaqManager = dynamic(() => import('@/components/superadmin/SuperadminFaqManager'), { ssr: false });
 const SuperadminTemplatesManager = dynamic(() => import('@/components/superadmin/SuperadminTemplatesManager'), { ssr: false });
+const SuperadminMarketingHub = dynamic(() => import('@/components/superadmin/SuperadminMarketingHub'), { ssr: false });
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
   Globe, Link2, Pause, Play, ExternalLink, LogIn, ShieldAlert, History, Search, Filter, ChevronRight,
   Cloud, Plus, Edit2, ImagePlus, Package, MessageCircle, Copy, TrendingUp, Percent, DollarSign, Receipt, RefreshCw, AlertCircle, Bell,
-  Layout, HelpCircle, Handshake, Truck, Lock, Save, Palette
+  Layout, HelpCircle, Handshake, Truck, Lock, Save, Palette, Target
 } from 'lucide-react';
 import { Button, Card, Input } from '@/components/ui';
 import { logoutUser } from '@/lib/auth';
@@ -1411,6 +1412,18 @@ export default function SuperAdminPage() {
                 >
                   <Layout size={16} />
                   <span>হোমপেজ সেকশন অন / অফ</span>
+                </button>
+
+                <button
+                  onClick={() => setSuperadminTab('marketing_hub')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                    superadminTab === 'marketing_hub'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Target size={16} />
+                  <span>পিক্সেল ও মার্কেটিং সেটআপ</span>
                 </button>
 
                 <button
@@ -4360,6 +4373,10 @@ export default function SuperAdminPage() {
 
       {superadminTab === 'homepage_sections' && canAccess('view_homepage_cms') && (
         <SuperadminHomepageControls globalConfig={globalConfig} />
+      )}
+
+      {superadminTab === 'marketing_hub' && canAccess('view_homepage_cms') && (
+        <SuperadminMarketingHub globalConfig={globalConfig} />
       )}
 
       {superadminTab === 'pricing_customizer' && canAccess('view_homepage_cms') && (

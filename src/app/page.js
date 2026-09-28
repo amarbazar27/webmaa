@@ -11,6 +11,8 @@ import {
   ShieldCheck, Truck, Clock, Maximize2, Minimize2, LogIn, LayoutDashboard
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
+import NotificationInbox from '@/components/shared/NotificationInbox';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
 import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug, getAllShops, getUserOrders } from '@/lib/firestore';
 import toast from 'react-hot-toast';
@@ -164,6 +166,7 @@ function normalizePhonetic(text) {
 
 export default function Home() {
   const { user, userData, forceUpdateAuth } = useAuth();
+  const { language, toggleLanguage, t } = useLanguage();
   const router = useRouter();
   const [loggingIn, setLoggingIn] = useState(false);
   const [globalConfig, setGlobalConfig] = useState(null);
@@ -1542,19 +1545,24 @@ export default function Home() {
               )}
             </div>
 
-            {/* Cart Button */}
+            {/* Notification Inbox (Left of BN/EN toggle) */}
+            <NotificationInbox 
+              isDashboard={false}
+              triggerClassName="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shadow-xs"
+            />
+
+            {/* Native BN / EN Language Switch Toggle */}
             <button
-              onClick={() => setIsCartOpen(true)}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shadow-xs"
-              title="শপিং কার্ট"
-              aria-label="Shopping Cart"
+              onClick={toggleLanguage}
+              className="h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all font-bold text-xs shadow-xs"
+              title={language === 'bn' ? 'Switch to English' : 'বাংলায় দেখুন'}
+              aria-label="Toggle Language"
             >
-              <ShoppingCart size={18} />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 bg-emerald-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">
-                  {cartItemCount}
-                </span>
-              )}
+              <Globe size={14} className="text-emerald-600 dark:text-emerald-400" />
+              <span className="font-bold">{language === 'bn' ? 'বাং' : 'EN'}</span>
+              <span className="text-[10px] px-1 py-0.5 rounded font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                {language === 'bn' ? 'EN' : 'বাং'}
+              </span>
             </button>
 
             {/* Direct Auth / Dashboard CTA — login er por dashboard show hobe */}
@@ -1564,29 +1572,29 @@ export default function Home() {
                   <Link 
                     href={getDashboardHref()} 
                     className="px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                    title="ড্যাশবোর্ড"
+                    title={t('ড্যাশবোর্ড', 'Dashboard')}
                   >
                     <LayoutDashboard size={14} />
-                    <span>ড্যাশবোর্ড</span>
+                    <span>{t('ড্যাশবোর্ড', 'Dashboard')}</span>
                   </Link>
                 ) : (
                   <Link 
                     href="/become-retailer" 
                     className="px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                    title="স্টোর তৈরি করুন"
+                    title={t('স্টোর তৈরি করুন', 'Create Store')}
                   >
                     <Store size={14} />
-                    <span>স্টোর খুলুন</span>
+                    <span>{t('স্টোর খুলুন', 'Open Store')}</span>
                   </Link>
                 )
               ) : (
                 <Link 
                   href="/login" 
                   className="px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                  title="লগইন করুন"
+                  title={t('লগইন করুন', 'Login')}
                 >
                   <LogIn size={14} />
-                  <span>লগইন</span>
+                  <span>{t('লগইন', 'Login')}</span>
                 </Link>
               )}
             </div>
@@ -1602,46 +1610,72 @@ export default function Home() {
             <div className="space-y-2 max-w-3xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
                 <Store size={14} className="text-emerald-600 dark:text-emerald-400" />
-                <span>BD Retailers • আধুনিক ই-কমার্স প্ল্যাটফর্ম</span>
+                <span>{globalConfig?.sectionContent?.hero?.badge || t('BD Retailers • আধুনিক ই-কমার্স তৈরির প্ল্যাটফর্ম', 'BD Retailers • Modern E-Commerce Creation Platform')}</span>
               </div>
               <p className="text-sm sm:text-base font-medium text-slate-800 dark:text-slate-100 leading-relaxed">
-                BD Retailers বাংলাদেশের আধুনিক ই-কমার্স প্ল্যাটফর্ম, যেখানে মাত্র ১ মিনিটেই একটি পূর্ণাঙ্গ অনলাইন স্টোর তৈরি করা যায়। <span className="text-emerald-700 dark:text-emerald-400 font-bold">MesserBazar.com</span> ও <span className="text-slate-900 dark:text-slate-100 font-bold">CameraKini.com</span>-এর মতো ওয়েবসাইট ইতোমধ্যেই আমাদের প্ল্যাটফর্মে পরিচালিত হচ্ছে। আজই আপনার ব্যবসাকে ডিজিটাল রূপ দিন এবং আত্মবিশ্বাসের সঙ্গে অনলাইনে বিক্রি শুরু করুন।
+                {language === 'bn' ? (
+                  <>
+                    BD Retailers বাংলাদেশের আধুনিক ই-কমার্স প্ল্যাটফর্ম, যেখানে মাত্র ১ মিনিটেই একটি পূর্ণাঙ্গ অনলাইন স্টোর তৈরি করা যায়।{' '}
+                    <a
+                      href="https://messerbazar.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-700 dark:text-emerald-400 font-bold underline decoration-emerald-400 hover:text-emerald-800 transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+                      title="MesserBazar.com ভিজিট করুন"
+                    >
+                      MesserBazar.com
+                    </a>
+                    {' '}ও{' '}
+                    <a
+                      href="https://camerakini.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-900 dark:text-slate-100 font-bold underline decoration-slate-400 hover:text-emerald-700 transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+                      title="CameraKini.com ভিজিট করুন"
+                    >
+                      CameraKini.com
+                    </a>
+                    -এর মতো ওয়েবসাইট ইতোমধ্যেই আমাদের প্ল্যাটফর্মে পরিচালিত হচ্ছে। আজই আপনার ব্যবসাকে ডিজিটাল রূপ দিন এবং আত্মবিশ্বাসের সঙ্গে অনলাইনে বিক্রি শুরু করুন।
+                  </>
+                ) : (
+                  <>
+                    BD Retailers is Bangladesh's modern e-commerce platform where a complete online store can be launched in just 1 minute.{' '}
+                    <a
+                      href="https://messerbazar.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-700 dark:text-emerald-400 font-bold underline decoration-emerald-400 hover:text-emerald-800 transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+                      title="Visit MesserBazar.com"
+                    >
+                      MesserBazar.com
+                    </a>
+                    {' '}and{' '}
+                    <a
+                      href="https://camerakini.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-slate-900 dark:text-slate-100 font-bold underline decoration-slate-400 hover:text-emerald-700 transition-colors inline-flex items-center gap-0.5 cursor-pointer"
+                      title="Visit CameraKini.com"
+                    >
+                      CameraKini.com
+                    </a>
+                    {' '}are already operating on our platform. Digitize your business today and start selling online with confidence.
+                  </>
+                )}
               </p>
             </div>
 
-            {/* Right: Quick Action CTAs */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+            {/* Right: Quick Action CTA — replaced 3 options with 'আপনিও ট্রাই করুন' */}
+            <div className="flex items-center shrink-0">
               <Link
-                href="/store"
-                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                href="/become-retailer"
+                className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 group"
+                title={t('স্টোর খুলুন এবং অনলাইনে বিক্রি শুরু করুন', 'Open a store and start selling')}
               >
-                <ShoppingBag size={14} />
-                <span>মূল মার্কেটপ্লেস স্টোর</span>
+                <Store size={16} className="transition-transform group-hover:scale-110" />
+                <span>{t('আপনিও ট্রাই করুন', 'Try It Yourself')}</span>
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
               </Link>
-              {user && getDashboardHref() ? (
-                <Link
-                  href={getDashboardHref()}
-                  className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                >
-                  <LayoutDashboard size={14} />
-                  <span>ড্যাশবোর্ড</span>
-                </Link>
-              ) : (
-                <Link
-                  href={user ? "/become-retailer" : "/login"}
-                  className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs border border-slate-200 dark:border-slate-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                >
-                  {user ? <Store size={14} /> : <LogIn size={14} />}
-                  <span>{user ? "স্টোর তৈরি করুন" : "লগইন"}</span>
-                </Link>
-              )}
-              <button
-                onClick={() => setIsAboutModalOpen(true)}
-                className="p-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
-                title="আমাদের সম্পর্কে জানুন"
-              >
-                ℹ️
-              </button>
             </div>
           </div>
         </div>
@@ -1654,13 +1688,13 @@ export default function Home() {
             <div className="space-y-2 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/90 border border-emerald-300/80 text-emerald-800 text-xs font-bold shadow-2xs">
                 <Globe size={13} className="text-emerald-700" />
-                <span>store.bdretailers.com • মূল মার্কেটপ্লেস</span>
+                <span>store.bdretailers.com • {t('মূল মার্কেটপ্লেস', 'Central Marketplace')}</span>
               </div>
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-snug">
-                সকল ভেরিফাইড শপের পণ্য এক জায়গায় ব্রাউজ ও কেনাকাটা করুন
+                {globalConfig?.sectionContent?.marketplaceGateway?.title || t('সকল ভেরিফাইড শপের পণ্য এক জায়গায় ব্রাউজ ও কেনাকাটা করুন', 'Browse & Shop Products from All Verified Stores in One Place')}
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-                আমাদের প্ল্যাটফর্মের সব বিশ্বস্ত রিটেইলারদের সেরা পণ্য সরাসরি দেখুন ও অর্ডার করুন আমাদের মূল মার্কেটপ্লেস স্টোর থেকে। ক্যাশ অন ডেলিভারি ও দ্রুত হোম ডেলিভারি সুবিধা।
+                {globalConfig?.sectionContent?.marketplaceGateway?.subtitle || t('আমাদের প্ল্যাটফর্মের সব বিশ্বস্ত রিটেইলারদের সেরা পণ্য সরাসরি দেখুন ও অর্ডার করুন আমাদের মূল মার্কেটপ্লেস স্টোর থেকে।', 'Browse and order top products directly from all trusted retailers across our main marketplace store.')}
               </p>
             </div>
 

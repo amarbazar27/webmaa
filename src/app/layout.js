@@ -1,7 +1,10 @@
 import './globals.css';
+import { Suspense } from 'react';
 import { Outfit } from 'next/font/google';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { LanguageProvider } from '@/context/LanguageContext';
+import PlatformAnalytics from '@/components/shared/PlatformAnalytics';
 import { Toaster } from 'react-hot-toast';
 import ScrollProgress from '@/components/ui/ScrollProgress';
 
@@ -255,15 +258,20 @@ export default function RootLayout({ children }) {
         <ScrollProgress />
         <ThemeProvider>
           <AuthProvider>
-            <main id="main-content" className="relative z-10 min-h-screen">
-              {children}
-            </main>
-            <Toaster 
-              position="bottom-left" 
-              toastOptions={{ 
-                style: { marginBottom: '20px', marginLeft: '20px' } 
-              }} 
-            />
+            <LanguageProvider>
+              <Suspense fallback={null}>
+                <PlatformAnalytics />
+              </Suspense>
+              <main id="main-content" className="relative z-10 min-h-screen">
+                {children}
+              </main>
+              <Toaster 
+                position="bottom-left" 
+                toastOptions={{ 
+                  style: { marginBottom: '20px', marginLeft: '20px' } 
+                }} 
+              />
+            </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
