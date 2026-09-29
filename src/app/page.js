@@ -1435,7 +1435,7 @@ export default function Home() {
   }, [activeShopFilter, filteredProducts, allShops]);
 
   return (
-    <div className="neo-root font-sans overflow-x-hidden pt-16 pb-20 lg:pb-10 transition-colors duration-300 bg-[#F8FAFC] text-[#0F172A]">
+    <div className="neo-root font-sans pt-16 pb-20 lg:pb-10 transition-colors duration-300 bg-[#F8FAFC] text-[#0F172A]">
       <style jsx global>{`
         body {
           background-color: #F8FAFC !important;

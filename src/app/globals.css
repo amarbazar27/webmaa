@@ -107,19 +107,15 @@
 
   html {
     scroll-behavior: smooth;
-    overflow-x: clip;
   }
 
   body {
-    min-height: 100vh;
-    overflow-x: clip;
     background-color: var(--bg-color);
     color: var(--text-color);
     font-family: var(--font-sans);
     transition: background-color 0.35s ease, color 0.35s ease;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overscroll-behavior-x: none;
     -webkit-tap-highlight-color: transparent;
   }
 }

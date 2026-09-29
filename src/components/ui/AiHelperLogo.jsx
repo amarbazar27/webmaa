@@ -3,30 +3,30 @@
 import React, { useId } from 'react';
 
 /**
- * 🌟 AiHelperLogo
- * Premium, friendly, non-generic AI Helper Assistant Logo for BD Retailers.
- * Features:
- * - Ultra-crisp vector geometry (scalable from 16px to 128px)
- * - Friendly glowing smart-assistant visor with warm expressive eyes
- * - Dynamic 4-point AI intelligence nexus spark
- * - Unique SVG gradient IDs via React useId() to prevent DOM collisions
- * - Optional micro-glow / breathing animation
+ * 🌟 AiHelperLogo v2 — Elite Neural Intelligence Star & Helper Orbit
+ * World-class modern AI emblem inspired by DeepMind, Claude, and Apple Intelligence.
+ * - Zero cartoonish / boxy robot clichés
+ * - Multi-faceted 4-point hyperbolic intelligence diamond star
+ * - Dynamic 3D-feel crystalline light reflection facets
+ * - Helper guidance orbit ring with satellite sparks
+ * - Unique SVG gradient IDs to prevent collisions
  */
 export default function AiHelperLogo({ 
   size = 24, 
   className = '', 
   animated = false,
-  showSparkle = true,
+  showOrbit = true,
   variant = 'icon' // 'icon' | 'badge'
 }) {
   const rawId = useId();
-  // Sanitize useId for valid SVG url(#id) in all browsers
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, '_');
 
-  const bodyGradientId = `ai_body_grad_${id}`;
-  const visorGradientId = `ai_visor_grad_${id}`;
-  const eyeGradientId = `ai_eye_grad_${id}`;
-  const sparkGradientId = `ai_spark_grad_${id}`;
+  const facetTopLeftId = `ai_tl_${id}`;
+  const facetTopRightId = `ai_tr_${id}`;
+  const facetBottomLeftId = `ai_bl_${id}`;
+  const facetBottomRightId = `ai_br_${id}`;
+  const miniSparkId = `ai_mini_${id}`;
+  const orbitGradId = `ai_orb_${id}`;
   const glowFilterId = `ai_glow_${id}`;
 
   const svgContent = (
@@ -41,127 +41,117 @@ export default function AiHelperLogo({
       aria-label="BD Retailers AI Helper"
     >
       <defs>
-        {/* Helper Head / Chassis Gradient */}
-        <linearGradient id={bodyGradientId} x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#34D399" />
-          <stop offset="35%" stopColor="#10B981" />
-          <stop offset="70%" stopColor="#059669" />
-          <stop offset="100%" stopColor="#0D9488" />
+        {/* Top-Left Facet: Pure crystalline light reflection */}
+        <linearGradient id={facetTopLeftId} x1="4" y1="4" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="40%" stopColor="#A7F3D0" />
+          <stop offset="100%" stopColor="#10B981" />
         </linearGradient>
 
-        {/* Visor Glass Gradient */}
-        <linearGradient id={visorGradientId} x1="24" y1="14" x2="24" y2="34" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#090D16" />
-          <stop offset="100%" stopColor="#1E293B" />
+        {/* Top-Right Facet: Cyan / Electric Teal intelligence flare */}
+        <linearGradient id={facetTopRightId} x1="44" y1="4" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="50%" stopColor="#06B6D4" />
+          <stop offset="100%" stopColor="#059669" />
         </linearGradient>
 
-        {/* Friendly Expressive Glowing Eyes */}
-        <linearGradient id={eyeGradientId} x1="14" y1="20" x2="34" y2="28" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#67E8F9" />
-          <stop offset="50%" stopColor="#38BDF8" />
-          <stop offset="100%" stopColor="#34D399" />
+        {/* Bottom-Left Facet: Deep Emerald body */}
+        <linearGradient id={facetBottomLeftId} x1="4" y1="44" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#047857" />
+          <stop offset="60%" stopColor="#059669" />
+          <stop offset="100%" stopColor="#10B981" />
         </linearGradient>
 
-        {/* Intelligence Nexus Sparkle Gradient */}
-        <linearGradient id={sparkGradientId} x1="32" y1="2" x2="46" y2="16" gradientUnits="userSpaceOnUse">
+        {/* Bottom-Right Facet: Rich Teal / Jade shade */}
+        <linearGradient id={facetBottomRightId} x1="44" y1="44" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#0F766E" />
+          <stop offset="50%" stopColor="#0D9488" />
+          <stop offset="100%" stopColor="#14B8A6" />
+        </linearGradient>
+
+        {/* Mini Helper Spark Gradient */}
+        <linearGradient id={miniSparkId} x1="31" y1="3" x2="45" y2="17" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#FDE047" />
-          <stop offset="45%" stopColor="#34D399" />
+          <stop offset="50%" stopColor="#34D399" />
           <stop offset="100%" stopColor="#38BDF8" />
         </linearGradient>
 
-        {/* Ambient Soft Glow Filter */}
-        <filter id={glowFilterId} x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#059669" floodOpacity="0.35" />
+        {/* Orbit Ring Gradient */}
+        <linearGradient id={orbitGradId} x1="6" y1="12" x2="42" y2="36" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.8" />
+          <stop offset="50%" stopColor="#10B981" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#A7F3D0" stopOpacity="0.2" />
+        </linearGradient>
+
+        {/* Soft Ambient Radial Glow */}
+        <filter id={glowFilterId} x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#10B981" floodOpacity="0.45" />
         </filter>
       </defs>
 
-      {/* ── 1. Smart Helper Head Chassis (Super-ellipse / aerodynamic curved capsule) ── */}
-      <rect 
-        x="6" 
-        y="8" 
-        width="36" 
-        height="32" 
-        rx="16" 
-        fill={`url(#${bodyGradientId})`} 
-        filter={`url(#${glowFilterId})`}
-      />
-
-      {/* Head Top Helper Antenna Puck */}
-      <path 
-        d="M21 8V5C21 4.44772 21.4477 4 22 4H26C26.5523 4 27 4.44772 27 5V8H21Z" 
-        fill={`url(#${bodyGradientId})`} 
-      />
-
-      {/* Headset / Smart Audio Sensor Ears (Friendly headphone nodes) */}
-      <rect x="3.5" y="18" width="4.5" height="12" rx="2.25" fill="#0D9488" />
-      <rect x="40" y="18" width="4.5" height="12" rx="2.25" fill="#0D9488" />
-
-      {/* ── 2. Visor Screen Glass ── */}
-      <rect 
-        x="10.5" 
-        y="13.5" 
-        width="27" 
-        height="21" 
-        rx="10.5" 
-        fill={`url(#${visorGradientId})`} 
-        stroke="rgba(255,255,255,0.18)" 
-        strokeWidth="1.2"
-      />
-
-      {/* Visor Glass Curved Top Reflection Highlight */}
-      <path 
-        d="M14 17C16.5 15.2 20.5 14.5 24 14.5C27.5 14.5 31.5 15.2 34 17" 
-        stroke="rgba(255,255,255,0.3)" 
-        strokeWidth="1" 
-        strokeLinecap="round" 
-      />
-
-      {/* ── 3. Friendly Animated Eyes (Warm, Happy, Approachable helper arcs) ── */}
-      {/* Left Eye */}
-      <g>
-        <path 
-          d="M15.5 24.5C15.5 22 17.5 20.5 19.5 20.5C21.5 20.5 23.5 22 23.5 24.5" 
-          stroke={`url(#${eyeGradientId})`} 
-          strokeWidth="2.4" 
-          strokeLinecap="round" 
-        />
-        {/* Subtle eye pupil glow center */}
-        <circle cx="19.5" cy="23.5" r="1" fill="#FFFFFF" opacity="0.9" />
-      </g>
-
-      {/* Right Eye */}
-      <g>
-        <path 
-          d="M24.5 24.5C24.5 22 26.5 20.5 28.5 20.5C30.5 20.5 32.5 22 32.5 24.5" 
-          stroke={`url(#${eyeGradientId})`} 
-          strokeWidth="2.4" 
-          strokeLinecap="round" 
-        />
-        {/* Subtle eye pupil glow center */}
-        <circle cx="28.5" cy="23.5" r="1" fill="#FFFFFF" opacity="0.9" />
-      </g>
-
-      {/* ── 4. Friendly Helper Smile (Subtle micro-smile indicator) ── */}
-      <path 
-        d="M21.5 29C22.8 30.2 25.2 30.2 26.5 29" 
-        stroke="#6EE7B7" 
-        strokeWidth="1.6" 
-        strokeLinecap="round" 
-        opacity="0.85"
-      />
-
-      {/* ── 5. AI Cognition Nexus Sparkle (Top-Right Spark) ── */}
-      {showSparkle && (
-        <g className="transform origin-[39px_8px] transition-transform">
-          {/* Glowing 4-point Diamond Star */}
-          <path 
-            d="M39 2C39.4 5.5 41.5 7.6 45 8C41.5 8.4 39.4 10.5 39 14C38.6 10.5 36.5 8.4 33 8C36.5 7.6 38.6 5.5 39 2Z" 
-            fill={`url(#${sparkGradientId})`}
+      {/* ── 1. Helper Guidance Orbit Ring (Elliptical Neural Track) ── */}
+      {showOrbit && (
+        <g opacity="0.85">
+          <ellipse 
+            cx="24" 
+            cy="24" 
+            rx="20" 
+            ry="7.5" 
+            transform="rotate(-26 24 24)" 
+            stroke={`url(#${orbitGradId})`} 
+            strokeWidth="1.3" 
+            strokeDasharray="4 2.5"
           />
-          {/* Core White Sparkle Center */}
-          <circle cx="39" cy="8" r="1.3" fill="#FFFFFF" />
+          {/* Orbiting Satellite Node 1 */}
+          <circle cx="8" cy="20" r="1.5" fill="#38BDF8" />
+          {/* Orbiting Satellite Node 2 */}
+          <circle cx="40" cy="28" r="1.5" fill="#34D399" />
         </g>
       )}
+
+      {/* ── 2. Master AI Intelligence Star (Faceted 4-Point Diamond Nexus) ── */}
+      <g filter={`url(#${glowFilterId})`}>
+        {/* Top-Left Facet */}
+        <path 
+          d="M 24 4 C 24 14.5, 14.5 24, 4 24 L 24 24 Z" 
+          fill={`url(#${facetTopLeftId})`} 
+        />
+
+        {/* Top-Right Facet */}
+        <path 
+          d="M 24 4 C 24 14.5, 33.5 24, 44 24 L 24 24 Z" 
+          fill={`url(#${facetTopRightId})`} 
+        />
+
+        {/* Bottom-Left Facet */}
+        <path 
+          d="M 4 24 C 14.5 24, 24 33.5, 24 44 L 24 24 Z" 
+          fill={`url(#${facetBottomLeftId})`} 
+        />
+
+        {/* Bottom-Right Facet */}
+        <path 
+          d="M 44 24 C 33.5 24, 24 33.5, 24 44 L 24 24 Z" 
+          fill={`url(#${facetBottomRightId})`} 
+        />
+
+        {/* Sleek Facet Separation Seams for Dimensional Luxury */}
+        <line x1="24" y1="4" x2="24" y2="44" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+        <line x1="4" y1="24" x2="44" y2="24" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+      </g>
+
+      {/* ── 3. Central Crystalline Sparkle Core ── */}
+      <circle cx="24" cy="24" r="2.8" fill="#FFFFFF" />
+      <circle cx="24" cy="24" r="1.4" fill="#A7F3D0" />
+
+      {/* ── 4. Mini Auxiliary Helper Spark (Top-Right Assistant Star) ── */}
+      <g>
+        <path 
+          d="M 38 4 C 38 7.5, 34.5 10, 31 10 C 34.5 10, 38 12.5, 38 16 C 38 12.5, 41.5 10, 45 10 C 41.5 10, 38 7.5, 38 4 Z" 
+          fill={`url(#${miniSparkId})`}
+        />
+        <circle cx="38" cy="10" r="1.1" fill="#FFFFFF" />
+      </g>
     </svg>
   );
 
