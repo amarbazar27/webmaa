@@ -49,13 +49,23 @@ export async function POST(req) {
     }
     const shopData = shopSnap.data();
 
-    // 3. Resolve API URL and Key
-    let utUrl = shopData?.uddoktapayUrl?.trim() || globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
-    let utApiKey = shopData?.uddoktapayApiKey?.trim() || globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
+    // 3. Resolve API URL and Key securely (Prevent SSRF & Credential Leak)
+    let utUrl = '';
+    let utApiKey = '';
 
     if (isSubscription || isDuePayment) {
       utUrl = globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
       utApiKey = globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
+    } else {
+      // For orders: only use shop-specific gateway if BOTH custom url and key are provided
+      if (shopData?.uddoktapayUrl?.trim() && shopData?.uddoktapayApiKey?.trim()) {
+        utUrl = shopData.uddoktapayUrl.trim();
+        utApiKey = shopData.uddoktapayApiKey.trim();
+      } else {
+        // Fall back strictly to platform global gateway
+        utUrl = globalData?.uddoktapayUrl?.trim() || globalData?.piprapayUrl?.trim() || '';
+        utApiKey = globalData?.uddoktapayApiKey?.trim() || globalData?.piprapayApiKey?.trim() || '';
+      }
     }
 
     if (utUrl) {
@@ -68,11 +78,28 @@ export async function POST(req) {
       }
     }
 
-    if (!utUrl || !utApiKey) {
-      return NextResponse.json({ error: 'UddoktaPay configuration is missing' }, { status: 400 });
+    // 🔒 SSRF Protection: Ensure target gateway URL is HTTPS and not a local/private network
+    const isSafeGatewayUrl = (urlStr) => {
+      try {
+        const u = new URL(urlStr);
+        if (u.protocol !== 'https:' && !u.hostname.includes('sandbox.uddoktapay.com')) {
+          if (u.protocol !== 'https:') return false;
+        }
+        const h = u.hostname.toLowerCase();
+        if (h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || h === '169.254.169.254') return false;
+        if (h.endsWith('.internal') || h.endsWith('.local')) return false;
+        if (/^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h)) return false;
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (!utUrl || !utApiKey || !isSafeGatewayUrl(utUrl)) {
+      return NextResponse.json({ error: 'Valid and secure UddoktaPay configuration is missing' }, { status: 400 });
     }
 
-    // 🔒 Server-to-server Verification
+    // 🔒 Server-to-server Verification with 10s timeout against slowloris/hanging
     console.log(`[UddoktaPay Webhook] Verifying invoice ${invoiceId} against ${utUrl}/api/verify-payment`);
     const verifyRes = await fetch(`${utUrl}/api/verify-payment`, {
       method: 'POST',
@@ -81,7 +108,8 @@ export async function POST(req) {
         'content-type': 'application/json',
         'RT-UDDOKTAPAY-API-KEY': utApiKey
       },
-      body: JSON.stringify({ invoice_id: invoiceId })
+      body: JSON.stringify({ invoice_id: invoiceId }),
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!verifyRes.ok) {

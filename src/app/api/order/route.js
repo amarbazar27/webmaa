@@ -1,13 +1,23 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { createRateLimiter } from '@/lib/rate-limit';
+
+const orderLimiter = createRateLimiter({ maxRequests: 30, windowMs: 60000, prefix: 'order_track' });
+
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const shopSlug = searchParams.get('shopSlug');
-    const orderId = searchParams.get('orderId');
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { limited } = await orderLimiter.check(ip);
+    if (limited) {
+      return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+    }
 
-    if (!shopSlug || !orderId) {
-      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
+    const { searchParams } = new URL(req.url);
+    const shopSlug = searchParams.get('shopSlug')?.trim();
+    const orderId = searchParams.get('orderId')?.trim();
+
+    if (!shopSlug || !orderId || shopSlug.length > 80 || orderId.length > 80) {
+      return NextResponse.json({ error: 'Missing or invalid parameters' }, { status: 400 });
     }
 
     // Find the shop

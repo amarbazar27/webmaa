@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server';
 import { sendOTPEmail } from '@/lib/ruflo';
 import { FieldValue, adminDb } from '@/lib/firebase-admin';
 
+import { createRateLimiter } from '@/lib/rate-limit';
+
+// 🔒 IP-level limiter: max 5 OTP requests per 5 minutes per IP (blocks automated bot bombing)
+const ipOtpLimiter = createRateLimiter({ maxRequests: 5, windowMs: 300000, prefix: 'otp_ip' });
+
 // CRIT-7 Fix: Rate limit OTP requests (Firestore-based, works on serverless)
 const OTP_RATE_LIMIT = 5;       // max requests per window
 const OTP_RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour window
@@ -39,6 +44,16 @@ async function isOtpRateLimited(email) {
 
 export async function POST(req) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+
+    // 🔒 1. IP-level rate limit check (anti-bot / anti-bombing)
+    const { limited: ipLimited } = await ipOtpLimiter.check(ip);
+    if (ipLimited) {
+      return NextResponse.json({ 
+        error: 'অনেক বেশি ওটিপি রিকোয়েস্ট করা হয়েছে। অনুগ্রহ করে ৫ মিনিট পর আবার চেষ্টা করুন।' 
+      }, { status: 429 });
+    }
+
     const { email } = await req.json();
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'সঠিক ইমেইল ঠিকানা প্রদান করুন।' }, { status: 400 });
@@ -46,7 +61,7 @@ export async function POST(req) {
 
     const cleanEmail = email.toLowerCase().trim();
 
-    // 🔒 CRIT-7: Rate limit check
+    // 🔒 2. Email-level rate limit check
     if (await isOtpRateLimited(cleanEmail)) {
       return NextResponse.json({ 
         error: 'অনেক বেশি ওটিপি রিকোয়েস্ট করা হয়েছে। ১ ঘন্টা পর আবার চেষ্টা করুন।' 

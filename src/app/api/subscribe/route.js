@@ -1,12 +1,32 @@
 import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { adminDb } from '@/lib/firebase-admin';
+import { createRateLimiter } from '@/lib/rate-limit';
+
+const subscribeLimiter = createRateLimiter({ maxRequests: 5, windowMs: 3600000, prefix: 'newsletter_sub' });
 
 export async function POST(request) {
   try {
-    const { email } = await request.json();
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
 
-    if (!email || !email.includes('@') || !email.includes('.')) {
+    // 🔒 1. Rate Limiting Check
+    const { limited } = await subscribeLimiter.check(ip);
+    if (limited) {
+      return NextResponse.json(
+        { error: 'অনেক বেশি অনুরোধ করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।' },
+        { status: 429 }
+      );
+    }
+
+    const body = await request.json();
+    const { email, honeypot } = body;
+
+    // 🔒 2. Anti-Bot Honeypot Defense
+    if (honeypot && honeypot.length > 0) {
+      return NextResponse.json({ error: 'Bot detected' }, { status: 403 });
+    }
+
+    if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return NextResponse.json(
         { error: 'অনুগ্রহ করে সঠিক ইমেইল অ্যাড্রেস দিন' },
         { status: 400 }

@@ -1,10 +1,19 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { FieldValue, adminAuth, adminDb } from '@/lib/firebase-admin';
+import { createRateLimiter } from '@/lib/rate-limit';
+
 const MAX_OTP_ATTEMPTS = 5; // Lock out after 5 failed attempts
+const ipVerifyLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60000, prefix: 'otp_verify_ip' });
 
 export async function POST(req) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { limited } = await ipVerifyLimiter.check(ip);
+    if (limited) {
+      return NextResponse.json({ error: 'অনেক বেশি চেষ্টা করা হয়েছে। ১ মিনিট পর চেষ্টা করুন।' }, { status: 429 });
+    }
+
     const { email, otp } = await req.json();
     if (!email || !otp) {
       return NextResponse.json({ error: 'ইমেইল এবং ওটিপি উভয়ই প্রয়োজন।' }, { status: 400 });

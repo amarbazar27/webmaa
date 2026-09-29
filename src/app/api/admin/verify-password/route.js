@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { createRateLimiter } from '@/lib/rate-limit';
+
+const verifyLimiter = createRateLimiter({ maxRequests: 5, windowMs: 900000, prefix: 'superadmin_pwd' }); // 5 attempts per 15 mins
+const forgotLimiter = createRateLimiter({ maxRequests: 3, windowMs: 900000, prefix: 'superadmin_otp' }); // 3 OTP requests per 15 mins
+
 // Gmail SMTP transporter — uses env vars set in Vercel + .env.local
 function createTransporter() {
   return nodemailer.createTransport({
@@ -36,6 +41,7 @@ export async function POST(request) {
     }
 
     const { action, password, otp } = await request.json();
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || decoded.uid;
 
     const docRef = adminDb.collection('config').doc('superadmin_security');
     const docSnap = await docRef.get();
@@ -64,6 +70,10 @@ export async function POST(request) {
 
     // ── 2. Forgot Password — Send OTP via Gmail ───────────────
     if (action === 'forgot') {
+      const { limited: otpLimited } = await forgotLimiter.check(ip);
+      if (otpLimited) {
+        return NextResponse.json({ success: false, error: 'অনেক বেশি ওটিপি রিকোয়েস্ট করা হয়েছে। ১৫ মিনিট পর আবার চেষ্টা করুন।' }, { status: 429 });
+      }
       const adminEmail = process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL;
       if (!adminEmail) {
         return NextResponse.json(
@@ -119,6 +129,14 @@ export async function POST(request) {
 
     // ── 3. Verify Password ────────────────────────────────────
     if (action === 'verify') {
+      const { limited: verifyLimited } = await verifyLimiter.check(ip);
+      if (verifyLimited) {
+        return NextResponse.json(
+          { success: false, error: 'অনেক বেশি ভুল চেষ্টা করা হয়েছে। নিরাপত্তা স্বার্থে ১৫ মিনিট অপেক্ষা করুন।' },
+          { status: 429 }
+        );
+      }
+
       if (!data.passwordHash) {
         return NextResponse.json(
           { success: false, error: 'NO_PASSWORD_SET' },

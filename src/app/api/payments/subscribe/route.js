@@ -49,6 +49,17 @@ export async function POST(req) {
     }
     const shopData = shopSnap.data();
 
+    // Fetch owner user profile to get real email & phone number
+    const userSnap = await adminDb.collection('users').doc(shopId).get();
+    const userData = userSnap.exists ? userSnap.data() : {};
+    const ownerEmail = userData.email || shopData.ownerEmail || authUser.email || '';
+    const ownerPhone = userData.phone || shopData.phone || '';
+
+    // Determine current domain
+    const host = req.headers.get('host') || 'localhost:3000';
+    const protocol = host.startsWith('localhost') ? 'http' : 'https';
+    const domainUrl = `${protocol}://${host}`;
+
     // 1.1 Handle Starter Plan (Revenue Share) instant free activation
     if (packageType === 'starter') {
       const historyItem = {
@@ -98,17 +109,6 @@ export async function POST(req) {
         message: 'অভিনন্দন! আপনার স্টার্টার রেভিনিউ শেয়ার প্ল্যান সফলভাবে সক্রিয় হয়েছে! 🎉' 
       });
     }
-
-    // Fetch owner user profile to get real email & phone number
-    const userSnap = await adminDb.collection('users').doc(shopId).get();
-    const userData = userSnap.exists ? userSnap.data() : {};
-    const ownerEmail = userData.email || shopData.ownerEmail || '';
-    const ownerPhone = userData.phone || shopData.phone || '';
-
-    // Determine current domain
-    const host = req.headers.get('host') || 'localhost:3000';
-    const protocol = host.startsWith('localhost') ? 'http' : 'https';
-    const domainUrl = `${protocol}://${host}`;
 
     // 1.2 Handle Commission Due Payout (Revenue Share settlement)
     if (packageType === 'commission_due') {

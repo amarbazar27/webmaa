@@ -63,7 +63,8 @@ export async function POST(req) {
         'content-type': 'application/json',
         'mh-piprapay-api-key': ppApiKey
       },
-      body: JSON.stringify({ pp_id })
+      body: JSON.stringify({ pp_id }),
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!verifyRes.ok) {

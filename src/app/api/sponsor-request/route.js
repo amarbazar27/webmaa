@@ -1,11 +1,30 @@
 import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { adminDb } from '@/lib/firebase-admin';
+import { createRateLimiter } from '@/lib/rate-limit';
+
+const sponsorLimiter = createRateLimiter({ maxRequests: 5, windowMs: 3600000, prefix: 'sponsor_sub' });
 
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+
+    // 🔒 1. Rate Limiting Check
+    const { limited } = await sponsorLimiter.check(ip);
+    if (limited) {
+      return NextResponse.json(
+        { error: 'অনেক বেশি আবেদন জমা দেওয়া হয়েছে। কিছুক্ষণ পর চেষ্টা করুন।' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
-    const { companyName, contactName, email, phone, websiteUrl, logoUrl, note } = body;
+    const { companyName, contactName, email, phone, websiteUrl, logoUrl, note, honeypot } = body;
+
+    // 🔒 2. Anti-Bot Honeypot Defense
+    if (honeypot && honeypot.length > 0) {
+      return NextResponse.json({ error: 'Bot detected' }, { status: 403 });
+    }
 
     if (!companyName?.trim()) {
       return NextResponse.json({ error: 'কোম্পানি বা ব্র্যান্ডের নাম প্রয়োজন' }, { status: 400 });
@@ -19,13 +38,13 @@ export async function POST(request) {
     }
 
     const sponsorRequest = {
-      companyName: companyName.trim(),
-      contactName: contactName?.trim() || '',
-      email: email?.trim() || '',
-      phone: phone?.trim() || '',
-      websiteUrl: websiteUrl?.trim() || '',
-      logoUrl: logoUrl?.trim() || '',
-      note: note?.trim() || '',
+      companyName: companyName.trim().slice(0, 100),
+      contactName: (contactName?.trim() || '').slice(0, 100),
+      email: (email?.trim() || '').slice(0, 100),
+      phone: (phone?.trim() || '').slice(0, 20),
+      websiteUrl: (websiteUrl?.trim() || '').slice(0, 200),
+      logoUrl: (logoUrl?.trim() || '').slice(0, 500),
+      note: (note?.trim() || '').slice(0, 1000),
       status: 'pending',
       createdAt: new Date().toISOString()
     };

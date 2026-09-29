@@ -3,9 +3,18 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { checkSteadfastFraud } from '@/lib/steadfast';
 import { adminDb } from '@/lib/firebase-admin';
+import { createRateLimiter } from '@/lib/rate-limit';
+
+const fraudCheckLimiter = createRateLimiter({ maxRequests: 20, windowMs: 60000, prefix: 'fraud_check' });
 
 export async function GET(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { limited } = await fraudCheckLimiter.check(ip);
+    if (limited) {
+      return NextResponse.json({ error: 'অনেক বেশি রিকোয়েস্ট করা হয়েছে। ১ মিনিট পর চেষ্টা করুন।' }, { status: 429 });
+    }
+
     const { searchParams } = new URL(request.url);
     const phone = searchParams.get('phone') || '';
     const shopId = searchParams.get('shopId') || '';

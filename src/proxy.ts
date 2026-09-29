@@ -17,10 +17,40 @@ import type { NextRequest } from 'next/server';
 const rateLimitMap = new Map<string, { count: number, startTime: number }>();
 const domainCache = new Map<string, { slug: string | null, expiresAt: number }>();
 
+// ── Security Headers Injection ──
 function applySecurityHeaders(response: NextResponse, pathname: string): NextResponse {
-  // Disabled security headers temporarily to debug Auth conflict
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self)');
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
   return response;
 }
+
+// ── Edge WAF: Blocked Exploit & Probe Patterns ──
+const BLOCKED_PROBE_PATTERNS = [
+  /^\/\.env/i,
+  /^\/\.git/i,
+  /^\/\.aws/i,
+  /^\/\.ssh/i,
+  /^\/\.htaccess/i,
+  /^\/\.ds_store/i,
+  /^\/wp-(admin|login|content|includes)/i,
+  /^\/xmlrpc\.php/i,
+  /^\/phpmyadmin/i,
+  /^\/pma/i,
+  /^\/adminer/i,
+  /^\/eval-stdin/i,
+  /^\/cgi-bin/i,
+  /^\/actuator/i,
+  /^\/solr/i,
+  /\.(php|asp|aspx|jsp|cgi|pl|sh|bash|sql|bak|yaml|yml|orig|save)$/i
+];
+
+const BLOCKED_BOT_SIGNATURES = [
+  'sqlmap', 'nikto', 'masscan', 'wpscan', 'nuclei', 'dirbuster',
+  'gobuster', 'acunetix', 'nessus', 'havij', 'zgrab', 'censys'
+];
 
 // এই হোস্টগুলো কাস্টম ডোমেইন হিসেবে ধরা হবে না — সরাসরি পার হয়ে যাবে
 const BYPASS_HOSTS = [
@@ -105,12 +135,46 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   console.log(`[Proxy] host=${host} pathname=${pathname}`);
 
+  // ── Edge WAF: Drop known exploit probes & vulnerability scans immediately ──
+  const isMaliciousProbe = BLOCKED_PROBE_PATTERNS.some(pattern => pattern.test(pathname));
+  if (isMaliciousProbe) {
+    return applySecurityHeaders(
+      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+      pathname
+    );
+  }
+
+  // ── Edge WAF: Drop known security scanning tools ──
+  const userAgent = (request.headers.get('user-agent') || '').toLowerCase();
+  const isBadBot = BLOCKED_BOT_SIGNATURES.some(bot => userAgent.includes(bot));
+  if (isBadBot) {
+    return applySecurityHeaders(
+      NextResponse.json({ error: 'Access Denied' }, { status: 403 }),
+      pathname
+    );
+  }
+
+  // ── Anti-Slowloris & Memory Protection: Reject oversized payloads at edge ──
+  const rawContentLength = request.headers.get('content-length');
+  if (rawContentLength) {
+    const contentLength = parseInt(rawContentLength, 10);
+    const maxBytes = pathname.startsWith('/api/upload') ? 26 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (contentLength > maxBytes) {
+      return applySecurityHeaders(
+        NextResponse.json({ error: 'Payload too large' }, { status: 413 }),
+        pathname
+      );
+    }
+  }
+
   // ---------------------------------------------------------
-  // 1. RATE LIMITING (all requests, basic DDoS protection)
+  // 1. TIERED RATE LIMITING (Edge Firewall per route sensitivity)
   // ---------------------------------------------------------
   if (pathname.startsWith('/api/')) {
+    const routeKey = pathname.split('?')[0];
+    const ipKey = `${ip}:${routeKey}`;
     const windowStart = Date.now() - 60000;
-    const countData = rateLimitMap.get(ip) || { count: 0, startTime: Date.now() };
+    const countData = rateLimitMap.get(ipKey) || { count: 0, startTime: Date.now() };
 
     if (countData.startTime < windowStart) {
       countData.count = 1;
@@ -119,9 +183,18 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       countData.count++;
     }
 
-    rateLimitMap.set(ip, countData);
+    rateLimitMap.set(ipKey, countData);
 
-    if (countData.count > 100) {
+    let maxAllowed = 100; // general API
+    if (routeKey === '/api/auth/send-otp') maxAllowed = 6;
+    else if (routeKey === '/api/checkout') maxAllowed = 12;
+    else if (routeKey === '/api/upload') maxAllowed = 12;
+    else if (routeKey === '/api/ai' || routeKey === '/api/ai-vision') maxAllowed = 15;
+    else if (routeKey === '/api/subscribe' || routeKey === '/api/sponsor-request') maxAllowed = 8;
+    else if (routeKey === '/api/courier/fraud-check') maxAllowed = 25;
+    else if (routeKey === '/api/auth/delete-account') maxAllowed = 5;
+
+    if (countData.count > maxAllowed) {
       return applySecurityHeaders(
         NextResponse.json({ error: 'Too many requests. Rate limit exceeded.' }, { status: 429 }),
         pathname
