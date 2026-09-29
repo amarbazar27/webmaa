@@ -18,6 +18,7 @@ import { subscribeGlobalConfig, getAllMarketplaceProducts, getShopBySlug, getAll
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
+import AiHelperLogo from '@/components/ui/AiHelperLogo';
 import PricingSection from '@/components/home/PricingSection';
 import FaqSection from '@/components/home/FaqSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
@@ -3386,19 +3387,24 @@ export default function Home() {
       <div className="fixed bottom-24 sm:bottom-8 right-4 sm:right-6 z-[120] flex flex-col items-end gap-3 pointer-events-auto select-none animate-fade-in">
         {/* 1. AI Companion Trigger */}
         <div className="flex items-center gap-2 group">
-          <span className="hidden sm:inline-block bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-xl shadow-md border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
-            AI Assistant
+          <span className="hidden sm:inline-block bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-md border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+            AI শপিং সহকারী (Assistant)
           </span>
           <button 
             onClick={() => {
               setAiTab('chat');
               setIsAiOpen(true);
             }}
-            className="w-12 h-12 sm:w-13 sm:h-13 bg-slate-900 hover:bg-slate-800 text-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all border border-slate-700 cursor-pointer shadow-slate-900/30 relative"
+            className="w-13 h-13 sm:w-14 sm:h-14 bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 hover:from-slate-850 hover:to-emerald-900 text-white rounded-2xl flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all border border-emerald-500/40 cursor-pointer shadow-emerald-950/40 relative group/btn"
             title="AI Shopping Assistant"
             aria-label="AI Shopping Assistant"
           >
-            <Bot size={22} className="stroke-[2.5]" />
+            <AiHelperLogo size={32} animated />
+            {/* Live active pulsing indicator */}
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-slate-950"></span>
+            </span>
           </button>
         </div>
 

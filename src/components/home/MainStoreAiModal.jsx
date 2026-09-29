@@ -7,6 +7,7 @@ import {
   Maximize2, Minimize2, ChevronLeft, Store, Tag, ArrowRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AiHelperLogo from '@/components/ui/AiHelperLogo';
 
 const MARKETPLACE_SUGGESTED_PROMPTS = [
   { id: 1, label: '🛒 সেরা সাশ্রয়ী অফার', text: 'আজকের মার্কেটপ্লেসের সবচেয়ে জনপ্রিয় ও সাশ্রয়ী পণ্য কোনগুলো?' },
@@ -321,8 +322,8 @@ Rules:
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-950 text-white p-3.5 sm:p-4 flex justify-between items-center border-b border-emerald-900/50 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-white/15 rounded-xl flex items-center justify-center text-white shadow-xs shrink-0">
-              <Bot size={20} className="stroke-[2.5]" />
+            <div className="w-10 h-10 bg-slate-900/90 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-white shadow-sm shrink-0">
+              <AiHelperLogo size={26} animated />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
@@ -480,12 +481,18 @@ Rules:
                 const isUser = msg.role === 'user';
 
                 return (
-                  <div key={msg.id} className={`flex flex-col gap-1.5 max-w-[88%] ${isUser ? 'self-end' : 'self-start'}`}>
-                    <div className={`group relative p-3 sm:p-3.5 rounded-2xl text-xs sm:text-sm font-medium leading-relaxed shadow-xs ${
-                      isUser 
-                        ? 'bg-emerald-600 text-white rounded-tr-none' 
-                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
-                    }`}>
+                  <div key={msg.id} className={`flex gap-2 max-w-[90%] ${isUser ? 'self-end flex-row-reverse' : 'self-start items-start'}`}>
+                    {!isUser && (
+                      <div className="w-7 h-7 rounded-xl bg-slate-900 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                        <AiHelperLogo size={18} />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                      <div className={`group relative p-3 sm:p-3.5 rounded-2xl text-xs sm:text-sm font-medium leading-relaxed shadow-xs ${
+                        isUser 
+                          ? 'bg-emerald-600 text-white rounded-tr-none' 
+                          : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
+                      }`}>
                       {/* Copy message button */}
                       <button
                         onClick={() => handleCopyMessage(msg.id, msg.text)}
@@ -550,17 +557,23 @@ Rules:
                         </button>
                       </div>
                     )}
+                    </div>
                   </div>
                 );
               })}
 
               {/* Typing indicator */}
               {isTyping && (
-                <div className="p-3 rounded-2xl bg-white border border-slate-200 self-start flex items-center gap-1.5 shadow-2xs">
-                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '300ms' }} />
-                  <span className="text-[10px] font-bold text-slate-400 ml-1">AI উত্তর তৈরি করছে...</span>
+                <div className="flex items-start gap-2 self-start">
+                  <div className="w-7 h-7 rounded-xl bg-slate-900 border border-emerald-500/30 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                    <AiHelperLogo size={18} animated />
+                  </div>
+                  <div className="p-3 rounded-2xl bg-white border border-slate-200 flex items-center gap-1.5 shadow-2xs">
+                    <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 rounded-full bg-emerald-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="text-[10px] font-bold text-slate-400 ml-1">AI উত্তর তৈরি করছে...</span>
+                  </div>
                 </div>
               )}
 
