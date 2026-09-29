@@ -68,7 +68,11 @@ export default function FaqSection({ globalConfig = null }) {
             <span>{t('সচরাচর জিজ্ঞাসিত প্রশ্নাবলী', 'Frequently Asked Questions')}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-            Frequently Asked <span className="text-emerald-600 dark:text-emerald-400">Questions</span>
+            {language === 'en' ? (
+              <>Frequently Asked <span className="text-emerald-600 dark:text-emerald-400">Questions</span></>
+            ) : (
+              <>সাধারণ কিছু <span className="text-emerald-600 dark:text-emerald-400">প্রশ্ন ও উত্তর</span></>
+            )}
           </h2>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal max-w-xl mx-auto">
             {t('BDRetailers প্ল্যাটফর্ম, সাবস্ক্রিপশন প্ল্যান ও সার্ভিস সম্পর্কে সাধারণ প্রশ্নগুলোর উত্তর জেনে নিন।', 'Find answers to common questions about BDRetailers platform, subscription plans, and merchant services.')}
@@ -126,7 +130,7 @@ export default function FaqSection({ globalConfig = null }) {
                 {/* Flat, Non-nested Answer Box */}
                 {isOpen && (
                   <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800">
-                    {faq.answer}
+                    {answerText}
                   </div>
                 )}
               </div>
@@ -137,14 +141,14 @@ export default function FaqSection({ globalConfig = null }) {
         {/* Need more help CTA */}
         <div className="mt-10 text-center">
           <div className="inline-flex flex-wrap items-center justify-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium text-slate-600 dark:text-slate-400">
-            <span>আরও কোনো প্রশ্ন আছে? আমাদের সাপোর্ট টিম সবসময় প্রস্তুত।</span>
+            <span>{t('আরও কোনো প্রশ্ন আছে? আমাদের সাপোর্ট টিম সবসময় প্রস্তুত।', 'Have more questions? Our support team is always ready to help.')}</span>
             <a
               href={`https://wa.me/88${(globalConfig?.whatsapp || '01734763306').replace(/[^0-9]/g, '').replace(/^88/, '')}`}
               target="_blank"
               rel="noreferrer"
               className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
             >
-              <MessageCircleQuestion size={14} /> সরাসরি হোয়াটসঅ্যাপে কথা বলুন
+              <MessageCircleQuestion size={14} /> {t('সরাসরি হোয়াটসঅ্যাপে কথা বলুন', 'Chat on WhatsApp Directly')}
             </a>
           </div>
         </div>

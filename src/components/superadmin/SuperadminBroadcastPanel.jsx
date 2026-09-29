@@ -20,9 +20,8 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
 
   useEffect(() => {
     const unsub = subscribeBroadcasts((data) => {
-      // Filter: only show superadmin/system broadcast messages
-      const adminBroadcasts = data.filter(b => b.senderRole === 'superadmin' || b.senderRole === 'system');
-      setBroadcasts(adminBroadcasts);
+      // Superadmin sees all broadcast messages across platform
+      setBroadcasts(data);
       setLoadingBroadcasts(false);
     }, (err) => {
       console.warn('[SuperadminBroadcastPanel] Listener failed:', err.message);
@@ -34,7 +33,19 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
   const handleDeleteBroadcast = async (id) => {
     if (!confirm('আপনি কি নিশ্চিত যে আপনি এই নোটিফিকেশনটি মুছে ফেলতে চান? এটি কাস্টমারদের স্ক্রীন থেকেও মুছে যাবে।')) return;
     try {
-      await deleteBroadcast(id);
+      const token = await auth.currentUser?.getIdToken();
+      if (token) {
+        const res = await fetch(`/api/broadcast?id=${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to delete');
+        }
+      } else {
+        await deleteBroadcast(id);
+      }
       toast.success('নোটিফিকেশনটি সফলভাবে মুছে ফেলা হয়েছে! 🗑️');
     } catch (err) {
       toast.error('মুছে ফেলতে সমস্যা হয়েছে: ' + err.message);
@@ -44,7 +55,12 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
   const handleClearAllBroadcasts = async () => {
     if (!confirm('সব নোটিফিকেশন মুছে ফেলতে চান? এটি প্ল্যাটফর্মের সব নোটিফিকেশন চিরতরে মুছে ফেলবে।')) return;
     try {
-      const deletePromises = broadcasts.map(b => deleteBroadcast(b.id));
+      const token = await auth.currentUser?.getIdToken();
+      const deletePromises = broadcasts.map(b => 
+        token 
+          ? fetch(`/api/broadcast?id=${b.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+          : deleteBroadcast(b.id)
+      );
       await Promise.all(deletePromises);
       toast.success('সব নোটিফিকেশন মুছে ফেলা হয়েছে! 🧹');
     } catch (err) {

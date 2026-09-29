@@ -147,7 +147,24 @@ export default function PricingSection({ globalConfig = null }) {
     yearly: Number(globalConfig?.subPriceYearly) || 5000
   };
 
-  // Merge configured pricing plans and their dynamic feature lines
+const FEATURE_TRANSLATIONS = {
+  '০৳ অগ্রিম খরচ (Zero Upfront Risk)': '৳0 Upfront Cost (Zero Risk)',
+  'সম্পূর্ণ অনলাইন ওয়েবসাইট ও স্টোরফ্রন্ট': 'Full Online Website & Storefront',
+  'নো সেল = নো ফি (১০০% নিরাপদ ব্যবসা)': 'No Sale = No Fee (100% Risk-Free)',
+  'Steadfast ও অটো পেমেন্ট গেটওয়ে': 'Steadfast & Automated Payment Gateways',
+  'যেকোনো সময় ফিক্সড প্ল্যানে আপগ্রেড': 'Upgrade to Fixed Plan Anytime',
+  '১০০% বিক্রয় লাভ আপনার (০% কমিশন)': '100% Sales Profit is Yours (0% Commission)',
+  '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন': '🌐 Custom Domain Connection',
+  '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA': '📱 Professional Mobile App & PWA',
+  '📦 আনলিমিটেড প্রোডাক্ট ও ক্যাটালগ': '📦 Unlimited Products & Catalog',
+  '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার': '🤖 AI Product Description Writer',
+  '📦 আনলিমিটেড প্রোডাক্ট ও অর্ডার': '📦 Unlimited Products & Orders',
+  '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট': '⚡ VIP Priority Support',
+  '🤖 ফুল AI অটোমেশন ও অ্যাসিস্ট্যান্ট': '🤖 Full AI Automation & Assistant',
+  '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ': '👑 Dedicated VIP Support & Setup',
+};
+
+// Merge configured pricing plans and their dynamic feature lines
   const configuredPlans = globalConfig?.pricingPlans || {};
 
   const getPlanData = (key) => {
@@ -160,18 +177,31 @@ export default function PricingSection({ globalConfig = null }) {
     }
 
     const isEn = language === 'en';
-    const features = Array.isArray(customData.features) && customData.features.length > 0
-      ? customData.features
-      : (isEn ? defaultData.featuresEn : defaultData.featuresBn);
+    let features;
+    if (isEn) {
+      if (Array.isArray(customData.featuresEn) && customData.featuresEn.length > 0) {
+        features = customData.featuresEn;
+      } else if (Array.isArray(customData.features) && customData.features.length > 0) {
+        features = customData.features.map((feat, idx) => {
+          return FEATURE_TRANSLATIONS[feat] || defaultData.featuresEn?.[idx] || feat;
+        });
+      } else {
+        features = defaultData.featuresEn;
+      }
+    } else {
+      features = Array.isArray(customData.features) && customData.features.length > 0
+        ? customData.features
+        : defaultData.featuresBn;
+    }
 
     const commissionText = key === 'starter'
       ? (isEn ? `⚡ Only ${starterPercent}% share on sales` : `⚡ বিক্রয়ের মাত্র ${starterPercent}% শেয়ার`)
-      : (customData.commissionText || (isEn ? defaultData.commissionTextEn : defaultData.commissionTextBn));
+      : (isEn ? (customData.commissionTextEn || defaultData.commissionTextEn) : (customData.commissionText || defaultData.commissionTextBn));
 
-    const badge = isEn ? defaultData.badgeEn : (customData.badge || defaultData.badgeBn);
-    const subtitle = isEn ? defaultData.subtitleEn : (customData.subtitle || defaultData.subtitleBn);
-    const period = isEn ? defaultData.periodEn : (customData.period || defaultData.periodBn);
-    const title = isEn ? defaultData.englishTitle : (customData.bengaliTitle || defaultData.bengaliTitle);
+    const badge = isEn ? (customData.badgeEn || defaultData.badgeEn) : (customData.badge || defaultData.badgeBn);
+    const subtitle = isEn ? (customData.subtitleEn || defaultData.subtitleEn) : (customData.subtitle || defaultData.subtitleBn);
+    const period = isEn ? (customData.periodEn || defaultData.periodEn) : (customData.period || defaultData.periodBn);
+    const title = isEn ? (customData.englishTitle || defaultData.englishTitle) : (customData.bengaliTitle || defaultData.bengaliTitle);
 
     return {
       ...defaultData,

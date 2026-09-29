@@ -14,6 +14,44 @@ import {
   getDemoUrl 
 } from '@/lib/templatesData';
 
+const TEMPLATE_DESCRIPTIONS_EN = {
+  health_pharmacy: 'Prescription upload, DGDA-approved genuine medicines, health concern navigation, and 24/7 registered pharmacist support.',
+  fresh_grocery: 'Live daily market price scroller, fresh vegetables & meat, monthly grocery savings bundles, and quick weight-based ordering.',
+  fashion_editorial: 'Elegant lookbook, shoppable Instagram reels, real-time color and size variant switcher, and luxury runway design.',
+  tech_electronics: 'Star Tech-style technical specs tables, official brand warranty badges, EMI calculator, and dark neon cyber styling.',
+  luxury_beauty: 'Before-after result sliders, 4-step skincare routine builder, verified customer selfie reviews, and soft rose-gold aesthetic.',
+  restaurant_food: 'Live food menu tabs, spice level selector, 30-minute hot express delivery counter, and chef-special family buckets.',
+  jewelry_gold: 'Dramatic black and 24K gold finish, diamond macro preview, hallmark authenticity certification, and VIP gift packaging.',
+  wholesale_b2b: 'Quantity-tiered pricing ladders, Minimum Order Quantity (MOQ) controls, and corporate RFQ invoice generation.',
+  supermarket_deals: 'Multi-departmental category grids, mega weekly deals, flash sale countdown timers, and streamlined checkout.',
+  boutique_minimal: 'Minimalist boutique layout, curated apparel collections, fast checkout, and mobile-first experience.',
+  gadget_accessories: 'Trending mobile accessories, fast cable and charger showcase, brand warranty tags, and quick cart.',
+  organic_herbal: '100% natural organic oils, herbal remedies, certified pure ingredients, and eco-friendly aesthetic.',
+  home_living: 'Modern furniture & decor showroom, room-by-room inspiration, dimensional specs, and secure delivery.',
+  sports_fitness: 'Protein supplements, athletic dry-fit sportswear, heavy gym equipment, and fitness accessories.',
+  books_stationery: 'Bestseller novels, self-improvement books, Islamic literature, and premium journals & fountain pens.',
+  baby_kids: 'Baby diapers, BPA-free feeding bottles, organic baby lotions, and Montessori educational toys.'
+};
+
+const TEMPLATE_BADGES_EN = {
+  health_pharmacy: 'Emergency Prescription',
+  fresh_grocery: 'Super Deals',
+  fashion_editorial: 'Runway Trends',
+  tech_electronics: 'Official Warranty',
+  luxury_beauty: 'Korean Glass Skin',
+  restaurant_food: '30-Min Delivery',
+  jewelry_gold: 'Hallmark 22K/24K',
+  wholesale_b2b: 'Tiered Bulk Pricing',
+  supermarket_deals: 'Mega Savings',
+  boutique_minimal: 'Trending',
+  gadget_accessories: 'Best Gadgets',
+  organic_herbal: '100% Organic',
+  home_living: 'Eco-Living',
+  sports_fitness: 'Pro Fitness',
+  books_stationery: 'Bestsellers',
+  baby_kids: 'Doctor Choice'
+};
+
 export default function TemplatesSection({ globalConfig = {} }) {
   const { language, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState('all');
@@ -96,7 +134,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
                     {/* Badge */}
                     {tpl.badge && (
                       <div className="absolute top-2 left-2 sm:top-3 sm:left-3 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold text-white shadow-xs bg-slate-900/90 border border-slate-700">
-                        {tpl.badge}
+                        {language === 'en' ? (tpl.badgeEn || TEMPLATE_BADGES_EN[tpl.id] || tpl.badge) : (tpl.badgeBn || tpl.badge)}
                       </div>
                     )}
 
@@ -144,7 +182,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
                     </h3>
 
                     <p className="text-[10px] sm:text-xs text-slate-600 leading-relaxed font-medium line-clamp-1 sm:line-clamp-2">
-                      {tpl.description}
+                      {language === 'en' ? (tpl.descriptionEn || TEMPLATE_DESCRIPTIONS_EN[tpl.id] || tpl.description) : (tpl.descriptionBn || tpl.description)}
                     </p>
 
                     {/* Color dots */}

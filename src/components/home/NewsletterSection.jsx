@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { Mail, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 import toast from 'react-hot-toast';
 
 export default function NewsletterSection({ globalConfig = null }) {
+  const { language, t } = useLanguage();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
@@ -12,7 +14,7 @@ export default function NewsletterSection({ globalConfig = null }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
-      toast.error('অনুগ্রহ করে সঠিক ইমেইল এড্রেস লিখুন');
+      toast.error(t('অনুগ্রহ করে সঠিক ইমেইল এড্রেস লিখুন', 'Please enter a valid email address'));
       return;
     }
 
@@ -25,14 +27,14 @@ export default function NewsletterSection({ globalConfig = null }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'সাবস্ক্রিপশন ব্যর্থ হয়েছে');
+        throw new Error(data.error || t('সাবস্ক্রিপশন ব্যর্থ হয়েছে', 'Subscription failed'));
       }
 
       setSubscribed(true);
-      toast.success(data.message || 'সাবস্ক্রিপশন সফল হয়েছে! 🎉');
+      toast.success(data.message || t('সাবস্ক্রিপশন সফল হয়েছে! 🎉', 'Subscription successful! 🎉'));
       setEmail('');
     } catch (err) {
-      toast.error(err.message || 'ত্রুটি হয়েছে, পরে চেষ্টা করুন');
+      toast.error(err.message || t('ত্রুটি হয়েছে, পরে চেষ্টা করুন', 'An error occurred, please try again'));
     } finally {
       setLoading(false);
     }
@@ -60,20 +62,24 @@ export default function NewsletterSection({ globalConfig = null }) {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
                 <Mail size={13} />
-                <span>ভিআইপি আপডেট ও অফার</span>
+                <span>{t('ভিআইপি আপডেট ও অফার', 'VIP Updates & Offers')}</span>
               </div>
               <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-                Stay Ahead with <span className="text-emerald-600 dark:text-emerald-400">BDRetailers</span>
+                {language === 'en' ? (
+                  <>Stay Ahead with <span className="text-emerald-600 dark:text-emerald-400">BDRetailers</span></>
+                ) : (
+                  <>BDRetailers এর সাথে থাকুন <span className="text-emerald-600 dark:text-emerald-400">একধাপ এগিয়ে</span></>
+                )}
               </h2>
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                নতুন পণ্য লঞ্চ, স্পেশাল ডিসকাউন্ট কুপন ও ই-কমার্স গ্রোথ গাইড সরাসরি আপনার ইনবক্সে পেতে সাবস্ক্রাইব করুন। কোনো স্প্যাম নেই!
+                {t('নতুন পণ্য লঞ্চ, স্পেশাল ডিসকাউন্ট কুপন ও ই-কমার্স গ্রোথ গাইড সরাসরি আপনার ইনবক্সে পেতে সাবস্ক্রাইব করুন। কোনো স্প্যাম নেই!', 'Subscribe to get new product launches, special discount coupons, and e-commerce growth guides directly in your inbox. No spam!')}
               </p>
             </div>
 
             {subscribed ? (
               <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-3 text-emerald-700 dark:text-emerald-300 font-bold text-sm animate-fade-in">
                 <CheckCircle2 size={24} className="shrink-0 text-emerald-600" />
-                <span>ধন্যবাদ! আপনি সফলভাবে আমাদের নিউজলেটারে সাবস্ক্রাইব করেছেন।</span>
+                <span>{t('ধন্যবাদ! আপনি সফলভাবে আমাদের নিউজলেটারে সাবস্ক্রাইব করেছেন।', 'Thank you! You have successfully subscribed to our newsletter.')}</span>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -86,7 +92,7 @@ export default function NewsletterSection({ globalConfig = null }) {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="আপনার ইমেইল অ্যাড্রেস লিখুন (e.g. name@mail.com)"
+                    placeholder={t('আপনার ইমেইল অ্যাড্রেস লিখুন (e.g. name@mail.com)', 'Enter your email address (e.g. name@mail.com)')}
                     required
                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all bg-white dark:bg-slate-900"
                   />
@@ -101,11 +107,11 @@ export default function NewsletterSection({ globalConfig = null }) {
                   {loading ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      <span>যুক্ত হচ্ছে...</span>
+                      <span>{t('যুক্ত হচ্ছে...', 'Subscribing...')}</span>
                     </>
                   ) : (
                     <>
-                      <span>সাবস্ক্রাইব করুন</span>
+                      <span>{t('সাবস্ক্রাইব করুন', 'Subscribe')}</span>
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -115,10 +121,10 @@ export default function NewsletterSection({ globalConfig = null }) {
 
             <div className="flex items-center justify-center gap-6 pt-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> ১০০% নিরাপদ ও ফ্রি
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t('১০০% নিরাপদ ও ফ্রি', '100% Safe & Free')}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> যেকোনো সময় আনসাবস্ক্রাইব
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t('যেকোনো সময় আনসাবস্ক্রাইব', 'Unsubscribe Anytime')}
               </span>
             </div>
 

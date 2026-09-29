@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import { Send, Bell, Info, AlertTriangle, Sparkles, Loader2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { subscribeBroadcasts, deleteBroadcast } from '@/lib/firestore';
+import { useAuth } from '@/context/AuthContext';
 
 export default function NotificationBox({ senderRole, shopId = null }) {
+  const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [type, setType] = useState('info');
   const [target, setTarget] = useState('all');
@@ -18,7 +20,7 @@ export default function NotificationBox({ senderRole, shopId = null }) {
     if (!shopId) return;
     const unsub = subscribeBroadcasts((data) => {
       // Filter: only show broadcasts sent by this retailer for this shop
-      const shopBroadcasts = data.filter(b => b.shopId === shopId && b.senderRole === 'retailer');
+      const shopBroadcasts = data.filter(b => b.shopId === shopId && (b.senderRole === 'retailer' || b.target === 'shop_users' || b.target === 'specific_shop'));
       setBroadcasts(shopBroadcasts);
       setLoadingHistory(false);
     }, (err) => {
@@ -31,7 +33,15 @@ export default function NotificationBox({ senderRole, shopId = null }) {
   const handleDeleteBroadcast = async (id) => {
     if (!confirm('আপনি কি নিশ্চিত যে আপনি এই নোটিফিকেশনটি মুছে ফেলতে চান? এটি কাস্টমারদের স্ক্রীন থেকেও মুছে যাবে।')) return;
     try {
-      await deleteBroadcast(id);
+      const token = await user?.getIdToken();
+      if (token) {
+        await fetch(`/api/broadcast?id=${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        await deleteBroadcast(id);
+      }
       toast.success('নোটিফিকেশনটি সফলভাবে মুছে ফেলা হয়েছে! 🗑️');
     } catch (err) {
       toast.error('মুছে ফেলতে সমস্যা হয়েছে: ' + err.message);
@@ -46,9 +56,19 @@ export default function NotificationBox({ senderRole, shopId = null }) {
 
     setLoading(true);
     try {
+      const token = await user?.getIdToken();
+      if (!token) {
+        toast.error('অনুগ্রহ করে লগইন করুন (Authentication required)');
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch('/api/broadcast', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           message,
           type,

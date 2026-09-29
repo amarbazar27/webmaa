@@ -149,6 +149,9 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
           style.id = 'bdretailers-native-app-styles';
           style.innerHTML = `
             html, body {
+              max-width: 100vw !important;
+              width: 100% !important;
+              overflow-x: hidden !important;
               overscroll-behavior-y: none !important;
               overscroll-behavior-x: none !important;
               overscroll-behavior: none !important;
@@ -197,8 +200,8 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     javaScriptEnabled: true,
                     domStorageEnabled: true,
                     databaseEnabled: true,
-                    useWideViewPort: true,
-                    loadWithOverviewMode: true,
+                    useWideViewPort: false,
+                    loadWithOverviewMode: false,
                     supportZoom: false,
                     builtInZoomControls: false,
                     displayZoomControls: false,
@@ -504,6 +507,9 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                         }
                       },
                     );
+                  },
+                  onLoadStart: (controller, url) {
+                    _injectNativeAppStyles(controller);
                   },
                   onPageCommitVisible: (controller, url) {
                     _injectNativeAppStyles(controller);

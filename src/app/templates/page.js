@@ -16,12 +16,52 @@ import {
 } from '@/lib/templatesData';
 import { subscribeGlobalConfig, updateShop, getAllShops } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import Logo from '@/components/ui/Logo';
 import toast from 'react-hot-toast';
+
+const TEMPLATE_DESCRIPTIONS_EN = {
+  health_pharmacy: 'Prescription upload, DGDA-approved genuine medicines, health concern navigation, and 24/7 registered pharmacist support.',
+  fresh_grocery: 'Live daily market price scroller, fresh vegetables & meat, monthly grocery savings bundles, and quick weight-based ordering.',
+  fashion_editorial: 'Elegant lookbook, shoppable Instagram reels, real-time color and size variant switcher, and luxury runway design.',
+  tech_electronics: 'Star Tech-style technical specs tables, official brand warranty badges, EMI calculator, and dark neon cyber styling.',
+  luxury_beauty: 'Before-after result sliders, 4-step skincare routine builder, verified customer selfie reviews, and soft rose-gold aesthetic.',
+  restaurant_food: 'Live food menu tabs, spice level selector, 30-minute hot express delivery counter, and chef-special family buckets.',
+  jewelry_gold: 'Dramatic black and 24K gold finish, diamond macro preview, hallmark authenticity certification, and VIP gift packaging.',
+  wholesale_b2b: 'Quantity-tiered pricing ladders, Minimum Order Quantity (MOQ) controls, and corporate RFQ invoice generation.',
+  supermarket_deals: 'Multi-departmental category grids, mega weekly deals, flash sale countdown timers, and streamlined checkout.',
+  boutique_minimal: 'Minimalist boutique layout, curated apparel collections, fast checkout, and mobile-first experience.',
+  gadget_accessories: 'Trending mobile accessories, fast cable and charger showcase, brand warranty tags, and quick cart.',
+  organic_herbal: '100% natural organic oils, herbal remedies, certified pure ingredients, and eco-friendly aesthetic.',
+  home_living: 'Modern furniture & decor showroom, room-by-room inspiration, dimensional specs, and secure delivery.',
+  sports_fitness: 'Protein supplements, athletic dry-fit sportswear, heavy gym equipment, and fitness accessories.',
+  books_stationery: 'Bestseller novels, self-improvement books, Islamic literature, and premium journals & fountain pens.',
+  baby_kids: 'Baby diapers, BPA-free feeding bottles, organic baby lotions, and Montessori educational toys.'
+};
+
+const TEMPLATE_BADGES_EN = {
+  health_pharmacy: 'Emergency Prescription',
+  fresh_grocery: 'Super Deals',
+  fashion_editorial: 'Runway Trends',
+  tech_electronics: 'Official Warranty',
+  luxury_beauty: 'Korean Glass Skin',
+  restaurant_food: '30-Min Delivery',
+  jewelry_gold: 'Hallmark 22K/24K',
+  wholesale_b2b: 'Tiered Bulk Pricing',
+  supermarket_deals: 'Mega Savings',
+  boutique_minimal: 'Trending',
+  gadget_accessories: 'Best Gadgets',
+  organic_herbal: '100% Organic',
+  home_living: 'Eco-Living',
+  sports_fitness: 'Pro Fitness',
+  books_stationery: 'Bestsellers',
+  baby_kids: 'Doctor Choice'
+};
 
 export default function TemplatesPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { language, t } = useLanguage();
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -150,9 +190,9 @@ export default function TemplatesPage() {
           <div className="flex items-center gap-6">
             <Logo href="/" className="scale-105" text="bdretailers.com" />
             <div className="hidden md:flex items-center gap-4 text-xs font-bold text-slate-600">
-              <Link href="/" className="hover:text-purple-600 transition-colors">হোম</Link>
-              <Link href="/templates" className="text-purple-600">রেডিমেড ওয়েবসাইট</Link>
-              <Link href="/become-retailer" className="hover:text-purple-600 transition-colors">মার্চেন্ট প্ল্যাটফর্ম</Link>
+              <Link href="/" className="hover:text-purple-600 transition-colors">{t('হোম', 'Home')}</Link>
+              <Link href="/templates" className="text-purple-600">{t('রেডিমেড ওয়েবসাইট', 'Readymade Websites')}</Link>
+              <Link href="/become-retailer" className="hover:text-purple-600 transition-colors">{t('মার্চেন্ট প্ল্যাটফর্ম', 'Merchant Platform')}</Link>
             </div>
           </div>
 
@@ -162,7 +202,7 @@ export default function TemplatesPage() {
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
             >
               <Store size={14} />
-              <span>১ মিনিটে স্টোর খুলুন</span>
+              <span>{t('১ মিনিটে স্টোর খুলুন', 'Open Store in 1 Min')}</span>
             </Link>
           </div>
         </div>
@@ -172,37 +212,38 @@ export default function TemplatesPage() {
       <header className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8 text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-200 text-purple-700 text-xs font-black">
           <SlidersHorizontal size={14} />
-          <span>প্রিমিয়াম রেডিমেড ওয়েবসাইট গ্যালারি</span>
+          <span>{t('প্রিমিয়াম রেডিমেড ওয়েবসাইট গ্যালারি', 'Premium Readymade Website Gallery')}</span>
         </div>
 
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-950 leading-tight">
-          আপনার ব্যবসার জন্য সেরা <br />
-          <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">
-            রেডিমেড ওয়েবসাইট ডিজাইন
-          </span>
+          {language === 'en' ? (
+            <>Best Readymade <br /><span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Website Designs</span> for Your Business</>
+          ) : (
+            <>আপনার ব্যবসার জন্য সেরা <br /><span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">রেডিমেড ওয়েবসাইট ডিজাইন</span></>
+          )}
         </h1>
 
         <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto leading-relaxed font-medium">
-          যেকোনো ক্যাটাগরির জন্য সম্পূর্ণ রেডিমেড ওয়েবসাইট বেছে নিন। প্রতিটি ডিজাইনের লাইভ ডেমো দেখুন, মোবাইল রেসপন্সিভনেস টেস্ট করুন এবং ১ ক্লিকেই আপনার ব্র্যান্ডের জন্য চালু করুন।
+          {t('যেকোনো ক্যাটাগরির জন্য সম্পূর্ণ রেডিমেড ওয়েবসাইট বেছে নিন। প্রতিটি ডিজাইনের লাইভ ডেমো দেখুন, মোবাইল রেসপন্সিভনেস টেস্ট করুন এবং ১ ক্লিকেই আপনার ব্র্যান্ডের জন্য চালু করুন।', 'Choose a complete readymade website for any category. View live demos, test mobile responsiveness, and launch for your brand in just 1 click.')}
         </p>
 
         {/* Feature Badges */}
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 pt-1">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs">
             <CheckCircle2 size={14} className="text-emerald-500" />
-            <span>১৫+ ক্যাটাগরি ডিজাইন</span>
+            <span>{t('১৫+ ক্যাটাগরি ডিজাইন', '15+ Category Designs')}</span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs">
             <CheckCircle2 size={14} className="text-emerald-500" />
-            <span>বিকাশ ও নগদ পেমেন্ট গেটওয়ে</span>
+            <span>{t('বিকাশ ও নগদ পেমেন্ট গেটওয়ে', 'bKash & Nagad Gateways')}</span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs">
             <CheckCircle2 size={14} className="text-emerald-500" />
-            <span>Steadfast কুরিয়ার অটো ট্র্যাকিং</span>
+            <span>{t('Steadfast কুরিয়ার অটো ট্র্যাকিং', 'Steadfast Courier Auto-Tracking')}</span>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs">
             <CheckCircle2 size={14} className="text-emerald-500" />
-            <span>অ্যান্ড্রয়েড APK মোবাইল অ্যাপ রেডি</span>
+            <span>{t('অ্যান্ড্রয়েড APK মোবাইল অ্যাপ রেডি', 'Android APK App Ready')}</span>
           </div>
         </div>
 
@@ -212,7 +253,7 @@ export default function TemplatesPage() {
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
-              placeholder="গ্রোসারি, ফ্যাশন, টেক, বিউটি বা জুয়েলারি ডিজাইন খুঁজুন..."
+              placeholder={t('গ্রোসারি, ফ্যাশন, টেক, বিউটি বা জুয়েলারি ডিজাইন খুঁজুন...', 'Search grocery, fashion, tech, beauty, or jewelry designs...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-10 py-3 rounded-2xl bg-white border-2 border-purple-200 text-slate-900 placeholder-slate-400 text-xs sm:text-sm font-bold outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 transition-all shadow-xs"
@@ -244,7 +285,7 @@ export default function TemplatesPage() {
                     : 'bg-white border-slate-200 text-slate-700 hover:text-purple-700 hover:border-purple-300'
                 }`}
               >
-                <span>{cat.label}</span>
+                <span>{language === 'en' ? (cat.labelEn || cat.label) : cat.label}</span>
               </button>
             );
           })}
@@ -256,13 +297,13 @@ export default function TemplatesPage() {
         {filteredTemplates.length === 0 ? (
           <div className="py-16 text-center space-y-4 bg-white rounded-3xl border border-slate-200 p-8 shadow-xs">
             <ShoppingBag size={48} className="mx-auto text-slate-300" />
-            <h3 className="text-base font-black text-slate-800">কোনো ডিজাইন পাওয়া যায়নি</h3>
-            <p className="text-xs text-slate-500">অনুগ্রহ করে অন্য কোনো কি-ওয়ার্ড দিয়ে সার্চ করুন অথবা ক্যাটাগরি পরিবর্তন করুন।</p>
+            <h3 className="text-base font-black text-slate-800">{t('কোনো ডিজাইন পাওয়া যায়নি', 'No Designs Found')}</h3>
+            <p className="text-xs text-slate-500">{t('অনুগ্রহ করে অন্য কোনো কি-ওয়ার্ড দিয়ে সার্চ করুন অথবা ক্যাটাগরি পরিবর্তন করুন।', 'Please search with another keyword or select a different category.')}</p>
             <button
               onClick={() => { setActiveCategory('all'); setSearchQuery(''); }}
               className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold"
             >
-              সব ডিজাইন দেখুন
+              {t('সব ডিজাইন দেখুন', 'View All Designs')}
             </button>
           </div>
         ) : (
@@ -287,7 +328,7 @@ export default function TemplatesPage() {
                       {/* Floating Badge */}
                       {tpl.badge && (
                         <div className="absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-black text-white shadow-md bg-black/70 border border-white/20">
-                          {tpl.badge}
+                          {language === 'en' ? (tpl.badgeEn || TEMPLATE_BADGES_EN[tpl.id] || tpl.badge) : (tpl.badgeBn || tpl.badge)}
                         </div>
                       )}
 
@@ -304,14 +345,14 @@ export default function TemplatesPage() {
                           className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs shadow-lg transition-all flex items-center gap-1.5"
                         >
                           <Eye size={14} />
-                          <span>ইন্টারঅ্যাক্টিভ ডেমো</span>
+                          <span>{t('ইন্টারঅ্যাক্টিভ ডেমো', 'Interactive Demo')}</span>
                         </Link>
                         <a
                           href={liveUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="px-3.5 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs border border-white/30 transition-all flex items-center gap-1"
-                          title="নতুন ট্যাবে খুলুন"
+                          title={t('নতুন ট্যাবে খুলুন', 'Open in new tab')}
                         >
                           <ExternalLink size={14} />
                         </a>
@@ -322,26 +363,28 @@ export default function TemplatesPage() {
                     <div className="p-5 sm:p-6 space-y-3.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-black text-purple-600">
-                          {tpl.categoryBn}
+                          {language === 'en' ? (tpl.category || tpl.categoryBn) : (tpl.categoryBn || tpl.category)}
                         </span>
                         <div className="flex items-center gap-1 text-xs text-amber-500 font-bold">
                           <Star size={13} className="fill-amber-500" />
                           <span>{tpl.rating || '4.9'}</span>
-                          <span className="text-slate-400 text-[10px]">({tpl.storesCount || '100+'} স্টোর)</span>
+                          <span className="text-slate-400 text-[10px]">
+                            ({tpl.storesCount || '100+'} {language === 'en' ? 'Stores' : 'স্টোর'})
+                          </span>
                         </div>
                       </div>
 
                       <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-purple-600 transition-colors">
-                        {tpl.titleBn}
+                        {language === 'en' ? (tpl.title || tpl.titleBn) : (tpl.titleBn || tpl.title)}
                       </h3>
 
                       <p className="text-xs text-slate-600 leading-relaxed font-medium line-clamp-2 min-h-[32px]">
-                        {tpl.description}
+                        {language === 'en' ? (tpl.descriptionEn || TEMPLATE_DESCRIPTIONS_EN[tpl.id] || tpl.description) : (tpl.descriptionBn || tpl.description)}
                       </p>
 
                       {/* Color Palette preview dots */}
                       <div className="flex items-center gap-2 pt-1">
-                        <span className="text-[10px] text-slate-400 font-bold">রং প্যালেট:</span>
+                        <span className="text-[10px] text-slate-400 font-bold">{t('রং প্যালেট:', 'Color Palette:')}</span>
                         <div className="flex items-center gap-1.5">
                           <span className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs" style={{ backgroundColor: tpl.primaryColor }} />
                           <span className="w-3.5 h-3.5 rounded-full border border-slate-300 shadow-xs" style={{ backgroundColor: tpl.secondaryColor }} />
@@ -368,7 +411,7 @@ export default function TemplatesPage() {
                       className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-200 transition-all flex items-center justify-center gap-1"
                     >
                       <Eye size={13} />
-                      <span>লাইভ ডেমো</span>
+                      <span>{t('লাইভ ডেমো', 'Live Demo')}</span>
                     </Link>
                     <button
                       onClick={() => {
@@ -377,7 +420,7 @@ export default function TemplatesPage() {
                       className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
                     >
                       <SlidersHorizontal size={13} />
-                      <span>সিলেক্ট করুন</span>
+                      <span>{t('সিলেক্ট করুন', 'Select Design')}</span>
                     </button>
                   </div>
                 </div>
@@ -392,10 +435,14 @@ export default function TemplatesPage() {
         <div className="max-w-7xl mx-auto space-y-10">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
             <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              কেন bdretailers.com এর <span className="text-purple-600">রেডিমেড ডিজাইন সেরা?</span>
+              {language === 'en' ? (
+                <>Why Choose <span className="text-purple-600">bdretailers.com Designs?</span></>
+              ) : (
+                <>কেন bdretailers.com এর <span className="text-purple-600">রেডিমেড ডিজাইন সেরা?</span></>
+              )}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
-              ওয়ার্ডপ্রেস বা সাধারণ স্টোরের চেয়ে আমাদের ক্লাউড আর্কিটেকচার ৪ গুণ দ্রুত এবং সরাসরি বাংলাদেশের স্থানীয় পেমেন্ট ও কুরিয়ারের সাথে সিঙ্ক করা।
+              {t('ওয়ার্ডপ্রেস বা সাধারণ স্টোরের চেয়ে আমাদের ক্লাউড আর্কিটেকচার ৪ গুণ দ্রুত এবং সরাসরি বাংলাদেশের স্থানীয় পেমেন্ট ও কুরিয়ারের সাথে সিঙ্ক করা।', 'Our cloud architecture is 4x faster than standard WordPress, with instant synchronization for Bangladeshi local payments and couriers.')}
             </p>
           </div>
 
@@ -404,9 +451,9 @@ export default function TemplatesPage() {
               <div className="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-black">
                 <Zap size={22} />
               </div>
-              <h3 className="text-base font-black text-slate-900">আল্ট্রা-ফাস্ট মোবাইল স্পিড</h3>
+              <h3 className="text-base font-black text-slate-900">{t('আল্ট্রা-ফাস্ট মোবাইল স্পিড', 'Ultra-Fast Mobile Speed')}</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Next.js সার্ভার সাইড রেন্ডারিং থাকায় পেজ লোড হতে ১ সেকেন্ডেরও কম সময় লাগে, যা সেলস কনভার্সন দ্বিগুণ করে দেয়।
+                {t('Next.js সার্ভার সাইড রেন্ডারিং থাকায় পেজ লোড হতে ১ সেকেন্ডেরও কম সময় লাগে, যা সেলস কনভার্সন দ্বিগুণ করে দেয়।', 'Next.js server-side rendering ensures sub-second page loads, doubling mobile conversion rates.')}
               </p>
             </div>
 
@@ -414,9 +461,9 @@ export default function TemplatesPage() {
               <div className="w-11 h-11 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center font-black">
                 <ShieldCheck size={22} />
               </div>
-              <h3 className="text-base font-black text-slate-900">বিকাশ, নগদ ও কুরিয়ার রেডি</h3>
+              <h3 className="text-base font-black text-slate-900">{t('বিকাশ, নগদ ও কুরিয়ার রেডি', 'bKash, Nagad & Courier Ready')}</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                কোনো প্লাগইন কেনার ঝামেলা নেই। বিকাশ/নগদ স্বয়ংক্রিয় পেমেন্ট এবং Steadfast কুরিয়ার বুকিং প্রি-ইনস্টল করা থাকে।
+                {t('কোনো প্লাগইন কেনার ঝামেলা নেই। বিকাশ/নগদ স্বয়ংক্রিয় পেমেন্ট এবং Steadfast কুরিয়ার বুকিং প্রি-ইনস্টল করা থাকে।', 'Zero plugin headaches. Automated bKash/Nagad payments and Steadfast Courier bookings are pre-integrated.')}
               </p>
             </div>
 
@@ -424,9 +471,9 @@ export default function TemplatesPage() {
               <div className="w-11 h-11 rounded-2xl bg-cyan-100 text-cyan-600 flex items-center justify-center font-black">
                 <Smartphone size={22} />
               </div>
-              <h3 className="text-base font-black text-slate-900">অ্যান্ড্রয়েড অ্যাপ অটো-বিল্ড</h3>
+              <h3 className="text-base font-black text-slate-900">{t('অ্যান্ড্রয়েড অ্যাপ অটো-বিল্ড', 'Android App Auto-Build')}</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                প্রতিটি ডিজাইনের জন্য ১ ক্লিকেই প্রফেশনাল অ্যান্ড্রয়েড অ্যাপ (APK ও AAB) তৈরি করা যায় যা সরাসরি গুগল প্লে কনসোলে আপলোডযোগ্য।
+                {t('প্রতিটি ডিজাইনের জন্য ১ ক্লিকেই প্রফেশনাল অ্যান্ড্রয়েড অ্যাপ (APK ও AAB) তৈরি করা যায় যা সরাসরি গুগল প্লে কনসোলে আপলোডযোগ্য।', 'Generate professional Android apps (.APK & .AAB) in 1 click, ready for Google Play Store upload.')}
               </p>
             </div>
           </div>
@@ -447,20 +494,20 @@ export default function TemplatesPage() {
             <div className="space-y-1.5 text-left">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black">
                 <SlidersHorizontal size={13} />
-                <span>ডিজাইন সিলেকশন</span>
+                <span>{t('ডিজাইন সিলেকশন', 'Design Selection')}</span>
               </div>
               <h3 className="text-lg sm:text-xl font-black text-slate-900">
-                {selectedTemplate.titleBn}
+                {language === 'en' ? (selectedTemplate.title || selectedTemplate.titleBn) : (selectedTemplate.titleBn || selectedTemplate.title)}
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                আপনি এই ডিজাইনটি সিলেক্ট করেছেন। আপনার শপে এক ক্লিকেই এটি যুক্ত করতে পারেন।
+                {t('আপনি এই ডিজাইনটি সিলেক্ট করেছেন। আপনার শপে এক ক্লিকেই এটি যুক্ত করতে পারেন।', 'You have selected this design. You can apply it to your store in just 1 click.')}
               </p>
             </div>
 
             {user && userShops.length > 0 ? (
               <div className="space-y-4 text-left">
                 <label className="text-xs font-black text-slate-800 block">
-                  কোন স্টোরে এই ডিজাইনটি সেট করতে চান?
+                  {t('কোন স্টোরে এই ডিজাইনটি সেট করতে চান?', 'Which store would you like to apply this design to?')}
                 </label>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {userShops.map((s) => (
@@ -497,19 +544,19 @@ export default function TemplatesPage() {
                   className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <SlidersHorizontal size={16} />
-                  <span>{applying ? 'অ্যাপ্লাই হচ্ছে...' : 'আমার স্টোরে এই ডিজাইন যুক্ত করুন'}</span>
+                  <span>{applying ? t('অ্যাপ্লাই হচ্ছে...', 'Applying...') : t('আমার স্টোরে এই ডিজাইন যুক্ত করুন', 'Apply Design to My Store')}</span>
                 </button>
               </div>
             ) : (
               <div className="space-y-4 text-left">
                 <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100 space-y-2">
                   <p className="text-xs text-slate-700 font-medium">
-                     মাত্র ১ মিনিটে এই <strong className="text-purple-800">{selectedTemplate.titleBn}</strong> ডিজাইন সহ আপনার ফুল ই-কমার্স স্টোর রেডি করুন!
+                     {t('মাত্র ১ মিনিটে এই ডিজাইন সহ আপনার ফুল ই-কমার্স স্টোর রেডি করুন!', 'Ready your full e-commerce store with this design in just 1 minute!')}
                   </p>
                   <ul className="text-[11px] text-slate-600 space-y-1">
-                    <li>✓ ফ্রি সাবডোমেন: <span className="text-emerald-700 font-mono font-bold">yourshop.bdretailers.com</span></li>
-                    <li>✓ সরাসরি বিকাশ, নগদ ও কুরিয়ার ক্যাশ অন ডেলিভারি</li>
-                    <li>✓ আনলিমিটেড প্রোডাক্ট আপলোড ও সেলস</li>
+                    <li>✓ {t('ফ্রি সাবডোমেন:', 'Free Subdomain:')} <span className="text-emerald-700 font-mono font-bold">yourshop.bdretailers.com</span></li>
+                    <li>✓ {t('সরাসরি বিকাশ, নগদ ও কুরিয়ার ক্যাশ অন ডেলিভারি', 'Direct bKash, Nagad & Cash on Delivery')}</li>
+                    <li>✓ {t('আনলিমিটেড প্রোডাক্ট আপলোড ও সেলস', 'Unlimited Product Uploads & Sales')}</li>
                   </ul>
                 </div>
 
@@ -518,14 +565,14 @@ export default function TemplatesPage() {
                     onClick={() => handleApplyTheme(selectedTemplate)}
                     className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>এই ডিজাইন দিয়ে স্টোর খুলুন</span>
+                    <span>{t('এই ডিজাইন দিয়ে স্টোর খুলুন', 'Open Store with this Design')}</span>
                     <ArrowRight size={14} />
                   </button>
                   <Link
                     href="/login"
                     className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs transition-all text-center border border-slate-200"
                   >
-                    লগইন করুন
+                    {t('লগইন করুন', 'Login')}
                   </Link>
                 </div>
               </div>

@@ -66,9 +66,18 @@ export async function POST(request) {
     // 🛡️ Verify retailer actually owns the shop they claim to broadcast for
     if (senderRole === 'retailer' && shopId) {
       const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-      if (!shopDoc.exists || shopDoc.data().ownerId !== decoded.uid) {
+      if (!shopDoc.exists) {
+        return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+      }
+      const shopData = shopDoc.data() || {};
+      const isOwner = shopData.ownerId === decoded.uid ||
+                      shopData.ownerUid === decoded.uid ||
+                      shopData.createdBy === decoded.uid ||
+                      (decoded.email && shopData.ownerEmail?.toLowerCase() === decoded.email?.toLowerCase());
+
+      if (!isOwner) {
         const userDoc = await adminDb.collection('users').doc(decoded.uid).get();
-        const isStaff = (shopDoc.exists && (shopDoc.data().staffEmails || []).includes(decoded.email?.toLowerCase()));
+        const isStaff = (shopData.staffEmails || []).includes(decoded.email?.toLowerCase());
         const isSuperAdmin = userDoc.exists && userDoc.data()?.role === 'superadmin';
         if (!isStaff && !isSuperAdmin) {
           return NextResponse.json({ error: 'Forbidden: You do not own this shop' }, { status: 403 });
@@ -197,22 +206,41 @@ export async function POST(request) {
         if (tokens.length > 0) {
           const payload = {
             notification: {
-              title: senderName || 'Daripallah',
+              title: senderName || 'BD Retailers',
               body: notifMessage.trim(),
-              icon: '/logo.png',
             },
             data: {
-              shopId,
-              shopSlug: actualShopSlug,
+              shopId: shopId || '',
+              shopSlug: actualShopSlug || '',
               url: actualShopSlug ? `/shop/${actualShopSlug}` : '/',
+              type: type || 'info',
+            },
+            android: {
+              priority: 'high',
+              notification: {
+                channelId: 'bdretailers_channel',
+                sound: 'default',
+                priority: 'high',
+                defaultSound: true,
+                defaultVibrateTimings: true,
+                visibility: 'public',
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: 'default',
+                  badge: 1,
+                },
+              },
             },
             webpush: {
               notification: {
-                title: senderName || 'Daripallah',
+                title: senderName || 'BD Retailers',
                 body: notifMessage.trim(),
                 icon: '/logo.png',
                 badge: '/logo.png',
-                tag: 'daripallah-msg',
+                tag: 'bdretailers-msg',
                 requireInteraction: true,
                 vibrate: [200, 100, 200]
               },
@@ -248,29 +276,68 @@ export async function POST(request) {
       } catch (fcmErr) {
         console.error('[FCM] Error sending push notifications:', fcmErr.message);
       }
-    } else if (senderRole === 'superadmin' && target === 'all') {
-      // Superadmin global broadcast — send to all shops' FCM tokens
+    } else if (senderRole === 'superadmin' && (target === 'all' || target === 'users' || target === 'retailers')) {
+      // Superadmin global broadcast — send to all device tokens (global + all shops)
       try {
-        const shopsSnap = await adminDb.collection('shops').get();
-        const allTokens = [];
-        for (const shopDoc of shopsSnap.docs) {
-          const tokensSnap = await adminDb.collection('shops').doc(shopDoc.id).collection('fcmTokens').get();
-          tokensSnap.docs.forEach(d => allTokens.push(d.id));
+        const tokenSet = new Set();
+
+        // 1. Collect from global_fcm_tokens
+        try {
+          const globalTokensSnap = await adminDb.collection('global_fcm_tokens').limit(1000).get();
+          globalTokensSnap.docs.forEach(d => tokenSet.add(d.id));
+        } catch (gErr) {
+          console.warn('[FCM] Global tokens fetch warning:', gErr.message);
         }
+
+        // 2. Collect from all shops' fcmTokens
+        try {
+          const shopsSnap = await adminDb.collection('shops').limit(100).get();
+          for (const sDoc of shopsSnap.docs) {
+            const tSnap = await adminDb.collection('shops').doc(sDoc.id).collection('fcmTokens').limit(500).get();
+            tSnap.docs.forEach(d => tokenSet.add(d.id));
+          }
+        } catch (sErr) {
+          console.warn('[FCM] Shop tokens fetch warning:', sErr.message);
+        }
+
+        const allTokens = Array.from(tokenSet);
+
         if (allTokens.length > 0) {
-          // Send in batches of 500 (FCM limit)
           const batchSize = 500;
           for (let i = 0; i < allTokens.length; i += batchSize) {
             const batch = allTokens.slice(i, i + batchSize);
             await adminMessaging.sendEachForMulticast({
-              notification: { title: 'Daripallah', body: notifMessage.trim(), icon: '/logo.png' },
+              notification: { 
+                title: senderName || 'BD Retailers', 
+                body: notifMessage.trim() 
+              },
+              data: {
+                url: '/',
+                type: type || 'info',
+              },
+              android: {
+                priority: 'high',
+                notification: {
+                  channelId: 'bdretailers_channel',
+                  sound: 'default',
+                  priority: 'high',
+                  defaultSound: true,
+                  defaultVibrateTimings: true,
+                  visibility: 'public',
+                },
+              },
+              apns: {
+                payload: {
+                  aps: { sound: 'default', badge: 1 }
+                }
+              },
               webpush: {
                 notification: {
-                  title: 'Daripallah',
+                  title: senderName || 'BD Retailers',
                   body: notifMessage.trim(),
                   icon: '/logo.png',
                   badge: '/logo.png',
-                  tag: 'daripallah-msg',
+                  tag: 'bdretailers-msg',
                   requireInteraction: true,
                 },
                 headers: { Urgency: 'high' }
@@ -278,6 +345,7 @@ export async function POST(request) {
               tokens: batch,
             });
           }
+          console.log(`[FCM] Sent global broadcast to ${allTokens.length} registered devices`);
         }
       } catch (fcmErr) {
         console.error('[FCM] Global broadcast error:', fcmErr.message);
@@ -380,7 +448,24 @@ export async function DELETE(request) {
     } catch (e) {}
 
     const isSystemAdmin = userRole === 'superadmin';
-    const isOwner = broadcastData.shopId === callerUid;
+    let isOwner = false;
+
+    if (broadcastData.shopId) {
+      if (broadcastData.shopId === callerUid) {
+        isOwner = true;
+      } else {
+        const shopDoc = await adminDb.collection('shops').doc(broadcastData.shopId).get();
+        if (shopDoc.exists) {
+          const sData = shopDoc.data() || {};
+          isOwner = sData.ownerId === callerUid || 
+                    sData.ownerUid === callerUid || 
+                    sData.createdBy === callerUid || 
+                    (decodedToken.email && sData.ownerEmail?.toLowerCase() === decodedToken.email?.toLowerCase());
+        }
+      }
+    } else if (broadcastData.senderRole === 'retailer') {
+      isOwner = true;
+    }
 
     if (!isSystemAdmin && !isOwner) {
       return NextResponse.json({ error: 'এই নোটিফিকেশনটি ডিলিট করার অনুমতি আপনার নেই' }, { status: 403 });

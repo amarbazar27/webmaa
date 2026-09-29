@@ -1501,7 +1501,7 @@ export default function Home() {
                   <Store size={15} className="text-white" />
                 </div>
               )}
-              <div className="flex flex-col min-w-0">
+              <div className="flex flex-col min-w-0 max-w-[100px] xs:max-w-none">
                 <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none truncate">
                   {globalConfig?.brandName || 'BD Retailers'}
                 </span>
@@ -1554,15 +1554,12 @@ export default function Home() {
             {/* Native BN / EN Language Switch Toggle — compact on mobile */}
             <button
               onClick={toggleLanguage}
-              className="h-8 sm:h-10 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 transition-all font-bold text-xs shadow-xs shrink-0"
+              className="w-8 h-8 sm:w-auto sm:h-10 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center sm:gap-1.5 cursor-pointer active:scale-95 transition-all font-bold text-xs shadow-xs shrink-0"
               title={language === 'bn' ? 'Switch to English' : 'বাংলায় দেখুন'}
               aria-label="Toggle Language"
             >
-              <Globe size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="font-bold text-[11px] sm:text-xs">{language === 'bn' ? 'বাং' : 'EN'}</span>
-              <span className="hidden xs:inline-block text-[9px] sm:text-[10px] px-1 py-0.2 rounded font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                {language === 'bn' ? 'EN' : 'বাং'}
-              </span>
+              <Globe size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0 hidden sm:inline" />
+              <span className="font-bold text-[11px] sm:text-xs">{language === 'bn' ? 'EN' : 'বাং'}</span>
             </button>
 
             {/* Direct Auth / Dashboard CTA — guaranteed full visibility */}
@@ -1571,7 +1568,7 @@ export default function Home() {
                 getDashboardHref() ? (
                   <Link 
                     href={getDashboardHref()} 
-                    className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                    className="px-2 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                     title={t('ড্যাশবোর্ড', 'Dashboard')}
                   >
                     <LayoutDashboard size={13} className="shrink-0" />
@@ -1580,7 +1577,7 @@ export default function Home() {
                 ) : (
                   <Link 
                     href="/become-retailer" 
-                    className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                    className="px-2 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                     title={t('স্টোর তৈরি করুন', 'Create Store')}
                   >
                     <Store size={13} className="shrink-0" />
@@ -1590,7 +1587,7 @@ export default function Home() {
               ) : (
                 <Link 
                   href="/login" 
-                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                  className="px-2 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                   title={t('লগইন করুন', 'Login')}
                 >
                   <LogIn size={13} className="shrink-0" />
