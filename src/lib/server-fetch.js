@@ -227,6 +227,12 @@ export async function getShopByDomainServer(host) {
       const shopsRef = adminDb.collection('shops');
       let snap = await shopsRef.where('customDomain', '==', lookupHost).limit(1).get();
       if (snap.empty) {
+        snap = await shopsRef.where('domains', 'array-contains', lookupHost).limit(1).get();
+      }
+      if (snap.empty) {
+        snap = await shopsRef.where('domains', 'array-contains', `www.${lookupHost}`).limit(1).get();
+      }
+      if (snap.empty) {
         // Fallback to checking subdomain (e.g. messerbazar.daripallah.com -> messerbazar)
         const subdomain = lookupHost.split('.')[0];
         snap = await shopsRef.where('subdomainSlug', '==', subdomain).limit(1).get();

@@ -41,6 +41,9 @@ const nextConfig = {
       'clsx'
     ],
   },
+  env: {
+    INTERNAL_PROXY_SECRET: process.env.INTERNAL_PROXY_SECRET || '',
+  },
 
   async headers() {
     return [

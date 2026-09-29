@@ -5,9 +5,9 @@ import { db } from './firebase';
 import { adminDb } from '@/lib/firebase-admin';
 
 /**
- * getShopByDomain — Resolve a hostname to a shop document
- * HIGH-6 Fix: Removed blanket getDocs() that loaded ALL shops into memory
- * HIGH-7 Fix: Removed excessive debug console.log statements
+ * getShopByDomain — Resolve a hostname to a shop document on server
+ * ⚡ Prioritizes Firebase Admin SDK (server-side service account)
+ * which is 100% immune to client API key domain/referer restrictions.
  */
 export const getShopByDomain = async (rawDomain) => {
   if (!rawDomain) return null;
@@ -24,44 +24,25 @@ export const getShopByDomain = async (rawDomain) => {
     variants.push('messerbazar.com', 'www.messerbazar.com');
   }
 
+  // ── 3. PRIMARY: Firebase Admin SDK (High-speed server-to-server) ──
   try {
-    const shopsRef = collection(db, 'shops');
-
-    // 3. Query each variant using indexed 'domains' array-contains
-    for (const variant of variants) {
-      const q = query(shopsRef, where('domains', 'array-contains', variant));
-      const snap = await getDocs(q);
-      
-      if (!snap.empty) {
-        return { id: snap.docs[0].id, ...snap.docs[0].data() };
-      }
-    }
-
-    // 4. Fallback to legacy field check
-    const lookupDomain = (naked === 'messbazar.com' || naked === 'messerbazar.com') ? 'messerbazar.com' : naked;
-    const legacyQ = query(shopsRef, where('customDomain', '==', lookupDomain));
-    const legacySnap = await getDocs(legacyQ);
-    
-    if (!legacySnap.empty) {
-      return { id: legacySnap.docs[0].id, ...legacySnap.docs[0].data() };
-    }
-
-    // 5. If client SDK returns nothing, try Admin SDK as final fallback
-    try {
-            if (adminDb) {
-        for (const variant of variants) {
-          const adminSnap = await adminDb.collection('shops')
-            .where('domains', 'array-contains', variant)
-            .limit(1)
-            .get();
-          if (!adminSnap.empty) {
-            const d = adminSnap.docs[0];
-            return { id: d.id, ...d.data() };
-          }
+    if (adminDb) {
+      // 3a. Check 'domains' array-contains for all variants
+      for (const variant of variants) {
+        const adminSnap = await adminDb.collection('shops')
+          .where('domains', 'array-contains', variant)
+          .limit(1)
+          .get();
+        if (!adminSnap.empty) {
+          const d = adminSnap.docs[0];
+          return { id: d.id, ...d.data() };
         }
-        // Admin SDK legacy fallback
+      }
+
+      // 3b. Check 'customDomain' field for all variants
+      for (const variant of variants) {
         const adminLegacy = await adminDb.collection('shops')
-          .where('customDomain', '==', lookupDomain)
+          .where('customDomain', '==', variant)
           .limit(1)
           .get();
         if (!adminLegacy.empty) {
@@ -69,13 +50,35 @@ export const getShopByDomain = async (rawDomain) => {
           return { id: d.id, ...d.data() };
         }
       }
-    } catch {
-      // Admin SDK not available, silently continue
     }
-
-    return null;
-  } catch (error) {
-    console.error(`[Firestore] getShopByDomain error for "${rawDomain}":`, error.message);
-    return null;
+  } catch (adminErr) {
+    console.warn(`[FirestoreServer] Admin SDK lookup error for "${rawDomain}":`, adminErr.message);
   }
+
+  // ── 4. FALLBACK: Client SDK (Used only if Admin SDK is unavailable) ──
+  try {
+    if (db) {
+      const shopsRef = collection(db, 'shops');
+
+      for (const variant of variants) {
+        const q = query(shopsRef, where('domains', 'array-contains', variant));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          return { id: snap.docs[0].id, ...snap.docs[0].data() };
+        }
+      }
+
+      for (const variant of variants) {
+        const legacyQ = query(shopsRef, where('customDomain', '==', variant));
+        const legacySnap = await getDocs(legacyQ);
+        if (!legacySnap.empty) {
+          return { id: legacySnap.docs[0].id, ...legacySnap.docs[0].data() };
+        }
+      }
+    }
+  } catch (clientErr) {
+    console.warn(`[FirestoreServer] Client SDK lookup fallback error for "${rawDomain}":`, clientErr.message);
+  }
+
+  return null;
 };

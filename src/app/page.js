@@ -1501,11 +1501,11 @@ export default function Home() {
                   <Store size={15} className="text-white" />
                 </div>
               )}
-              <div className="flex flex-col min-w-0 max-w-[100px] xs:max-w-none">
-                <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none truncate">
+              <div className="flex flex-col min-w-0 shrink-0">
+                <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none whitespace-nowrap">
                   {globalConfig?.brandName || 'BD Retailers'}
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-medium text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight mt-0.5 hidden xs:block">
+                <span className="text-[9px] sm:text-[10px] font-medium text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight mt-0.5 hidden sm:block whitespace-nowrap">
                   Verified Stores • Store Maker
                 </span>
               </div>
@@ -2614,8 +2614,10 @@ export default function Home() {
                 </div>
               )}
               <div>
-                <h2 className="text-sm font-bold text-slate-950 dark:text-white leading-tight">BD Retailers</h2>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Verified Stores • Store Maker</p>
+                <h2 className="text-sm font-bold text-slate-950 dark:text-white leading-tight whitespace-nowrap">
+                  {globalConfig?.brandName || 'BD Retailers'}
+                </h2>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium whitespace-nowrap">Verified Stores • Store Maker</p>
               </div>
             </div>
             <button 
@@ -2946,7 +2948,7 @@ export default function Home() {
                      alt="Logo" 
                    />
                    <div>
-                     <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">{globalConfig?.brandName || 'BDRetailers'}</h3>
+                     <h3 className="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">{globalConfig?.brandName || 'BD Retailers'}</h3>
                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">bdretailers.com</p>
                    </div>
                  </div>

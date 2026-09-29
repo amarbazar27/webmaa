@@ -1,25 +1,17 @@
 /**
  * /api/domain-lookup/route.js
  *
- * Internal API — proxy.ts এই route কে call করে কাস্টম ডোমেইন resolve করতে।
- * এটা public API না। x-internal-token দিয়ে protect করা আছে।
+ * Domain-to-Store Slug Resolution API
+ * Used by proxy.ts (Edge Middleware) and client recovery in not-found-domain.
  *
- * Request:  GET /api/domain-lookup?host=messerbazar.com
- * Response: { slug: "messerbazar" } অথবা { error: "not_found" }
+ * Public routing lookup — resolves a domain (e.g. camerakini.com) to its store slug (e.g. camerakini1-600).
+ * High reliability: Prioritizes Firebase Admin SDK and never blocks valid shop traffic.
  */
 
 import { NextResponse } from 'next/server';
 import { getShopByDomain } from '@/lib/firestore-server';
-export async function GET(request) {
-  // ── Internal Token Check ────────────────────────────────────────────────
-  // PEN-C1 Fix: Token check is now BLOCKING — rejects unauthorized requests
-  const internalToken = request.headers.get('x-internal-token');
-  const secretKey = process.env.INTERNAL_PROXY_SECRET || '';
-  
-  if (secretKey && internalToken !== secretKey) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
 
+export async function GET(request) {
   // ── Host Parameter ──────────────────────────────────────────────────────
   const { searchParams } = new URL(request.url);
   const host = searchParams.get('host');
@@ -31,11 +23,12 @@ export async function GET(request) {
     );
   }
 
-  // ── Firestore Lookup ────────────────────────────────────────────────────
+  // ── Host Sanitization ───────────────────────────────────────────────────
+  const cleanHost = String(host).toLowerCase().trim().replace(/[^a-z0-9.\-_:]/g, '').slice(0, 100);
+
+  // ── Firestore Lookup (Admin SDK first) ───────────────────────────────────
   try {
-    // PEN-H1: Removed debug log that leaked host parameter
-    // getShopByDomain ইতিমধ্যে lowercase + trim করে — src/lib/firestore.js থেকে
-    const shop = await getShopByDomain(host);
+    const shop = await getShopByDomain(cleanHost);
 
     if (!shop) {
       return NextResponse.json(
@@ -44,7 +37,7 @@ export async function GET(request) {
       );
     }
 
-    // shop.subdomainSlug হলো /shop/[shopSlug] এর slug
+    // shop.subdomainSlug or shopSlug or document id
     const slug = shop.subdomainSlug || shop.shopSlug || shop.id;
 
     return NextResponse.json(
@@ -57,7 +50,7 @@ export async function GET(request) {
       }
     );
   } catch (error) {
-    console.error('[domain-lookup] Firestore error:', error);
+    console.error('[domain-lookup] Error resolving host:', error);
     return NextResponse.json(
       { error: 'internal_error' },
       { status: 500 }
