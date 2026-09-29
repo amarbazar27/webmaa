@@ -6,10 +6,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
   Settings, LogOut, ShieldCheck, Menu, X, Crown, Lock, Paintbrush, Radio,
-  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle, Rocket
+  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle, Rocket, Home, ArrowLeft
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { getShop, subscribeGlobalConfig } from '@/lib/firestore';
 import { checkIsSubscriptionActive } from '@/lib/subscription';
 import clsx from 'clsx';
@@ -101,12 +102,38 @@ const navGroups = [
 
 export default function Sidebar({ isOpen, onClose, onOpen }) {
   const { userData, activeShopId } = useAuth();
+  const { language, t } = useLanguage();
   const [shop, setShop] = useState(null);
   const [globalConfig, setGlobalConfig] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [openGroups, setOpenGroups] = useState({});
   const pathname = usePathname();
   const router = useRouter();
+
+  const translateNav = (text) => {
+    const map = {
+      'Dashboard': t('ড্যাশবোর্ড', 'Dashboard'),
+      'Product': t('পণ্য', 'Product'),
+      'Product List': t('পণ্যের তালিকা', 'Product List'),
+      'Add Product': t('পণ্য যোগ করুন', 'Add Product'),
+      'Smart Inventory': t('স্মার্ট ইনভেন্টরি', 'Smart Inventory'),
+      'Category': t('ক্যাটাগরি', 'Category'),
+      'Category List': t('ক্যাটাগরি তালিকা', 'Category List'),
+      'Order': t('অর্ডার', 'Order'),
+      'All Orders': t('সকল অর্ডার', 'All Orders'),
+      'Leads & Abandoned Carts': t('ইনকমপ্লিট অর্ডার ও লিডস', 'Leads & Abandoned Carts'),
+      'Homepage Builder': t('হোমপেজ বিল্ডার', 'Homepage Builder'),
+      'Landing Pages': t('ল্যান্ডিং পেজ', 'Landing Pages'),
+      'Customers': t('কাস্টমার', 'Customers'),
+      'Broadcast': t('ব্রডকাস্ট', 'Broadcast'),
+      'Billing': t('বিলিং ও প্যাকেজ', 'Billing'),
+      'Store Settings': t('স্টোর সেটিংস', 'Store Settings'),
+      'Superadmin Panel': t('সুপারএডমিন প্যানেল', 'Superadmin Panel'),
+      'Sign Out': t('সাইন আউট', 'Sign Out'),
+      'Back to Main Site': t('হোমপেজে ফিরুন', 'Back to Main Site'),
+    };
+    return map[text] || text;
+  };
 
   useEffect(() => {
     if (activeShopId) {
@@ -250,7 +277,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
               >
                 <div className="flex items-center gap-3">
                   <Icon size={18} className={clsx('transition-colors', isDirectActive ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-700')} />
-                  <span>{group.label}</span>
+                  <span>{translateNav(group.label)}</span>
                 </div>
                 {isDirectActive && <div className="w-1.5 h-1.5 rounded-full bg-purple-600 shadow-xs" />}
               </Link>
@@ -272,7 +299,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
               >
                 <div className="flex items-center gap-3">
                   <Icon size={18} className={clsx('transition-colors', (isChildActive || isGroupOpen) ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-700')} />
-                  <span>{group.label}</span>
+                  <span>{translateNav(group.label)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {isLocked && (
@@ -312,7 +339,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
                         ) : (
                           <Circle size={10} className="text-slate-300 group-hover:text-slate-500 shrink-0" />
                         )}
-                        <span className="truncate">{sub.label}</span>
+                        <span className="truncate">{translateNav(sub.label)}</span>
                       </Link>
                     );
                   })}
@@ -339,7 +366,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
             >
               <div className="flex items-center gap-3">
                 <Crown size={18} className="text-amber-500" />
-                Superadmin Panel
+                <span>{translateNav('Superadmin Panel')}</span>
               </div>
               {pathname.startsWith('/superadmin') && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
             </Link>
@@ -347,15 +374,24 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
         )}
       </nav>
 
-      {/* Bottom actions */}
-      <div className="p-4 border-t border-slate-100 mt-auto bg-slate-50/50">
+      {/* Bottom actions: Back to Home + Sign Out */}
+      <div className="p-3 sm:p-4 border-t border-slate-100 mt-auto bg-slate-50/50 space-y-2">
+        <Link
+          href="/"
+          onClick={onClose}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-emerald-700 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 transition-all shadow-2xs"
+          title={translateNav('Back to Main Site')}
+        >
+          <Home size={15} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span>{translateNav('Back to Main Site')}</span>
+        </Link>
         <div className="flex items-center gap-2 px-1">
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-black text-red-500 hover:bg-red-50 transition-all group cursor-pointer"
+            className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all group cursor-pointer"
           >
             <LogOut size={16} />
-            <span>Sign Out</span>
+            <span>{translateNav('Sign Out')}</span>
           </button>
           {(!isStaff || isAdmin) && (
             <div className="shrink-0">

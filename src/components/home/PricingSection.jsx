@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { CheckCircle2, ArrowRight, ShieldCheck, Zap, Crown } from 'lucide-react';
 
 const DEFAULT_PLANS = {
@@ -11,72 +12,120 @@ const DEFAULT_PLANS = {
     id: 'starter',
     name: 'Starter Plan',
     bengaliTitle: 'স্টার্টার প্যাকেজ',
-    subtitle: '০৳ মাসিক ফি • রেভিনিউ শেয়ার',
+    englishTitle: 'Starter Package',
+    subtitleBn: '০৳ মাসিক ফি • রেভিনিউ শেয়ার',
+    subtitleEn: '৳0 Monthly Fee • Revenue Share',
     price: 0,
-    period: '/ মাসিক চার্জ নেই',
-    badge: 'নতুনদের জন্য স্পেশাল',
+    periodBn: '/ মাসিক চার্জ নেই',
+    periodEn: '/ No monthly charge',
+    badgeBn: 'নতুনদের জন্য স্পেশাল',
+    badgeEn: 'Special for Beginners',
     badgeTheme: 'amber',
-    commissionText: '⚡ বিক্রয়ের মাত্র ৫% শেয়ার',
-    features: [
+    commissionTextBn: '⚡ বিক্রয়ের মাত্র ৫% শেয়ার',
+    commissionTextEn: '⚡ Only 5% share on sales',
+    featuresBn: [
       '০৳ অগ্রিম খরচ (Zero Upfront Risk)',
       'সম্পূর্ণ অনলাইন ওয়েবসাইট ও স্টোরফ্রন্ট',
       'নো সেল = নো ফি (১০০% নিরাপদ ব্যবসা)',
       'Steadfast ও অটো পেমেন্ট গেটওয়ে',
       'যেকোনো সময় ফিক্সড প্ল্যানে আপগ্রেড'
+    ],
+    featuresEn: [
+      '৳0 Upfront Cost (Zero Risk)',
+      'Full Online Website & Storefront',
+      'No Sale = No Fee (100% Risk-Free)',
+      'Steadfast & Automated Payment Gateways',
+      'Upgrade to Fixed Plan Anytime'
     ]
   },
   monthly: {
     id: 'monthly',
     name: 'Standard Monthly',
     bengaliTitle: 'মাসিক প্যাকেজ',
-    subtitle: 'নিয়মিত ব্যবসার জন্য সেরা',
+    englishTitle: 'Standard Monthly',
+    subtitleBn: 'নিয়মিত ব্যবসার জন্য সেরা',
+    subtitleEn: 'Best for Regular Businesses',
     price: 500,
-    period: '/ প্রতি মাস',
-    badge: '🎁 ১ম মাস ফ্রি ট্রায়াল',
+    periodBn: '/ প্রতি মাস',
+    periodEn: '/ per month',
+    badgeBn: '🎁 ১ম মাস ফ্রি ট্রায়াল',
+    badgeEn: '🎁 1st Month Free Trial',
     badgeTheme: 'emerald',
-    commissionText: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
-    features: [
+    commissionTextBn: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
+    commissionTextEn: '🛡️ 0% Sales Commission (100% Profit)',
+    featuresBn: [
       '১০০% বিক্রয় লাভ আপনার (০% কমিশন)',
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '📦 আনলিমিটেড প্রোডাক্ট ও ক্যাটালগ',
       '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার'
+    ],
+    featuresEn: [
+      '100% Sales Profit is Yours (0% Commission)',
+      '🌐 Custom Domain Connection',
+      '📱 Professional Mobile App & PWA',
+      '📦 Unlimited Products & Catalog',
+      '🤖 AI Product Description Writer'
     ]
   },
   quarterly: {
     id: 'quarterly',
     name: 'Growth Quarterly',
     bengaliTitle: 'ত্রৈমাসিক প্যাকেজ',
-    subtitle: '৩ মাসের জন্য ১০% অতিরিক্ত ছাড়',
+    englishTitle: 'Growth Quarterly',
+    subtitleBn: '৩ মাসের জন্য ১০% অতিরিক্ত ছাড়',
+    subtitleEn: '10% Extra Discount for 3 Months',
     price: 1350,
-    period: '/ ৩ মাস',
-    badge: '🔥 জনপ্রিয় ও সাশ্রয়ী',
+    periodBn: '/ ৩ মাস',
+    periodEn: '/ 3 months',
+    badgeBn: '🔥 জনপ্রিয় ও সাশ্রয়ী',
+    badgeEn: '🔥 Popular & Cost-Effective',
     badgeTheme: 'teal',
-    commissionText: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
-    features: [
+    commissionTextBn: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
+    commissionTextEn: '🛡️ 0% Sales Commission (100% Profit)',
+    featuresBn: [
       '১০০% বিক্রয় লাভ আপনার (০% কমিশন)',
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '📦 আনলিমিটেড প্রোডাক্ট ও অর্ডার',
       '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট'
+    ],
+    featuresEn: [
+      '100% Sales Profit is Yours (0% Commission)',
+      '🌐 Custom Domain Connection',
+      '📱 Professional Mobile App & PWA',
+      '📦 Unlimited Products & Orders',
+      '⚡ VIP Priority Support'
     ]
   },
   yearly: {
     id: 'yearly',
     name: 'Pro Yearly',
     bengaliTitle: 'বার্ষিক প্যাকেজ',
-    subtitle: 'সারা বছরের নিশ্চিন্ত সুপার সেভার',
+    englishTitle: 'Pro Yearly',
+    subtitleBn: 'সারা বছরের নিশ্চিন্ত সুপার সেভার',
+    subtitleEn: 'Worry-Free Annual Super Saver',
     price: 5000,
-    period: '/ ১ বছর',
-    badge: '👑 সর্বোচ্চ লাভজনক (২ মাস ফ্রি)',
+    periodBn: '/ ১ বছর',
+    periodEn: '/ 1 year',
+    badgeBn: '👑 সর্বোচ্চ লাভজনক (২ মাস ফ্রি)',
+    badgeEn: '👑 Most Profitable (2 Mos Free)',
     badgeTheme: 'emerald',
-    commissionText: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
-    features: [
+    commissionTextBn: '🛡️ ০% সেলস কমিশন (১০০% প্রফিট)',
+    commissionTextEn: '🛡️ 0% Sales Commission (100% Profit)',
+    featuresBn: [
       '১০০% বিক্রয় লাভ আপনার (০% কমিশন)',
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '🤖 ফুল AI অটোমেশন ও অ্যাসিস্ট্যান্ট',
       '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ'
+    ],
+    featuresEn: [
+      '100% Sales Profit is Yours (0% Commission)',
+      '🌐 Custom Domain Connection',
+      '📱 Professional Mobile App & PWA',
+      '🤖 Full AI Automation & Assistant',
+      '👑 Dedicated VIP Support & Setup'
     ]
   }
 };
@@ -84,6 +133,7 @@ const DEFAULT_PLANS = {
 export default function PricingSection({ globalConfig = null }) {
   const router = useRouter();
   const { user, userData } = useAuth();
+  const { language, t } = useLanguage();
   const [selectedPlan, setSelectedPlan] = useState('monthly');
 
   // Starter commission percent from globalConfig if set
@@ -109,17 +159,27 @@ export default function PricingSection({ globalConfig = null }) {
       price = Number(customData.price);
     }
 
+    const isEn = language === 'en';
     const features = Array.isArray(customData.features) && customData.features.length > 0
       ? customData.features
-      : defaultData.features;
+      : (isEn ? defaultData.featuresEn : defaultData.featuresBn);
 
     const commissionText = key === 'starter'
-      ? `⚡ বিক্রয়ের মাত্র ${starterPercent}% শেয়ার`
-      : (customData.commissionText || defaultData.commissionText);
+      ? (isEn ? `⚡ Only ${starterPercent}% share on sales` : `⚡ বিক্রয়ের মাত্র ${starterPercent}% শেয়ার`)
+      : (customData.commissionText || (isEn ? defaultData.commissionTextEn : defaultData.commissionTextBn));
+
+    const badge = isEn ? defaultData.badgeEn : (customData.badge || defaultData.badgeBn);
+    const subtitle = isEn ? defaultData.subtitleEn : (customData.subtitle || defaultData.subtitleBn);
+    const period = isEn ? defaultData.periodEn : (customData.period || defaultData.periodBn);
+    const title = isEn ? defaultData.englishTitle : (customData.bengaliTitle || defaultData.bengaliTitle);
 
     return {
       ...defaultData,
       ...customData,
+      title,
+      subtitle,
+      period,
+      badge,
       price,
       commissionText,
       features
@@ -155,16 +215,19 @@ export default function PricingSection({ globalConfig = null }) {
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12 md:mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 font-bold text-xs">
             <Zap size={14} />
-            <span>স্বচ্ছ ও সাশ্রয়ী সাবস্ক্রিপশন প্ল্যান</span>
+            <span>{t('স্বচ্ছ ও সাশ্রয়ী সাবস্ক্রিপশন প্ল্যান', 'Transparent & Affordable Subscription Plans')}</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-            আপনার অনলাইন ব্যবসার জন্য{' '}
-            <span className="text-emerald-600 dark:text-emerald-400">সেরা প্যাকেজটি</span> বেছে নিন
+            {language === 'en' ? (
+              <>Choose the <span className="text-emerald-600 dark:text-emerald-400">Best Package</span> for Your Online Business</>
+            ) : (
+              <>আপনার অনলাইন ব্যবসার জন্য <span className="text-emerald-600 dark:text-emerald-400">সেরা প্যাকেজটি</span> বেছে নিন</>
+            )}
           </h2>
 
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            কোনো লুকানো চার্জ নেই। নতুনদের জন্য ০৳ অগ্রিম খরচে রেভিনিউ শেয়ার থেকে শুরু করে বড় ব্যবসার জন্য আনলিমিটেড ফিক্সড প্যাকেজ।
+            {t('কোনো লুকানো চার্জ নেই। নতুনদের জন্য ০৳ অগ্রিম খরচে রেভিনিউ শেয়ার থেকে শুরু করে বড় ব্যবসার জন্য আনলিমিটেড ফিক্সড প্যাকেজ।', 'No hidden charges. From ৳0 upfront cost revenue share for beginners to unlimited fixed packages for growing businesses.')}
           </p>
         </div>
 
@@ -201,7 +264,7 @@ export default function PricingSection({ globalConfig = null }) {
                   {/* Plan Info */}
                   <div>
                     <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                      {data.bengaliTitle}
+                      {data.title}
                     </p>
                     <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 leading-tight mt-0.5">
                       {data.name}
@@ -257,7 +320,11 @@ export default function PricingSection({ globalConfig = null }) {
                         : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700'
                     }`}
                   >
-                    <span>{isStarter ? 'শেয়ার করে শুরু করুন' : 'প্যাকেজটি বেছে নিন'}</span>
+                    <span>
+                      {isStarter
+                        ? t('শেয়ার করে শুরু করুন', 'Start with Revenue Share')
+                        : t('প্যাকেজটি বেছে নিন', 'Choose This Package')}
+                    </span>
                     <ArrowRight size={14} />
                   </button>
                 </div>

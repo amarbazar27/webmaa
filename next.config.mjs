@@ -106,6 +106,12 @@ const nextConfig = {
       },
       // ⚡ High-traffic read-only API routes — Edge CDN cached to eliminate Serverless CPU & Invocations
       {
+        source: '/api/homepage-config(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=120, stale-while-revalidate=600' },
+        ],
+      },
+      {
         source: '/api/manifest(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, s-maxage=3600, stale-while-revalidate=86400' },

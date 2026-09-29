@@ -4044,25 +4044,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         isPreview={false}
       />
 
-      {/* ── Sleek Scroll To Top / Bottom Floating Pills ── */}
-      <div className="fixed left-4 bottom-24 z-40 flex flex-col gap-2 md:bottom-8 select-none">
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="group w-10 h-10 rounded-2xl bg-white hover:bg-slate-900 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-slate-800 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
-          title="উপরে যান (Scroll to Top)"
-          aria-label="Scroll to top"
-        >
-          <ArrowUp size={16} className="stroke-[2.5] group-hover:-translate-y-0.5 transition-transform" />
-        </button>
-        <button
-          onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
-          className="group w-10 h-10 rounded-2xl bg-white hover:bg-slate-900 text-slate-700 hover:text-white shadow-md border border-slate-200 hover:border-slate-800 transition-all duration-300 flex items-center justify-center active:scale-90 cursor-pointer"
-          title="নিচে যান (Scroll to Bottom)"
-          aria-label="Scroll to bottom"
-        >
-          <ArrowDown size={16} className="stroke-[2.5] group-hover:translate-y-0.5 transition-transform" />
-        </button>
-      </div>
+      {/* Old duplicate scroller removed — ScrollProgress in layout.js handles smart page scrolling */}
 
       {/* ── Floating Buttons (Right Bottom - Updated) ── */}
       <div className="fixed bottom-24 right-6 md:bottom-8 z-40 flex flex-col items-end gap-4">

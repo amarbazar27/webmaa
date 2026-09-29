@@ -123,7 +123,11 @@ export async function GET(request) {
     if (!data.header) data.header = DEFAULT_HEADER;
     if (!data.footer) data.footer = DEFAULT_FOOTER;
 
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   } catch (err) {
     console.error('[homepage-config GET]', err);
     return NextResponse.json({ error: 'Failed to fetch config' }, { status: 500 });

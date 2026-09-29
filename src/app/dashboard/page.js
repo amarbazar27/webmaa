@@ -10,9 +10,11 @@ import toast from 'react-hot-toast';
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 import AiInsightsPanel from '@/components/dashboard/AiInsightsPanel';
 import NotificationBox from '@/components/dashboard/NotificationBox';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function DashboardPage() {
   const { user, activeShopId } = useAuth();
+  const { language, t } = useLanguage();
   const [shop, setShop] = useState(null);
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
@@ -119,48 +121,50 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="space-y-8 animate-slide-in pb-12">
+      <div className="space-y-6 sm:space-y-8 animate-slide-in pb-12 w-full min-w-0">
       {/* Welcome Header & Store Live Link Hub */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-sm">
-        <div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 bg-white dark:bg-slate-900 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm w-full min-w-0">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-800">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live Storefront Active
+              {t('লাইভ স্টোর চালু আছে', 'Live Storefront Active')}
             </span>
             {globalConfig?.donationEnabled !== false && (
               <button
                 onClick={() => setIsDonateModalOpen(true)}
                 className="flex items-center gap-1 px-2.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-full text-xs font-bold transition-colors cursor-pointer"
-                title="Support Platform"
+                title={t('প্ল্যাটফর্ম অনুদান', 'Support Platform')}
               >
                 <Heart size={11} className="fill-current text-rose-500" />
-                <span>Donate</span>
+                <span>{t('অনুদান', 'Donate')}</span>
               </button>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-none mt-2">
-            Welcome back, {user?.displayName?.split(' ')[0] || shop?.shopName || 'Retailer'} 👋
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mt-2 truncate">
+            {t('স্বাগতম,', 'Welcome back,')} {user?.displayName?.split(' ')[0] || shop?.shopName || 'Retailer'} 👋
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1.5">Here's what's happening with your store today.</p>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-1.5">
+            {t('আজ আপনার স্টোরের সাম্প্রতিক হালনাগাদ।', "Here's what's happening with your store today.")}
+          </p>
         </div>
         
         {/* Full-width Branded Subdomain Live Card */}
         {shop && (
-          <div className="bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/80 p-4 sm:p-5 rounded-2xl border-2 border-purple-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-xl">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 shrink-0">
-                <Globe size={20} />
+          <div className="bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/80 dark:from-purple-950/30 dark:via-slate-900 dark:to-indigo-950/30 p-3.5 sm:p-5 rounded-2xl border-2 border-purple-200 dark:border-purple-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full max-w-xl min-w-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 shrink-0">
+                <Globe size={18} />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-purple-600 flex items-center gap-1">
-                  <span>🌟 লাইভ সাবডোমেইন লিংক</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                  <span>🌟 {t('লাইভ সাবডোমেইন লিংক', 'Live Store URL')}</span>
                 </p>
                 <a 
                   href={shopUrl} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="text-sm sm:text-base font-black font-mono text-slate-900 hover:text-purple-700 underline truncate block tracking-tight mt-0.5" 
+                  className="text-xs sm:text-base font-black font-mono text-slate-900 dark:text-white hover:text-purple-700 dark:hover:text-purple-300 underline truncate block tracking-tight mt-0.5 max-w-[190px] xs:max-w-xs sm:max-w-sm" 
                   title={shopUrl}
                 >
                   {shopUrl}
@@ -172,19 +176,19 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="px-3.5 py-2.5 bg-white hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-black transition-all border border-purple-200 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                className="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-white dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-slate-700 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-black transition-all border border-purple-200 dark:border-purple-800 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
                 title="Copy Store URL"
               >
                 {copiedLink ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                <span>{copiedLink ? 'কপি হয়েছে' : 'কপি'}</span>
+                <span>{copiedLink ? t('কপি হয়েছে', 'Copied') : t('কপি', 'Copy')}</span>
               </button>
               <a 
                 href={shopUrl} 
                 target="_blank" 
                 rel="noreferrer"
-                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-purple-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="px-3.5 py-2 sm:px-4 sm:py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-purple-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
               >
-                <span>ভিজিট স্টোর</span>
+                <span>{t('ভিজিট স্টোর', 'Visit Store')}</span>
                 <ExternalLink size={14} />
               </a>
             </div>
@@ -194,23 +198,23 @@ export default function DashboardPage() {
 
       {/* 🎁 1-Month Free Claim Offer Banner for New Retailers / Expired Accounts */}
       {showTrialOfferBanner && (
-        <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-purple-400/30 animate-pulse">
-          <div className="space-y-2 text-left">
+        <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-800 rounded-2xl sm:rounded-3xl p-5 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 border border-purple-400/30 animate-pulse w-full min-w-0">
+          <div className="space-y-2 text-left min-w-0">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-bold shadow-sm">
-              🎁 নতুন অ্যাকাউন্ট অফার
+              🎁 {t('নতুন অ্যাকাউন্ট অফার', 'New Retailer Offer')}
             </div>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight">
-              ১ মাস (৩০ দিন) ফ্রি ক্লেইম করুন!
+            <h2 className="text-lg md:text-2xl font-black tracking-tight">
+              {t('১ মাস (৩০ দিন) ফ্রি ক্লেইম করুন!', 'Claim 1 Month (30 Days) Free Trial!')}
             </h2>
             <p className="text-xs text-purple-100 font-medium max-w-xl leading-relaxed">
-              আপনার স্টোরের লোগো, কাস্টম ডোমেইন ও প্রেফারেন্স সেটিংস আনলক করতে এখনই ১ মাসের ফ্রি ট্রায়াল ক্লেইম করুন। বিলিং পেজে গিয়ে ট্রায়াল শুরু করুন।
+              {t('আপনার স্টোরের লোগো, কাস্টম ডোমেইন ও প্রেফারেন্স সেটিংস আনলক করতে এখনই ১ মাসের ফ্রি ট্রায়াল ক্লেইম করুন। বিলিং পেজে গিয়ে ট্রায়াল শুরু করুন।', 'Unlock custom domains, store logos, and preference controls by claiming your 1-month free trial now in Billing.')}
             </p>
           </div>
           <Link
             href="/dashboard/billing"
-            className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-bold text-xs transition-all shadow-lg shadow-amber-400/20 shrink-0 flex items-center gap-2 hover:scale-105 active:scale-95"
+            className="px-5 py-3 sm:px-6 sm:py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-2xl font-bold text-xs transition-all shadow-lg shadow-amber-400/20 shrink-0 flex items-center gap-2 hover:scale-105 active:scale-95"
           >
-            <span>Claim 1 Month Free in Billing</span>
+            <span>{t('বিলিংয়ে ১ মাস ফ্রি ক্লেইম করুন', 'Claim 1 Month Free in Billing')}</span>
             <ArrowUpRight size={16} />
           </Link>
         </div>
@@ -222,21 +226,21 @@ export default function DashboardPage() {
         if (!notice || !notice.active || !notice.text) return null;
 
         return (
-          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-6 md:p-7 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 border-2 border-amber-300/40 relative overflow-hidden">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 shadow-inner">
-                <Zap size={24} className="fill-current text-yellow-300" />
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl sm:rounded-3xl p-5 md:p-7 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-5 border-2 border-amber-300/40 relative overflow-hidden w-full min-w-0">
+            <div className="flex items-start gap-3 sm:gap-4 min-w-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center shrink-0 shadow-inner">
+                <Zap size={22} className="fill-current text-yellow-300" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/25 text-white text-xs font-bold">
-                  📢 সুপারএডমিন জরুরি নোটিশ
+                  📢 {t('জরুরি নোটিশ', 'Important Notice')}
                 </div>
-                <div className="text-sm md:text-base font-black tracking-tight text-white leading-snug whitespace-pre-line">
+                <div className="text-sm md:text-base font-black tracking-tight text-white leading-snug whitespace-pre-line break-words">
                   {notice.text}
                 </div>
                 {notice.createdAt && (
                   <p className="text-[10px] font-bold text-amber-100">
-                    প্রকাশের তারিখ: {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {t('প্রকাশের তারিখ:', 'Published:')} {new Date(notice.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 )}
               </div>
@@ -244,9 +248,9 @@ export default function DashboardPage() {
             {shop?.subscriptionPackage === 'starter' && (
               <Link
                 href="/dashboard/billing"
-                className="px-5 py-3 bg-white hover:bg-amber-50 text-amber-900 rounded-2xl font-bold text-xs transition-all shadow-lg shrink-0 flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                className="px-4 py-2.5 sm:px-5 sm:py-3 bg-white hover:bg-amber-50 text-amber-900 rounded-2xl font-bold text-xs transition-all shadow-lg shrink-0 flex items-center gap-1.5 hover:scale-105 active:scale-95"
               >
-                <span>বিলিং পেজ</span>
+                <span>{t('বিলিং পেজ', 'Billing Page')}</span>
                 <ArrowUpRight size={15} />
               </Link>
             )}
@@ -254,35 +258,35 @@ export default function DashboardPage() {
         );
       })()}
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      {/* Metrics Row — 2 columns on mobile so cards never horizontally overflow */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 w-full min-w-0">
          <Card 
             title={`৳${totalRevenue.toLocaleString()}`} 
-            subtitle="Gross Revenue" 
+            subtitle={t('মোট আয়', 'Gross Revenue')} 
             icon={DollarSign} 
             className="border-l-4 border-l-green-500 shadow-sm" 
          />
          <Card 
             title={totalOrdersCount} 
-            subtitle="Total Orders" 
+            subtitle={t('মোট অর্ডার', 'Total Orders')} 
             icon={ShoppingBag} 
             className="border-l-4 border-l-blue-500 shadow-sm" 
          />
          <Card 
             title={products.length} 
-            subtitle="Active Inventory" 
+            subtitle={t('সক্রিয় পণ্য', 'Active Inventory')} 
             icon={Package} 
             className="border-l-4 border-l-purple-500 shadow-sm" 
          />
          <Card 
             title={pendingOrdersCount} 
-            subtitle="Pending Orders" 
+            subtitle={t('অপেক্ষমান অর্ডার', 'Pending Orders')} 
             icon={Clock} 
             className="border-l-4 border-l-amber-500 shadow-sm" 
          />
          <Card 
             title={completedOrdersCount} 
-            subtitle="Completed Orders" 
+            subtitle={t('সম্পন্ন অর্ডার', 'Completed Orders')} 
             icon={CheckCircle} 
             className="border-l-4 border-l-emerald-500 shadow-sm" 
          />

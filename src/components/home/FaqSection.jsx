@@ -2,42 +2,56 @@
 
 import { useState } from 'react';
 import { HelpCircle, ChevronDown, MessageCircleQuestion } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 const DEFAULT_FAQS = [
   {
     id: 'faq-1',
-    question: 'BDRetailers এ কীভাবে অনলাইন স্টোর খুলব?',
-    answer: 'মার্চেন্ট হতে "Become Retailer" বাটনে ক্লিক করে আপনার নাম, দোকানের নাম, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে মাত্র ১ মিনিটেই ফ্রি রেজিস্ট্রেশন সম্পন্ন করতে পারেন। এরপর সাথে সাথেই আপনার স্টোর লাইভ হয়ে যাবে।'
+    questionBn: 'BDRetailers এ কীভাবে অনলাইন স্টোর খুলব?',
+    questionEn: 'How do I open an online store on BDRetailers?',
+    answerBn: 'মার্চেন্ট হতে "Become Retailer" বাটনে ক্লিক করে আপনার নাম, দোকানের নাম, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে মাত্র ১ মিনিটেই ফ্রি রেজিস্ট্রেশন সম্পন্ন করতে পারেন। এরপর সাথে সাথেই আপনার স্টোর লাইভ হয়ে যাবে।',
+    answerEn: 'Click the "Become Retailer" button and complete the free registration in just 1 minute with your name, store name, mobile number, and password. Your store will go live instantly.'
   },
   {
     id: 'faq-2',
-    question: 'স্টার্টার প্ল্যানে কি আসলেই কোনো অগ্রিম ফি নেই?',
-    answer: 'হ্যাঁ, আমাদের স্টার্টার প্ল্যানে কোনো মাসিক ফি বা অগ্রিম খরচ নেই (০৳ আপফ্রন্ট ফি)। শুধুমাত্র আপনার পণ্য সফলভাবে বিক্রয় হলে একটি ক্ষুদ্র রেভিনিউ শেয়ার প্রযোজ্য হবে। অর্থাৎ নো সেল = নো ফি!'
+    questionBn: 'স্টার্টার প্ল্যানে কি আসলেই কোনো অগ্রিম ফি নেই?',
+    questionEn: 'Is there really no upfront fee in the Starter plan?',
+    answerBn: 'হ্যাঁ, আমাদের স্টার্টার প্ল্যানে কোনো মাসিক ফি বা অগ্রিম খরচ নেই (০৳ আপফ্রন্ট ফি)। শুধুমাত্র আপনার পণ্য সফলভাবে বিক্রয় হলে একটি ক্ষুদ্র রেভিনিউ শেয়ার প্রযোজ্য হবে। অর্থাৎ নো সেল = নো ফি!',
+    answerEn: 'Yes, our Starter plan has no monthly fees or upfront costs (৳0 upfront fee). Only when your products sell successfully, a small revenue share applies. No sale = no fee!'
   },
   {
     id: 'faq-3',
-    question: 'Steadfast কুরিয়ার ও পেমেন্ট গেটওয়ে কীভাবে কাজ করে?',
-    answer: 'আমাদের সিস্টেমে Steadfast কুরিয়ার অটোমেটেড API সম্পূর্ণ ফ্রি ইন্টিগ্রেটেড রয়েছে। বিকাশ, নগদ, রকেট ও অনলাইন কার্ড পেমেন্ট সরাসরি আপনার অ্যাকাউন্টে জমা হবে।'
+    questionBn: 'Steadfast কুরিয়ার ও পেমেন্ট গেটওয়ে কীভাবে কাজ করে?',
+    questionEn: 'How do Steadfast Courier and payment gateways work?',
+    answerBn: 'আমাদের সিস্টেমে Steadfast কুরিয়ার অটোমেটেড API সম্পূর্ণ ফ্রি ইন্টিগ্রেটেড রয়েছে। বিকাশ, নগদ, রকেট ও অনলাইন কার্ড পেমেন্ট সরাসরি আপনার অ্যাকাউন্টে জমা হবে।',
+    answerEn: 'Our system has Steadfast Courier automated API integrated for free. bKash, Nagad, Rocket, and card payments deposit directly into your account.'
   },
   {
     id: 'faq-4',
-    question: 'আমি কি আমার নিজস্ব কাস্টম ডোমেইন (.com বা .shop) ব্যবহার করতে পারব?',
-    answer: 'অবশ্যই! আমাদের মান্থলি, কোয়ার্টারলি ও ইয়ারলি প্যাকেজে সম্পূর্ণ ফ্রি কাস্টম ডোমেইন কানেক্টিভিটি ও আজীবন ফ্রি SSL সার্টিফিকেটের সুবিধা অন্তর্ভুক্ত রয়েছে।'
+    questionBn: 'আমি কি আমার নিজস্ব কাস্টম ডোমেইন (.com বা .shop) ব্যবহার করতে পারব?',
+    questionEn: 'Can I use my own custom domain (.com or .shop)?',
+    answerBn: 'অবশ্যই! আমাদের মান্থলি, কোয়ার্টারলি ও ইয়ারলি প্যাকেজে সম্পূর্ণ ফ্রি কাস্টম ডোমেইন কানেক্টিভিটি ও আজীবন ফ্রি SSL সার্টিফিকেটের সুবিধা অন্তর্ভুক্ত রয়েছে।',
+    answerEn: 'Absolutely! Our Monthly, Quarterly, and Yearly packages include free custom domain connectivity and lifetime free SSL certificates.'
   },
   {
     id: 'faq-5',
-    question: 'আমার ব্র্যান্ডের নামে কি নিজস্ব অ্যান্ড্রয়েড মোবাইল অ্যাপ তৈরি হবে?',
-    answer: 'হ্যাঁ! BDRetailers এর আধুনিক হোয়াইট-লেবেল টেকনোলজির মাধ্যমে আপনার নিজস্ব ব্র্যান্ডের নামে ডেডিকেটেড Android অ্যাপ (.aab / .apk) তৈরি ও Google Play Store এ পাবলিশ করার ব্যবস্থা রয়েছে।'
+    questionBn: 'আমার ব্র্যান্ডের নামে কি নিজস্ব অ্যান্ড্রয়েড মোবাইল অ্যাপ তৈরি হবে?',
+    questionEn: 'Will an Android app be created under my own brand name?',
+    answerBn: 'হ্যাঁ! BDRetailers এর আধুনিক হোয়াইট-লেবেল টেকনোলজির মাধ্যমে আপনার নিজস্ব ব্র্যান্ডের নামে ডেডিকেটেড Android অ্যাপ (.aab / .apk) তৈরি ও Google Play Store এ পাবলিশ করার ব্যবস্থা রয়েছে।',
+    answerEn: 'Yes! Through BDRetailers’ modern white-label technology, a dedicated Android app (.aab / .apk) can be built in your brand name and published to Google Play Store.'
   },
   {
     id: 'faq-6',
-    question: 'আমার কোনো প্রযুক্তিগত বা কোডিং জ্ঞান না থাকলে কি আমি চালাতে পারব?',
-    answer: 'একদমই কোনো কোডিং বা টেকনিক্যাল জ্ঞানের প্রয়োজন নেই। সম্পূর্ণ ইউজার-ফ্রেন্ডলি বাংলা ও ইংরেজি ইন্টারফেসে পণ্য যোগ করা, অর্ডার প্রসেসিং ও স্টক ম্যানেজমেন্ট খুব সহজেই মোবাইল দিয়ে পরিচালনা করতে পারবেন।'
+    questionBn: 'আমার কোনো প্রযুক্তিগত বা কোডিং জ্ঞান না থাকলে কি আমি চালাতে পারব?',
+    questionEn: 'Can I run it without any technical or coding knowledge?',
+    answerBn: 'একদমই কোনো কোডিং বা টেকনিক্যাল জ্ঞানের প্রয়োজন নেই। সম্পূর্ণ ইউজার-ফ্রেন্ডলি বাংলা ও ইংরেজি ইন্টারফেসে পণ্য যোগ করা, অর্ডার প্রসেসিং ও স্টক ম্যানেজমেন্ট খুব সহজেই মোবাইল দিয়ে পরিচালনা করতে পারবেন।',
+    answerEn: 'No coding or technical skills are required at all. You can easily manage product additions, order processing, and inventory via mobile in a user-friendly bilingual interface.'
   }
 ];
 
 export default function FaqSection({ globalConfig = null }) {
   const [openIndex, setOpenIndex] = useState(0);
+  const { language, t } = useLanguage();
 
   const rawFaqs = (globalConfig?.faqs && globalConfig.faqs.length > 0)
     ? globalConfig.faqs
@@ -51,13 +65,13 @@ export default function FaqSection({ globalConfig = null }) {
         <div className="text-center space-y-4 mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-bold text-xs">
             <HelpCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
-            <span>সচরাচর জিজ্ঞাসিত প্রশ্নাবলী</span>
+            <span>{t('সচরাচর জিজ্ঞাসিত প্রশ্নাবলী', 'Frequently Asked Questions')}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
             Frequently Asked <span className="text-emerald-600 dark:text-emerald-400">Questions</span>
           </h2>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 font-normal max-w-xl mx-auto">
-            BDRetailers প্ল্যাটফর্ম, সাবস্ক্রিপশন প্ল্যান ও সার্ভিস সম্পর্কে সাধারণ প্রশ্নগুলোর উত্তর জেনে নিন।
+            {t('BDRetailers প্ল্যাটফর্ম, সাবস্ক্রিপশন প্ল্যান ও সার্ভিস সম্পর্কে সাধারণ প্রশ্নগুলোর উত্তর জেনে নিন।', 'Find answers to common questions about BDRetailers platform, subscription plans, and merchant services.')}
           </p>
         </div>
 
@@ -65,6 +79,13 @@ export default function FaqSection({ globalConfig = null }) {
         <div className="space-y-4">
           {rawFaqs.map((faq, index) => {
             const isOpen = openIndex === index;
+            const questionText = language === 'en'
+              ? (faq.questionEn || faq.question)
+              : (faq.questionBn || faq.question);
+            const answerText = language === 'en'
+              ? (faq.answerEn || faq.answer)
+              : (faq.answerBn || faq.answer);
+
             return (
               <div
                 key={faq.id || index}
@@ -87,7 +108,7 @@ export default function FaqSection({ globalConfig = null }) {
                       <HelpCircle size={18} />
                     </div>
                     <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 leading-snug">
-                      {faq.question}
+                      {questionText}
                     </span>
                   </div>
 

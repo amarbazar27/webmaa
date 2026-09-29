@@ -2508,479 +2508,699 @@ export default function SuperAdminPage() {
                 <Store size={40} className="mx-auto mb-4 text-emerald-300" />
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No active stores found</p>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-separate border-spacing-y-2">
-                  <thead>
-                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                      <th className="pb-2 px-4 border-b border-slate-100">Store Name</th>
-                      <th className="pb-2 px-4 border-b border-slate-100">Retailer Gmail</th>
-                      <th className="pb-2 px-4 border-b border-slate-100">Performance (Sales/Money)</th>
-                      <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
-                      <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
-                      <th className="pb-2 px-4 border-b border-slate-100">Subscription</th>
-                      {!isSubAdmin && <th className="pb-2 px-4 border-b border-slate-100 text-center">Sub-Admin</th>}
-                      <th className="pb-2 px-4 border-b border-slate-100 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(isSubAdmin ? shops.filter(s => s.showInSubAdmin === true || s.showInSubAdmin === 'true') : shops).map((shop) => {
-                      // Estimate size: basic 2MB base + ~500kb per banner + assumed product footprint
+            ) : (() => {
+              const visibleShops = isSubAdmin ? shops.filter(s => s.showInSubAdmin === true || s.showInSubAdmin === 'true') : shops;
+
+              const renderCloudinaryConfig = (shop) => (
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-left">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
+                    <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
+                      ☁️ Cloudinary Configuration for <span className="text-purple-600 font-black">{shop.shopName || 'this store'}</span>
+                    </h4>
+                    
+                    <div className="flex flex-wrap items-center gap-4">
+                      {/* Cloudinary Toggle */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 font-bold">Cloud Settings:</span>
+                        <button
+                          onClick={() => handleUpdateShopCloudinary(shop.id, { 
+                            cloudinaryConfigEnabled: shop.cloudinaryConfigEnabled === false ? true : false 
+                          })}
+                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                            shop.cloudinaryConfigEnabled !== false ? 'bg-purple-600' : 'bg-slate-300'
+                          }`}
+                        >
+                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                            shop.cloudinaryConfigEnabled !== false ? 'translate-x-5' : 'translate-x-1'
+                          }`} />
+                        </button>
+                        <span className="text-xs font-black text-slate-700">
+                          {shop.cloudinaryConfigEnabled !== false ? 'Shown' : 'Hidden'}
+                        </span>
+                      </div>
+
+                      {/* Data Export Toggle */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-500 font-bold">Data Export:</span>
+                        <button
+                          onClick={() => handleUpdateShopCloudinary(shop.id, { 
+                            dataExportEnabled: shop.dataExportEnabled === false ? true : false 
+                          })}
+                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
+                            shop.dataExportEnabled === true ? 'bg-purple-600' : 'bg-slate-300'
+                          }`}
+                        >
+                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                            shop.dataExportEnabled === true ? 'translate-x-5' : 'translate-x-1'
+                          }`} />
+                        </button>
+                        <span className="text-xs font-black text-slate-700">
+                          {shop.dataExportEnabled === true ? 'Allowed' : 'Blocked'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-xs text-purple-800 leading-relaxed font-bold">
+                      💡 একাধিক Cloudinary অ্যাকাউন্ট যোগ করলে আপলোডকৃত ফাইলগুলো ওই অ্যাকাউন্টগুলোর মাঝে ভাগ হয়ে যাবে, যা স্টোরটির মোট ফ্রি স্টোরেজ বৃদ্ধি করবে। একটি অ্যাকাউন্ট থাকলে সেটিই শুধুমাত্র ব্যবহৃত হবে।
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-xs font-black text-slate-700 uppercase tracking-wider">Cloudinary Accounts List:</p>
+                      
+                      {(() => {
+                        const accounts = shop.cloudinaryAccounts || [];
+                        const displayAccounts = accounts.length > 0 
+                          ? accounts 
+                          : (shop.cloudinaryCloudName || shop.cloudinaryUploadPreset 
+                              ? [{ cloudName: shop.cloudinaryCloudName || '', uploadPreset: shop.cloudinaryUploadPreset || '' }] 
+                              : []);
+
+                        return (
+                          <div className="space-y-3">
+                            {displayAccounts.map((acc, idx) => (
+                              <div key={idx} className="flex flex-col md:flex-row gap-3 items-end bg-slate-50/60 p-3 rounded-xl border border-slate-200/60">
+                                <div className="flex-1 space-y-1">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase">Cloud Name</label>
+                                  <input
+                                    type="text"
+                                    value={acc.cloudName || ''}
+                                    placeholder="e.g. dcsecgwzc"
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                                    onChange={(e) => {
+                                      const newAccs = [...displayAccounts];
+                                      newAccs[idx] = { ...newAccs[idx], cloudName: e.target.value.trim() };
+                                      setShops(prev => prev.map(s => s.id === shop.id ? { ...s, cloudinaryAccounts: newAccs } : s));
+                                    }}
+                                    onBlur={() => {
+                                      handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: displayAccounts });
+                                    }}
+                                  />
+                                </div>
+                                
+                                <div className="flex-1 space-y-1">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase">Upload Preset (Must be Unsigned)</label>
+                                  <input
+                                    type="text"
+                                    value={acc.uploadPreset || ''}
+                                    placeholder="e.g. unsigned_preset"
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                                    onChange={(e) => {
+                                      const newAccs = [...displayAccounts];
+                                      newAccs[idx] = { ...newAccs[idx], uploadPreset: e.target.value.trim() };
+                                      setShops(prev => prev.map(s => s.id === shop.id ? { ...s, cloudinaryAccounts: newAccs } : s));
+                                    }}
+                                    onBlur={() => {
+                                      handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: displayAccounts });
+                                    }}
+                                  />
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newAccs = displayAccounts.filter((_, i) => i !== idx);
+                                    handleUpdateShopCloudinary(shop.id, { 
+                                      cloudinaryAccounts: newAccs,
+                                      ...(newAccs.length === 0 ? { cloudinaryCloudName: '', cloudinaryUploadPreset: '' } : {})
+                                    });
+                                  }}
+                                  className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors border border-rose-200 flex items-center justify-center h-[38px] w-[38px] shrink-0"
+                                  title="রিমুভ করুন"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+
+                            <div className="flex flex-wrap gap-3 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newAccs = [...displayAccounts, { cloudName: '', uploadPreset: '' }];
+                                  handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: newAccs });
+                                }}
+                                className="px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-black flex items-center gap-1 border border-purple-200 transition-all cursor-pointer"
+                              >
+                                <Plus size={12} /> Add Cloudinary Account
+                              </button>
+
+                              {displayAccounts.length === 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const singleAcc = displayAccounts[0];
+                                    handleUpdateShopCloudinary(shop.id, {
+                                      cloudinaryCloudName: singleAcc.cloudName || '',
+                                      cloudinaryUploadPreset: singleAcc.uploadPreset || ''
+                                    });
+                                    toast.success('Default configuration updated!');
+                                  }}
+                                  className="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold border border-blue-200 transition-all cursor-pointer"
+                                >
+                                  Save as Default (Single Config)
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                disabled={copyingCloudinaryShopId === shop.id}
+                                onClick={() => handleCopyCloudinaryMedia(shop.id)}
+                                className="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-black border border-emerald-200 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
+                                title="মেইন সাইটের Cloudinary থেকে মার্চেন্টের ডেডিকেটেড Cloudinary-তে ছবিগুলো কপি করুন"
+                              >
+                                <Copy size={13} />
+                                {copyingCloudinaryShopId === shop.id ? 'কপি হচ্ছে...' : '১-ক্লিকে মিডিয়া কপি করুন'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              );
+
+              const renderDescriptionConfig = (shop) => (
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-left">
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
+                      📝 Edit AI & SEO Description for <span className="text-blue-600 font-black">{shop.shopName || 'this store'}</span>
+                    </h4>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 leading-relaxed font-bold">
+                      💡 এই ডেসক্রিপশনটি কাস্টমারদের স্টোর পেজের উপরে এবং সার্চ ইঞ্জিনের (AEO/SEO) জন্য প্রদর্শিত হবে। এটি সুন্দর এবং তথ্যবহুল হওয়া বাঞ্ছনীয়।
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-black text-slate-500 uppercase">Banner / SEO Description</label>
+                      <textarea
+                        rows={4}
+                        value={shop.bannerDescription || shop.description || ''}
+                        placeholder="আমাদের স্টোরে স্বাগতম! এখানে আপনি পাবেন..."
+                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setShops(prev => prev.map(s => s.id === shop.id ? { ...s, bannerDescription: val, description: val } : s));
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const desc = shop.bannerDescription || '';
+                            await updateShop(shop.id, { 
+                              bannerDescription: desc,
+                              description: desc
+                            });
+                            toast.success('ডেসক্রিপশন সফলভাবে আপডেট হয়েছে!');
+                            setExpandedDescShopId(null);
+                          } catch (err) {
+                            toast.error('আপডেট করতে ব্যর্থ হয়েছে: ' + err.message);
+                          }
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-black shadow-md active:scale-95 transition-all cursor-pointer"
+                      >
+                        সংরক্ষণ করুন (Save)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+
+              return (
+                <>
+                  {/* Desktop Table View (>= 768px) */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left border-separate border-spacing-y-2">
+                      <thead>
+                        <tr className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                          <th className="pb-2 px-4 border-b border-slate-100">Store Name</th>
+                          <th className="pb-2 px-4 border-b border-slate-100">Retailer Gmail</th>
+                          <th className="pb-2 px-4 border-b border-slate-100">Performance (Sales/Money)</th>
+                          <th className="pb-2 px-4 border-b border-slate-100">Domain Map</th>
+                          <th className="pb-2 px-4 border-b border-slate-100">Approx. Storage</th>
+                          <th className="pb-2 px-4 border-b border-slate-100">Subscription</th>
+                          {!isSubAdmin && <th className="pb-2 px-4 border-b border-slate-100 text-center">Sub-Admin</th>}
+                          <th className="pb-2 px-4 border-b border-slate-100 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {visibleShops.map((shop) => {
+                          const bannerFootprintMB = (shop.banners?.length || 0) * 0.5;
+                          const productFootprintMB = (shop.orderCount || 0) * 0.1 + 5.2; 
+                          const estimatedTotalMB = (2.0 + bannerFootprintMB + productFootprintMB).toFixed(1);
+                          
+                          return (
+                            <Fragment key={shop.id}>
+                              <tr className="bg-white group hover:bg-emerald-50/50 transition-colors border-b border-slate-50 last:border-0">
+                                <td className="p-4 first:rounded-l-2xl">
+                                  <div className="flex items-center gap-3">
+                                    {shop.logoUrl ? (
+                                      <img src={shop.logoUrl} className="w-8 h-8 rounded-lg object-cover border border-slate-200" alt="" />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center font-black text-emerald-600 text-xs text-center leading-none">
+                                        {shop.shopName?.[0] || 'S'}
+                                      </div>
+                                    )}
+                                    <div>
+                                      <p className="font-bold text-slate-900 text-sm leading-tight">{shop.shopName || 'Unnamed Store'}</p>
+                                      <p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{shop.slogan || 'No slogan'}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <div>
+                                     <p className="font-bold text-xs text-slate-600">{shop.ownerEmail}</p>
+                                     <p className="font-mono text-[9px] text-slate-400">UID: {shop.id.substring(0,8)}...</p>
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <div className="flex flex-col">
+                                     <div className="flex items-center gap-2">
+                                        <span className="text-[11px] font-black text-slate-800">{shop.totalSales} Sales</span>
+                                        <span className="text-[11px] font-black text-emerald-600">৳{shop.totalRevenue.toLocaleString()}</span>
+                                     </div>
+                                     <div className="mt-1 flex items-center gap-1">
+                                        {shop.totalSales > 10 ? (
+                                          <span className="text-[8px] font-black uppercase bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">High Growth</span>
+                                        ) : shop.totalSales > 0 ? (
+                                          <span className="text-[8px] font-black uppercase bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Active</span>
+                                        ) : (
+                                          <span className="text-[8px] font-black uppercase bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded">No Sales</span>
+                                        )}
+                                     </div>
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <div className="space-y-1">
+                                    {shop.customDomain && (
+                                      <a href={`https://${shop.customDomain}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-black text-purple-600 hover:text-purple-800 hover:underline">
+                                        <Globe size={11} /> {shop.customDomain}
+                                      </a>
+                                    )}
+                                    {shop.subdomainSlug && (
+                                      <a href={`https://bdretailers.com/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
+                                        <Link2 size={11} /> /{shop.subdomainSlug}
+                                      </a>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-full bg-slate-100 rounded-full h-1.5 max-w-[60px]">
+                                      <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (estimatedTotalMB / 20) * 100)}%` }}></div>
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
+                                        shop.subscriptionStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                        shop.subscriptionStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                                        'bg-rose-50 text-rose-700 border-rose-200'
+                                      }`}>
+                                        {shop.subscriptionStatus || 'expired'}
+                                      </span>
+                                      {shop.subscriptionPackage && shop.subscriptionPackage !== 'none' && (
+                                        <span className="text-[10px] font-black text-slate-500 uppercase">{shop.subscriptionPackage}</span>
+                                      )}
+                                    </div>
+                                    {shop.subscriptionExpiresAt && (
+                                      <p className="text-[9px] text-slate-400 font-bold">
+                                        Expires: {(() => {
+                                          const d = shop.subscriptionExpiresAt.toDate ? shop.subscriptionExpiresAt.toDate() : new Date(shop.subscriptionExpiresAt);
+                                          return d.toLocaleDateString('en-GB');
+                                        })()}
+                                      </p>
+                                    )}
+                                    {shop.subscriptionStatus === 'pending' && shop.subscriptionPendingTxn && (
+                                      <div className="mt-1 p-2 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5 max-w-[200px] text-left">
+                                        <p className="text-[9px] text-amber-800 font-bold leading-normal break-words">
+                                          {shop.subscriptionPendingTxn}
+                                        </p>
+                                        <button
+                                          onClick={() => handleApproveSubscription(shop.id, shop.subscriptionPendingPackage || 'monthly')}
+                                          className="w-full py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer text-center block"
+                                        >
+                                          Approve
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                                {!isSubAdmin && (
+                                  <td className="p-4 text-center">
+                                    <button
+                                      type="button"
+                                      disabled={togglingSubAdminShopId === shop.id}
+                                      onClick={() => handleToggleShowInSubAdmin(shop)}
+                                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border shadow-sm ${
+                                        shop.showInSubAdmin
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                                          : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                                      } disabled:opacity-50`}
+                                      title={shop.showInSubAdmin ? 'ক্লিক করে সাব-এডমিন থেকে লুকান' : 'ক্লিক করে সাব-এডমিনে দেখান'}
+                                    >
+                                      {togglingSubAdminShopId === shop.id ? (
+                                        <Loader2 size={11} className="animate-spin" />
+                                      ) : shop.showInSubAdmin ? (
+                                        <Eye size={11} className="text-emerald-600" />
+                                      ) : (
+                                        <EyeOff size={11} className="text-slate-400" />
+                                      )}
+                                      <span>{shop.showInSubAdmin ? 'দৃশ্যমান' : 'লুকানো'}</span>
+                                    </button>
+                                  </td>
+                                )}
+                                <td className="p-4 text-right last:rounded-r-2xl">
+                                  <div className="flex items-center justify-end gap-2 flex-wrap max-w-md">
+                                    {/* 🔐 Login as Retailer Button (Root Superadmin only) */}
+                                    {!isSubAdmin && (
+                                      <button
+                                        onClick={() => handleLoginAsRetailer(shop)}
+                                        disabled={impersonatingId === shop.id}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
+                                        title="এই রিটেইলারের ড্যাশবোর্ডে প্রবেশ করুন"
+                                      >
+                                        {impersonatingId === shop.id ? (
+                                          <Loader2 size={11} className="animate-spin" />
+                                        ) : (
+                                          <LogIn size={11} />
+                                        )}
+                                        Login as
+                                      </button>
+                                    )}
+
+                                    {(shop.subdomainSlug || shop.shopSlug) && (
+                                      <a
+                                        href={`${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/${shop.subdomainSlug || shop.shopSlug}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                                        title="Live shop খুলুন"
+                                      >
+                                        <ExternalLink size={11} /> Live
+                                      </a>
+                                    )}
+                                    
+                                    <button
+                                      onClick={() => {
+                                        setExpandedCloudinaryShopId(expandedCloudinaryShopId === shop.id ? null : shop.id);
+                                        setExpandedDescShopId(null);
+                                      }}
+                                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                                        expandedCloudinaryShopId === shop.id 
+                                          ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                                          : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
+                                      }`}
+                                      title="ক্লাউডিনারি সেটিংস"
+                                    >
+                                      <Cloud size={11} /> Cloudinary
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        setExpandedDescShopId(expandedDescShopId === shop.id ? null : shop.id);
+                                        setExpandedCloudinaryShopId(null);
+                                      }}
+                                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                                        expandedDescShopId === shop.id 
+                                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                          : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+                                      }`}
+                                      title="স্টোর ডেসক্রিপশন এডিট"
+                                    >
+                                      <Edit2 size={11} /> Description
+                                    </button>
+
+                                    <button
+                                      onClick={() => handlePauseShop(shop)}
+                                      disabled={processingShopId === shop.id}
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all disabled:opacity-50 ${
+                                        shop.isActive !== false
+                                          ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
+                                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                      }`}
+                                    >
+                                      {processingShopId === shop.id ? (
+                                        <Loader2 size={11} className="animate-spin" />
+                                      ) : shop.isActive !== false ? (
+                                        <><Pause size={11} /> Pause</>
+                                      ) : (
+                                        <><Play size={11} /> Resume</>
+                                      )}
+                                    </button>
+                                    {!isSubAdmin && (
+                                      <button
+                                        onClick={() => initiateDeleteShop(shop)}
+                                        disabled={processingShopId === shop.id}
+                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                                        title="স্টোর ডিলিট করুন"
+                                      >
+                                        <Trash2 size={11} /> Delete
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                              {expandedCloudinaryShopId === shop.id && (
+                                <tr className="bg-slate-50/50">
+                                  <td colSpan={8} className="p-4 border-t border-b border-slate-100">
+                                    {renderCloudinaryConfig(shop)}
+                                  </td>
+                                </tr>
+                              )}
+                              {expandedDescShopId === shop.id && (
+                                <tr className="bg-slate-50/50">
+                                  <td colSpan={8} className="p-4 border-t border-b border-slate-100">
+                                    {renderDescriptionConfig(shop)}
+                                  </td>
+                                </tr>
+                              )}
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Card View (< 768px) — Zero horizontal scroll */}
+                  <div className="block md:hidden space-y-4">
+                    {visibleShops.map((shop) => {
                       const bannerFootprintMB = (shop.banners?.length || 0) * 0.5;
                       const productFootprintMB = (shop.orderCount || 0) * 0.1 + 5.2; 
                       const estimatedTotalMB = (2.0 + bannerFootprintMB + productFootprintMB).toFixed(1);
-                      
+
                       return (
-                        <Fragment key={shop.id}>
-                          <tr className="bg-white group hover:bg-emerald-50/50 transition-colors border-b border-slate-50 last:border-0">
-                            <td className="p-4 first:rounded-l-2xl">
-                              <div className="flex items-center gap-3">
-                                {shop.logoUrl ? (
-                                  <img src={shop.logoUrl} className="w-8 h-8 rounded-lg object-cover border border-slate-200" alt="" />
-                                ) : (
-                                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center font-black text-emerald-600 text-xs text-center leading-none">
-                                    {shop.shopName?.[0] || 'S'}
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-bold text-slate-900 text-sm leading-tight">{shop.shopName || 'Unnamed Store'}</p>
-                                  <p className="text-[10px] text-slate-400 font-bold truncate max-w-[120px]">{shop.slogan || 'No slogan'}</p>
+                        <div key={shop.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+                          {/* Store Header */}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {shop.logoUrl ? (
+                                <img src={shop.logoUrl} className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0" alt="" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center font-black text-emerald-600 text-sm shrink-0">
+                                  {shop.shopName?.[0] || 'S'}
                                 </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="font-bold text-slate-900 text-sm truncate">{shop.shopName || 'Unnamed Store'}</p>
+                                <p className="text-[10px] text-slate-400 font-bold truncate">{shop.slogan || 'No slogan'}</p>
                               </div>
-                            </td>
-                            <td className="p-4">
-                              <div>
-                                 <p className="font-bold text-xs text-slate-600">{shop.ownerEmail}</p>
-                                 <p className="font-mono text-[9px] text-slate-400">UID: {shop.id.substring(0,8)}...</p>
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex flex-col">
-                                 <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-black text-slate-800">{shop.totalSales} Sales</span>
-                                    <span className="text-[11px] font-black text-emerald-600">৳{shop.totalRevenue.toLocaleString()}</span>
-                                 </div>
-                                 <div className="mt-1 flex items-center gap-1">
-                                    {shop.totalSales > 10 ? (
-                                      <span className="text-[8px] font-black uppercase bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">High Growth</span>
-                                    ) : shop.totalSales > 0 ? (
-                                      <span className="text-[8px] font-black uppercase bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Active</span>
-                                    ) : (
-                                      <span className="text-[8px] font-black uppercase bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded">No Sales</span>
-                                    )}
-                                 </div>
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="space-y-1">
-                                {shop.customDomain && (
-                                  <a href={`https://${shop.customDomain}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-black text-purple-600 hover:text-purple-800 hover:underline">
-                                    <Globe size={11} /> {shop.customDomain}
-                                  </a>
-                                )}
-                                {shop.subdomainSlug && (
-                                  <a href={`https://bdretailers.com/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-800 hover:underline">
-                                    <Link2 size={11} /> /{shop.subdomainSlug}
-                                  </a>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-full bg-slate-100 rounded-full h-1.5 max-w-[60px]">
+                            </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
+                                shop.subscriptionStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                shop.subscriptionStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
+                                'bg-rose-50 text-rose-700 border-rose-200'
+                              }`}>
+                                {shop.subscriptionStatus || 'expired'}
+                              </span>
+                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${
+                                shop.isActive !== false ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                              }`}>
+                                {shop.isActive !== false ? 'Active' : 'Paused'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Owner & Performance */}
+                          <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <div className="min-w-0">
+                              <p className="text-[9px] font-bold uppercase text-slate-400">Retailer</p>
+                              <p className="font-bold text-slate-700 truncate text-[11px]">{shop.ownerEmail}</p>
+                              <p className="font-mono text-[8px] text-slate-400 truncate">UID: {shop.id.substring(0,8)}...</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-bold uppercase text-slate-400">Sales / Revenue</p>
+                              <p className="font-black text-emerald-600 text-[11px]">৳{shop.totalRevenue.toLocaleString()}</p>
+                              <p className="text-[10px] font-bold text-slate-700">{shop.totalSales} Sales</p>
+                            </div>
+                          </div>
+
+                          {/* Domain Map & Storage */}
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {shop.customDomain && (
+                                <a href={`https://${shop.customDomain}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] font-black text-purple-600 hover:underline">
+                                  <Globe size={11} /> {shop.customDomain}
+                                </a>
+                              )}
+                              {shop.subdomainSlug && (
+                                <a href={`https://bdretailers.com/${shop.subdomainSlug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:underline">
+                                  <Link2 size={11} /> /{shop.subdomainSlug}
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 pt-0.5">
+                              <span>Storage:</span>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-16 bg-slate-100 rounded-full h-1.5">
                                   <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (estimatedTotalMB / 20) * 100)}%` }}></div>
                                 </div>
-                                <span className="text-[10px] font-black text-slate-500">{estimatedTotalMB} MB</span>
+                                <span className="font-mono">{estimatedTotalMB} MB</span>
                               </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${
-                                    shop.subscriptionStatus === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                    shop.subscriptionStatus === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
-                                    'bg-rose-50 text-rose-700 border-rose-200'
-                                  }`}>
-                                    {shop.subscriptionStatus || 'expired'}
-                                  </span>
-                                  {shop.subscriptionPackage && shop.subscriptionPackage !== 'none' && (
-                                    <span className="text-[10px] font-black text-slate-500 uppercase">{shop.subscriptionPackage}</span>
-                                  )}
-                                </div>
-                                {shop.subscriptionExpiresAt && (
-                                  <p className="text-[9px] text-slate-400 font-bold">
-                                    Expires: {(() => {
-                                      const d = shop.subscriptionExpiresAt.toDate ? shop.subscriptionExpiresAt.toDate() : new Date(shop.subscriptionExpiresAt);
-                                      return d.toLocaleDateString('en-GB');
-                                    })()}
-                                  </p>
+                            </div>
+                          </div>
+
+                          {/* Subscription Expiry / Pending */}
+                          {shop.subscriptionExpiresAt && (
+                            <p className="text-[10px] text-slate-400 font-bold">
+                              Expires: {(() => {
+                                const d = shop.subscriptionExpiresAt.toDate ? shop.subscriptionExpiresAt.toDate() : new Date(shop.subscriptionExpiresAt);
+                                return d.toLocaleDateString('en-GB');
+                              })()}
+                            </p>
+                          )}
+                          {shop.subscriptionStatus === 'pending' && shop.subscriptionPendingTxn && (
+                            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5">
+                              <p className="text-[10px] text-amber-800 font-bold break-words">{shop.subscriptionPendingTxn}</p>
+                              <button
+                                onClick={() => handleApproveSubscription(shop.id, shop.subscriptionPendingPackage || 'monthly')}
+                                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition-all"
+                              >
+                                Approve Subscription
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Sub-Admin Toggle */}
+                          {!isSubAdmin && (
+                            <div className="flex items-center justify-between pt-1">
+                              <span className="text-[10px] font-black uppercase text-slate-400">Sub-Admin Visibility:</span>
+                              <button
+                                type="button"
+                                disabled={togglingSubAdminShopId === shop.id}
+                                onClick={() => handleToggleShowInSubAdmin(shop)}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border shadow-xs ${
+                                  shop.showInSubAdmin
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                    : 'bg-slate-100 text-slate-500 border-slate-200'
+                                }`}
+                              >
+                                {togglingSubAdminShopId === shop.id ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : shop.showInSubAdmin ? (
+                                  <Eye size={11} className="text-emerald-600" />
+                                ) : (
+                                  <EyeOff size={11} className="text-slate-400" />
                                 )}
-                                {shop.subscriptionStatus === 'pending' && shop.subscriptionPendingTxn && (
-                                  <div className="mt-1 p-2 bg-amber-50 border border-amber-200 rounded-xl space-y-1.5 max-w-[200px] text-left">
-                                    <p className="text-[9px] text-amber-800 font-bold leading-normal break-words">
-                                      {shop.subscriptionPendingTxn}
-                                    </p>
-                                    <button
-                                      onClick={() => handleApproveSubscription(shop.id, shop.subscriptionPendingPackage || 'monthly')}
-                                      className="w-full py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer text-center block"
-                                    >
-                                      Approve
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
+                                <span>{shop.showInSubAdmin ? 'দৃশ্যমান' : 'লুকানো'}</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Action Buttons Grid */}
+                          <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-100">
                             {!isSubAdmin && (
-                              <td className="p-4 text-center">
-                                <button
-                                  type="button"
-                                  disabled={togglingSubAdminShopId === shop.id}
-                                  onClick={() => handleToggleShowInSubAdmin(shop)}
-                                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border shadow-sm ${
-                                    shop.showInSubAdmin
-                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                                      : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-                                  } disabled:opacity-50`}
-                                  title={shop.showInSubAdmin ? 'ক্লিক করে সাব-এডমিন থেকে লুকান' : 'ক্লিক করে সাব-এডমিনে দেখান'}
-                                >
-                                  {togglingSubAdminShopId === shop.id ? (
-                                    <Loader2 size={11} className="animate-spin" />
-                                  ) : shop.showInSubAdmin ? (
-                                    <Eye size={11} className="text-emerald-600" />
-                                  ) : (
-                                    <EyeOff size={11} className="text-slate-400" />
-                                  )}
-                                  <span>{shop.showInSubAdmin ? 'দৃশ্যমান' : 'লুকানো'}</span>
-                                </button>
-                              </td>
+                              <button
+                                onClick={() => handleLoginAsRetailer(shop)}
+                                disabled={impersonatingId === shop.id}
+                                className="inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
+                              >
+                                {impersonatingId === shop.id ? <Loader2 size={10} className="animate-spin" /> : <LogIn size={10} />}
+                                Login
+                              </button>
                             )}
-                            <td className="p-4 text-right last:rounded-r-2xl">
-                              <div className="flex items-center justify-end gap-2 flex-wrap max-w-md">
-                                {/* 🔐 Login as Retailer Button (Root Superadmin only) */}
-                                {!isSubAdmin && (
-                                  <button
-                                    onClick={() => handleLoginAsRetailer(shop)}
-                                    disabled={impersonatingId === shop.id}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-600 hover:text-white transition-all disabled:opacity-50"
-                                    title="এই রিটেইলারের ড্যাশবোর্ডে প্রবেশ করুন"
-                                  >
-                                    {impersonatingId === shop.id ? (
-                                      <Loader2 size={11} className="animate-spin" />
-                                    ) : (
-                                      <LogIn size={11} />
-                                    )}
-                                    Login as
-                                  </button>
-                                )}
+                            {(shop.subdomainSlug || shop.shopSlug) && (
+                              <a
+                                href={`${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/${shop.subdomainSlug || shop.shopSlug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all text-center"
+                              >
+                                <ExternalLink size={10} /> Live
+                              </a>
+                            )}
+                            <button
+                              onClick={() => {
+                                setExpandedCloudinaryShopId(expandedCloudinaryShopId === shop.id ? null : shop.id);
+                                setExpandedDescShopId(null);
+                              }}
+                              className={`inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                                expandedCloudinaryShopId === shop.id ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 border border-purple-200'
+                              }`}
+                            >
+                              <Cloud size={10} /> Cloud
+                            </button>
+                            <button
+                              onClick={() => {
+                                setExpandedDescShopId(expandedDescShopId === shop.id ? null : shop.id);
+                                setExpandedCloudinaryShopId(null);
+                              }}
+                              className={`inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-black transition-all ${
+                                expandedDescShopId === shop.id ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                              }`}
+                            >
+                              <Edit2 size={10} /> Desc
+                            </button>
+                            <button
+                              onClick={() => handlePauseShop(shop)}
+                              disabled={processingShopId === shop.id}
+                              className={`inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-black transition-all disabled:opacity-50 ${
+                                shop.isActive !== false ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              }`}
+                            >
+                              {processingShopId === shop.id ? <Loader2 size={10} className="animate-spin" /> : shop.isActive !== false ? <><Pause size={10} /> Pause</> : <><Play size={10} /> Resume</>}
+                            </button>
+                            {!isSubAdmin && (
+                              <button
+                                onClick={() => initiateDeleteShop(shop)}
+                                disabled={processingShopId === shop.id}
+                                className="inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                              >
+                                <Trash2 size={10} /> Delete
+                              </button>
+                            )}
+                          </div>
 
-                                {(shop.subdomainSlug || shop.shopSlug) && (
-                                  <a
-                                    href={`${typeof window !== 'undefined' ? window.location.origin : 'https://bdretailers.com'}/${shop.subdomainSlug || shop.shopSlug}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
-                                    title="Live shop খুলুন"
-                                  >
-                                    <ExternalLink size={11} /> Live
-                                  </a>
-                                )}
-                                
-                                <button
-                                  onClick={() => {
-                                    setExpandedCloudinaryShopId(expandedCloudinaryShopId === shop.id ? null : shop.id);
-                                    setExpandedDescShopId(null);
-                                  }}
-                                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${
-                                    expandedCloudinaryShopId === shop.id 
-                                      ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                                      : 'bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100'
-                                  }`}
-                                  title="ক্লাউডিনারি সেটিংস"
-                                >
-                                  <Cloud size={11} /> Cloudinary
-                                </button>
-
-                                <button
-                                  onClick={() => {
-                                    setExpandedDescShopId(expandedDescShopId === shop.id ? null : shop.id);
-                                    setExpandedCloudinaryShopId(null);
-                                  }}
-                                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-black transition-all ${
-                                    expandedDescShopId === shop.id 
-                                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                                      : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
-                                  }`}
-                                  title="স্টোর ডেসক্রিপশন এডিট"
-                                >
-                                  <Edit2 size={11} /> Description
-                                </button>
-
-                                <button
-                                  onClick={() => handlePauseShop(shop)}
-                                  disabled={processingShopId === shop.id}
-                                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all disabled:opacity-50 ${
-                                    shop.isActive !== false
-                                      ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                                  }`}
-                                >
-                                  {processingShopId === shop.id ? (
-                                    <Loader2 size={11} className="animate-spin" />
-                                  ) : shop.isActive !== false ? (
-                                    <><Pause size={11} /> Pause</>
-                                  ) : (
-                                    <><Play size={11} /> Resume</>
-                                  )}
-                                </button>
-                                {!isSubAdmin && (
-                                  <button
-                                    onClick={() => initiateDeleteShop(shop)}
-                                    disabled={processingShopId === shop.id}
-                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
-                                    title="স্টোর ডিলিট করুন"
-                                  >
-                                    <Trash2 size={11} /> Delete
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
+                          {/* Expandable Sections in Card */}
                           {expandedCloudinaryShopId === shop.id && (
-                            <tr className="bg-slate-50/50">
-                              <td colSpan={8} className="p-4 border-t border-b border-slate-100">
-                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-left">
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
-                                    <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
-                                      ☁️ Cloudinary Configuration for <span className="text-purple-600 font-black">{shop.shopName || 'this store'}</span>
-                                    </h4>
-                                    
-                                    <div className="flex flex-wrap items-center gap-4">
-                                      {/* Cloudinary Toggle */}
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs text-slate-500 font-bold">Cloud Settings:</span>
-                                        <button
-                                          onClick={() => handleUpdateShopCloudinary(shop.id, { 
-                                            cloudinaryConfigEnabled: shop.cloudinaryConfigEnabled === false ? true : false 
-                                          })}
-                                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-                                            shop.cloudinaryConfigEnabled !== false ? 'bg-purple-600' : 'bg-slate-300'
-                                          }`}
-                                        >
-                                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                                            shop.cloudinaryConfigEnabled !== false ? 'translate-x-5' : 'translate-x-1'
-                                          }`} />
-                                        </button>
-                                        <span className="text-xs font-black text-slate-700">
-                                          {shop.cloudinaryConfigEnabled !== false ? 'Shown' : 'Hidden'}
-                                        </span>
-                                      </div>
-
-                                      {/* Data Export Toggle */}
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-xs text-slate-500 font-bold">Data Export:</span>
-                                        <button
-                                          onClick={() => handleUpdateShopCloudinary(shop.id, { 
-                                            dataExportEnabled: shop.dataExportEnabled === false ? true : false 
-                                          })}
-                                          className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${
-                                            shop.dataExportEnabled === true ? 'bg-purple-600' : 'bg-slate-300'
-                                          }`}
-                                        >
-                                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                                            shop.dataExportEnabled === true ? 'translate-x-5' : 'translate-x-1'
-                                          }`} />
-                                        </button>
-                                        <span className="text-xs font-black text-slate-700">
-                                          {shop.dataExportEnabled === true ? 'Allowed' : 'Blocked'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-4">
-                                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-xs text-purple-800 leading-relaxed font-bold">
-                                      💡 একাধিক Cloudinary অ্যাকাউন্ট যোগ করলে আপলোডকৃত ফাইলগুলো ওই অ্যাকাউন্টগুলোর মাঝে ভাগ হয়ে যাবে, যা স্টোরটির মোট ফ্রি স্টোরেজ বৃদ্ধি করবে। একটি অ্যাকাউন্ট থাকলে সেটিই শুধুমাত্র ব্যবহৃত হবে।
-                                    </div>
-
-                                    <div className="space-y-3">
-                                      <p className="text-xs font-black text-slate-700 uppercase tracking-wider">Cloudinary Accounts List:</p>
-                                      
-                                      {(() => {
-                                        const accounts = shop.cloudinaryAccounts || [];
-                                        const displayAccounts = accounts.length > 0 
-                                          ? accounts 
-                                          : (shop.cloudinaryCloudName || shop.cloudinaryUploadPreset 
-                                              ? [{ cloudName: shop.cloudinaryCloudName || '', uploadPreset: shop.cloudinaryUploadPreset || '' }] 
-                                              : []);
-
-                                        return (
-                                          <div className="space-y-3">
-                                            {displayAccounts.map((acc, idx) => (
-                                              <div key={idx} className="flex flex-col md:flex-row gap-3 items-end bg-slate-50/60 p-3 rounded-xl border border-slate-200/60">
-                                                <div className="flex-1 space-y-1">
-                                                  <label className="text-[10px] font-black text-slate-400 uppercase">Cloud Name</label>
-                                                  <input
-                                                    type="text"
-                                                    value={acc.cloudName || ''}
-                                                    placeholder="e.g. dcsecgwzc"
-                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
-                                                    onChange={(e) => {
-                                                      const newAccs = [...displayAccounts];
-                                                      newAccs[idx] = { ...newAccs[idx], cloudName: e.target.value.trim() };
-                                                      setShops(prev => prev.map(s => s.id === shop.id ? { ...s, cloudinaryAccounts: newAccs } : s));
-                                                    }}
-                                                    onBlur={() => {
-                                                      handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: displayAccounts });
-                                                    }}
-                                                  />
-                                                </div>
-                                                
-                                                <div className="flex-1 space-y-1">
-                                                  <label className="text-[10px] font-black text-slate-400 uppercase">Upload Preset (Must be Unsigned)</label>
-                                                  <input
-                                                    type="text"
-                                                    value={acc.uploadPreset || ''}
-                                                    placeholder="e.g. unsigned_preset"
-                                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
-                                                    onChange={(e) => {
-                                                      const newAccs = [...displayAccounts];
-                                                      newAccs[idx] = { ...newAccs[idx], uploadPreset: e.target.value.trim() };
-                                                      setShops(prev => prev.map(s => s.id === shop.id ? { ...s, cloudinaryAccounts: newAccs } : s));
-                                                    }}
-                                                    onBlur={() => {
-                                                      handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: displayAccounts });
-                                                    }}
-                                                  />
-                                                </div>
-
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    const newAccs = displayAccounts.filter((_, i) => i !== idx);
-                                                    handleUpdateShopCloudinary(shop.id, { 
-                                                      cloudinaryAccounts: newAccs,
-                                                      ...(newAccs.length === 0 ? { cloudinaryCloudName: '', cloudinaryUploadPreset: '' } : {})
-                                                    });
-                                                  }}
-                                                  className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors border border-rose-200 flex items-center justify-center h-[38px] w-[38px] shrink-0"
-                                                  title="রিমুভ করুন"
-                                                >
-                                                  <Trash2 size={14} />
-                                                </button>
-                                              </div>
-                                            ))}
-
-                                            <div className="flex flex-wrap gap-3 pt-1">
-                                              <button
-                                                type="button"
-                                                onClick={() => {
-                                                  const newAccs = [...displayAccounts, { cloudName: '', uploadPreset: '' }];
-                                                  handleUpdateShopCloudinary(shop.id, { cloudinaryAccounts: newAccs });
-                                                }}
-                                                className="px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-xl text-xs font-black flex items-center gap-1 border border-purple-200 transition-all cursor-pointer"
-                                              >
-                                                <Plus size={12} /> Add Cloudinary Account
-                                              </button>
-
-                                              {displayAccounts.length === 1 && (
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    const singleAcc = displayAccounts[0];
-                                                    handleUpdateShopCloudinary(shop.id, {
-                                                      cloudinaryCloudName: singleAcc.cloudName || '',
-                                                      cloudinaryUploadPreset: singleAcc.uploadPreset || ''
-                                                    });
-                                                    toast.success('Default configuration updated!');
-                                                  }}
-                                                  className="px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold border border-blue-200 transition-all cursor-pointer"
-                                                >
-                                                  Save as Default (Single Config)
-                                                </button>
-                                              )}
-
-                                              <button
-                                                type="button"
-                                                disabled={copyingCloudinaryShopId === shop.id}
-                                                onClick={() => handleCopyCloudinaryMedia(shop.id)}
-                                                className="px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-black border border-emerald-200 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 shadow-sm"
-                                                title="মেইন সাইটের Cloudinary থেকে মার্চেন্টের ডেডিকেটেড Cloudinary-তে ছবিগুলো কপি করুন"
-                                              >
-                                                <Copy size={13} />
-                                                {copyingCloudinaryShopId === shop.id ? 'কপি হচ্ছে...' : '১-ক্লিকে মিডিয়া কপি করুন'}
-                                              </button>
-                                            </div>
-                                          </div>
-                                        );
-                                      })()}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
+                            <div className="pt-2 border-t border-purple-100">
+                              {renderCloudinaryConfig(shop)}
+                            </div>
                           )}
                           {expandedDescShopId === shop.id && (
-                            <tr className="bg-slate-50/50">
-                              <td colSpan={8} className="p-4 border-t border-b border-slate-100">
-                                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 text-left">
-                                  <div className="flex items-center justify-between border-b pb-3">
-                                    <h4 className="font-extrabold text-sm text-slate-800 flex items-center gap-1.5">
-                                      📝 Edit AI & SEO Description for <span className="text-blue-600 font-black">{shop.shopName || 'this store'}</span>
-                                    </h4>
-                                  </div>
-                                  
-                                  <div className="space-y-4">
-                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 leading-relaxed font-bold">
-                                      💡 এই ডেসক্রিপশনটি কাস্টমারদের স্টোর পেজের উপরে এবং সার্চ ইঞ্জিনের (AEO/SEO) জন্য প্রদর্শিত হবে। এটি সুন্দর এবং তথ্যবহুল হওয়া বাঞ্ছনীয়।
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                      <label className="text-[11px] font-black text-slate-500 uppercase">Banner / SEO Description</label>
-                                      <textarea
-                                        rows={4}
-                                        value={shop.bannerDescription || shop.description || ''}
-                                        placeholder="আমাদের স্টোরে স্বাগতম! এখানে আপনি পাবেন..."
-                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                                        onChange={(e) => {
-                                          const val = e.target.value;
-                                          setShops(prev => prev.map(s => s.id === shop.id ? { ...s, bannerDescription: val, description: val } : s));
-                                        }}
-                                      />
-                                    </div>
-
-                                    <div className="flex justify-end gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={async () => {
-                                          try {
-                                            const desc = shop.bannerDescription || '';
-                                            await updateShop(shop.id, { 
-                                              bannerDescription: desc,
-                                              description: desc
-                                            });
-                                            toast.success('ডেসক্রিপশন সফলভাবে আপডেট হয়েছে!');
-                                            setExpandedDescShopId(null);
-                                          } catch (err) {
-                                            toast.error('আপডেট করতে ব্যর্থ হয়েছে: ' + err.message);
-                                          }
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-xl text-xs font-black shadow-md active:scale-95 transition-all cursor-pointer"
-                                      >
-                                        সংরক্ষণ করুন (Save)
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
+                            <div className="pt-2 border-t border-blue-100">
+                              {renderDescriptionConfig(shop)}
+                            </div>
                           )}
-                        </Fragment>
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  </div>
+                </>
+              );
+            })()}
           </Card>
         </div>
       </div>

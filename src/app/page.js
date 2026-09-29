@@ -1475,53 +1475,53 @@ export default function Home() {
       `}} />
 
       {/* ── Fixed Clean Top Bar ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 py-2.5 sm:py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xs transition-all duration-300">
-        <div className="max-w-7xl mx-auto flex justify-between items-center gap-2 sm:gap-4">
+      <header className="fixed top-0 left-0 right-0 z-50 px-2 sm:px-6 py-2 sm:py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xs transition-all duration-300">
+        <div className="max-w-7xl mx-auto flex justify-between items-center gap-1.5 sm:gap-4">
           {/* Left: Hamburger Drawer Menu Button & Brand Identity */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5">
+          <div className="flex items-center gap-1.5 sm:gap-3.5 min-w-0">
             {/* Hamburger Button (Opens Navigation Drawer) */}
             <button 
               onClick={() => setIsStoresMenuOpen(true)} 
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95 shrink-0"
-              title="মেনু ও নেভিগেশন খুলুন"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95 shrink-0"
+              title={t('মেনু ও নেভিগেশন খুলুন', 'Open Menu & Navigation')}
               aria-label="Open Navigation Menu"
             >
-              <Menu size={20} strokeWidth={2.5} className="text-slate-800 dark:text-white" />
+              <Menu size={18} strokeWidth={2.5} className="text-slate-800 dark:text-white" />
             </button>
             
             {/* Logo + Brand Name */}
             <Link 
               href="/"
-              className="flex items-center gap-2 sm:gap-2.5 group select-none"
+              className="flex items-center gap-1.5 sm:gap-2.5 group select-none min-w-0"
             >
               {globalConfig?.logoUrl || mainShopData?.logoUrl ? (
-                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-8 sm:h-9 object-contain" alt="BD Retailers" />
+                <img src={globalConfig?.logoUrl || mainShopData?.logoUrl} className="h-7 sm:h-9 object-contain shrink-0" alt="BD Retailers" />
               ) : (
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-                  <Store size={18} className="text-white" />
+                <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                  <Store size={15} className="text-white" />
                 </div>
               )}
-              <div className="flex flex-col">
-                <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none truncate">
                   {globalConfig?.brandName || 'BD Retailers'}
                 </span>
-                <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight mt-0.5 hidden xs:block">
+                <span className="text-[9px] sm:text-[10px] font-medium text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight mt-0.5 hidden xs:block">
                   Verified Stores • Store Maker
                 </span>
               </div>
             </Link>
           </div>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Right Actions: Compact on mobile so Dashboard button is NEVER cut off */}
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
 
             {/* User Profile / Login Icon Button */}
-            <div className="flex items-center">
+            <div className="flex items-center shrink-0">
               {user ? (
                 <button
                   onClick={() => setIsProfileOpen(true)}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 overflow-hidden"
-                  title="আমার অ্যাকাউন্ট ও অর্ডার"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0"
+                  title={t('আমার অ্যাকাউন্ট ও অর্ডার', 'My Account & Orders')}
                   aria-label="User Profile"
                 >
                   {user.photoURL ? (
@@ -1536,11 +1536,11 @@ export default function Home() {
                 <button
                   onClick={handleSmartLogin}
                   disabled={loggingIn}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
-                  title="লগইন করুন"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+                  title={t('লগইন করুন', 'Login')}
                   aria-label="Login"
                 >
-                  <User size={18} />
+                  <User size={16} />
                 </button>
               )}
             </div>
@@ -1548,53 +1548,53 @@ export default function Home() {
             {/* Notification Inbox (Left of BN/EN toggle) */}
             <NotificationInbox 
               isDashboard={false}
-              triggerClassName="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shadow-xs"
+              triggerClassName="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shadow-xs shrink-0"
             />
 
-            {/* Native BN / EN Language Switch Toggle */}
+            {/* Native BN / EN Language Switch Toggle — compact on mobile */}
             <button
               onClick={toggleLanguage}
-              className="h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all font-bold text-xs shadow-xs"
+              className="h-8 sm:h-10 px-2 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 transition-all font-bold text-xs shadow-xs shrink-0"
               title={language === 'bn' ? 'Switch to English' : 'বাংলায় দেখুন'}
               aria-label="Toggle Language"
             >
-              <Globe size={14} className="text-emerald-600 dark:text-emerald-400" />
-              <span className="font-bold">{language === 'bn' ? 'বাং' : 'EN'}</span>
-              <span className="text-[10px] px-1 py-0.5 rounded font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Globe size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="font-bold text-[11px] sm:text-xs">{language === 'bn' ? 'বাং' : 'EN'}</span>
+              <span className="hidden xs:inline-block text-[9px] sm:text-[10px] px-1 py-0.2 rounded font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 {language === 'bn' ? 'EN' : 'বাং'}
               </span>
             </button>
 
-            {/* Direct Auth / Dashboard CTA — login er por dashboard show hobe */}
-            <div className="flex items-center gap-2 pl-1">
+            {/* Direct Auth / Dashboard CTA — guaranteed full visibility */}
+            <div className="flex items-center shrink-0">
               {user ? (
                 getDashboardHref() ? (
                   <Link 
                     href={getDashboardHref()} 
-                    className="px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                     title={t('ড্যাশবোর্ড', 'Dashboard')}
                   >
-                    <LayoutDashboard size={14} />
-                    <span>{t('ড্যাশবোর্ড', 'Dashboard')}</span>
+                    <LayoutDashboard size={13} className="shrink-0" />
+                    <span className="whitespace-nowrap font-black">{t('ড্যাশবোর্ড', 'Dashboard')}</span>
                   </Link>
                 ) : (
                   <Link 
                     href="/become-retailer" 
-                    className="px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                     title={t('স্টোর তৈরি করুন', 'Create Store')}
                   >
-                    <Store size={14} />
-                    <span>{t('স্টোর খুলুন', 'Open Store')}</span>
+                    <Store size={13} className="shrink-0" />
+                    <span className="whitespace-nowrap font-black">{t('স্টোর খুলুন', 'Open Store')}</span>
                   </Link>
                 )
               ) : (
                 <Link 
                   href="/login" 
-                  className="px-3 sm:px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                   title={t('লগইন করুন', 'Login')}
                 >
-                  <LogIn size={14} />
-                  <span>{t('লগইন', 'Login')}</span>
+                  <LogIn size={13} className="shrink-0" />
+                  <span className="whitespace-nowrap font-black">{t('লগইন', 'Login')}</span>
                 </Link>
               )}
             </div>
@@ -2954,7 +2954,7 @@ export default function Home() {
                    </div>
                  </div>
                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-sm font-medium">
-                    {globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব।'}
+                    {language === 'en' ? 'BDRetailers — Bangladesh’s most modern e-commerce platform. A one-stop hub for customers to shop safely and quickly from a verified local merchant network.' : (globalConfig?.platformDescription || 'BDRetailers — বাংলাদেশের সবচেয়ে আধুনিক ই-কমার্স প্ল্যাটফর্ম। কাস্টমারদের জন্য সরাসরি ভেরিফাইড লোকাল মার্চেন্ট নেটওয়ার্ক থেকে সুরক্ষিত ও দ্রুত কেনাকাটার ওয়ান-স্টপ হাব।')}
                  </p>
                  <div className="pt-2">
                    <span className="text-[11px] font-medium text-slate-500">bdretailers global platform © {new Date().getFullYear()}</span>
@@ -2963,32 +2963,32 @@ export default function Home() {
               
               {/* Navigation Links */}
               <div>
-                 <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200 mb-4">নেভিগেশন ও লিংক</h4>
+                 <h4 className="text-xs font-bold text-slate-900 dark:text-slate-200 mb-4">{t('নেভিগেশন ও লিংক', 'Navigation & Links')}</h4>
                  <ul className="space-y-2.5 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <li>
                       <button
                         onClick={() => setIsAboutModalOpen(true)}
                         className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-left cursor-pointer"
                       >
-                        আমাদের সম্পর্কে (About BD Retailers)
+                        {t('আমাদের সম্পর্কে', 'About Us')} (About BD Retailers)
                       </button>
                     </li>
-                    <li><Link href="/about" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">About Us Details</Link></li>
-                    <li><Link href="/showcase" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Live Showcase Registry</Link></li>
-                    <li><a href="#marketplace" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">All Products Marketplace</a></li>
-                    <li><a href="#pricing" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Subscription Pricing</a></li>
-                    <li><a href="#faq" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Frequently Asked Questions</a></li>
-                    <li><Link href={user ? (getDashboardHref() || '/dashboard') : '/login?redirect=/dashboard'} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{user ? 'Store Admin Portal' : 'Retailer Login'}</Link></li>
-                    <li><Link href="/become-retailer" className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold transition-colors flex items-center gap-1">🤝 Become Retailer</Link></li>
-                    <li><Link href="/reviews" className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold transition-colors flex items-center gap-1">⭐ Platform Reviews</Link></li>
-                    <li><Link href="/privacy-policy" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Privacy Policy</Link></li>
-                    <li><Link href="/terms" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Terms of Service</Link></li>
+                    <li><Link href="/about" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{t('আমাদের সম্পর্কে বিস্তারিত', 'About Us Details')}</Link></li>
+                    <li><Link href="/showcase" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{t('লাইভ শোরুম রেজিস্ট্রি', 'Live Showcase Registry')}</Link></li>
+                    <li><a href="#marketplace" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{t('সকল পণ্য মার্কেটপ্লেস', 'All Products Marketplace')}</a></li>
+                    <li><a href="#pricing" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{t('সাবস্ক্রিপশন প্যাকেজ', 'Subscription Pricing')}</a></li>
+                    <li><a href="#faq" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{t('সচরাচর প্রশ্নাবলী', 'Frequently Asked Questions')}</a></li>
+                    <li><Link href={user ? (getDashboardHref() || '/dashboard') : '/login?redirect=/dashboard'} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{user ? t('স্টোর এডমিন পোর্টাল', 'Store Admin Portal') : t('রিটেইলার লগইন', 'Retailer Login')}</Link></li>
+                    <li><Link href="/become-retailer" className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold transition-colors flex items-center gap-1">{t('🤝 রিটেইলার হতে চান?', '🤝 Become Retailer')}</Link></li>
+                    <li><Link href="/reviews" className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold transition-colors flex items-center gap-1">{t('⭐ প্ল্যাটফর্ম রিভিউ', '⭐ Platform Reviews')}</Link></li>
+                    <li><Link href="/privacy-policy" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{t('প্রাইভেসি পলিসি', 'Privacy Policy')}</Link></li>
+                    <li><Link href="/terms" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">{t('টার্মস অফ সার্ভিস', 'Terms of Service')}</Link></li>
                  </ul>
               </div>
 
               {/* Contact Section */}
               <div className="space-y-4">
-                  <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#3D4852] dark:text-slate-200 mb-6">যোগাযোগ করুন</h4>
+                  <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-[#3D4852] dark:text-slate-200 mb-6">{t('যোগাযোগ করুন', 'Contact Us')}</h4>
                   <div className="space-y-3">
                     {(() => {
                       const rawEmail = globalConfig?.contactEmail || 'bdretailers26@gmail.com';

@@ -6,6 +6,7 @@ import {
   Eye, ArrowRight, ExternalLink, Check, Star, 
   ShoppingBag, ShieldCheck, Zap, Layers, Store, Layout
 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 import { 
   DEFAULT_WEBSITE_TEMPLATES, 
   TEMPLATE_CATEGORIES, 
@@ -14,6 +15,7 @@ import {
 } from '@/lib/templatesData';
 
 export default function TemplatesSection({ globalConfig = {} }) {
+  const { language, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState('all');
   const templates = getMergedTemplates(globalConfig?.websiteTemplates, globalConfig?.deletedTemplateIds);
 
@@ -31,13 +33,13 @@ export default function TemplatesSection({ globalConfig = {} }) {
           <div className="text-left space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs">
               <Layout size={13} />
-              <span>Readymade Store Designs</span>
+              <span>{t('রেডিমেড স্টোর ডিজাইন', 'Readymade Store Designs')}</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              রেডিমেড ওয়েবসাইট <span className="text-emerald-600">ডিজাইন ও লাইভ ডেমো</span>
+              {t('রেডিমেড ওয়েবসাইট ', 'Readymade Website ')}<span className="text-emerald-600">{t('ডিজাইন ও লাইভ ডেমো', 'Designs & Live Demo')}</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-xl leading-relaxed">
-              আপনার ব্যবসার ক্যাটাগরি অনুযায়ী পছন্দসই ওয়েবসাইট নির্বাচন করুন। সরাসরি *.bdretailers.com এ ডেমো চালান এবং ১ ক্লিকেই চালু করুন নিজস্ব ইকমার্স শপ।
+              {t('আপনার ব্যবসার ক্যাটাগরি অনুযায়ী পছন্দসই ওয়েবসাইট নির্বাচন করুন। সরাসরি *.bdretailers.com এ ডেমো চালান এবং ১ ক্লিকেই চালু করুন নিজস্ব ইকমার্স শপ।', 'Choose a website design tailored to your business category. Test live demos directly on *.bdretailers.com and launch your own e-commerce shop in 1 click.')}
             </p>
           </div>
 
@@ -46,7 +48,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
               href="/templates"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer active:scale-95"
             >
-              <span>সব ১৫+ ডিজাইন দেখুন</span>
+              <span>{t('সব ১৫+ ডিজাইন দেখুন', 'View All 15+ Designs')}</span>
               <ArrowRight size={14} />
             </Link>
           </div>
@@ -66,7 +68,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
                     : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
-                <span>{cat.label}</span>
+                <span>{language === 'en' ? (cat.labelEn || cat.label) : cat.label}</span>
               </button>
             );
           })}
@@ -111,14 +113,14 @@ export default function TemplatesSection({ globalConfig = {} }) {
                         className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
                       >
                         <Eye size={13} />
-                        <span>লাইভ ডেমো</span>
+                        <span>{t('লাইভ ডেমো', 'Live Demo')}</span>
                       </Link>
                       <a
                         href={liveUrl}
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/30 transition-all flex items-center justify-center"
-                        title="নতুন ট্যাবে সাইট দেখুন"
+                        title={t('নতুন ট্যাবে সাইট দেখুন', 'Open site in new tab')}
                       >
                         <ExternalLink size={13} />
                       </a>
@@ -129,7 +131,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
                   <div className="p-3 sm:p-5 space-y-1.5 sm:space-y-2.5">
                     <div className="flex items-center justify-between gap-1.5">
                       <span className="text-[10px] sm:text-xs font-bold text-emerald-600 truncate">
-                        {tpl.categoryBn}
+                        {language === 'en' ? (tpl.category || tpl.categoryBn) : (tpl.categoryBn || tpl.category)}
                       </span>
                       <div className="flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-amber-500 font-bold shrink-0">
                         <Star size={11} className="fill-amber-500" />
@@ -138,7 +140,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
                     </div>
 
                     <h3 className="text-xs sm:text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-1">
-                      {tpl.titleBn}
+                      {language === 'en' ? (tpl.title || tpl.titleBn) : (tpl.titleBn || tpl.title)}
                     </h3>
 
                     <p className="text-[10px] sm:text-xs text-slate-600 leading-relaxed font-medium line-clamp-1 sm:line-clamp-2">
@@ -147,7 +149,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
 
                     {/* Color dots */}
                     <div className="hidden sm:flex items-center gap-2 pt-1">
-                      <span className="text-[10px] text-slate-400 font-bold">রং:</span>
+                      <span className="text-[10px] text-slate-400 font-bold">{t('রং:', 'Colors:')}</span>
                       <div className="flex items-center gap-1">
                         <span className="w-3 h-3 rounded-full border border-slate-300 shadow-xs" style={{ backgroundColor: tpl.primaryColor }} />
                         <span className="w-3 h-3 rounded-full border border-slate-300 shadow-xs" style={{ backgroundColor: tpl.secondaryColor }} />
@@ -164,14 +166,14 @@ export default function TemplatesSection({ globalConfig = {} }) {
                     className="w-full py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[10px] sm:text-xs border border-slate-200 transition-all flex items-center justify-center gap-1"
                   >
                     <Eye size={12} />
-                    <span>ডেমো</span>
+                    <span>{t('ডেমো', 'Demo')}</span>
                   </Link>
                   <Link
                     href={`/become-retailer?selectedTheme=${tpl.id}`}
                     className="w-full py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] sm:text-xs shadow-xs active:scale-95 transition-all flex items-center justify-center gap-1 text-center"
                   >
                     <Check size={12} />
-                    <span>সিলেক্ট</span>
+                    <span>{t('সিলেক্ট', 'Select')}</span>
                   </Link>
                 </div>
               </div>
@@ -185,7 +187,7 @@ export default function TemplatesSection({ globalConfig = {} }) {
             href="/templates"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 text-slate-900 hover:text-emerald-600 font-bold text-xs shadow-xs hover:shadow-md transition-all active:scale-95"
           >
-            <span>সকল রেডিমেড ওয়েবসাইট ও ডিজাইন ব্রাউজ করুন</span>
+            <span>{t('সকল রেডিমেড ওয়েবসাইট ও ডিজাইন ব্রাউজ করুন', 'Browse All Readymade Websites & Designs')}</span>
             <ArrowRight size={14} className="text-emerald-600" />
           </Link>
         </div>
