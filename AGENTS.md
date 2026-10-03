@@ -101,19 +101,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
     3. **Pick the Winner**: Implement the single most elegant, secure, and lean solution.
   - For deep, difficult, or contested tasks where the user invokes `/arena` or asks for multi-agent competition: utilize the installed `arena` skill bracket runner.
 
-# ☁️ Webmaa Production Cloud Stack Blueprint (Anti-Bloat Standards)
-- **Active & Approved Stack**:
-  - **Code & AI**: Antigravity / Gemini / Claude Code
-  - **Backend & Database**: Firebase / Firestore (Protected: NEVER migrate to Supabase or delete live data!)
-  - **Hosting & Deployment**: Vercel via GitHub automated push (`npm run deploy`)
-  - **Auth**: Firebase Auth with native Flutter WebView Google Sign-In bridge (DO NOT replace with Clerk; would break native mobile apps!)
-  - **Payments**: Local Bangladeshi Gateways (bKash Merchant, Nagad, Steadfast COD, UddoktaPay/PipraPay). Stripe is reserved solely for international USD transactions.
-  - **Domain & DNS**: Cloudflare DNS (Free edge DDoS protection, fast CNAME routing for custom merchant domains)
-  - **Transactional Email**: Resend recommended for order confirmations & invoices (3,000 free emails/mo, replaces flaky SMTP).
-  - **Product Analytics**: PostHog recommended (Free 1M events/mo, cart abandonment & funnel analysis).
-  - **Error Tracking**: Sentry recommended (Free tier for real-time frontend and mobile WebView error capture).
-  - **Rate Limiting & Cache**: Upstash Redis recommended (Free 10k req/day for OTP flood protection & catalog cache).
-  - **Vector DB**: Pinecone is marked YAGNI/Bloat — forbidden unless semantic search is specifically requested.
+# ☁️ Webmaa Production Cloud Stack Status & Persistent Memory
+- **Active & Configured Services (NEVER FORGET OR RE-SUGGEST SETTING UP)**:
+  - **Cloudflare DNS & CDN**: ALREADY CONFIGURED and active for `bdretailers.com` (Nameservers pointed, SSL Full/Strict, Vercel CNAME).
+  - **Resend Transactional Email**: ALREADY VERIFIED for `bdretailers.com` (Domain Verified Oct 03). Inbound MX records are NOT needed for outbound sending; existing MX records for personal inboxes must remain untouched.
+  - **Upstash Redis**: ALREADY CONFIGURED in Vercel Production environment variables. Handled via `src/lib/rate-limit.js` (`UPSTASH_REDIS_*` / `KV_REST_API_*`).
+  - **Sentry Error Tracking**: Configuration files established (`sentry.client.config.js`, `sentry.server.config.js`, `sentry.edge.config.js`).
+  - **Google Search Console MCP**: Service Account configured at `D:/search-console-ai-510515-6f3365e7d7df.json` for `gsc-reader@search-console-ai-510515.iam.gserviceaccount.com`.
+  - **Token Optimization**: Science plugins permanently deactivated to prevent context bloat.
+
 
 
 
