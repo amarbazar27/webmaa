@@ -79,4 +79,41 @@ This version has breaking changes — APIs, conventions, and file structure may 
   3. Git diff review before committing to eliminate accidental artifacts.
   4. Automatic commit and push triggering deployment (`npm run deploy`).
 
+# 🔍 Autonomous 3-Tier SEO & Generative Engine Optimization (GEO) Protocol
+- **Tier 1 — Search Telemetry (Google Search Console MCP)**:
+  - Connect via `mcp-search-console` (`AminForou/mcp-gsc`). Read real-time search queries, impressions, CTR, average rankings (positions 11–20), and indexing/sitemap issues.
+  - Prioritize optimizing pages with high impressions but low CTR (<2%) by refining Title tags, Meta descriptions, and H1 tags.
+- **Tier 2 — Semantic SEO & Intent Mapping (Claude-SEO & Agency Agents)**:
+  - Rely on built-in `.agents/skills/claude-seo` and `agency-agents` SEO Specialist for keyword intent mapping, semantic architecture, and content gap analysis.
+  - Zero paid DataForSEO dependencies required: perform all semantic audits, competitor gap analyses, and entity optimizations autonomously.
+- **Tier 3 — Generative Engine Optimization (GEO) & AI Discovery**:
+  - Run or verify audits with `geo-optimizer` skill (`uvx --from geo-optimizer-skill geo audit --url <url>`).
+  - Maintain `public/llms.txt` with concise, structured entity definitions for AI scrapers (ChatGPT, Claude, Perplexity, Gemini, Google AI Overviews).
+  - Maintain `src/app/robots.txt/route.js` allowing `GPTBot`, `ChatGPT-User`, `ClaudeBot`, `Claude-Web`, `PerplexityBot`, `Google-Extended`, and `Applebot-Extended` while blocking aggressive SEO scrapers.
+  - Ensure dynamic SSR-rendered JSON-LD schema (Product, Organization, BreadcrumbList) on all storefront and product pages.
+
+# 🏆 Autonomous Arena Tournament & Multi-Agent Competitive Protocol
+- **Local Skill Available**: `skills/arena` (`Jakeschincariol/arena-skill`) is installed and ready.
+- **Auto-Arena Principle for Prompts & Ambiguous Requests**:
+  - To prevent repetitive prompt iteration and user back-and-forth, apply the Arena tournament mindset on every non-trivial architecture or refactor task:
+    1. **Multi-Perspective Formulations**: Evaluate competing implementation strategies (e.g. Minimalist Ponytail vs Enterprise Robustness vs AppSec Hardening).
+    2. **Adversarial Critique**: Run an internal debate/review before finalizing code. Check for: data deletion risk, WebView bridge compatibility, React 19 / Next.js 16 breaking changes, and unnecessary boilerplate.
+    3. **Pick the Winner**: Implement the single most elegant, secure, and lean solution.
+  - For deep, difficult, or contested tasks where the user invokes `/arena` or asks for multi-agent competition: utilize the installed `arena` skill bracket runner.
+
+# ☁️ Webmaa Production Cloud Stack Blueprint (Anti-Bloat Standards)
+- **Active & Approved Stack**:
+  - **Code & AI**: Antigravity / Gemini / Claude Code
+  - **Backend & Database**: Firebase / Firestore (Protected: NEVER migrate to Supabase or delete live data!)
+  - **Hosting & Deployment**: Vercel via GitHub automated push (`npm run deploy`)
+  - **Auth**: Firebase Auth with native Flutter WebView Google Sign-In bridge (DO NOT replace with Clerk; would break native mobile apps!)
+  - **Payments**: Local Bangladeshi Gateways (bKash Merchant, Nagad, Steadfast COD, UddoktaPay/PipraPay). Stripe is reserved solely for international USD transactions.
+  - **Domain & DNS**: Cloudflare DNS (Free edge DDoS protection, fast CNAME routing for custom merchant domains)
+  - **Transactional Email**: Resend recommended for order confirmations & invoices (3,000 free emails/mo, replaces flaky SMTP).
+  - **Product Analytics**: PostHog recommended (Free 1M events/mo, cart abandonment & funnel analysis).
+  - **Error Tracking**: Sentry recommended (Free tier for real-time frontend and mobile WebView error capture).
+  - **Rate Limiting & Cache**: Upstash Redis recommended (Free 10k req/day for OTP flood protection & catalog cache).
+  - **Vector DB**: Pinecone is marked YAGNI/Bloat — forbidden unless semantic search is specifically requested.
+
+
 
