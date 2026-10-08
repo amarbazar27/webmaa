@@ -26,6 +26,7 @@ import SponsorsSection from '@/components/home/SponsorsSection';
 import TemplatesSection from '@/components/home/TemplatesSection';
 import AboutModal from '@/components/home/AboutModal';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import dynamic from 'next/dynamic';
 
 // Phase 1.2: Dynamic imports for heavy components — reduces initial bundle by ~60KB
@@ -1502,8 +1503,8 @@ export default function Home() {
                   <Store size={15} className="text-white" />
                 </div>
               )}
-              <div className="flex flex-col min-w-0 shrink-0">
-                <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none whitespace-nowrap">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none truncate max-w-[95px] xs:max-w-none">
                   {globalConfig?.brandName || 'BD Retailers'}
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-medium text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight mt-0.5 hidden sm:block whitespace-nowrap">
@@ -1513,85 +1514,75 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Right Actions: Compact on mobile so Dashboard button is NEVER cut off */}
-          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+          {/* Right Actions: Compact on mobile so Dashboard / Login button is NEVER cut off */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
 
-            {/* User Profile / Login Icon Button */}
-            <div className="flex items-center shrink-0">
-              {user ? (
-                <button
-                  onClick={() => setIsProfileOpen(true)}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0"
-                  title={t('আমার অ্যাকাউন্ট ও অর্ডার', 'My Account & Orders')}
-                  aria-label="User Profile"
-                >
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-emerald-600 font-bold text-white text-xs flex items-center justify-center">
-                      {user.displayName?.[0] || 'U'}
-                    </div>
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handleSmartLogin}
-                  disabled={loggingIn}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
-                  title={t('লগইন করুন', 'Login')}
-                  aria-label="Login"
-                >
-                  <User size={16} />
-                </button>
-              )}
-            </div>
+            {/* User Profile (when logged in) or Login icon (hidden on small mobile to avoid redundancy and prevent cutoff) */}
+            {user ? (
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0"
+                title={t('আমার অ্যাকাউন্ট ও অর্ডার', 'My Account & Orders')}
+                aria-label="User Profile"
+              >
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-emerald-600 font-bold text-white text-xs flex items-center justify-center">
+                    {user.displayName?.[0] || 'U'}
+                  </div>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={handleSmartLogin}
+                disabled={loggingIn}
+                className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 items-center justify-center text-slate-700 dark:text-slate-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
+                title={t('লগইন করুন', 'Login')}
+                aria-label="Login"
+              >
+                <User size={15} />
+              </button>
+            )}
 
-            {/* Notification Inbox (Left of BN/EN toggle) */}
+            {/* Notification Inbox */}
             <NotificationInbox 
               isDashboard={false}
-              triggerClassName="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shadow-xs shrink-0"
+              triggerClassName="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shadow-xs shrink-0"
             />
 
-            {/* Native BN / EN Language Switch Toggle — compact on mobile */}
-            <button
-              onClick={toggleLanguage}
-              className="w-8 h-8 sm:w-auto sm:h-10 sm:px-3 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center sm:gap-1.5 cursor-pointer active:scale-95 transition-all font-bold text-xs shadow-xs shrink-0"
-              title={language === 'bn' ? 'Switch to English' : 'বাংলায় দেখুন'}
-              aria-label="Toggle Language"
-            >
-              <Globe size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0 hidden sm:inline" />
-              <span className="font-bold text-[11px] sm:text-xs">{language === 'bn' ? 'EN' : 'বাং'}</span>
-            </button>
+            {/* Tiny & Stylish Dual Language Switcher [বাং | EN] */}
+            <LanguageToggle accent="emerald" />
 
-            {/* Direct Auth / Dashboard CTA — guaranteed full visibility */}
+            {/* Direct Auth / Dashboard CTA — guaranteed full visibility and NEVER cut off */}
             <div className="flex items-center shrink-0">
               {user ? (
                 getDashboardHref() ? (
                   <Link 
                     href={getDashboardHref()} 
-                    className="px-2 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                     title={t('ড্যাশবোর্ড', 'Dashboard')}
                   >
-                    <LayoutDashboard size={13} className="shrink-0" />
+                    <LayoutDashboard size={12} className="shrink-0" />
                     <span className="whitespace-nowrap font-black">{t('ড্যাশবোর্ড', 'Dashboard')}</span>
                   </Link>
                 ) : (
                   <Link 
                     href="/become-retailer" 
-                    className="px-2 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                     title={t('স্টোর তৈরি করুন', 'Create Store')}
                   >
-                    <Store size={13} className="shrink-0" />
+                    <Store size={12} className="shrink-0" />
                     <span className="whitespace-nowrap font-black">{t('স্টোর খুলুন', 'Open Store')}</span>
                   </Link>
                 )
               ) : (
                 <Link 
                   href="/login" 
-                  className="px-2 sm:px-3.5 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[11px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
+                  className="px-2 sm:px-3 py-1 sm:py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] sm:text-xs rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 whitespace-nowrap"
                   title={t('লগইন করুন', 'Login')}
                 >
-                  <LogIn size={13} className="shrink-0" />
+                  <LogIn size={12} className="shrink-0" />
                   <span className="whitespace-nowrap font-black">{t('লগইন', 'Login')}</span>
                 </Link>
               )}

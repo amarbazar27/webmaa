@@ -49,6 +49,72 @@ const DEFAULT_FAQS = [
   }
 ];
 
+const FAQ_TRANSLATIONS_DICT = {
+  // Questions
+  'BDRetailers এ কীভাবে অনলাইন স্টোর খুলব?': 'How do I open an online store on BDRetailers?',
+  'স্টার্টার প্ল্যানে কি আসলেই কোনো অগ্রিম ফি নেই?': 'Is there really no upfront fee in the Starter plan?',
+  'Steadfast কুরিয়ার ও পেমেন্ট গেটওয়ে কীভাবে কাজ করে?': 'How do Steadfast Courier and payment gateways work?',
+  'আমি কি আমার নিজস্ব কাস্টম ডোমেইন (.com বা .shop) ব্যবহার করতে পারব?': 'Can I use my own custom domain (.com or .shop)?',
+  'আমার ব্র্যান্ডের নামে কি নিজস্ব অ্যান্ড্রয়েড মোবাইল অ্যাপ তৈরি হবে?': 'Will an Android app be created under my own brand name?',
+  'আমার কোনো প্রযুক্তিগত বা কোডিং জ্ঞান না থাকলে কি আমি চালাতে পারব?': 'Can I run it without any technical or coding knowledge?',
+
+  // Answers
+  'মার্চেন্ট হতে "Become Retailer" বাটনে ক্লিক করে আপনার নাম, দোকানের নাম, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে মাত্র ১ মিনিটেই ফ্রি রেজিস্ট্রেশন সম্পন্ন করতে পারেন। এরপর সাথে সাথেই আপনার স্টোর লাইভ হয়ে যাবে।':
+    'Click the "Become Retailer" button and complete the free registration in just 1 minute with your name, store name, mobile number, and password. Your store will go live instantly.',
+  'হ্যাঁ, আমাদের স্টার্টার প্ল্যানে কোনো মাসিক ফি বা অগ্রিম খরচ নেই (০৳ আপফ্রন্ট ফি)। শুধুমাত্র আপনার পণ্য সফলভাবে বিক্রয় হলে একটি ক্ষুদ্র রেভিনিউ শেয়ার প্রযোজ্য হবে। অর্থাৎ নো সেল = নো ফি!':
+    'Yes, our Starter plan has no monthly fees or upfront costs (৳0 upfront fee). Only when your products sell successfully, a small revenue share applies. No sale = no fee!',
+  'আমাদের সিস্টেমে Steadfast কুরিয়ার অটোমেটেড API সম্পূর্ণ ফ্রি ইন্টিগ্রেটেড রয়েছে। বিকাশ, নগদ, রকেট ও অনলাইন কার্ড পেমেন্ট সরাসরি আপনার অ্যাকাউন্টে জমা হবে।':
+    'Our system has Steadfast Courier automated API integrated for free. bKash, Nagad, Rocket, and card payments deposit directly into your account.',
+  'অবশ্যই! আমাদের মান্থলি, কোয়ার্টারলি ও ইয়ারলি প্যাকেজে সম্পূর্ণ ফ্রি কাস্টম ডোমেইন কানেক্টিভিটি ও আজীবন ফ্রি SSL সার্টিফিকেটের সুবিধা অন্তর্ভুক্ত রয়েছে।':
+    'Absolutely! Our Monthly, Quarterly, and Yearly packages include free custom domain connectivity and lifetime free SSL certificates.',
+  'হ্যাঁ! BDRetailers এর আধুনিক হোয়াইট-লেবেল টেকনোলজির মাধ্যমে আপনার নিজস্ব ব্র্যান্ডের নামে ডেডিকেটেড Android অ্যাপ (.aab / .apk) তৈরি ও Google Play Store এ পাবলিশ করার ব্যবস্থা রয়েছে।':
+    'Yes! Through BDRetailers’ modern white-label technology, a dedicated Android app (.aab / .apk) can be built in your brand name and published to Google Play Store.',
+  'একদমই কোনো কোডিং বা টেকনিক্যাল জ্ঞানের প্রয়োজন নেই। সম্পূর্ণ ইউজার-ফ্রেন্ডলি বাংলা ও ইংরেজি ইন্টারফেসে পণ্য যোগ করা, অর্ডার প্রসেসিং ও স্টক ম্যানেজমেন্ট খুব সহজেই মোবাইল দিয়ে পরিচালনা করতে পারবেন।':
+    'No coding or technical skills are required at all. You can easily manage product additions, order processing, and inventory via mobile in a user-friendly bilingual interface.'
+};
+
+const getFaqQuestion = (faq, isEn) => {
+  if (!isEn) {
+    return faq.questionBn || faq.question || '';
+  }
+  if (faq.questionEn) return faq.questionEn;
+
+  // Match by id in DEFAULT_FAQS
+  const matchById = DEFAULT_FAQS.find(d => d.id === faq.id);
+  if (matchById?.questionEn) return matchById.questionEn;
+
+  // Match by raw question in dictionary
+  const rawQ = String(faq.question || faq.questionBn || '').trim();
+  if (FAQ_TRANSLATIONS_DICT[rawQ]) return FAQ_TRANSLATIONS_DICT[rawQ];
+
+  // Match by normalized text in DEFAULT_FAQS
+  const matchByText = DEFAULT_FAQS.find(d => d.questionBn.trim() === rawQ);
+  if (matchByText?.questionEn) return matchByText.questionEn;
+
+  return faq.question || faq.questionBn || '';
+};
+
+const getFaqAnswer = (faq, isEn) => {
+  if (!isEn) {
+    return faq.answerBn || faq.answer || '';
+  }
+  if (faq.answerEn) return faq.answerEn;
+
+  // Match by id in DEFAULT_FAQS
+  const matchById = DEFAULT_FAQS.find(d => d.id === faq.id);
+  if (matchById?.answerEn) return matchById.answerEn;
+
+  // Match by raw answer in dictionary
+  const rawA = String(faq.answer || faq.answerBn || '').trim();
+  if (FAQ_TRANSLATIONS_DICT[rawA]) return FAQ_TRANSLATIONS_DICT[rawA];
+
+  // Match by normalized text in DEFAULT_FAQS
+  const matchByText = DEFAULT_FAQS.find(d => d.answerBn.trim() === rawA);
+  if (matchByText?.answerEn) return matchByText.answerEn;
+
+  return faq.answer || faq.answerBn || '';
+};
+
 export default function FaqSection({ globalConfig = null }) {
   const [openIndex, setOpenIndex] = useState(0);
   const { language, t } = useLanguage();
@@ -56,6 +122,8 @@ export default function FaqSection({ globalConfig = null }) {
   const rawFaqs = (globalConfig?.faqs && globalConfig.faqs.length > 0)
     ? globalConfig.faqs
     : DEFAULT_FAQS;
+
+  const isEn = language === 'en';
 
   return (
     <section id="faq" className="relative z-20 py-16 md:py-24 scroll-mt-20">
@@ -83,12 +151,8 @@ export default function FaqSection({ globalConfig = null }) {
         <div className="space-y-4">
           {rawFaqs.map((faq, index) => {
             const isOpen = openIndex === index;
-            const questionText = language === 'en'
-              ? (faq.questionEn || faq.question)
-              : (faq.questionBn || faq.question);
-            const answerText = language === 'en'
-              ? (faq.answerEn || faq.answer)
-              : (faq.answerBn || faq.answer);
+            const questionText = getFaqQuestion(faq, isEn);
+            const answerText = getFaqAnswer(faq, isEn);
 
             return (
               <div

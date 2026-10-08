@@ -8,6 +8,7 @@ import { loginWithGoogle } from '@/lib/auth';
 import toast from 'react-hot-toast';
 import { ShieldAlert, Trash2, Mail, Info, Loader2, ArrowLeft, Globe } from 'lucide-react';
 import Link from 'next/link';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 
 export default function AccountDeletePage() {
   const { user, userData, logout } = useAuth();
@@ -101,14 +102,7 @@ export default function AccountDeletePage() {
             <ArrowLeft size={16} /> {t('হোম পেজে ফিরুন', 'Back to Home')}
           </Link>
 
-          <button
-            onClick={toggleLanguage}
-            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200"
-            title="Change Language / ভাষা পরিবর্তন"
-          >
-            <Globe size={13} />
-            <span>{language === 'bn' ? 'English' : 'বাংলা'}</span>
-          </button>
+          <LanguageToggle accent="slate" />
         </div>
 
         <div className="flex items-center gap-4 mb-6">

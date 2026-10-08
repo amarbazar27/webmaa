@@ -43,7 +43,8 @@ const DEFAULT_PLANS_DATA = {
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '📦 আনলিমিটেড প্রোডাক্ট ও ক্যাটালগ',
-      '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার'
+      '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার',
+      'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ।'
     ]
   },
   quarterly: {
@@ -61,7 +62,8 @@ const DEFAULT_PLANS_DATA = {
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '📦 আনলিমিটেড প্রোডাক্ট ও অর্ডার',
-      '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট'
+      '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট',
+      'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ।'
     ]
   },
   yearly: {
@@ -79,7 +81,8 @@ const DEFAULT_PLANS_DATA = {
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '🤖 ফুল AI অটোমেশন ও অ্যাসিস্ট্যান্ট',
-      '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ'
+      '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ',
+      'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ।'
     ]
   }
 };
@@ -291,10 +294,10 @@ export default function SuperadminPricingCustomizer({ globalConfig = {} }) {
       {/* Plan Selection Tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { key: 'starter', title: 'স্টার্টার প্ল্যান', icon: Zap, color: 'text-amber-500', activeBg: 'border-amber-500 bg-amber-50/50' },
           { key: 'monthly', title: 'মাসিক প্যাকেজ', icon: Sparkles, color: 'text-purple-500', activeBg: 'border-purple-500 bg-purple-50/50' },
           { key: 'quarterly', title: 'ত্রৈমাসিক প্যাকেজ', icon: ShieldCheck, color: 'text-teal-500', activeBg: 'border-teal-500 bg-teal-50/50' },
-          { key: 'yearly', title: 'বার্ষিক প্যাকেজ', icon: Crown, color: 'text-indigo-500', activeBg: 'border-indigo-500 bg-indigo-50/50' }
+          { key: 'yearly', title: 'বার্ষিক প্যাকেজ', icon: Crown, color: 'text-indigo-500', activeBg: 'border-indigo-500 bg-indigo-50/50' },
+          { key: 'starter', title: 'স্টার্টার প্ল্যান', icon: Zap, color: 'text-amber-500', activeBg: 'border-amber-500 bg-amber-50/50' }
         ].map(item => {
           const Icon = item.icon;
           const isSelected = selectedPlanKey === item.key;

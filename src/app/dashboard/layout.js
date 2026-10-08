@@ -8,6 +8,7 @@ import LoadingScreen from '@/components/ui/LoadingScreen';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import NotificationInbox from '@/components/shared/NotificationInbox';
 import ImpersonationBadge from '@/components/shared/ImpersonationBadge';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function DashboardLayout({ children }) {
@@ -96,14 +97,7 @@ export default function DashboardLayout({ children }) {
            </div>
 
            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <button
-                onClick={toggleLanguage}
-                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-                title={language === 'bn' ? 'Switch to English' : 'বাংলায় দেখুন'}
-              >
-                <Globe size={12} className="text-purple-600 dark:text-purple-400" />
-                <span className="text-[10px] font-mono font-bold">{language === 'bn' ? 'বাং' : 'EN'}</span>
-              </button>
+              <LanguageToggle accent="purple" />
               <ThemeToggleButton size="sm" />
               <NotificationInbox shopId={userData?.activeShopId} isDashboard={true} />
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-purple-600 dark:text-purple-400 shrink-0">

@@ -13,32 +13,56 @@ const DEFAULT_FAQS_LIST = [
   {
     id: 'faq-1',
     question: 'BDRetailers এ কীভাবে অনলাইন স্টোর খুলব?',
-    answer: 'মার্চেন্ট হতে "Become Retailer" বাটনে ক্লিক করে আপনার নাম, দোকানের নাম, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে মাত্র ১ মিনিটেই ফ্রি রেজিস্ট্রেশন সম্পন্ন করতে পারেন। এরপর সাথে সাথেই আপনার স্টোর লাইভ হয়ে যাবে।'
+    questionBn: 'BDRetailers এ কীভাবে অনলাইন স্টোর খুলব?',
+    questionEn: 'How do I open an online store on BDRetailers?',
+    answer: 'মার্চেন্ট হতে "Become Retailer" বাটনে ক্লিক করে আপনার নাম, দোকানের নাম, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে মাত্র ১ মিনিটেই ফ্রি রেজিস্ট্রেশন সম্পন্ন করতে পারেন। এরপর সাথে সাথেই আপনার স্টোর লাইভ হয়ে যাবে।',
+    answerBn: 'মার্চেন্ট হতে "Become Retailer" বাটনে ক্লিক করে আপনার নাম, দোকানের নাম, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে মাত্র ১ মিনিটেই ফ্রি রেজিস্ট্রেশন সম্পন্ন করতে পারেন। এরপর সাথে সাথেই আপনার স্টোর লাইভ হয়ে যাবে।',
+    answerEn: 'Click the "Become Retailer" button and complete the free registration in just 1 minute with your name, store name, mobile number, and password. Your store will go live instantly.'
   },
   {
     id: 'faq-2',
     question: 'স্টার্টার প্ল্যানে কি আসলেই কোনো অগ্রিম ফি নেই?',
-    answer: 'হ্যাঁ, আমাদের স্টার্টার প্ল্যানে কোনো মাসিক ফি বা অগ্রিম খরচ নেই (০৳ আপফ্রন্ট ফি)। শুধুমাত্র আপনার পণ্য সফলভাবে বিক্রয় হলে একটি ক্ষুদ্র রেভিনিউ শেয়ার প্রযোজ্য হবে। অর্থাৎ নো সেল = নো ফি!'
+    questionBn: 'স্টার্টার প্ল্যানে কি আসলেই কোনো অগ্রিম ফি নেই?',
+    questionEn: 'Is there really no upfront fee in the Starter plan?',
+    answer: 'হ্যাঁ, আমাদের স্টার্টার প্ল্যানে কোনো মাসিক ফি বা অগ্রিম খরচ নেই (০৳ আপফ্রন্ট ফি)। শুধুমাত্র আপনার পণ্য সফলভাবে বিক্রয় হলে একটি ক্ষুদ্র রেভিনিউ শেয়ার প্রযোজ্য হবে। অর্থাৎ নো সেল = নো ফি!',
+    answerBn: 'হ্যাঁ, আমাদের স্টার্টার প্ল্যানে কোনো মাসিক ফি বা অগ্রিম খরচ নেই (০৳ আপফ্রন্ট ফি)। শুধুমাত্র আপনার পণ্য সফলভাবে বিক্রয় হলে একটি ক্ষুদ্র রেভিনিউ শেয়ার প্রযোজ্য হবে। অর্থাৎ নো সেল = নো ফি!',
+    answerEn: 'Yes, our Starter plan has no monthly fees or upfront costs (৳0 upfront fee). Only when your products sell successfully, a small revenue share applies. No sale = no fee!'
   },
   {
     id: 'faq-3',
     question: 'Steadfast কুরিয়ার ও পেমেন্ট গেটওয়ে কীভাবে কাজ করে?',
-    answer: 'আমাদের সিস্টেমে Steadfast কুরিয়ার অটোমেটেড API সম্পূর্ণ ফ্রি ইন্টিগ্রেটেড রয়েছে। বিকাশ, নগদ, রকেট ও অনলাইন কার্ড পেমেন্ট সরাসরি আপনার অ্যাকাউন্টে জমা হবে।'
+    questionBn: 'Steadfast কুরিয়ার ও পেমেন্ট গেটওয়ে কীভাবে কাজ করে?',
+    questionEn: 'How do Steadfast Courier and payment gateways work?',
+    answer: 'আমাদের সিস্টেমে Steadfast কুরিয়ার অটোমেটেড API সম্পূর্ণ ফ্রি ইন্টিগ্রেটেড রয়েছে। বিকাশ, নগদ, রকেট ও অনলাইন কার্ড পেমেন্ট সরাসরি আপনার অ্যাকাউন্টে জমা হবে।',
+    answerBn: 'আমাদের সিস্টেমে Steadfast কুরিয়ার অটোমেটেড API সম্পূর্ণ ফ্রি ইন্টিগ্রেটেড রয়েছে। বিকাশ, নগদ, রকেট ও অনলাইন কার্ড পেমেন্ট সরাসরি আপনার অ্যাকাউন্টে জমা হবে।',
+    answerEn: 'Our system has Steadfast Courier automated API integrated for free. bKash, Nagad, Rocket, and card payments deposit directly into your account.'
   },
   {
     id: 'faq-4',
     question: 'আমি কি আমার নিজস্ব কাস্টম ডোমেইন (.com বা .shop) ব্যবহার করতে পারব?',
-    answer: 'অবশ্যই! আমাদের মান্থলি, কোয়ার্টারলি ও ইয়ারলি প্যাকেজে সম্পূর্ণ ফ্রি কাস্টম ডোমেইন কানেক্টিভিটি ও আজীবন ফ্রি SSL সার্টিফিকেটের সুবিধা অন্তর্ভুক্ত রয়েছে।'
+    questionBn: 'আমি কি আমার নিজস্ব কাস্টম ডোমেইন (.com বা .shop) ব্যবহার করতে পারব?',
+    questionEn: 'Can I use my own custom domain (.com or .shop)?',
+    answer: 'অবশ্যই! আমাদের মান্থলি, কোয়ার্টারলি ও ইয়ারলি প্যাকেজে সম্পূর্ণ ফ্রি কাস্টম ডোমেইন কানেক্টিভিটি ও আজীবন ফ্রি SSL সার্টিফিকেটের সুবিধা অন্তর্ভুক্ত রয়েছে।',
+    answerBn: 'অবশ্যই! আমাদের মান্থলি, কোয়ার্টারলি ও ইয়ারলি প্যাকেজে সম্পূর্ণ ফ্রি কাস্টম ডোমেইন কানেক্টিভিটি ও আজীবন ফ্রি SSL সার্টিফিকেটের সুবিধা অন্তর্ভুক্ত রয়েছে।',
+    answerEn: 'Absolutely! Our Monthly, Quarterly, and Yearly packages include free custom domain connectivity and lifetime free SSL certificates.'
   },
   {
     id: 'faq-5',
     question: 'আমার ব্র্যান্ডের নামে কি নিজস্ব অ্যান্ড্রয়েড মোবাইল অ্যাপ তৈরি হবে?',
-    answer: 'হ্যাঁ! BDRetailers এর আধুনিক হোয়াইট-লেবেল টেকনোলজির মাধ্যমে আপনার নিজস্ব ব্র্যান্ডের নামে ডেডিকেটেড Android অ্যাপ (.aab / .apk) তৈরি ও Google Play Store এ পাবলিশ করার ব্যবস্থা রয়েছে।'
+    questionBn: 'আমার ব্র্যান্ডের নামে কি নিজস্ব অ্যান্ড্রয়েড মোবাইল অ্যাপ তৈরি হবে?',
+    questionEn: 'Will an Android app be created under my own brand name?',
+    answer: 'হ্যাঁ! BDRetailers এর আধুনিক হোয়াইট-লেবেল টেকনোলজির মাধ্যমে আপনার নিজস্ব ব্র্যান্ডের নামে ডেডিকেটেড Android অ্যাপ (.aab / .apk) তৈরি ও Google Play Store এ পাবলিশ করার ব্যবস্থা রয়েছে।',
+    answerBn: 'হ্যাঁ! BDRetailers এর আধুনিক হোয়াইট-লেবেল টেকনোলজির মাধ্যমে আপনার নিজস্ব ব্র্যান্ডের নামে ডেডিকেটেড Android অ্যাপ (.aab / .apk) তৈরি ও Google Play Store এ পাবলিশ করার ব্যবস্থা রয়েছে।',
+    answerEn: 'Yes! Through BDRetailers’ modern white-label technology, a dedicated Android app (.aab / .apk) can be built in your brand name and published to Google Play Store.'
   },
   {
     id: 'faq-6',
     question: 'আমার কোনো প্রযুক্তিগত বা কোডিং জ্ঞান না থাকলে কি আমি চালাতে পারব?',
-    answer: 'একদমই কোনো কোডিং বা টেকনিক্যাল জ্ঞানের প্রয়োজন নেই। সম্পূর্ণ ইউজার-ফ্রেন্ডলি বাংলা ও ইংরেজি ইন্টারফেসে পণ্য যোগ করা, অর্ডার প্রসেসিং ও স্টক ম্যানেজমেন্ট খুব সহজেই মোবাইল দিয়ে পরিচালনা করতে পারবেন।'
+    questionBn: 'আমার কোনো প্রযুক্তিগত বা কোডিং জ্ঞান না থাকলে কি আমি চালাতে পারব?',
+    questionEn: 'Can I run it without any technical or coding knowledge?',
+    answer: 'একদমই কোনো কোডিং বা টেকনিক্যাল জ্ঞানের প্রয়োজন নেই। সম্পূর্ণ ইউজার-ফ্রেন্ডলি বাংলা ও ইংরেজি ইন্টারফেসে পণ্য যোগ করা, অর্ডার প্রসেসিং ও স্টক ম্যানেজমেন্ট খুব সহজেই মোবাইল দিয়ে পরিচালনা করতে পারবেন।',
+    answerBn: 'একদমই কোনো কোডিং বা টেকনিক্যাল জ্ঞানের প্রয়োজন নেই। সম্পূর্ণ ইউজার-ফ্রেন্ডলি বাংলা ও ইংরেজি ইন্টারফেসে পণ্য যোগ করা, অর্ডার প্রসেসিং ও স্টক ম্যানেজমেন্ট খুব সহজেই মোবাইল দিয়ে পরিচালনা করতে পারবেন।',
+    answerEn: 'No coding or technical skills are required at all. You can easily manage product additions, order processing, and inventory via mobile in a user-friendly bilingual interface.'
   }
 ];
 
@@ -49,9 +73,9 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
       : DEFAULT_FAQS_LIST;
   });
 
-  const [newFaq, setNewFaq] = useState({ question: '', answer: '' });
+  const [newFaq, setNewFaq] = useState({ question: '', answer: '', questionEn: '', answerEn: '' });
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ question: '', answer: '' });
+  const [editForm, setEditForm] = useState({ question: '', answer: '', questionEn: '', answerEn: '' });
   const [saving, setSaving] = useState(false);
   const [previewOpenIndex, setPreviewOpenIndex] = useState(null);
 
@@ -74,12 +98,16 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
       const entry = {
         id: `faq-${Date.now()}`,
         question: newFaq.question.trim(),
-        answer: newFaq.answer.trim()
+        questionBn: newFaq.question.trim(),
+        questionEn: newFaq.questionEn?.trim() || '',
+        answer: newFaq.answer.trim(),
+        answerBn: newFaq.answer.trim(),
+        answerEn: newFaq.answerEn?.trim() || ''
       };
       const updated = [...faqs, entry];
       setFaqs(updated);
       await updateGlobalConfig({ faqs: updated });
-      setNewFaq({ question: '', answer: '' });
+      setNewFaq({ question: '', answer: '', questionEn: '', answerEn: '' });
       toast.success('নতুন FAQ সফলভাবে যুক্ত হয়েছে! 🎉', { id: toastId });
     } catch (err) {
       console.error(err);
@@ -91,7 +119,12 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
 
   const handleStartEdit = (item) => {
     setEditingId(item.id);
-    setEditForm({ question: item.question, answer: item.answer });
+    setEditForm({ 
+      question: item.question || item.questionBn || '', 
+      questionEn: item.questionEn || '',
+      answer: item.answer || item.answerBn || '',
+      answerEn: item.answerEn || ''
+    });
   };
 
   const handleSaveEdit = async () => {
@@ -103,7 +136,18 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
     setSaving(true);
     const toastId = toast.loading('আপডেট করা হচ্ছে...');
     try {
-      const updated = faqs.map(f => f.id === editingId ? { ...f, ...editForm } : f);
+      const updated = faqs.map(f => {
+        if (f.id !== editingId) return f;
+        return {
+          ...f,
+          question: editForm.question.trim(),
+          questionBn: editForm.question.trim(),
+          questionEn: editForm.questionEn?.trim() || '',
+          answer: editForm.answer.trim(),
+          answerBn: editForm.answer.trim(),
+          answerEn: editForm.answerEn?.trim() || ''
+        };
+      });
       setFaqs(updated);
       await updateGlobalConfig({ faqs: updated });
       setEditingId(null);
@@ -205,7 +249,7 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
 
           <form onSubmit={handleAddFaq} className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">প্রশ্ন (Question) *</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">প্রশ্ন (বাংলা) *</label>
               <input
                 type="text"
                 value={newFaq.question}
@@ -217,14 +261,36 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">উত্তর (Answer) *</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Question (English - ঐচ্ছিক)</label>
+              <input
+                type="text"
+                value={newFaq.questionEn}
+                onChange={(e) => setNewFaq({ ...newFaq, questionEn: e.target.value })}
+                placeholder="e.g. How do I make a payment with bKash?"
+                className="w-full px-4 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-purple-600"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">উত্তর (বাংলা) *</label>
               <textarea
-                rows={6}
+                rows={4}
                 value={newFaq.answer}
                 onChange={(e) => setNewFaq({ ...newFaq, answer: e.target.value })}
-                placeholder="প্রশ্নের সুস্পষ্ট উত্তর লিখুন..."
+                placeholder="প্রশ্নের সুস্পষ্ট বাংলা উত্তর লিখুন..."
                 className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-purple-600 resize-none"
                 required
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Answer (English - ঐচ্ছিক)</label>
+              <textarea
+                rows={4}
+                value={newFaq.answerEn}
+                onChange={(e) => setNewFaq({ ...newFaq, answerEn: e.target.value })}
+                placeholder="Write the clear English answer here..."
+                className="w-full px-4 py-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-purple-600 resize-none"
               />
             </div>
 
@@ -272,7 +338,7 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
                     {isEditing ? (
                       <div className="space-y-3">
                         <div>
-                          <label className="text-[10px] font-bold text-slate-600 block mb-1">প্রশ্ন</label>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1">প্রশ্ন (বাংলা)</label>
                           <input
                             type="text"
                             value={editForm.question}
@@ -281,11 +347,29 @@ export default function SuperadminFaqManager({ globalConfig = {} }) {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-bold text-slate-600 block mb-1">উত্তর</label>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1">Question (English)</label>
+                          <input
+                            type="text"
+                            value={editForm.questionEn}
+                            onChange={(e) => setEditForm({ ...editForm, questionEn: e.target.value })}
+                            className="w-full px-3 py-1.5 text-xs rounded-lg border border-purple-500 focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1">উত্তর (বাংলা)</label>
                           <textarea
-                            rows={4}
+                            rows={3}
                             value={editForm.answer}
                             onChange={(e) => setEditForm({ ...editForm, answer: e.target.value })}
+                            className="w-full px-3 py-2 text-xs rounded-lg border border-purple-500 focus:outline-none resize-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-1">Answer (English)</label>
+                          <textarea
+                            rows={3}
+                            value={editForm.answerEn}
+                            onChange={(e) => setEditForm({ ...editForm, answerEn: e.target.value })}
                             className="w-full px-3 py-2 text-xs rounded-lg border border-purple-500 focus:outline-none resize-none"
                           />
                         </div>

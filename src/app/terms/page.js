@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { FileText, ShieldCheck, Scale, AlertCircle, ArrowLeft, Mail, Globe } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 
 export default function TermsPage() {
   const { language, toggleLanguage, t } = useLanguage();
@@ -23,14 +24,7 @@ export default function TermsPage() {
             </Link>
 
             {/* Language Switcher Pill */}
-            <button
-              onClick={toggleLanguage}
-              className="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer backdrop-blur-sm"
-              title="Change Language / ভাষা পরিবর্তন"
-            >
-              <Globe size={13} />
-              <span>{language === 'bn' ? 'English' : 'বাংলা'}</span>
-            </button>
+            <LanguageToggle accent="slate" />
           </div>
 
           <div className="pt-6 flex flex-col items-center text-center">

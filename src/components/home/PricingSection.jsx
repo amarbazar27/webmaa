@@ -58,14 +58,16 @@ const DEFAULT_PLANS = {
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '📦 আনলিমিটেড প্রোডাক্ট ও ক্যাটালগ',
-      '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার'
+      '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার',
+      'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ।'
     ],
     featuresEn: [
       '100% Sales Profit is Yours (0% Commission)',
       '🌐 Custom Domain Connection',
       '📱 Professional Mobile App & PWA',
       '📦 Unlimited Products & Catalog',
-      '🤖 AI Product Description Writer'
+      '🤖 AI Product Description Writer',
+      'Get your custom Play Store app for just ৳500 extra per month.'
     ]
   },
   quarterly: {
@@ -88,14 +90,16 @@ const DEFAULT_PLANS = {
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '📦 আনলিমিটেড প্রোডাক্ট ও অর্ডার',
-      '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট'
+      '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট',
+      'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ।'
     ],
     featuresEn: [
       '100% Sales Profit is Yours (0% Commission)',
       '🌐 Custom Domain Connection',
       '📱 Professional Mobile App & PWA',
       '📦 Unlimited Products & Orders',
-      '⚡ VIP Priority Support'
+      '⚡ VIP Priority Support',
+      'Get your custom Play Store app for just ৳500 extra per month.'
     ]
   },
   yearly: {
@@ -118,16 +122,61 @@ const DEFAULT_PLANS = {
       '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন',
       '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA',
       '🤖 ফুল AI অটোমেশন ও অ্যাসিস্ট্যান্ট',
-      '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ'
+      '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ',
+      'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ।'
     ],
     featuresEn: [
       '100% Sales Profit is Yours (0% Commission)',
       '🌐 Custom Domain Connection',
       '📱 Professional Mobile App & PWA',
       '🤖 Full AI Automation & Assistant',
-      '👑 Dedicated VIP Support & Setup'
+      '👑 Dedicated VIP Support & Setup',
+      'Get your custom Play Store app for just ৳500 extra per month.'
     ]
   }
+};
+
+const FEATURE_TRANSLATIONS = {
+  '০৳ অগ্রিম খরচ (Zero Upfront Risk)': '৳0 Upfront Cost (Zero Risk)',
+  'সম্পূর্ণ অনলাইন ওয়েবসাইট ও স্টোরফ্রন্ট': 'Full Online Website & Storefront',
+  'নো সেল = নো ফি (১০০% নিরাপদ ব্যবসা)': 'No Sale = No Fee (100% Risk-Free)',
+  'Steadfast ও অটো পেমেন্ট গেটওয়ে': 'Steadfast & Automated Payment Gateways',
+  'যেকোনো সময় ফিক্সড প্ল্যানে আপগ্রেড': 'Upgrade to Fixed Plan Anytime',
+  '১০০% বিক্রয় লাভ আপনার (০% কমিশন)': '100% Sales Profit is Yours (0% Commission)',
+  '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন': '🌐 Custom Domain Connection',
+  '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA': '📱 Professional Mobile App & PWA',
+  '📦 আনলিমিটেড প্রোডাক্ট ও ক্যাটালগ': '📦 Unlimited Products & Catalog',
+  '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার': '🤖 AI Product Description Writer',
+  '📦 আনলিমিটেড প্রোডাক্ট ও অর্ডার': '📦 Unlimited Products & Orders',
+  '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট': '⚡ VIP Priority Support',
+  '🤖 ফুল AI অটোমেশন ও অ্যাসিস্ট্যান্ট': '🤖 Full AI Automation & Assistant',
+  '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ': '👑 Dedicated VIP Support & Setup',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ।': 'Get your custom Play Store app for just ৳500 extra per month.',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে এপ': 'Get your custom Play Store app for just ৳500 extra per month.',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে অ্যাপ।': 'Get your custom Play Store app for just ৳500 extra per month.',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোরে অ্যাপ': 'Get your custom Play Store app for just ৳500 extra per month.',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোর এপ।': 'Get your custom Play Store app for just ৳500 extra per month.',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোর এপ': 'Get your custom Play Store app for just ৳500 extra per month.',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোর অ্যাপ।': 'Get your custom Play Store app for just ৳500 extra per month.',
+  'মাত্র ৫০০ টাকা এক্সট্রা প্রতি মাসে দিলেই পাবেন আপনার প্লে স্টোর অ্যাপ': 'Get your custom Play Store app for just ৳500 extra per month.',
+};
+
+const resolveFeatureTranslation = (feat, idx, defaultData) => {
+  if (!feat) return '';
+  const trimmed = String(feat).trim();
+  if (FEATURE_TRANSLATIONS[trimmed]) return FEATURE_TRANSLATIONS[trimmed];
+  const stripped = trimmed.replace(/[।.]+$/, '').trim();
+  if (FEATURE_TRANSLATIONS[stripped]) return FEATURE_TRANSLATIONS[stripped];
+
+  // Smart regex for Play Store 500 Tk add-on
+  if (
+    (trimmed.includes('৫০০') || trimmed.includes('500')) &&
+    (trimmed.includes('প্লে স্টোর') || trimmed.includes('প্লে স্টোরে') || trimmed.toLowerCase().includes('play store'))
+  ) {
+    return 'Get your custom Play Store app for just ৳500 extra per month.';
+  }
+
+  return defaultData?.featuresEn?.[idx] || feat;
 };
 
 export default function PricingSection({ globalConfig = null }) {
@@ -147,24 +196,7 @@ export default function PricingSection({ globalConfig = null }) {
     yearly: Number(globalConfig?.subPriceYearly) || 5000
   };
 
-const FEATURE_TRANSLATIONS = {
-  '০৳ অগ্রিম খরচ (Zero Upfront Risk)': '৳0 Upfront Cost (Zero Risk)',
-  'সম্পূর্ণ অনলাইন ওয়েবসাইট ও স্টোরফ্রন্ট': 'Full Online Website & Storefront',
-  'নো সেল = নো ফি (১০০% নিরাপদ ব্যবসা)': 'No Sale = No Fee (100% Risk-Free)',
-  'Steadfast ও অটো পেমেন্ট গেটওয়ে': 'Steadfast & Automated Payment Gateways',
-  'যেকোনো সময় ফিক্সড প্ল্যানে আপগ্রেড': 'Upgrade to Fixed Plan Anytime',
-  '১০০% বিক্রয় লাভ আপনার (০% কমিশন)': '100% Sales Profit is Yours (0% Commission)',
-  '🌐 নিজস্ব কাস্টম ডোমেন কানেকশন': '🌐 Custom Domain Connection',
-  '📱 প্রফেশনাল মোবাইল অ্যাপ ও PWA': '📱 Professional Mobile App & PWA',
-  '📦 আনলিমিটেড প্রোডাক্ট ও ক্যাটালগ': '📦 Unlimited Products & Catalog',
-  '🤖 AI প্রোডাক্ট ডেসক্রিপশন রাইটার': '🤖 AI Product Description Writer',
-  '📦 আনলিমিটেড প্রোডাক্ট ও অর্ডার': '📦 Unlimited Products & Orders',
-  '⚡ ভিআইপি প্রায়োরিটি সাপোর্ট': '⚡ VIP Priority Support',
-  '🤖 ফুল AI অটোমেশন ও অ্যাসিস্ট্যান্ট': '🤖 Full AI Automation & Assistant',
-  '👑 ডেডিকেটেড ভিআইপি সাপোর্ট ও সেটআপ': '👑 Dedicated VIP Support & Setup',
-};
-
-// Merge configured pricing plans and their dynamic feature lines
+  // Merge configured pricing plans and their dynamic feature lines
   const configuredPlans = globalConfig?.pricingPlans || {};
 
   const getPlanData = (key) => {
@@ -183,7 +215,7 @@ const FEATURE_TRANSLATIONS = {
         features = customData.featuresEn;
       } else if (Array.isArray(customData.features) && customData.features.length > 0) {
         features = customData.features.map((feat, idx) => {
-          return FEATURE_TRANSLATIONS[feat] || defaultData.featuresEn?.[idx] || feat;
+          return resolveFeatureTranslation(feat, idx, defaultData);
         });
       } else {
         features = defaultData.featuresEn;
@@ -221,11 +253,12 @@ const FEATURE_TRANSLATIONS = {
   const quarterlyData = getPlanData('quarterly');
   const yearlyData = getPlanData('yearly');
 
+  // Order: 500 Tk Monthly FIRST, then Quarterly, Yearly, and 0 Tk Starter Plan LAST
   const plans = [
-    { key: 'starter', data: starterData },
     { key: 'monthly', data: monthlyData },
     { key: 'quarterly', data: quarterlyData },
-    { key: 'yearly', data: yearlyData }
+    { key: 'yearly', data: yearlyData },
+    { key: 'starter', data: starterData }
   ];
 
   const handlePlanSelect = (planKey) => {
