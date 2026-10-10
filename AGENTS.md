@@ -110,6 +110,33 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - **Google Search Console MCP**: Service Account configured at `D:/search-console-ai-510515-6f3365e7d7df.json` for `gsc-reader@search-console-ai-510515.iam.gserviceaccount.com`.
   - **Token Optimization**: Science plugins permanently deactivated to prevent context bloat.
 
+# 🔔 Push Notification Architecture (FCM)
+- **CRITICAL**: `NEXT_PUBLIC_FIREBASE_VAPID_KEY` MUST be set in `.env.local` AND Vercel env for push notifications to work.
+- Without VAPID key: FCM tokens cannot be generated → devices never register → push never reaches device.
+- Notifications only appear in-app (Firestore `broadcasts` collection) without VAPID key.
+- Service Worker: `public/firebase-messaging-sw.js` handles background push + click actions.
+- Client: `src/lib/fcm.js` handles token generation, caching, foreground messages.
+- API: `/api/broadcast` sends FCM push; `/api/fcm-token` registers device tokens.
+- Tokens stored in: `global_fcm_tokens` (all devices) + `shops/{shopId}/fcmTokens` (shop-scoped).
+
+# 🤖 Vyce AI Integration Architecture
+- **API Provider**: Vyce AI (vyceai.com) — OpenAI-compatible API proxy with multiple models.
+- **Preferred Model**: Agnes 3.0 Flash (cheapest: $0.05 in / $0.15 out per 1K tokens).
+- **Credit Balance**: ~$90 available — sufficient for ~3M AI responses.
+- **No Model Training Required**: Use RAG (system prompt + product catalog context) approach.
+- **Endpoint**: `https://vyceai.com/v1` (OpenAI-compatible, drop-in replacement).
+- **API Key**: Store as `VYCE_AI_API_KEY` in `.env.local` + Vercel.
+
+# 📱 Social Media Automation Architecture (Meta Graph API)
+- **Facebook Comment Auto-Reply**: Meta Graph API Webhooks → `/api/social/facebook-webhook` → AI reply via Vyce AI → send DM.
+- **Lead Generation**: Comment/Like/Follow events → auto-capture in Firestore `leads` collection.
+- **Instagram DM**: Same Meta API, same webhook handler.
+- **WhatsApp Business**: Requires Meta Business Verification + WhatsApp Business API approval.
+- **Unified Inbox**: Dashboard component consolidating FB + IG + WhatsApp + Web Chat messages.
+- **Human-AI Handoff**: Retailer types "." to pause AI, "." again to resume — implemented via conversation state flag in Firestore.
+- **Retailer Setup**: Each retailer must connect their own Facebook Page via Meta App → Page Access Token → paste in dashboard.
+- **SuperAdmin Social Hub**: Main website's FB/IG/WhatsApp integrated in SuperAdmin panel for centralized management.
+
 
 
 
