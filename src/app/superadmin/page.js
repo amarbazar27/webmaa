@@ -13,6 +13,7 @@ import {
 import dynamic from 'next/dynamic';
 // Phase 1.3: Dynamic import — SuperadminBroadcastPanel is 34KB
 const SuperadminBroadcastPanel = dynamic(() => import('@/components/superadmin/SuperadminBroadcastPanel'), { ssr: false });
+const SuperadminSocialHub = dynamic(() => import('@/components/superadmin/SuperadminSocialHub'), { ssr: false });
 const SuperadminAppBuilder = dynamic(() => import('@/components/superadmin/SuperadminAppBuilder'), { ssr: false });
 const SuperadminCustomersPanel = dynamic(() => import('@/components/superadmin/SuperadminCustomersPanel'), { ssr: false });
 const SuperadminHomepageControls = dynamic(() => import('@/components/superadmin/SuperadminHomepageControls'), { ssr: false });
@@ -1341,6 +1342,20 @@ export default function SuperAdminPage() {
               </button>
             )}
             
+            {!isSubAdmin && (
+              <button
+                onClick={() => setSuperadminTab('social_hub')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'social_hub'
+                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Globe size={16} />
+                <span>সোশ্যাল হাব</span>
+              </button>
+            )}
+
             {!isSubAdmin && (
               <button
                 onClick={() => setSuperadminTab('security')}
@@ -3681,6 +3696,10 @@ export default function SuperAdminPage() {
         </div>
       </div>
       </>)}
+
+      {superadminTab === 'social_hub' && !isSubAdmin && (
+        <SuperadminSocialHub />
+      )}
 
       {superadminTab === 'directory' && canAccess('view_live_stores') && !isSubAdmin && (<>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

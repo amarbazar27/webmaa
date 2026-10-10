@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
   Settings, LogOut, ShieldCheck, Menu, X, Crown, Lock, Paintbrush, Radio,
-  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle, Rocket, Home, ArrowLeft
+  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle, Rocket, Home, ArrowLeft, MessageCircle
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -84,6 +84,13 @@ const navGroups = [
     staffAllowed: false 
   },
   { 
+    id: 'social_hub', 
+    label: 'Social Hub', 
+    icon: MessageCircle,
+    href: '/dashboard/social-hub', 
+    staffAllowed: false 
+  },
+  { 
     id: 'billing', 
     label: 'Billing', 
     icon: ShieldCheck, 
@@ -126,6 +133,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
       'Landing Pages': t('ল্যান্ডিং পেজ', 'Landing Pages'),
       'Customers': t('কাস্টমার', 'Customers'),
       'Broadcast': t('ব্রডকাস্ট', 'Broadcast'),
+      'Social Hub': t('সোশ্যাল হাব', 'Social Hub'),
       'Billing': t('বিলিং ও প্যাকেজ', 'Billing'),
       'Store Settings': t('স্টোর সেটিংস', 'Store Settings'),
       'Superadmin Panel': t('সুপারএডমিন প্যানেল', 'Superadmin Panel'),
