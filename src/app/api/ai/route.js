@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getGlobalConfig, getShop } from '@/lib/firestore';
 
 import { createRateLimiter } from '@/lib/rate-limit';
+import { aiCache } from '@/lib/ai-cache';
 
 // Phase 5: Distributed rate limiter (Upstash Redis with in-memory fallback)
 const aiLimiter = createRateLimiter({ maxRequests: 10, windowMs: 60000, prefix: 'ai_chat' });
@@ -35,6 +36,23 @@ export async function POST(req) {
       return NextResponse.json({ error: { message: 'Too many messages. Max 20.' } }, { status: 400 });
     }
 
+    // ── Smart Cache Check (saves ~50-60% API cost) ─────────────
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    const userMsgText = lastUserMsg?.text || lastUserMsg?.content || '';
+    
+    if (userMsgText) {
+      const cached = await aiCache.get(shopId, userMsgText);
+      if (cached) {
+        return NextResponse.json({ choices: [{ message: { content: cached } }], _cached: true });
+      }
+    }
+
+    // ── Per-Shop Daily Quota (anti-misuse: max 500 AI calls/day/shop) ──
+    const { exceeded, remaining } = await aiCache.checkQuota(shopId, 500);
+    if (exceeded) {
+      return NextResponse.json({ error: { message: 'দৈনিক AI কল সীমা শেষ। আগামীকাল আবার চেষ্টা করুন।' } }, { status: 429 });
+    }
+
     // ── API Key Resolution Fallback Chain ──────────────────────────
     const keysToTry = [];
     const isValidApiKey = (key) => {
@@ -43,7 +61,12 @@ export async function POST(req) {
       return k.startsWith('AIza') || k.startsWith('gsk_') || k.startsWith('sk-') || k.startsWith('sk-or-') || k.startsWith('lfu_');
     };
 
-    // 1. Try shop custom key first
+    // 0. 🔥 Vyce AI — top priority (cheapest: $0.05/$0.15 per 1K tokens)
+    if (isValidApiKey(process.env.VYCE_AI_API_KEY)) {
+      keysToTry.push({ key: process.env.VYCE_AI_API_KEY.trim(), source: 'Vyce AI (Agnes 3.0 Flash)', vyceAi: true });
+    }
+
+    // 1. Try shop custom key
     if (shopId) {
       const shop = await getShop(shopId);
       const shopKey = shop?.aiConfig?.apiKey?.trim();
@@ -109,7 +132,10 @@ export async function POST(req) {
       let defaultModel = model;
 
       if (!isGemini) {
-        if (apiKey.startsWith('gsk_')) {
+        if (keyObj.vyceAi) {
+          endpoint = 'https://vyceai.com/v1/chat/completions';
+          defaultModel = model || 'agnes-3.0-flash';
+        } else if (apiKey.startsWith('gsk_')) {
           endpoint = 'https://api.groq.com/openai/v1/chat/completions';
           defaultModel = model || 'llama-3.3-70b-versatile';
         } else if (apiKey.startsWith('sk-or-')) {
@@ -201,6 +227,11 @@ export async function POST(req) {
 
           if (keySuccess && responseData) {
             console.log(`[AI API] Successfully answered request using key: ${keySource}`);
+            const botContent = responseData.choices?.[0]?.message?.content;
+            if (userMsgText && botContent) {
+              aiCache.set(shopId, userMsgText, botContent).catch(() => {});
+              aiCache.trackUsage(shopId).catch(() => {});
+            }
             return NextResponse.json(responseData);
           }
 
@@ -232,6 +263,11 @@ export async function POST(req) {
           const data = await response.json();
           if (response.ok) {
             console.log(`[AI API] Successfully answered request using OpenAI-compatible key: ${keySource}`);
+            const botContent = data.choices?.[0]?.message?.content;
+            if (userMsgText && botContent) {
+              aiCache.set(shopId, userMsgText, botContent).catch(() => {});
+              aiCache.trackUsage(shopId).catch(() => {});
+            }
             return NextResponse.json(data);
           }
 
