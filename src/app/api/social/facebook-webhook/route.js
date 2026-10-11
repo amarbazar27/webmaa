@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { adminDb, FieldValue } from '@/lib/firebase-admin';
 
-const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;
+const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN || 'bdretailers_meta_webhook_secret_2026';
 
-// GET: Webhook verification
+// GET: Meta Webhook Verification Challenge
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('hub.mode');
@@ -11,43 +11,79 @@ export async function GET(request) {
   const challenge = searchParams.get('hub.challenge');
 
   if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+    console.log('[Meta Webhook] Successfully verified with challenge token!');
     return new NextResponse(challenge, { status: 200 });
   }
 
+  console.warn('[Meta Webhook] Verification token mismatch. Expected:', VERIFY_TOKEN, 'Received:', token);
   return new NextResponse('Forbidden', { status: 403 });
 }
 
+// Helper: Send Facebook Messenger private message
 async function sendFacebookMessage(recipientId, text, pageAccessToken) {
-  await fetch(`https://graph.facebook.com/v21.0/me/messages`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      recipient: { id: recipientId },
-      message: { text },
-      messaging_type: 'RESPONSE',
-      access_token: pageAccessToken
-    })
-  });
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/me/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: { text },
+        messaging_type: 'RESPONSE',
+        access_token: pageAccessToken
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('[Facebook Messenger Send Error]:', err.message);
+    return null;
+  }
 }
 
+// Helper: Reply publicly to a Facebook Post Comment
+async function sendFacebookCommentReply(commentId, text, pageAccessToken) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        access_token: pageAccessToken
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('[Facebook Comment Reply Error]:', err.message);
+    return null;
+  }
+}
+
+// Helper: Call Vyce AI (Agnes 3.0 Flash) for smart responses
 async function getAiReply(messages, shopContext) {
   const apiKey = process.env.VYCE_AI_API_KEY;
   if (!apiKey) return null;
-  const res = await fetch('https://vyceai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: 'agnes-3.0-flash',
-      messages: [
-        { role: 'system', content: shopContext },
-        ...messages
-      ],
-      max_tokens: 500,
-      temperature: 0.7
-    })
-  });
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || null;
+  try {
+    const res = await fetch('https://vyceai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${apiKey}` 
+      },
+      body: JSON.stringify({
+        model: 'agnes-3.0-flash',
+        messages: [
+          { role: 'system', content: shopContext },
+          ...messages
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      })
+    });
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || null;
+  } catch (err) {
+    console.error('[Vyce AI Error]:', err.message);
+    return null;
+  }
 }
 
 export async function POST(request) {
@@ -55,28 +91,56 @@ export async function POST(request) {
     const body = await request.json();
 
     if (body.object === 'page') {
-      for (const entry of body.entry) {
+      for (const entry of (body.entry || [])) {
         const pageId = entry.id;
 
-        // Lookup shop connection
+        // Lookup shop connection (check doc ID first, then field pageId)
+        let shopId = null;
+        let pageAccessToken = null;
+
         const connectionDoc = await adminDb.collection('social_connections').doc(pageId).get();
-        if (!connectionDoc.exists) continue;
+        if (connectionDoc.exists) {
+          const connData = connectionDoc.data();
+          shopId = connData.shopId;
+          pageAccessToken = connData.pageAccessToken;
+        } else {
+          const querySnap = await adminDb.collection('social_connections').where('pageId', '==', pageId).limit(1).get();
+          if (!querySnap.empty) {
+            const connData = querySnap.docs[0].data();
+            shopId = connData.shopId;
+            pageAccessToken = connData.pageAccessToken;
+          }
+        }
 
-        const connection = connectionDoc.data();
-        const shopId = connection.shopId;
-        const pageAccessToken = connection.pageAccessToken;
+        if (!shopId || !pageAccessToken) {
+          console.warn('[Meta Webhook] No matching shop connection found for pageId:', pageId);
+          continue;
+        }
 
-        // Handle Messaging Events
+        // Fetch shop details and automation settings
+        const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+        const shopData = shopDoc.exists ? shopDoc.data() : {};
+        const shopName = shopData.shopName || shopData.name || 'Store';
+        let commentSettings = shopData.commentAutomation;
+        if (!commentSettings) {
+          const sDoc = await adminDb.collection('shops').doc(shopId).collection('settings').doc('socialAutomation').get();
+          if (sDoc.exists) {
+            commentSettings = sDoc.data()?.commentAutomation;
+          }
+        }
+        commentSettings = commentSettings || {};
+
+        // ── 1. Handle Messenger Messages ──────────────────────────
         if (entry.messaging) {
           for (const event of entry.messaging) {
-            const senderId = event.sender.id;
-            
-            // Handle Message
+            const senderId = event.sender?.id;
+            if (!senderId || senderId === pageId) continue;
+
             if (event.message && !event.message.is_echo) {
               const text = event.message.text;
               if (!text) continue;
 
-              const conversationRef = adminDb.collection(`shops/${shopId}/conversations`).doc(senderId);
+              const conversationRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(senderId);
               const conversationDoc = await conversationRef.get();
               let conversationData = conversationDoc.exists ? conversationDoc.data() : {
                 platform: 'facebook',
@@ -87,8 +151,8 @@ export async function POST(request) {
                 shopId
               };
 
-              // Check for human handoff toggle
-              if (text === '.') {
+              // Human Takeover via '.' command
+              if (text.trim() === '.') {
                 conversationData.aiPaused = !conversationData.aiPaused;
                 await conversationRef.set({
                   aiPaused: conversationData.aiPaused,
@@ -97,18 +161,16 @@ export async function POST(request) {
                 continue;
               }
 
-              // Update conversation
+              // Append user message
               conversationData.messages.push({ role: 'user', content: text, timestamp: new Date().toISOString() });
-              
               await conversationRef.set({
                 ...conversationData,
                 lastMessage: text,
                 lastMessageAt: FieldValue.serverTimestamp()
               }, { merge: true });
 
-              // Save Lead
-              const leadsRef = adminDb.collection(`shops/${shopId}/leads`).doc(senderId);
-              await leadsRef.set({
+              // Record Lead
+              await adminDb.collection('shops').doc(shopId).collection('leads').doc(senderId).set({
                 name: 'Facebook User',
                 source: 'facebook_message',
                 fbId: senderId,
@@ -118,24 +180,21 @@ export async function POST(request) {
                 shopId
               }, { merge: true });
 
-              // AI Reply
-              if (!conversationData.aiPaused) {
-                // Get shop context
-                const productsSnapshot = await adminDb.collection(`shops/${shopId}/products`).limit(50).get();
+              // Generate AI reply if AI is active
+              if (!conversationData.aiPaused && !shopData?.aiSettings?.globallyPaused) {
+                // Load products for RAG context
+                const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(30).get();
                 let productList = '';
                 productsSnapshot.forEach(doc => {
                   const p = doc.data();
-                  productList += `${p.name} - ${p.price}\n`;
+                  productList += `- ${p.name || ''}: ৳${p.price || ''}\n`;
                 });
-                
-                // Get shop doc
-                const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-                const shopName = shopDoc.exists ? shopDoc.data().name : 'Store';
 
-                const shopContext = `তুমি ${shopName}-এর AI সেলসম্যান। বাংলায় উত্তর দাও। পণ্য:\n${productList}`;
-                
-                // Format messages for AI
-                const aiMessages = conversationData.messages.map(m => ({
+                const customPrompt = shopData.aiSettings?.customPrompt || '';
+                const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';
+                const shopContext = `তুমি ${shopName}-এর স্মার্ট AI সেলসম্যান। বাংলায় সুন্দর ও সংক্ষিপ্ত উত্তর দাও।\nপণ্য তালিকা:\n${productList}\nডেলিভারি তথ্য: ${deliveryInfo}\n${customPrompt}`;
+
+                const aiMessages = conversationData.messages.slice(-8).map(m => ({
                   role: m.role === 'retailer' ? 'assistant' : m.role,
                   content: m.content
                 }));
@@ -143,8 +202,6 @@ export async function POST(request) {
                 const reply = await getAiReply(aiMessages, shopContext);
                 if (reply) {
                   await sendFacebookMessage(senderId, reply, pageAccessToken);
-                  
-                  // Save AI reply to conversation
                   conversationData.messages.push({ role: 'assistant', content: reply, timestamp: new Date().toISOString() });
                   await conversationRef.set({
                     messages: conversationData.messages,
@@ -157,69 +214,64 @@ export async function POST(request) {
           }
         }
 
-        // Handle Feed Events (Comments/Likes)
+        // ── 2. Handle Feed Events (Comments, Likes) ───────────────
         if (entry.changes) {
           for (const change of entry.changes) {
             if (change.field === 'feed') {
-              const item = change.value.item;
-              const verb = change.value.verb;
-              const senderId = change.value.from?.id;
-              if (!senderId || senderId === pageId) continue; // Skip own actions
+              const item = change.value?.item;
+              const verb = change.value?.verb;
+              const senderId = change.value?.from?.id;
+              const senderName = change.value?.from?.name || 'Facebook User';
+              const commentId = change.value?.comment_id;
+
+              if (!senderId || senderId === pageId) continue;
 
               if (item === 'comment' && verb === 'add') {
-                const text = change.value.message;
-                
-                // Save Lead
-                const leadsRef = adminDb.collection(`shops/${shopId}/leads`).doc(senderId);
-                await leadsRef.set({
-                  name: change.value.from.name || 'Facebook User',
+                const commentText = change.value?.message || '';
+
+                // Capture Lead
+                await adminDb.collection('shops').doc(shopId).collection('leads').doc(senderId).set({
+                  name: senderName,
                   source: 'facebook_comment',
                   fbId: senderId,
-                  message: text,
+                  message: commentText,
                   status: 'new',
                   createdAt: FieldValue.serverTimestamp(),
                   shopId
                 }, { merge: true });
 
-                // Auto-send a DM reply via Vyce AI
-                const productsSnapshot = await adminDb.collection(`shops/${shopId}/products`).limit(50).get();
-                let productList = '';
-                productsSnapshot.forEach(doc => {
-                  const p = doc.data();
-                  productList += `${p.name} - ${p.price}\n`;
-                });
-                
-                const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-                const shopName = shopDoc.exists ? shopDoc.data().name : 'Store';
+                // Check comment automation settings
+                const isAutoReplyEnabled = commentSettings.enabled !== false;
+                if (isAutoReplyEnabled) {
+                  // A. Send Public Comment Reply if configured
+                  const publicReply = commentSettings.publicReply || 'ধন্যবাদ আপনার কমেন্টের জন্য ভাইয়া! বিস্তারিত তথ্য ইনবক্সে পাঠানো হয়েছে 😊';
+                  if (commentId) {
+                    await sendFacebookCommentReply(commentId, publicReply, pageAccessToken);
+                  }
 
-                const shopContext = `তুমি ${shopName}-এর AI সেলসম্যান। বাংলায় উত্তর দাও। পণ্য:\n${productList}`;
-                
-                const reply = await getAiReply([{ role: 'user', content: `Commented: ${text}` }], shopContext);
-                
-                if (reply) {
-                  await sendFacebookMessage(senderId, reply, pageAccessToken);
-                  
-                  const conversationRef = adminDb.collection(`shops/${shopId}/conversations`).doc(senderId);
+                  // B. Send Private DM to the commenter
+                  const privateDm = commentSettings.privateDm || 'আসসালামু আলাইকুম! আমাদের সাথে যোগাযোগ করার জন্য ধন্যবাদ। কোনো পণ্য সম্পর্কে জানতে চাইলে এখনই মেসেজ দিন।';
+                  await sendFacebookMessage(senderId, privateDm, pageAccessToken);
+
+                  // Create/Update Conversation
+                  const conversationRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(senderId);
                   await conversationRef.set({
                     platform: 'facebook',
-                    senderName: change.value.from.name || 'Facebook User',
+                    senderName,
                     senderPsid: senderId,
-                    lastMessage: reply,
+                    lastMessage: privateDm,
                     lastMessageAt: FieldValue.serverTimestamp(),
                     aiPaused: false,
                     shopId,
                     messages: [
-                      { role: 'user', content: `[Comment]: ${text}`, timestamp: new Date().toISOString() },
-                      { role: 'assistant', content: reply, timestamp: new Date().toISOString() }
+                      { role: 'user', content: `[Post Comment]: ${commentText}`, timestamp: new Date().toISOString() },
+                      { role: 'assistant', content: `[Auto DM]: ${privateDm}`, timestamp: new Date().toISOString() }
                     ]
                   }, { merge: true });
                 }
               } else if (item === 'like' || item === 'follow') {
-                // Save Lead for Like/Follow
-                const leadId = `${senderId}_${Date.now()}`;
-                const leadsRef = adminDb.collection(`shops/${shopId}/leads`).doc(leadId);
-                await leadsRef.set({
-                  name: change.value.from?.name || 'Facebook User',
+                await adminDb.collection('shops').doc(shopId).collection('leads').doc(`${senderId}_${Date.now()}`).set({
+                  name: senderName,
                   source: `facebook_${item}`,
                   fbId: senderId,
                   message: `User ${verb}ed`,
@@ -234,10 +286,10 @@ export async function POST(request) {
       }
       return new NextResponse('EVENT_RECEIVED', { status: 200 });
     }
-    
+
     return new NextResponse('Not Found', { status: 404 });
   } catch (error) {
-    console.error('Webhook Error:', error);
+    console.error('[Meta Webhook Error]:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

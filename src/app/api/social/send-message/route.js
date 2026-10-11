@@ -13,16 +13,21 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // Verify retailer owns the shop
-    const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-    if (!shopDoc.exists) {
-      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
-    }
-    const shopData = shopDoc.data() || {};
-    const isOwner = shopData.ownerId === authResult.uid ||
-                    shopData.ownerUid === authResult.uid ||
-                    shopData.createdBy === authResult.uid;
-    if (!isOwner) {
+    // Verify retailer owns the shop (or superadmin for main)
+    if (shopId !== 'main') {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      if (!shopDoc.exists) {
+        return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+      }
+      const shopData = shopDoc.data() || {};
+      const isOwner = authResult.role === 'superadmin' ||
+                      shopData.ownerId === authResult.uid ||
+                      shopData.ownerUid === authResult.uid ||
+                      shopData.createdBy === authResult.uid;
+      if (!isOwner) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (authResult.role !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

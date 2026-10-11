@@ -4,27 +4,31 @@ import { useState, useEffect } from 'react';
 import { Card, Button } from '@/components/ui';
 import { 
   Globe, Camera, Phone, MessageCircle, Bot, Zap, Users, Loader2, 
-  CheckCircle2, TrendingUp, Download, ShieldCheck, Trash2, ExternalLink 
+  CheckCircle2, TrendingUp, Download, ShieldCheck, Trash2, ExternalLink,
+  Sparkles, Layers, Sliders, LayoutDashboard
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { db } from '@/lib/firebase';
 import { auth } from '@/lib/auth';
-import { collection, collectionGroup, query, orderBy, limit, onSnapshot, doc, getDocs } from 'firebase/firestore';
+import { collection, collectionGroup, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import clsx from 'clsx';
+import SocialHubPanel from '@/components/dashboard/SocialHubPanel';
 
 export default function SuperadminSocialHub() {
-  const [activeTab, setActiveTab] = useState('overview');
+  // Mode switcher: Main Platform vs All Shops Overview
+  const [viewMode, setViewMode] = useState('main_platform'); // 'main_platform' | 'platform_overview'
   const [leads, setLeads] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedShopFilter, setSelectedShopFilter] = useState('all');
 
   useEffect(() => {
     // 1. Live stream leads across all shops
     const qLeads = query(
       collectionGroup(db, 'leads'),
       orderBy('createdAt', 'desc'),
-      limit(200)
+      limit(250)
     );
     const unsubLeads = onSnapshot(qLeads, (snap) => {
       setLeads(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -45,7 +49,7 @@ export default function SuperadminSocialHub() {
     }, () => {});
 
     // 3. Live stream all connected social accounts
-    const qConn = query(collection(db, 'social_connections'), limit(100));
+    const qConn = query(collection(db, 'social_connections'), limit(150));
     const unsubConn = onSnapshot(qConn, (snap) => {
       setConnections(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }, () => {});
@@ -57,116 +61,19 @@ export default function SuperadminSocialHub() {
     };
   }, []);
 
-  const tabs = [
-    { id: 'overview', label: 'সারসংক্ষেপ (Overview)', icon: TrendingUp },
-    { id: 'leads', label: `সকল সংগৃহীত লিড (${leads.length})`, icon: Users },
-    { id: 'accounts', label: `সংযুক্ত শপ অ্যাকাউন্টস (${connections.length})`, icon: Globe },
-  ];
+  const filteredLeads = selectedShopFilter === 'all' 
+    ? leads 
+    : leads.filter(l => l.shopId === selectedShopFilter);
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <MessageCircle className="text-purple-600" size={28} />
-            সুপারএডমিন সোশ্যাল কন্ট্রোল হাব
-          </h2>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            পুরো প্ল্যাটফর্মের সমস্ত রিটেইলার শপ ও বিডি রিটেইলার্স মেইন সাইটের সোশ্যাল মিডিয়া কার্যক্রম ও লিড তদারকি।
-          </p>
-        </div>
-      </div>
+  const uniqueShops = Array.from(new Set(leads.map(l => l.shopId).filter(Boolean)));
 
-      {/* Tabs */}
-      <div className="flex overflow-x-auto gap-2 pb-1 hide-scrollbar border-b border-slate-200">
-        {tabs.map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                'flex items-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs transition-all whitespace-nowrap cursor-pointer',
-                isActive 
-                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' 
-                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/60'
-              )}
-            >
-              <Icon size={16} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Content */}
-      <div>
-        {activeTab === 'overview' && (
-          <OverviewSection 
-            leadsCount={leads.length} 
-            conversationsCount={conversations.length} 
-            connectionsCount={connections.length} 
-          />
-        )}
-        {activeTab === 'leads' && <LeadsSection leads={leads} loading={loading} />}
-        {activeTab === 'accounts' && <AccountsSection connections={connections} />}
-      </div>
-    </div>
-  );
-}
-
-function OverviewSection({ leadsCount, conversationsCount, connectionsCount }) {
-  const stats = [
-    { label: 'মোট সংগৃহীত লিড', value: leadsCount.toString(), icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'সক্রিয় কথোপকথন', value: conversationsCount.toString(), icon: MessageCircle, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'সংযুক্ত পেজ ও চ্যানেল', value: connectionsCount.toString(), icon: Globe, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'AI মডেল স্ট্যাটাস', value: 'Agnes 3.0', icon: Bot, color: 'text-amber-600', bg: 'bg-amber-50' },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={i} className="!p-5 border-l-4 border-l-purple-500 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className={clsx('p-3 rounded-2xl', stat.bg, stat.color)}>
-                  <Icon size={22} />
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-slate-900 leading-none">{stat.value}</div>
-                  <div className="text-[11px] font-bold text-slate-500 mt-1 uppercase tracking-wider">{stat.label}</div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      <Card title="সোশ্যাল মিডিয়া সেলস ইঞ্জিন স্ট্যাটাস" icon={Zap}>
-        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs text-slate-700">
-          <p className="font-bold flex items-center gap-2 text-slate-900">
-            <ShieldCheck size={16} className="text-emerald-600" /> Meta Graph API Webhook & Vyce AI RAG ইঞ্জিন সক্রিয়
-          </p>
-          <p className="leading-relaxed text-slate-600">
-            গ্রাহক যেকোনো সংযুক্ত ফেসবুক পেজে কমেন্ট বা ইনবক্স করলে Agnes 3.0 Flash মডেলের মাধ্যমে স্বয়ংক্রিয়ভাবে রিয়েল-টাইম রিপ্লাই তৈরি হচ্ছে এবং ক্যাটালগ প্রোডাক্ট লিংক ডেলিভার করা হচ্ছে।
-          </p>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function LeadsSection({ leads, loading }) {
-  const exportCsv = () => {
+  const exportAllLeadsCsv = () => {
     if (leads.length === 0) {
       toast.error('কোনো লিড নেই');
       return;
     }
     const headers = ['Name,Phone,Source,Status,ShopId,Date\n'];
-    const rows = leads.map(l => {
+    const rows = filteredLeads.map(l => {
       const d = l.createdAt?.seconds ? new Date(l.createdAt.seconds * 1000).toISOString() : '';
       return `"${l.name || 'Unknown'}","${l.phone || ''}","${l.source || ''}","${l.status || 'new'}","${l.shopId || ''}","${d}"\n`;
     });
@@ -174,154 +81,235 @@ function LeadsSection({ leads, loading }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `global-leads-${Date.now()}.csv`;
+    a.download = `bdretailers-all-leads-${Date.now()}.csv`;
     a.click();
-    toast.success('গ্লোবাল লিড CSV ডাউনলোড সম্পন্ন');
+    toast.success('প্ল্যাটফর্মের সকল লিড CSV ডাউনলোড সম্পন্ন!');
   };
 
   return (
-    <Card 
-      title="গ্লোবাল কাস্টমার লিড ডেটাবেজ" 
-      icon={Users}
-      headerRight={
-        <Button variant="outline" onClick={exportCsv} className="!text-xs font-bold !py-1.5 !px-3">
-          <Download size={13} className="mr-1" /> CSV এক্সপোর্ট
-        </Button>
-      }
-    >
-      <div className="overflow-x-auto pt-1">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-              <th className="pb-3">গ্রাহকের নাম</th>
-              <th className="pb-3">উৎস</th>
-              <th className="pb-3">ফোন / ফেসবুক আইডি</th>
-              <th className="pb-3">শপ আইডি</th>
-              <th className="pb-3">স্ট্যাটাস</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="5" className="py-8 text-center"><Loader2 className="animate-spin inline text-purple-600" size={24} /></td></tr>
-            ) : leads.length === 0 ? (
-              <tr><td colSpan="5" className="py-12 text-center text-slate-400">কোনো লিড পাওয়া যায়নি।</td></tr>
-            ) : (
-              leads.map(lead => (
-                <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                  <td className="py-3 font-bold text-slate-900">{lead.name || 'অপরিচিত'}</td>
-                  <td className="py-3 capitalize text-slate-600">{lead.source || 'social'}</td>
-                  <td className="py-3 font-mono text-slate-600">{lead.phone || lead.fbId || 'N/A'}</td>
-                  <td className="py-3 text-purple-700 font-mono font-bold">{lead.shopId || 'global'}</td>
-                  <td className="py-3">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 capitalize">
-                      {lead.status || 'new'}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
-
-function AccountsSection({ connections }) {
-  const [mainFbToken, setMainFbToken] = useState('');
-  const [connecting, setConnecting] = useState(false);
-
-  const handleConnectMain = async () => {
-    if (!mainFbToken.trim()) {
-      toast.error('Page Access Token দিন');
-      return;
-    }
-    setConnecting(true);
-    try {
-      const token = await auth.currentUser?.getIdToken();
-      const res = await fetch('/api/social/connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          shopId: 'main',
-          pageName: 'BD Retailers Official',
-          pageAccessToken: mainFbToken.trim(),
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'ব্যর্থ');
-      toast.success('বিডি রিটেইলার্স ফেসবুক পেজ কানেক্ট হয়েছে! 🎉');
-      setMainFbToken('');
-    } catch (err) {
-      toast.error(err.message || 'কানেকশন ব্যর্থ');
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Main Website Connection Box */}
-      <Card title="বিডি রিটেইলার্স মেইন ফেসবুক পেজ ইন্টিগ্রেশন" icon={Globe} className="border-t-4 border-t-purple-600">
-        <div className="space-y-3.5 max-w-xl">
-          <p className="text-xs text-slate-600 font-medium">
-            প্রধান bdretailers.com ফেসবুক পেজের মেসেজ ও কমেন্ট স্বয়ংক্রিয়ভাবে সুপারএডমিন থেকে হ্যান্ডেল করতে টোকেন দিন:
+    <div className="space-y-6 animate-fade-in">
+      {/* ── Top Header & Mode Toggle ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <MessageCircle className="text-purple-600" size={28} />
+            সুপারএডমিন সোশ্যাল কন্ট্রোল হাব
+          </h2>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            প্রধান bdretailers.com ওয়েবসাইট ও সমগ্র প্ল্যাটফর্মের সমস্ত রিটেইলার শপের সোশ্যাল সেলস ও অটোমেশন কেন্দ্র।
           </p>
-          <div className="flex gap-2">
-            <input
-              type="password"
-              placeholder="Page Access Token (EAAI...)"
-              value={mainFbToken}
-              onChange={e => setMainFbToken(e.target.value)}
-              className="flex-1 text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
-            />
-            <Button onClick={handleConnectMain} loading={connecting} className="!bg-purple-600 text-white text-xs font-bold shrink-0">
-              কানেক্ট করুন
-            </Button>
-          </div>
         </div>
-      </Card>
 
-      {/* List of all connected shops */}
-      <Card title={`সংযুক্ত সমস্ত শপের ফেসবুক পেজ তালিকা (${connections.length})`} icon={ShieldCheck}>
-        <div className="overflow-x-auto pt-1">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                <th className="pb-3">পেজের নাম</th>
-                <th className="pb-3">শপ আইডি</th>
-                <th className="pb-3">Page ID</th>
-                <th className="pb-3">ওয়েবহুক স্ট্যাটাস</th>
-                <th className="pb-3 text-right">কানেক্টেড সময়</th>
-              </tr>
-            </thead>
-            <tbody>
-              {connections.length === 0 ? (
-                <tr><td colSpan="5" className="py-8 text-center text-slate-400">কোনো শপ এখনো ফেসবুক কানেক্ট করেনি।</td></tr>
-              ) : (
-                connections.map(c => (
-                  <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="py-3 font-bold text-slate-900">{c.pageName || 'Facebook Page'}</td>
-                    <td className="py-3 font-mono text-purple-700 font-bold">{c.shopId}</td>
-                    <td className="py-3 font-mono text-slate-500">{c.pageId || c.id}</td>
-                    <td className="py-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800">
-                        Active
-                      </span>
-                    </td>
-                    <td className="py-3 text-right text-slate-400 text-[10px]">
-                      {c.connectedAt ? new Date(c.connectedAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' }) : 'আজ'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        {/* View Mode Switcher */}
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-100 rounded-2xl border border-slate-200 self-start sm:self-auto">
+          <button
+            onClick={() => setViewMode('main_platform')}
+            className={clsx(
+              'px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer',
+              viewMode === 'main_platform'
+                ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            )}
+          >
+            <Globe size={15} />
+            <span>bdretailers.com (মেইন সাইট)</span>
+          </button>
+
+          <button
+            onClick={() => setViewMode('platform_overview')}
+            className={clsx(
+              'px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer',
+              viewMode === 'platform_overview'
+                ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/20'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            )}
+          >
+            <Layers size={15} />
+            <span>সকল শপ ও গ্লোবাল লিড ({leads.length})</span>
+          </button>
         </div>
-      </Card>
+      </div>
+
+      {/* ── Mode 1: Main Platform bdretailers.com Full AiPraktor Control Plane ── */}
+      {viewMode === 'main_platform' && (
+        <div className="space-y-4">
+          <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-2xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-purple-900 font-bold">
+              <Sparkles size={16} className="text-purple-600" />
+              <span>আপনি এখন প্রধান bdretailers.com ওয়েবসাইটের সোশ্যাল হাব কন্ট্রোল করছেন (Shop ID: &quot;main&quot;)</span>
+            </div>
+            <span className="text-[10px] bg-purple-200 text-purple-800 font-black px-2 py-0.5 rounded-md uppercase">
+              SUPERADMIN MODE
+            </span>
+          </div>
+
+          <SocialHubPanel shopId="main" />
+        </div>
+      )}
+
+      {/* ── Mode 2: Multi-Tenant Platform-Wide Aggregation ── */}
+      {viewMode === 'platform_overview' && (
+        <div className="space-y-6">
+          {/* Top Aggregation KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="!p-4 border-l-4 border-l-blue-500 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                  <Users size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">{leads.length}</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase">মোট সংগৃহীত লিড</div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="!p-4 border-l-4 border-l-purple-500 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                  <MessageCircle size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">{conversations.length}</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase">মোট সক্রিয় চ্যাট</div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="!p-4 border-l-4 border-l-emerald-500 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <Globe size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">{connections.length}</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase">সংযুক্ত পেজ ও চ্যানেল</div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="!p-4 border-l-4 border-l-amber-500 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                  <Bot size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900">Agnes 3.0</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase">Vyce AI Flash Engine</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Global Leads Table with Shop Filter */}
+          <Card 
+            title="প্ল্যাটফর্ম-ওয়াইড কাস্টমার লিড সেন্ট্রাল ডেটাবেজ" 
+            icon={Users}
+            headerRight={
+              <div className="flex items-center gap-2">
+                {uniqueShops.length > 0 && (
+                  <select
+                    value={selectedShopFilter}
+                    onChange={e => setSelectedShopFilter(e.target.value)}
+                    className="text-xs font-bold py-1.5 px-3 rounded-xl border border-slate-200 bg-white outline-none cursor-pointer"
+                  >
+                    <option value="all">সকল শপ ({leads.length})</option>
+                    {uniqueShops.map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                )}
+                <Button variant="outline" onClick={exportAllLeadsCsv} className="!text-xs font-bold !py-1.5 !px-3">
+                  <Download size={13} className="mr-1" /> CSV এক্সপোর্ট
+                </Button>
+              </div>
+            }
+          >
+            <div className="overflow-x-auto pt-1">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="pb-3">গ্রাহকের নাম</th>
+                    <th className="pb-3">উৎস</th>
+                    <th className="pb-3">ফোন / সোশ্যাল আইডি</th>
+                    <th className="pb-3">শপ আইডি</th>
+                    <th className="pb-3">তারিখ</th>
+                    <th className="pb-3 text-right">স্ট্যাটাস</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="6" className="py-8 text-center"><Loader2 className="animate-spin inline text-purple-600" size={24} /></td></tr>
+                  ) : filteredLeads.length === 0 ? (
+                    <tr><td colSpan="6" className="py-12 text-center text-slate-400">কোনো লিড পাওয়া যায়নি।</td></tr>
+                  ) : (
+                    filteredLeads.map(lead => (
+                      <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                        <td className="py-3 font-bold text-slate-900">{lead.name || 'অপরিচিত'}</td>
+                        <td className="py-3 capitalize text-slate-600">
+                          <span className="px-2 py-0.5 bg-slate-100 rounded-md text-[10px] font-bold">
+                            {lead.source || 'social'}
+                          </span>
+                        </td>
+                        <td className="py-3 font-mono text-slate-600">{lead.phone || lead.fbId || 'N/A'}</td>
+                        <td className="py-3 font-mono font-bold text-purple-700">{lead.shopId || 'global'}</td>
+                        <td className="py-3 text-slate-400 text-[10px]">
+                          {lead.createdAt?.seconds 
+                            ? new Date(lead.createdAt.seconds * 1000).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' }) 
+                            : 'আজ'}
+                        </td>
+                        <td className="py-3 text-right">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 capitalize">
+                            {lead.status || 'new'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Connected Pages Table across platform */}
+          <Card title={`সংযুক্ত সমস্ত ফেসবুক পেজের তালিকা (${connections.length})`} icon={ShieldCheck}>
+            <div className="overflow-x-auto pt-1">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="pb-3">পেজের নাম</th>
+                    <th className="pb-3">শপ আইডি</th>
+                    <th className="pb-3">Page ID</th>
+                    <th className="pb-3">Webhook স্ট্যাটাস</th>
+                    <th className="pb-3 text-right">কানেকশন তারিখ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {connections.length === 0 ? (
+                    <tr><td colSpan="5" className="py-8 text-center text-slate-400">কোনো শপ এখনো ফেসবুক কানেক্ট করেনি।</td></tr>
+                  ) : (
+                    connections.map(c => (
+                      <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                        <td className="py-3 font-bold text-slate-900">{c.pageName || 'Facebook Page'}</td>
+                        <td className="py-3 font-mono text-purple-700 font-bold">{c.shopId}</td>
+                        <td className="py-3 font-mono text-slate-500">{c.pageId || c.id}</td>
+                        <td className="py-3">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800">
+                            Active
+                          </span>
+                        </td>
+                        <td className="py-3 text-right text-slate-400 text-[10px]">
+                          {c.connectedAt ? new Date(c.connectedAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' }) : 'আজ'}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

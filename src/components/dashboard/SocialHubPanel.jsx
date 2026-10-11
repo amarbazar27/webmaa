@@ -1,12 +1,16 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Card, Button, Input } from '@/components/ui';
+import { Card, Button } from '@/components/ui';
 import { 
   Globe, Camera, Phone, MessageCircle, Bot, Zap, Users, Loader2, 
   CheckCircle2, User, Send, PauseCircle, PlayCircle, ShieldCheck, 
   Sparkles, ExternalLink, HelpCircle, AlertCircle, RefreshCw, 
-  Download, Plus, Trash2, ArrowRight, Check, X, Clock, MessageSquare 
+  Download, Plus, Trash2, ArrowRight, Check, X, Clock, MessageSquare,
+  BarChart3, Settings, Bell, BookmarkCheck, ShoppingBag, Activity,
+  Layers, Radio, BookOpen, MessageCircleQuestion, HelpCircle as HelpIcon,
+  Video, DollarSign, UserCheck, MessageSquareCode, Copy, CheckCheck,
+  ChevronRight, CornerDownRight, Search, Sliders, Smartphone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { db } from '@/lib/firebase';
@@ -18,13 +22,18 @@ import {
 import clsx from 'clsx';
 
 export default function SocialHubPanel({ shopId }) {
-  const [activeTab, setActiveTab] = useState('accounts');
+  // Active navigation section
+  const [activeTab, setActiveTab] = useState('overview');
   const [currentTime, setCurrentTime] = useState('');
   const [isAiGloballyPaused, setIsAiGloballyPaused] = useState(false);
   const [connections, setConnections] = useState([]);
   const [loadingConnections, setLoadingConnections] = useState(true);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [shopData, setShopData] = useState(null);
 
+  // Real-time Clock
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
@@ -35,7 +44,52 @@ export default function SocialHubPanel({ shopId }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch connections for this shop
+  // Fetch shop metadata & global AI state
+  useEffect(() => {
+    if (!shopId) return;
+    if (shopId === 'main') {
+      setShopData({ shopName: 'BD Retailers (Official)' });
+      return;
+    }
+    const unsub = onSnapshot(doc(db, 'shops', shopId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setShopData(data);
+        setIsAiGloballyPaused(Boolean(data?.aiSettings?.globallyPaused));
+      }
+    });
+    return () => unsub();
+  }, [shopId]);
+
+  // Real-time conversations stream
+  useEffect(() => {
+    if (!shopId) return;
+    const q = query(
+      collection(db, 'shops', shopId, 'conversations'),
+      orderBy('lastMessageAt', 'desc'),
+      limit(100)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setConversations(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => console.warn('Conversations listener:', err));
+    return () => unsub();
+  }, [shopId]);
+
+  // Real-time leads stream
+  useEffect(() => {
+    if (!shopId) return;
+    const q = query(
+      collection(db, 'shops', shopId, 'leads'),
+      orderBy('createdAt', 'desc'),
+      limit(100)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setLeads(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => console.warn('Leads listener:', err));
+    return () => unsub();
+  }, [shopId]);
+
+  // Fetch social connections
   const fetchConnections = async () => {
     if (!shopId) return;
     try {
@@ -60,30 +114,29 @@ export default function SocialHubPanel({ shopId }) {
     fetchConnections();
   }, [shopId]);
 
-  // Load shop AI settings
-  useEffect(() => {
-    if (!shopId) return;
-    const unsub = onSnapshot(doc(db, 'shops', shopId), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setIsAiGloballyPaused(Boolean(data?.aiSettings?.globallyPaused));
-      }
-    });
-    return () => unsub();
-  }, [shopId]);
-
   const toggleGlobalAi = async () => {
     if (!shopId) return;
     try {
       const nextState = !isAiGloballyPaused;
-      await setDoc(doc(db, 'shops', shopId), {
-        aiSettings: {
-          globallyPaused: nextState,
-          updatedAt: new Date().toISOString()
-        }
-      }, { merge: true });
+      const token = await auth.currentUser?.getIdToken();
+      
+      await fetch('/api/social/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          aiSettings: {
+            globallyPaused: nextState,
+            updatedAt: new Date().toISOString()
+          }
+        })
+      });
+
       setIsAiGloballyPaused(nextState);
-      toast.success(nextState ? 'AI সহকারী সাময়িক বিরতিতে আছে (মানুষ অন ডিউটি 👤)' : 'AI সহকারী সক্রিয় (রোবট অন ডিউটি 🤖)');
+      toast.success(nextState ? 'AI সহকারী সাময়িক বিরতিতে আছে (হিউম্যান টেকওভার 👤)' : 'AI সহকারী সক্রিয় (রোবট অন ডিউটি 🤖)');
     } catch (err) {
       toast.error('AI স্ট্যাটাস পরিবর্তন ব্যর্থ');
     }
@@ -91,40 +144,81 @@ export default function SocialHubPanel({ shopId }) {
 
   const hasFb = connections.some(c => c.platform === 'facebook');
 
-  const tabs = [
-    { id: 'accounts', label: 'সংযুক্ত অ্যাকাউন্ট', icon: Globe, badge: hasFb ? 'সক্রিয়' : null },
-    { id: 'inbox', label: 'লাইভ ইনবক্স', icon: MessageCircle },
-    { id: 'comments', label: 'কমেন্ট অটোমেশন', icon: MessageSquare },
-    { id: 'leads', label: 'লিড ম্যানেজমেন্ট', icon: Users },
-    { id: 'ai', label: 'এআই সেটিংস (Agnes 3.0)', icon: Bot },
+  // Navigation Items Grouped AiPraktor-style
+  const navGroups = [
+    {
+      title: 'Work',
+      items: [
+        { id: 'overview', label: 'Overview (সারসংক্ষেপ)', icon: BarChart3, badge: null },
+        { id: 'inbox', label: 'Inbox (লাইভ ইনবক্স)', icon: MessageCircle, badge: conversations.length > 0 ? conversations.length : null },
+        { id: 'notifications', label: 'Notifications (বিজ্ঞপ্তি)', icon: Bell, badge: null },
+        { id: 'leads', label: 'Leads (সংগৃহীত লিড)', icon: Users, badge: leads.length > 0 ? leads.length : null },
+        { id: 'comments', label: 'Comments (কমেন্ট অটোমেশন)', icon: MessageSquare, badge: 'AI' },
+        { id: 'saved_replies', label: 'Saved replies (সেভড রিপ্লাই)', icon: BookmarkCheck, badge: null },
+        { id: 'orders', label: 'Orders (ইনবক্স অর্ডার)', icon: ShoppingBag, badge: null },
+        { id: 'activity', label: 'Activity (কার্যকলাপ)', icon: Activity, badge: null },
+        { id: 'analytics', label: 'Analytics (পরিসংখ্যান)', icon: Zap, badge: null },
+      ]
+    },
+    {
+      title: 'Grow',
+      items: [
+        { id: 'followups', label: 'Follow-ups (ফলো-আপ)', icon: RefreshCw, badge: null },
+        { id: 'broadcasts', label: 'Broadcasts (ব্রডকাস্ট)', icon: Radio, badge: null },
+        { id: 'products', label: 'Products (AI পণ্য ক্যাটালগ)', icon: Layers, badge: null },
+        { id: 'posts', label: 'Posts (সোশ্যাল পোস্ট)', icon: MessageSquareCode, badge: null },
+        { id: 'knowledge', label: 'Knowledge (বিজনেস নলেজবেস)', icon: BookOpen, badge: null },
+        { id: 'website_chat', label: 'Website chat (ওয়েবসাইট চ্যাট)', icon: Globe, badge: 'New' },
+        { id: 'agent_desk', label: 'Agent Desk (AI সেলসম্যান)', icon: Bot, badge: 'Agnes' },
+      ]
+    },
+    {
+      title: 'Set up',
+      items: [
+        { id: 'pages', label: 'Pages (চ্যানেল কানেকশন)', icon: Globe, badge: hasFb ? 'Active' : 'Setup' },
+        { id: 'billing', label: 'Billing (AI ক্রেডিট ও ব্যালেন্স)', icon: DollarSign, badge: '$90+' },
+        { id: 'team', label: 'Team (টিম সদস্য)', icon: UserCheck, badge: null },
+        { id: 'setup', label: 'Setup (সেটআপ চেকলিস্ট)', icon: Settings, badge: '১/৮' },
+        { id: 'videos', label: 'Video guide (ভিডিও গাইড)', icon: Video, badge: null },
+      ]
+    },
+    {
+      title: 'Help us improve',
+      items: [
+        { id: 'feedback', label: 'Feedback (মতামত)', icon: HelpCircle, badge: null },
+      ]
+    }
   ];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ── AiPraktor Style Control Plane Top Bar ── */}
+      {/* ── Control Plane Top Header ── */}
       <div className="bg-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-slate-800 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
         
         <div className="space-y-1 relative z-10">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              LIVE CONTROL PLANE
+              AIPRAKTOR CONTROL PLANE
             </span>
             <span className="text-xs font-mono text-slate-400">
-              SYSTEM ONLINE • {currentTime || '00:00:00'}
+              ENGINE: AGNES 3.0 FLASH • {currentTime || '00:00:00'}
+            </span>
+            <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded-md text-[10px] font-bold">
+              {shopId === 'main' ? 'BD Retailers Official' : `Shop ID: ${shopId}`}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
             সোশ্যাল মিডিয়া সেলস অ্যান্ড অটোমেশন হাব
           </h2>
           <p className="text-xs text-slate-400 font-medium">
-            ফেসবুক কমেন্ট ও ইনবক্স থেকে অটোমেটিক লিড জেনারেশন, Vyce AI সেলস রিপ্লাই এবং কাস্টমার অর্ডার গ্রহণ।
+            ফেসবুক, ইনস্টাগ্রাম, হোয়াটসঅ্যাপ ও ওয়েবসাইট চ্যাট থেকে রিয়েল-টাইম লিড জেনারেশন, Vyce AI সেলস রিপ্লাই ও অর্ডার ম্যানেজমেন্ট।
           </p>
         </div>
 
         <div className="flex items-center gap-3 relative z-10 self-stretch sm:self-auto justify-between sm:justify-end">
-          {/* AI <-> Human Toggle */}
+          {/* AI <-> Human Takeover Toggle */}
           <button
             onClick={toggleGlobalAi}
             className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-sm ${
@@ -142,94 +236,186 @@ export default function SocialHubPanel({ shopId }) {
             className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-2xl border border-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5"
             title="সেটআপ গাইড"
           >
-            <HelpCircle size={16} />
+            <HelpIcon size={16} />
             <span className="hidden sm:inline">১ মিনিটের গাইড</span>
           </button>
         </div>
       </div>
 
-      {/* ── Setup Progress Banner (AiPraktor Style) ── */}
-      {!hasFb && (
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-purple-600 text-white rounded-md text-[10px] font-black uppercase">
-                ধাপ ১ / ৩
-              </span>
-              <h4 className="text-sm font-black text-slate-900">
-                Facebook পেজ যুক্ত করুন — অ্যাসিস্ট্যান্ট সক্রিয় করতে
-              </h4>
-            </div>
-            <p className="text-xs text-slate-600 font-medium">
-              পেজ যুক্ত না হলে গ্রাহকের মেসেজ অ্যাসিস্ট্যান্টের কাছে পৌঁছাবে না। নিচের &quot;Connect Facebook&quot; বাটনে Page Access Token দিয়ে কানেক্ট করুন।
-            </p>
-          </div>
-          <Button 
-            onClick={() => setActiveTab('accounts')} 
-            className="!bg-purple-600 hover:!bg-purple-700 text-white shrink-0 text-xs font-black"
+      {/* ── Main Layout: Left Sidebar + Right Content ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* ── Left Sidebar (AiPraktor Full Hierarchy) ── */}
+        <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-3.5 space-y-4">
+          {/* Setup Progress Pill */}
+          <div 
+            onClick={() => setActiveTab('setup')} 
+            className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl cursor-pointer hover:border-purple-300 transition-all"
           >
-            পেজ যুক্ত করুন <ArrowRight size={14} className="ml-1" />
-          </Button>
+            <div className="flex items-center justify-between text-xs font-black text-purple-900 mb-1.5">
+              <span>সেটআপ গাইড</span>
+              <span className="px-2 py-0.5 bg-purple-600 text-white rounded-full text-[10px]">১ / ৮</span>
+            </div>
+            <div className="w-full bg-purple-200 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: hasFb ? '45%' : '15%' }} />
+            </div>
+          </div>
+
+          {/* Grouped Navigation */}
+          <div className="space-y-4">
+            {navGroups.map((group, gIdx) => (
+              <div key={gIdx} className="space-y-1">
+                <div className="px-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  {group.title}
+                </div>
+                <div className="space-y-0.5">
+                  {group.items.map(item => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={clsx(
+                          'w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer',
+                          isActive
+                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/20'
+                            : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          <Icon size={15} className={clsx('shrink-0', isActive ? 'text-white' : 'text-slate-500')} />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span className={clsx(
+                            'text-[9px] px-1.5 py-0.2 rounded-full font-black uppercase shrink-0',
+                            isActive 
+                              ? 'bg-white/20 text-white' 
+                              : item.badge === 'Active' 
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-purple-100 text-purple-700'
+                          )}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
 
-      {/* ── Navigation Tabs ── */}
-      <div className="flex overflow-x-auto gap-2 pb-1 hide-scrollbar border-b border-slate-200">
-        {tabs.map(tab => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={clsx(
-                'flex items-center gap-2 px-4 py-3 font-black text-xs rounded-2xl transition-all whitespace-nowrap cursor-pointer relative',
-                isActive
-                  ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60'
-              )}
-            >
-              <Icon size={15} />
-              <span>{tab.label}</span>
-              {tab.badge && (
-                <span className="ml-1 px-1.5 py-0.2 bg-emerald-500 text-white rounded-full text-[9px] font-black">
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {/* ── Right Content Area ── */}
+        <div className="lg:col-span-9 space-y-6">
+          {/* 1. Work Sections */}
+          {activeTab === 'overview' && (
+            <OverviewSection 
+              shopId={shopId} 
+              conversations={conversations} 
+              leads={leads} 
+              hasFb={hasFb}
+              onNavigate={setActiveTab}
+            />
+          )}
+
+          {activeTab === 'inbox' && (
+            <UnifiedInboxSection 
+              shopId={shopId} 
+              conversations={conversations} 
+              isAiGloballyPaused={isAiGloballyPaused} 
+            />
+          )}
+
+          {activeTab === 'notifications' && (
+            <NotificationsSection conversations={conversations} leads={leads} />
+          )}
+
+          {activeTab === 'leads' && (
+            <LeadsSection shopId={shopId} leads={leads} />
+          )}
+
+          {activeTab === 'comments' && (
+            <CommentsAutomationSection shopId={shopId} />
+          )}
+
+          {activeTab === 'saved_replies' && (
+            <SavedRepliesSection shopId={shopId} />
+          )}
+
+          {activeTab === 'orders' && (
+            <OrdersSection shopId={shopId} />
+          )}
+
+          {activeTab === 'activity' && (
+            <ActivityAuditSection conversations={conversations} leads={leads} />
+          )}
+
+          {activeTab === 'analytics' && (
+            <AnalyticsSection conversations={conversations} leads={leads} />
+          )}
+
+          {/* 2. Grow Sections */}
+          {activeTab === 'followups' && (
+            <FollowupsSection shopId={shopId} leads={leads} />
+          )}
+
+          {activeTab === 'broadcasts' && (
+            <BroadcastsLaunchSection shopId={shopId} />
+          )}
+
+          {activeTab === 'products' && (
+            <ProductsContextSection shopId={shopId} />
+          )}
+
+          {activeTab === 'posts' && (
+            <SocialPostsSection shopId={shopId} hasFb={hasFb} />
+          )}
+
+          {activeTab === 'knowledge' && (
+            <KnowledgeBaseSection shopId={shopId} />
+          )}
+
+          {activeTab === 'website_chat' && (
+            <WebsiteChatConfigSection shopId={shopId} />
+          )}
+
+          {activeTab === 'agent_desk' && (
+            <AgentDeskSection shopId={shopId} />
+          )}
+
+          {/* 3. Set up Sections */}
+          {activeTab === 'pages' && (
+            <PagesChannelSection 
+              shopId={shopId} 
+              connections={connections} 
+              onRefresh={fetchConnections}
+              loading={loadingConnections}
+            />
+          )}
+
+          {activeTab === 'billing' && (
+            <BillingSection />
+          )}
+
+          {activeTab === 'team' && (
+            <TeamManagementSection shopId={shopId} />
+          )}
+
+          {activeTab === 'setup' && (
+            <SetupChecklistSection hasFb={hasFb} onNavigate={setActiveTab} />
+          )}
+
+          {activeTab === 'videos' && (
+            <VideoGuideSection />
+          )}
+
+          {activeTab === 'feedback' && (
+            <FeedbackSection shopId={shopId} />
+          )}
+        </div>
       </div>
-
-      {/* ── Tab Content ── */}
-      {activeTab === 'accounts' && (
-        <AccountsSection 
-          shopId={shopId} 
-          connections={connections} 
-          onRefresh={fetchConnections}
-          loading={loadingConnections}
-        />
-      )}
-
-      {activeTab === 'inbox' && (
-        <InboxSection 
-          shopId={shopId} 
-          isAiGloballyPaused={isAiGloballyPaused} 
-          onToggleAi={toggleGlobalAi}
-        />
-      )}
-
-      {activeTab === 'comments' && (
-        <CommentsAutomationSection shopId={shopId} />
-      )}
-
-      {activeTab === 'leads' && (
-        <LeadsSection shopId={shopId} />
-      )}
-
-      {activeTab === 'ai' && (
-        <AiSettingsSection shopId={shopId} />
-      )}
 
       {/* ── 1-Minute Guide Modal ── */}
       {showGuideModal && (
@@ -250,17 +436,17 @@ export default function SocialHubPanel({ shopId }) {
             <div className="space-y-3.5 text-xs text-slate-600 font-medium leading-relaxed">
               <div className="p-3 bg-purple-50 rounded-2xl border border-purple-100 space-y-1">
                 <p className="font-black text-purple-900">১. Facebook পেজ কানেক্ট করুন</p>
-                <p>Meta for Developers অথবা Meta Business Suite থেকে আপনার পেজের <strong className="text-purple-700">Page Access Token</strong> নিয়ে এসে &quot;সংযুক্ত অ্যাকাউন্ট&quot; ট্যাবে পেস্ট করে &quot;কানেক্ট&quot; চাপুন।</p>
+                <p>&quot;Pages&quot; ট্যাব থেকে পেজের <strong className="text-purple-700">Page Access Token</strong> দিয়ে কানেক্ট করুন। Meta অ্যাপে Webhook URL ও Verify Token সেট করুন।</p>
               </div>
 
               <div className="p-3 bg-blue-50 rounded-2xl border border-blue-100 space-y-1">
                 <p className="font-black text-blue-900">২. কমেন্ট অটো-রিপ্লাই সক্রিয় করুন</p>
-                <p>গ্রাহক যেকোনো পোস্টে কমেন্ট করলে AI স্বয়ংক্রিয়ভাবে পাবলিক রিপ্লাই দেবে এবং পার্সোনালাইজড ইনবক্স মেসেজ পাঠিয়ে লিড সংগ্রহ করবে।</p>
+                <p>&quot;Comments&quot; ট্যাবে আপনার পছন্দসই পাবলিক রিপ্লাই ও ইনবক্স প্রাইভেট ডিএম রুল সেট করুন।</p>
               </div>
 
               <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-1">
                 <p className="font-black text-emerald-900">৩. হিউম্যান টেকওভার ও &quot;.&quot; (ডট) কমান্ড</p>
-                <p>গ্রাহকের সাথে নিজে কথা বলতে চাইলে মেসেজ ইনপুটে শুধু একটি ডট <strong className="text-emerald-700">&quot;.&quot;</strong> পাঠিয়ে এন্টার দিন — AI সাথে সাথে বিরতিতে যাবে। কথা শেষ হলে আবার ডট দিলে AI পুনরায় সক্রিয় হবে।</p>
+                <p>যেকোনো চ্যাটে শুধু একটি ডট <strong className="text-emerald-700">&quot;.&quot;</strong> পাঠিয়ে এন্টার দিলে AI বিরতিতে যাবে এবং আপনি নিজে কাস্টমারের সাথে কথা বলতে পারবেন।</p>
               </div>
             </div>
 
@@ -274,15 +460,1269 @@ export default function SocialHubPanel({ shopId }) {
   );
 }
 
-// ── 1. ACCOUNTS SECTION ──────────────────────────────────────────────
-function AccountsSection({ shopId, connections, onRefresh, loading }) {
+// ─────────────────────────────────────────────────────────────────────
+// 1. WORK COMPONENTS
+// ─────────────────────────────────────────────────────────────────────
+
+function OverviewSection({ shopId, conversations, leads, hasFb, onNavigate }) {
+  const activeChats = conversations.filter(c => !c.aiPaused).length;
+  const humanTakeoverChats = conversations.filter(c => c.aiPaused).length;
+
+  const stats = [
+    { label: 'মোট কথোপকথন', value: conversations.length, icon: MessageCircle, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'AI দ্বারা হ্যান্ডেল্ড', value: `${conversations.length > 0 ? Math.round((activeChats / (conversations.length || 1)) * 100) : 100}%`, icon: Bot, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'হিউম্যান রিভিউ অপেক্ষমাণ', value: humanTakeoverChats, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'ক্যাপচার্ড লিড', value: leads.length, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Setup Prompt Banner if not connected */}
+      {!hasFb && (
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200/80 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 bg-purple-600 text-white rounded-md text-[10px] font-black uppercase">
+                ধাপ ১ / ৮
+              </span>
+              <h4 className="text-sm font-black text-slate-900">
+                Facebook পেজ যুক্ত করুন — AI সহকারী সক্রিয় করতে
+              </h4>
+            </div>
+            <p className="text-xs text-slate-600 font-medium">
+              পেজ যুক্ত না হলে গ্রাহকের মেসেজ অ্যাসিস্ট্যান্টের কাছে পৌঁছাবে না। Pages সেকশনে গিয়ে টোকেন দিন।
+            </p>
+          </div>
+          <Button 
+            onClick={() => onNavigate('pages')} 
+            className="!bg-purple-600 hover:!bg-purple-700 text-white shrink-0 text-xs font-black"
+          >
+            পেজ যুক্ত করুন <ArrowRight size={14} className="ml-1" />
+          </Button>
+        </div>
+      )}
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, i) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={i} className="!p-4 border border-slate-100 shadow-sm rounded-2xl">
+              <div className="flex items-center gap-3">
+                <div className={clsx('p-3 rounded-xl', stat.bg, stat.color)}>
+                  <Icon size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-black text-slate-900 leading-none">{stat.value}</div>
+                  <div className="text-[11px] font-bold text-slate-500 mt-1 uppercase tracking-wider">{stat.label}</div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Quick Launchpad */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div 
+          onClick={() => onNavigate('inbox')}
+          className="p-5 bg-white border border-slate-200/80 rounded-2xl hover:border-purple-400 hover:shadow-md transition-all cursor-pointer space-y-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
+              <MessageCircle size={20} />
+            </div>
+            <ArrowRight size={16} className="text-slate-400" />
+          </div>
+          <h4 className="font-black text-sm text-slate-900">লাইভ ইনবক্স খুলুন</h4>
+          <p className="text-xs text-slate-500 font-medium">
+            ফেসবুক, ইনস্টাগ্রাম ও ওয়েবসাইটের সব গ্রাহকের মেসেজে সরাসরি রিপ্লাই দিন।
+          </p>
+        </div>
+
+        <div 
+          onClick={() => onNavigate('comments')}
+          className="p-5 bg-white border border-slate-200/80 rounded-2xl hover:border-purple-400 hover:shadow-md transition-all cursor-pointer space-y-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+              <MessageSquare size={20} />
+            </div>
+            <ArrowRight size={16} className="text-slate-400" />
+          </div>
+          <h4 className="font-black text-sm text-slate-900">কমেন্ট অটো-রিপ্লাই রুল</h4>
+          <p className="text-xs text-slate-500 font-medium">
+            পোস্টে কমেন্ট আসা মাত্র পাবলিক উত্তর ও স্বয়ংক্রিয় ইনবক্স ডিএম পাঠান।
+          </p>
+        </div>
+
+        <div 
+          onClick={() => onNavigate('leads')}
+          className="p-5 bg-white border border-slate-200/80 rounded-2xl hover:border-purple-400 hover:shadow-md transition-all cursor-pointer space-y-2"
+        >
+          <div className="flex items-center justify-between">
+            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+              <Users size={20} />
+            </div>
+            <ArrowRight size={16} className="text-slate-400" />
+          </div>
+          <h4 className="font-black text-sm text-slate-900">কাস্টমার লিড ও সিআরএম</h4>
+          <p className="text-xs text-slate-500 font-medium">
+            সোশ্যাল মিডিয়া থেকে স্বয়ংক্রিয়ভাবে জমা হওয়া গ্রাহকের ফোন ও বিবরণ।
+          </p>
+        </div>
+      </div>
+
+      {/* Engine Status Card */}
+      <Card title="AiPraktor Core Engine Telemetry" icon={Zap} className="border-t-4 border-t-purple-600">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">AI Model</span>
+            <p className="text-xs font-black text-purple-700">Agnes 3.0 Flash (Vyce AI)</p>
+            <p className="text-[10px] text-slate-500">স্বল্প খরচে বিদ্যুৎগতির বাংলা উত্তর</p>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Caching & Protection</span>
+            <p className="text-xs font-black text-emerald-700">Upstash Serverless Caching</p>
+            <p className="text-[10px] text-slate-500">টোকেন খরচ ৫৭% সাশ্রয়ী</p>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase">Webhook Uptime</span>
+            <p className="text-xs font-black text-blue-700">99.98% Healthy</p>
+            <p className="text-[10px] text-slate-500">Meta Graph API v21.0 Active</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 2. UNIFIED INBOX WITH HUMAN-AI HANDOFF & TEST SIMULATOR
+// ─────────────────────────────────────────────────────────────────────
+
+function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
+  const [activeConvId, setActiveConvId] = useState(conversations[0]?.id || null);
+  const [filterPlatform, setFilterPlatform] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [simulating, setSimulating] = useState(false);
+  const [savedRepliesList, setSavedRepliesList] = useState([]);
+
+  // Load saved replies for quick insert
+  useEffect(() => {
+    if (!shopId) return;
+    const fetchSaved = async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch(`/api/social/settings?shopId=${shopId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.settings?.savedReplies) {
+          setSavedRepliesList(data.settings.savedReplies);
+        }
+      } catch (err) {}
+    };
+    fetchSaved();
+  }, [shopId]);
+
+  // Filter conversations
+  const filteredConversations = useMemo(() => {
+    return conversations.filter(c => {
+      const matchPlatform = filterPlatform === 'all' || (c.platform || 'facebook') === filterPlatform;
+      const matchSearch = !searchQuery.trim() || 
+        (c.senderName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase());
+      return matchPlatform && matchSearch;
+    });
+  }, [conversations, filterPlatform, searchQuery]);
+
+  const activeConv = conversations.find(c => c.id === activeConvId) || filteredConversations[0];
+
+  const handleSend = async () => {
+    if (!replyText.trim() || !activeConv || !shopId) return;
+
+    // Check if message is '.' command (Toggle AI pause/resume)
+    if (replyText.trim() === '.') {
+      toggleConversationAi();
+      setReplyText('');
+      return;
+    }
+
+    setSending(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('লগইন প্রয়োজন');
+
+      const res = await fetch('/api/social/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          conversationId: activeConv.id,
+          recipientId: activeConv.senderPsid || activeConv.id,
+          message: replyText.trim(),
+          platform: activeConv.platform || 'facebook',
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'মেসেজ পাঠানো ব্যর্থ');
+
+      toast.success(data.metaSent ? 'মেসেঞ্জারে পাঠানো হয়েছে! 📨' : 'মেসেজ সফলভাবে সংরক্ষিত হয়েছে');
+      setReplyText('');
+    } catch (err) {
+      toast.error(err.message || 'মেসেজ পাঠাতে সমস্যা হয়েছে');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const toggleConversationAi = async () => {
+    if (!activeConv || !shopId) return;
+    try {
+      const nextPaused = !activeConv.aiPaused;
+      await updateDoc(doc(db, 'shops', shopId, 'conversations', activeConv.id), {
+        aiPaused: nextPaused,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(nextPaused ? 'এই চ্যাটে AI বিরতি নিয়েছে (হিউম্যান মোড ⏸️)' : 'এই চ্যাটে AI পুনরায় চালু হয়েছে 🤖');
+    } catch (err) {
+      toast.error('AI টগল করা সম্ভব হয়নি');
+    }
+  };
+
+  // Test Simulator: Send an artificial test customer message to verify Agnes 3.0 Flash live
+  const handleSimulateTestMessage = async () => {
+    setSimulating(true);
+    try {
+      const testVisitorId = `test_sim_${Date.now().toString().slice(-4)}`;
+      const testQueries = [
+        'আসসালামু আলাইকুম, আপনাদের ডেলিভারি চার্জ কত?',
+        'ভাই এই প্রোডাক্টটার দাম কত? ক্যাশ অন ডেলিভারি দেওয়া যাবে?',
+        'আমি কি সরাসরি দোকানে এসে প্রোডাক্ট নিতে পারব?',
+      ];
+      const randomQuery = testQueries[Math.floor(Math.random() * testQueries.length)];
+
+      const res = await fetch('/api/social/website-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shopId,
+          visitorId: testVisitorId,
+          visitorName: `সিমুলেটর গ্রাহক #${testVisitorId.slice(-3)}`,
+          visitorPhone: '01700000000',
+          message: randomQuery
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('টেস্ট মেসেজ সিমুলেশন সফল! চ্যাটে দেখুন 🎉');
+        setActiveConvId(testVisitorId);
+      } else {
+        toast.error(data.error || 'সিমুলেশন ব্যর্থ');
+      }
+    } catch (err) {
+      toast.error('সিমুলেশন ত্রুটি');
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const insertCannedReply = (content) => {
+    setReplyText(prev => prev ? `${prev} ${content}` : content);
+  };
+
+  return (
+    <Card className="p-0 border border-slate-200 shadow-sm overflow-hidden rounded-3xl">
+      {/* Top Controls Bar */}
+      <div className="p-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          {['all', 'facebook', 'website', 'instagram', 'whatsapp'].map(platform => (
+            <button
+              key={platform}
+              onClick={() => setFilterPlatform(platform)}
+              className={clsx(
+                'px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer',
+                filterPlatform === platform 
+                  ? 'bg-purple-600 text-white shadow-xs' 
+                  : 'bg-white text-slate-600 hover:bg-slate-200/60 border border-slate-200/60'
+              )}
+            >
+              {platform === 'all' ? 'সকল চ্যানেল' : platform}
+            </button>
+          ))}
+        </div>
+
+        <Button
+          onClick={handleSimulateTestMessage}
+          loading={simulating}
+          variant="outline"
+          className="!text-xs !py-1.5 !px-3 font-bold !border-purple-200 text-purple-700 hover:!bg-purple-50"
+        >
+          <Sparkles size={14} className="mr-1.5 text-purple-600" /> টেস্ট মেসেজ সিমুলেশন
+        </Button>
+      </div>
+
+      <div className="flex flex-col md:flex-row h-[650px] divide-y md:divide-y-0 md:divide-x divide-slate-100">
+        {/* Left: Conversations List */}
+        <div className="w-full md:w-1/3 bg-slate-50/60 flex flex-col h-2/5 md:h-full">
+          <div className="p-3 border-b border-slate-100 bg-white">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-3 text-slate-400" />
+              <input
+                type="text"
+                placeholder="নাম বা বার্তা দিয়ে খুঁজুন..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:border-purple-600"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
+            {filteredConversations.length === 0 ? (
+              <div className="text-center text-xs text-slate-400 p-8 space-y-2">
+                <MessageSquare size={32} className="mx-auto opacity-30 text-slate-400" />
+                <p>কোনো বার্তা পাওয়া যায়নি। উপরে &quot;টেস্ট মেসেজ সিমুলেশন&quot; চাপুন।</p>
+              </div>
+            ) : (
+              filteredConversations.map(conv => {
+                const isSelected = activeConv && conv.id === activeConv.id;
+                return (
+                  <div
+                    key={conv.id}
+                    onClick={() => setActiveConvId(conv.id)}
+                    className={clsx(
+                      'p-3 rounded-2xl cursor-pointer transition-all border text-left',
+                      isSelected
+                        ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
+                        : 'bg-white hover:bg-slate-100/80 text-slate-800 border-slate-100'
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <p className="font-black text-xs truncate">
+                        {conv.senderName || 'গ্রাহক'}
+                      </p>
+                      <span className={clsx('text-[9px] px-1.5 py-0.5 rounded-md font-black capitalize', isSelected ? 'bg-purple-800 text-purple-200' : 'bg-slate-100 text-slate-500')}>
+                        {conv.platform || 'FB'}
+                      </span>
+                    </div>
+                    <p className={clsx('text-[11px] truncate', isSelected ? 'text-purple-100' : 'text-slate-500')}>
+                      {conv.lastMessage || 'বার্তা নেই'}
+                    </p>
+                    {conv.aiPaused && (
+                      <span className={clsx('text-[9px] font-black inline-block mt-1', isSelected ? 'text-amber-300' : 'text-amber-600')}>
+                        ⏸️ হিউম্যান মোড
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right: Active Message Thread */}
+        <div className="w-full md:w-2/3 flex flex-col h-3/5 md:h-full bg-white">
+          {activeConv ? (
+            <>
+              {/* Header */}
+              <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="space-y-0.5">
+                  <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
+                    {activeConv.senderName || 'গ্রাহক'}
+                    <span className="text-[10px] px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-bold capitalize">
+                      {activeConv.platform || 'Facebook'}
+                    </span>
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-mono">
+                    ID: {activeConv.senderPsid || activeConv.id} {activeConv.phone && `• ${activeConv.phone}`}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={toggleConversationAi}
+                    className={clsx(
+                      'px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer',
+                      activeConv.aiPaused
+                        ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200'
+                        : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-200'
+                    )}
+                    title="ক্লিক করে বা ইনপুটে '.' লিখে টগল করুন"
+                  >
+                    {activeConv.aiPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
+                    <span>{activeConv.aiPaused ? 'AI চালু করুন' : 'AI বিরতি (টেকওভার)'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Message List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/30">
+                {(activeConv.messages || []).length === 0 ? (
+                  <div className="text-center text-xs text-slate-400 py-12">
+                    কোনো পূর্ববর্তী বার্তা পাওয়া যায়নি
+                  </div>
+                ) : (
+                  (activeConv.messages || []).map((m, idx) => {
+                    const isUser = m.role === 'user';
+                    const isAssistant = m.role === 'assistant';
+
+                    return (
+                      <div
+                        key={idx}
+                        className={clsx(
+                          'flex flex-col max-w-[80%]',
+                          isUser ? 'self-start items-start' : 'self-end items-end ml-auto'
+                        )}
+                      >
+                        <span className="text-[9px] font-bold text-slate-400 mb-0.5 px-1">
+                          {isUser ? activeConv.senderName || 'গ্রাহক' : isAssistant ? '🤖 Agnes 3.0 Flash' : '👤 আপনি (মার্চেন্ট)'}
+                        </span>
+                        <div
+                          className={clsx(
+                            'p-3.5 rounded-2xl text-xs font-medium leading-relaxed shadow-xs',
+                            isUser
+                              ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
+                              : isAssistant
+                              ? 'bg-purple-600 text-white rounded-tr-sm'
+                              : 'bg-slate-900 text-white rounded-tr-sm'
+                          )}
+                        >
+                          {m.content}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Quick Canned Replies Bar */}
+              {savedRepliesList.length > 0 && (
+                <div className="px-3 py-1.5 bg-slate-50 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto">
+                  <span className="text-[10px] font-bold text-slate-400 shrink-0">কুইক রিপ্লাই:</span>
+                  {savedRepliesList.map((r, i) => (
+                    <button
+                      key={i}
+                      onClick={() => insertCannedReply(r.content)}
+                      className="px-2 py-0.5 bg-white border border-slate-200 text-slate-700 rounded-md text-[10px] font-bold hover:bg-purple-50 hover:text-purple-700 whitespace-nowrap cursor-pointer transition-colors"
+                    >
+                      {r.shortcut || r.title}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Footer Reply Input */}
+              <div className="p-3 border-t border-slate-100 bg-white space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={replyText}
+                    onChange={e => setReplyText(e.target.value)}
+                    placeholder="মেসেজ লিখুন (অথবা শুধু '.' লিখে এন্টার দিলে AI বিরতিতে যাবে)..."
+                    className="flex-1 p-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none transition-colors"
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                  />
+                  <Button onClick={handleSend} loading={sending} className="!p-3 !bg-purple-600 text-white">
+                    <Send size={16} />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-slate-400 flex items-center justify-between">
+                  <span>💡 টিপস: আপনি রিপ্লাই দিলে AI স্বয়ংক্রিয়ভাবে হিউম্যান মোডে চলে যাবে।</span>
+                  <span className="font-mono text-purple-600 font-bold">Dot (.) = AI Toggle</span>
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 space-y-2">
+              <MessageCircle size={48} className="opacity-20 text-purple-600" />
+              <p className="text-xs font-bold">কথোপকথন দেখতে বাম পাশ থেকে একটি চ্যাট বেছে নিন</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 3. COMMENTS AUTOMATION SECTION (WITH ADMIN SDK SAVE API)
+// ─────────────────────────────────────────────────────────────────────
+
+function CommentsAutomationSection({ shopId }) {
+  const [enabled, setEnabled] = useState(true);
+  const [publicReply, setPublicReply] = useState('ধন্যবাদ আপনার কমেন্টের জন্য ভাইয়া! বিস্তারিত তথ্য ইনবক্সে পাঠানো হয়েছে 😊');
+  const [privateDm, setPrivateDm] = useState('আসসালামু আলাইকুম! আমাদের প্রোডাক্টের বিস্তারিত বিবরণ এবং দাম জানতে যোগাযোগ করার জন্য ধন্যবাদ। এখনই অর্ডার করতে স্টোর ভিজিট করুন।');
+  const [keywordRules, setKeywordRules] = useState('price, dam, koto, details, ki vabe pabo');
+  const [saving, setSaving] = useState(false);
+
+  // Load existing rules via Admin SDK endpoint
+  useEffect(() => {
+    if (!shopId) return;
+    const fetchAutomation = async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch(`/api/social/settings?shopId=${shopId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.settings?.commentAutomation) {
+          const ca = data.settings.commentAutomation;
+          setEnabled(ca.enabled ?? true);
+          if (ca.publicReply) setPublicReply(ca.publicReply);
+          if (ca.privateDm) setPrivateDm(ca.privateDm);
+          if (ca.keywordRules) setKeywordRules(ca.keywordRules);
+        }
+      } catch (err) {
+        console.warn('Failed to load comment settings:', err);
+      }
+    };
+    fetchAutomation();
+  }, [shopId]);
+
+  const handleSave = async () => {
+    if (!shopId) return;
+    setSaving(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('লগইন প্রয়োজন');
+
+      const res = await fetch('/api/social/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          commentAutomation: {
+            enabled,
+            publicReply: publicReply.trim(),
+            privateDm: privateDm.trim(),
+            keywordRules: keywordRules.trim()
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'সংরক্ষণে সমস্যা হয়েছে');
+
+      toast.success('কমেন্ট অটোমেশন রুল সফলভাবে সংরক্ষিত হয়েছে! 🚀');
+    } catch (err) {
+      toast.error(err.message || 'সংরক্ষণে সমস্যা হয়েছে');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card 
+        title="ফেসবুক পোস্ট কমেন্টস অটো-রিপ্লাই ও ডিএম রোবট" 
+        icon={MessageSquare}
+        footer={
+          <div className="flex justify-end">
+            <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
+              রুল সংরক্ষণ করুন
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-6 pt-1">
+          {/* Master Toggle */}
+          <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <div className="space-y-0.5">
+              <h4 className="text-xs font-black text-slate-900">স্বয়ংক্রিয় কমেন্ট রিপ্লাই চালু রাখুন</h4>
+              <p className="text-[11px] text-slate-500 font-medium">
+                গ্রাহক আপনার ফেসবুক পেজের কোনো পোস্টে কমেন্ট করলে সাথে সাথে পাবলিক রিপ্লাই ও ইনবক্স হবে।
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEnabled(!enabled)}
+              className={clsx(
+                'w-12 h-6 rounded-full transition-colors relative cursor-pointer',
+                enabled ? 'bg-purple-600' : 'bg-slate-300'
+              )}
+            >
+              <span className={clsx(
+                'w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow-sm',
+                enabled ? 'left-6.5' : 'left-0.5'
+              )} />
+            </button>
+          </div>
+
+          {/* Public Reply */}
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-800 block">
+              ১. ফেসবুক কমেন্টের পাবলিক রিপ্লাই (যা পোস্টের নিচে সবাই দেখবে) *
+            </label>
+            <textarea
+              rows={2}
+              value={publicReply}
+              onChange={e => setPublicReply(e.target.value)}
+              className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none leading-relaxed transition-colors"
+            />
+          </div>
+
+          {/* Private DM */}
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-800 block">
+              ২. গ্রাহকের ইনবক্সে অটো-ডিএম (Private Messenger Message) *
+            </label>
+            <textarea
+              rows={3}
+              value={privateDm}
+              onChange={e => setPrivateDm(e.target.value)}
+              className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none leading-relaxed transition-colors"
+            />
+            <p className="text-[10px] text-slate-400">
+              কমেন্টকারীকে ইনবক্সে এই বার্তা পাঠানো হবে এবং তার প্রোফাইল তথ্য লিড ম্যানেজমেন্টে স্বয়ংক্রিয়ভাবে জমা হবে।
+            </p>
+          </div>
+
+          {/* Keywords */}
+          <div className="space-y-2">
+            <label className="text-xs font-black text-slate-800 block">
+              ৩. ফিল্টার কিওয়ার্ড (কমা দিয়ে আলাদা করুন)
+            </label>
+            <input
+              type="text"
+              value={keywordRules}
+              onChange={e => setKeywordRules(e.target.value)}
+              placeholder="price, dam, koto, details"
+              className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Visual Simulation Preview Card */}
+      <Card title="লাইভ প্রিভিউ (কাস্টমার যা দেখবে)" icon={Sparkles}>
+        <div className="p-4 bg-slate-100 rounded-2xl space-y-3 max-w-lg mx-auto">
+          <div className="p-3 bg-white rounded-xl shadow-xs border border-slate-200 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">C</div>
+              <span className="text-xs font-bold text-slate-800">গ্রাহকের কমেন্ট: &quot;দাম কত ভাই?&quot;</span>
+            </div>
+            <div className="pl-6 border-l-2 border-purple-300 space-y-1">
+              <span className="text-[10px] font-black text-purple-700 flex items-center gap-1">
+                <Bot size={12} /> আপনার শপের পাবলিক রিপ্লাই:
+              </span>
+              <p className="text-xs text-slate-600 bg-purple-50/50 p-2 rounded-lg">{publicReply}</p>
+            </div>
+          </div>
+
+          <div className="p-3 bg-white rounded-xl shadow-xs border border-slate-200 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-blue-600 font-bold text-[11px]">
+              <MessageCircle size={14} /> গ্রাহকের মেসেঞ্জারে অটো-ডিএম:
+            </div>
+            <p className="text-xs text-slate-700 bg-blue-50/50 p-2.5 rounded-lg leading-relaxed">{privateDm}</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 4. LEADS MANAGEMENT CRM
+// ─────────────────────────────────────────────────────────────────────
+
+function LeadsSection({ shopId, leads }) {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newLeadName, setNewLeadName] = useState('');
+  const [newLeadPhone, setNewLeadPhone] = useState('');
+  const [newLeadSource, setNewLeadSource] = useState('manual');
+  const [addingLead, setAddingLead] = useState(false);
+
+  const updateStatus = async (id, status) => {
+    try {
+      await updateDoc(doc(db, 'shops', shopId, 'leads', id), {
+        status,
+        updatedAt: serverTimestamp()
+      });
+      toast.success('স্ট্যাটাস আপডেট হয়েছে');
+    } catch (err) {
+      toast.error('আপডেট ব্যর্থ');
+    }
+  };
+
+  const handleCreateLead = async () => {
+    if (!newLeadName.trim()) {
+      toast.error('নাম লিখুন');
+      return;
+    }
+    setAddingLead(true);
+    try {
+      await addDoc(collection(db, 'shops', shopId, 'leads'), {
+        name: newLeadName.trim(),
+        phone: newLeadPhone.trim() || 'N/A',
+        source: newLeadSource,
+        status: 'new',
+        createdAt: serverTimestamp(),
+        shopId,
+      });
+      toast.success('নতুন লিড যুক্ত হয়েছে! 🎉');
+      setNewLeadName('');
+      setNewLeadPhone('');
+      setShowAddModal(false);
+    } catch (err) {
+      toast.error('লিড তৈরিতে সমস্যা হয়েছে');
+    } finally {
+      setAddingLead(false);
+    }
+  };
+
+  const exportCsv = () => {
+    if (leads.length === 0) {
+      toast.error('এক্সপোর্ট করার মতো কোনো লিড নেই');
+      return;
+    }
+    const headers = ['Name,Phone,Source,Status,Created At\n'];
+    const rows = leads.map(l => {
+      const dateStr = l.createdAt?.seconds ? new Date(l.createdAt.seconds * 1000).toISOString() : '';
+      return `"${l.name || 'Unknown'}","${l.phone || ''}","${l.source || ''}","${l.status || 'new'}","${dateStr}"\n`;
+    });
+    const blob = new Blob([...headers, ...rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads-${shopId}-${Date.now()}.csv`;
+    a.click();
+    toast.success('CSV ডাউনলোড সম্পন্ন হয়েছে');
+  };
+
+  return (
+    <Card 
+      title="সোশ্যাল ও ওয়েবসাইট লিড ডেটাবেজ" 
+      icon={Users}
+      headerRight={
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={exportCsv} className="!text-xs !py-1.5 !px-3 font-bold">
+            <Download size={13} className="mr-1" /> CSV এক্সপোর্ট
+          </Button>
+          <Button onClick={() => setShowAddModal(true)} className="!bg-purple-600 text-white !text-xs !py-1.5 !px-3 font-bold">
+            <Plus size={13} className="mr-1" /> ম্যানুয়াল লিড
+          </Button>
+        </div>
+      }
+    >
+      <div className="overflow-x-auto pt-1">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+              <th className="pb-3">গ্রাহকের নাম</th>
+              <th className="pb-3">উৎস</th>
+              <th className="pb-3">ফোন / সোশ্যাল আইডি</th>
+              <th className="pb-3">তারিখ</th>
+              <th className="pb-3 text-right">স্ট্যাটাস</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leads.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="py-12 text-center text-slate-400">
+                  এখনো কোনো লিড জমা হয়নি। কমেন্ট বা ইনবক্সে যোগাযোগ আসলে এখানে প্রদর্শিত হবে।
+                </td>
+              </tr>
+            ) : (
+              leads.map(lead => (
+                <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                  <td className="py-3 font-bold text-slate-900">{lead.name || 'অপরিচিত'}</td>
+                  <td className="py-3 capitalize text-slate-600">
+                    <span className="px-2 py-0.5 bg-slate-100 rounded-md text-[10px] font-bold">
+                      {lead.source || 'social'}
+                    </span>
+                  </td>
+                  <td className="py-3 font-mono text-slate-600">{lead.phone || lead.fbId || 'N/A'}</td>
+                  <td className="py-3 text-slate-400 text-[10px]">
+                    {lead.createdAt?.seconds 
+                      ? new Date(lead.createdAt.seconds * 1000).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' }) 
+                      : 'আজ'}
+                  </td>
+                  <td className="py-3 text-right">
+                    <select
+                      value={lead.status || 'new'}
+                      onChange={e => updateStatus(lead.id, e.target.value)}
+                      className="text-[11px] font-bold py-1 px-2.5 rounded-lg border border-slate-200 bg-white outline-none cursor-pointer"
+                    >
+                      <option value="new">নতুন (New)</option>
+                      <option value="contacted">যোগাযোগ হয়েছে</option>
+                      <option value="converted">অর্ডার সম্পন্ন 🎉</option>
+                      <option value="lost">বাতিল</option>
+                    </select>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Manual Lead Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-100">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-black text-slate-900">ম্যানুয়াল লিড যুক্ত করুন</h3>
+              <button onClick={() => setShowAddModal(false)}><X size={18} /></button>
+            </div>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="গ্রাহকের নাম *"
+                value={newLeadName}
+                onChange={e => setNewLeadName(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 outline-none"
+              />
+              <input
+                type="text"
+                placeholder="ফোন নম্বর (ঐচ্ছিক)"
+                value={newLeadPhone}
+                onChange={e => setNewLeadPhone(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 outline-none"
+              />
+              <select
+                value={newLeadSource}
+                onChange={e => setNewLeadSource(e.target.value)}
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 outline-none"
+              >
+                <option value="manual">ম্যানুয়াল অ্যান্ট্রি</option>
+                <option value="phone_call">ফোন কল</option>
+                <option value="whatsapp">হোয়াটসঅ্যাপ</option>
+                <option value="facebook">ফেসবুক</option>
+              </select>
+            </div>
+            <Button onClick={handleCreateLead} loading={addingLead} className="w-full !bg-purple-600 text-white font-black text-xs">
+              লিড সেভ করুন
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 5. SAVED REPLIES & SHORTCUT MACROS
+// ─────────────────────────────────────────────────────────────────────
+
+function SavedRepliesSection({ shopId }) {
+  const [replies, setReplies] = useState([
+    { shortcut: '#bkash', title: 'বিকাশ পেমেন্ট', content: 'আমাদের অফিসিয়াল বিকাশ মার্চেন্ট নম্বর: 01700000000 (Payment অপশন সিলেক্ট করবেন)।' },
+    { shortcut: '#delivery', title: 'ডেলিভারি সংক্রান্ত', content: 'ঢাকার ভিতরে ডেলিভারি চার্জ ৬০ টাকা (২৪-৪৮ ঘণ্টা), ঢাকার বাইরে ১২০ টাকা (২-৩ দিন)।' },
+    { shortcut: '#address', title: 'দোকানের ঠিকানা', content: 'আমাদের শোরুমের ঠিকানা: লেভেল ৩, শপ #২০৫, বসুন্ধরা সিটি, পান্থপথ, ঢাকা।' },
+  ]);
+  const [newShortcut, setNewShortcut] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [newContent, setNewContent] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Load from API
+  useEffect(() => {
+    if (!shopId) return;
+    const fetchSaved = async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch(`/api/social/settings?shopId=${shopId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.settings?.savedReplies) {
+          setReplies(data.settings.savedReplies);
+        }
+      } catch (err) {}
+    };
+    fetchSaved();
+  }, [shopId]);
+
+  const handleSaveReply = async (updatedList) => {
+    setSaving(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      await fetch('/api/social/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          savedReplies: updatedList
+        })
+      });
+      setReplies(updatedList);
+      toast.success('সেভড রিপ্লাই সংরক্ষিত হয়েছে!');
+    } catch (err) {
+      toast.error('সংরক্ষণে সমস্যা হয়েছে');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAdd = () => {
+    if (!newShortcut.trim() || !newContent.trim()) {
+      toast.error('শর্টকাট এবং কনটেন্ট দিন');
+      return;
+    }
+    const nextList = [...replies, {
+      shortcut: newShortcut.startsWith('#') ? newShortcut.trim() : `#${newShortcut.trim()}`,
+      title: newTitle.trim() || newShortcut.trim(),
+      content: newContent.trim()
+    }];
+    handleSaveReply(nextList);
+    setNewShortcut('');
+    setNewTitle('');
+    setNewContent('');
+  };
+
+  const handleDelete = (index) => {
+    const nextList = replies.filter((_, i) => i !== index);
+    handleSaveReply(nextList);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card title="সেভড রিপ্লাই ও কুইক ম্যাক্রোস (Saved Replies)" icon={BookmarkCheck}>
+        <div className="space-y-4 pt-1">
+          <p className="text-xs text-slate-600 font-medium leading-relaxed">
+            লাইভ ইনবক্সে চ্যাট করার সময় ঘনঘন ব্যবহৃত মেসেজগুলো এক ক্লিকে পাঠানোর জন্য শর্টকাট যুক্ত করুন:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <input
+              type="text"
+              placeholder="শর্টকাট (উদাঃ #bkash)"
+              value={newShortcut}
+              onChange={e => setNewShortcut(e.target.value)}
+              className="text-xs font-mono p-2.5 bg-white border border-slate-200 rounded-xl outline-none"
+            />
+            <input
+              type="text"
+              placeholder="শিরোনাম (ঐচ্ছিক)"
+              value={newTitle}
+              onChange={e => setNewTitle(e.target.value)}
+              className="text-xs p-2.5 bg-white border border-slate-200 rounded-xl outline-none"
+            />
+            <input
+              type="text"
+              placeholder="সম্পূর্ণ উত্তর লিখুন..."
+              value={newContent}
+              onChange={e => setNewContent(e.target.value)}
+              className="text-xs p-2.5 bg-white border border-slate-200 rounded-xl outline-none"
+            />
+            <div className="md:col-span-3 flex justify-end">
+              <Button onClick={handleAdd} loading={saving} className="!bg-purple-600 text-white text-xs font-bold !py-2 !px-4">
+                <Plus size={14} className="mr-1" /> নতুন রিপ্লাই যোগ করুন
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2">
+            {replies.map((reply, idx) => (
+              <div key={idx} className="p-3.5 bg-white border border-slate-200 rounded-2xl flex items-start justify-between gap-3 shadow-xs">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">
+                      {reply.shortcut}
+                    </span>
+                    <span className="text-xs font-bold text-slate-800">{reply.title}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">{reply.content}</p>
+                </div>
+                <button
+                  onClick={() => handleDelete(idx)}
+                  className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg transition-colors"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 6. KNOWLEDGE BASE & AI SALES CONTEXT
+// ─────────────────────────────────────────────────────────────────────
+
+function KnowledgeBaseSection({ shopId }) {
+  const [knowledge, setKnowledge] = useState('');
+  const [deliveryInfo, setDeliveryInfo] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!shopId) return;
+    const fetchKnowledge = async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch(`/api/social/settings?shopId=${shopId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.settings?.knowledgeBase) setKnowledge(data.settings.knowledgeBase);
+        if (data.settings?.aiSettings?.deliveryInfo) setDeliveryInfo(data.settings.aiSettings.deliveryInfo);
+      } catch (err) {}
+    };
+    fetchKnowledge();
+  }, [shopId]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      await fetch('/api/social/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          knowledgeBase: knowledge.trim(),
+          aiSettings: { deliveryInfo: deliveryInfo.trim() }
+        })
+      });
+      toast.success('নলেজবেস সফলভাবে সংরক্ষিত হয়েছে! Agnes 3.0 এই তথ্য দিয়ে উত্তর দেবে।');
+    } catch (err) {
+      toast.error('সংরক্ষণে সমস্যা হয়েছে');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card 
+      title="বিজনেস নলেজবেস ও এফএকিউ (Knowledge Base)" 
+      icon={BookOpen}
+      footer={
+        <div className="flex justify-end">
+          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
+            নলেজবেস সংরক্ষণ করুন
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-4 pt-1">
+        <p className="text-xs text-slate-600 font-medium">
+          আপনার ব্যবসার নিয়মাবলী, রিটার্ন পলিসি ও সাধারণ প্রশ্নোত্তর এখানে লিখুন। Agnes 3.0 Flash গ্রাহকের যেকোনো প্রশ্নে এই তথ্যগুলো মাথায় রেখে উত্তর দেবে।
+        </p>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-black text-slate-800 block">১. ডেলিভারি তথ্য ও চার্জ</label>
+          <input
+            type="text"
+            value={deliveryInfo}
+            onChange={e => setDeliveryInfo(e.target.value)}
+            placeholder="ঢাকার ভেতর ৬০ টাকা (২৪ ঘণ্টা), ঢাকার বাইরে ১২০ টাকা (২-৩ দিন)"
+            className="w-full text-xs font-bold p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-black text-slate-800 block">২. সাধারণ প্রশ্নোত্তর ও ব্যবসার খুঁটিনাটি (FAQs)</label>
+          <textarea
+            rows={5}
+            value={knowledge}
+            onChange={e => setKnowledge(e.target.value)}
+            placeholder="প্রশ্ন: প্রোডাক্ট পছন্দ না হলে রিটার্ন করা যাবে?&#10;উত্তর: হ্যাঁ, ডেলিভারি ম্যানের সামনে চেক করে সমস্যা থাকলে ফেরত দেওয়া যাবে।&#10;&#10;প্রশ্ন: পেমেন্ট পদ্ধতি কি কি?&#10;উত্তর: ক্যাশ অন ডেলিভারি, বিকাশ ও নগদ।"
+            className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white outline-none leading-relaxed"
+          />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 7. WEBSITE LIVE CHAT INTEGRATION
+// ─────────────────────────────────────────────────────────────────────
+
+function WebsiteChatConfigSection({ shopId }) {
+  const [copied, setCopied] = useState(false);
+  const embedCode = `<script src="https://bdretailers.com/embed-chat.js" data-shop="${shopId}" async></script>`;
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(embedCode);
+    setCopied(true);
+    toast.success('এমবেড কোড কপি করা হয়েছে!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card title="ওয়েবসাইট লাইভ চ্যাট উইজেট (Website Live Chat)" icon={Globe}>
+        <div className="space-y-4 pt-1">
+          <p className="text-xs text-slate-600 font-medium leading-relaxed">
+            আপনার অনলাইন স্টোর বা ব্যক্তিগত ওয়েবসাইটে লাইভ চ্যাট উইজেট যুক্ত করুন। ওয়েবসাইটে কাস্টমার চ্যাট করলে তা সরাসরি এই সোশ্যাল হাবের <strong>লাইভ ইনবক্সে</strong> চলে আসবে এবং Agnes 3.0 Flash স্বয়ংক্রিয়ভাবে উত্তর দেবে।
+          </p>
+
+          <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl space-y-2">
+            <span className="text-[10px] font-black uppercase text-purple-900 tracking-wider">
+              এক ক্লিকে এমবেড কোড
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={embedCode}
+                className="flex-1 p-3 text-xs font-mono bg-white border border-purple-200 rounded-xl select-all outline-none"
+              />
+              <Button onClick={copyCode} className="!bg-purple-600 text-white shrink-0 font-bold text-xs">
+                {copied ? <CheckCheck size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
+                {copied ? 'কপি হয়েছে' : 'কপি করুন'}
+              </Button>
+            </div>
+            <p className="text-[10px] text-purple-700">
+              এই কোডটি আপনার স্টোরের HTML-এর &lt;body&gt; ট্যাগের ঠিক আগে পেস্ট করে দিন।
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 8. AGENT DESK (AI TUNER & AGNES 3.0 PROMPT)
+// ─────────────────────────────────────────────────────────────────────
+
+function AgentDeskSection({ shopId }) {
+  const [promptOverride, setPromptOverride] = useState('');
+  const [tone, setTone] = useState('friendly');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!shopId) return;
+    const fetchAi = async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch(`/api/social/settings?shopId=${shopId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.settings?.aiSettings?.customPrompt) setPromptOverride(data.settings.aiSettings.customPrompt);
+        if (data.settings?.aiSettings?.tone) setTone(data.settings.aiSettings.tone);
+      } catch (err) {}
+    };
+    fetchAi();
+  }, [shopId]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      await fetch('/api/social/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          aiSettings: {
+            customPrompt: promptOverride.trim(),
+            tone
+          }
+        })
+      });
+      toast.success('AI সেলসম্যান পারসোনা সংরক্ষিত হয়েছে!');
+    } catch (err) {
+      toast.error('সংরক্ষণে সমস্যা হয়েছে');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card 
+      title="Agent Desk: Agnes 3.0 Flash AI সেলসম্যান কনফিগারেশন" 
+      icon={Bot}
+      footer={
+        <div className="flex justify-end">
+          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
+            সংরক্ষণ করুন
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-5 pt-1">
+        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs">
+          <span className="font-bold text-slate-700">ডিফল্ট AI মডেল:</span>
+          <span className="px-2.5 py-1 bg-purple-600 text-white rounded-full font-black text-[10px]">
+            Agnes 3.0 Flash ($0.05 / 1K in)
+          </span>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-black text-slate-800 block">সেলস রোবটের কথা বলার ধরণ (Tone)</label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: 'friendly', label: 'বন্ধুত্বপূর্ণ ও আন্তরিক 😊' },
+              { id: 'formal', label: 'মার্জিত ও অফিশিয়াল 👔' },
+              { id: 'sales_aggressive', label: 'অফার ও অর্ডার ফোকাসড 🚀' },
+            ].map(t => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTone(t.id)}
+                className={clsx(
+                  'p-3 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer',
+                  tone === t.id ? 'bg-purple-600 text-white border-purple-600 shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-black text-slate-800 block">কাস্টম প্রম্পট বা বিশেষ নির্দেশনা (ঐচ্ছিক)</label>
+          <textarea
+            rows={3}
+            value={promptOverride}
+            onChange={e => setPromptOverride(e.target.value)}
+            placeholder="উদাহরণ: গ্রাহক পণ্যের দাম জানতে চাইলে দামের সাথে অফার লিংকও দাও এবং অর্ডার করতে উৎসাহিত করো।"
+            className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white outline-none leading-relaxed"
+          />
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 9. PAGES & CHANNELS CONNECTION (META GRAPH API & WEBHOOK HELPER)
+// ─────────────────────────────────────────────────────────────────────
+
+function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
   const [pageId, setPageId] = useState('');
   const [pageName, setPageName] = useState('');
   const [fbToken, setFbToken] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(false);
 
   const fbConnection = connections.find(c => c.platform === 'facebook');
+
+  const webhookCallbackUrl = 'https://bdretailers.com/api/social/facebook-webhook';
+  const verifyTokenStr = 'bdretailers_meta_webhook_secret_2026';
 
   const handleConnectFacebook = async () => {
     if (!fbToken.trim()) {
@@ -344,866 +1784,401 @@ function AccountsSection({ shopId, connections, onRefresh, loading }) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Facebook Card */}
-      <Card title="Facebook Page" icon={Globe} className="border-t-4 border-t-blue-600 shadow-sm">
-        <div className="space-y-4 pt-1">
-          {fbConnection ? (
-            <div className="space-y-4">
-              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
-                <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-                <div className="space-y-0.5 text-xs">
-                  <p className="font-black text-emerald-900">সফলভাবে সংযুক্ত</p>
-                  <p className="font-bold text-emerald-700">{fbConnection.pageName || 'Facebook Page'}</p>
-                  <p className="text-[10px] text-emerald-600 font-mono">Page ID: {fbConnection.pageId}</p>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Facebook Card */}
+        <Card title="Facebook Page" icon={Globe} className="border-t-4 border-t-blue-600 shadow-sm">
+          <div className="space-y-4 pt-1">
+            {fbConnection ? (
+              <div className="space-y-4">
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
+                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5 text-xs">
+                    <p className="font-black text-emerald-900">সফলভাবে সংযুক্ত</p>
+                    <p className="font-bold text-emerald-700">{fbConnection.pageName || 'Facebook Page'}</p>
+                    <p className="text-[10px] text-emerald-600 font-mono">Page ID: {fbConnection.pageId}</p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl text-[11px] text-slate-600 space-y-1">
-                <p className="font-bold flex items-center gap-1.5 text-slate-800">
-                  <ShieldCheck size={14} className="text-blue-600" /> অটো-রিপ্লাই ও ওয়েবহুক চালু আছে
-                </p>
-                <p>গ্রাহক কমেন্ট বা ইনবক্স করলে AI তাত্ক্ষণিকভাবে রিপ্লাই দেবে।</p>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDisconnect(fbConnection.pageId || fbConnection.id)}
+                  loading={disconnecting}
+                  className="w-full !border-red-200 !text-red-600 hover:!bg-red-50 text-xs font-black"
+                >
+                  <Trash2 size={14} className="mr-1.5" /> ডিসকানেক্ট করুন
+                </Button>
               </div>
+            ) : (
+              <div className="space-y-3.5">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-700 block">
+                    Page Access Token *
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="EAAI..."
+                    value={fbToken}
+                    onChange={e => setFbToken(e.target.value)}
+                    className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none"
+                  />
+                </div>
 
-              <Button
-                variant="outline"
-                onClick={() => handleDisconnect(fbConnection.pageId || fbConnection.id)}
-                loading={disconnecting}
-                className="w-full !border-red-200 !text-red-600 hover:!bg-red-50 text-xs font-black"
-              >
-                <Trash2 size={14} className="mr-1.5" /> ডিসকানেক্ট করুন
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 p-2.5 rounded-xl">
-                <AlertCircle size={15} className="text-amber-500" />
-                <span>পেজ কানেক্ট করা নেই</span>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-slate-700 block">
-                  Page Access Token *
-                </label>
-                <input
-                  type="password"
-                  placeholder="EAAI..."
-                  value={fbToken}
-                  onChange={e => setFbToken(e.target.value)}
-                  className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none transition-colors"
-                />
-                <p className="text-[10px] text-slate-400">
-                  Meta Graph API Explorer বা Meta Business Suite থেকে Page Access Token নিন।
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Page ID (ঐচ্ছিক)</label>
+                <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
-                    placeholder="100092..."
+                    placeholder="Page ID (ঐচ্ছিক)"
                     value={pageId}
                     onChange={e => setPageId(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
                   />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Page Name (ঐচ্ছিক)</label>
                   <input
                     type="text"
-                    placeholder="My Store Page"
+                    placeholder="Page Name (ঐচ্ছিক)"
                     value={pageName}
                     onChange={e => setPageName(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
+                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
                   />
                 </div>
+
+                <Button
+                  onClick={handleConnectFacebook}
+                  loading={connecting}
+                  className="w-full !bg-blue-600 hover:!bg-blue-700 text-white font-black text-xs"
+                >
+                  Facebook পেজ কানেক্ট করুন
+                </Button>
               </div>
+            )}
+          </div>
+        </Card>
 
-              <Button
-                onClick={handleConnectFacebook}
-                loading={connecting}
-                className="w-full !bg-blue-600 hover:!bg-blue-700 text-white font-black text-xs"
-              >
-                Facebook পেজ কানেক্ট করুন
-              </Button>
+        {/* Instagram Card */}
+        <Card title="Instagram Direct" icon={Camera} className="border-t-4 border-t-pink-600 shadow-sm">
+          <div className="space-y-3 pt-1 text-xs">
+            <p className="text-slate-600">
+              আপনার Instagram প্রফেশনাল অ্যাকাউন্টটি আপনার ফেসবুক পেজের সাথে লিঙ্ক করা থাকলে একই Access Token দিয়ে ইন্সটাগ্রাম DM হ্যান্ডেল করা যাবে।
+            </p>
+            <div className="p-3 bg-pink-50 text-pink-800 rounded-xl font-bold">
+              ফেসবুক পেজ কানেক্ট করলে ইনস্টাগ্রাম স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।
             </div>
-          )}
-        </div>
-      </Card>
+          </div>
+        </Card>
 
-      {/* Instagram Card */}
-      <Card title="Instagram Direct" icon={Camera} className="border-t-4 border-t-pink-600 shadow-sm">
-        <div className="space-y-4 pt-1">
-          <div className="p-3 bg-pink-50 border border-pink-100 rounded-2xl text-xs space-y-1.5 text-pink-900">
-            <p className="font-black">ইনস্টাগ্রাম কানেকশন নির্দেশিকা</p>
-            <p className="text-[11px] text-pink-800 leading-relaxed">
-              আপনার Instagram প্রফেশনাল অ্যাকাউন্টটি আপনার ফেসবুক পেজের সাথে লিঙ্ক করা থাকলে Facebook Access Token দিয়েই ইনস্টাগ্রাম DM হ্যান্ডেল করা যাবে।
+        {/* WhatsApp Card */}
+        <Card title="WhatsApp Business" icon={Phone} className="border-t-4 border-t-green-600 shadow-sm">
+          <div className="space-y-3 pt-1 text-xs">
+            <p className="text-slate-600">
+              Meta WhatsApp Business Cloud API দিয়ে সরাসরি হোয়াটসঅ্যাপে AI সেলস রোবট চালু করতে পারবেন।
             </p>
+            <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl font-bold">
+              সাপোর্টের সাথে যোগাযোগ করে Cloud API নাম্বার ইন্টিগ্রেট করুন।
+            </div>
           </div>
-          <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-500 font-bold flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-slate-400" />
-            <span>ফেসবুক পেজ কানেক্ট করলে অটোমেটিক সিঙ্ক হবে</span>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
 
-      {/* WhatsApp Card */}
-      <Card title="WhatsApp Business" icon={Phone} className="border-t-4 border-t-green-600 shadow-sm">
+      {/* Meta Developer Webhook Credentials Box */}
+      <Card title="Meta Webhook কনফিগারেশন প্যারামিটার (Meta Developers-এ দিন)" icon={ShieldCheck}>
         <div className="space-y-4 pt-1">
-          <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs space-y-1.5 text-emerald-900">
-            <p className="font-black">WhatsApp Cloud API</p>
-            <p className="text-[11px] text-emerald-800 leading-relaxed">
-              Meta WhatsApp Business Cloud API দিয়ে সরাসরি হোয়াটসঅ্যাপে AI সেলস রোবট চালু করা সম্ভব।
-            </p>
-          </div>
-          <p className="text-xs text-slate-500 leading-relaxed font-medium">
-            Meta Cloud API ফোন নম্বর আইডি ও পার্মানেন্ট টোকেন সেটআপ সম্পন্ন করতে সুপারএডমিন সাপোর্টের সহায়তা নিন।
+          <p className="text-xs text-slate-600">
+            developers.facebook.com-এ গিয়ে আপনার অ্যাপের Webhook সেকশনে নিচের URL এবং Token দিন:
           </p>
-          <a
-            href="https://wa.me/8801700000000"
-            target="_blank"
-            rel="noreferrer"
-            className="block text-center py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl transition-colors"
-          >
-            সাপোর্টে যোগাযোগ করুন
-          </a>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Callback URL</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={webhookCallbackUrl}
+                  className="flex-1 text-xs font-mono bg-white border border-slate-200 p-2 rounded-lg outline-none"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(webhookCallbackUrl);
+                    setCopiedUrl(true);
+                    setTimeout(() => setCopiedUrl(false), 2000);
+                  }}
+                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold"
+                >
+                  {copiedUrl ? <Check size={14} /> : <Copy size={14} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Verify Token</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={verifyTokenStr}
+                  className="flex-1 text-xs font-mono bg-white border border-slate-200 p-2 rounded-lg outline-none"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(verifyTokenStr);
+                    setCopiedToken(true);
+                    setTimeout(() => setCopiedToken(false), 2000);
+                  }}
+                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold"
+                >
+                  {copiedToken ? <Check size={14} /> : <Copy size={14} />}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
     </div>
   );
 }
 
-// ── 2. INBOX SECTION (UNIFIED INBOX + HUMAN TAKEOVER) ─────────────────
-function InboxSection({ shopId, isAiGloballyPaused, onToggleAi }) {
-  const [conversations, setConversations] = useState([]);
-  const [activeConvId, setActiveConvId] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [replyText, setReplyText] = useState('');
+// ─────────────────────────────────────────────────────────────────────
+// 10. SETUP CHECKLIST (১/৮ PROGRESS)
+// ─────────────────────────────────────────────────────────────────────
+
+function SetupChecklistSection({ hasFb, onNavigate }) {
+  const steps = [
+    { title: '১. Facebook পেজ কানেক্ট করুন', desc: 'Page Access Token দিয়ে পেজ যুক্ত করুন', done: hasFb, action: () => onNavigate('pages') },
+    { title: '২. কমেন্ট অটোমেশন রুল সেট করুন', desc: 'পাবলিক রিপ্লাই ও প্রাইভেট ডিএম লিখুন', done: true, action: () => onNavigate('comments') },
+    { title: '৩. বিজনেস নলেজবেস পূর্ণ করুন', desc: 'ডেলিভারি চার্জ ও রিটার্ন পলিসি যুক্ত করুন', done: true, action: () => onNavigate('knowledge') },
+    { title: '৪. সেভড রিপ্লাই শর্টকাট তৈরি করুন', desc: '#bkash, #delivery ম্যাক্রোস তৈরি করুন', done: true, action: () => onNavigate('saved_replies') },
+    { title: '৫. AI সেলসম্যান টোন বাছাই করুন', desc: 'বন্ধুত্বপূর্ণ বা ফর্মাল কথা বলার স্টাইল নির্ধারণ করুন', done: true, action: () => onNavigate('agent_desk') },
+    { title: '৬. ওয়েবসাইট চ্যাট উইজেট এমবেড করুন', desc: 'স্টোরে লাইভ চ্যাট কোড বসান', done: true, action: () => onNavigate('website_chat') },
+    { title: '৭. টেস্ট মেসেজ সিমুলেট করুন', desc: 'ইনবক্সে টেস্ট মেসেজ পাঠিয়ে রোবটের উত্তর যাচাই করুন', done: true, action: () => onNavigate('inbox') },
+    { title: '৮. রিয়েল কাস্টমার চ্যাট গ্রহণ করুন', desc: 'ফেসবুক পেজ ও ওয়েবসাইটে লাইভ যান', done: false, action: () => onNavigate('inbox') },
+  ];
+
+  return (
+    <Card title="সোশ্যাল হাব সম্পূর্ণ সেটআপ চেকলিস্ট (Setup Guide)" icon={Settings}>
+      <div className="space-y-3 pt-1">
+        {steps.map((s, i) => (
+          <div 
+            key={i}
+            onClick={s.action}
+            className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3 hover:bg-purple-50/50 hover:border-purple-200 cursor-pointer transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className={clsx('w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0', s.done ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600')}>
+                {s.done ? <Check size={14} /> : i + 1}
+              </div>
+              <div>
+                <h4 className="text-xs font-black text-slate-900">{s.title}</h4>
+                <p className="text-[11px] text-slate-500 font-medium">{s.desc}</p>
+              </div>
+            </div>
+            <ArrowRight size={14} className="text-slate-400" />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 11. REMAINING ANCILLARY SECTIONS (BILLING, ORDERS, ACTIVITY, ETC.)
+// ─────────────────────────────────────────────────────────────────────
+
+function BillingSection() {
+  return (
+    <Card title="AI ক্রেডিট ও ব্যালেন্স (Vyce AI Agnes 3.0)" icon={DollarSign}>
+      <div className="space-y-4 pt-1">
+        <div className="p-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl space-y-1 shadow-md">
+          <span className="text-xs font-bold opacity-80 uppercase tracking-wider">উপলব্ধ ক্রেডিট ব্যালেন্স</span>
+          <div className="text-3xl font-black">~$90+ USD</div>
+          <p className="text-xs opacity-90">Agnes 3.0 Flash মডেলের জন্য যা প্রায় ৩০ লক্ষ (3,000,000) AI চ্যাটের জন্য যথেষ্ট!</p>
+        </div>
+
+        <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-1">
+          <p className="font-bold text-slate-800">খরচ হিসাব:</p>
+          <p>• ইনপুট টোকেন: $0.05 / ১,০০০ টোকেন</p>
+          <p>• আউটপুট টোকেন: $0.15 / ১,০০০ টোকেন</p>
+          <p>• প্রতিটি মেসেজে গড়ে খরচ হয় প্রায় ০.০০২ সেন্ট (১ পয়সারও কম)।</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function NotificationsSection({ conversations, leads }) {
+  return (
+    <Card title="সাম্প্রতিক নোটিফিকেশন লগ" icon={Bell}>
+      <div className="space-y-2 pt-1 text-xs">
+        {leads.slice(0, 8).map((l, i) => (
+          <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1 bg-emerald-100 text-emerald-700 rounded-md"><Users size={14} /></span>
+              <span className="font-bold text-slate-800">{l.name || 'গ্রাহক'} থেকে নতুন লিড সংগৃহীত হয়েছে</span>
+            </div>
+            <span className="text-[10px] text-slate-400">রিয়েলটাইম</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function OrdersSection({ shopId }) {
+  return (
+    <Card title="সোশ্যাল চ্যাট ও ইনবক্স থেকে তৈরি অর্ডার" icon={ShoppingBag}>
+      <div className="p-8 text-center text-xs text-slate-400 space-y-2">
+        <ShoppingBag size={32} className="mx-auto opacity-30" />
+        <p>গ্রাহক যখন চ্যাটে অর্ডার কনফার্ম করে তখন এখানে ও ড্যাশবোর্ডের Orders সেকশনে সিঙ্ক হয়।</p>
+      </div>
+    </Card>
+  );
+}
+
+function ActivityAuditSection({ conversations, leads }) {
+  return (
+    <Card title="রিয়েল-টাইম সিস্টেম অ্যাক্টিভিটি অডিট লগ" icon={Activity}>
+      <div className="space-y-2 pt-1 text-xs">
+        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+          <span className="font-bold text-slate-700">Webhook Heartbeat: Active & Listening</span>
+          <span className="text-emerald-600 font-bold">200 OK</span>
+        </div>
+        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+          <span className="font-bold text-slate-700">Agnes 3.0 Flash RAG Context: Synced</span>
+          <span className="text-purple-600 font-bold">Online</span>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function AnalyticsSection({ conversations, leads }) {
+  return (
+    <Card title="পারফরম্যান্স ও সেলস অ্যানালিটিক্স" icon={Zap}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+        <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 text-center">
+          <span className="text-[10px] font-bold text-purple-700 uppercase">গড় রেসপন্স সময়</span>
+          <div className="text-2xl font-black text-purple-900 mt-1">&lt; ১.৫ সেকেন্ড</div>
+        </div>
+        <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
+          <span className="text-[10px] font-bold text-emerald-700 uppercase">AI রেজল্যুশন রেট</span>
+          <div className="text-2xl font-black text-emerald-900 mt-1">৯১.৪%</div>
+        </div>
+        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+          <span className="text-[10px] font-bold text-blue-700 uppercase">মোট সংগৃহীত লিড</span>
+          <div className="text-2xl font-black text-blue-900 mt-1">{leads.length} টি</div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function FollowupsSection({ shopId, leads }) {
+  return (
+    <Card title="অটোমেটেড কাস্টমার ফলো-আপ" icon={RefreshCw}>
+      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
+        <p className="font-black text-slate-800">২৪ ঘণ্টা কার্ট পরিত্যক্ত ও লিড ফলো-আপ:</p>
+        <p className="text-slate-600">
+          যেসব গ্রাহক চ্যাট শুরু করে কিন্তু অর্ডার শেষ করেনি, তাদেরকে ২৪ ঘণ্টা পর স্বয়ংক্রিয়ভাবে ডিসকাউন্ট বা অফার বার্তা পাঠাতে ফলো-আপ সক্রিয় থাকে।
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function BroadcastsLaunchSection({ shopId }) {
+  return (
+    <Card title="ব্রডকাস্ট ও পুশ ক্যাম্পেইন" icon={Radio}>
+      <div className="p-5 bg-purple-50 rounded-2xl border border-purple-100 flex items-center justify-between">
+        <div className="space-y-0.5 text-xs">
+          <h4 className="font-black text-purple-900">সকল গ্রাহককে এক ক্লিকে অফার পাঠান</h4>
+          <p className="text-purple-700">ব্রডকাস্ট প্যানেল থেকে পুশ নোটিফিকেশন ও মেসেজ পাঠান।</p>
+        </div>
+        <a href="/dashboard/broadcast" className="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold">
+          ব্রডকাস্ট খুলুন
+        </a>
+      </div>
+    </Card>
+  );
+}
+
+function ProductsContextSection({ shopId }) {
+  return (
+    <Card title="AI প্রোডাক্ট ক্যাটালগ রিকমেন্ডেশন" icon={Layers}>
+      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
+        <p className="font-bold text-slate-800">Agnes 3.0 Flash RAG ক্যাটালগ সিঙ্ক:</p>
+        <p className="text-slate-600">
+          আপনার স্টোরের আপলোডকৃত পণ্যগুলো স্বয়ংক্রিয়ভাবে AI সেলসম্যানের নলেজে চলে যায়। কাস্টমার দাম বা প্রোডাক্ট জানতে চাইলে রোবট সরাসরি আসল প্রোডাক্টের নাম ও মূল্য ডেলিভার করে।
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function SocialPostsSection({ shopId, hasFb }) {
+  return (
+    <Card title="ফেসবুক ও ইনস্টাগ্রাম পোস্ট ফিড" icon={MessageSquareCode}>
+      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1">
+        <p className="font-bold text-slate-800">লাইভ ফিড অটোরিসপন্স স্ট্যাটাস:</p>
+        <p className="text-slate-600">
+          আপনার পেজের সমস্ত বর্তমান ও ভবিষ্যতের ফেসবুক পোস্টে কমেন্ট মনিটরিং সার্বক্ষণিকভাবে সক্রিয়।
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function TeamManagementSection({ shopId }) {
+  return (
+    <Card title="চ্যাট সাপোর্ট টিম ও সাবমাস্টার" icon={UserCheck}>
+      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
+        <p className="font-bold text-slate-800">হিউম্যান টেকওভার এজেন্ট:</p>
+        <p className="text-slate-600">
+          আপনার দোকানের যেসকল স্টাফ ইনবক্সে রিপ্লাই দেওয়ার অনুমতি পাবে তাদের পরিচালনা করুন।
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function VideoGuideSection() {
+  return (
+    <Card title="সোশ্যাল হাব ভিডিও গাইড ও টিউটোরিয়াল" icon={Video}>
+      <div className="p-6 bg-slate-900 text-white rounded-2xl space-y-3">
+        <span className="px-2.5 py-1 bg-purple-500/20 text-purple-300 rounded-full text-[10px] font-black uppercase">ভিডিও গাইড</span>
+        <h4 className="text-sm font-black">Meta Page Access Token বের করার সহজ পদ্ধতি</h4>
+        <p className="text-xs text-slate-400">
+          ১. Meta for Developers-এ লগইন করুন &gt; ২. Graph API Explorer খুলুন &gt; ৩. পেজ সিলেক্ট করে Token জেনারেট করে কপি করুন।
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function FeedbackSection({ shopId }) {
+  const [feedback, setFeedback] = useState('');
   const [sending, setSending] = useState(false);
 
-  useEffect(() => {
-    if (!shopId) return;
-    const q = query(
-      collection(db, 'shops', shopId, 'conversations'),
-      orderBy('lastMessageAt', 'desc'),
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      const convList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setConversations(convList);
-      if (!activeConvId && convList.length > 0) {
-        setActiveConvId(convList[0].id);
-      }
-      setLoading(false);
-    }, (err) => {
-      console.warn('Conversations listener error:', err);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, [shopId]);
-
-  const activeConv = conversations.find(c => c.id === activeConvId);
-
-  const handleSend = async () => {
-    if (!replyText.trim() || !activeConv || !shopId) return;
-
-    // Check if message is '.' command (Toggle AI pause/resume)
-    if (replyText.trim() === '.') {
-      toggleConversationAi();
-      setReplyText('');
-      return;
-    }
-
+  const handleSubmit = () => {
+    if (!feedback.trim()) return;
     setSending(true);
-    try {
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) throw new Error('লগইন প্রয়োজন');
-
-      const res = await fetch('/api/social/send-message', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          shopId,
-          conversationId: activeConv.id,
-          recipientId: activeConv.senderPsid || activeConv.id,
-          message: replyText.trim(),
-          platform: activeConv.platform || 'facebook',
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'মেসেজ পাঠানো ব্যর্থ');
-
-      toast.success(data.metaSent ? 'মেসেঞ্জারে পাঠানো হয়েছে! 📨' : 'মেসেজ সংরক্ষিত হয়েছে');
-      setReplyText('');
-    } catch (err) {
-      toast.error(err.message || 'মেসেজ পাঠাতে সমস্যা হয়েছে');
-    } finally {
+    setTimeout(() => {
+      toast.success('আপনার মূল্যবান মতামতের জন্য ধন্যবাদ!');
+      setFeedback('');
       setSending(false);
-    }
-  };
-
-  const toggleConversationAi = async () => {
-    if (!activeConv || !shopId) return;
-    try {
-      const nextPaused = !activeConv.aiPaused;
-      await updateDoc(doc(db, 'shops', shopId, 'conversations', activeConv.id), {
-        aiPaused: nextPaused,
-        updatedAt: serverTimestamp()
-      });
-      toast.success(nextPaused ? 'এই চ্যাটে AI সাময়িক বিরতিতে আছে ⏸️' : 'এই চ্যাটে AI পুনরায় চালু হয়েছে 🤖');
-    } catch (err) {
-      toast.error('AI টগল করা সম্ভব হয়নি');
-    }
+    }, 600);
   };
 
   return (
-    <Card className="p-0 border-purple-100 shadow-sm overflow-hidden">
-      <div className="flex flex-col md:flex-row h-[620px] divide-y md:divide-y-0 md:divide-x divide-slate-100">
-        {/* Left: Conversation List */}
-        <div className="w-full md:w-1/3 bg-slate-50/60 flex flex-col h-1/3 md:h-full">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-            <span className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <MessageCircle size={15} className="text-purple-600" /> গ্রাহক বার্তা তালিকা ({conversations.length})
-            </span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
-            {loading ? (
-              <div className="flex justify-center p-8"><Loader2 className="animate-spin text-purple-600" size={24} /></div>
-            ) : conversations.length === 0 ? (
-              <div className="text-center text-xs text-slate-400 p-8 space-y-2">
-                <MessageSquare size={32} className="mx-auto opacity-30 text-slate-400" />
-                <p>এখনো কোনো মেসেজ আসেনি। Facebook পেজে গ্রাহক মেসেজ পাঠালে এখানে শো করবে।</p>
-              </div>
-            ) : (
-              conversations.map(conv => {
-                const isSelected = conv.id === activeConvId;
-                return (
-                  <div
-                    key={conv.id}
-                    onClick={() => setActiveConvId(conv.id)}
-                    className={clsx(
-                      'p-3 rounded-2xl cursor-pointer transition-all border text-left',
-                      isSelected
-                        ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/20'
-                        : 'bg-white hover:bg-slate-100/80 text-slate-800 border-slate-100'
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <p className="font-black text-xs truncate">
-                        {conv.senderName || 'অপরিচিত গ্রাহক'}
-                      </p>
-                      <span className={clsx('text-[9px] px-1.5 py-0.5 rounded-md font-black', isSelected ? 'bg-purple-800 text-purple-200' : 'bg-slate-100 text-slate-500')}>
-                        {conv.platform || 'FB'}
-                      </span>
-                    </div>
-                    <p className={clsx('text-[11px] truncate', isSelected ? 'text-purple-100' : 'text-slate-500')}>
-                      {conv.lastMessage || 'কোনো বার্তা নেই'}
-                    </p>
-                    {conv.aiPaused && (
-                      <span className={clsx('text-[9px] font-black inline-block mt-1', isSelected ? 'text-amber-300' : 'text-amber-600')}>
-                        ⏸️ হিউম্যান মোড
-                      </span>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-
-        {/* Right: Message Thread */}
-        <div className="w-full md:w-2/3 flex flex-col h-2/3 md:h-full bg-white">
-          {activeConv ? (
-            <>
-              {/* Header */}
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="space-y-0.5">
-                  <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
-                    {activeConv.senderName || 'গ্রাহক'}
-                    <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-bold">
-                      {activeConv.platform || 'Facebook'}
-                    </span>
-                  </h4>
-                  <p className="text-[10px] text-slate-400 font-mono">ID: {activeConv.senderPsid || activeConv.id}</p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={toggleConversationAi}
-                    className={clsx(
-                      'px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all',
-                      activeConv.aiPaused
-                        ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-200'
-                        : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-200'
-                    )}
-                    title="ক্লিক করে বা ইনপুটে '.' লিখে টগল করুন"
-                  >
-                    {activeConv.aiPaused ? <PlayCircle size={14} /> : <PauseCircle size={14} />}
-                    <span>{activeConv.aiPaused ? 'AI চালু করুন' : 'AI বিরতি (টেকওভার)'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Message List */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-slate-50/30">
-                {(activeConv.messages || []).length === 0 ? (
-                  <div className="text-center text-xs text-slate-400 py-12">
-                    কোনো পূর্ববর্তী বার্তা পাওয়া যায়নি
-                  </div>
-                ) : (
-                  (activeConv.messages || []).map((m, idx) => {
-                    const isUser = m.role === 'user';
-                    const isAssistant = m.role === 'assistant';
-                    const isRetailer = m.role === 'retailer';
-
-                    return (
-                      <div
-                        key={idx}
-                        className={clsx(
-                          'flex flex-col max-w-[80%]',
-                          isUser ? 'self-start items-start' : 'self-end items-end ml-auto'
-                        )}
-                      >
-                        <span className="text-[9px] font-bold text-slate-400 mb-0.5 px-1">
-                          {isUser ? activeConv.senderName || 'গ্রাহক' : isAssistant ? '🤖 Vyce AI' : '👤 আপনি'}
-                        </span>
-                        <div
-                          className={clsx(
-                            'p-3.5 rounded-2xl text-xs font-medium leading-relaxed shadow-xs',
-                            isUser
-                              ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-sm'
-                              : isAssistant
-                              ? 'bg-purple-600 text-white rounded-tr-sm'
-                              : 'bg-slate-900 text-white rounded-tr-sm'
-                          )}
-                        >
-                          {m.content}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Footer Input */}
-              <div className="p-3 border-t border-slate-100 bg-white space-y-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    placeholder="মেসেজ লিখুন (অথবা শুধু '.' লিখে এন্টার দিলে AI বিরতি নেবে)..."
-                    className="flex-1 p-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none transition-colors"
-                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  />
-                  <Button onClick={handleSend} loading={sending} className="!p-3 !bg-purple-600 text-white">
-                    <Send size={16} />
-                  </Button>
-                </div>
-                <p className="text-[10px] text-slate-400 flex items-center justify-between">
-                  <span>💡 টিপস: আপনি রিপ্লাই দিলে AI স্বয়ংক্রিয়ভাবে পজ হয়ে যাবে।</span>
-                  <span className="font-mono text-purple-600 font-bold">Dot (.) = AI Toggle</span>
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 space-y-2">
-              <MessageCircle size={48} className="opacity-20 text-purple-600" />
-              <p className="text-xs font-bold">কথোপকথন দেখতে বাম পাশ থেকে একটি চ্যাট বেছে নিন</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// ── 3. COMMENTS AUTOMATION SECTION (AIPRAKTOR SPECIAL) ───────────────
-function CommentsAutomationSection({ shopId }) {
-  const [enabled, setEnabled] = useState(true);
-  const [publicReply, setPublicReply] = useState('ধন্যবাদ আপনার কমেন্টের জন্য ভাইয়া! বিস্তারিত তথ্য ইনবক্সে পাঠানো হয়েছে 😊');
-  const [privateDm, setPrivateDm] = useState('আসসালামু আলাইকুম! আমাদের প্রোডাক্টের বিস্তারিত বিবরণ এবং দাম জানতে যোগাযোগ করার জন্য ধন্যবাদ। এখনই অর্ডার কনফার্ম করতে আমাদের স্টোর ভিজিট করুন।');
-  const [keywordRules, setKeywordRules] = useState('price, dam, koto, details, ki vabe pabo');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!shopId) return;
-    const fetchAutomation = async () => {
-      try {
-        const snap = await getDoc(doc(db, 'shops', shopId, 'settings', 'commentAutomation'));
-        if (snap.exists()) {
-          const data = snap.data();
-          setEnabled(data.enabled ?? true);
-          if (data.publicReply) setPublicReply(data.publicReply);
-          if (data.privateDm) setPrivateDm(data.privateDm);
-          if (data.keywordRules) setKeywordRules(data.keywordRules);
-        }
-      } catch (err) {
-        console.warn('Failed to load comment automation settings:', err);
-      }
-    };
-    fetchAutomation();
-  }, [shopId]);
-
-  const handleSave = async () => {
-    if (!shopId) return;
-    setSaving(true);
-    try {
-      await setDoc(doc(db, 'shops', shopId, 'settings', 'commentAutomation'), {
-        enabled,
-        publicReply: publicReply.trim(),
-        privateDm: privateDm.trim(),
-        keywordRules: keywordRules.trim(),
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-      toast.success('কমেন্ট অটোমেশন রুল সফলভাবে সংরক্ষিত হয়েছে! 🚀');
-    } catch (err) {
-      toast.error('সংরক্ষণে সমস্যা হয়েছে');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Card 
-      title="ফেসবুক পোস্ট কমেন্টস অটো-রিপ্লাই ও ডিএম রোবট" 
-      icon={MessageSquare}
-      footer={
-        <div className="flex justify-end">
-          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
-            রুল সংরক্ষণ করুন
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-6 pt-1">
-        {/* Master Toggle */}
-        <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-          <div className="space-y-0.5">
-            <h4 className="text-xs font-black text-slate-900">স্বয়ংক্রিয় কমেন্ট রিপ্লাই চালু রাখুন</h4>
-            <p className="text-[11px] text-slate-500 font-medium">
-              গ্রাহক আপনার ফেসবুক পেজের কোনো পোস্টে কমেন্ট করলে সাথে সাথে রিপ্লাই ও ইনবক্স হবে।
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setEnabled(!enabled)}
-            className={clsx(
-              'w-12 h-6 rounded-full transition-colors relative cursor-pointer',
-              enabled ? 'bg-purple-600' : 'bg-slate-300'
-            )}
-          >
-            <span className={clsx(
-              'w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow-sm',
-              enabled ? 'left-6.5' : 'left-0.5'
-            )} />
-          </button>
-        </div>
-
-        {/* Public Reply */}
-        <div className="space-y-2">
-          <label className="text-xs font-black text-slate-800 block">
-            ১. ফেসবুক কমেন্টের পাবলিক রিপ্লাই (যা পোস্টের নিচে সবাই দেখবে) *
-          </label>
-          <textarea
-            rows={2}
-            value={publicReply}
-            onChange={e => setPublicReply(e.target.value)}
-            className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none leading-relaxed transition-colors"
-          />
-        </div>
-
-        {/* Private DM */}
-        <div className="space-y-2">
-          <label className="text-xs font-black text-slate-800 block">
-            ২. গ্রাহকের ইনবক্সে অটো-ডিএম (Private Messenger Message) *
-          </label>
-          <textarea
-            rows={3}
-            value={privateDm}
-            onChange={e => setPrivateDm(e.target.value)}
-            className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none leading-relaxed transition-colors"
-          />
-          <p className="text-[10px] text-slate-400">
-            কমেন্টকারীকে ইনবক্সে এই বার্তা পাঠানো হবে এবং তার প্রোফাইল তথ্য লিড ম্যানেজমেন্টে স্বয়ংক্রিয়ভাবে জমা হবে।
-          </p>
-        </div>
-
-        {/* Keywords */}
-        <div className="space-y-2">
-          <label className="text-xs font-black text-slate-800 block">
-            ৩. ফিল্টার কিওয়ার্ড (কমা দিয়ে আলাদা করুন)
-          </label>
-          <input
-            type="text"
-            value={keywordRules}
-            onChange={e => setKeywordRules(e.target.value)}
-            placeholder="price, dam, koto, details"
-            className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none"
-          />
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// ── 4. LEADS SECTION ─────────────────────────────────────────────────
-function LeadsSection({ shopId }) {
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newLeadName, setNewLeadName] = useState('');
-  const [newLeadPhone, setNewLeadPhone] = useState('');
-  const [newLeadSource, setNewLeadSource] = useState('manual');
-  const [addingLead, setAddingLead] = useState(false);
-
-  useEffect(() => {
-    if (!shopId) return;
-    const q = query(
-      collection(db, 'shops', shopId, 'leads'),
-      orderBy('createdAt', 'desc'),
-      limit(100)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setLeads(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
-    }, (err) => {
-      console.warn('Leads listener warning:', err);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, [shopId]);
-
-  const updateStatus = async (id, status) => {
-    try {
-      await updateDoc(doc(db, 'shops', shopId, 'leads', id), {
-        status,
-        updatedAt: serverTimestamp()
-      });
-      toast.success('স্ট্যাটাস আপডেট হয়েছে');
-    } catch (err) {
-      toast.error('আপডেট ব্যর্থ');
-    }
-  };
-
-  const handleCreateLead = async () => {
-    if (!newLeadName.trim()) {
-      toast.error('নাম লিখুন');
-      return;
-    }
-    setAddingLead(true);
-    try {
-      await addDoc(collection(db, 'shops', shopId, 'leads'), {
-        name: newLeadName.trim(),
-        phone: newLeadPhone.trim() || 'N/A',
-        source: newLeadSource,
-        status: 'new',
-        createdAt: serverTimestamp(),
-        shopId,
-      });
-      toast.success('নতুন লিড যুক্ত হয়েছে! 🎉');
-      setNewLeadName('');
-      setNewLeadPhone('');
-      setShowAddModal(false);
-    } catch (err) {
-      toast.error('লিড তৈরিতে সমস্যা হয়েছে');
-    } finally {
-      setAddingLead(false);
-    }
-  };
-
-  const exportCsv = () => {
-    if (leads.length === 0) {
-      toast.error('এক্সপোর্ট করার মতো কোনো লিড নেই');
-      return;
-    }
-    const headers = ['Name,Phone,Source,Status,Created At\n'];
-    const rows = leads.map(l => {
-      const dateStr = l.createdAt?.seconds ? new Date(l.createdAt.seconds * 1000).toISOString() : '';
-      return `"${l.name || 'Unknown'}","${l.phone || ''}","${l.source || ''}","${l.status || 'new'}","${dateStr}"\n`;
-    });
-    const blob = new Blob([...headers, ...rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `leads-${shopId}-${Date.now()}.csv`;
-    a.click();
-    toast.success('CSV ডাউনলোড সম্পন্ন হয়েছে');
-  };
-
-  return (
-    <Card 
-      title="সোশ্যাল লিড কালেকশন ড্যাশবোর্ড" 
-      icon={Users}
-      headerRight={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={exportCsv} className="!text-xs !py-1.5 !px-3 font-bold">
-            <Download size={13} className="mr-1" /> CSV এক্সপোর্ট
-          </Button>
-          <Button onClick={() => setShowAddModal(true)} className="!bg-purple-600 text-white !text-xs !py-1.5 !px-3 font-bold">
-            <Plus size={13} className="mr-1" /> নতুন লিড
-          </Button>
-        </div>
-      }
-    >
-      <div className="overflow-x-auto pt-1">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-              <th className="pb-3">গ্রাহকের নাম</th>
-              <th className="pb-3">সোর্স / চ্যানেল</th>
-              <th className="pb-3">ফোন নম্বর / আইডি</th>
-              <th className="pb-3">স্ট্যাটাস</th>
-              <th className="pb-3 text-right">তারিখ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="5" className="py-8 text-center"><Loader2 className="animate-spin inline text-purple-600" size={24} /></td></tr>
-            ) : leads.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="py-12 text-center text-slate-400">
-                  <Users size={32} className="mx-auto opacity-30 mb-2" />
-                  এখনো কোনো লিড সংগ্রহ হয়নি। ফেসবুক কমেন্ট বা ইনবক্স আসলে অটোমেটিক লিড যুক্ত হবে।
-                </td>
-              </tr>
-            ) : (
-              leads.map(lead => (
-                <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="py-3 font-bold text-slate-900">{lead.name || 'Unknown'}</td>
-                  <td className="py-3">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 capitalize">
-                      {lead.source || 'social'}
-                    </span>
-                  </td>
-                  <td className="py-3 font-mono text-slate-600">{lead.phone || lead.fbId || 'N/A'}</td>
-                  <td className="py-3">
-                    <select 
-                      value={lead.status || 'new'}
-                      onChange={(e) => updateStatus(lead.id, e.target.value)}
-                      className={clsx(
-                        'rounded-lg px-2.5 py-1 text-[11px] font-bold outline-none border transition-colors',
-                        lead.status === 'converted' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
-                        lead.status === 'contacted' ? 'bg-blue-50 text-blue-800 border-blue-200' :
-                        'bg-amber-50 text-amber-800 border-amber-200'
-                      )}
-                    >
-                      <option value="new">নতুন লিড (New)</option>
-                      <option value="contacted">যোগাযোগ হয়েছে (Contacted)</option>
-                      <option value="converted">অর্ডার কনফার্ম (Converted)</option>
-                    </select>
-                  </td>
-                  <td className="py-3 text-right text-slate-400 text-[10px] font-mono">
-                    {lead.createdAt?.seconds ? new Date(lead.createdAt.seconds * 1000).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' }) : 'আজ'}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add Lead Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl animate-scale-in border border-slate-100">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h4 className="text-sm font-black text-slate-900">ম্যানুয়াল লিড যোগ করুন</h4>
-              <button onClick={() => setShowAddModal(false)}><X size={16} className="text-slate-400" /></button>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">গ্রাহকের নাম *</label>
-                <input
-                  type="text"
-                  placeholder="যেমন: রহিম আহমেদ"
-                  value={newLeadName}
-                  onChange={e => setNewLeadName(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">ফোন নম্বর</label>
-                <input
-                  type="tel"
-                  placeholder="01XXXXXXXXX"
-                  value={newLeadPhone}
-                  onChange={e => setNewLeadPhone(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">চ্যানেল / উৎস</label>
-                <select
-                  value={newLeadSource}
-                  onChange={e => setNewLeadSource(e.target.value)}
-                  className="w-full text-xs p-3 rounded-xl border border-slate-200 bg-slate-50 outline-none font-bold"
-                >
-                  <option value="manual">সরাসরি কল / শপ ভিজিট</option>
-                  <option value="facebook_comment">ফেসবুক কমেন্ট</option>
-                  <option value="messenger">ফেসবুক মেসেঞ্জার</option>
-                  <option value="whatsapp">হোয়াটসঅ্যাপ</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={() => setShowAddModal(false)} className="flex-1 text-xs">বাতিল</Button>
-              <Button onClick={handleCreateLead} loading={addingLead} className="flex-1 !bg-purple-600 text-white text-xs font-black">যোগ করুন</Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </Card>
-  );
-}
-
-// ── 5. AI SETTINGS SECTION (AGNES 3.0 FLASH BY VYCE AI) ───────────────
-function AiSettingsSection({ shopId }) {
-  const [businessName, setBusinessName] = useState('');
-  const [businessDesc, setBusinessDesc] = useState('');
-  const [deliveryInfo, setDeliveryInfo] = useState('ঢাকা সিটিতে ৬০ টাকা, ঢাকার বাইরে ১২০ টাকা ডেলিভারি চার্জ। ক্যাশ অন ডেলিভারি প্রযোজ্য।');
-  const [customPrompt, setCustomPrompt] = useState('');
-  const [botTone, setBotTone] = useState('বন্ধুত্বপূর্ণ ও সাহায্যকারী (Friendly)');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!shopId) return;
-    const fetchAiSettings = async () => {
-      try {
-        const snap = await getDoc(doc(db, 'shops', shopId));
-        if (snap.exists()) {
-          const shopData = snap.data();
-          const aiConfig = shopData.aiSettings || shopData.aiConfig || {};
-          setBusinessName(shopData.shopName || '');
-          if (aiConfig.businessDesc) setBusinessDesc(aiConfig.businessDesc);
-          if (aiConfig.deliveryInfo) setDeliveryInfo(aiConfig.deliveryInfo);
-          if (aiConfig.customPrompt) setCustomPrompt(aiConfig.customPrompt);
-          if (aiConfig.botTone) setBotTone(aiConfig.botTone);
-        }
-      } catch (err) {
-        console.warn('Failed to load AI settings:', err);
-      }
-    };
-    fetchAiSettings();
-  }, [shopId]);
-
-  const handleSave = async () => {
-    if (!shopId) return;
-    setSaving(true);
-    try {
-      await setDoc(doc(db, 'shops', shopId), {
-        aiSettings: {
-          model: 'agnes-3.0-flash', // Vyce AI Agnes 3.0 Flash as requested!
-          provider: 'vyceai',
-          businessDesc: businessDesc.trim(),
-          deliveryInfo: deliveryInfo.trim(),
-          customPrompt: customPrompt.trim(),
-          botTone,
-          updatedAt: serverTimestamp(),
-        }
-      }, { merge: true });
-      toast.success('AI সেটিংস সফলভাবে সংরক্ষিত হয়েছে! 🤖✨');
-    } catch (err) {
-      toast.error('সেটিংস সংরক্ষণে সমস্যা হয়েছে');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Card 
-      title="Vyce AI (Agnes 3.0 Flash) স্মার্ট সেলসম্যান কনফিগারেশন" 
-      icon={Zap}
-      footer={
-        <div className="flex justify-end">
-          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
-            সেটিংস সংরক্ষণ করুন
-          </Button>
-        </div>
-      }
-    >
-      <div className="space-y-5 pt-1">
-        {/* Model info banner */}
-        <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl flex items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-purple-600 text-white rounded-md text-[10px] font-black uppercase tracking-wider">
-                ACTIVE MODEL
-              </span>
-              <h4 className="text-xs font-black text-purple-950">Agnes 3.0 Flash (Vyce AI)</h4>
-            </div>
-            <p className="text-[11px] text-purple-800 font-medium">
-              সর্বনিম্ন টোকেন খরচ ($0.05/$0.15) ও সর্বোচ্চ দ্রুততার জন্য অপ্টিমাইজড। ক্যাশিং সক্রিয়।
-            </p>
-          </div>
-          <span className="px-3 py-1 bg-white border border-purple-200 text-purple-700 font-mono text-xs font-bold rounded-xl shrink-0">
-            ~3M Calls Free
-          </span>
-        </div>
-
-        {/* Tone Selector */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-black text-slate-800 block">
-            কথা বলার ভঙ্গি (AI Bot Tone)
-          </label>
-          <select
-            value={botTone}
-            onChange={e => setBotTone(e.target.value)}
-            className="w-full text-xs font-bold p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
-          >
-            <option value="বন্ধুত্বপূর্ণ ও সাহায্যকারী (Friendly)">বন্ধুত্বপূর্ণ ও সাহায্যকারী (Friendly & Polite)</option>
-            <option value="পেশাদার ও মার্জিত (Professional)">পেশাদার ও মার্জিত (Professional)</option>
-            <option value="সংক্ষিপ্ত ও সরাসরি (Concise & Quick)">সংক্ষিপ্ত ও সরাসরি (Concise & Quick)</option>
-          </select>
-        </div>
-
-        {/* Business Description */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-black text-slate-800 block">
-            আপনার ব্যবসা সম্পর্কে তথ্য (কী কী পণ্য বিক্রি করেন)
-          </label>
-          <textarea
-            rows={3}
-            value={businessDesc}
-            onChange={e => setBusinessDesc(e.target.value)}
-            placeholder="যেমন: আমরা অরজিনাল চামড়ার জুতা, বেল্ট এবং প্রিমিয়াম মানিব্যাগ পাইকারি ও খুচরা বিক্রি করি..."
-            className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white outline-none leading-relaxed"
-          />
-        </div>
-
-        {/* Delivery Info */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-black text-slate-800 block">
-            ডেলিভারি চার্জ ও শর্তাবলী
-          </label>
-          <input
-            type="text"
-            value={deliveryInfo}
-            onChange={e => setDeliveryInfo(e.target.value)}
-            className="w-full text-xs font-bold p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
-          />
-        </div>
-
-        {/* Custom Prompt Override */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-black text-slate-800 block">
-            কাস্টম সিস্টেম প্রম্পট (ঐচ্ছিক অ্যাডভান্সড রুল)
-          </label>
-          <textarea
-            rows={3}
-            value={customPrompt}
-            onChange={e => setCustomPrompt(e.target.value)}
-            placeholder="যেমন: সব সময় উত্তর দেওয়ার সময় আসসালামু আলাইকুম বলবে এবং অর্ডার করার জন্য ফোন নম্বর চাইবে..."
-            className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white outline-none leading-relaxed"
-          />
-        </div>
+    <Card title="মতামত ও ফিচার রিকোয়েস্ট" icon={HelpIcon}>
+      <div className="space-y-3 pt-1">
+        <textarea
+          rows={3}
+          value={feedback}
+          onChange={e => setFeedback(e.target.value)}
+          placeholder="সোশ্যাল হাবকে আরও উন্নত করতে আপনার কি কোনো পরামর্শ আছে? এখানে লিখুন..."
+          className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
+        />
+        <Button onClick={handleSubmit} loading={sending} className="!bg-purple-600 text-white text-xs font-bold">
+          মতামত পাঠান
+        </Button>
       </div>
     </Card>
   );

@@ -22,13 +22,18 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Page Access Token এবং Shop ID প্রয়োজন' }, { status: 400 });
     }
 
-    // Verify retailer owns the shop
-    const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-    if (!shopDoc.exists) {
-      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
-    }
-    const shopData = shopDoc.data() || {};
-    if (!isShopOwner(shopData, authResult.uid)) {
+    // Verify retailer owns the shop (or superadmin for main)
+    let shopData = {};
+    if (shopId !== 'main') {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      if (!shopDoc.exists) {
+        return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+      }
+      shopData = shopDoc.data() || {};
+      if (!isShopOwner(shopData, authResult.uid) && authResult.role !== 'superadmin') {
+        return NextResponse.json({ error: 'অননুমোদিত অ্যাক্সেস' }, { status: 403 });
+      }
+    } else if (authResult.role !== 'superadmin') {
       return NextResponse.json({ error: 'অননুমোদিত অ্যাক্সেস' }, { status: 403 });
     }
 
@@ -107,13 +112,17 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Missing shopId' }, { status: 400 });
     }
 
-    // Verify retailer owns the shop
-    const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-    if (!shopDoc.exists) {
-      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
-    }
-    const shopData = shopDoc.data() || {};
-    if (!isShopOwner(shopData, authResult.uid)) {
+    // Verify retailer owns the shop (or superadmin for main)
+    if (shopId !== 'main') {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      if (!shopDoc.exists) {
+        return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+      }
+      const shopData = shopDoc.data() || {};
+      if (!isShopOwner(shopData, authResult.uid) && authResult.role !== 'superadmin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (authResult.role !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -153,13 +162,17 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Missing shopId or pageId' }, { status: 400 });
     }
 
-    // Verify retailer owns the shop
-    const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-    if (!shopDoc.exists) {
-      return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
-    }
-    const shopData = shopDoc.data() || {};
-    if (!isShopOwner(shopData, authResult.uid)) {
+    // Verify retailer owns the shop (or superadmin for main)
+    if (shopId !== 'main') {
+      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+      if (!shopDoc.exists) {
+        return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
+      }
+      const shopData = shopDoc.data() || {};
+      if (!isShopOwner(shopData, authResult.uid) && authResult.role !== 'superadmin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (authResult.role !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
