@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, Button } from '@/components/ui';
 import { 
   Globe, Camera, Phone, MessageCircle, Bot, Zap, Users, Loader2, 
@@ -10,7 +10,7 @@ import {
   BarChart3, Settings, Bell, BookmarkCheck, ShoppingBag, Activity,
   Layers, Radio, BookOpen, MessageCircleQuestion, HelpCircle as HelpIcon,
   Video, DollarSign, UserCheck, MessageSquareCode, Copy, CheckCheck,
-  ChevronRight, CornerDownRight, Search, Sliders, Smartphone
+  ChevronRight, CornerDownRight, Search, Sliders, Smartphone, Lock, Eye, Edit3
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { db } from '@/lib/firebase';
@@ -48,7 +48,7 @@ export default function SocialHubPanel({ shopId }) {
   useEffect(() => {
     if (!shopId) return;
     if (shopId === 'main') {
-      setShopData({ shopName: 'BD Retailers (Official)' });
+      setShopData({ shopName: 'BD Retailers (Official)', slug: '' });
       return;
     }
     const unsub = onSnapshot(doc(db, 'shops', shopId), (snap) => {
@@ -61,31 +61,76 @@ export default function SocialHubPanel({ shopId }) {
     return () => unsub();
   }, [shopId]);
 
-  // Real-time conversations stream
+  // Robust conversations loader: Real-time listener with fallback REST API
+  const refreshConversations = useCallback(async () => {
+    if (!shopId) return;
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      const res = await fetch(`/api/social/conversations?shopId=${shopId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.conversations) {
+        setConversations(data.conversations);
+      }
+    } catch (err) {
+      console.warn('API conversations fallback warning:', err);
+    }
+  }, [shopId]);
+
   useEffect(() => {
     if (!shopId) return;
-    const q = query(
-      collection(db, 'shops', shopId, 'conversations'),
-      orderBy('lastMessageAt', 'desc'),
-      limit(100)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setConversations(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => console.warn('Conversations listener:', err));
+
+    // 1. Initial fetch via server API
+    refreshConversations();
+
+    // 2. Real-time onSnapshot listener (ordered client-side to prevent missing index exclusions)
+    let unsub = () => {};
+    try {
+      const q = query(
+        collection(db, 'shops', shopId, 'conversations'),
+        limit(100)
+      );
+      unsub = onSnapshot(q, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Safe client-side sort
+        list.sort((a, b) => {
+          const tA = a.lastMessageAt?.seconds ? a.lastMessageAt.seconds * 1000 : new Date(a.lastMessageAt || a.updatedAt || a.createdAt || 0).getTime();
+          const tB = b.lastMessageAt?.seconds ? b.lastMessageAt.seconds * 1000 : new Date(b.lastMessageAt || b.updatedAt || b.createdAt || 0).getTime();
+          return tB - tA;
+        });
+        setConversations(list);
+      }, (err) => {
+        console.warn('Firestore conversations stream warning (using API fallback):', err.message);
+        refreshConversations();
+      });
+    } catch (e) {
+      refreshConversations();
+    }
+
     return () => unsub();
-  }, [shopId]);
+  }, [shopId, refreshConversations]);
 
   // Real-time leads stream
   useEffect(() => {
     if (!shopId) return;
-    const q = query(
-      collection(db, 'shops', shopId, 'leads'),
-      orderBy('createdAt', 'desc'),
-      limit(100)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setLeads(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, (err) => console.warn('Leads listener:', err));
+    let unsub = () => {};
+    try {
+      const q = query(
+        collection(db, 'shops', shopId, 'leads'),
+        limit(100)
+      );
+      unsub = onSnapshot(q, (snap) => {
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        list.sort((a, b) => {
+          const tA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
+          const tB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
+          return tB - tA;
+        });
+        setLeads(list);
+      }, (err) => console.warn('Leads listener warning:', err.message));
+    } catch (e) {}
     return () => unsub();
   }, [shopId]);
 
@@ -144,7 +189,7 @@ export default function SocialHubPanel({ shopId }) {
 
   const hasFb = connections.some(c => c.platform === 'facebook');
 
-  // Navigation Items Grouped AiPraktor-style
+  // Navigation Items Grouped cleanly (No redundant video tabs)
   const navGroups = [
     {
       title: 'Work',
@@ -168,7 +213,7 @@ export default function SocialHubPanel({ shopId }) {
         { id: 'products', label: 'Products (AI পণ্য ক্যাটালগ)', icon: Layers, badge: null },
         { id: 'posts', label: 'Posts (সোশ্যাল পোস্ট)', icon: MessageSquareCode, badge: null },
         { id: 'knowledge', label: 'Knowledge (বিজনেস নলেজবেস)', icon: BookOpen, badge: null },
-        { id: 'website_chat', label: 'Website chat (ওয়েবসাইট চ্যাট)', icon: Globe, badge: 'New' },
+        { id: 'website_chat', label: 'Website chat (স্টোর লাইভ চ্যাট)', icon: Globe, badge: 'Auto' },
         { id: 'agent_desk', label: 'Agent Desk (AI সেলসম্যান)', icon: Bot, badge: 'Agnes' },
       ]
     },
@@ -177,9 +222,8 @@ export default function SocialHubPanel({ shopId }) {
       items: [
         { id: 'pages', label: 'Pages (চ্যানেল কানেকশন)', icon: Globe, badge: hasFb ? 'Active' : 'Setup' },
         { id: 'billing', label: 'Billing (AI ক্রেডিট ও ব্যালেন্স)', icon: DollarSign, badge: '$90+' },
-        { id: 'team', label: 'Team (টিম সদস্য)', icon: UserCheck, badge: null },
-        { id: 'setup', label: 'Setup (সেটআপ চেকলিস্ট)', icon: Settings, badge: '১/৮' },
-        { id: 'videos', label: 'Video guide (ভিডিও গাইড)', icon: Video, badge: null },
+        { id: 'team', label: 'Team (টিম সদস্য ও সাপোর্ট)', icon: UserCheck, badge: null },
+        { id: 'setup', label: 'Setup (সেটআপ চেকলিস্ট)', icon: Settings, badge: '১/৭' },
       ]
     },
     {
@@ -213,7 +257,7 @@ export default function SocialHubPanel({ shopId }) {
             সোশ্যাল মিডিয়া সেলস অ্যান্ড অটোমেশন হাব
           </h2>
           <p className="text-xs text-slate-400 font-medium">
-            ফেসবুক, ইনস্টাগ্রাম, হোয়াটসঅ্যাপ ও ওয়েবসাইট চ্যাট থেকে রিয়েল-টাইম লিড জেনারেশন, Vyce AI সেলস রিপ্লাই ও অর্ডার ম্যানেজমেন্ট।
+            ফেসবুক, ইনস্টাগ্রাম, হোয়াটসঅ্যাপ ও স্টোর লাইভ চ্যাট থেকে রিয়েল-টাইম লিড জেনারেশন, Vyce AI সেলস রিপ্লাই ও অর্ডার সেলস।
           </p>
         </div>
 
@@ -221,7 +265,7 @@ export default function SocialHubPanel({ shopId }) {
           {/* AI <-> Human Takeover Toggle */}
           <button
             onClick={toggleGlobalAi}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-sm ${
+            className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-sm cursor-pointer ${
               isAiGloballyPaused 
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30' 
                 : 'bg-purple-600 text-white hover:bg-purple-500 shadow-purple-600/30'
@@ -233,18 +277,18 @@ export default function SocialHubPanel({ shopId }) {
 
           <button
             onClick={() => setShowGuideModal(true)}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-2xl border border-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5"
-            title="সেটআপ গাইড"
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-2xl border border-slate-700 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="সেটআপ ও হেল্প গাইড"
           >
             <HelpIcon size={16} />
-            <span className="hidden sm:inline">১ মিনিটের গাইড</span>
+            <span className="hidden sm:inline">হেল্প গাইড (?)</span>
           </button>
         </div>
       </div>
 
       {/* ── Main Layout: Left Sidebar + Right Content ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* ── Left Sidebar (AiPraktor Full Hierarchy) ── */}
+        {/* ── Left Sidebar (AiPraktor Hierarchy) ── */}
         <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-3.5 space-y-4">
           {/* Setup Progress Pill */}
           <div 
@@ -253,10 +297,10 @@ export default function SocialHubPanel({ shopId }) {
           >
             <div className="flex items-center justify-between text-xs font-black text-purple-900 mb-1.5">
               <span>সেটআপ গাইড</span>
-              <span className="px-2 py-0.5 bg-purple-600 text-white rounded-full text-[10px]">১ / ৮</span>
+              <span className="px-2 py-0.5 bg-purple-600 text-white rounded-full text-[10px]">১ / ৭</span>
             </div>
             <div className="w-full bg-purple-200 rounded-full h-1.5 overflow-hidden">
-              <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: hasFb ? '45%' : '15%' }} />
+              <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: hasFb ? '50%' : '20%' }} />
             </div>
           </div>
 
@@ -325,6 +369,7 @@ export default function SocialHubPanel({ shopId }) {
               shopId={shopId} 
               conversations={conversations} 
               isAiGloballyPaused={isAiGloballyPaused} 
+              onRefresh={refreshConversations}
             />
           )}
 
@@ -378,7 +423,7 @@ export default function SocialHubPanel({ shopId }) {
           )}
 
           {activeTab === 'website_chat' && (
-            <WebsiteChatConfigSection shopId={shopId} />
+            <WebsiteChatConfigSection shopId={shopId} shopData={shopData} />
           )}
 
           {activeTab === 'agent_desk' && (
@@ -407,50 +452,71 @@ export default function SocialHubPanel({ shopId }) {
             <SetupChecklistSection hasFb={hasFb} onNavigate={setActiveTab} />
           )}
 
-          {activeTab === 'videos' && (
-            <VideoGuideSection />
-          )}
-
           {activeTab === 'feedback' && (
             <FeedbackSection shopId={shopId} />
           )}
         </div>
       </div>
 
-      {/* ── 1-Minute Guide Modal ── */}
+      {/* ── All-in-One Helper & Setup Guide Modal (?) ── */}
       {showGuideModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-scale-in border border-slate-100">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl animate-scale-in border border-slate-100 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <Sparkles size={18} className="text-purple-600" /> ১ মিনিটের সোশ্যাল হাব সেটআপ গাইড
+                <Sparkles size={18} className="text-purple-600" /> সোশ্যাল হাব ও লাইভ চ্যাট সম্পূর্ণ গাইড
               </h3>
               <button 
                 onClick={() => setShowGuideModal(false)}
-                className="p-1 rounded-full text-slate-400 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-full text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
             <div className="space-y-3.5 text-xs text-slate-600 font-medium leading-relaxed">
-              <div className="p-3 bg-purple-50 rounded-2xl border border-purple-100 space-y-1">
-                <p className="font-black text-purple-900">১. Facebook পেজ কানেক্ট করুন</p>
-                <p>&quot;Pages&quot; ট্যাব থেকে পেজের <strong className="text-purple-700">Page Access Token</strong> দিয়ে কানেক্ট করুন। Meta অ্যাপে Webhook URL ও Verify Token সেট করুন।</p>
+              <div className="p-3.5 bg-purple-50 rounded-2xl border border-purple-100 space-y-1">
+                <p className="font-black text-purple-900 flex items-center gap-1.5">
+                  <Globe size={15} /> ১. ফেসবুক পেজ কানেকশন ও টোকেন
+                </p>
+                <p>
+                  Meta for Developers-এর <strong className="text-purple-800">Graph API Explorer</strong> থেকে আপনার পেজ বেছে নিয়ে Generate Access Token চাপুন এবং টোকেনটি Pages ট্যাবে পেস্ট করুন।
+                </p>
+                <p className="text-[11px] text-purple-700 font-mono">
+                  Webhook URL: https://bdretailers.com/api/social/facebook-webhook<br/>
+                  Verify Token: bdretailers_meta_webhook_secret_2026
+                </p>
               </div>
 
-              <div className="p-3 bg-blue-50 rounded-2xl border border-blue-100 space-y-1">
-                <p className="font-black text-blue-900">২. কমেন্ট অটো-রিপ্লাই সক্রিয় করুন</p>
-                <p>&quot;Comments&quot; ট্যাবে আপনার পছন্দসই পাবলিক রিপ্লাই ও ইনবক্স প্রাইভেট ডিএম রুল সেট করুন।</p>
+              <div className="p-3.5 bg-blue-50 rounded-2xl border border-blue-100 space-y-1">
+                <p className="font-black text-blue-900 flex items-center gap-1.5">
+                  <MessageSquare size={15} /> ২. ফেসবুক পোস্ট কমেন্ট অটো-রিপ্লাই
+                </p>
+                <p>
+                  Comments ট্যাবে গিয়ে অটো-রিপ্লাই অন রাখুন। গ্রাহক আপনার ফেসবুক পেজের কোনো পোস্টে কমেন্ট করলে সাথে সাথে পাবলিক উত্তর যাবে এবং তার ইনবক্সে স্বয়ংক্রিয় প্রাইভেট ডিএম পাঠিয়ে লিড সংগ্রহ করা হবে।
+                </p>
               </div>
 
-              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-1">
-                <p className="font-black text-emerald-900">৩. হিউম্যান টেকওভার ও &quot;.&quot; (ডট) কমান্ড</p>
-                <p>যেকোনো চ্যাটে শুধু একটি ডট <strong className="text-emerald-700">&quot;.&quot;</strong> পাঠিয়ে এন্টার দিলে AI বিরতিতে যাবে এবং আপনি নিজে কাস্টমারের সাথে কথা বলতে পারবেন।</p>
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-1">
+                <p className="font-black text-emerald-900 flex items-center gap-1.5">
+                  <ShoppingBag size={15} /> ৩. অনলাইন স্টোরে স্বয়ংক্রিয় লাইভ চ্যাট
+                </p>
+                <p>
+                  আপনার দোকানের ওয়েবসাইটে কোনো স্ক্রিপ্ট বা কোড বসানোর প্রয়োজন নেই! আপনার অনলাইন স্টোরে গ্রাহক প্রবেশ করে নিচে থাকা AI চ্যাটে প্রশ্ন করলে সমস্ত মেসেজ এই সোশ্যাল হাবের লাইভ ইনবক্সে রিয়েলটাইমে পৌঁছাবে।
+                </p>
+              </div>
+
+              <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-100 space-y-1">
+                <p className="font-black text-amber-900 flex items-center gap-1.5">
+                  <PauseCircle size={15} /> ৪. হিউম্যান টেকওভার ও ডট (.) কমান্ড
+                </p>
+                <p>
+                  গ্রাহকের সাথে নিজে কথা বলতে চাইলে মেসেজ ইনপুটে শুধু একটি ডট <strong className="text-amber-800">&quot;.&quot;</strong> লিখে এন্টার দিন — AI সাথে সাথে বিরতিতে যাবে। কথা শেষ হলে আবার ডট দিলে AI পুনরায় উত্তর দেওয়া শুরু করবে।
+                </p>
               </div>
             </div>
 
-            <Button onClick={() => setShowGuideModal(false)} className="w-full !bg-slate-900 text-white font-black">
+            <Button onClick={() => setShowGuideModal(false)} className="w-full !bg-slate-900 text-white font-black cursor-pointer">
               বুঝেছি, কাজ শুরু করি!
             </Button>
           </div>
@@ -483,7 +549,7 @@ function OverviewSection({ shopId, conversations, leads, hasFb, onNavigate }) {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 bg-purple-600 text-white rounded-md text-[10px] font-black uppercase">
-                ধাপ ১ / ৮
+                ধাপ ১ / ৭
               </span>
               <h4 className="text-sm font-black text-slate-900">
                 Facebook পেজ যুক্ত করুন — AI সহকারী সক্রিয় করতে
@@ -495,7 +561,7 @@ function OverviewSection({ shopId, conversations, leads, hasFb, onNavigate }) {
           </div>
           <Button 
             onClick={() => onNavigate('pages')} 
-            className="!bg-purple-600 hover:!bg-purple-700 text-white shrink-0 text-xs font-black"
+            className="!bg-purple-600 hover:!bg-purple-700 text-white shrink-0 text-xs font-black cursor-pointer"
           >
             পেজ যুক্ত করুন <ArrowRight size={14} className="ml-1" />
           </Button>
@@ -603,7 +669,7 @@ function OverviewSection({ shopId, conversations, leads, hasFb, onNavigate }) {
 // 2. UNIFIED INBOX WITH HUMAN-AI HANDOFF & TEST SIMULATOR
 // ─────────────────────────────────────────────────────────────────────
 
-function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
+function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefresh }) {
   const [activeConvId, setActiveConvId] = useState(conversations[0]?.id || null);
   const [filterPlatform, setFilterPlatform] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -678,6 +744,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
 
       toast.success(data.metaSent ? 'মেসেঞ্জারে পাঠানো হয়েছে! 📨' : 'মেসেজ সফলভাবে সংরক্ষিত হয়েছে');
       setReplyText('');
+      if (onRefresh) onRefresh();
     } catch (err) {
       toast.error(err.message || 'মেসেজ পাঠাতে সমস্যা হয়েছে');
     } finally {
@@ -694,16 +761,17 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
         updatedAt: serverTimestamp()
       });
       toast.success(nextPaused ? 'এই চ্যাটে AI বিরতি নিয়েছে (হিউম্যান মোড ⏸️)' : 'এই চ্যাটে AI পুনরায় চালু হয়েছে 🤖');
+      if (onRefresh) onRefresh();
     } catch (err) {
       toast.error('AI টগল করা সম্ভব হয়নি');
     }
   };
 
-  // Test Simulator: Send an artificial test customer message to verify Agnes 3.0 Flash live
+  // Test Simulator: Send artificial message to verify Agnes 3.0 Flash live
   const handleSimulateTestMessage = async () => {
     setSimulating(true);
     try {
-      const testVisitorId = `test_sim_${Date.now().toString().slice(-4)}`;
+      const testVisitorId = `sim_${Date.now().toString().slice(-4)}`;
       const testQueries = [
         'আসসালামু আলাইকুম, আপনাদের ডেলিভারি চার্জ কত?',
         'ভাই এই প্রোডাক্টটার দাম কত? ক্যাশ অন ডেলিভারি দেওয়া যাবে?',
@@ -725,8 +793,9 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
 
       const data = await res.json();
       if (res.ok) {
-        toast.success('টেস্ট মেসেজ সিমুলেশন সফল! চ্যাটে দেখুন 🎉');
+        toast.success('টেস্ট মেসেজ সিমুলেশন সফল! ইনবক্সে মেসেজ যোগ হয়েছে 🎉');
         setActiveConvId(testVisitorId);
+        if (onRefresh) onRefresh();
       } else {
         toast.error(data.error || 'সিমুলেশন ব্যর্থ');
       }
@@ -762,14 +831,26 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
           ))}
         </div>
 
-        <Button
-          onClick={handleSimulateTestMessage}
-          loading={simulating}
-          variant="outline"
-          className="!text-xs !py-1.5 !px-3 font-bold !border-purple-200 text-purple-700 hover:!bg-purple-50"
-        >
-          <Sparkles size={14} className="mr-1.5 text-purple-600" /> টেস্ট মেসেজ সিমুলেশন
-        </Button>
+        <div className="flex items-center gap-2">
+          {onRefresh && (
+            <button
+              onClick={() => { onRefresh(); toast.success('রিফ্রেশ সম্পন্ন'); }}
+              className="p-1.5 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold transition-colors cursor-pointer"
+              title="ইনবক্স রিফ্রেশ"
+            >
+              <RefreshCw size={14} />
+            </button>
+          )}
+
+          <Button
+            onClick={handleSimulateTestMessage}
+            loading={simulating}
+            variant="outline"
+            className="!text-xs !py-1.5 !px-3 font-bold !border-purple-200 text-purple-700 hover:!bg-purple-50 cursor-pointer"
+          >
+            <Sparkles size={14} className="mr-1.5 text-purple-600" /> টেস্ট মেসেজ পাঠান
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row h-[650px] divide-y md:divide-y-0 md:divide-x divide-slate-100">
@@ -792,7 +873,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
             {filteredConversations.length === 0 ? (
               <div className="text-center text-xs text-slate-400 p-8 space-y-2">
                 <MessageSquare size={32} className="mx-auto opacity-30 text-slate-400" />
-                <p>কোনো বার্তা পাওয়া যায়নি। উপরে &quot;টেস্ট মেসেজ সিমুলেশন&quot; চাপুন।</p>
+                <p>কোনো বার্তা পাওয়া যায়নি। উপরে &quot;টেস্ট মেসেজ পাঠান&quot; চাপুন।</p>
               </div>
             ) : (
               filteredConversations.map(conv => {
@@ -933,7 +1014,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused }) {
                     className="flex-1 p-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none transition-colors"
                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   />
-                  <Button onClick={handleSend} loading={sending} className="!p-3 !bg-purple-600 text-white">
+                  <Button onClick={handleSend} loading={sending} className="!p-3 !bg-purple-600 text-white cursor-pointer">
                     <Send size={16} />
                   </Button>
                 </div>
@@ -1032,7 +1113,7 @@ function CommentsAutomationSection({ shopId }) {
         icon={MessageSquare}
         footer={
           <div className="flex justify-end">
-            <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
+            <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs cursor-pointer">
               রুল সংরক্ষণ করুন
             </Button>
           </div>
@@ -1209,10 +1290,10 @@ function LeadsSection({ shopId, leads }) {
       icon={Users}
       headerRight={
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={exportCsv} className="!text-xs !py-1.5 !px-3 font-bold">
+          <Button variant="outline" onClick={exportCsv} className="!text-xs !py-1.5 !px-3 font-bold cursor-pointer">
             <Download size={13} className="mr-1" /> CSV এক্সপোর্ট
           </Button>
-          <Button onClick={() => setShowAddModal(true)} className="!bg-purple-600 text-white !text-xs !py-1.5 !px-3 font-bold">
+          <Button onClick={() => setShowAddModal(true)} className="!bg-purple-600 text-white !text-xs !py-1.5 !px-3 font-bold cursor-pointer">
             <Plus size={13} className="mr-1" /> ম্যানুয়াল লিড
           </Button>
         </div>
@@ -1272,11 +1353,11 @@ function LeadsSection({ shopId, leads }) {
 
       {/* Manual Lead Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-100">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-100 animate-scale-in">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="text-base font-black text-slate-900">ম্যানুয়াল লিড যুক্ত করুন</h3>
-              <button onClick={() => setShowAddModal(false)}><X size={18} /></button>
+              <button onClick={() => setShowAddModal(false)} className="cursor-pointer"><X size={18} /></button>
             </div>
             <div className="space-y-3">
               <input
@@ -1304,7 +1385,7 @@ function LeadsSection({ shopId, leads }) {
                 <option value="facebook">ফেসবুক</option>
               </select>
             </div>
-            <Button onClick={handleCreateLead} loading={addingLead} className="w-full !bg-purple-600 text-white font-black text-xs">
+            <Button onClick={handleCreateLead} loading={addingLead} className="w-full !bg-purple-600 text-white font-black text-xs cursor-pointer">
               লিড সেভ করুন
             </Button>
           </div>
@@ -1423,7 +1504,7 @@ function SavedRepliesSection({ shopId }) {
               className="text-xs p-2.5 bg-white border border-slate-200 rounded-xl outline-none"
             />
             <div className="md:col-span-3 flex justify-end">
-              <Button onClick={handleAdd} loading={saving} className="!bg-purple-600 text-white text-xs font-bold !py-2 !px-4">
+              <Button onClick={handleAdd} loading={saving} className="!bg-purple-600 text-white text-xs font-bold !py-2 !px-4 cursor-pointer">
                 <Plus size={14} className="mr-1" /> নতুন রিপ্লাই যোগ করুন
               </Button>
             </div>
@@ -1443,7 +1524,7 @@ function SavedRepliesSection({ shopId }) {
                 </div>
                 <button
                   onClick={() => handleDelete(idx)}
-                  className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg transition-colors"
+                  className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg transition-colors cursor-pointer"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -1511,7 +1592,7 @@ function KnowledgeBaseSection({ shopId }) {
       icon={BookOpen}
       footer={
         <div className="flex justify-end">
-          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
+          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs cursor-pointer">
             নলেজবেস সংরক্ষণ করুন
           </Button>
         </div>
@@ -1549,47 +1630,146 @@ function KnowledgeBaseSection({ shopId }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 7. WEBSITE LIVE CHAT INTEGRATION
+// 7. STOREFRONT LIVE CHAT (AUTO-ACTIVE WITH NO CODE REQUIREMENT)
 // ─────────────────────────────────────────────────────────────────────
 
-function WebsiteChatConfigSection({ shopId }) {
-  const [copied, setCopied] = useState(false);
-  const embedCode = `<script src="https://bdretailers.com/embed-chat.js" data-shop="${shopId}" async></script>`;
+function WebsiteChatConfigSection({ shopId, shopData }) {
+  const [chatEnabled, setChatEnabled] = useState(true);
+  const [botName, setBotName] = useState('Bazar Bot');
+  const [welcomeMsg, setWelcomeMsg] = useState('আসসালামু আলাইকুম! কোনো পণ্য বা ডেলিভারি সম্পর্কে জানতে মেসেজ দিন। 😊');
+  const [saving, setSaving] = useState(false);
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(embedCode);
-    setCopied(true);
-    toast.success('এমবেড কোড কপি করা হয়েছে!');
-    setTimeout(() => setCopied(false), 2000);
+  useEffect(() => {
+    if (!shopId) return;
+    const fetchChatConfig = async () => {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch(`/api/social/settings?shopId=${shopId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.settings?.aiSettings) {
+          const ai = data.settings.aiSettings;
+          if (ai.chatEnabled !== undefined) setChatEnabled(ai.chatEnabled);
+          if (ai.botName) setBotName(ai.botName);
+          if (ai.welcomeMsg) setWelcomeMsg(ai.welcomeMsg);
+        }
+      } catch (err) {}
+    };
+    fetchChatConfig();
+  }, [shopId]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      await fetch('/api/social/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          aiSettings: {
+            chatEnabled,
+            botName: botName.trim(),
+            welcomeMsg: welcomeMsg.trim()
+          }
+        })
+      });
+      toast.success('স্টোর লাইভ চ্যাট সেটিংস সংরক্ষিত হয়েছে!');
+    } catch (err) {
+      toast.error('সংরক্ষণে সমস্যা হয়েছে');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const storeUrl = shopId === 'main' ? '/' : `/shop/${shopData?.slug || shopId}`;
 
   return (
     <div className="space-y-6">
-      <Card title="ওয়েবসাইট লাইভ চ্যাট উইজেট (Website Live Chat)" icon={Globe}>
-        <div className="space-y-4 pt-1">
-          <p className="text-xs text-slate-600 font-medium leading-relaxed">
-            আপনার অনলাইন স্টোর বা ব্যক্তিগত ওয়েবসাইটে লাইভ চ্যাট উইজেট যুক্ত করুন। ওয়েবসাইটে কাস্টমার চ্যাট করলে তা সরাসরি এই সোশ্যাল হাবের <strong>লাইভ ইনবক্সে</strong> চলে আসবে এবং Agnes 3.0 Flash স্বয়ংক্রিয়ভাবে উত্তর দেবে।
-          </p>
+      <Card 
+        title="অনলাইন স্টোর লাইভ চ্যাট কন্ট্রোল (Website Live Chat)" 
+        icon={Globe}
+        footer={
+          <div className="flex justify-between items-center">
+            <a 
+              href={storeUrl} 
+              target="_blank" 
+              rel="noreferrer"
+              className="text-xs font-bold text-purple-700 hover:text-purple-800 flex items-center gap-1"
+            >
+              <ExternalLink size={14} /> নিজের স্টোরে লাইভ চ্যাট দেখুন
+            </a>
+            <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs cursor-pointer">
+              সেটিংস সংরক্ষণ করুন
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-5 pt-1">
+          {/* Automatic Active Status Banner */}
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <Check size={18} />
+            </div>
+            <div className="space-y-1 text-xs">
+              <p className="font-black text-emerald-950 text-sm">
+                লাইভ চ্যাট স্ট্যাটাস: আপনার অনলাইন স্টোরে স্বয়ংক্রিয়ভাবে সক্রিয় 🟢
+              </p>
+              <p className="text-emerald-800 leading-relaxed">
+                আপনার কোনো কোড কপি বা পরিবর্তন করার দরকার নেই! প্রতিটি রিটেইলার শপে লাইভ চ্যাট উইজেট স্থায়ীভাবে ইনস্টল্ড। গ্রাহক আপনার স্টোর ভিজিট করে প্রশ্ন করা মাত্রই তা সরাসরি আপনার এই সোশ্যাল হাবের <strong>লাইভ ইনবক্সে</strong> চলে আসবে।
+              </p>
+            </div>
+          </div>
 
-          <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl space-y-2">
-            <span className="text-[10px] font-black uppercase text-purple-900 tracking-wider">
-              এক ক্লিকে এমবেড কোড
-            </span>
-            <div className="flex items-center gap-2">
+          {/* Toggle Active */}
+          <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <div className="space-y-0.5">
+              <h4 className="text-xs font-black text-slate-900">স্টোরে লাইভ চ্যাট উইজেট দৃশ্যমান রাখুন</h4>
+              <p className="text-[11px] text-slate-500 font-medium">
+                অনলাইন স্টোরের ডান পাশে ভাসমান চ্যাট বাটনটি গ্রাহকদের দেখাবে।
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setChatEnabled(!chatEnabled)}
+              className={clsx(
+                'w-12 h-6 rounded-full transition-colors relative cursor-pointer',
+                chatEnabled ? 'bg-purple-600' : 'bg-slate-300'
+              )}
+            >
+              <span className={clsx(
+                'w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform shadow-sm',
+                chatEnabled ? 'left-6.5' : 'left-0.5'
+              )} />
+            </button>
+          </div>
+
+          {/* Bot Name & Greeting */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-800 block">চ্যাট অ্যাসিস্ট্যান্টের নাম</label>
               <input
                 type="text"
-                readOnly
-                value={embedCode}
-                className="flex-1 p-3 text-xs font-mono bg-white border border-purple-200 rounded-xl select-all outline-none"
+                value={botName}
+                onChange={e => setBotName(e.target.value)}
+                placeholder="Bazar Bot"
+                className="w-full text-xs font-bold p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
               />
-              <Button onClick={copyCode} className="!bg-purple-600 text-white shrink-0 font-bold text-xs">
-                {copied ? <CheckCheck size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
-                {copied ? 'কপি হয়েছে' : 'কপি করুন'}
-              </Button>
             </div>
-            <p className="text-[10px] text-purple-700">
-              এই কোডটি আপনার স্টোরের HTML-এর &lt;body&gt; ট্যাগের ঠিক আগে পেস্ট করে দিন।
-            </p>
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-slate-800 block">প্রথম স্বাগত বার্তা (Greeting)</label>
+              <input
+                type="text"
+                value={welcomeMsg}
+                onChange={e => setWelcomeMsg(e.target.value)}
+                placeholder="আসসালামু আলাইকুম! কোনো পণ্য বা ডেলিভারি সম্পর্কে জানতে মেসেজ দিন।"
+                className="w-full text-xs font-bold p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
+              />
+            </div>
           </div>
         </div>
       </Card>
@@ -1654,7 +1834,7 @@ function AgentDeskSection({ shopId }) {
       icon={Bot}
       footer={
         <div className="flex justify-end">
-          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs">
+          <Button onClick={handleSave} loading={saving} className="!bg-purple-600 text-white font-black text-xs cursor-pointer">
             সংরক্ষণ করুন
           </Button>
         </div>
@@ -1804,7 +1984,7 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                   variant="outline"
                   onClick={() => handleDisconnect(fbConnection.pageId || fbConnection.id)}
                   loading={disconnecting}
-                  className="w-full !border-red-200 !text-red-600 hover:!bg-red-50 text-xs font-black"
+                  className="w-full !border-red-200 !text-red-600 hover:!bg-red-50 text-xs font-black cursor-pointer"
                 >
                   <Trash2 size={14} className="mr-1.5" /> ডিসকানেক্ট করুন
                 </Button>
@@ -1844,7 +2024,7 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                 <Button
                   onClick={handleConnectFacebook}
                   loading={connecting}
-                  className="w-full !bg-blue-600 hover:!bg-blue-700 text-white font-black text-xs"
+                  className="w-full !bg-blue-600 hover:!bg-blue-700 text-white font-black text-xs cursor-pointer"
                 >
                   Facebook পেজ কানেক্ট করুন
                 </Button>
@@ -1901,7 +2081,7 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                     setCopiedUrl(true);
                     setTimeout(() => setCopiedUrl(false), 2000);
                   }}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold"
+                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold cursor-pointer"
                 >
                   {copiedUrl ? <Check size={14} /> : <Copy size={14} />}
                 </button>
@@ -1923,7 +2103,7 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                     setCopiedToken(true);
                     setTimeout(() => setCopiedToken(false), 2000);
                   }}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold"
+                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold cursor-pointer"
                 >
                   {copiedToken ? <Check size={14} /> : <Copy size={14} />}
                 </button>
@@ -1937,7 +2117,7 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 10. SETUP CHECKLIST (১/৮ PROGRESS)
+// 10. SETUP CHECKLIST (১/৭ PROGRESS)
 // ─────────────────────────────────────────────────────────────────────
 
 function SetupChecklistSection({ hasFb, onNavigate }) {
@@ -1947,9 +2127,8 @@ function SetupChecklistSection({ hasFb, onNavigate }) {
     { title: '৩. বিজনেস নলেজবেস পূর্ণ করুন', desc: 'ডেলিভারি চার্জ ও রিটার্ন পলিসি যুক্ত করুন', done: true, action: () => onNavigate('knowledge') },
     { title: '৪. সেভড রিপ্লাই শর্টকাট তৈরি করুন', desc: '#bkash, #delivery ম্যাক্রোস তৈরি করুন', done: true, action: () => onNavigate('saved_replies') },
     { title: '৫. AI সেলসম্যান টোন বাছাই করুন', desc: 'বন্ধুত্বপূর্ণ বা ফর্মাল কথা বলার স্টাইল নির্ধারণ করুন', done: true, action: () => onNavigate('agent_desk') },
-    { title: '৬. ওয়েবসাইট চ্যাট উইজেট এমবেড করুন', desc: 'স্টোরে লাইভ চ্যাট কোড বসান', done: true, action: () => onNavigate('website_chat') },
-    { title: '৭. টেস্ট মেসেজ সিমুলেট করুন', desc: 'ইনবক্সে টেস্ট মেসেজ পাঠিয়ে রোবটের উত্তর যাচাই করুন', done: true, action: () => onNavigate('inbox') },
-    { title: '৮. রিয়েল কাস্টমার চ্যাট গ্রহণ করুন', desc: 'ফেসবুক পেজ ও ওয়েবসাইটে লাইভ যান', done: false, action: () => onNavigate('inbox') },
+    { title: '৬. টেস্ট মেসেজ পাঠান', desc: 'ইনবক্সে টেস্ট মেসেজ পাঠিয়ে রোবটের উত্তর যাচাই করুন', done: true, action: () => onNavigate('inbox') },
+    { title: '৭. রিয়েল কাস্টমার চ্যাট গ্রহণ করুন', desc: 'ফেসবুক পেজ ও ওয়েবসাইটে লাইভ যান', done: false, action: () => onNavigate('inbox') },
   ];
 
   return (
@@ -1979,7 +2158,262 @@ function SetupChecklistSection({ hasFb, onNavigate }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 11. REMAINING ANCILLARY SECTIONS (BILLING, ORDERS, ACTIVITY, ETC.)
+// 11. TEAM MANAGEMENT (REAL & SECURE API BACKED)
+// ─────────────────────────────────────────────────────────────────────
+
+function TeamManagementSection({ shopId }) {
+  const [team, setTeam] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState('agent');
+  const [adding, setAdding] = useState(false);
+
+  const fetchTeam = async () => {
+    if (!shopId) return;
+    try {
+      setLoading(true);
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      const res = await fetch(`/api/social/team?shopId=${shopId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.team) {
+        setTeam(data.team);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch team:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeam();
+  }, [shopId]);
+
+  const handleAddMember = async () => {
+    if (!name.trim() || !email.trim()) {
+      toast.error('নাম এবং ইমেইল দিন');
+      return;
+    }
+    setAdding(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/social/team', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          role,
+          permissions: role === 'manager' ? ['chat_reply', 'leads_view', 'orders_view'] : ['chat_reply']
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'সদস্য যোগ করতে ব্যর্থ');
+
+      toast.success('টিম মেম্বার সফলভাবে যুক্ত হয়েছেন! 🎉');
+      setName('');
+      setEmail('');
+      setPhone('');
+      setShowAddModal(false);
+      fetchTeam();
+    } catch (err) {
+      toast.error(err.message || 'ত্রুটি ঘটেছে');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const toggleMemberStatus = async (memberId, currentStatus) => {
+    const nextStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/social/team', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          memberId,
+          status: nextStatus
+        })
+      });
+      if (res.ok) {
+        toast.success(nextStatus === 'active' ? 'সদস্য সক্রিয় করা হয়েছে 🟢' : 'সদস্য নিষ্ক্রিয় করা হয়েছে ⏸️');
+        fetchTeam();
+      }
+    } catch (err) {
+      toast.error('স্ট্যাটাস আপডেট ব্যর্থ');
+    }
+  };
+
+  const handleDeleteMember = async (memberId) => {
+    if (!confirm('আপনি কি এই টিম মেম্বারকে অপসারিত করতে চান?')) return;
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/social/team?shopId=${shopId}&memberId=${memberId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('টিম মেম্বার অপসারিত হয়েছে');
+        fetchTeam();
+      }
+    } catch (err) {
+      toast.error('অপসারণ ব্যর্থ');
+    }
+  };
+
+  return (
+    <Card 
+      title="চ্যাট সাপোর্ট টিম ও সাবমাস্টার ম্যানেজমেন্ট" 
+      icon={UserCheck}
+      headerRight={
+        <Button onClick={() => setShowAddModal(true)} className="!bg-purple-600 text-white !text-xs !py-1.5 !px-3 font-bold cursor-pointer">
+          <Plus size={13} className="mr-1" /> টিম মেম্বার যোগ করুন
+        </Button>
+      }
+    >
+      <div className="space-y-4 pt-1">
+        <p className="text-xs text-slate-600 font-medium">
+          আপনার দোকানের যেসকল কর্মী ইনবক্সে কাস্টমারদের সাথে সরাসরি চ্যাট করতে পারবেন তাদেরকে এখানে যুক্ত করুন:
+        </p>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-slate-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                <th className="pb-3">নাম</th>
+                <th className="pb-3">ইমেইল</th>
+                <th className="pb-3">ফোন</th>
+                <th className="pb-3">রোল (Role)</th>
+                <th className="pb-3">স্ট্যাটাস</th>
+                <th className="pb-3 text-right">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="6" className="py-8 text-center"><Loader2 className="animate-spin inline text-purple-600" size={24} /></td></tr>
+              ) : team.length === 0 ? (
+                <tr><td colSpan="6" className="py-10 text-center text-slate-400">কোনো টিম মেম্বার এখনো যুক্ত করা হয়নি। উপরে &quot;টিম মেম্বার যোগ করুন&quot; বাটনে চাপুন।</td></tr>
+              ) : (
+                team.map(m => (
+                  <tr key={m.id} className="border-b border-slate-50 hover:bg-slate-50/50">
+                    <td className="py-3 font-bold text-slate-900">{m.name}</td>
+                    <td className="py-3 font-mono text-slate-600">{m.email}</td>
+                    <td className="py-3 font-mono text-slate-500">{m.phone || 'N/A'}</td>
+                    <td className="py-3">
+                      <span className={clsx(
+                        'px-2 py-0.5 rounded-md text-[10px] font-black uppercase',
+                        m.role === 'manager' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700'
+                      )}>
+                        {m.role === 'manager' ? 'ম্যানেজার' : 'এজেন্ট'}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <button
+                        onClick={() => toggleMemberStatus(m.id, m.status)}
+                        className={clsx(
+                          'px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-colors',
+                          m.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        )}
+                      >
+                        {m.status === 'active' ? 'Active 🟢' : 'Suspended ⏸️'}
+                      </button>
+                    </td>
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={() => handleDeleteMember(m.id)}
+                        className="text-slate-400 hover:text-red-600 p-1 rounded-lg transition-colors cursor-pointer"
+                        title="মুছে ফেলুন"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Add Member Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/70 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-100 animate-scale-in">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-black text-slate-900">নতুন টিম মেম্বার যুক্ত করুন</h3>
+              <button onClick={() => setShowAddModal(false)} className="cursor-pointer"><X size={18} /></button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">সদস্যের নাম *</label>
+                <input
+                  type="text"
+                  placeholder="যেমনঃ মোঃ করিম"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">ইমেইল অ্যাড্রেস *</label>
+                <input
+                  type="email"
+                  placeholder="staff@gmail.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">ফোন নম্বর (ঐচ্ছিক)</label>
+                <input
+                  type="text"
+                  placeholder="01700000000"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">রোল (অ্যাক্সেস লেভেল)</label>
+                <select
+                  value={role}
+                  onChange={e => setRole(e.target.value)}
+                  className="w-full text-xs p-3 rounded-xl border border-slate-200 outline-none"
+                >
+                  <option value="agent">এজেন্ট (শুধু চ্যাট রিপ্লাই দিতে পারবে)</option>
+                  <option value="manager">ম্যানেজার (চ্যাট, লিড ও অর্ডার দেখতে পারবে)</option>
+                </select>
+              </div>
+            </div>
+            <Button onClick={handleAddMember} loading={adding} className="w-full !bg-purple-600 text-white font-black text-xs cursor-pointer">
+              টিম মেম্বার সেভ করুন
+            </Button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 12. REMAINING SECTIONS (BILLING, NOTIFICATIONS, ORDERS, ETC.)
 // ─────────────────────────────────────────────────────────────────────
 
 function BillingSection() {
@@ -2125,33 +2559,6 @@ function SocialPostsSection({ shopId, hasFb }) {
   );
 }
 
-function TeamManagementSection({ shopId }) {
-  return (
-    <Card title="চ্যাট সাপোর্ট টিম ও সাবমাস্টার" icon={UserCheck}>
-      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
-        <p className="font-bold text-slate-800">হিউম্যান টেকওভার এজেন্ট:</p>
-        <p className="text-slate-600">
-          আপনার দোকানের যেসকল স্টাফ ইনবক্সে রিপ্লাই দেওয়ার অনুমতি পাবে তাদের পরিচালনা করুন।
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-function VideoGuideSection() {
-  return (
-    <Card title="সোশ্যাল হাব ভিডিও গাইড ও টিউটোরিয়াল" icon={Video}>
-      <div className="p-6 bg-slate-900 text-white rounded-2xl space-y-3">
-        <span className="px-2.5 py-1 bg-purple-500/20 text-purple-300 rounded-full text-[10px] font-black uppercase">ভিডিও গাইড</span>
-        <h4 className="text-sm font-black">Meta Page Access Token বের করার সহজ পদ্ধতি</h4>
-        <p className="text-xs text-slate-400">
-          ১. Meta for Developers-এ লগইন করুন &gt; ২. Graph API Explorer খুলুন &gt; ৩. পেজ সিলেক্ট করে Token জেনারেট করে কপি করুন।
-        </p>
-      </div>
-    </Card>
-  );
-}
-
 function FeedbackSection({ shopId }) {
   const [feedback, setFeedback] = useState('');
   const [sending, setSending] = useState(false);
@@ -2176,7 +2583,7 @@ function FeedbackSection({ shopId }) {
           placeholder="সোশ্যাল হাবকে আরও উন্নত করতে আপনার কি কোনো পরামর্শ আছে? এখানে লিখুন..."
           className="w-full text-xs font-bold p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white outline-none"
         />
-        <Button onClick={handleSubmit} loading={sending} className="!bg-purple-600 text-white text-xs font-bold">
+        <Button onClick={handleSubmit} loading={sending} className="!bg-purple-600 text-white text-xs font-bold cursor-pointer">
           মতামত পাঠান
         </Button>
       </div>

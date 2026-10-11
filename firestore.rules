@@ -195,6 +195,20 @@ service cloud.firestore {
       match /private_configs/{configId} {
         allow read, write: if isShopOwner(shopId);
       }
+
+      // Social Hub & Omnichannel Sub-collections
+      match /conversations/{convId} {
+        allow read, write: if isShopAdmin(shopId);
+      }
+
+      match /leads/{leadId} {
+        allow read, write: if isShopAdmin(shopId);
+      }
+
+      match /team/{teamId} {
+        allow read: if isShopAdmin(shopId);
+        allow write: if isShopOwner(shopId) || isSuperAdmin();
+      }
     }
     
     // ── System Logs & Broadcasts ──────────────────────────────────
@@ -206,6 +220,19 @@ service cloud.firestore {
     match /broadcasts/{broadcastId} {
       allow read: if isAuthenticated();
       allow write: if isSuperAdmin();
+    }
+
+    match /social_connections/{connId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin();
+    }
+
+    match /{path=**}/conversations/{convId} {
+      allow read: if isSuperAdmin();
+    }
+
+    match /{path=**}/leads/{leadId} {
+      allow read: if isSuperAdmin();
     }
 
     // ── Server-Managed Collections (Admin SDK only) ──────────

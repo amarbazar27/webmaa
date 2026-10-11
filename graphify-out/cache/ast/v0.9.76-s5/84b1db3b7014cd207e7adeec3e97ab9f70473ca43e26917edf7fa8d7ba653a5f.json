@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_flutter_app_template_android_settings_gradle", "label": "settings.gradle", "file_type": "code", "source_file": "flutter_app_template/android/settings.gradle", "source_location": "L1"}], "edges": [], "raw_calls": [], "parse_errors": {"first_error_line": 9, "multiline_error": false}}

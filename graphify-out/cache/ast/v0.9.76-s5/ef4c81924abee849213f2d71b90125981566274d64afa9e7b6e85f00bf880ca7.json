@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_agents_skills_geo_optimizer_ai_context_chatgpt_instructions_md", "label": "chatgpt-instructions.md", "file_type": "document", "node_kind": "page", "source_file": ".agents/skills/geo-optimizer/ai-context/chatgpt-instructions.md", "source_location": "L1"}], "edges": [], "raw_calls": [], "input_tokens": 0, "output_tokens": 0}

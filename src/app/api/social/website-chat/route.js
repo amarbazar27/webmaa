@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { adminDb, FieldValue } from '@/lib/firebase-admin';
+import { createRateLimiter } from '@/lib/rate-limit';
+
+// Security: Rate limit public chat endpoint (25 requests per minute per IP)
+const chatLimiter = createRateLimiter({ maxRequests: 25, windowMs: 60000, prefix: 'website_chat' });
 
 // Helper: Call Vyce AI (Agnes 3.0 Flash) with shop catalog RAG context
 async function getAiReply(messages, shopContext) {
@@ -18,7 +22,7 @@ async function getAiReply(messages, shopContext) {
           { role: 'system', content: shopContext },
           ...messages
         ],
-        max_tokens: 500,
+        max_tokens: 450,
         temperature: 0.7
       })
     });
@@ -32,16 +36,32 @@ async function getAiReply(messages, shopContext) {
 
 export async function POST(request) {
   try {
+    // 1. Rate Limiting by Client IP
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const { limited } = await chatLimiter.check(clientIp);
+    if (limited) {
+      return NextResponse.json({ error: 'খুব দ্রুত মেসেজ পাঠানো হচ্ছে। কিছুক্ষণ অপেক্ষা করুন।' }, { status: 429 });
+    }
+
+    const contentType = request.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return NextResponse.json({ error: 'Invalid content type' }, { status: 400 });
+    }
+
     const body = await request.json();
     const { shopId = 'main', visitorId, visitorName = 'কাস্টমার', visitorPhone, message } = body;
 
-    if (!visitorId || !message?.trim()) {
+    if (!visitorId || typeof visitorId !== 'string' || !message?.trim() || typeof message !== 'string') {
       return NextResponse.json({ error: 'visitorId এবং message প্রয়োজন' }, { status: 400 });
     }
 
-    const cleanMsg = message.trim();
+    // Input Sanitization (Anti-XSS and Buffer Flooding)
+    const cleanMsg = message.trim().slice(0, 1000);
+    const cleanName = (visitorName || 'কাস্টমার').trim().slice(0, 100);
+    const cleanPhone = visitorPhone ? String(visitorPhone).replace(/[^0-9+]/g, '').slice(0, 20) : null;
+    const cleanVisitorId = visitorId.trim().slice(0, 100);
 
-    // 1. Fetch shop & settings
+    // 2. Fetch shop & settings
     let shopName = 'BD Retailers';
     let deliveryInfo = '';
     let customPrompt = '';
@@ -60,23 +80,22 @@ export async function POST(request) {
       }
     }
 
-    // 2. Load or initialize conversation
-    const convRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(visitorId);
+    // 3. Load or initialize conversation document
+    const convRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(cleanVisitorId);
     const convDoc = await convRef.get();
     let convData = convDoc.exists ? convDoc.data() : {
       platform: 'website',
-      senderName: visitorName,
-      senderPsid: visitorId,
-      phone: visitorPhone || null,
+      senderName: cleanName,
+      senderPsid: cleanVisitorId,
+      phone: cleanPhone || null,
       messages: [],
       aiPaused: false,
       shopId,
       createdAt: new Date().toISOString()
     };
 
-    // If customer provided a phone number, update it
-    if (visitorPhone && !convData.phone) {
-      convData.phone = visitorPhone;
+    if (cleanPhone && !convData.phone) {
+      convData.phone = cleanPhone;
     }
 
     // Check if human handoff is currently active for this chat
@@ -97,30 +116,32 @@ export async function POST(request) {
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
 
-    // 3. Capture / update lead
-    await adminDb.collection('shops').doc(shopId).collection('leads').doc(visitorId).set({
-      name: visitorName,
-      phone: visitorPhone || convData.phone || 'N/A',
+    // 4. Capture / update lead
+    await adminDb.collection('shops').doc(shopId).collection('leads').doc(cleanVisitorId).set({
+      name: cleanName,
+      phone: cleanPhone || convData.phone || 'N/A',
       source: 'website_chat',
-      fbId: visitorId,
+      fbId: cleanVisitorId,
       message: cleanMsg,
       status: 'new',
       createdAt: FieldValue.serverTimestamp(),
       shopId
     }, { merge: true });
 
-    // 4. Generate AI response if not paused
+    // 5. Generate AI response if not paused
     let aiReply = null;
     if (!chatPaused) {
-      // Build product catalog RAG context
-      const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(30).get();
+      // Build product catalog RAG context (Limit 25 items to stay lean and fast)
+      const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(25).get();
       let productList = '';
       productsSnapshot.forEach(doc => {
         const p = doc.data();
-        productList += `- ${p.name || ''}: ৳${p.price || ''}\n`;
+        if (p.name && p.price) {
+          productList += `- ${p.name}: ৳${p.price}\n`;
+        }
       });
 
-      const shopContext = `তুমি ${shopName}-এর ওয়েবসাইট লাইভ চ্যাট সেলস এক্সিকিউটিভ। বাংলায় অত্যন্ত বিনয়ী, স্মার্ট ও সংক্ষিপ্ত উত্তর দাও।\nপণ্য তালিকা:\n${productList}\nডেলিভারি সংক্রান্ত:\n${deliveryInfo}\nবিজনেস প্রশ্নোত্তর ও নিয়মাবলী:\n${knowledgeBase}\n${customPrompt}`;
+      const shopContext = `তুমি ${shopName}-এর ওয়েবসাইট লাইভ চ্যাট সেলস এক্সিকিউটিভ। বাংলায় অত্যন্ত বিনয়ী, স্মার্ট ও সংক্ষিপ্ত উত্তর দাও।\nপণ্য তালিকা:\n${productList}\nডেলিভারি তথ্য:\n${deliveryInfo}\nনিয়মাবলী ও পলিসি:\n${knowledgeBase}\n${customPrompt}`;
 
       const aiMessages = convData.messages.slice(-8).map(m => ({
         role: m.role === 'retailer' ? 'assistant' : m.role,

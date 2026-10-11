@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_agent_skills_wait_what_skill_md", "label": "SKILL.md", "file_type": "document", "node_kind": "page", "source_file": "agent/skills/wait-what/SKILL.md", "source_location": "L1", "frontmatter": {"description": "Stop. That last message did not land \u2014 re-pitch it."}}], "edges": [], "raw_calls": [], "input_tokens": 0, "output_tokens": 0}

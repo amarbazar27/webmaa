@@ -1457,6 +1457,27 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     setChatMessages(prev => [...prev, userMsg]);
     setChatInput('');
     setIsAiTyping(true);
+
+    // Sync to Social Hub Omnichannel Inbox & capture lead in real time
+    try {
+      const vKey = `bdr_visitor_${shop.id}`;
+      let vId = typeof window !== 'undefined' ? localStorage.getItem(vKey) : null;
+      if (!vId) {
+        vId = 'vis_' + Math.random().toString(36).substring(2, 10);
+        if (typeof window !== 'undefined') localStorage.setItem(vKey, vId);
+      }
+      fetch('/api/social/website-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shopId: shop.id,
+          visitorId: vId,
+          visitorName: user?.displayName || user?.name || 'স্টোর কাস্টমার',
+          visitorPhone: user?.phoneNumber || user?.phone || '',
+          message: text
+        })
+      }).catch(() => {});
+    } catch (syncErr) {}
     try {
       const resp = await fetch('/api/ai', {
         method: 'POST',

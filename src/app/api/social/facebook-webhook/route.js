@@ -86,9 +86,30 @@ async function getAiReply(messages, shopContext) {
   }
 }
 
+import crypto from 'crypto';
+
+function verifySignature(payload, signature) {
+  const secret = process.env.FACEBOOK_APP_SECRET;
+  if (!secret || !signature) return true; // bypass if secret not set
+  try {
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+    const incoming = signature.replace('sha256=', '');
+    return crypto.timingSafeEqual(Buffer.from(incoming, 'hex'), Buffer.from(expected, 'hex'));
+  } catch (err) {
+    return false;
+  }
+}
+
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const rawText = await request.text();
+    const signature = request.headers.get('x-hub-signature-256');
+    if (process.env.FACEBOOK_APP_SECRET && !verifySignature(rawText, signature)) {
+      console.warn('[Meta Webhook] Invalid HMAC SHA256 signature');
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const body = JSON.parse(rawText || '{}');
 
     if (body.object === 'page') {
       for (const entry of (body.entry || [])) {
