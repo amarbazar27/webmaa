@@ -210,6 +210,9 @@ export async function POST(request) {
               body: notifMessage.trim(),
             },
             data: {
+              title: senderName || 'BD Retailers',
+              body: notifMessage.trim(),
+              message: notifMessage.trim(),
               shopId: shopId || '',
               shopSlug: actualShopSlug || '',
               url: actualShopSlug ? `/shop/${actualShopSlug}` : '/',
@@ -312,6 +315,9 @@ export async function POST(request) {
                 body: notifMessage.trim() 
               },
               data: {
+                title: senderName || 'BD Retailers',
+                body: notifMessage.trim(),
+                message: notifMessage.trim(),
                 url: '/',
                 type: type || 'info',
               },

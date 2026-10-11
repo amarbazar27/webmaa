@@ -153,6 +153,8 @@ export async function getFCMToken(shopId = null, userId = null, retryCount = 0) 
 
   if (cached && !isStale) {
     log('✅ Using cached FCM token:', cached.substring(0, 20) + '...');
+    // Always sync with server in background to guarantee presence in global_fcm_tokens
+    syncTokenWithServer(cached, shopId, userId).catch(() => {});
     return cached;
   }
 
@@ -191,10 +193,8 @@ export async function getFCMToken(shopId = null, userId = null, retryCount = 0) 
     localStorage.setItem(FCM_TOKEN_KEY, token);
     localStorage.setItem(FCM_TOKEN_TS_KEY, Date.now().toString());
 
-    // Save to Firestore if shopId provided
-    if (shopId) {
-      await saveTokenToFirestore(token, shopId, userId);
-    }
+    // Register token with server (both shop and global_fcm_tokens)
+    await syncTokenWithServer(token, shopId, userId);
 
     // Setup foreground message handler
     setupForegroundHandler(messaging);
@@ -216,30 +216,50 @@ export async function getFCMToken(shopId = null, userId = null, retryCount = 0) 
 }
 
 /**
- * Save FCM token to Firestore for this shop's subscriber list.
- * Path: shops/{shopId}/fcmTokens/{token}
+ * Register FCM token with both the API route (global_fcm_tokens) and client Firestore
  */
-async function saveTokenToFirestore(token, shopId, userId) {
+async function syncTokenWithServer(token, shopId, userId) {
+  if (!token) return;
+
+  // 1. Call API route to save in global_fcm_tokens + shop fcmTokens
   try {
-    const { db } = await import('@/lib/firebase');
-    const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
-
-    await setDoc(
-      doc(db, 'shops', shopId, 'fcmTokens', token),
-      {
+    await fetch('/api/fcm-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         token,
-        userId: userId || null,
+        shopId: shopId || null,
         platform: getPlatformInfo(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        active: true,
-      },
-      { merge: true }
-    );
+        deviceModel: typeof navigator !== 'undefined' ? navigator.userAgent.substring(0, 100) : 'Browser',
+      }),
+    });
+    log('✅ FCM token registered via /api/fcm-token (global + shop)');
+  } catch (apiErr) {
+    warn('API /api/fcm-token sync warning:', apiErr.message);
+  }
 
-    log('✅ FCM token saved to Firestore');
-  } catch (e) {
-    warn('Failed to save FCM token to Firestore:', e.message);
+  // 2. Also save to client-side Firestore if shopId is provided
+  if (shopId) {
+    try {
+      const { db } = await import('@/lib/firebase');
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+
+      await setDoc(
+        doc(db, 'shops', shopId, 'fcmTokens', token),
+        {
+          token,
+          userId: userId || null,
+          platform: getPlatformInfo(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          active: true,
+        },
+        { merge: true }
+      );
+      log('✅ FCM token saved to shop Firestore');
+    } catch (e) {
+      warn('Failed to save FCM token to shop Firestore:', e.message);
+    }
   }
 }
 

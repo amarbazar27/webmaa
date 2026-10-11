@@ -7,6 +7,7 @@ import { X, Info, LogOut, Menu, Globe } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import NotificationInbox from '@/components/shared/NotificationInbox';
+import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import ImpersonationBadge from '@/components/shared/ImpersonationBadge';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/context/LanguageContext';
@@ -100,6 +101,7 @@ export default function DashboardLayout({ children }) {
               <LanguageToggle accent="purple" />
               <ThemeToggleButton size="sm" />
               <NotificationInbox shopId={userData?.activeShopId} isDashboard={true} />
+              <NotificationPermissionModal shopId={userData?.activeShopId} userId={user?.uid} />
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-black text-purple-600 dark:text-purple-400 shrink-0">
                 {userData?.name?.[0] || 'U'}
               </div>

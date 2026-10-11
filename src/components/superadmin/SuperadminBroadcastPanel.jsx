@@ -17,10 +17,10 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
   // ── Sent Box / History Broadcast State & Handlers ───────────────────────
   const [broadcasts, setBroadcasts] = useState([]);
   const [loadingBroadcasts, setLoadingBroadcasts] = useState(true);
+  const [sentFilter, setSentFilter] = useState('superadmin'); // 'superadmin' | 'all' | 'retailers'
 
   useEffect(() => {
     const unsub = subscribeBroadcasts((data) => {
-      // Superadmin sees all broadcast messages across platform
       setBroadcasts(data);
       setLoadingBroadcasts(false);
     }, (err) => {
@@ -29,6 +29,14 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
     });
     return () => unsub();
   }, []);
+
+  const filteredBroadcasts = useMemo(() => {
+    return broadcasts.filter(b => {
+      if (sentFilter === 'superadmin') return b.senderRole === 'superadmin' || !b.senderRole || b.senderRole === 'system';
+      if (sentFilter === 'retailers') return b.senderRole === 'retailer' || (b.shopId && b.senderRole !== 'superadmin');
+      return true;
+    });
+  }, [broadcasts, sentFilter]);
 
   const handleDeleteBroadcast = async (id) => {
     if (!confirm('আপনি কি নিশ্চিত যে আপনি এই নোটিফিকেশনটি মুছে ফেলতে চান? এটি কাস্টমারদের স্ক্রীন থেকেও মুছে যাবে।')) return;
@@ -598,15 +606,43 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
       {/* ── Sent Box Tab ────────────────────────────────────────────────── */}
       {tab === 'sent' && (
         <div className="space-y-6">
-          <div className="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <div>
-              <p className="text-xs font-black text-slate-800 flex items-center gap-1.5"><Send size={14} className="text-purple-600"/> প্রেরিত নোটিফিকেশন</p>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">সবচেয়ে নতুন নোটিফিকেশন সবার উপরে</p>
+              <p className="text-xs font-black text-slate-800 flex items-center gap-1.5"><Send size={14} className="text-purple-600"/> প্রেরিত নোটিফিকেশন ফিল্টার</p>
+              <div className="flex items-center gap-1.5 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setSentFilter('superadmin')}
+                  className={`px-3 py-1 rounded-xl text-[11px] font-black transition-all ${
+                    sentFilter === 'superadmin' ? 'bg-purple-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  🛡️ সুপারএডমিন ব্রডকাস্ট ({broadcasts.filter(b => b.senderRole === 'superadmin' || !b.senderRole || b.senderRole === 'system').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSentFilter('retailers')}
+                  className={`px-3 py-1 rounded-xl text-[11px] font-black transition-all ${
+                    sentFilter === 'retailers' ? 'bg-purple-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  🏪 রিটেইলার শপ ব্রডকাস্ট ({broadcasts.filter(b => b.senderRole === 'retailer' || (b.shopId && b.senderRole !== 'superadmin')).length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSentFilter('all')}
+                  className={`px-3 py-1 rounded-xl text-[11px] font-black transition-all ${
+                    sentFilter === 'all' ? 'bg-purple-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  সব ({broadcasts.length})
+                </button>
+              </div>
             </div>
-            {broadcasts.length > 0 && (
+            {filteredBroadcasts.length > 0 && (
               <button
                 onClick={handleClearAllBroadcasts}
-                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-black transition-all border border-red-100 flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-xs font-black transition-all border border-red-100 flex items-center gap-1.5 shadow-sm shrink-0"
               >
                 <Trash2 size={12} /> সব নোটিফিকেশন মুছুন
               </button>
@@ -618,30 +654,36 @@ export default function SuperadminBroadcastPanel({ shops = [] }) {
               <Loader2 className="animate-spin mx-auto text-slate-300 mb-3" size={24} />
               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">লোড হচ্ছে...</p>
             </div>
-          ) : broadcasts.length === 0 ? (
+          ) : filteredBroadcasts.length === 0 ? (
             <div className="py-20 text-center bg-slate-50 border border-dashed border-slate-200 rounded-3xl">
               <Bell className="mx-auto text-slate-300 mb-3" size={40} />
-              <p className="text-slate-400 text-xs font-black uppercase tracking-wider">কোনো নোটিফিকেশন পাঠানো হয়নি</p>
+              <p className="text-slate-400 text-xs font-black uppercase tracking-wider">এই ফিল্টারে কোনো নোটিফিকেশন নেই</p>
             </div>
           ) : (
             <div className="space-y-3.5 max-h-[450px] overflow-y-auto pr-1.5 custom-scrollbar">
-              {broadcasts.map((notif) => {
+              {filteredBroadcasts.map((notif) => {
                 const isWarning = notif.type === 'warning';
                 const isPromo = notif.type === 'promo';
                 const bgClass = isWarning ? 'bg-amber-50 border-amber-200' : isPromo ? 'bg-purple-50 border-purple-200' : 'bg-blue-50 border-blue-200';
                 const textClass = isWarning ? 'text-amber-800' : isPromo ? 'text-purple-800' : 'text-blue-800';
+                const isSuperadminSender = notif.senderRole === 'superadmin' || !notif.senderRole || notif.senderRole === 'system';
 
                 return (
                   <div key={notif.id} className={`p-5 rounded-3xl border shadow-sm relative overflow-hidden flex items-start justify-between gap-4 transition-all hover:shadow-md ${bgClass}`}>
                     <div className="space-y-1.5 flex-1 min-w-0 pr-8">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
                           notif.type === 'warning' ? 'bg-amber-100 text-amber-700' : notif.type === 'promo' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                         }`}>
                           {notif.type === 'warning' ? 'Warning' : notif.type === 'promo' ? 'Promo' : 'Info'}
                         </span>
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${
+                          isSuperadminSender ? 'bg-purple-100 text-purple-700' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {isSuperadminSender ? '🛡️ সুপারএডমিন প্রেরিত' : `🏪 শপ প্রেরিত: ${notif.shopId || notif.senderName || 'Retailer'}`}
+                        </span>
                         <span className="text-[9px] font-bold text-slate-400">
-                          Target: <strong className="text-slate-700">{notif.target === 'all' ? 'সবাই' : notif.target === 'retailers' ? 'রিটেইলার' : 'নির্দিষ্ট শপ'}</strong>
+                          Target: <strong className="text-slate-700">{notif.target === 'all' ? 'সবাই' : notif.target === 'retailers' ? 'রিটেইলার' : notif.shopId ? `শপ: ${notif.shopId}` : 'নির্দিষ্ট শপ'}</strong>
                         </span>
                       </div>
                       <p className={`text-sm font-bold leading-relaxed ${textClass} break-words`}>

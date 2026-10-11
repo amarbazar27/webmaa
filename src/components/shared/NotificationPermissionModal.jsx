@@ -29,12 +29,20 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
     if (typeof window === 'undefined') return;
     if (!isPushSupported()) return;
 
-    // ইতিমধ্যে browser-এ granted বা denied — modal দরকার নেই
+    // ইতিমধ্যে browser-এ granted বা denied
     const perm = getPermissionStatus();
-    if (perm === 'granted' || perm === 'denied') return;
+    if (perm === 'granted') {
+      // Already granted: background sync device token with server/global_fcm_tokens
+      getFCMToken(shopId, userId).catch(() => {});
+      return;
+    }
+    if (perm === 'denied') return;
 
     // User already clicked Allow
-    if (localStorage.getItem(ALLOWED_KEY)) return;
+    if (localStorage.getItem(ALLOWED_KEY)) {
+      getFCMToken(shopId, userId).catch(() => {});
+      return;
+    }
 
     // Check last asked time
     const lastAsked = localStorage.getItem(STORAGE_KEY);
@@ -46,7 +54,7 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
     // Page load-এর ৪ সেকেন্ড পরে দেখাও (সবার শেষে শান্তভাবে)
     const timer = setTimeout(() => setShow(true), 4000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [shopId, userId]);
 
   const handleContinue = async () => {
     setLoading(true);
@@ -56,9 +64,8 @@ export default function NotificationPermissionModal({ shopId = null, userId = nu
         if (result === 'granted') {
           localStorage.setItem(ALLOWED_KEY, '1');
           localStorage.removeItem(STORAGE_KEY);
-          if (shopId) {
-            await getFCMToken(shopId, userId);
-          }
+          // Always obtain and register token (both globally and for shop)
+          await getFCMToken(shopId, userId);
           setStep('success');
           setTimeout(() => setShow(false), 2000);
           setLoading(false);

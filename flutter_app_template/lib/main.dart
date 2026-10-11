@@ -29,13 +29,13 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void _showNotification(RemoteMessage message) async {
-  RemoteNotification? notification = message.notification;
-  AndroidNotification? android = message.notification?.android;
-  if (notification != null) {
+  String? title = message.notification?.title ?? message.data['title'] ?? 'BD Retailers';
+  String? body = message.notification?.body ?? message.data['body'] ?? message.data['message'];
+  if (body != null && body.trim().isNotEmpty) {
     flutterLocalNotificationsPlugin.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'bdretailers_channel',
@@ -54,6 +54,7 @@ void _showNotification(RemoteMessage message) async {
 
 Future<void> _registerDeviceToken() async {
   try {
+    // 1. Request FCM permission
     final settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
@@ -61,6 +62,12 @@ Future<void> _registerDeviceToken() async {
       provisional: false,
     );
     debugPrint("User notification permission: ${settings.authorizationStatus}");
+
+    // 2. Request Android 13+ runtime POST_NOTIFICATIONS permission
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
 
     // Get initial device FCM token
     final token = await FirebaseMessaging.instance.getToken();
@@ -124,6 +131,13 @@ void main() async {
     _firebaseInitialized = true;
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+    // Initialize local notifications plugin
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
     // Set up Android notification channel
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -136,7 +150,7 @@ void main() async {
           playSound: true,
           enableVibration: true,
         ));
-    debugPrint("Firebase initialized successfully.");
+    debugPrint("Firebase & Notifications initialized successfully.");
 
     // Automatically register device token with backend
     _registerDeviceToken();

@@ -5453,6 +5453,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         />
       )}
 
+      {/* 🔔 Notification Permission Prompt for Shop */}
+      <NotificationPermissionModal shopId={shop?.id} />
+
       <style dangerouslySetInnerHTML={{ __html: `
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         @keyframes marquee { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
