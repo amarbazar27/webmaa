@@ -3,7 +3,7 @@
 import { useAuth } from '@/context/AuthContext';
 import BroadcastPanel from '@/components/dashboard/BroadcastPanel';
 import { Card } from '@/components/ui';
-import { MailOpen } from 'lucide-react';
+import { Bell } from 'lucide-react';
 
 export default function BroadcastPage() {
   const { activeShopId } = useAuth();
@@ -20,11 +20,11 @@ export default function BroadcastPage() {
     <div className="max-w-4xl mx-auto space-y-8 animate-slide-in pb-12">
       <div>
         <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-          <MailOpen className="text-blue-600" size={32} />
-          ইমেইল ব্রডকাস্ট
+          <Bell className="text-blue-600" size={32} />
+          ব্রডকাস্ট ও পুশ নোটিফিকেশন সেন্টার
         </h1>
         <p className="text-sm text-slate-500 font-medium mt-1">
-          আপনার গ্রাহকদের নতুন অফার, প্রমোশন বা নোটিশ পাঠান।
+          আপনার অ্যাপ ব্যবহারকারী ও গ্রাহকদের ফোন স্ক্রিনে পুশ নোটিফিকেশন অথবা সরাসরি ইমেইল বার্তা পাঠান।
         </p>
       </div>
 

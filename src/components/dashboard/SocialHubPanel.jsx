@@ -2110,6 +2110,17 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
               </div>
             </div>
           </div>
+
+          <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 text-xs space-y-2">
+            <p className="font-black text-purple-900">📍 Meta Developer সাইটে কোথায় বসাবেন? (মাত্র ৫টি ধাপ):</p>
+            <ol className="list-decimal list-inside space-y-1.5 text-purple-800 font-medium">
+              <li><strong className="text-purple-950">developers.facebook.com/apps</strong>-এ গিয়ে আপনার অ্যাপে ক্লিক করুন।</li>
+              <li>বাম সাইডবারের <strong className="text-purple-950">Add Product</strong> থেকে <strong className="text-purple-950">Webhooks</strong>-এ <span className="font-bold underline">Set up</span> চাপুন।</li>
+              <li>পেজের একদম উপরে ড্রপডাউন থেকে <strong className="text-purple-950">Page</strong> সিলেক্ট করুন এবং <strong className="text-purple-950">Subscribe to this object</strong> বাটনে চাপুন।</li>
+              <li>পপ-আপ বক্সে উপরের <strong>Callback URL</strong> ও <strong>Verify Token</strong> পেস্ট করে <strong className="text-purple-950">Verify and Save</strong> বাটনে ক্লিক করুন।</li>
+              <li>নিচের তালিকা থেকে <strong className="text-purple-950">messages</strong> এবং <strong className="text-purple-950">feed</strong> ফিল্ডের ডানে <span className="font-bold underline">Subscribe</span> চাপুন। কাজ শেষ! 🎉</li>
+            </ol>
+          </div>
         </div>
       </Card>
     </div>
@@ -2308,7 +2319,25 @@ function TeamManagementSection({ shopId }) {
               {loading ? (
                 <tr><td colSpan="6" className="py-8 text-center"><Loader2 className="animate-spin inline text-purple-600" size={24} /></td></tr>
               ) : team.length === 0 ? (
-                <tr><td colSpan="6" className="py-10 text-center text-slate-400">কোনো টিম মেম্বার এখনো যুক্ত করা হয়নি। উপরে &quot;টিম মেম্বার যোগ করুন&quot; বাটনে চাপুন।</td></tr>
+                <tr>
+                  <td colSpan="6" className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+                        <UserCheck size={24} />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-slate-700">কোনো টিম মেম্বার এখনো যুক্ত করা হয়নি</p>
+                        <p className="text-xs text-slate-400 font-medium">ইনবক্সে কাস্টমারদের উত্তর দিতে আপনার সহকর্মীদের যুক্ত করুন</p>
+                      </div>
+                      <Button 
+                        onClick={() => setShowAddModal(true)} 
+                        className="!bg-purple-600 hover:!bg-purple-700 text-white !text-xs !py-2 !px-4 font-bold cursor-pointer mt-1"
+                      >
+                        <Plus size={14} className="mr-1.5" /> নতুন টিম মেম্বার যোগ করুন
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 team.map(m => (
                   <tr key={m.id} className="border-b border-slate-50 hover:bg-slate-50/50">

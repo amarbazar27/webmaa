@@ -60,8 +60,11 @@ export default function NotificationInbox({
           return !isDashboard;
         }
         
-        // 4. Global target 'all' or empty target (must NOT have a different shopId)
-        if (b.target === 'all' || !b.target) {
+        // 4. Global target 'all' or empty target
+        if (b.target === 'all') {
+          return true;
+        }
+        if (!b.target) {
           if (b.shopId && b.shopId !== shopId) return false;
           return true;
         }

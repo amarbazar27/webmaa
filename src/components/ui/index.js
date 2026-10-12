@@ -36,22 +36,24 @@ export const Button = ({
   );
 };
 
-export const Card = ({ children, className, title, subtitle, icon: Icon, footer }) => {
+export const Card = ({ children, className, title, subtitle, icon: Icon, footer, headerRight, action }) => {
+  const headerAction = headerRight || action;
   return (
     <div className={clsx('glass-panel overflow-hidden border-slate-100 bg-white shadow-sm', className)}>
-      {(title || subtitle || Icon) && (
-        <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {(title || subtitle || Icon || headerAction) && (
+        <div className="p-6 border-b border-slate-50 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
             {Icon && (
-              <div className="p-2.5 bg-purple-50 rounded-xl text-purple-600 border border-purple-100 shadow-sm">
+              <div className="p-2.5 bg-purple-50 rounded-xl text-purple-600 border border-purple-100 shadow-sm shrink-0">
                 <Icon size={20} />
               </div>
             )}
-            <div>
-              {title !== undefined && <h3 className="font-extrabold text-slate-900 text-lg tracking-tight leading-none">{title}</h3>}
+            <div className="min-w-0">
+              {title !== undefined && <h3 className="font-extrabold text-slate-900 text-lg tracking-tight leading-none truncate">{title}</h3>}
               {subtitle && <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1.5">{subtitle}</p>}
             </div>
           </div>
+          {headerAction && <div className="shrink-0">{headerAction}</div>}
         </div>
       )}
       <div className="p-6">{children}</div>

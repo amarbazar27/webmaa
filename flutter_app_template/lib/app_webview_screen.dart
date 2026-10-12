@@ -151,12 +151,10 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
             html, body {
               max-width: 100vw !important;
               width: 100% !important;
-              overflow-x: hidden !important;
-              overscroll-behavior-y: none !important;
-              overscroll-behavior-x: none !important;
-              overscroll-behavior: none !important;
+              overflow-x: clip !important;
+              touch-action: pan-y pinch-zoom !important;
+              -webkit-overflow-scrolling: touch !important;
               -webkit-tap-highlight-color: transparent !important;
-              -webkit-touch-callout: none !important;
             }
             ::-webkit-scrollbar {
               display: none !important;
@@ -220,7 +218,7 @@ class _AppWebViewScreenState extends State<AppWebViewScreen> with SingleTickerPr
                     transparentBackground: false,
                     verticalScrollBarEnabled: false,
                     horizontalScrollBarEnabled: false,
-                    overScrollMode: OverScrollMode.NEVER,
+                    overScrollMode: OverScrollMode.IF_CONTENT_SCROLLS,
                     disableDefaultErrorPage: true,
                     preferredContentMode: UserPreferredContentMode.MOBILE,
                   ),

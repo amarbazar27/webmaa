@@ -178,6 +178,21 @@ export async function POST(request) {
       return NextResponse.json({ error: 'বার্তা লিখুন' }, { status: 400 });
     }
 
+    let activeSenderName = senderName || 'BD Retailers';
+    let actualShopSlug = shopSlug || '';
+    if (shopId && adminDb) {
+      try {
+        const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+        if (shopDoc.exists) {
+          const sData = shopDoc.data();
+          activeSenderName = sData.shopName || activeSenderName;
+          actualShopSlug = sData.subdomainSlug || sData.shopSlug || actualShopSlug;
+        }
+      } catch (err) {
+        console.warn('[Broadcast] Error resolving shop details:', err.message);
+      }
+    }
+
     // Save notification to Firestore (for in-app banner)
     // For retailer notifications: always scope to shopId so only that shop's users see it
     // For superadmin: can target all, retailers only, or customers only
@@ -187,30 +202,50 @@ export async function POST(request) {
       target: senderRole === 'retailer' ? 'specific_shop' : (target || 'all'),
       senderRole: senderRole || 'system',
       shopId: shopId || null,
-      senderName: senderName || 'System',
+      senderName: activeSenderName,
       active: true,
       createdAt: FieldValue.serverTimestamp(),
     };
     await adminDb.collection('broadcasts').add(broadcastDoc);
 
+    // Save to history so retailer dashboard shows sent notification
+    if (shopId) {
+      try {
+        await adminDb.collection('broadcast_history').add({
+          shopId,
+          subject: notifMessage.trim(),
+          message: notifMessage.trim(),
+          type: type || 'info',
+          sentByName: activeSenderName,
+          senderRole: senderRole || 'retailer',
+          broadcastId: broadcastId || null,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      } catch (histErr) {}
+    }
+
     // Send FCM push notifications
     if (shopId) {
       // Scoped to a specific shop
       try {
-        const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-        const actualShopSlug = shopDoc.exists ? (shopDoc.data().subdomainSlug || shopDoc.data().shopSlug || shopSlug || '') : (shopSlug || '');
-        
         const tokensSnap = await adminDb.collection('shops').doc(shopId).collection('fcmTokens').get();
-        const tokens = tokensSnap.docs.map(d => d.id);
+        const tokenSet = new Set(tokensSnap.docs.map(d => d.id));
+
+        try {
+          const globalMatch = await adminDb.collection('global_fcm_tokens').where('shopId', '==', shopId).get();
+          globalMatch.docs.forEach(d => tokenSet.add(d.id));
+        } catch (gmErr) {}
+
+        const tokens = Array.from(tokenSet);
 
         if (tokens.length > 0) {
           const payload = {
             notification: {
-              title: senderName || 'BD Retailers',
+              title: activeSenderName,
               body: notifMessage.trim(),
             },
             data: {
-              title: senderName || 'BD Retailers',
+              title: activeSenderName,
               body: notifMessage.trim(),
               message: notifMessage.trim(),
               shopId: shopId || '',
@@ -222,6 +257,8 @@ export async function POST(request) {
               priority: 'high',
               notification: {
                 channelId: 'bdretailers_channel',
+                icon: 'ic_launcher',
+                color: '#059669',
                 sound: 'default',
                 priority: 'high',
                 defaultSound: true,
@@ -325,6 +362,8 @@ export async function POST(request) {
                 priority: 'high',
                 notification: {
                   channelId: 'bdretailers_channel',
+                  icon: 'ic_launcher',
+                  color: '#059669',
                   sound: 'default',
                   priority: 'high',
                   defaultSound: true,
