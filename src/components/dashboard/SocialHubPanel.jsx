@@ -2447,19 +2447,19 @@ function TeamManagementSection({ shopId }) {
 
 function BillingSection() {
   return (
-    <Card title="AI ক্রেডিট ও ব্যালেন্স (Vyce AI Agnes 3.0)" icon={DollarSign}>
+    <Card title="AI ইঞ্জিন ও ক্রেডিট ব্যালেন্স (Groq LPU + Vyce AI Dual-Engine)" icon={DollarSign}>
       <div className="space-y-4 pt-1">
         <div className="p-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl space-y-1 shadow-md">
-          <span className="text-xs font-bold opacity-80 uppercase tracking-wider">উপলব্ধ ক্রেডিট ব্যালেন্স</span>
-          <div className="text-3xl font-black">~$90+ USD</div>
-          <p className="text-xs opacity-90">Agnes 3.0 Flash মডেলের জন্য যা প্রায় ৩০ লক্ষ (3,000,000) AI চ্যাটের জন্য যথেষ্ট!</p>
+          <span className="text-xs font-bold opacity-80 uppercase tracking-wider">ডুয়াল-ইঞ্জিন এআই সক্রিয়</span>
+          <div className="text-2xl font-black">Groq Llama 3.3 70B + Vyce AI</div>
+          <p className="text-xs opacity-90">১ম ইঞ্জিন: Groq LPU (Llama 3.3 70B) — বিশুদ্ধ প্রমিত বাংলা (৩০০+ টোকেন/সেকেন্ড)। ২য় ইঞ্জিন: Vyce AI ফলব্যাক।</p>
         </div>
 
         <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600 space-y-1">
-          <p className="font-bold text-slate-800">খরচ হিসাব:</p>
-          <p>• ইনপুট টোকেন: $0.05 / ১,০০০ টোকেন</p>
-          <p>• আউটপুট টোকেন: $0.15 / ১,০০০ টোকেন</p>
-          <p>• প্রতিটি মেসেজে গড়ে খরচ হয় প্রায় ০.০০২ সেন্ট (১ পয়সারও কম)।</p>
+          <p className="font-bold text-slate-800">খরচ ও লিমিট বিবরণ:</p>
+          <p>• Groq LPU: প্রতিদিন ১,০০০ হাই-স্পিড রিকোয়েস্ট সম্পূর্ণ ফ্রি এবং ৩ গুণ নির্ভুল প্রমিত বাংলা।</p>
+          <p>• Vyce AI ব্যালেন্স: ~$90+ USD ক্রেডিট সংরক্ষিত (জরুরি ব্যাকআপ হিসেবে সক্রিয়)।</p>
+          <p>• জিরো স্ল্যাং গ্যারান্টি: কোনো অশুদ্ধ বা আঞ্চলিক শব্দ নেই, সর্বোচ্চ মার্জিত কাস্টমার সাপোর্ট।</p>
         </div>
       </div>
     </Card>

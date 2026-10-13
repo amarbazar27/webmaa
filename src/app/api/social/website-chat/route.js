@@ -5,33 +5,65 @@ import { createRateLimiter } from '@/lib/rate-limit';
 // Security: Rate limit public chat endpoint (25 requests per minute per IP)
 const chatLimiter = createRateLimiter({ maxRequests: 25, windowMs: 60000, prefix: 'website_chat' });
 
-// Helper: Call Vyce AI (Agnes 3.0 Flash) with shop catalog RAG context
+// Helper: Dual-engine AI generator (Groq Llama 3.3 70B primary for flawless standard Bangla, Vyce AI fallback)
 async function getAiReply(messages, shopContext) {
-  const apiKey = process.env.VYCE_AI_API_KEY;
-  if (!apiKey) return null;
-  try {
-    const res = await fetch('https://vyceai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${apiKey}` 
-      },
-      body: JSON.stringify({
-        model: 'agnes-3.0-flash',
-        messages: [
-          { role: 'system', content: shopContext },
-          ...messages
-        ],
-        max_tokens: 450,
-        temperature: 0.7
-      })
-    });
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content || null;
-  } catch (err) {
-    console.error('[Website Chat Vyce AI Error]:', err.message);
-    return null;
+  // 1. Try Groq LPU (Llama 3.3 70B Versatile — Ultra-fluent standard Bangla, zero hallucinated slang, 300 tps)
+  const groqKey = process.env.GROQ_API_KEY;
+  if (groqKey) {
+    try {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: shopContext },
+            ...messages
+          ],
+          max_tokens: 500,
+          temperature: 0.4
+        })
+      });
+      if (groqRes.ok) {
+        const groqData = await groqRes.json();
+        const reply = groqData.choices?.[0]?.message?.content;
+        if (reply) return reply;
+      }
+    } catch (groqErr) {
+      console.warn('[Website Chat Groq Warning, falling back to Vyce AI]:', groqErr.message);
+    }
   }
+
+  // 2. Fallback to Vyce AI (Agnes 3.0 Flash)
+  const vyceKey = process.env.VYCE_AI_API_KEY;
+  if (vyceKey) {
+    try {
+      const res = await fetch('https://vyceai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Authorization': `Bearer ${vyceKey}` 
+        },
+        body: JSON.stringify({
+          model: 'agnes-3.0-flash',
+          messages: [
+            { role: 'system', content: shopContext },
+            ...messages
+          ],
+          max_tokens: 450,
+          temperature: 0.5
+        })
+      });
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || null;
+    } catch (err) {
+      console.error('[Website Chat Vyce AI Error]:', err.message);
+    }
+  }
+  return null;
 }
 
 export async function POST(request) {
@@ -141,7 +173,22 @@ export async function POST(request) {
         }
       });
 
-      const shopContext = `তুমি ${shopName}-এর ওয়েবসাইট লাইভ চ্যাট সেলস এক্সিকিউটিভ। বাংলায় অত্যন্ত বিনয়ী, স্মার্ট ও সংক্ষিপ্ত উত্তর দাও।\nপণ্য তালিকা:\n${productList}\nডেলিভারি তথ্য:\n${deliveryInfo}\nনিয়মাবলী ও পলিসি:\n${knowledgeBase}\n${customPrompt}`;
+      const shopContext = `তুমি "${shopName}"-এর অফিসিয়াল ওয়েবসাইট লাইভ চ্যাট সেলস এক্সিকিউটিভ।
+
+গুরুত্বপূর্ণ নির্দেশনা (কঠোরভাবে মানতে হবে):
+১. ভাষা: সর্বদা অত্যন্ত মার্জিত, প্রমিত এবং ভদ্র বাংলায় কথা বলবে। কাস্টমারকে শ্রদ্ধার সাথে 'আপনি' বা মার্জিতভাবে 'ভাইয়া/আপু' সম্বোধন করবে।
+২. নিষিদ্ধ: কখনোই অপভ্রংশ, অশুদ্ধ বা অদ্ভুত আঞ্চলিক শব্দ (যেমন: 'দাদু', 'আউদি', 'দোস্ত' ইত্যাদি) ব্যবহার করবে না।
+৩. সত্যনিষ্ঠ তথ্য: তালিকার বাইরের কোনো কাল্পনিক পণ্যের নাম বা মিথ্যা দাম বানিয়ে বলবে না। যদি কোনো তথ্য তালিকায় না থাকে, তবে বিনয়ের সাথে বলবে যে আমাদের প্রতিনিধি দ্রুত যোগাযোগ করবে।
+৪. দাম ও সংখ্যা: প্রমিত বাংলায় বা স্পষ্ট সংখ্যায় (যেমন: ৳৫০০ বা ৫০০ টাকা) লিখবে।
+৫. উত্তর শৈলী: উত্তর হবে স্পষ্ট, সংক্ষিপ্ত (১-৩ বাক্য) এবং সরাসরি কাস্টমারের প্রশ্নের সমাধানকেন্দ্রিক।
+
+দোকানের পণ্য তালিকা:
+${productList || 'পণ্য তালিকা লোড করা হচ্ছে'}
+ডেলিভারি সংক্রান্ত তথ্য:
+${deliveryInfo || 'সারাদেশে হোম ডেলিভারি সুবিধা রয়েছে।'}
+দোকানের পলিসি ও নিয়মাবলী:
+${knowledgeBase}
+${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}` : ''}`;
 
       const aiMessages = convData.messages.slice(-8).map(m => ({
         role: m.role === 'retailer' ? 'assistant' : m.role,

@@ -137,6 +137,23 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Retailer Setup**: Each retailer must connect their own Facebook Page via Meta App → Page Access Token → paste in dashboard.
 - **SuperAdmin Social Hub**: Main website's FB/IG/WhatsApp integrated in SuperAdmin panel for centralized management.
 
+# 🛡️ Autonomous Cloudflare Security Audit Protocol (`cloudflare/security-audit-skill`)
+- Enforce the 6-phase evidence-based vulnerability hunting workflow on all sensitive codebases and API endpoints:
+  1. **Reconnaissance**: Map trust boundaries, public entry points, unauthenticated routes, and inputs into an internal coverage map.
+  2. **Coverage-Led Hunting**: Systematically examine authentication barriers, role enforcement (`staffAllowed`, `superadmin`), secret exposure, and SQL/NoSQL injection risks.
+  3. **Adversarial Candidate Validation**: Never accept speculative vulnerability claims. Every finding must be tested with an adversarial counter-check trying to disprove the exploit.
+  4. **Strict Schema & Categorization**: Classify security findings into `confirmed`, `needs_validation`, and `rejected`.
+  5. **Independent Verification**: Verify code references and line numbers before reporting or making patches.
+  6. **Hardened Defense**: Apply rate limiters (`createRateLimiter`), HMAC verification (`x-hub-signature-256`), sanitized inputs, and defensive null guards across all public and webhook handlers.
 
+# 🔬 Autonomous REA (Reverse Engineer Anything) Protocol (`rea-agents` / `morluto/rea`)
+- When deconstructing competitor applications, external web platforms, or advanced feature suites (e.g. AiPraktor, Shopify, Meta Business Suite):
+  1. **Deconstruct & Inspect**: Inspect network schemas, API contracts, DOM layout structures, and state machines rather than guessing or hallucinating features.
+  2. **Extract Real Mechanics**: Map out data models, webhook event lifecycles, and user journeys down to exact fields and states.
+  3. **Recreate with Ponytail Simplicity**: Implement the verified feature cleanly within BD Retailers using native Next.js/Firestore/Tailwind stack, without introducing bloated third-party dependencies or speculative code.
 
-
+# 🤖 Groq LPU & Dual-Engine AI Architecture
+- **Primary Inference**: Groq LPU (`llama-3.3-70b-versatile`) at temperature 0.35 for lightning-fast (300+ tps), grammatically flawless, natural Bengali conversations.
+- **Negative Constraints**: Strictly forbid rural slang, broken colloquialisms, or over-familiar terms (e.g. "দাদু", "আউদি", "দোস্ত"). Always address users respectfully with "আপনি" or polite "ভাইয়া/আপু". Ground answers strictly in the shop product catalog.
+- **Fallback Inference**: Vyce AI (`agnes-3.0-flash`) as seamless secondary fallback if Groq API rate limits or network issues occur.
+- **API Keys**: `GROQ_API_KEY` and `VYCE_AI_API_KEY` configured in `.env.local` and Vercel production environment.
