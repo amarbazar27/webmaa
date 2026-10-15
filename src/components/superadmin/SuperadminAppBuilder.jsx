@@ -205,33 +205,31 @@ export default function SuperadminAppBuilder() {
             </thead>
             <tbody>
               {filteredShops.map((shop) => {
-                const slug = shop.subdomainSlug || shop.shopSlug;
+                const isMainApp = shop.id === 'main' || shop.appBuildPackageName === 'com.bdretailers' || shop.subdomainSlug === 'main' || shop.shopSlug === 'main' || (!shop.subdomainSlug && !shop.shopSlug);
+                const slug = isMainApp ? 'main' : (shop.subdomainSlug || shop.shopSlug);
                 const status = shop.appBuildStatus || 'not_generated'; // not_generated, building, completed, failed
                 const rawSlug = (slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
                 const packageSlug = reservedKeywords.has(rawSlug) ? `${rawSlug}app` : rawSlug;
-                const packageId = shop.appBuildPackageName || `com.${packageSlug}`;
+                const packageId = shop.appBuildPackageName || (isMainApp ? 'com.bdretailers' : `com.${packageSlug}`);
                 const primaryColor = shop.designOverrides?.primaryColor || '#9333ea';
+                const displayName = shop.shopName || (isMainApp ? 'BD Retailers (Official)' : 'Store');
+                const displayLogo = shop.logoUrl || (isMainApp ? (globalConfig?.logoUrl || '/icon.png') : '/logo.png');
                 
                 return (
                   <tr key={shop.id} className="bg-white hover:bg-purple-50/20 transition-all border border-slate-100 shadow-sm rounded-2xl group">
                     {/* Store Identity */}
                     <td className="p-4 rounded-l-2xl border-y border-l border-slate-100">
                       <div className="flex items-center gap-3">
-                        {(shop.logoUrl || (slug === 'main' ? (globalConfig?.logoUrl || '/logo.png') : null)) ? (
-                          <img 
-                            src={shop.logoUrl || (slug === 'main' ? (globalConfig?.logoUrl || '/logo.png') : '/logo.png')} 
-                            className="w-10 h-10 rounded-xl object-contain border border-slate-200 bg-white p-0.5" 
-                            alt="" 
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center font-black text-purple-600 text-sm">
-                            {shop.shopName?.[0]?.toUpperCase() || 'S'}
-                          </div>
-                        )}
+                        <img 
+                          src={displayLogo} 
+                          onError={(e) => { e.currentTarget.src = '/icon.png'; }}
+                          className="w-10 h-10 rounded-xl object-contain border border-slate-200 bg-white p-0.5 shadow-xs" 
+                          alt="" 
+                        />
                         <div>
-                          <p className="font-black text-slate-900 text-sm leading-none">{shop.shopName}</p>
+                          <p className="font-black text-slate-900 text-sm leading-none">{displayName}</p>
                           <p className="text-[10px] text-slate-400 font-bold mt-1.5 truncate max-w-[150px]">
-                            {(shop.subdomainSlug === 'main' || shop.shopSlug === 'main' || shop.ownerEmail === 'admin@bdretailers.com' || !shop.ownerEmail)
+                            {(isMainApp || shop.ownerEmail === 'admin@bdretailers.com' || !shop.ownerEmail)
                               ? 'rafiqunnabi07@gmail.com'
                               : shop.ownerEmail}
                           </p>

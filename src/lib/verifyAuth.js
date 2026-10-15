@@ -28,12 +28,16 @@ export async function verifyAuth(request) {
   try {
     // 🔒 Firebase Admin SDK — full cryptographic token verification
     const decoded = await adminAuth.verifyIdToken(token);
+    const callerEmail = (decoded.email || '').toLowerCase().trim();
+    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
+    const isRootAdmin = callerEmail === 'rafiqunnabi07@gmail.com' || callerEmail === 'amarbazar27@gmail.com' || (envAdmin && callerEmail === envAdmin);
 
     return {
       uid: decoded.uid,
-      email: decoded.email || '',
+      email: callerEmail,
       name: decoded.name || '',
       emailVerified: decoded.email_verified || false,
+      role: isRootAdmin ? 'superadmin' : (decoded.role || 'user'),
     };
   } catch (error) {
     if (error instanceof AuthError) throw error;

@@ -26,17 +26,27 @@ export async function POST(request) {
 
     const decodedToken = await adminAuth.verifyIdToken(token);
     const callerUid = decodedToken.uid;
+    const callerEmail = (decodedToken.email || '').toLowerCase().trim();
+
+    // Check root superadmin emails
+    const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
+    const isRootAdmin = callerEmail === 'rafiqunnabi07@gmail.com' || callerEmail === 'amarbazar27@gmail.com' || (envAdmin && callerEmail === envAdmin);
 
     let userRole = decodedToken.role || 'user';
     try {
       const userDoc = await adminDb.collection('users').doc(callerUid).get();
       if (userDoc.exists) {
         userRole = userDoc.data().role || userRole;
+      } else if (isRootAdmin) {
+        // Auto-seed superadmin role for root admin
+        await adminDb.collection('users').doc(callerUid).set({ role: 'superadmin', email: callerEmail }, { merge: true });
+        userRole = 'superadmin';
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[build-app] users lookup error (quota or network):', e.message);
+    }
 
-    // RED-9: Only use Firestore role — NEXT_PUBLIC_SUPER_ADMIN_EMAIL is client-exposed
-    const isSystemAdmin = userRole === 'superadmin';
+    const isSystemAdmin = userRole === 'superadmin' || isRootAdmin;
 
     if (!isSystemAdmin) {
       return NextResponse.json({ error: 'এই কাজটি করার অনুমতি আপনার নেই।' }, { status: 403 });
@@ -62,7 +72,8 @@ export async function POST(request) {
       }
     } else {
       shopData = shopDoc.data();
-      shopSlug = shopData.subdomainSlug || shopData.shopSlug || (shopId === 'main' ? 'main' : '');
+      const rawSlug = shopData.subdomainSlug || shopData.shopSlug || '';
+      shopSlug = (rawSlug === '/' || !rawSlug) ? ((shopData.appBuildPackageName === 'com.bdretailers' || shopId === 'main') ? 'main' : '') : rawSlug;
     }
 
     if (!shopSlug) {

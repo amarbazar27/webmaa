@@ -244,10 +244,10 @@ export default function SocialHubPanel({ shopId }) {
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              AIPRAKTOR CONTROL PLANE
+              BD RETAILERS SOCIAL HUB
             </span>
             <span className="text-xs font-mono text-slate-400">
-              ENGINE: AGNES 3.0 FLASH • {currentTime || '00:00:00'}
+              AI ENGINE: GROQ LPU (LLAMA 3.3 70B) • {currentTime || '00:00:00'}
             </span>
             <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded-md text-[10px] font-bold">
               {shopId === 'main' ? 'BD Retailers Official' : `Shop ID: ${shopId}`}
@@ -257,7 +257,7 @@ export default function SocialHubPanel({ shopId }) {
             সোশ্যাল মিডিয়া সেলস অ্যান্ড অটোমেশন হাব
           </h2>
           <p className="text-xs text-slate-400 font-medium">
-            ফেসবুক, ইনস্টাগ্রাম, হোয়াটসঅ্যাপ ও স্টোর লাইভ চ্যাট থেকে রিয়েল-টাইম লিড জেনারেশন, Vyce AI সেলস রিপ্লাই ও অর্ডার সেলস।
+            ফেসবুক, ইনস্টাগ্রাম, হোয়াটসঅ্যাপ ও স্টোর লাইভ চ্যাট থেকে রিয়েল-টাইম লিড জেনারেশন, স্মার্ট সেলস রিপ্লাই ও অর্ডার ক্লোজিং।
           </p>
         </div>
 
@@ -638,29 +638,6 @@ function OverviewSection({ shopId, conversations, leads, hasFb, onNavigate }) {
           </p>
         </div>
       </div>
-
-      {/* Engine Status Card */}
-      <Card title="AiPraktor Core Engine Telemetry" icon={Zap} className="border-t-4 border-t-purple-600">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">AI Model</span>
-            <p className="text-xs font-black text-purple-700">Agnes 3.0 Flash (Vyce AI)</p>
-            <p className="text-[10px] text-slate-500">স্বল্প খরচে বিদ্যুৎগতির বাংলা উত্তর</p>
-          </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Caching & Protection</span>
-            <p className="text-xs font-black text-emerald-700">Upstash Serverless Caching</p>
-            <p className="text-[10px] text-slate-500">টোকেন খরচ ৫৭% সাশ্রয়ী</p>
-          </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Webhook Uptime</span>
-            <p className="text-xs font-black text-blue-700">99.98% Healthy</p>
-            <p className="text-[10px] text-slate-500">Meta Graph API v21.0 Active</p>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }

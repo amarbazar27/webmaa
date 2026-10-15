@@ -98,6 +98,11 @@ export async function POST(request) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error('Social connect error:', error);
+    if (error.message?.includes('RESOURCE_EXHAUSTED') || error.code === 8) {
+      return NextResponse.json({ 
+        error: 'ফায়ারবেস ক্লাউড ডাটাবেজের দৈনিক ফ্রি লিমিট (Spark Plan 50,000 reads/writes) সাময়িকভাবে শেষ হয়েছে। Firebase Console থেকে Blaze প্ল্যানে আপগ্রেড করুন বা কোটা রিসেট হওয়া পর্যন্ত অপেক্ষা করুন।' 
+      }, { status: 429 });
+    }
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
