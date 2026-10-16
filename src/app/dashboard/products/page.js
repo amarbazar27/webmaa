@@ -348,10 +348,69 @@ export default function ProductsPage() {
     toast.success(`${filteredProducts.length} টি প্রোডাক্ট সফলভাবে CSV ফাইলে ডাউনলোড হয়েছে! 📥`);
   };
 
-  const handleCsvFileChange = (e) => {
+  // Dynamic SheetJS loader for native Excel (.xlsx, .xls) support without bundling overhead
+  const loadSheetJS = () => {
+    return new Promise((resolve, reject) => {
+      if (typeof window !== 'undefined' && window.XLSX) return resolve(window.XLSX);
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = () => resolve(window.XLSX);
+      script.onerror = () => reject(new Error('Excel ফাইল রিডার লোড করতে ব্যর্থ হয়েছে।'));
+      document.head.appendChild(script);
+    });
+  };
+
+  const handleCsvFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setCsvFile(file);
+
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+
+    if (isExcel) {
+      const loadToast = toast.loading('এক্সেল ফাইল (.xlsx/.xls) বিশ্লেষণ করা হচ্ছে...');
+      try {
+        const XLSX = await loadSheetJS();
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        const parsed = rawJson.map(row => {
+          const item = {};
+          Object.keys(row).forEach(key => {
+            const h = key.toLowerCase().trim();
+            const val = row[key];
+            if (h.includes('name') || h === 'title') item.name = String(val).trim();
+            else if (h.includes('price') && !h.includes('cost')) item.price = parseFloat(val) || 0;
+            else if (h.includes('cost')) item.costPrice = parseFloat(val) || 0;
+            else if (h.includes('stock') || h.includes('qty')) item.stock = parseInt(val, 10) || 50;
+            else if (h.includes('category') && !h.includes('sub')) item.category = String(val).trim();
+            else if (h.includes('subcat')) item.subCategory = String(val).trim();
+            else if (h.includes('image') || h.includes('photo')) item.imageUrl = String(val).trim();
+            else if (h.includes('sku')) item.sku = String(val).trim();
+            else if (h.includes('desc')) item.description = String(val).trim();
+          });
+          return item;
+        }).filter(item => item.name);
+
+        setParsedCsvProducts(parsed);
+        toast.dismiss(loadToast);
+        if (parsed.length === 0) {
+          toast.error('এক্সেল ফাইলে কোনো ভ্যালিড প্রোডাক্ট ডাটা পাওয়া যায়নি');
+        } else {
+          toast.success(`${parsed.length} টি প্রোডাক্ট সফলভাবে এক্সেল ফাইল থেকে শনাক্ত হয়েছে! 🎉`);
+        }
+      } catch (err) {
+        toast.dismiss(loadToast);
+        console.error('Excel parse error:', err);
+        toast.error('এক্সেল ফাইল পড়তে সমস্যা: ' + err.message);
+      }
+      return;
+    }
+
+    // CSV text processing
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result;
@@ -361,7 +420,7 @@ export default function ProductsPage() {
         if (parsed.length === 0) {
           toast.error('CSV ফাইলে কোনো ভ্যালিড প্রোডাক্ট পাওয়া যায়নি');
         } else {
-          toast.success(`${parsed.length} টি প্রোডাক্ট শনাক্ত হয়েছে!`);
+          toast.success(`${parsed.length} টি প্রোডাক্ট শনাক্ত হয়েছে! 🎉`);
         }
       }
     };
@@ -860,7 +919,7 @@ export default function ProductsPage() {
                     💡 সহজ নিয়ম:
                   </p>
                   <p className="text-[11px] text-purple-800">
-                    আপনার CSV ফাইলে <strong>Product Name, Price, Category, Stock, Image URL</strong> হেডার থাকলেই আমাদের সিস্টেম স্বয়ংক্রিয়ভাবে সব ডাটা ও ক্যাটাগরি তৈরি করে নেবে।
+                    আপনার CSV বা Excel ফাইলে <strong>Product Name, Price, Category, Stock, Image URL</strong> হেডার থাকলেই আমাদের সিস্টেম স্বয়ংক্রিয়ভাবে সব ডাটা ও ক্যাটাগরি তৈরি করে নেবে (একবারে সর্বোচ্চ ৫,০০০ প্রোডাক্ট পর্যন্ত)।
                   </p>
                 </div>
 
@@ -870,16 +929,16 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <label className="inline-block px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-sm">
-                      <span>ফাইল বেছে নিন (.csv)</span>
+                      <span>ফাইল বেছে নিন (.csv বা .xlsx / .xls)</span>
                       <input
                         type="file"
-                        accept=".csv,text/csv"
+                        accept=".csv, .xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, text/csv"
                         onChange={handleCsvFileChange}
                         className="hidden"
                       />
                     </label>
                     <p className="text-[11px] text-slate-400 font-medium mt-1.5">
-                      {csvFile ? csvFile.name : 'কম্পিউটার থেকে যেকোনো প্রোডাক্ট CSV ফাইল সিলেক্ট করুন'}
+                      {csvFile ? csvFile.name : 'কম্পিউটার থেকে যেকোনো প্রোডাক্ট CSV বা Excel (.xlsx / .xls) ফাইল সিলেক্ট করুন'}
                     </p>
                   </div>
                 </div>
@@ -910,7 +969,7 @@ export default function ProductsPage() {
                     <Sparkles size={14} className="text-indigo-600" /> REA Reverse Engineering AI Cloner:
                   </p>
                   <p className="text-[11px] text-indigo-800 leading-relaxed">
-                    প্রতিযোগী বা সাপ্লায়ারের যেকোনো ই-কমার্স সাইট (Daraz, Chaldal, Rokomari, Shajgoj, Shopify বা কোনো লোকাল স্টোর)-এর লিংক দিলে AI স্বয়ংক্রিয়ভাবে পণ্যের নাম, দাম, ছবি ও বিবরণ এক্সট্র্যাক্ট করে আপনার দোকানে যুক্ত করে দিবে!
+                    প্রতিযোগী বা সাপ্লায়ারের যেকোনো একক পণ্য অথবা পুরো ই-কমার্স সাইটের লিংক দিলে REA রিভার্স ইঞ্জিনিয়ারিং ইঞ্জিন স্বয়ংক্রিয়ভাবে আসল পণ্যের নাম, দাম, ছবি, বিবরণ ও ক্যাটাগরি এক্সট্র্যাক্ট করে দোকানে যুক্ত করে দিবে (পুরো স্টোর লিংকে সর্বোচ্চ ৫,০০০ প্রোডাক্ট পর্যন্ত এক ক্লিকে আমদানি করা যাবে)!
                   </p>
                 </div>
 

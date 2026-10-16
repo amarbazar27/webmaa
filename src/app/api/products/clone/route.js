@@ -43,32 +43,44 @@ function extractOgMeta(html) {
 // Strategy 1: Shopify Direct Catalog Engine
 async function fetchShopifyProducts(origin) {
   try {
-    const res = await fetch(`${origin}/products.json?limit=30`, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!data.products || !Array.isArray(data.products) || data.products.length === 0) return [];
+    const allProducts = [];
+    const maxPages = 20; // 20 * 250 = up to 5,000 products
 
-    return data.products.map(p => {
-      const price = parseFloat(p.variants?.[0]?.price) || 0;
-      const cleanDesc = (p.body_html || '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 600) || p.title;
+    for (let page = 1; page <= maxPages; page++) {
+      const res = await fetch(`${origin}/products.json?limit=250&page=${page}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
+        signal: AbortSignal.timeout(8000)
+      });
+      if (!res.ok) break;
+      const data = await res.json();
+      if (!data.products || !Array.isArray(data.products) || data.products.length === 0) break;
 
-      return {
-        name: p.title.trim(),
-        price,
-        costPrice: Math.round(price * 0.7),
-        stock: p.variants?.[0]?.inventory_quantity > 0 ? p.variants[0].inventory_quantity : 40,
-        category: p.product_type || (p.tags?.[0] ? p.tags[0].split(',')[0].trim() : 'সাধারণ'),
-        description: cleanDesc,
-        imageUrl: p.images?.[0]?.src || '',
-      };
-    }).filter(p => p.name && p.price > 0);
+      for (const p of data.products) {
+        const price = parseFloat(p.variants?.[0]?.price) || 0;
+        const cleanDesc = (p.body_html || '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 600) || p.title;
+
+        if (p.title && price > 0) {
+          allProducts.push({
+            name: p.title.trim(),
+            price,
+            costPrice: Math.round(price * 0.7),
+            stock: p.variants?.[0]?.inventory_quantity > 0 ? p.variants[0].inventory_quantity : 40,
+            category: p.product_type || (p.tags?.[0] ? p.tags[0].split(',')[0].trim() : 'সাধারণ'),
+            description: cleanDesc,
+            imageUrl: p.images?.[0]?.src || '',
+          });
+        }
+      }
+
+      // If page returned fewer than 250, we reached the end
+      if (data.products.length < 250) break;
+    }
+
+    return allProducts;
   } catch (_) {
     return [];
   }
@@ -124,8 +136,8 @@ async function fetchSitemapProducts(origin) {
       const locMatches = [...smText.matchAll(/<loc>([^<]*(?:product|item|p)[^<]*)<\/loc>/gi)].map(m => m[1]);
       if (locMatches.length === 0) continue;
 
-      // Extract up to 12 product pages concurrently
-      const sampleUrls = locMatches.slice(0, 12);
+      // Extract up to 60 product pages concurrently
+      const sampleUrls = locMatches.slice(0, 60);
       const settled = await Promise.allSettled(sampleUrls.map(async (pUrl) => {
         const pRes = await fetch(pUrl, {
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
@@ -470,51 +482,58 @@ export async function POST(request) {
       }, { status: 422 });
     }
 
-    // ── STEP 3: Auto-save to shop in Firestore ──
+    // ── STEP 3: Auto-save to shop in Firestore (Chunked up to 5,000 products) ──
     if (autoSave) {
-      const batch = adminDb.batch();
       const existingCats = new Set();
       const catSnap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
       catSnap.forEach(d => existingCats.add((d.data().name || '').trim().toLowerCase()));
 
+      const targetList = extractedProducts.slice(0, 5000);
+      const BATCH_SIZE = 300;
       let savedCount = 0;
-      for (const p of extractedProducts.slice(0, 40)) {
-        if (!p.name) continue;
-        const pRef = adminDb.collection('shops').doc(shopId).collection('products').doc();
-        const catName = (p.category || 'সাধারণ').trim();
 
-        if (catName && !existingCats.has(catName.toLowerCase())) {
-          existingCats.add(catName.toLowerCase());
-          const catRef = adminDb.collection('shops').doc(shopId).collection('categories').doc();
-          batch.set(catRef, {
-            name: catName,
-            slug: catName.toLowerCase().replace(/\s+/g, '-'),
-            createdAt: new Date().toISOString()
+      for (let i = 0; i < targetList.length; i += BATCH_SIZE) {
+        const chunk = targetList.slice(i, i + BATCH_SIZE);
+        const batch = adminDb.batch();
+
+        for (const p of chunk) {
+          if (!p.name) continue;
+          const pRef = adminDb.collection('shops').doc(shopId).collection('products').doc();
+          const catName = (p.category || 'সাধারণ').trim();
+
+          if (catName && !existingCats.has(catName.toLowerCase())) {
+            existingCats.add(catName.toLowerCase());
+            const catRef = adminDb.collection('shops').doc(shopId).collection('categories').doc();
+            batch.set(catRef, {
+              name: catName,
+              slug: catName.toLowerCase().replace(/\s+/g, '-'),
+              createdAt: new Date().toISOString()
+            });
+          }
+
+          const price = parseFloat(p.price) || 0;
+          const costPrice = parseFloat(p.costPrice) || Math.round(price * 0.7);
+          const img = p.imageUrl || ogData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
+
+          batch.set(pRef, {
+            name: p.name.trim(),
+            price,
+            costPrice,
+            stock: parseInt(p.stock, 10) || 40,
+            category: catName,
+            description: p.description || p.name,
+            imageUrl: img,
+            images: [img],
+            sourceUrl: url,
+            extractionSource,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           });
+          savedCount++;
         }
 
-        const price = parseFloat(p.price) || 0;
-        const costPrice = parseFloat(p.costPrice) || Math.round(price * 0.7);
-        const img = p.imageUrl || ogData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
-
-        batch.set(pRef, {
-          name: p.name.trim(),
-          price,
-          costPrice,
-          stock: parseInt(p.stock, 10) || 40,
-          category: catName,
-          description: p.description || p.name,
-          imageUrl: img,
-          images: [img],
-          sourceUrl: url,
-          extractionSource,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        });
-        savedCount++;
+        await batch.commit();
       }
-
-      await batch.commit();
 
       const sourceLabel = {
         shopify_catalog: 'Shopify সরাসরি ক্যাটালগ',

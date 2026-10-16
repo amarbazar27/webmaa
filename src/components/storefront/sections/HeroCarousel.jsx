@@ -32,53 +32,68 @@ export default function HeroCarousel({ data, themeVars }) {
     setTouchStart(null); setTouchEnd(null);
   };
 
+  const isContained = d.layout !== 'full_bleed';
+  const fitMode = d.fitMode || 'smart_fit';
+  const ratio = d.ratio || 'wide';
+
+  const ratioClass = ratio === 'standard'
+    ? 'aspect-[16/9]'
+    : ratio === 'cinematic'
+    ? 'aspect-[2.4/1]'
+    : 'aspect-[16/8] sm:aspect-[16/6] md:aspect-[21/9] lg:aspect-[2.7/1]';
+
+  const imageFitClass = fitMode === 'cover'
+    ? 'w-full h-full object-cover object-center'
+    : 'w-full h-full object-contain md:object-cover object-center';
+
   if (!slides.length) return null;
 
   return (
-    <div className="sf-hero relative w-full overflow-hidden bg-slate-950 group/banner aspect-[16/9] max-h-[520px] md:max-h-[580px]">
-      <div
-        className="w-full h-full"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        {slides.map((slide, i) => (
-          <div
-            key={i}
-            className={`absolute inset-0 w-full h-full transition-all duration-700 ${
-              i === active ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-0 scale-[1.02] pointer-events-none'
-            }`}
-          >
-            {slide.url && (
-              <div className="w-full h-full relative flex items-center justify-center bg-slate-950 overflow-hidden">
-                <img
-                  src={slide.url}
-                  alt={slide.title || `Slide ${i + 1}`}
-                  loading={i === 0 ? 'eager' : 'lazy'}
-                  className="w-full h-full object-cover object-center z-10"
-                />
-              </div>
-            )}
-            {(slide.title || slide.description) && (
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent z-20 flex flex-col justify-end p-5 md:p-12">
-                <div className="max-w-xl">
-                  {slide.title && <h2 className="text-xl sm:text-2xl md:text-4xl font-black text-white mb-2 drop-shadow-md">{slide.title}</h2>}
-                  {slide.description && <p className="text-xs sm:text-sm md:text-base text-white/85 mb-4 line-clamp-2 font-medium">{slide.description}</p>}
-                  {slide.buttonText && (
-                    <a 
-                      href={slide.linkUrl || '#'} 
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-black text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer" 
-                      style={{ background: primary }}
-                    >
-                      {slide.buttonText}
-                    </a>
-                  )}
+    <div className={`w-full ${isContained ? 'max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6' : ''}`}>
+      <div className={`sf-hero relative w-full overflow-hidden bg-stone-900 group/banner ${isContained ? 'rounded-2xl sm:rounded-3xl shadow-xl' : ''} ${ratioClass} min-h-[170px] sm:min-h-[260px] md:min-h-[380px] max-h-[640px]`}>
+        <div
+          className="w-full h-full"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          {slides.map((slide, i) => (
+            <div
+              key={i}
+              className={`absolute inset-0 w-full h-full transition-all duration-700 ${
+                i === active ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-0 scale-[1.01] pointer-events-none'
+              }`}
+            >
+              {slide.url && (
+                <div className="w-full h-full relative flex items-center justify-center bg-stone-950 overflow-hidden">
+                  <img
+                    src={slide.url}
+                    alt={slide.title || `Slide ${i + 1}`}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    className={`w-full h-full ${imageFitClass} z-10 transition-transform duration-500`}
+                  />
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+              )}
+              {(slide.title || slide.description) && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent z-20 flex flex-col justify-end p-5 md:p-12">
+                  <div className="max-w-xl">
+                    {slide.title && <h2 className="text-xl sm:text-2xl md:text-4xl font-black text-white mb-2 drop-shadow-md">{slide.title}</h2>}
+                    {slide.description && <p className="text-xs sm:text-sm md:text-base text-white/85 mb-4 line-clamp-2 font-medium">{slide.description}</p>}
+                    {slide.buttonText && (
+                      <a 
+                        href={slide.linkUrl || '#'} 
+                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-black text-white shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer" 
+                        style={{ background: primary }}
+                      >
+                        {slide.buttonText}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
 
       {/* Controls */}
       {slides.length > 1 && (
@@ -92,6 +107,7 @@ export default function HeroCarousel({ data, themeVars }) {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

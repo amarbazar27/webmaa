@@ -127,13 +127,55 @@ function HeroCarouselEditor({ data, onChange, shopId }) {
 
   return (
     <div className="space-y-4">
+      <div className="bg-purple-50/70 border border-purple-100 rounded-2xl p-3.5 space-y-3">
+        <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
+          📐 ব্যানার ফ্রেম ও ডিসপ্লে অপশন (OHSOGO স্টাইল)
+        </span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          <div>
+            <label className="text-[10px] font-bold text-slate-600 block mb-1">লেআউট স্টাইল</label>
+            <select
+              value={data.layout || 'contained'}
+              onChange={e => onChange({ ...data, layout: e.target.value })}
+              className="w-full text-xs font-bold p-2 bg-white border border-purple-200 rounded-xl outline-none"
+            >
+              <option value="contained">কন্টেইনার রাউন্ডেড (OHSOGO)</option>
+              <option value="full_bleed">ফুল-উইথ এজ-টু-এজ</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-slate-600 block mb-1">ইমেজ ফিট মোড</label>
+            <select
+              value={data.fitMode || 'smart_fit'}
+              onChange={e => onChange({ ...data, fitMode: e.target.value })}
+              className="w-full text-xs font-bold p-2 bg-white border border-purple-200 rounded-xl outline-none"
+            >
+              <option value="smart_fit">স্মার্ট ফিট (নো ক্রপিং - পুরো ব্যানার)</option>
+              <option value="cover">ফুল কভার</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-slate-600 block mb-1">ব্যানার রেশিও</label>
+            <select
+              value={data.ratio || 'wide'}
+              onChange={e => onChange({ ...data, ratio: e.target.value })}
+              className="w-full text-xs font-bold p-2 bg-white border border-purple-200 rounded-xl outline-none"
+            >
+              <option value="wide">ওয়াইড ব্যানার (২১:৯ / ১৬:৬)</option>
+              <option value="standard">১৬:৯ স্ট্যান্ডার্ড</option>
+              <option value="cinematic">সিনেমাটিক (২.৪:১)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       {slides.map((slide, i) => (
         <div key={i} className="bg-white rounded-2xl border border-slate-200 p-3.5 space-y-2.5 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Slide {i + 1}</span>
             <button onClick={() => removeSlide(i)} className="text-red-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50"><Trash2 size={13} /></button>
           </div>
-          <ImageUploadField label="ব্যানার ইমেজ (বাধ্যতামূলক ১৬:৯ রেশিও)" value={slide.url} onChange={v => updateSlide(i, 'url', v)} shopId={shopId} aspectRatio="16:9" />
+          <ImageUploadField label="ব্যানার ইমেজ (যেকোনো ওয়াইড সাইজ বা ১৬:৯)" value={slide.url} onChange={v => updateSlide(i, 'url', v)} shopId={shopId} />
           <Field label="টাইটেল"><Input value={slide.title} onChange={v => updateSlide(i, 'title', v)} placeholder="ব্যানার টাইটেল" /></Field>
           <Field label="বিবরণ"><Input value={slide.description} onChange={v => updateSlide(i, 'description', v)} placeholder="সংক্ষিপ্ত বিবরণ" /></Field>
           <div className="grid grid-cols-2 gap-2">

@@ -62,6 +62,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **High-Converting Copy:** On all CTAs, use explicit action verbs + clear outcomes (e.g. "১ মিনিটে ফ্রি স্টোর তৈরি করুন"). Keep copy scannable, honest, and benefit-driven before technical specifications.
 
 # 🛡️ Alibaba OpenCodeReview (OCR) & Security Standards
+- Registered skill located at `.agents/skills/open-code-review/SKILL.md`.
 - Always enforce Alibaba code review standards: zero `var`, strict equality `===`, defensive null checking, zero unsanitized `innerHTML` or script injection vulnerabilities, and verified error boundaries.
 - Run or verify with `scripts/ocr-check.js` on code changes.
 

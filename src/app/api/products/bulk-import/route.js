@@ -40,7 +40,6 @@ export async function POST(request) {
     const existingCats = new Set(catSnap.docs.map(d => (d.data().name || '').trim().toLowerCase()));
 
     const newCategories = new Set();
-    const batch = adminDb.batch();
     let count = 0;
 
     const defaultImages = [
@@ -50,48 +49,57 @@ export async function POST(request) {
       'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&auto=format&fit=crop&q=80'
     ];
 
-    for (const item of products.slice(0, 200)) { // limit 200 per batch for performance
-      if (!item.name || !item.name.trim()) continue;
+    const targetProducts = products.slice(0, 5000);
+    const BATCH_SIZE = 300;
 
-      const pRef = adminDb.collection('shops').doc(shopId).collection('products').doc();
-      const catName = (item.category || 'সাধারণ').trim();
-      
-      if (catName && !existingCats.has(catName.toLowerCase()) && !newCategories.has(catName.toLowerCase())) {
-        newCategories.add(catName.toLowerCase());
-        const catRef = adminDb.collection('shops').doc(shopId).collection('categories').doc();
-        batch.set(catRef, {
-          name: catName,
-          slug: catName.toLowerCase().replace(/\s+/g, '-'),
-          createdAt: new Date().toISOString()
+    for (let i = 0; i < targetProducts.length; i += BATCH_SIZE) {
+      const chunk = targetProducts.slice(i, i + BATCH_SIZE);
+      const batch = adminDb.batch();
+
+      for (const item of chunk) {
+        if (!item.name || !item.name.trim()) continue;
+
+        const pRef = adminDb.collection('shops').doc(shopId).collection('products').doc();
+        const catName = (item.category || 'সাধারণ').trim();
+        
+        if (catName && !existingCats.has(catName.toLowerCase()) && !newCategories.has(catName.toLowerCase())) {
+          existingCats.add(catName.toLowerCase());
+          newCategories.add(catName.toLowerCase());
+          const catRef = adminDb.collection('shops').doc(shopId).collection('categories').doc();
+          batch.set(catRef, {
+            name: catName,
+            slug: catName.toLowerCase().replace(/\s+/g, '-'),
+            createdAt: new Date().toISOString()
+          });
+        }
+
+        const price = parseFloat(item.price) || 0;
+        const costPrice = parseFloat(item.costPrice) || Math.round(price * 0.7);
+        const stock = parseInt(item.stock, 10) || 50;
+        const imageUrl = item.imageUrl || item.image || defaultImages[count % defaultImages.length];
+
+        batch.set(pRef, {
+          name: item.name.trim(),
+          price,
+          costPrice,
+          stock,
+          category: catName,
+          subCategory: item.subCategory || '',
+          description: item.description || '',
+          sku: item.sku || `SKU-${Date.now().toString().slice(-6)}-${count + 1}`,
+          imageUrl,
+          images: [imageUrl],
+          hidden: Boolean(item.hidden),
+          featured: Boolean(item.featured),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         });
+
+        count++;
       }
 
-      const price = parseFloat(item.price) || 0;
-      const costPrice = parseFloat(item.costPrice) || 0;
-      const stock = parseInt(item.stock, 10) || 50;
-      const imageUrl = item.imageUrl || item.image || defaultImages[count % defaultImages.length];
-
-      batch.set(pRef, {
-        name: item.name.trim(),
-        price,
-        costPrice,
-        stock,
-        category: catName,
-        subCategory: item.subCategory || '',
-        description: item.description || '',
-        sku: item.sku || `SKU-${Date.now().toString().slice(-6)}-${count + 1}`,
-        imageUrl,
-        images: [imageUrl],
-        hidden: Boolean(item.hidden),
-        featured: Boolean(item.featured),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-
-      count++;
+      await batch.commit();
     }
-
-    await batch.commit();
 
     return NextResponse.json({
       success: true,

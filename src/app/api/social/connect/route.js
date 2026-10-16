@@ -95,8 +95,8 @@ export async function POST(request) {
     let resolvedToken = pageAccessToken.trim();
 
     try {
-      // 1. Verify token validity with basic fields supported on BOTH User and Page nodes
-      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name,category&access_token=${resolvedToken}`);
+      // 1. Verify token validity with basic fields supported on BOTH User and Page nodes (never ask for category on /me as it fails on User nodes)
+      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${resolvedToken}`);
       const meData = await meRes.json();
 
       if (meData.error) {

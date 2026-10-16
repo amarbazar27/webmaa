@@ -79,6 +79,13 @@ export const HEADER_PRESETS = [
     icon: '💎',
     badge: 'Cinematic Glass'
   },
+  {
+    id: 'split_nav_center_brand',
+    label: 'Header 11 — Split Nav & Center Brand (OHSOGO Style)',
+    desc: 'দুই পাশে ক্যাটাগরি মেনু, সেন্টারে বড় ব্র্যান্ড লোগো/নাম ও ওহসোগো স্টাইল প্রিমিয়াম হেডার',
+    icon: '✨',
+    badge: 'OHSOGO Style'
+  },
 ];
 
 export default function StorefrontHeader({
@@ -613,6 +620,153 @@ export default function StorefrontHeader({
 
         <div className="px-3 pb-2.5">
           {renderSearchBar("সার্চ করতে টাইপ করুন...")}
+        </div>
+      </header>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // HEADER 11: SPLIT NAV & CENTER BRAND (OHSOGO Style)
+  // ══════════════════════════════════════════════════════════════════
+  if (hStyle === 'split_nav_center_brand') {
+    const half = Math.ceil(safeCategories.length / 2);
+    const leftCats = safeCategories.slice(0, Math.min(half, 3));
+    const rightCats = safeCategories.slice(Math.min(half, 3), Math.min(half, 3) + 3);
+
+    return (
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 shadow-2xs transition-all font-sans">
+        {renderAnnouncementBar()}
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+          {/* Mobile Left: Menu & Search */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              onClick={onOpenCategories}
+              className="p-2 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="ক্যাটাগরি"
+            >
+              <Menu size={20} />
+            </button>
+            <button
+              onClick={onOpenCategories}
+              className="p-2 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="সার্চ"
+            >
+              <Search size={18} />
+            </button>
+          </div>
+
+          {/* Desktop Left: Search Bar & Left Categories */}
+          <div className="hidden md:flex items-center gap-6 flex-1">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="সার্চ করুন..."
+                className="pl-8.5 pr-3 py-1.5 w-36 lg:w-44 bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-800 placeholder:text-slate-400 outline-none transition-all focus:border-purple-600"
+              />
+            </div>
+            <nav className="flex items-center gap-5 text-[11px] font-black uppercase tracking-widest text-slate-700">
+              {leftCats.map((cat, idx) => {
+                const cName = typeof cat === 'object' ? (cat.name || cat.label) : String(cat);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => onSearchChange?.(cName)}
+                    className="hover:text-purple-600 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    {cName}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Center: Brand Logo / Name */}
+          <div className="flex-shrink-0 text-center">
+            <Link
+              href={`/shop/${shop?.subdomainSlug || shop?.shopSlug || ''}`}
+              onClick={(e) => { if (isPreview) e.preventDefault(); }}
+              className="inline-flex flex-col items-center group select-none no-underline"
+            >
+              {shop?.logoUrl ? (
+                <img
+                  src={shop.logoUrl}
+                  alt={shopName}
+                  className="h-9 sm:h-11 w-auto max-w-[180px] object-contain group-hover:scale-105 transition-transform"
+                />
+              ) : (
+                <span className="text-xl sm:text-2xl font-black tracking-widest uppercase text-slate-950 group-hover:text-purple-700 transition-colors">
+                  {shopName}
+                </span>
+              )}
+            </Link>
+          </div>
+
+          {/* Desktop Right: Right Categories + Actions */}
+          <div className="hidden md:flex items-center justify-end gap-6 flex-1">
+            <nav className="flex items-center gap-5 text-[11px] font-black uppercase tracking-widest text-slate-700">
+              {rightCats.map((cat, idx) => {
+                const cName = typeof cat === 'object' ? (cat.name || cat.label) : String(cat);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => onSearchChange?.(cName)}
+                    className="hover:text-purple-600 transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    {cName}
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenProfile}
+                className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="প্রোফাইল"
+              >
+                <User size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={onOpenCart}
+                className="relative p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="কার্ট"
+              >
+                <ShoppingBag size={18} />
+                {cartCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-black text-white flex items-center justify-center shadow-xs"
+                    style={{ background: primary }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Right Cart Button */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenCart}
+              className="relative p-2 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <ShoppingBag size={20} />
+              {cartCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] font-black text-white flex items-center justify-center shadow-xs"
+                  style={{ background: primary }}
+                >
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
     );

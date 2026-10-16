@@ -97,7 +97,7 @@ export default function HeaderFooterEditor({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[11px] font-black text-slate-800 uppercase tracking-wider block">
-                🎨 হেডার ডিজাইন লাইব্রেরি (১০টি ভিন্ন লেআউট)
+                🎨 হেডার ডিজাইন লাইব্রেরি (১১টি প্রিমিয়াম লেআউট)
               </label>
               <span className="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
                 Live Preview
