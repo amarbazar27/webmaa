@@ -152,8 +152,16 @@ This version has breaking changes — APIs, conventions, and file structure may 
   2. **Extract Real Mechanics**: Map out data models, webhook event lifecycles, and user journeys down to exact fields and states.
   3. **Recreate with Ponytail Simplicity**: Implement the verified feature cleanly within BD Retailers using native Next.js/Firestore/Tailwind stack, without introducing bloated third-party dependencies or speculative code.
 
-# 🤖 Groq LPU & Dual-Engine AI Architecture
+# 🤖 Groq LPU Multi-Account & Dual-Engine AI Architecture
 - **Primary Inference**: Groq LPU (`llama-3.3-70b-versatile`) at temperature 0.35 for lightning-fast (300+ tps), grammatically flawless, natural Bengali conversations.
+- **Multi-Account Failover Rotation**: Automatically rotate between `GROQ_API_KEY` (Account 1) and `GROQ_API_KEY_2` (Account 2) if rate limits (HTTP 429) or token quotas are reached.
 - **Negative Constraints**: Strictly forbid rural slang, broken colloquialisms, or over-familiar terms (e.g. "দাদু", "আউদি", "দোস্ত"). Always address users respectfully with "আপনি" or polite "ভাইয়া/আপু". Ground answers strictly in the shop product catalog.
-- **Fallback Inference**: Vyce AI (`agnes-3.0-flash`) as seamless secondary fallback if Groq API rate limits or network issues occur.
-- **API Keys**: `GROQ_API_KEY` and `VYCE_AI_API_KEY` configured in `.env.local` and Vercel production environment.
+- **Bengali Phonetic & Synonym Normalization**: Customers use varied transliterations and colloquial spellings (e.g. পেঁয়াজ / পেয়াজ / পিয়াজ, কাঁচামরিচ / মরিচ / ঝাল, আলু / Potato, তেল / সয়াবিন). The AI must identify phonetic and semantic synonyms and NEVER claim an item is out of stock if a matching product exists in the catalog.
+- **Fallback Inference**: Vyce AI (`agnes-3.0-flash`) as seamless secondary fallback if all Groq keys are exhausted or network issues occur.
+- **API Keys**: Store in `.env.local` and Vercel production environment (`GROQ_API_KEY`, `GROQ_API_KEY_2`, `VYCE_AI_API_KEY`).
+
+# 📱 Android 15 (SDK 35) & Google Play R8 Optimization Protocol
+- **Edge-to-Edge Compatibility**: Android 15 targets SDK 35 which renders edge-to-edge by default. Ensure `MainActivity` initializes `enableEdgeToEdge()` or handles window insets gracefully.
+- **R8 Proguard & Resource Shrinking**:
+  - In `app/build.gradle`: Set `minifyEnabled true` and `shrinkResources true` on release builds.
+  - Maintain `proguard-rules.pro` with explicit keep rules for Flutter channels, Flutter InAppWebView, and Firebase Messaging to prevent runtime crashes.

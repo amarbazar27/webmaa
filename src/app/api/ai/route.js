@@ -84,7 +84,10 @@ export async function POST(req) {
 
     // 3. Try environment keys (prioritizing ultra-fast Groq LPU inference, then Gemini, then generic)
     if (isValidApiKey(process.env.GROQ_API_KEY)) {
-      keysToTry.push({ key: process.env.GROQ_API_KEY.trim(), source: 'System Groq Key' });
+      keysToTry.push({ key: process.env.GROQ_API_KEY.trim(), source: 'System Groq Key 1' });
+    }
+    if (isValidApiKey(process.env.GROQ_API_KEY_2)) {
+      keysToTry.push({ key: process.env.GROQ_API_KEY_2.trim(), source: 'System Groq Key 2' });
     }
     if (isValidApiKey(process.env.GEMINI_API_KEY)) {
       keysToTry.push({ key: process.env.GEMINI_API_KEY.trim(), source: 'System Gemini Key' });
@@ -280,28 +283,39 @@ export async function POST(req) {
       }
     }
 
-    // Silent Groq fallback as a last system-wide resort
-    const groqKey = process.env.GROQ_API_KEY;
-    if (groqKey) {
-      try {
-        console.log('[AI API] Attempting system-wide silent Groq fallback...');
-        const groqMessages = messages
-          .filter(m => m.role !== 'system')
-          .map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.text || m.content }));
-        groqMessages.unshift({ role: 'system', content: systemText });
+    // Silent Groq fallback as a last system-wide resort across multiple keys
+    const fallbackGroqKeys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2].filter(Boolean);
+    if (fallbackGroqKeys.length > 0) {
+      console.log('[AI API] Attempting system-wide silent Groq fallback...');
+      const groqMessages = messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({ role: m.role === 'bot' ? 'assistant' : m.role, content: m.text || m.content }));
+      groqMessages.unshift({ role: 'system', content: systemText });
 
-        const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
-          body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: groqMessages, temperature: 0.7, max_tokens: 4000 })
-        });
-        const groqData = await groqResp.json();
-        if (groqResp.ok && groqData.choices?.[0]?.message?.content) {
-          console.log('[AI API] Successfully answered request using silent Groq fallback.');
-          return NextResponse.json({ choices: [{ message: { content: groqData.choices[0].message.content } }] });
+      for (const fKey of fallbackGroqKeys) {
+        for (const fModel of ['llama-3.3-70b-versatile', 'deepseek-r1-distill-llama-70b']) {
+          try {
+            const groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${fKey}` },
+              body: JSON.stringify({ model: fModel, messages: groqMessages, temperature: 0.35, max_tokens: 3500 })
+            });
+            const groqData = await groqResp.json();
+            let rawContent = groqData.choices?.[0]?.message?.content;
+            if (groqResp.ok && rawContent) {
+              rawContent = rawContent.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+              if (rawContent) {
+                console.log(`[AI API] Successfully answered request using silent Groq fallback (${fModel}).`);
+                return NextResponse.json({ choices: [{ message: { content: rawContent } }] });
+              }
+            } else if (groqResp.status === 429) {
+              console.warn(`[AI API] Groq key rate limited on ${fModel}, trying next key...`);
+              break;
+            }
+          } catch (groqErr) {
+            console.error(`[AI API] Groq fallback failed on ${fModel}:`, groqErr.message);
+          }
         }
-      } catch (groqErr) {
-        console.error('[AI API] Groq fallback failed:', groqErr.message);
       }
     }
 

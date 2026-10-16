@@ -28,6 +28,41 @@ import ServiceBanner from '@/components/shop/ServiceBanner';
 import NotificationBanner from '@/components/shop/NotificationBanner';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import NotificationInbox from '@/components/shared/NotificationInbox';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
+
+// Web Audio synthesizer chime for incoming chat replies (zero asset latency)
+const playNotificationChime = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+      }
+    }
+  } catch (e) {}
+};
+
+const triggerTabAlert = (shopName) => {
+  if (typeof document !== 'undefined') {
+    const originalTitle = document.title;
+    document.title = `🔔 (১) নতুন মেসেজ এসেছে! - ${shopName || 'BD Retailers'}`;
+    setTimeout(() => {
+      if (typeof document !== 'undefined') document.title = originalTitle;
+    }, 5000);
+  }
+};
 
 const AiShoppingList = dynamic(() => import('@/components/shop/AiShoppingList'), { ssr: false });
 const AiVoicePanel = dynamic(() => import('@/components/shop/AiVoicePanel'), { ssr: false });
@@ -1435,6 +1470,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
 
   // ── AI Chat ────────────────────────────────────
+  const [visitorId, setVisitorId] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 1, role: 'bot', text: `আসসালামু আলাইকুম! আমি ${shop.aiConfig?.botName || 'Daripallah AI'}। ${shop.shopName}-এ আপনাকে স্বাগতম। কোনো প্রশ্ন থাকলে করুন!` }
   ]);
@@ -1442,6 +1478,45 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [showAiSuggestionModal, setShowAiSuggestionModal] = useState(false);
   const [suggestionForm, setSuggestionForm] = useState({ members: '', budget: '' });
+
+  // Persistent visitor ID for cross-session omnichannel sync
+  useEffect(() => {
+    if (typeof window === 'undefined' || !shop?.id) return;
+    const vKey = `bdr_visitor_${shop.id}`;
+    let vId = localStorage.getItem(vKey);
+    if (!vId) {
+      vId = 'vis_' + Math.random().toString(36).substring(2, 10);
+      localStorage.setItem(vKey, vId);
+    }
+    setVisitorId(vId);
+  }, [shop?.id]);
+
+  // Real-time listener for Merchant / Retailer replies sent from Social Hub Inbox
+  useEffect(() => {
+    if (!shop?.id || !visitorId) return;
+    let unsub = () => {};
+    try {
+      unsub = onSnapshot(doc(db, 'shops', shop.id, 'conversations', visitorId), (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const incoming = data.messages || [];
+        const retailerMsgs = incoming.filter(m => m.role === 'retailer');
+        if (retailerMsgs.length > 0) {
+          setChatMessages(prev => {
+            const last = retailerMsgs[retailerMsgs.length - 1];
+            if (!prev.some(m => m.role === 'retailer' && m.text === last.content)) {
+              playNotificationChime();
+              triggerTabAlert(shop.shopName);
+              toast.success(`শপ প্রতিনিধি: ${last.content.slice(0, 30)}...`, { icon: '💬' });
+              return [...prev, { id: Date.now(), role: 'retailer', text: last.content }];
+            }
+            return prev;
+          });
+        }
+      }, (err) => console.warn('Chat sync notice:', err.message));
+    } catch (e) {}
+    return () => unsub();
+  }, [shop?.id, visitorId, shop?.shopName]);
 
   const getSmartBotReply = (text) => {
     const q = text.toLowerCase();
@@ -1461,7 +1536,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
     // Sync to Social Hub Omnichannel Inbox & capture lead in real time
     try {
       const vKey = `bdr_visitor_${shop.id}`;
-      let vId = typeof window !== 'undefined' ? localStorage.getItem(vKey) : null;
+      let vId = visitorId || (typeof window !== 'undefined' ? localStorage.getItem(vKey) : null);
       if (!vId) {
         vId = 'vis_' + Math.random().toString(36).substring(2, 10);
         if (typeof window !== 'undefined') localStorage.setItem(vKey, vId);
@@ -1507,7 +1582,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 ৭. বাংলায় লেখো, উত্তর সংক্ষিপ্ত কিন্তু সম্পূর্ণ রাখো।
 ৮. পণ্য তালিকার বাইরে থাকা কোনো পণ্য বা সেবার অর্ডার নিবে না বা সাজেস্ট করবে না। শুধুমাত্র প্রদত্ত পণ্য তালিকার পণ্যই রেকমেন্ড করবে।
 ৯. একই পণ্যের বিভিন্ন রূপ (পিস বনাম কেজি): যদি কোনো পণ্যের একই নামে একাধিক ভেরিয়েশন/ইউনিট থাকে (যেমন: 'বয়লার মুরগি' পিস হিসেবে এবং কেজি হিসেবে আলাদা আলাদা পণ্য), তাহলে ইউজারকে অবশ্যই দুটি অপশনের কথাই স্পষ্টভাবে জানাবে এবং জিজ্ঞেস করবে সে কোনটি নিতে চায়। কখনো নিজের থেকে যেকোনো একটি ধরে নিয়ে বাকি অপশনের কথা গোপন করবে না।
-১০. পণ্য অনুসন্ধান এবং প্রাপ্যতা (Product Search & Availability): ব্যবহারকারী যদি নির্দিষ্ট কোনো পণ্যের (যেমন: ক্যামেরা) খোঁজ করে, তবে তুমি প্রথমে প্রদত্ত পণ্য তালিকায় তা খুঁজবে। যদি পণ্যটি তালিকায় থাকে, তবে সেটি সাজেস্ট করবে। কিন্তু যদি পণ্যটি তালিকায় না থাকে, তবে স্পষ্টভাবে ব্যবহারকারীকে বলবে যে পণ্যটি এই মুহূর্তে দোকানে উপলব্ধ নেই (available নেই)। এরপর তুমি বিকল্প হিসেবে অন্য কোনো সম্পর্কিত পণ্য (যেমন ক্যামেরা না থাকলে লেন্স বা অন্য কোনো অ্যাক্সেসরিজ যা তালিকায় আছে) বা বিকল্প ব্যবস্থা সাজেস্ট করতে পারো। কখনোই দোকানে না থাকা পণ্যের বদলে অন্য পণ্যকে সরাসরি মূল পণ্য হিসেবে সাজেস্ট করবে না।` },
+১০. পণ্য অনুসন্ধান এবং প্রাপ্যতা (Product Search & Availability): ব্যবহারকারী যদি নির্দিষ্ট কোনো পণ্যের (যেমন: ক্যামেরা) খোঁজ করে, তবে তুমি প্রথমে প্রদত্ত পণ্য তালিকায় তা খুঁজবে। যদি পণ্যটি তালিকায় থাকে, তবে সেটি সাজেস্ট করবে। কিন্তু যদি পণ্যটি তালিকায় না থাকে, তবে স্পষ্টভাবে ব্যবহারকারীকে বলবে যে পণ্যটি এই মুহূর্তে দোকানে উপলব্ধ নেই (available নেই)। এরপর তুমি বিকল্প হিসেবে অন্য কোনো সম্পর্কিত পণ্য (যেমন ক্যামেরা না থাকলে লেন্স বা অন্য কোনো অ্যাক্সেসরিজ যা তালিকায় আছে) বা বিকল্প ব্যবস্থা সাজেস্ট করতে পারো। কখনোই দোকানে না থাকা পণ্যের বদলে অন্য পণ্যকে সরাসরি মূল পণ্য হিসেবে সাজেস্ট করবে না।
+১১. বাংলা বানানের ভিন্নতা ও সমার্থক পণ্য সমন্বয়: গ্রাহক বিভিন্ন বানানে বা উচ্চারণে পণ্যের নাম লিখতে পারে (যেমন: 'পেঁয়াজ' / 'পেয়াজ' / 'পিয়াজ' / 'Onion', 'মরিচ' / 'কাঁচামরিচ' / 'ঝাল', 'আলু' / 'Potato', 'তেল' / 'সয়াবিন', 'রসুন' / 'রশুন')। পণ্য তালিকায় কাছাকাছি বা সমার্থক কোনো পণ্য থাকলে কখনোই 'দোকানে উপলব্ধ নেই' বা 'নাই' বলবে না! সরাসরি সেই পণ্যটি স্টোরে আছে বলে নিশ্চিত করবে এবং তার সঠিক দাম জানিয়ে অর্ডার করতে উৎসাহিত করবে।` },
             ...chatMessages.slice(-6).filter(m => m.id !== 1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.text })),
             { role: 'user', content: text }
           ]
@@ -1520,6 +1596,8 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         const botText = data.choices?.[0]?.message?.content || getSmartBotReply(text);
         const hasSuggestions = botText.includes('🛒');
         setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: botText, hasSuggestions }]);
+        playNotificationChime();
+        triggerTabAlert(shop.shopName);
       }
     } catch (err) {
       setChatMessages(prev => [...prev, { id: Date.now()+1, role: 'bot', text: `⚠️ Network Error: ${err.message}` }]);
@@ -4392,8 +4470,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 {chatMessages.map(msg => {
                   const suggestedItems = getSuggestedProductsForMessage(msg);
                   return (
-                    <div key={msg.id} className={`max-w-[90%] flex flex-col gap-2 ${msg.role === 'bot' ? 'self-start' : 'self-end'}`}>
-                      <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${msg.role === 'bot' ? 'bg-white border border-slate-200 text-slate-800 rounded-tl-none' : 'bg-slate-900 text-white rounded-tr-none'}`}>
+                    <div key={msg.id} className={`max-w-[90%] flex flex-col gap-1 ${msg.role === 'user' ? 'self-end items-end' : 'self-start items-start'}`}>
+                      <span className="text-[10px] font-bold text-slate-400 px-1">
+                        {msg.role === 'user' ? 'আপনি' : msg.role === 'retailer' ? '👤 শপ প্রতিনিধি' : '🤖 AI সহকারী'}
+                      </span>
+                      <div className={`p-3.5 rounded-2xl text-sm font-bold shadow-sm leading-relaxed ${
+                        msg.role === 'user' 
+                          ? 'bg-slate-900 text-white rounded-tr-none' 
+                          : msg.role === 'retailer'
+                          ? 'bg-purple-700 text-white rounded-tl-none'
+                          : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
+                      }`}>
                         {msg && msg.text && typeof msg.text === 'string' 
                           ? msg.text.replace(/PRODUCTS_JSON:.*$/s, '').trim() 
                           : (msg ? msg.text : '')}

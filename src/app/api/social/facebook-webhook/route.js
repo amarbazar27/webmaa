@@ -57,35 +57,49 @@ async function sendFacebookCommentReply(commentId, text, pageAccessToken) {
   }
 }
 
-// Helper: Dual-engine AI generator (Groq Llama 3.3 70B primary for flawless standard Bangla, Vyce AI fallback)
+// Helper: Multi-Account Groq LPU (Llama 3.3 70B & DeepSeek R1) with Vyce AI Fallback
 async function getAiReply(messages, shopContext) {
-  // 1. Primary: Groq LPU (Llama 3.3 70B Versatile — Ultra-fluent standard Bangla, zero hallucinations, 300 tps)
-  const groqKey = process.env.GROQ_API_KEY;
-  if (groqKey) {
-    try {
-      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${groqKey}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: shopContext },
-            ...messages
-          ],
-          max_tokens: 450,
-          temperature: 0.35
-        })
-      });
-      if (groqRes.ok) {
-        const groqData = await groqRes.json();
-        const reply = groqData.choices?.[0]?.message?.content;
-        if (reply) return reply;
+  const groqKeys = [
+    process.env.GROQ_API_KEY,
+    process.env.GROQ_API_KEY_2
+  ].filter(Boolean);
+
+  // 1. Try Groq LPU across all configured keys and models
+  for (const key of groqKeys) {
+    for (const model of ['llama-3.3-70b-versatile', 'deepseek-r1-distill-llama-70b', 'llama-3.1-8b-instant']) {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: shopContext },
+              ...messages
+            ],
+            max_tokens: 500,
+            temperature: 0.35
+          })
+        });
+
+        if (groqRes.ok) {
+          const groqData = await groqRes.json();
+          let reply = groqData.choices?.[0]?.message?.content;
+          if (reply) {
+            // Strip DeepSeek R1 internal thought blocks <think>...</think>
+            reply = reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+            if (reply) return reply;
+          }
+        } else if (groqRes.status === 429) {
+          console.warn(`[Groq Webhook 429] Key rate limited on ${model}, rotating to next key...`);
+          break; // break inner model loop to try next key immediately
+        }
+      } catch (groqErr) {
+        console.warn(`[Groq Webhook Warning with ${model}]:`, groqErr.message);
       }
-    } catch (groqErr) {
-      console.warn('[Facebook Webhook Groq Warning, falling back to Vyce AI]:', groqErr.message);
     }
   }
 
@@ -112,7 +126,7 @@ async function getAiReply(messages, shopContext) {
       const data = await res.json();
       return data.choices?.[0]?.message?.content || null;
     } catch (err) {
-      console.error('[Facebook Webhook Vyce AI Error]:', err.message);
+      console.error('[Facebook Webhook Vyce AI Fallback Error]:', err.message);
     }
   }
   return null;
@@ -254,6 +268,7 @@ export async function POST(request) {
 ৩. সত্যনিষ্ঠ তথ্য: তালিকার বাইরের কোনো কাল্পনিক পণ্যের নাম বা মিথ্যা দাম বানিয়ে বলবে না। যদি কোনো তথ্য তালিকায় না থাকে, তবে বিনয়ের সাথে বলবে যে আমাদের প্রতিনিধি দ্রুত যোগাযোগ করবে।
 ৪. দাম ও সংখ্যা: প্রমিত বাংলায় বা স্পষ্ট সংখ্যায় (যেমন: ৳৫০০ বা ৫০০ টাকা) লিখবে।
 ৫. উত্তর শৈলী: উত্তর হবে স্পষ্ট, সংক্ষিপ্ত (১-৩ বাক্য) এবং সরাসরি কাস্টমারের প্রশ্নের সমাধানকেন্দ্রিক।
+৬. বাংলা বানানের ভিন্নতা ও সমার্থক পণ্য সমন্বয়: গ্রাহক বিভিন্ন বানানে বা উচ্চারণে পণ্যের নাম লিখতে পারে (যেমন: 'পেঁয়াজ' / 'পেয়াজ' / 'পিয়াজ' / 'Onion', 'মরিচ' / 'কাঁচামরিচ' / 'ঝাল', 'আলু' / 'Potato', 'তেল' / 'সয়াবিন', 'রসুন' / 'রশুন')। পণ্য তালিকায় কাছাকাছি বা সমার্থক কোনো পণ্য থাকলে কখনোই 'নাই' বলবে না! সরাসরি সেই পণ্যটি স্টোরে আছে বলে নিশ্চিত করবে এবং তার সঠিক দাম জানিয়ে অর্ডার করতে উৎসাহিত করবে।
 
 দোকানের পণ্য তালিকা:
 ${productList || 'পণ্য তালিকা লোড করা হচ্ছে'}

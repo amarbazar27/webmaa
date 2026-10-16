@@ -214,7 +214,7 @@ export default function SocialHubPanel({ shopId }) {
         { id: 'posts', label: 'Posts (সোশ্যাল পোস্ট)', icon: MessageSquareCode, badge: null },
         { id: 'knowledge', label: 'Knowledge (বিজনেস নলেজবেস)', icon: BookOpen, badge: null },
         { id: 'website_chat', label: 'Website chat (স্টোর লাইভ চ্যাট)', icon: Globe, badge: 'Auto' },
-        { id: 'agent_desk', label: 'Agent Desk (AI সেলসম্যান)', icon: Bot, badge: 'Agnes' },
+        { id: 'agent_desk', label: 'Agent Desk (AI সেলসম্যান)', icon: Bot, badge: 'Groq LPU' },
       ]
     },
     {
@@ -475,43 +475,98 @@ export default function SocialHubPanel({ shopId }) {
             </div>
 
             <div className="space-y-3.5 text-xs text-slate-600 font-medium leading-relaxed">
-              <div className="p-3.5 bg-purple-50 rounded-2xl border border-purple-100 space-y-1">
-                <p className="font-black text-purple-900 flex items-center gap-1.5">
-                  <Globe size={15} /> ১. ফেসবুক পেজ কানেকশন ও টোকেন
+              {/* Step 1: Create Meta App */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
+                <p className="font-black text-slate-900 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-indigo-700">
+                    <Globe size={15} /> ধাপ ১: Meta Developer-এ অ্যাপ তৈরি (App Creation)
+                  </span>
+                  <a 
+                    href="https://developers.facebook.com/apps/create/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-[11px] text-blue-600 font-bold hover:underline flex items-center gap-1"
+                  >
+                    অ্যাপ তৈরি লিংক <ExternalLink size={12} />
+                  </a>
                 </p>
-                <p>
-                  Meta for Developers-এর <strong className="text-purple-800">Graph API Explorer</strong> থেকে আপনার পেজ বেছে নিয়ে Generate Access Token চাপুন এবং টোকেনটি Pages ট্যাবে পেস্ট করুন।
-                </p>
-                <p className="text-[11px] text-purple-700 font-mono">
-                  Webhook URL: https://bdretailers.com/api/social/facebook-webhook<br/>
-                  Verify Token: bdretailers_meta_webhook_secret_2026
-                </p>
-              </div>
-
-              <div className="p-3.5 bg-blue-50 rounded-2xl border border-blue-100 space-y-1">
-                <p className="font-black text-blue-900 flex items-center gap-1.5">
-                  <MessageSquare size={15} /> ২. ফেসবুক পোস্ট কমেন্ট অটো-রিপ্লাই
-                </p>
-                <p>
-                  Comments ট্যাবে গিয়ে অটো-রিপ্লাই অন রাখুন। গ্রাহক আপনার ফেসবুক পেজের কোনো পোস্টে কমেন্ট করলে সাথে সাথে পাবলিক উত্তর যাবে এবং তার ইনবক্সে স্বয়ংক্রিয় প্রাইভেট ডিএম পাঠিয়ে লিড সংগ্রহ করা হবে।
+                <p className="text-slate-600">
+                  Graph API বা Webhook ব্যবহারের আগে মেটায় আপনার একটি অ্যাপ থাকতে হবে। <a href="https://developers.facebook.com/apps/create/" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:underline">developers.facebook.com/apps/create</a> লিংকে যান, Use Case হিসেবে &quot;Other&quot; বা &quot;Business&quot; সিলেক্ট করে যেকোনো নামে একটি App তৈরি করুন।
                 </p>
               </div>
 
-              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-1">
+              {/* Step 2: Page Access Token */}
+              <div className="p-3.5 bg-purple-50 rounded-2xl border border-purple-100 space-y-1.5">
+                <p className="font-black text-purple-900 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Zap size={15} className="text-purple-600" /> ধাপ ২: পেজ অ্যাক্সেস টোকেন সংগ্রহ (Access Token)
+                  </span>
+                  <a 
+                    href="https://developers.facebook.com/tools/explorer/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-[11px] text-purple-700 font-bold hover:underline flex items-center gap-1"
+                  >
+                    Graph API Explorer <ExternalLink size={12} />
+                  </a>
+                </p>
+                <p className="text-purple-900">
+                  সরাসরি <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="font-bold underline">Graph API Explorer</a>-এ যান। উপরে আপনার তৈরি অ্যাপ বেছে নিন, <strong>User or Page</strong> ড্রপডাউন থেকে আপনার Facebook Page সিলেক্ট করুন এবং <strong>Generate Access Token</strong> চাপুন। প্রাপ্ত টোকেনটি কপি করে Social Hub এর Pages ট্যাবে পেস্ট করুন।
+                </p>
+              </div>
+
+              {/* Step 3: Webhooks Setup */}
+              <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
+                <p className="font-black text-amber-950 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-amber-900">
+                    <ShieldCheck size={15} className="text-amber-600" /> ধাপ ৩: ওয়েবহুক যুক্ত করা (Webhooks Setup)
+                  </span>
+                  <a 
+                    href="https://developers.facebook.com/apps/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-[11px] text-amber-800 font-bold hover:underline flex items-center gap-1"
+                  >
+                    Webhooks ড্যাশবোর্ড <ExternalLink size={12} />
+                  </a>
+                </p>
+                <div className="p-2 bg-amber-100/70 border border-amber-300/80 rounded-xl text-[11px] text-amber-950 font-bold">
+                  ⚠️ গুরুত্বপূর্ণ সতর্কবার্তা: Select an object ড্রপডাউনে <u>অবশ্যই &quot;Page&quot; সিলেক্ট করবেন</u>! ভুলেও Catalog (ক্যাটালগ) সিলেক্ট করবেন না। ক্যাটালগ সিলেক্ট করলে মেসেজ বা কমেন্ট আসবে না।
+                </div>
+                <div className="bg-white p-2.5 rounded-xl border border-amber-200 space-y-1 font-mono text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Callback URL:</span>
+                    <button 
+                      onClick={() => { navigator.clipboard.writeText('https://bdretailers.com/api/social/facebook-webhook'); toast.success('Webhook URL কপি হয়েছে!'); }}
+                      className="text-purple-600 hover:text-purple-800 font-bold cursor-pointer"
+                    >
+                      কপি
+                    </button>
+                  </div>
+                  <div className="text-slate-800 break-all select-all font-semibold">https://bdretailers.com/api/social/facebook-webhook</div>
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                    <span className="text-slate-500">Verify Token:</span>
+                    <button 
+                      onClick={() => { navigator.clipboard.writeText('bdretailers_meta_webhook_secret_2026'); toast.success('Verify Token কপি হয়েছে!'); }}
+                      className="text-purple-600 hover:text-purple-800 font-bold cursor-pointer"
+                    >
+                      কপি
+                    </button>
+                  </div>
+                  <div className="text-slate-800 select-all font-semibold">bdretailers_meta_webhook_secret_2026</div>
+                </div>
+                <p className="text-[11px] text-amber-900">
+                  Verify and Save চাপার পর নিচে ফিল্ড তালিকা থেকে <strong>messages</strong> এবং <strong>feed</strong> এর পাশে <strong>Subscribe</strong> বাটনে ক্লিক করুন।
+                </p>
+              </div>
+
+              {/* Step 4: Human Takeover */}
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-1">
                 <p className="font-black text-emerald-900 flex items-center gap-1.5">
-                  <ShoppingBag size={15} /> ৩. অনলাইন স্টোরে স্বয়ংক্রিয় লাইভ চ্যাট
+                  <PauseCircle size={15} className="text-emerald-600" /> হিউম্যান টেকওভার ও ডট (.) কমান্ড
                 </p>
-                <p>
-                  আপনার দোকানের ওয়েবসাইটে কোনো স্ক্রিপ্ট বা কোড বসানোর প্রয়োজন নেই! আপনার অনলাইন স্টোরে গ্রাহক প্রবেশ করে নিচে থাকা AI চ্যাটে প্রশ্ন করলে সমস্ত মেসেজ এই সোশ্যাল হাবের লাইভ ইনবক্সে রিয়েলটাইমে পৌঁছাবে।
-                </p>
-              </div>
-
-              <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-100 space-y-1">
-                <p className="font-black text-amber-900 flex items-center gap-1.5">
-                  <PauseCircle size={15} /> ৪. হিউম্যান টেকওভার ও ডট (.) কমান্ড
-                </p>
-                <p>
-                  গ্রাহকের সাথে নিজে কথা বলতে চাইলে মেসেজ ইনপুটে শুধু একটি ডট <strong className="text-amber-800">&quot;.&quot;</strong> লিখে এন্টার দিন — AI সাথে সাথে বিরতিতে যাবে। কথা শেষ হলে আবার ডট দিলে AI পুনরায় উত্তর দেওয়া শুরু করবে।
+                <p className="text-emerald-800 text-[11px]">
+                  গ্রাহকের সাথে নিজে কথা বলতে চাইলে মেসেজ ইনপুটে শুধু একটি ডট <strong>&quot;.&quot;</strong> লিখে এন্টার দিন — AI সাথে সাথে পজ হয়ে যাবে। কথা শেষ হলে আবার ডট দিলে AI পুনরায় সক্রিয় হবে।
                 </p>
               </div>
             </div>
@@ -944,7 +999,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
                         )}
                       >
                         <span className="text-[9px] font-bold text-slate-400 mb-0.5 px-1">
-                          {isUser ? activeConv.senderName || 'গ্রাহক' : isAssistant ? '🤖 Agnes 3.0 Flash' : '👤 আপনি (মার্চেন্ট)'}
+                          {isUser ? activeConv.senderName || 'গ্রাহক' : isAssistant ? '🤖 Groq LPU AI' : '👤 আপনি (মার্চেন্ট)'}
                         </span>
                         <div
                           className={clsx(
@@ -1577,7 +1632,7 @@ function KnowledgeBaseSection({ shopId }) {
     >
       <div className="space-y-4 pt-1">
         <p className="text-xs text-slate-600 font-medium">
-          আপনার ব্যবসার নিয়মাবলী, রিটার্ন পলিসি ও সাধারণ প্রশ্নোত্তর এখানে লিখুন। Agnes 3.0 Flash গ্রাহকের যেকোনো প্রশ্নে এই তথ্যগুলো মাথায় রেখে উত্তর দেবে।
+          আপনার ব্যবসার নিয়মাবলী, রিটার্ন পলিসি ও সাধারণ প্রশ্নোত্তর এখানে লিখুন। Groq LPU ও Vyce AI গ্রাহকের যেকোনো প্রশ্নে এই তথ্যগুলো মাথায় রেখে প্রমিত বাংলায় উত্তর দেবে।
         </p>
 
         <div className="space-y-1.5">
@@ -1807,7 +1862,7 @@ function AgentDeskSection({ shopId }) {
 
   return (
     <Card 
-      title="Agent Desk: Agnes 3.0 Flash AI সেলসম্যান কনফিগারেশন" 
+      title="Agent Desk: Groq LPU (Llama 3.3 70B & DeepSeek R1) AI সেলসম্যান কনফিগারেশন" 
       icon={Bot}
       footer={
         <div className="flex justify-end">
@@ -1819,9 +1874,9 @@ function AgentDeskSection({ shopId }) {
     >
       <div className="space-y-5 pt-1">
         <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs">
-          <span className="font-bold text-slate-700">ডিফল্ট AI মডেল:</span>
+          <span className="font-bold text-slate-700">ডিফল্ট AI ইঞ্জিন:</span>
           <span className="px-2.5 py-1 bg-purple-600 text-white rounded-full font-black text-[10px]">
-            Agnes 3.0 Flash ($0.05 / 1K in)
+            Groq LPU (Llama 3.3 & DeepSeek R1) / Vyce Fallback
           </span>
         </div>
 
@@ -2481,7 +2536,7 @@ function ActivityAuditSection({ conversations, leads }) {
           <span className="text-emerald-600 font-bold">200 OK</span>
         </div>
         <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-          <span className="font-bold text-slate-700">Agnes 3.0 Flash RAG Context: Synced</span>
+          <span className="font-bold text-slate-700">Groq LPU & Vyce AI RAG Context: Synced</span>
           <span className="text-purple-600 font-bold">Online</span>
         </div>
       </div>
@@ -2543,7 +2598,7 @@ function ProductsContextSection({ shopId }) {
   return (
     <Card title="AI প্রোডাক্ট ক্যাটালগ রিকমেন্ডেশন" icon={Layers}>
       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
-        <p className="font-bold text-slate-800">Agnes 3.0 Flash RAG ক্যাটালগ সিঙ্ক:</p>
+        <p className="font-bold text-slate-800">Groq LPU & Vyce AI RAG ক্যাটালগ সিঙ্ক:</p>
         <p className="text-slate-600">
           আপনার স্টোরের আপলোডকৃত পণ্যগুলো স্বয়ংক্রিয়ভাবে AI সেলসম্যানের নলেজে চলে যায়। কাস্টমার দাম বা প্রোডাক্ট জানতে চাইলে রোবট সরাসরি আসল প্রোডাক্টের নাম ও মূল্য ডেলিভার করে।
         </p>
