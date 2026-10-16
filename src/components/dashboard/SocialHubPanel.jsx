@@ -2097,16 +2097,29 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
             ) : (
               <div className="space-y-3.5">
                 <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-700 block">
-                    Page Access Token *
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-black text-slate-700 block">
+                      Page Access Token *
+                    </label>
+                    <a
+                      href="https://developers.facebook.com/tools/explorer/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-blue-600 font-bold hover:underline flex items-center gap-1"
+                    >
+                      Graph API Explorer <ExternalLink size={11} />
+                    </a>
+                  </div>
                   <input
                     type="password"
-                    placeholder="EAAI..."
+                    placeholder="EAA..."
                     value={fbToken}
                     onChange={e => setFbToken(e.target.value)}
                     className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none"
                   />
+                  <p className="text-[10px] text-slate-500 leading-tight">
+                    💡 Graph API Explorer-এ <strong>User or Page</strong> ড্রপডাউনে আপনার <strong>Facebook Page</strong> সিলেক্ট করে <em>Generate Access Token</em> চাপুন (অথবা ইউজার টোকেন পেস্ট করলেও আমাদের সিস্টেম স্বয়ংক্রিয়ভাবে পেজ টোকেনে কনভার্ট করে নিবে)।
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">

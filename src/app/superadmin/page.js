@@ -23,6 +23,7 @@ const SuperadminSponsorsManager = dynamic(() => import('@/components/superadmin/
 const SuperadminFaqManager = dynamic(() => import('@/components/superadmin/SuperadminFaqManager'), { ssr: false });
 const SuperadminTemplatesManager = dynamic(() => import('@/components/superadmin/SuperadminTemplatesManager'), { ssr: false });
 const SuperadminMarketingHub = dynamic(() => import('@/components/superadmin/SuperadminMarketingHub'), { ssr: false });
+const SuperadminStoreCloner = dynamic(() => import('@/components/superadmin/SuperadminStoreCloner'), { ssr: false });
 import {
   UserPlus, Mail, Trash2, Crown, Store, Activity, ShieldCheck,
   Phone, CheckCircle, XCircle, Clock, ArrowUpRight, Users, Loader2, Sparkles, Key, Eye, EyeOff,
@@ -1353,6 +1354,20 @@ export default function SuperAdminPage() {
               >
                 <Globe size={16} />
                 <span>সোশ্যাল হাব</span>
+              </button>
+            )}
+
+            {!isSubAdmin && (
+              <button
+                onClick={() => setSuperadminTab('store_cloner')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
+                  superadminTab === 'store_cloner'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/20'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }`}
+              >
+                <Sparkles size={16} className="text-yellow-400" />
+                <span>FB পেজ থেকে ওয়েবসাইট বিল্ডার</span>
               </button>
             )}
 
@@ -3699,6 +3714,10 @@ export default function SuperAdminPage() {
 
       {superadminTab === 'social_hub' && !isSubAdmin && (
         <SuperadminSocialHub />
+      )}
+
+      {superadminTab === 'store_cloner' && !isSubAdmin && (
+        <SuperadminStoreCloner />
       )}
 
       {superadminTab === 'directory' && canAccess('view_live_stores') && !isSubAdmin && (<>

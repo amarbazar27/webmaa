@@ -6,10 +6,11 @@ import { getProducts, deleteProduct, updateProduct, getCategories, addCategory, 
 import { uploadProductImage } from '@/lib/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { auth } from '@/lib/auth';
 import { 
   Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, 
   AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff, 
-  Inbox, Layers, FolderPlus, HelpCircle, Download
+  Inbox, Layers, FolderPlus, HelpCircle, Download, Upload, Globe, FileText, CheckCircle2
 } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
@@ -71,6 +72,54 @@ function EditableCell({ value, onSave, type = 'text', prefix = '', className = '
   );
 }
 
+// CSV Parser utility respecting quotes
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+  const items = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const fields = [];
+    let insideQuote = false;
+    let currentField = '';
+
+    for (let j = 0; j < rawLine.length; j++) {
+      const char = rawLine[j];
+      if (char === '"' || char === "'") {
+        insideQuote = !insideQuote;
+      } else if (char === ',' && !insideQuote) {
+        fields.push(currentField.trim());
+        currentField = '';
+      } else {
+        currentField += char;
+      }
+    }
+    fields.push(currentField.trim());
+
+    const item = {};
+    headers.forEach((h, idx) => {
+      const val = (fields[idx] || '').replace(/^["']|["']$/g, '');
+      if (h.includes('name') || h === 'title') item.name = val;
+      else if (h.includes('price') && !h.includes('cost')) item.price = parseFloat(val) || 0;
+      else if (h.includes('cost')) item.costPrice = parseFloat(val) || 0;
+      else if (h.includes('stock') || h.includes('qty')) item.stock = parseInt(val, 10) || 50;
+      else if (h.includes('category') && !h.includes('sub')) item.category = val;
+      else if (h.includes('subcat')) item.subCategory = val;
+      else if (h.includes('image') || h.includes('photo')) item.imageUrl = val;
+      else if (h.includes('sku')) item.sku = val;
+      else if (h.includes('desc')) item.description = val;
+    });
+
+    if (item.name) {
+      items.push(item);
+    }
+  }
+  return items;
+}
+
 export default function ProductsPage() {
   const { user, activeShopId } = useAuth();
   const [activeTab, setActiveTab] = useState('products'); // 'products' | 'categories'
@@ -88,6 +137,15 @@ export default function ProductsPage() {
   const [addingCat, setAddingCat] = useState(false);
   const [newSubcat, setNewSubcat] = useState({});
   const [isQuickCatModalOpen, setIsQuickCatModalOpen] = useState(false);
+
+  // Bulk Import & Competitor Cloner state
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importTab, setImportTab] = useState('csv'); // 'csv' | 'clone'
+  const [csvFile, setCsvFile] = useState(null);
+  const [parsedCsvProducts, setParsedCsvProducts] = useState([]);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const [cloneUrl, setCloneUrl] = useState('');
+  const [cloning, setCloning] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     if (!activeShopId) return;
@@ -290,6 +348,97 @@ export default function ProductsPage() {
     toast.success(`${filteredProducts.length} টি প্রোডাক্ট সফলভাবে CSV ফাইলে ডাউনলোড হয়েছে! 📥`);
   };
 
+  const handleCsvFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text === 'string') {
+        const parsed = parseCSV(text);
+        setParsedCsvProducts(parsed);
+        if (parsed.length === 0) {
+          toast.error('CSV ফাইলে কোনো ভ্যালিড প্রোডাক্ট পাওয়া যায়নি');
+        } else {
+          toast.success(`${parsed.length} টি প্রোডাক্ট শনাক্ত হয়েছে!`);
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleBulkImportSubmit = async () => {
+    if (parsedCsvProducts.length === 0) {
+      toast.error('ইমপোর্ট করার মতো কোনো প্রোডাক্ট নেই');
+      return;
+    }
+    setImportingCsv(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/products/bulk-import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId: activeShopId,
+          products: parsedCsvProducts
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'ইমপোর্ট ব্যর্থ হয়েছে');
+
+      toast.success(data.message || 'প্রোডাক্ট সফলভাবে ইমপোর্ট হয়েছে! 🎉');
+      setIsImportModalOpen(false);
+      setParsedCsvProducts([]);
+      setCsvFile(null);
+      fetchProducts();
+      fetchCategoriesData();
+    } catch (err) {
+      toast.error(err.message || 'সমস্যা হয়েছে');
+    } finally {
+      setImportingCsv(false);
+    }
+  };
+
+  const handleCloneSubmit = async (e) => {
+    e.preventDefault();
+    if (!cloneUrl.trim()) {
+      toast.error('ওয়েবসাইট লিংক দিন');
+      return;
+    }
+    setCloning(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/products/clone', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId: activeShopId,
+          url: cloneUrl.trim(),
+          autoSave: true
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'কপি করা ব্যর্থ হয়েছে');
+
+      toast.success(data.message || 'প্রোডাক্ট সফলভাবে কপি হয়েছে! 🚀');
+      setIsImportModalOpen(false);
+      setCloneUrl('');
+      fetchProducts();
+      fetchCategoriesData();
+    } catch (err) {
+      toast.error(err.message || 'সমস্যা হয়েছে');
+    } finally {
+      setCloning(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-slide-in pb-12">
       {/* Header with Title & Action Buttons */}
@@ -299,6 +448,15 @@ export default function ProductsPage() {
           <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1">প্রোডাক্ট স্টক, মূল্য ও ক্যাটাগরি একসাথে সহজভাবে পরিচালনা করুন</p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-xs flex items-center gap-1.5 shadow-sm shadow-purple-500/20 transition-all cursor-pointer active:scale-95"
+            title="CSV বা প্রতিযোগী ওয়েবসাইট থেকে প্রোডাক্ট ইমপোর্ট করুন"
+          >
+            <Upload size={15} />
+            <span>ইমপোর্ট ও অটো-সেটআপ</span>
+          </button>
           <button
             type="button"
             onClick={exportProductsToCSV}
@@ -645,6 +803,140 @@ export default function ProductsPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Product Import & Competitor Cloner Modal ── */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Upload size={20} className="text-purple-600" />
+                <h3 className="text-base font-black text-slate-900">প্রোডাক্ট ইমপোর্ট ও অটো-সেটআপ</h3>
+              </div>
+              <button 
+                onClick={() => { setIsImportModalOpen(false); setParsedCsvProducts([]); setCsvFile(null); }} 
+                className="p-1 rounded-full text-slate-400 hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex bg-slate-100 p-1 rounded-2xl gap-1">
+              <button
+                type="button"
+                onClick={() => setImportTab('csv')}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  importTab === 'csv'
+                    ? 'bg-white text-purple-700 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <FileText size={15} />
+                <span>CSV / Excel ফাইল আপলোড</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setImportTab('clone')}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  importTab === 'clone'
+                    ? 'bg-white text-purple-700 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Sparkles size={15} className="text-yellow-500" />
+                <span>প্রতিযোগী লিংক থেকে অটো কপি (REA)</span>
+              </button>
+            </div>
+
+            {/* Tab 1: CSV Upload */}
+            {importTab === 'csv' && (
+              <div className="space-y-4">
+                <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 text-xs text-purple-950 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    💡 সহজ নিয়ম:
+                  </p>
+                  <p className="text-[11px] text-purple-800">
+                    আপনার CSV ফাইলে <strong>Product Name, Price, Category, Stock, Image URL</strong> হেডার থাকলেই আমাদের সিস্টেম স্বয়ংক্রিয়ভাবে সব ডাটা ও ক্যাটাগরি তৈরি করে নেবে।
+                  </p>
+                </div>
+
+                <div className="border-2 border-dashed border-slate-200 hover:border-purple-500 rounded-3xl p-6 text-center space-y-3 transition-colors bg-slate-50/50">
+                  <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mx-auto">
+                    <FileText size={24} />
+                  </div>
+                  <div>
+                    <label className="inline-block px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-sm">
+                      <span>ফাইল বেছে নিন (.csv)</span>
+                      <input
+                        type="file"
+                        accept=".csv,text/csv"
+                        onChange={handleCsvFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-[11px] text-slate-400 font-medium mt-1.5">
+                      {csvFile ? csvFile.name : 'কম্পিউটার থেকে যেকোনো প্রোডাক্ট CSV ফাইল সিলেক্ট করুন'}
+                    </p>
+                  </div>
+                </div>
+
+                {parsedCsvProducts.length > 0 && (
+                  <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 text-emerald-900 font-black">
+                      <CheckCircle2 size={16} className="text-emerald-600" />
+                      <span>{parsedCsvProducts.length} টি প্রোডাক্ট সফলভাবে প্রস্তুত হয়েছে</span>
+                    </div>
+                    <Button
+                      onClick={handleBulkImportSubmit}
+                      loading={importingCsv}
+                      className="!bg-emerald-600 hover:!bg-emerald-700 text-white font-black text-xs cursor-pointer"
+                    >
+                      ইনভেন্টরিতে সেভ করুন
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Competitor Link Cloner */}
+            {importTab === 'clone' && (
+              <form onSubmit={handleCloneSubmit} className="space-y-4">
+                <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 text-xs text-indigo-950 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-indigo-600" /> REA Reverse Engineering AI Cloner:
+                  </p>
+                  <p className="text-[11px] text-indigo-800 leading-relaxed">
+                    প্রতিযোগী বা সাপ্লায়ারের যেকোনো ই-কমার্স সাইট (Daraz, Chaldal, Rokomari, Shajgoj, Shopify বা কোনো লোকাল স্টোর)-এর লিংক দিলে AI স্বয়ংক্রিয়ভাবে পণ্যের নাম, দাম, ছবি ও বিবরণ এক্সট্র্যাক্ট করে আপনার দোকানে যুক্ত করে দিবে!
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-800 block">
+                    প্রতিযোগী পণ্য / ওয়েবসাইটের URL *
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://example.com/product/..."
+                    value={cloneUrl}
+                    onChange={e => setCloneUrl(e.target.value)}
+                    className="w-full text-xs font-mono p-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none"
+                    required
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  loading={cloning}
+                  className="w-full !bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs h-12 shadow-lg shadow-purple-500/20 cursor-pointer"
+                >
+                  <Sparkles size={16} className="mr-2" /> পণ্য সংগ্রহ ও স্বয়ংক্রিয়ভাবে আমদানি করুন
+                </Button>
+              </form>
+            )}
           </div>
         </div>
       )}

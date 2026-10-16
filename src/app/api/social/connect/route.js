@@ -95,46 +95,39 @@ export async function POST(request) {
     let resolvedToken = pageAccessToken.trim();
 
     try {
-      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name,category&access_token=${resolvedToken}`);
+      // 1. Verify token validity with basic fields supported on BOTH User and Page nodes
+      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${resolvedToken}`);
       const meData = await meRes.json();
 
       if (meData.error) {
         return NextResponse.json({
-          error: `মেটা এক্সেস টোকেনটি অকার্যকর বা মেয়াদোত্তীর্ণ (${meData.error.message})। দয়া করে Graph API Explorer থেকে সচল Page Access Token সংগ্রহ করুন।`
+          error: `মেটা এক্সেস টোকেনটি অকার্যকর বা মেয়াদোত্তীর্ণ (${meData.error.message})। দয়া করে Graph API Explorer থেকে সচল টোকেন সংগ্রহ করুন।`
         }, { status: 400 });
       }
 
-      if (meData.category) {
-        // Genuine Page Access Token
+      // 2. Check if this is a User Access Token by querying /me/accounts
+      // If it's a User Token, /me/accounts returns the list of pages owned by this user
+      const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?access_token=${resolvedToken}`);
+      const accountsData = await accountsRes.json();
+
+      if (accountsData.data && Array.isArray(accountsData.data) && accountsData.data.length > 0) {
+        // User Token detected! Automatically extract the actual Page Access Token
+        const matchedPage = pageId
+          ? accountsData.data.find(p => p.id === pageId) || accountsData.data[0]
+          : accountsData.data[0];
+
+        if (matchedPage) {
+          pageId = matchedPage.id;
+          pageName = matchedPage.name || pageName;
+          if (matchedPage.access_token) {
+            resolvedToken = matchedPage.access_token;
+            console.log('[Social Connect] Successfully resolved Page Access Token from User Token for page:', pageName, pageId);
+          }
+        }
+      } else {
+        // Not a User Token with accounts, so it's already a direct Page Access Token!
         pageId = pageId || meData.id;
         pageName = pageName || meData.name || 'Facebook Page';
-      } else {
-        // Might be a User Token — query /me/accounts for user's pages
-        const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?access_token=${resolvedToken}`);
-        const accountsData = await accountsRes.json();
-
-        if (accountsData.error) {
-          return NextResponse.json({
-            error: `পেজ এক্সেস টোকেন পাওয়া যায়নি: ${accountsData.error.message}`
-          }, { status: 400 });
-        }
-
-        if (accountsData.data && Array.isArray(accountsData.data) && accountsData.data.length > 0) {
-          const matchedPage = pageId
-            ? accountsData.data.find(p => p.id === pageId) || accountsData.data[0]
-            : accountsData.data[0];
-
-          if (matchedPage) {
-            pageId = matchedPage.id;
-            pageName = matchedPage.name;
-            if (matchedPage.access_token) {
-              resolvedToken = matchedPage.access_token;
-            }
-          }
-        } else if (meData.id) {
-          pageId = pageId || meData.id;
-          pageName = pageName || meData.name || 'Facebook Page';
-        }
       }
     } catch (graphErr) {
       console.warn('[Social Connect] Meta lookup warning:', graphErr.message);
