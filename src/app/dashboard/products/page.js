@@ -2,15 +2,19 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { getProducts, deleteProduct, updateProduct, getCategories, addCategory, deleteCategory } from '@/lib/firestore';
+import { 
+  getProducts, deleteProduct, updateProduct, getCategories, addCategory, deleteCategory,
+  bulkDeleteProducts, bulkUpdateProductsCategory, bulkUpdateProductsStock
+} from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { auth } from '@/lib/auth';
 import { 
-  Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, Check, Pencil, X, 
+  Plus, Trash2, Package, Search, BarChart3, Tag, ChevronRight, ChevronLeft, Check, Pencil, X, 
   AlertCircle, Camera, ImageIcon, Loader2, MessageSquare, Sparkles, Eye, EyeOff, 
-  Inbox, Layers, FolderPlus, HelpCircle, Download, Upload, Globe, FileText, CheckCircle2
+  Inbox, Layers, FolderPlus, HelpCircle, Download, Upload, Globe, FileText, CheckCircle2,
+  CheckSquare, Square, RefreshCw, SlidersHorizontal
 } from 'lucide-react';
 import { Button, Card } from '@/components/ui';
 import Link from 'next/link';
@@ -130,6 +134,18 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name_asc');
   const [selectedCategory, setSelectedCategory] = useState('');
+
+  // ── Multi-select, Pagination & Bulk Actions State ──
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [isBulkLoading, setIsBulkLoading] = useState(false);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [bulkCategoryModalOpen, setBulkCategoryModalOpen] = useState(false);
+  const [targetCategory, setTargetCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [bulkStockModalOpen, setBulkStockModalOpen] = useState(false);
+  const [targetStock, setTargetStock] = useState(50);
   
   // Category management state
   const [newCat, setNewCat] = useState('');
@@ -303,6 +319,135 @@ export default function ProductsPage() {
   });
 
   const totalValue = products.reduce((acc, p) => acc + (parseFloat(p.price) || 0) * (parseInt(p.stock) || 0), 0);
+
+  // ── Pagination & Multi-Selection Calculations ──
+  const totalFiltered = filteredProducts.length;
+  const isPageSizeAll = pageSize === 'all';
+  const effectivePageSize = isPageSizeAll ? totalFiltered : Number(pageSize);
+  const totalPages = isPageSizeAll ? 1 : Math.max(1, Math.ceil(totalFiltered / effectivePageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  
+  const paginatedProducts = isPageSizeAll 
+    ? filteredProducts 
+    : filteredProducts.slice((safeCurrentPage - 1) * effectivePageSize, safeCurrentPage * effectivePageSize);
+
+  const isAllVisibleSelected = paginatedProducts.length > 0 && paginatedProducts.every(p => selectedIds.has(p.id));
+  const isAllFilteredSelected = totalFiltered > 0 && filteredProducts.every(p => selectedIds.has(p.id));
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAllVisible = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (isAllVisibleSelected) {
+        paginatedProducts.forEach(p => next.delete(p.id));
+      } else {
+        paginatedProducts.forEach(p => next.add(p.id));
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllFiltered = () => {
+    setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (!activeShopId || selectedIds.size === 0) return;
+    const idsToDelete = Array.from(selectedIds);
+    setIsBulkLoading(true);
+    try {
+      await bulkDeleteProducts(activeShopId, idsToDelete);
+      setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+      setSelectedIds(new Set());
+      setBulkDeleteModalOpen(false);
+      toast.success(`সফলভাবে ${idsToDelete.length}টি পণ্য ডিলিট করা হয়েছে! 🗑️`);
+    } catch (err) {
+      console.error(err);
+      toast.error('বাল্ক ডিলিট ব্যর্থ হয়েছে');
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
+  const handleBulkCategoryConfirm = async () => {
+    const finalCat = (customCategory.trim() || targetCategory.trim());
+    if (!finalCat) {
+      toast.error('ক্যাটাগরি নির্বাচন করুন বা নতুন ক্যাটাগরির নাম দিন');
+      return;
+    }
+    const idsToUpdate = Array.from(selectedIds);
+    setIsBulkLoading(true);
+    try {
+      await bulkUpdateProductsCategory(activeShopId, idsToUpdate, finalCat);
+      setProducts(prev => prev.map(p => selectedIds.has(p.id) ? { ...p, category: finalCat } : p));
+      setSelectedIds(new Set());
+      setBulkCategoryModalOpen(false);
+      setCustomCategory('');
+      setTargetCategory('');
+      toast.success(`${idsToUpdate.length}টি পণ্যের ক্যাটাগরি "${finalCat}" এ আপডেট হয়েছে! 🏷️`);
+      fetchCategoriesData();
+    } catch (err) {
+      console.error(err);
+      toast.error('ক্যাটাগরি আপডেট ব্যর্থ হয়েছে');
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
+  const handleBulkStockConfirm = async () => {
+    const stockVal = parseInt(targetStock, 10);
+    if (isNaN(stockVal) || stockVal < 0) {
+      toast.error('সঠিক স্টক সংখ্যা দিন');
+      return;
+    }
+    const idsToUpdate = Array.from(selectedIds);
+    setIsBulkLoading(true);
+    try {
+      await bulkUpdateProductsStock(activeShopId, idsToUpdate, stockVal);
+      setProducts(prev => prev.map(p => selectedIds.has(p.id) ? { ...p, stock: stockVal } : p));
+      setSelectedIds(new Set());
+      setBulkStockModalOpen(false);
+      toast.success(`${idsToUpdate.length}টি পণ্যের স্টক ${stockVal} এ সেট করা হয়েছে! 📦`);
+    } catch (err) {
+      console.error(err);
+      toast.error('স্টক আপডেট ব্যর্থ হয়েছে');
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
+  const handleDeleteCategoryWithProducts = async (cat) => {
+    const matching = products.filter(p => (p.category || '').toLowerCase() === (cat.name || '').toLowerCase());
+    const proceed = window.confirm(`⚠️ সতর্কতা: আপনি কি "${cat.name}" ক্যাটাগরি এবং এর অন্তর্ভুক্ত সকল ${matching.length}টি প্রোডাক্ট স্থায়ীভাবে মুছে ফেলতে চান? এটি আর ফিরিয়ে আনা যাবে না।`);
+    if (!proceed) return;
+    setIsBulkLoading(true);
+    try {
+      if (matching.length > 0) {
+        await bulkDeleteProducts(activeShopId, matching.map(p => p.id));
+        setProducts(prev => prev.filter(p => (p.category || '').toLowerCase() !== (cat.name || '').toLowerCase()));
+      }
+      await deleteCategory(activeShopId, cat.id);
+      setCategories(prev => prev.filter(c => c.id !== cat.id));
+      toast.success(`"${cat.name}" ক্যাটাগরি ও ${matching.length}টি প্রোডাক্ট সফলভাবে মুছে ফেলা হয়েছে! 🗑️`);
+    } catch (err) {
+      console.error(err);
+      toast.error('ক্যাটাগরি মুছতে সমস্যা হয়েছে');
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
 
   const exportProductsToCSV = () => {
     if (filteredProducts.length === 0) {
@@ -641,11 +786,43 @@ export default function ProductsPage() {
               </Link>
             </div>
           ) : (
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden space-y-0">
+              {/* Filter Selection Banner */}
+              {isAllVisibleSelected && totalFiltered > paginatedProducts.length && (
+                <div className="bg-purple-50 border-b border-purple-100 px-6 py-2.5 text-xs text-purple-900 font-bold flex items-center justify-between">
+                  <span>
+                    এই পেজের {paginatedProducts.length}টি পণ্য নির্বাচিত হয়েছে।
+                    {!isAllFilteredSelected ? (
+                      <button 
+                        type="button"
+                        onClick={handleSelectAllFiltered}
+                        className="ml-2 text-purple-700 underline font-black hover:text-purple-900 cursor-pointer"
+                      >
+                        ফিল্টার করা সকল {totalFiltered}টি পণ্য নির্বাচন করুন
+                      </button>
+                    ) : (
+                      <span className="ml-2 font-black text-emerald-700">✓ ফিল্টারের সকল {totalFiltered}টি পণ্য নির্বাচিত!</span>
+                    )}
+                  </span>
+                  <button type="button" onClick={handleClearSelection} className="text-purple-600 hover:text-purple-800 underline cursor-pointer">
+                    সিলেকশন ক্লিয়ার করুন
+                  </button>
+                </div>
+              )}
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
                     <tr>
+                      <th className="px-4 py-4 w-10 text-center">
+                        <input 
+                          type="checkbox"
+                          checked={isAllVisibleSelected}
+                          onChange={handleToggleSelectAllVisible}
+                          className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                          title="এই পেজের সব সিলেক্ট করুন"
+                        />
+                      </th>
                       <th className="px-6 py-4">Product</th>
                       <th className="px-6 py-4">Category</th>
                       <th className="px-6 py-4">Price (৳)</th>
@@ -654,8 +831,16 @@ export default function ProductsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filteredProducts.map(p => (
-                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                    {paginatedProducts.map(p => (
+                      <tr key={p.id} className={`hover:bg-slate-50/60 transition-colors ${selectedIds.has(p.id) ? 'bg-purple-50/40' : ''}`}>
+                        <td className="px-4 py-4 w-10 text-center">
+                          <input 
+                            type="checkbox"
+                            checked={selectedIds.has(p.id)}
+                            onChange={() => handleToggleSelect(p.id)}
+                            className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="relative w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 group">
@@ -717,6 +902,108 @@ export default function ProductsPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Bar */}
+              <div className="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50/50">
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
+                  <span>প্রতি পেজে:</span>
+                  <select 
+                    value={pageSize}
+                    onChange={e => {
+                      setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-700 outline-none cursor-pointer"
+                  >
+                    <option value={25}>২৫টি</option>
+                    <option value={50}>৫০টি</option>
+                    <option value={100}>১০০টি</option>
+                    <option value={250}>২৫০টি</option>
+                    <option value="all">সবগুলো ({totalFiltered})</option>
+                  </select>
+                  <span className="ml-2">
+                    মোট {totalFiltered} টির মধ্যে {isPageSizeAll ? `১-${totalFiltered}` : `${(safeCurrentPage - 1) * effectivePageSize + 1}-${Math.min(safeCurrentPage * effectivePageSize, totalFiltered)}`} দেখাচ্ছে
+                  </span>
+                </div>
+
+                {!isPageSizeAll && totalPages > 1 && (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={safeCurrentPage === 1}
+                      className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      title="পূর্ববর্তী পেজ"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="px-3 py-1 text-xs font-black text-slate-700">
+                      পেজ {safeCurrentPage} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={safeCurrentPage === totalPages}
+                      className="p-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+                      title="পরবর্তী পেজ"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Sticky Bulk Action Toolbar */}
+          {selectedIds.size > 0 && (
+            <div className="sticky bottom-6 z-40 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 border border-slate-800">
+              <div className="flex items-center gap-3">
+                <span className="w-7 h-7 rounded-lg bg-purple-600 text-white font-black text-xs flex items-center justify-center">
+                  {selectedIds.size}
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-white">
+                  {selectedIds.size}টি পণ্য নির্বাচিত
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setBulkCategoryModalOpen(true)}
+                  className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                >
+                  <Tag size={14} />
+                  <span>ক্যাটাগরি পরিবর্তন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBulkStockModalOpen(true)}
+                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                >
+                  <Package size={14} />
+                  <span>স্টক পরিবর্তন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBulkDeleteModalOpen(true)}
+                  className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md shadow-red-600/30"
+                >
+                  <Trash2 size={14} />
+                  <span>মুছে ফেলুন ({selectedIds.size})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClearSelection}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                  title="নির্বাচন বাতিল"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -770,16 +1057,35 @@ export default function ProductsPage() {
                       <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-black">
                         <Tag size={15} />
                       </div>
-                      <h4 className="font-black text-slate-900 text-sm">{cat.name}</h4>
+                      <div>
+                        <h4 className="font-black text-slate-900 text-sm">{cat.name}</h4>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {products.filter(p => (p.category || '').toLowerCase() === (cat.name || '').toLowerCase()).length} টি পণ্য
+                        </span>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCategory(cat.id)}
-                      className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                      title="Delete Category"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory(cat.name);
+                          setActiveTab('products');
+                        }}
+                        className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                        title="এই ক্যাটাগরির পণ্যসমূহ দেখুন"
+                      >
+                        <Search size={12} />
+                        <span>পণ্যসমূহ</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCategoryWithProducts(cat)}
+                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                        title="ক্যাটাগরি ও এর সকল পণ্য মুছুন"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Subcategories */}
@@ -996,6 +1302,183 @@ export default function ProductsPage() {
                 </Button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Delete Modal ── */}
+      {bulkDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 size={28} />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-slate-900">
+                {selectedIds.size}টি পণ্য ডিলিট নিশ্চিতকরণ
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                আপনি কি নিশ্চিত যে নির্বাচিত <strong>{selectedIds.size}</strong> টি প্রোডাক্ট চিরতরে মুছে ফেলতে চান? একবার মুছে ফেললে এটি আর ফিরিয়ে আনা সম্ভব হবে না।
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setBulkDeleteModalOpen(false)}
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDeleteConfirm}
+                disabled={isBulkLoading}
+                className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-lg shadow-red-500/20 disabled:opacity-50 cursor-pointer"
+              >
+                {isBulkLoading ? 'মুছে ফেলা হচ্ছে...' : 'হ্যাঁ, মুছে ফেলুন'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Change Category Modal ── */}
+      {bulkCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
+              <Tag size={28} />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-slate-900">
+                {selectedIds.size}টি পণ্যের ক্যাটাগরি পরিবর্তন
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                বিদ্যমান কোনো ক্যাটাগরি বেছে নিন অথবা নতুন ক্যাটাগরির নাম লিখুন:
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-black text-slate-600 block mb-1">বিদ্যমান ক্যাটাগরি:</label>
+                <select
+                  value={targetCategory}
+                  onChange={e => {
+                    setTargetCategory(e.target.value);
+                    if (e.target.value) setCustomCategory('');
+                  }}
+                  className="w-full text-xs font-bold p-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none"
+                >
+                  <option value="">-- ক্যাটাগরি বেছে নিন --</option>
+                  {uniqueCategories.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="relative flex items-center justify-center my-2">
+                <span className="bg-white px-2 text-[10px] text-slate-400 font-bold uppercase">অথবা</span>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-black text-slate-600 block mb-1">নতুন ক্যাটাগরির নাম লিখুন:</label>
+                <input
+                  type="text"
+                  placeholder="যেমন: স্কিন কেয়ার, কসমেটিকস..."
+                  value={customCategory}
+                  onChange={e => {
+                    setCustomCategory(e.target.value);
+                    if (e.target.value) setTargetCategory('');
+                  }}
+                  className="w-full text-xs font-bold p-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setBulkCategoryModalOpen(false)}
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkCategoryConfirm}
+                disabled={isBulkLoading}
+                className="flex-1 py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs shadow-lg shadow-purple-500/20 disabled:opacity-50 cursor-pointer"
+              >
+                {isBulkLoading ? 'আপডেট হচ্ছে...' : 'সেভ করুন'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Bulk Stock Update Modal ── */}
+      {bulkStockModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
+              <Package size={28} />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-black text-slate-900">
+                {selectedIds.size}টি পণ্যের স্টক পরিবর্তন
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                নির্বাচিত সকল পণ্যের নতুন স্টক সংখ্যা নির্ধারণ করুন:
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTargetStock(50)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${Number(targetStock) === 50 ? 'bg-purple-50 border-purple-300 text-purple-700 font-black' : 'border-slate-200 text-slate-600'}`}
+                >
+                  স্টক ৫০ (In Stock)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTargetStock(0)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${Number(targetStock) === 0 ? 'bg-red-50 border-red-300 text-red-700 font-black' : 'border-slate-200 text-slate-600'}`}
+                >
+                  স্টক ০ (Out of Stock)
+                </button>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-black text-slate-600 block mb-1">কাস্টম স্টক সংখ্যা:</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={targetStock}
+                  onChange={e => setTargetStock(e.target.value)}
+                  className="w-full text-xs font-bold p-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setBulkStockModalOpen(false)}
+                className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkStockConfirm}
+                disabled={isBulkLoading}
+                className="flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-lg shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
+              >
+                {isBulkLoading ? 'আপডেট হচ্ছে...' : 'স্টক পরিবর্তন করুন'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -363,12 +363,15 @@ export default function HomepageBuilder() {
           footer: footerConfig 
         }),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Save failed');
+      }
       setHasChanges(false);
       setLastSaved(new Date());
       toast.success('Draft সফলভাবে সেভ হয়েছে!');
-    } catch {
-      toast.error('সেভ করা যায়নি, আবার চেষ্টা করুন।');
+    } catch (err) {
+      toast.error(err.message === 'Forbidden' ? 'অনুমতি নেই (Forbidden)' : (err.message || 'সেভ করা যায়নি, আবার চেষ্টা করুন।'));
     } finally {
       setIsSaving(false);
     }
@@ -390,12 +393,15 @@ export default function HomepageBuilder() {
           footer: footerConfig 
         }),
       });
-      if (!res.ok) throw new Error('Publish failed');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Publish failed');
+      }
       setHasChanges(false);
       setLastSaved(new Date());
       toast.success('✅ হোমপেজ পাবলিশ হয়েছে! পরিবর্তন এখন লাইভ ওয়েবসাইটে দেখা যাবে।');
-    } catch {
-      toast.error('পাবলিশ করা যায়নি।');
+    } catch (err) {
+      toast.error(err.message === 'Forbidden' ? 'অনুমতি নেই (Forbidden)' : (err.message || 'পাবলিশ করা যায়নি।'));
     } finally {
       setIsPublishing(false);
     }

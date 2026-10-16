@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
-// Default homepage config template
+
+const db = adminDb;
+
+function isShopOwner(shopData, uid) {
+  if (!shopData || !uid) return false;
+  return (
+    shopData.ownerId === uid ||
+    shopData.ownerUid === uid ||
+    shopData.createdBy === uid ||
+    shopData.userId === uid
+  );
+}
 const DEFAULT_SECTIONS = [
   { id: 'basic_storefront', type: 'basic_storefront', enabled: true, order: 0, isPinned: true, data: { showDesc: true, showSearch: true, showCategories: true, showProducts: true } },
   { id: 'hero', type: 'hero_carousel', enabled: true, order: 1, data: { slides: [] } },
@@ -153,7 +164,12 @@ export async function POST(request) {
     const userSnap = await db.collection('users').doc(user.uid).get();
     const userRole = userSnap.data()?.role;
 
-    if (shopData.ownerId !== user.uid && userRole !== 'superadmin') {
+    if (shopId !== 'main') {
+      const isOwner = isShopOwner(shopData, user.uid);
+      if (!isOwner && userRole !== 'superadmin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (userRole !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -192,7 +208,12 @@ export async function PUT(request) {
     const userSnap = await db.collection('users').doc(user.uid).get();
     const userRole = userSnap.data()?.role;
 
-    if (shopData.ownerId !== user.uid && userRole !== 'superadmin') {
+    if (shopId !== 'main') {
+      const isOwner = isShopOwner(shopData, user.uid);
+      if (!isOwner && userRole !== 'superadmin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (userRole !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

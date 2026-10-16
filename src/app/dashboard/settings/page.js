@@ -2309,18 +2309,70 @@ export default function SettingsPage() {
                   placeholder="e.g. https://youtube.com/watch?v=..."
                 />
 
-                  <div className="space-y-3 pt-4 border-t border-slate-100">
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                      <label className="text-[10px] font-black text-slate-700 dark:text-slate-300 font-semibold ml-1">
-                        Shop Banners (বাধ্যতামূলক ১৬:৯ / 16:9 রেশিও, সর্বোচ্চ ৫টি)
+                      <label className="text-[11px] font-black text-slate-800 dark:text-slate-200">
+                        Shop Banners & Hero Showcase (ব্যানার প্রদর্শনী ও স্টাইল)
                       </label>
-                      <span className="text-[9px] font-extrabold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800/40 w-fit">
-                        📐 সাইজ: 1920x1080 বা 1600x900 (১৬:৯ রেশিও)
+                      <span className="text-[10px] font-bold text-purple-700 bg-purple-50 dark:bg-purple-950/40 dark:text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-200 dark:border-purple-800/40 w-fit">
+                        সর্বোচ্চ ৫টি ব্যানার
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-bold ml-1">
-                      ⚠️ ডেস্কটপ এবং মোবাইলে প্রফেশনাল ফুল-উইডথ প্রদর্শনের জন্য ব্যানার অবশ্যই ১৬:৯ (16:9) রেশিও হতে হবে। অন্য কোনো সাইজ গ্রহণযোগ্য নয়।
-                    </p>
+
+                    {/* Banner Display Controls */}
+                    <div className="p-4 bg-purple-50/60 dark:bg-slate-900 border border-purple-100 dark:border-slate-800 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-700 dark:text-slate-300 block mb-1">
+                          📐 ব্যানার অনুপাত (Aspect Ratio):
+                        </label>
+                        <select
+                          value={shop.bannerSettings?.ratio || 'wide'}
+                          onChange={e => setShop({
+                            ...shop,
+                            bannerSettings: { ...(shop.bannerSettings || {}), ratio: e.target.value }
+                          })}
+                          className="w-full text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 outline-none focus:border-purple-600 text-slate-800 dark:text-white cursor-pointer"
+                        >
+                          <option value="wide">Wide Modern (21:9 / 16:6) — সেরা ও আধুনিক লুক</option>
+                          <option value="standard">Standard 16:9 — ক্লাসিক ফুল এইচডি</option>
+                          <option value="cinematic">Cinematic 2.4:1 — ওয়াইড আল্ট্রা-সিনেমাটিক</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black text-slate-700 dark:text-slate-300 block mb-1">
+                          🎨 ব্যানার লেআউট (Layout):
+                        </label>
+                        <select
+                          value={shop.bannerSettings?.layout || 'contained'}
+                          onChange={e => setShop({
+                            ...shop,
+                            bannerSettings: { ...(shop.bannerSettings || {}), layout: e.target.value }
+                          })}
+                          className="w-full text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 outline-none focus:border-purple-600 text-slate-800 dark:text-white cursor-pointer"
+                        >
+                          <option value="contained">Contained (OHSOGO Style) — রাউন্ডেড বক্স ও মার্জিন সহ</option>
+                          <option value="full_bleed">Full Bleed — স্ক্রিন জুড়ে প্রান্ত-থেকে-প্রান্ত</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-black text-slate-700 dark:text-slate-300 block mb-1">
+                          🖼️ ছবি ফিট মোড (Fit Mode):
+                        </label>
+                        <select
+                          value={shop.bannerSettings?.fitMode || 'smart_fit'}
+                          onChange={e => setShop({
+                            ...shop,
+                            bannerSettings: { ...(shop.bannerSettings || {}), fitMode: e.target.value }
+                          })}
+                          className="w-full text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 outline-none focus:border-purple-600 text-slate-800 dark:text-white cursor-pointer"
+                        >
+                          <option value="smart_fit">Smart Fit (সেরা) — পুরো ব্যানার দৃশ্যমান, লেখা কাটবে না</option>
+                          <option value="cover">Cover (ক্রপ) — পুরো ফ্রেম জুড়ে জুম/কাটবে</option>
+                        </select>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        {shop.banners?.map((banner, i) => {
                           const bannerUrl = typeof banner === 'string' ? banner : (banner?.url || '');

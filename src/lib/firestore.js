@@ -1,6 +1,6 @@
 import { 
   collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc,
-  query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction, arrayUnion
+  query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction, arrayUnion, writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -145,6 +145,51 @@ export const updateProduct = async (shopId, productId, data) => {
 
 export const deleteProduct = async (shopId, productId) => {
   return deleteDoc(doc(db, 'shops', shopId, 'products', productId));
+};
+
+export const bulkDeleteProducts = async (shopId, productIds) => {
+  if (!shopId || !Array.isArray(productIds) || productIds.length === 0) return;
+  const CHUNK_SIZE = 350;
+  for (let i = 0; i < productIds.length; i += CHUNK_SIZE) {
+    const chunk = productIds.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+    for (const id of chunk) {
+      batch.delete(doc(db, 'shops', shopId, 'products', id));
+    }
+    await batch.commit();
+  }
+};
+
+export const bulkUpdateProductsCategory = async (shopId, productIds, category) => {
+  if (!shopId || !Array.isArray(productIds) || productIds.length === 0) return;
+  const CHUNK_SIZE = 350;
+  for (let i = 0; i < productIds.length; i += CHUNK_SIZE) {
+    const chunk = productIds.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+    for (const id of chunk) {
+      batch.update(doc(db, 'shops', shopId, 'products', id), {
+        category,
+        updatedAt: serverTimestamp()
+      });
+    }
+    await batch.commit();
+  }
+};
+
+export const bulkUpdateProductsStock = async (shopId, productIds, stock) => {
+  if (!shopId || !Array.isArray(productIds) || productIds.length === 0) return;
+  const CHUNK_SIZE = 350;
+  for (let i = 0; i < productIds.length; i += CHUNK_SIZE) {
+    const chunk = productIds.slice(i, i + CHUNK_SIZE);
+    const batch = writeBatch(db);
+    for (const id of chunk) {
+      batch.update(doc(db, 'shops', shopId, 'products', id), {
+        stock,
+        updatedAt: serverTimestamp()
+      });
+    }
+    await batch.commit();
+  }
 };
 
 // ── CATEGORIES ────────────────────────────────────

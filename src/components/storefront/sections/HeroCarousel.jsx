@@ -32,9 +32,10 @@ export default function HeroCarousel({ data, themeVars }) {
     setTouchStart(null); setTouchEnd(null);
   };
 
-  const isContained = d.layout !== 'full_bleed';
-  const fitMode = d.fitMode || 'smart_fit';
-  const ratio = d.ratio || 'wide';
+  const layoutSetting = d.layout || shop.bannerSettings?.layout || 'contained';
+  const isContained = layoutSetting !== 'full_bleed';
+  const fitMode = d.fitMode || shop.bannerSettings?.fitMode || 'smart_fit';
+  const ratio = d.ratio || shop.bannerSettings?.ratio || 'wide';
 
   const ratioClass = ratio === 'standard'
     ? 'aspect-[16/9]'

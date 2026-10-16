@@ -122,98 +122,164 @@ async function fetchWooCommerceProducts(origin) {
   }
 }
 
-// Strategy 3: Product Sitemap Crawler (For sites like Camerakini, Next.js, custom stores)
+// Strategy 3: Product Sitemap Crawler (For sites like Suglow, Camerakini, Next.js, custom stores)
 async function fetchSitemapProducts(origin) {
   try {
-    for (const smPath of ['/product-sitemap.xml', '/sitemap_products_1.xml', '/sitemap.xml']) {
+    for (const smPath of ['/sitemap.xml', '/product-sitemap.xml', '/sitemap_products_1.xml', '/sitemap_index.xml']) {
       const smRes = await fetch(`${origin}${smPath}`, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        signal: AbortSignal.timeout(5000)
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        signal: AbortSignal.timeout(6000)
       });
       if (!smRes.ok) continue;
 
       const smText = await smRes.text();
-      const locMatches = [...smText.matchAll(/<loc>([^<]*(?:product|item|p)[^<]*)<\/loc>/gi)].map(m => m[1]);
-      if (locMatches.length === 0) continue;
 
-      // Extract up to 60 product pages concurrently
-      const sampleUrls = locMatches.slice(0, 60);
-      const settled = await Promise.allSettled(sampleUrls.map(async (pUrl) => {
-        const pRes = await fetch(pUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
-          signal: AbortSignal.timeout(4500)
-        });
-        if (!pRes.ok) return null;
-        const pHtml = await pRes.text();
+      // Check if this is a sitemap index with child sitemaps
+      const subSitemaps = [...smText.matchAll(/<loc>([^<]*(?:product|item)[^<]*\.xml)<\/loc>/gi)].map(m => m[1]);
+      let activeText = smText;
+      if (subSitemaps.length > 0) {
+        try {
+          const subRes = await fetch(subSitemaps[0], {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            signal: AbortSignal.timeout(6000)
+          });
+          if (subRes.ok) activeText = await subRes.text();
+        } catch (_) {}
+      }
 
-        // 1. JSON-LD check
-        const jsonLdMatch = pHtml.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-        if (jsonLdMatch) {
-          for (const block of jsonLdMatch) {
-            try {
-              const cleaned = block.replace(/<\/?script[^>]*>/gi, '');
-              const parsed = JSON.parse(cleaned);
-              const prodObj = parsed['@type'] === 'Product'
-                ? parsed
-                : (Array.isArray(parsed['@graph']) ? parsed['@graph'].find(g => g['@type'] === 'Product') : null);
+      // Extract all <url> blocks to pair loc with image:loc
+      const urlBlocks = activeText.match(/<url>[\s\S]*?<\/url>/gi) || [];
+      const productEntries = [];
 
-              if (prodObj && prodObj.name) {
-                const price = parseFloat(prodObj.offers?.price || prodObj.offers?.[0]?.price) || 0;
-                if (price > 0) {
-                  return {
-                    name: prodObj.name.trim(),
-                    price,
-                    costPrice: Math.round(price * 0.7),
-                    stock: 35,
-                    category: prodObj.category || 'সাধারণ',
-                    description: (prodObj.description || prodObj.name).slice(0, 500),
-                    imageUrl: Array.isArray(prodObj.image) ? prodObj.image[0] : (typeof prodObj.image === 'string' ? prodObj.image : prodObj.image?.url || '')
-                  };
-                }
+      for (const block of urlBlocks) {
+        const loc = block.match(/<loc>([^<]+)<\/loc>/i)?.[1]?.trim();
+        if (!loc) continue;
+
+        // Filter out listing/utility pages
+        const isProductUrl = /(?:\/product\/|\/products\/|\/item\/|\/p\/)/i.test(loc) &&
+          !loc.endsWith('/product') && !loc.endsWith('/products') && !loc.includes('?') && !loc.includes('/category/');
+
+        if (isProductUrl) {
+          const imageLoc = block.match(/<image:loc>([^<]+)<\/image:loc>/i)?.[1]?.trim() || '';
+          productEntries.push({ url: loc, sitemapImage: imageLoc });
+        }
+      }
+
+      if (productEntries.length === 0) {
+        // Fallback to simple loc matching if <url> blocks were not well formed
+        const locMatches = [...activeText.matchAll(/<loc>([^<]*(?:product|item|p)\/[^<]+)<\/loc>/gi)].map(m => m[1]);
+        if (locMatches.length > 0) {
+          locMatches.forEach(l => productEntries.push({ url: l.trim(), sitemapImage: '' }));
+        }
+      }
+
+      if (productEntries.length === 0) continue;
+
+      // Extract up to 300 product pages using a controlled concurrency pool
+      const targetEntries = productEntries.slice(0, 300);
+      const results = [];
+      const CONCURRENCY = 8;
+      let currentIndex = 0;
+
+      const worker = async () => {
+        while (currentIndex < targetEntries.length) {
+          const entryIdx = currentIndex++;
+          const entry = targetEntries[entryIdx];
+          try {
+            const pRes = await fetch(entry.url, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
+              signal: AbortSignal.timeout(7500)
+            });
+            if (!pRes.ok) continue;
+            const pHtml = await pRes.text();
+
+            // 1. JSON-LD check
+            let extracted = false;
+            const jsonLdMatch = pHtml.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+            if (jsonLdMatch) {
+              for (const block of jsonLdMatch) {
+                try {
+                  const cleaned = block.replace(/<\/?script[^>]*>/gi, '');
+                  const parsed = JSON.parse(cleaned);
+                  const prodObj = parsed['@type'] === 'Product'
+                    ? parsed
+                    : (Array.isArray(parsed['@graph']) ? parsed['@graph'].find(g => g['@type'] === 'Product') : null);
+
+                  if (prodObj && prodObj.name) {
+                    const rawPrice = prodObj.offers?.price || prodObj.offers?.[0]?.price || prodObj.offers?.priceSpecification?.price;
+                    const price = parseFloat(rawPrice) || 0;
+                    if (price > 0) {
+                      const img = (Array.isArray(prodObj.image) ? prodObj.image[0] : (typeof prodObj.image === 'string' ? prodObj.image : prodObj.image?.url)) || entry.sitemapImage || '';
+                      results.push({
+                        name: prodObj.name.trim(),
+                        price,
+                        costPrice: Math.round(price * 0.7),
+                        stock: 35,
+                        category: prodObj.category || 'সাধারণ',
+                        description: (prodObj.description || prodObj.name).slice(0, 500),
+                        imageUrl: img
+                      });
+                      extracted = true;
+                      break;
+                    }
+                  }
+                } catch (_) {}
               }
-            } catch (_) {}
-          }
+            }
+
+            if (extracted) continue;
+
+            // 2. OpenGraph + Embedded Price
+            let title = pHtml.match(/property=["']og:title["']\s+content=["']([^"']*)["']/i)?.[1] ||
+                        pHtml.match(/content=["']([^"']*)["']\s+property=["']og:title["']/i)?.[1] ||
+                        pHtml.match(/<title>([^<]*)<\/title>/i)?.[1] || '';
+            title = title.replace(/\s*(?:—|-|\|)\s*(?:Suglow|Camerakini|OHSOGO|BD Retailers|Official|Store).*$/i, '').trim();
+
+            const image = pHtml.match(/property=["']og:image["']\s+content=["']([^"']*)["']/i)?.[1] ||
+                          pHtml.match(/content=["']([^"']*)["']\s+property=["']og:image["']/i)?.[1] ||
+                          entry.sitemapImage || '';
+
+            let price = 0;
+            const mPrice = pHtml.match(/\\?"price\\?"\s*:\s*(\d+(?:\.\d+)?)/i) ||
+                           pHtml.match(/(?:price|regularPrice|amount)[^0-9]{1,10}(\d{2,7})/i) ||
+                           pHtml.match(/(?:৳|Tk\.?|BDT)\s*(?:<!-- -->)?\s*([\d,]{2,8})/i);
+            if (mPrice) {
+              price = parseFloat(mPrice[1].replace(/,/g, ''));
+            }
+
+            const desc = pHtml.match(/property=["']og:description["']\s+content=["']([^"']*)["']/i)?.[1] || title;
+
+            if (title && price > 0) {
+              results.push({
+                name: title,
+                price,
+                costPrice: Math.round(price * 0.7),
+                stock: 35,
+                category: 'সাধারণ',
+                description: desc.slice(0, 500),
+                imageUrl: image
+              });
+            } else if (title && entry.sitemapImage) {
+              // Graceful product rescue from sitemap
+              results.push({
+                name: title,
+                price: 450,
+                costPrice: 315,
+                stock: 35,
+                category: 'সাধারণ',
+                description: desc.slice(0, 500),
+                imageUrl: entry.sitemapImage
+              });
+            }
+          } catch (_) {}
         }
+      };
 
-        // 2. OpenGraph + Next.js / embedded price
-        let title = pHtml.match(/property=["']og:title["']\s+content=["']([^"']*)["']/i)?.[1] ||
-                    pHtml.match(/content=["']([^"']*)["']\s+property=["']og:title["']/i)?.[1] ||
-                    pHtml.match(/<title>([^<]*)<\/title>/i)?.[1] || '';
-        title = title.replace(/\s*(?:—|-|\|)\s*(?:Camerakini|OHSOGO|BD Retailers|Official|Store).*$/i, '').trim();
+      const workers = Array.from({ length: CONCURRENCY }, () => worker());
+      await Promise.all(workers);
 
-        const image = pHtml.match(/property=["']og:image["']\s+content=["']([^"']*)["']/i)?.[1] ||
-                      pHtml.match(/content=["']([^"']*)["']\s+property=["']og:image["']/i)?.[1] || '';
-
-        let price = 0;
-        const mPrice = pHtml.match(/\\?"price\\?"\s*:\s*(\d+(?:\.\d+)?)/i) ||
-                       pHtml.match(/(?:price|regularPrice|amount)[^0-9]{1,10}(\d{2,7})/i) ||
-                       pHtml.match(/(?:৳|Tk\.?|BDT)\s*(?:<!-- -->)?\s*([\d,]{2,8})/i);
-        if (mPrice) {
-          price = parseFloat(mPrice[1].replace(/,/g, ''));
-        }
-
-        const desc = pHtml.match(/property=["']og:description["']\s+content=["']([^"']*)["']/i)?.[1] || title;
-
-        if (title && price > 0) {
-          return {
-            name: title,
-            price,
-            costPrice: Math.round(price * 0.7),
-            stock: 35,
-            category: 'সাধারণ',
-            description: desc.slice(0, 500),
-            imageUrl: image
-          };
-        }
-        return null;
-      }));
-
-      const products = settled
-        .filter(s => s.status === 'fulfilled' && s.value !== null)
-        .map(s => s.value);
-
-      if (products.length > 0) {
-        return products;
+      if (results.length > 0) {
+        return results;
       }
     }
     return [];
