@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { 
   getProducts, deleteProduct, updateProduct, getCategories, addCategory, deleteCategory,
-  bulkDeleteProducts, bulkUpdateProductsCategory, bulkUpdateProductsStock
+  bulkDeleteProducts, bulkUpdateProductsCategory, bulkUpdateProductsStock, bulkDeleteCategories
 } from '@/lib/firestore';
 import { uploadProductImage } from '@/lib/storage';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -147,12 +147,16 @@ export default function ProductsPage() {
   const [bulkStockModalOpen, setBulkStockModalOpen] = useState(false);
   const [targetStock, setTargetStock] = useState(50);
   
-  // Category management state
+  // Category management & bulk state
   const [newCat, setNewCat] = useState('');
   const [catError, setCatError] = useState('');
   const [addingCat, setAddingCat] = useState(false);
   const [newSubcat, setNewSubcat] = useState({});
   const [isQuickCatModalOpen, setIsQuickCatModalOpen] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState(new Set());
+  const [bulkCatDeleteModalOpen, setBulkCatDeleteModalOpen] = useState(false);
+  const [deleteCatWithProducts, setDeleteCatWithProducts] = useState(false);
+  const [isBulkCatLoading, setIsBulkCatLoading] = useState(false);
 
   // Bulk Import & Competitor Cloner state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -446,6 +450,66 @@ export default function ProductsPage() {
       toast.error('ক্যাটাগরি মুছতে সমস্যা হয়েছে');
     } finally {
       setIsBulkLoading(false);
+    }
+  };
+
+  // ── Category Multi-Select & Bulk Handlers ──
+  const isAllCategoriesSelected = categories.length > 0 && categories.every(c => selectedCategoryIds.has(c.id));
+
+  const handleToggleCategorySelect = (id) => {
+    setSelectedCategoryIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAllCategories = () => {
+    setSelectedCategoryIds(prev => {
+      if (isAllCategoriesSelected) {
+        return new Set();
+      } else {
+        return new Set(categories.map(c => c.id));
+      }
+    });
+  };
+
+  const handleClearCategorySelection = () => {
+    setSelectedCategoryIds(new Set());
+  };
+
+  const handleBulkCategoryDeleteConfirm = async () => {
+    if (!activeShopId || selectedCategoryIds.size === 0) return;
+    const selectedCats = categories.filter(c => selectedCategoryIds.has(c.id));
+    const selectedCatNames = selectedCats.map(c => (c.name || '').toLowerCase());
+    const catIdsToDelete = Array.from(selectedCategoryIds);
+
+    const matchingProducts = products.filter(p => selectedCatNames.includes((p.category || '').toLowerCase()));
+    const matchingProductIds = matchingProducts.map(p => p.id);
+
+    setIsBulkCatLoading(true);
+    try {
+      if (deleteCatWithProducts && matchingProductIds.length > 0) {
+        // Cascade delete products
+        await bulkDeleteProducts(activeShopId, matchingProductIds);
+        setProducts(prev => prev.filter(p => !matchingProductIds.includes(p.id)));
+      } else if (!deleteCatWithProducts && matchingProductIds.length > 0) {
+        // Safe reassign products to Uncategorized
+        await bulkUpdateProductsCategory(activeShopId, matchingProductIds, 'Uncategorized');
+        setProducts(prev => prev.map(p => matchingProductIds.includes(p.id) ? { ...p, category: 'Uncategorized' } : p));
+      }
+
+      await bulkDeleteCategories(activeShopId, catIdsToDelete);
+      setCategories(prev => prev.filter(c => !selectedCategoryIds.has(c.id)));
+      setSelectedCategoryIds(new Set());
+      setBulkCatDeleteModalOpen(false);
+      toast.success(`সফলভাবে ${catIdsToDelete.length}টি ক্যাটাগরি মুছে ফেলা হয়েছে! 🗑️`);
+    } catch (err) {
+      console.error(err);
+      toast.error('ক্যাটাগরি ডিলিট করতে সমস্যা হয়েছে');
+    } finally {
+      setIsBulkCatLoading(false);
     }
   };
 
@@ -1049,77 +1113,191 @@ export default function ProductsPage() {
               <p className="text-xs text-slate-400 mt-1">উপরের বক্সে নাম লিখে ক্যাটাগরি যোগ করুন</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {categories.map(cat => (
-                <div key={cat.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4 hover:border-purple-200 transition-all">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-black">
-                        <Tag size={15} />
-                      </div>
-                      <div>
-                        <h4 className="font-black text-slate-900 text-sm">{cat.name}</h4>
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {products.filter(p => (p.category || '').toLowerCase() === (cat.name || '').toLowerCase()).length} টি পণ্য
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedCategory(cat.name);
-                          setActiveTab('products');
-                        }}
-                        className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
-                        title="এই ক্যাটাগরির পণ্যসমূহ দেখুন"
-                      >
-                        <Search size={12} />
-                        <span>পণ্যসমূহ</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCategoryWithProducts(cat)}
-                        className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
-                        title="ক্যাটাগরি ও এর সকল পণ্য মুছুন"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
+            <div className="space-y-4">
+              {/* Category Select All Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <button
+                  type="button"
+                  onClick={handleToggleSelectAllCategories}
+                  className="flex items-center gap-2.5 text-xs font-black text-slate-700 hover:text-purple-600 transition-colors cursor-pointer select-none"
+                >
+                  <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
+                    isAllCategoriesSelected
+                      ? 'bg-purple-600 border-purple-600 text-white'
+                      : selectedCategoryIds.size > 0
+                      ? 'bg-purple-100 border-purple-400 text-purple-700'
+                      : 'border-slate-300 bg-white text-transparent'
+                  }`}>
+                    <Check size={13} strokeWidth={3} />
                   </div>
+                  <span>
+                    {isAllCategoriesSelected ? 'সবগুলো সিলেক্ট করা হয়েছে' : 'সকল ক্যাটাগরি সিলেক্ট করুন'} ({selectedCategoryIds.size}/{categories.length})
+                  </span>
+                </button>
 
-                  {/* Subcategories */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
-                    <div className="flex flex-wrap gap-1.5">
-                      {(cat.subcategories || []).map((sub, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors">
-                          <span>{sub}</span>
+                {selectedCategoryIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg">
+                      {selectedCategoryIds.size}টি ক্যাটাগরি নির্বাচিত
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleClearCategorySelection}
+                      className="text-xs text-slate-400 hover:text-red-500 font-bold px-2 py-1 cursor-pointer"
+                    >
+                      ক্লিয়ার
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Category Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {categories.map(cat => {
+                  const isCatSelected = selectedCategoryIds.has(cat.id);
+                  const matchingCount = products.filter(p => (p.category || '').toLowerCase() === (cat.name || '').toLowerCase()).length;
+
+                  return (
+                    <div 
+                      key={cat.id} 
+                      className={`bg-white p-5 rounded-2xl border transition-all ${
+                        isCatSelected ? 'border-purple-500 ring-2 ring-purple-100 bg-purple-50/20' : 'border-slate-100 hover:border-purple-200'
+                      } shadow-sm space-y-4`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
                           <button
                             type="button"
-                            onClick={() => handleRemoveSubcat(cat.id, sub, cat.subcategories)}
-                            className="text-slate-400 hover:text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleCategorySelect(cat.id);
+                            }}
+                            className="shrink-0 p-0.5 rounded-lg cursor-pointer"
+                            title={isCatSelected ? "আনসিলেক্ট করুন" : "সিলেক্ট করুন"}
                           >
-                            <X size={12} />
+                            <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
+                              isCatSelected
+                                ? 'bg-purple-600 border-purple-600 text-white'
+                                : 'border-slate-300 bg-white text-transparent hover:border-purple-400'
+                            }`}>
+                              <Check size={13} strokeWidth={3} />
+                            </div>
                           </button>
-                        </span>
-                      ))}
-                    </div>
+                          <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-black shrink-0">
+                            <Tag size={15} />
+                          </div>
+                          <div>
+                            <h4 className="font-black text-slate-900 text-sm">{cat.name}</h4>
+                            <span className="text-[10px] font-bold text-slate-400">
+                              {matchingCount} টি পণ্য
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCategory(cat.name);
+                              setActiveTab('products');
+                            }}
+                            className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                            title="এই ক্যাটাগরির পণ্যসমূহ দেখুন"
+                          >
+                            <Search size={12} />
+                            <span>পণ্যসমূহ</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCategoryWithProducts(cat)}
+                            className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                            title="ক্যাটাগরি ও এর সকল পণ্য মুছুন"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
 
-                    <form onSubmit={e => handleAddSubcat(e, cat.id, cat.subcategories)} className="flex gap-2 pt-1">
-                      <input
-                        type="text"
-                        placeholder="+ সাবক্যাটাগরি লিখুন..."
-                        value={newSubcat[cat.id] || ''}
-                        onChange={e => setNewSubcat({...newSubcat, [cat.id]: e.target.value})}
-                        className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-purple-400"
-                      />
-                      <button type="submit" className="px-3 py-1.5 bg-slate-100 hover:bg-purple-600 hover:text-white rounded-xl text-xs font-bold transition-colors">
-                        Add
-                      </button>
-                    </form>
+                      {/* Subcategories */}
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <div className="flex flex-wrap gap-1.5">
+                          {(cat.subcategories || []).map((sub, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors">
+                              <span>{sub}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSubcat(cat.id, sub, cat.subcategories)}
+                                className="text-slate-400 hover:text-red-500"
+                              >
+                                <X size={12} />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+
+                        <form onSubmit={e => handleAddSubcat(e, cat.id, cat.subcategories)} className="flex gap-2 pt-1">
+                          <input
+                            type="text"
+                            placeholder="+ সাবক্যাটাগরি লিখুন..."
+                            value={newSubcat[cat.id] || ''}
+                            onChange={e => setNewSubcat({...newSubcat, [cat.id]: e.target.value})}
+                            className="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:border-purple-400"
+                          />
+                          <button type="submit" className="px-3 py-1.5 bg-slate-100 hover:bg-purple-600 hover:text-white rounded-xl text-xs font-bold transition-colors">
+                            Add
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Sticky Bulk Category Action Toolbar */}
+              {selectedCategoryIds.size > 0 && (
+                <div className="sticky bottom-6 z-40 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-lg bg-purple-600 text-white font-black text-xs flex items-center justify-center">
+                      {selectedCategoryIds.size}
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-white">
+                      {selectedCategoryIds.size}টি ক্যাটাগরি নির্বাচিত
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const firstCat = categories.find(c => selectedCategoryIds.has(c.id));
+                        if (firstCat) setSelectedCategory(firstCat.name);
+                        setActiveTab('products');
+                      }}
+                      className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    >
+                      <Search size={14} />
+                      <span>পণ্যসমূহ দেখুন</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBulkCatDeleteModalOpen(true)}
+                      className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md shadow-red-600/30"
+                    >
+                      <Trash2 size={14} />
+                      <span>ক্যাটাগরি মুছুন ({selectedCategoryIds.size})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleClearCategorySelection}
+                      className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                      title="নির্বাচন বাতিল"
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
@@ -1482,6 +1660,103 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+
+      {/* ── Bulk Category Delete Modal (Strict Database Protection Compliant) ── */}
+      {bulkCatDeleteModalOpen && (() => {
+        const selectedCats = categories.filter(c => selectedCategoryIds.has(c.id));
+        const selectedCatNames = selectedCats.map(c => (c.name || '').toLowerCase());
+        const totalAffectedProducts = products.filter(p => selectedCatNames.includes((p.category || '').toLowerCase())).length;
+
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+                <Trash2 size={28} />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-black text-slate-900">
+                  {selectedCategoryIds.size}টি ক্যাটাগরি ডিলিট নিশ্চিতকরণ
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                  নির্বাচিত ক্যাটাগরিগুলোর অধীনে বর্তমানে মোট <strong className="text-purple-600 font-black">{totalAffectedProducts}</strong> টি পণ্য রয়েছে। নিচের অ্যাকশনটি বেছে নিন:
+                </p>
+              </div>
+
+              {/* Radio Choices */}
+              <div className="space-y-3 pt-1">
+                <label 
+                  onClick={() => setDeleteCatWithProducts(false)}
+                  className={`flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                    !deleteCatWithProducts 
+                      ? 'border-purple-600 bg-purple-50/50 ring-2 ring-purple-100' 
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="cat_delete_mode"
+                    checked={!deleteCatWithProducts}
+                    onChange={() => setDeleteCatWithProducts(false)}
+                    className="mt-0.5 text-purple-600 focus:ring-purple-500 cursor-pointer"
+                  />
+                  <div>
+                    <div className="text-xs font-black text-slate-900">
+                      শুধুমাত্র ক্যাটাগরি ডিলিট করুন (প্রস্তাবিত ও নিরাপদ)
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      ক্যাটাগরি মুছে যাবে কিন্তু পণ্যগুলো ডিলিট হবে না। পণ্যগুলো সুরক্ষিত থাকবে এবং 'Uncategorized' হিসেবে সংরক্ষিত হবে।
+                    </p>
+                  </div>
+                </label>
+
+                <label 
+                  onClick={() => setDeleteCatWithProducts(true)}
+                  className={`flex items-start gap-3 p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                    deleteCatWithProducts 
+                      ? 'border-red-600 bg-red-50/50 ring-2 ring-red-100' 
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="cat_delete_mode"
+                    checked={deleteCatWithProducts}
+                    onChange={() => setDeleteCatWithProducts(true)}
+                    className="mt-0.5 text-red-600 focus:ring-red-500 cursor-pointer"
+                  />
+                  <div>
+                    <div className="text-xs font-black text-red-600">
+                      ক্যাটাগরি এবং এর আওতাধীন সকল ({totalAffectedProducts}টি) পণ্য একসাথে মুছুন
+                    </div>
+                    <p className="text-[11px] text-red-500 font-medium mt-0.5">
+                      ⚠️ সতর্কতা: নির্বাচিত ক্যাটাগরির সাথে সাথে ডেটাবেজের সকল {totalAffectedProducts}টি পণ্য চিরতরে মুছে যাবে।
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setBulkCatDeleteModalOpen(false)}
+                  className="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkCategoryDeleteConfirm}
+                  disabled={isBulkCatLoading}
+                  className="flex-1 py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-lg shadow-red-500/20 disabled:opacity-50 cursor-pointer"
+                >
+                  {isBulkCatLoading ? 'মুছে ফেলা হচ্ছে...' : 'হ্যাঁ, নিশ্চিত মুছে ফেলুন'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

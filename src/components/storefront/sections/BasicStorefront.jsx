@@ -1,6 +1,6 @@
 'use client';
-import { useState, useMemo } from 'react';
-import { Search, ArrowUpDown, Plus, Minus, SlidersHorizontal, Package, ShoppingCart } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Search, ArrowUpDown, Plus, Minus, SlidersHorizontal, Package, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 
 const FALLBACK_COLORS = [
@@ -32,6 +32,12 @@ export default function BasicStorefront({
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortOption, setSortOption] = useState('newest');
   const [quantities, setQuantities] = useState({});
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20; // 5 rows max
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategory, searchTerm, sortOption]);
 
   const primary = themeVars?.primaryColor || '#6D28D9';
   const showDesc = data.showDesc !== false;
@@ -199,99 +205,151 @@ export default function BasicStorefront({
               <p className="text-sm font-black text-slate-700">কোনো পণ্য পাওয়া যায়নি</p>
               <p className="text-xs text-slate-400 font-medium mt-1">অন্য কোনো ক্যাটাগরি বা নামে খুঁজুন</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-              {filteredProducts.map((prod, idx) => {
-                const img = prod.images?.[0] || prod.imageUrl || prod.image;
-                const qty = quantities[prod.id] || 0;
+          ) : (() => {
+            const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+            const safePage = Math.min(page, totalPages);
+            const paginatedList = filteredProducts.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+            const startIndex = (safePage - 1) * PAGE_SIZE + 1;
+            const endIndex = Math.min(safePage * PAGE_SIZE, filteredProducts.length);
 
-                return (
-                  <div
-                    key={prod.id || idx}
-                    className="bg-white rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 group border border-slate-200 flex flex-col"
-                  >
-                    {/* Thumbnail */}
-                    <div
-                      className="relative h-36 sm:h-44 overflow-hidden bg-slate-50 border-b border-slate-100 cursor-pointer"
-                      onClick={() => onProductClick?.(prod)}
-                    >
-                      {img ? (
-                        <Image
-                          src={img}
-                          alt={prod.name || 'Product'}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className={`w-full h-full flex items-center justify-center p-3 text-center ${getFallbackColor(prod.name)}`}>
-                          <h4 className="text-xl font-black text-white drop-shadow-md leading-tight">
-                            {prod.name?.[0] || 'P'}
-                          </h4>
+            return (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                  {paginatedList.map((prod, idx) => {
+                    const img = prod.images?.[0] || prod.imageUrl || prod.image;
+                    const qty = quantities[prod.id] || 0;
+
+                    return (
+                      <div
+                        key={prod.id || idx}
+                        className="bg-white rounded-2xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 group border border-slate-200 flex flex-col"
+                      >
+                        {/* Thumbnail */}
+                        <div
+                          className="relative h-36 sm:h-44 overflow-hidden bg-slate-50 border-b border-slate-100 cursor-pointer"
+                          onClick={() => onProductClick?.(prod)}
+                        >
+                          {img ? (
+                            <Image
+                              src={img}
+                              alt={prod.name || 'Product'}
+                              fill
+                              sizes="(max-width: 768px) 50vw, 25vw"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className={`w-full h-full flex items-center justify-center p-3 text-center ${getFallbackColor(prod.name)}`}>
+                              <h4 className="text-xl font-black text-white drop-shadow-md leading-tight">
+                                {prod.name?.[0] || 'P'}
+                              </h4>
+                            </div>
+                          )}
+                          {prod.allowCustomize && (
+                            <div className="absolute top-2 left-2 bg-slate-900 text-white px-2 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1">
+                              <SlidersHorizontal size={9} /> কাস্টম
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {prod.allowCustomize && (
-                        <div className="absolute top-2 left-2 bg-slate-900 text-white px-2 py-0.5 rounded-lg text-[9px] font-bold flex items-center gap-1">
-                          <SlidersHorizontal size={9} /> কাস্টম
+
+                        {/* Details */}
+                        <div className="p-3 sm:p-3.5 flex flex-col flex-1">
+                          <h3
+                            onClick={() => onProductClick?.(prod)}
+                            className="font-extrabold text-xs sm:text-sm text-slate-900 group-hover:text-slate-800 leading-tight transition-colors line-clamp-2 mb-2 cursor-pointer"
+                          >
+                            {prod.name}
+                          </h3>
+
+                          <div className="mb-3 flex items-baseline gap-1">
+                            <span className="text-base sm:text-lg font-black text-slate-900">
+                              ৳{Number(prod.price || 0).toLocaleString()}
+                            </span>
+                            {prod.unit && (
+                              <span className="text-[10px] font-bold text-slate-400">/ {prod.unit}</span>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="mt-auto">
+                            {qty > 0 ? (
+                              <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1 border border-slate-200">
+                                <button
+                                  onClick={() => handleQtyChange(prod.id, -1, prod)}
+                                  className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-2xs font-black border border-slate-200 shrink-0 cursor-pointer"
+                                >
+                                  <Minus size={12} strokeWidth={2.5} />
+                                </button>
+                                <span className="font-black text-slate-900 text-xs w-full text-center select-none">
+                                  {qty}
+                                </span>
+                                <button
+                                  onClick={() => handleQtyChange(prod.id, 1, prod)}
+                                  className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-black transition-colors shadow-2xs font-black shrink-0 cursor-pointer"
+                                >
+                                  <Plus size={12} strokeWidth={2.5} />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleQtyChange(prod.id, 1, prod)}
+                                className="w-full py-2 px-2.5 rounded-xl font-black text-xs text-white transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                                style={{ background: primary }}
+                              >
+                                <Plus size={13} strokeWidth={2.5} />
+                                <span>কার্টে যোগ করুন</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 5-Row Pagination Bar */}
+                {totalPages > 1 && (
+                  <div className="mt-6 pt-5 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-xs font-bold text-slate-500">
+                      মোট <span className="font-black text-slate-900">{filteredProducts.length}</span> টির মধ্যে{' '}
+                      <span className="font-black text-slate-900">{startIndex} - {endIndex}</span> দেখাচ্ছে (সর্বোচ্চ ৫ সারি)
                     </div>
 
-                    {/* Details */}
-                    <div className="p-3 sm:p-3.5 flex flex-col flex-1">
-                      <h3
-                        onClick={() => onProductClick?.(prod)}
-                        className="font-extrabold text-xs sm:text-sm text-slate-900 group-hover:text-slate-800 leading-tight transition-colors line-clamp-2 mb-2 cursor-pointer"
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPage(p => Math.max(1, p - 1));
+                          window.scrollTo({ top: 300, behavior: 'smooth' });
+                        }}
+                        disabled={safePage === 1}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1 cursor-pointer"
                       >
-                        {prod.name}
-                      </h3>
+                        <ChevronLeft size={14} />
+                        <span>পূর্ববর্তী</span>
+                      </button>
 
-                      <div className="mb-3 flex items-baseline gap-1">
-                        <span className="text-base sm:text-lg font-black text-slate-900">
-                          ৳{Number(prod.price || 0).toLocaleString()}
-                        </span>
-                        {prod.unit && (
-                          <span className="text-[10px] font-bold text-slate-400">/ {prod.unit}</span>
-                        )}
-                      </div>
+                      <span className="px-3 py-1 text-xs font-black text-slate-800">
+                        পেজ {safePage} / {totalPages}
+                      </span>
 
-                      {/* Actions */}
-                      <div className="mt-auto">
-                        {qty > 0 ? (
-                          <div className="flex items-center justify-between gap-1 bg-slate-100 rounded-xl p-1 border border-slate-200">
-                            <button
-                              onClick={() => handleQtyChange(prod.id, -1, prod)}
-                              className="w-7 h-7 bg-white rounded-lg flex items-center justify-center text-slate-900 hover:text-red-600 hover:bg-red-50 transition-colors shadow-2xs font-black border border-slate-200 shrink-0 cursor-pointer"
-                            >
-                              <Minus size={12} strokeWidth={2.5} />
-                            </button>
-                            <span className="font-black text-slate-900 text-xs w-full text-center select-none">
-                              {qty}
-                            </span>
-                            <button
-                              onClick={() => handleQtyChange(prod.id, 1, prod)}
-                              className="w-7 h-7 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-black transition-colors shadow-2xs font-black shrink-0 cursor-pointer"
-                            >
-                              <Plus size={12} strokeWidth={2.5} />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleQtyChange(prod.id, 1, prod)}
-                            className="w-full py-2 px-2.5 rounded-xl font-black text-xs text-white transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-                            style={{ background: primary }}
-                          >
-                            <Plus size={13} strokeWidth={2.5} />
-                            <span>কার্টে যোগ করুন</span>
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPage(p => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 300, behavior: 'smooth' });
+                        }}
+                        disabled={safePage === totalPages}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>পরবর্তী</span>
+                        <ChevronRight size={14} />
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

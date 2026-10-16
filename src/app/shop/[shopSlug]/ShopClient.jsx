@@ -533,10 +533,17 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [recentSearches, setRecentSearches] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [sortOption, setSortOption] = useState('name_asc');
+  const [storefrontPage, setStorefrontPage] = useState(1);
+  const STOREFRONT_PAGE_SIZE = 20; // 5 rows max on desktop (4 cols x 5 rows)
   const { isOnline, isLiteMode, setLiteMode } = useNetworkStatus();
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [showSplash, setShowSplash] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  // Auto-reset storefront pagination to page 1 on filter or search change
+  useEffect(() => {
+    setStorefrontPage(1);
+  }, [searchTerm, activeCategory, activeSubcategory, sortOption]);
 
   // Load and manage recent search history
   useEffect(() => {
@@ -3540,7 +3547,99 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             );
           };
 
-          const sortedForShowcase = [...filteredProducts].sort((a, b) => {
+          const totalStorefrontPages = Math.max(1, Math.ceil(filteredProducts.length / STOREFRONT_PAGE_SIZE));
+          const safeStorefrontPage = Math.min(storefrontPage, totalStorefrontPages);
+          const paginatedProducts = filteredProducts.slice(
+            (safeStorefrontPage - 1) * STOREFRONT_PAGE_SIZE,
+            safeStorefrontPage * STOREFRONT_PAGE_SIZE
+          );
+
+          const renderStorefrontPagination = () => {
+            if (totalStorefrontPages <= 1) return null;
+
+            const handlePageChange = (newPage) => {
+              setStorefrontPage(newPage);
+              const el = document.getElementById('product-section');
+              if (el) {
+                const yOffset = -80;
+                const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+              }
+            };
+
+            const pages = [];
+            if (totalStorefrontPages <= 7) {
+              for (let i = 1; i <= totalStorefrontPages; i++) pages.push(i);
+            } else {
+              pages.push(1);
+              if (safeStorefrontPage > 3) pages.push('...');
+              const start = Math.max(2, safeStorefrontPage - 1);
+              const end = Math.min(totalStorefrontPages - 1, safeStorefrontPage + 1);
+              for (let i = start; i <= end; i++) {
+                if (!pages.includes(i)) pages.push(i);
+              }
+              if (safeStorefrontPage < totalStorefrontPages - 2) pages.push('...');
+              if (!pages.includes(totalStorefrontPages)) pages.push(totalStorefrontPages);
+            }
+
+            const startIndex = (safeStorefrontPage - 1) * STOREFRONT_PAGE_SIZE + 1;
+            const endIndex = Math.min(safeStorefrontPage * STOREFRONT_PAGE_SIZE, filteredProducts.length);
+
+            return (
+              <div className="mt-8 pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs sm:text-sm font-bold text-slate-500">
+                  মোট <span className="font-black text-slate-900">{filteredProducts.length}</span> টির মধ্যে{' '}
+                  <span className="font-black text-slate-900">{startIndex} - {endIndex}</span> দেখাচ্ছে (সর্বোচ্চ ৫ সারি)
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(Math.max(1, safeStorefrontPage - 1))}
+                    disabled={safeStorefrontPage === 1}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
+                  >
+                    <ChevronLeft size={15} />
+                    <span>পূর্ববর্তী</span>
+                  </button>
+
+                  {pages.map((p, idx) => {
+                    if (p === '...') {
+                      return <span key={`ellipsis-${idx}`} className="px-2 text-slate-400 font-bold text-xs select-none">...</span>;
+                    }
+                    const isActive = p === safeStorefrontPage;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => handlePageChange(p)}
+                        className={`min-w-9 h-9 px-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                          isActive
+                            ? 'text-white shadow-md scale-105'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                        }`}
+                        style={isActive ? { background: themeVars['--sp-primary'] || '#6D28D9', borderColor: themeVars['--sp-primary'] || '#6D28D9' } : {}}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(Math.min(totalStorefrontPages, safeStorefrontPage + 1))}
+                    disabled={safeStorefrontPage === totalStorefrontPages}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
+                  >
+                    <span>পরবর্তী</span>
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+              </div>
+            );
+          };
+
+          const sortedForShowcase = [...paginatedProducts].sort((a, b) => {
             const posA = a.highlightPosition ? parseInt(a.highlightPosition) : (a.isFeatured ? 1 : 999);
             const posB = b.highlightPosition ? parseInt(b.highlightPosition) : (b.isFeatured ? 1 : 999);
             return posA - posB;
@@ -4109,10 +4208,13 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             );
           }
 
-          // Standard Product Grid for Grocery / MesserBazar & Default Shops
+          // Standard Product Grid for Grocery / MesserBazar & Default Shops (Strict 5 Rows max per page)
           return (
-            <div id="product-section" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-3 sm:gap-4">
-              {filteredProducts.map(renderSingleProductCard)}
+            <div id="product-section" className="space-y-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 3xl:grid-cols-10 gap-3 sm:gap-4">
+                {paginatedProducts.map(renderSingleProductCard)}
+              </div>
+              {renderStorefrontPagination()}
             </div>
           );
         })())}

@@ -12,6 +12,8 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const shopId = searchParams.get('shopId');
     const category = searchParams.get('category');
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
 
     if (!shopId) {
       return NextResponse.json({ error: 'shopId required' }, { status: 400 });
@@ -23,7 +25,18 @@ export async function GET(req) {
       q = q.where('category', '==', category);
     }
 
-    const snap = await q.orderBy('createdAt', 'desc').get();
+    q = q.orderBy('createdAt', 'desc');
+
+    let page = 1;
+    let limit = 0; // 0 means all (unless specified)
+
+    if (limitParam) {
+      limit = Math.min(Math.max(1, parseInt(limitParam, 10) || 20), 100);
+      page = Math.max(1, parseInt(pageParam, 10) || 1);
+      q = q.offset((page - 1) * limit).limit(limit);
+    }
+
+    const snap = await q.get();
     const products = snap.docs.map(d => {
       const data = d.data();
       return {
@@ -42,10 +55,12 @@ export async function GET(req) {
 
     return NextResponse.json({
       products,
-      total: products.length,
+      page,
+      limit: limit || products.length,
+      count: products.length,
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       }
     });
   } catch (err) {

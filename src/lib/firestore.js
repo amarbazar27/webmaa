@@ -15,24 +15,53 @@ export const getAllShops = async () => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
+const clientShopCache = new Map();
+
 export const getShopBySlug = async (slug) => {
   if (!slug) return null;
-  // Indexing fix: Check both fields as some legacy stores might use shopSlug
-  const q1 = query(collection(db, 'shops'), where('subdomainSlug', '==', slug));
-  const snap1 = await getDocs(q1);
-  if (!snap1.empty) return { id: snap1.docs[0].id, ...snap1.docs[0].data() };
+  const cacheKey = slug.toLowerCase().trim();
+  const cached = clientShopCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < 1000 * 60 * 15)) {
+    return cached.data;
+  }
 
-  const q2 = query(collection(db, 'shops'), where('shopSlug', '==', slug));
-  const snap2 = await getDocs(q2);
-  if (!snap2.empty) return { id: snap2.docs[0].id, ...snap2.docs[0].data() };
-  
-  // Direct document ID fallback
   try {
-    const docSnap = await getDoc(doc(db, 'shops', slug));
-    if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
-  } catch (_) {}
+    // Indexing fix: Check both fields as some legacy stores might use shopSlug
+    const q1 = query(collection(db, 'shops'), where('subdomainSlug', '==', slug));
+    const snap1 = await getDocs(q1);
+    if (!snap1.empty) {
+      const res = { id: snap1.docs[0].id, ...snap1.docs[0].data() };
+      clientShopCache.set(cacheKey, { data: res, timestamp: Date.now() });
+      return res;
+    }
 
-  return null;
+    const q2 = query(collection(db, 'shops'), where('shopSlug', '==', slug));
+    const snap2 = await getDocs(q2);
+    if (!snap2.empty) {
+      const res = { id: snap2.docs[0].id, ...snap2.docs[0].data() };
+      clientShopCache.set(cacheKey, { data: res, timestamp: Date.now() });
+      return res;
+    }
+    
+    // Direct document ID fallback
+    try {
+      const docSnap = await getDoc(doc(db, 'shops', slug));
+      if (docSnap.exists()) {
+        const res = { id: docSnap.id, ...docSnap.data() };
+        clientShopCache.set(cacheKey, { data: res, timestamp: Date.now() });
+        return res;
+      }
+    } catch (_) {}
+
+    return null;
+  } catch (err) {
+    console.warn(`[getShopBySlug] Firestore query error for "${slug}":`, err.message);
+    // Graceful stale cache fallback to avoid 404 when Firestore daily quota is exhausted
+    if (cached?.data) {
+      return cached.data;
+    }
+    return null;
+  }
 };
 
 
@@ -207,6 +236,16 @@ export const addCategory = async (shopId, data) => {
 
 export const deleteCategory = async (shopId, categoryId) => {
   return deleteDoc(doc(db, 'shops', shopId, 'categories', categoryId));
+};
+
+export const bulkDeleteCategories = async (shopId, categoryIds) => {
+  if (!shopId || !categoryIds || categoryIds.length === 0) return;
+  const { writeBatch } = await import('firebase/firestore');
+  const batch = writeBatch(db);
+  categoryIds.forEach(id => {
+    batch.delete(doc(db, 'shops', shopId, 'categories', id));
+  });
+  return batch.commit();
 };
 
 // ── ORDERS ────────────────────────────────────────

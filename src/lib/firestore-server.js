@@ -4,10 +4,15 @@ import {
 import { db } from './firebase';
 import { adminDb } from '@/lib/firebase-admin';
 
+const domainCache = new Map();
+const CACHE_TTL_MS = 1000 * 60 * 30; // 30 mins active TTL
+const STALE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours stale fallback
+
 /**
  * getShopByDomain — Resolve a hostname to a shop document on server
  * ⚡ Prioritizes Firebase Admin SDK (server-side service account)
- * which is 100% immune to client API key domain/referer restrictions.
+ * with in-memory caching and resilient stale fallback to prevent 404s
+ * during Firebase quota exhaustion or network transient errors.
  */
 export const getShopByDomain = async (rawDomain) => {
   if (!rawDomain) return null;
@@ -24,6 +29,12 @@ export const getShopByDomain = async (rawDomain) => {
     variants.push('messerbazar.com', 'www.messerbazar.com');
   }
 
+  // Check active in-memory cache
+  const cached = domainCache.get(naked) || domainCache.get(host);
+  if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+    return cached.data;
+  }
+
   // ── 3. PRIMARY: Firebase Admin SDK (High-speed server-to-server) ──
   try {
     if (adminDb) {
@@ -35,7 +46,10 @@ export const getShopByDomain = async (rawDomain) => {
           .get();
         if (!adminSnap.empty) {
           const d = adminSnap.docs[0];
-          return { id: d.id, ...d.data() };
+          const shop = { id: d.id, ...d.data() };
+          domainCache.set(naked, { data: shop, timestamp: Date.now() });
+          domainCache.set(host, { data: shop, timestamp: Date.now() });
+          return shop;
         }
       }
 
@@ -47,12 +61,36 @@ export const getShopByDomain = async (rawDomain) => {
           .get();
         if (!adminLegacy.empty) {
           const d = adminLegacy.docs[0];
-          return { id: d.id, ...d.data() };
+          const shop = { id: d.id, ...d.data() };
+          domainCache.set(naked, { data: shop, timestamp: Date.now() });
+          domainCache.set(host, { data: shop, timestamp: Date.now() });
+          return shop;
+        }
+      }
+
+      // 3c. Fallback: Check subdomainSlug (e.g. camerakini.bdretailers.com -> camerakini)
+      const sub = naked.split('.')[0];
+      if (sub && sub !== 'www' && sub !== 'localhost') {
+        const subSnap = await adminDb.collection('shops')
+          .where('subdomainSlug', '==', sub)
+          .limit(1)
+          .get();
+        if (!subSnap.empty) {
+          const d = subSnap.docs[0];
+          const shop = { id: d.id, ...d.data() };
+          domainCache.set(naked, { data: shop, timestamp: Date.now() });
+          domainCache.set(host, { data: shop, timestamp: Date.now() });
+          return shop;
         }
       }
     }
   } catch (adminErr) {
     console.warn(`[FirestoreServer] Admin SDK lookup error for "${rawDomain}":`, adminErr.message);
+    // If quota exhausted or Firestore down, return stale cache if available
+    if (cached && (Date.now() - cached.timestamp < STALE_TTL_MS)) {
+      console.warn(`[FirestoreServer] Serving stale shop for "${rawDomain}" from cache`);
+      return cached.data;
+    }
   }
 
   // ── 4. FALLBACK: Client SDK (Used only if Admin SDK is unavailable) ──
@@ -64,7 +102,10 @@ export const getShopByDomain = async (rawDomain) => {
         const q = query(shopsRef, where('domains', 'array-contains', variant));
         const snap = await getDocs(q);
         if (!snap.empty) {
-          return { id: snap.docs[0].id, ...snap.docs[0].data() };
+          const shop = { id: snap.docs[0].id, ...snap.docs[0].data() };
+          domainCache.set(naked, { data: shop, timestamp: Date.now() });
+          domainCache.set(host, { data: shop, timestamp: Date.now() });
+          return shop;
         }
       }
 
@@ -72,12 +113,20 @@ export const getShopByDomain = async (rawDomain) => {
         const legacyQ = query(shopsRef, where('customDomain', '==', variant));
         const legacySnap = await getDocs(legacyQ);
         if (!legacySnap.empty) {
-          return { id: legacySnap.docs[0].id, ...legacySnap.docs[0].data() };
+          const shop = { id: legacySnap.docs[0].id, ...legacySnap.docs[0].data() };
+          domainCache.set(naked, { data: shop, timestamp: Date.now() });
+          domainCache.set(host, { data: shop, timestamp: Date.now() });
+          return shop;
         }
       }
     }
   } catch (clientErr) {
     console.warn(`[FirestoreServer] Client SDK lookup fallback error for "${rawDomain}":`, clientErr.message);
+  }
+
+  // Final check: if stale entry exists, return it instead of null (prevents 404!)
+  if (cached && (Date.now() - cached.timestamp < STALE_TTL_MS)) {
+    return cached.data;
   }
 
   return null;

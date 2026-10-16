@@ -6,22 +6,22 @@ const FIRESTORE_REST_BASE = `https://firestore.googleapis.com/v1/projects/${FIRE
 // ⚡ High-speed In-Memory Query Cache with TTL (Caches expensive queries & eliminates N+1 latency)
 const memoryCache = new Map();
 
-function getCached(key) {
+function getCached(key, allowStale = false) {
   const item = memoryCache.get(key);
   if (!item) return null;
   if (Date.now() > item.expiresAt) {
-    memoryCache.delete(key);
+    if (allowStale) return item.value;
     return null;
   }
   return item.value;
 }
 
-function setCached(key, value, ttlSeconds = 60) {
+function setCached(key, value, ttlSeconds = 300) {
   memoryCache.set(key, {
     value,
     expiresAt: Date.now() + ttlSeconds * 1000,
   });
-  if (memoryCache.size > 500) {
+  if (memoryCache.size > 1000) {
     const oldestKey = memoryCache.keys().next().value;
     memoryCache.delete(oldestKey);
   }
@@ -179,8 +179,8 @@ async function firestoreRestCollection(path) {
 
 
 export async function getShopServer(slug) {
+  const cacheKey = `shop_slug_${slug}`;
   try {
-    const cacheKey = `shop_slug_${slug}`;
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
@@ -204,21 +204,28 @@ export async function getShopServer(slug) {
       if (!shop) shop = await firestoreRestQuery('shops', 'shopSlug', 'EQUAL', slug);
     }
 
-    if (shop) setCached(cacheKey, shop, 60);
+    if (shop) setCached(cacheKey, shop, 600); // 10 minutes cache
     return shop || null;
   } catch (err) {
     console.error(`[getShopServer] Error:`, err);
+    // Return stale cache if available to prevent 404 during quota exhaustion
+    const stale = getCached(cacheKey, true);
+    if (stale) {
+      console.warn(`[getShopServer] Serving stale shop for slug "${slug}"`);
+      return stale;
+    }
     return null;
   }
 }
 
 export async function getShopByDomainServer(host) {
+  if (!host) return null;
+  // Normalize host
+  const normalizedHost = host.toLowerCase().trim().replace(/^www\./i, '');
+  const lookupHost = normalizedHost === 'messbazar.com' ? 'messerbazar.com' : normalizedHost;
+  const cacheKey = `shop_domain_${lookupHost}`;
+
   try {
-    if (!host) return null;
-    // Normalize host
-    const normalizedHost = host.toLowerCase().trim().replace(/^www\./i, '');
-    const lookupHost = normalizedHost === 'messbazar.com' ? 'messerbazar.com' : normalizedHost;
-    const cacheKey = `shop_domain_${lookupHost}`;
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
@@ -250,19 +257,25 @@ export async function getShopByDomainServer(host) {
     }
 
     if (shop) {
-      setCached(cacheKey, shop, 60);
+      setCached(cacheKey, shop, 600); // 10 minutes cache
     }
     return shop || null;
   } catch (err) {
     console.error(`[getShopByDomainServer] Error:`, err);
+    // Return stale cache if available to prevent 404 during quota exhaustion
+    const stale = getCached(cacheKey, true);
+    if (stale) {
+      console.warn(`[getShopByDomainServer] Serving stale shop for host "${host}"`);
+      return stale;
+    }
     return null;
   }
 }
 
 export async function getProductsServer(shopId) {
+  if (!shopId) return [];
+  const cacheKey = `products_${shopId}`;
   try {
-    if (!shopId) return [];
-    const cacheKey = `products_${shopId}`;
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
@@ -279,10 +292,15 @@ export async function getProductsServer(shopId) {
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
-    setCached(cacheKey, products, 60);
+    setCached(cacheKey, products, 300); // 5 minutes cache
     return products;
   } catch (err) {
     console.error(`[getProductsServer] Error:`, err);
+    const stale = getCached(cacheKey, true);
+    if (stale) {
+      console.warn(`[getProductsServer] Serving stale products for shopId "${shopId}"`);
+      return stale;
+    }
     return [];
   }
 }
