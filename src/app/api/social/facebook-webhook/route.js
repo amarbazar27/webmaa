@@ -57,6 +57,28 @@ async function sendFacebookCommentReply(commentId, text, pageAccessToken) {
   }
 }
 
+// Helper: Send message via Meta WhatsApp Business Cloud API
+async function sendWhatsAppMessage(phoneNumberId, recipientPhone, text, token) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: recipientPhone,
+        text: { body: text }
+      })
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('[WhatsApp Cloud API Send Error]:', err.message);
+    return null;
+  }
+}
+
 // Helper: Multi-Account Groq LPU (Llama 3.3 70B & DeepSeek R1) with Vyce AI Fallback
 async function getAiReply(messages, shopContext) {
   const groqKeys = [
@@ -364,6 +386,120 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
                   shopId
                 }, { merge: true });
               }
+            }
+          }
+        }
+      }
+      return new NextResponse('EVENT_RECEIVED', { status: 200 });
+    }
+
+    // ── 2. Handle Meta WhatsApp Business Cloud API Messages ─────
+    if (body.object === 'whatsapp_business_account') {
+      for (const entry of (body.entry || [])) {
+        for (const change of (entry.changes || [])) {
+          if (change.field === 'messages') {
+            const val = change.value;
+            const phoneNumberId = val?.metadata?.phone_number_id;
+            const messages = val?.messages || [];
+            if (!phoneNumberId || messages.length === 0) continue;
+
+            const connDoc = await adminDb.collection('social_connections').doc(phoneNumberId).get();
+            if (!connDoc.exists) {
+              console.warn('[WhatsApp Webhook] No shop connection found for phone ID:', phoneNumberId);
+              continue;
+            }
+            const connData = connDoc.data();
+            const shopId = connData.shopId;
+            const whatsappToken = connData.accessToken;
+
+            const shopDoc = await adminDb.collection('shops').doc(shopId).get();
+            const shopData = shopDoc.exists ? shopDoc.data() : {};
+            const shopName = shopData.shopName || shopData.name || 'Store';
+
+            for (const msg of messages) {
+              if (msg.type !== 'text') continue;
+              const senderPhone = msg.from;
+              const text = msg.text?.body;
+              if (!senderPhone || !text) continue;
+
+              const senderName = val?.contacts?.[0]?.profile?.name || `+${senderPhone}`;
+              const convRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(`wa_${senderPhone}`);
+              const convDoc = await convRef.get();
+              let convData = convDoc.exists ? convDoc.data() : {
+                platform: 'whatsapp',
+                senderName,
+                senderPsid: senderPhone,
+                phone: senderPhone,
+                messages: [],
+                aiPaused: false,
+                shopId
+              };
+
+              // Human takeover toggle with single dot
+              if (text.trim() === '.') {
+                convData.aiPaused = !convData.aiPaused;
+                await convRef.set({ aiPaused: convData.aiPaused }, { merge: true });
+                continue;
+              }
+
+              convData.messages.push({ role: 'user', content: text, timestamp: new Date().toISOString() });
+
+              // Lead capture
+              await adminDb.collection('shops').doc(shopId).collection('leads').doc(`wa_${senderPhone}`).set({
+                name: senderName,
+                phone: senderPhone,
+                source: 'whatsapp_message',
+                message: text,
+                status: 'new',
+                createdAt: FieldValue.serverTimestamp(),
+                shopId
+              }, { merge: true });
+
+              // Generate AI response
+              if (!convData.aiPaused && !shopData?.aiSettings?.globallyPaused) {
+                const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(30).get();
+                let productList = '';
+                productsSnapshot.forEach(doc => {
+                  const p = doc.data();
+                  productList += `- ${p.name || ''}: ৳${p.price || ''}\n`;
+                });
+
+                const customPrompt = shopData.aiSettings?.customPrompt || '';
+                const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';
+                const knowledgeBase = shopData.knowledgeBase || '';
+                const shopContext = `তুমি "${shopName}"-এর অফিসিয়াল WhatsApp সেলস অ্যাসিস্ট্যান্ট।
+১. সর্বদা অত্যন্ত মার্জিত, প্রমিত এবং ভদ্র বাংলায় কথা বলবে। কাস্টমারকে শ্রদ্ধার সাথে 'আপনি' বা 'ভাইয়া/আপু' সম্বোধন করবে।
+২. নিষিদ্ধ: অপভ্রংশ, অদ্ভুত আঞ্চলিক শব্দ ব্যবহার করবে না।
+৩. সত্যনিষ্ঠ তথ্য: তালিকার বাইরের কোনো কাল্পনিক পণ্যের নাম বা মিথ্যা দাম বানিয়ে বলবে না।
+৪. দাম ও সংখ্যা: প্রমিত বাংলায় বা স্পষ্ট সংখ্যায় (যেমন: ৳৫০০ বা ৫০০ টাকা) লিখবে।
+৫. উত্তর শৈলী: উত্তর হবে স্পষ্ট, সংক্ষিপ্ত (১-৩ বাক্য) এবং সরাসরি কাস্টমারের প্রশ্নের সমাধানকেন্দ্রিক।
+৬. বাংলা বানানের ভিন্নতা ও সমার্থক পণ্য সমন্বয়: গ্রাহক বিভিন্ন বানানে বা উচ্চারণে পণ্যের নাম লিখতে পারে (যেমন: 'পেঁয়াজ' / 'পেয়াজ' / 'পিয়াজ' / 'Onion')। তালিকায় কাছাকাছি কোনো পণ্য থাকলে কখনোই 'নাই' বলবে না, সরাসরি পণ্যের দাম জানিয়ে অর্ডার করতে উৎসাহিত করবে।
+দোকানের পণ্য তালিকা:
+${productList || 'পণ্য তালিকা লোড করা হচ্ছে'}
+ডেলিভারি সংক্রান্ত তথ্য:
+${deliveryInfo || 'সারাদেশে হোম ডেলিভারি সুবিধা রয়েছে।'}
+দোকানের পলিসি:
+${knowledgeBase}
+${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}` : ''}`;
+
+                const aiMessages = convData.messages.slice(-8).map(m => ({
+                  role: m.role === 'retailer' ? 'assistant' : m.role,
+                  content: m.content
+                }));
+
+                const reply = await getAiReply(aiMessages, shopContext);
+                if (reply) {
+                  await sendWhatsAppMessage(phoneNumberId, senderPhone, reply, whatsappToken);
+                  convData.messages.push({ role: 'assistant', content: reply, timestamp: new Date().toISOString() });
+                }
+              }
+
+              await convRef.set({
+                ...convData,
+                lastMessage: text,
+                lastMessageAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp()
+              }, { merge: true });
             }
           }
         }

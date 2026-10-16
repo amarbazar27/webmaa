@@ -1931,10 +1931,58 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
 
+  // WhatsApp Business Cloud API State
+  const [waPhoneId, setWaPhoneId] = useState('');
+  const [waWabaId, setWaWabaId] = useState('');
+  const [waToken, setWaToken] = useState('');
+  const [connectingWa, setConnectingWa] = useState(false);
+  const [showWaGuide, setShowWaGuide] = useState(false);
+
   const fbConnection = connections.find(c => c.platform === 'facebook');
+  const waConnection = connections.find(c => c.platform === 'whatsapp');
 
   const webhookCallbackUrl = 'https://bdretailers.com/api/social/facebook-webhook';
   const verifyTokenStr = 'bdretailers_meta_webhook_secret_2026';
+
+  const handleConnectWhatsApp = async () => {
+    if (!waPhoneId.trim() || !waToken.trim()) {
+      toast.error('WhatsApp Phone Number ID এবং Access Token দিন');
+      return;
+    }
+    setConnectingWa(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('লগইন করুন');
+
+      const res = await fetch('/api/social/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          platform: 'whatsapp',
+          phoneNumberId: waPhoneId.trim(),
+          wabaId: waWabaId.trim() || undefined,
+          accessToken: waToken.trim(),
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'WhatsApp কানেক্ট ব্যর্থ');
+
+      toast.success(data.message || 'WhatsApp Cloud API সফলভাবে যুক্ত হয়েছে! 🎉');
+      setWaPhoneId('');
+      setWaWabaId('');
+      setWaToken('');
+      onRefresh();
+    } catch (err) {
+      toast.error(err.message || 'হোয়াটসঅ্যাপ কানেকশনে সমস্যা');
+    } finally {
+      setConnectingWa(false);
+    }
+  };
 
   const handleConnectFacebook = async () => {
     if (!fbToken.trim()) {
@@ -2078,80 +2126,272 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
         </Card>
 
         {/* WhatsApp Card */}
-        <Card title="WhatsApp Business" icon={Phone} className="border-t-4 border-t-green-600 shadow-sm">
-          <div className="space-y-3 pt-1 text-xs">
-            <p className="text-slate-600">
-              Meta WhatsApp Business Cloud API দিয়ে সরাসরি হোয়াটসঅ্যাপে AI সেলস রোবট চালু করতে পারবেন।
-            </p>
-            <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl font-bold">
-              সাপোর্টের সাথে যোগাযোগ করে Cloud API নাম্বার ইন্টিগ্রেট করুন।
-            </div>
+        <Card title="WhatsApp Business Cloud API" icon={Phone} className="border-t-4 border-t-green-600 shadow-sm">
+          <div className="space-y-3.5 pt-1 text-xs">
+            {waConnection ? (
+              <div className="space-y-4">
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
+                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="font-black text-emerald-900">WhatsApp সফলভাবে সংযুক্ত 🟢</p>
+                    <p className="font-bold text-emerald-700 font-mono">
+                      {waConnection.displayPhoneNumber ? `নম্বর: ${waConnection.displayPhoneNumber}` : `Phone ID: ${waConnection.phoneNumberId}`}
+                    </p>
+                    <p className="text-[10px] text-emerald-600 font-mono">ID: {waConnection.phoneNumberId}</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 bg-green-50/70 border border-green-200 rounded-xl text-[11px] text-green-800 font-medium">
+                  ✅ প্রতি মাসে ১,০০০টি কাস্টমার চ্যাট ১০০% ফ্রি (মেটা পলিসি)।
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={() => handleDisconnect(waConnection.phoneNumberId || waConnection.id)}
+                  loading={disconnecting}
+                  className="w-full !border-red-200 !text-red-600 hover:!bg-red-50 text-xs font-black cursor-pointer"
+                >
+                  <Trash2 size={14} className="mr-1.5" /> WhatsApp ডিসকানেক্ট করুন
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                  <span className="font-black text-slate-800">হোয়াটসঅ্যাপ AI সেলসম্যান</span>
+                  <button
+                    onClick={() => setShowWaGuide(true)}
+                    className="text-[11px] text-green-700 font-black hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <HelpCircle size={13} /> সেটআপ গাইড ও খরচ
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-700 block">Phone Number ID *</label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: 104589234857..."
+                    value={waPhoneId}
+                    onChange={e => setWaPhoneId(e.target.value)}
+                    className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-700 block">WABA ID (ঐচ্ছিক)</label>
+                  <input
+                    type="text"
+                    placeholder="WhatsApp Business Account ID"
+                    value={waWabaId}
+                    onChange={e => setWaWabaId(e.target.value)}
+                    className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-slate-700 block">WhatsApp Access Token *</label>
+                  <input
+                    type="password"
+                    placeholder="EAA..."
+                    value={waToken}
+                    onChange={e => setWaToken(e.target.value)}
+                    className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none"
+                  />
+                </div>
+
+                <Button
+                  onClick={handleConnectWhatsApp}
+                  loading={connectingWa}
+                  className="w-full !bg-green-600 hover:!bg-green-700 text-white font-black text-xs cursor-pointer shadow-sm"
+                >
+                  WhatsApp Cloud API কানেক্ট করুন
+                </Button>
+              </div>
+            )}
           </div>
         </Card>
       </div>
 
-      {/* Meta Developer Webhook Credentials Box */}
-      <Card title="Meta Webhook কনফিগারেশন প্যারামিটার (Meta Developers-এ দিন)" icon={ShieldCheck}>
+      {/* WhatsApp Modal Guide */}
+      {showWaGuide && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/80 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <Phone size={18} className="text-green-600" /> WhatsApp Cloud API সেটআপ ও মেটার খরচ পলিসি
+              </h3>
+              <button onClick={() => setShowWaGuide(false)} className="p-1 rounded-full text-slate-400 hover:bg-slate-100 cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs text-slate-700 font-medium leading-relaxed">
+              {/* Pricing section */}
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-1.5">
+                <h4 className="font-black text-emerald-950 flex items-center gap-1.5 text-sm">
+                  💰 এটি কি ফ্রি নাকি পেইড? (Meta Official Pricing)
+                </h4>
+                <p className="text-emerald-900">
+                  <strong>১. প্রতি মাসে ১,০০০টি চ্যাট ১০০% ফ্রি:</strong> Meta প্রতিটি WhatsApp Business Account-কে প্রতি মাসে প্রথম <strong>১,০০০টি সার্ভিস কনভারসেশন</strong> (যখন গ্রাহক নিজে থেকে আপনার হোয়াটসঅ্যাপে মেসেজ পাঠায় এবং AI বা আপনি উত্তর দেন) সম্পূর্ণ বিনামূল্যে দেয়। এর জন্য কোনো মাসিক ফি বা প্ল্যাটফর্ম সাবস্ক্রিপশন চার্জ নেই।
+                </p>
+                <p className="text-emerald-900">
+                  <strong>২. বাল্ক মার্কেটিং বা ১,০০০+ চ্যাট:</strong> ফ্রি ১,০০০ চ্যাট শেষ হলে বা আপনি নিজে থেকে আনসলিসিটেড প্রমোশনাল মেসেজ পাঠালে মেটার সাধারণ রেট (মেসেজ প্রতি আনুমানিক ৳০.৬৫ - ৳১.২০) মেটা বিল করে। সাধারণ স্টোরের জন্য প্রতি মাসের ১,০০০ ফ্রি চ্যাটই যথেষ্ট।
+                </p>
+              </div>
+
+              {/* Step by step */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                <h4 className="font-black text-slate-900 text-sm">🚀 মাত্র ৪ ধাপে সেটআপ করার নিয়ম:</h4>
+                <ol className="list-decimal list-inside space-y-2 text-slate-700">
+                  <li>
+                    ব্রাউজারে যান: <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold underline">developers.facebook.com/apps</a> এবং আপনার তৈরি অ্যাপে ক্লিক করুন।
+                  </li>
+                  <li>
+                    বাম সাইডবারের <strong>Use cases</strong> থেকে <strong>Customize</strong>-এ গিয়ে <strong>WhatsApp</strong> কার্ডের ডানে <strong>Set up</strong> বাটনে চাপুন।
+                  </li>
+                  <li>
+                    বাম মেনু থেকে <strong>WhatsApp &gt; API Setup</strong>-এ যান। সেখানে মেটা আপনাকে একটি টেস্ট ফোন নম্বর, <strong>Phone number ID</strong> এবং <strong>Temporary Access Token</strong> দেখাবে। সেগুলো কপি করুন।
+                  </li>
+                  <li>
+                    সোশ্যাল হাবের এই পেজে এসে Phone number ID এবং Token পেস্ট করে <strong>&quot;WhatsApp Cloud API কানেক্ট করুন&quot;</strong> বাটনে চাপুন। সাথে সাথে আপনার হোয়াটসঅ্যাপে AI সেলসম্যান সক্রিয় হয়ে যাবে!
+                  </li>
+                </ol>
+              </div>
+
+              {/* Webhook for WhatsApp */}
+              <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 space-y-1 text-amber-950">
+                <p className="font-black">📌 WhatsApp Webhook লিংক:</p>
+                <p className="text-[11px]">
+                  মেটা ডেভেলপার সাইটের <strong>Webhooks</strong>-এ গিয়ে Product তালিকা থেকে <strong>WhatsApp Business Account</strong> সিলেক্ট করে Callback URL এবং Verify Token দিন এবং <strong>messages</strong> ফিল্ডটি Subscribe করুন।
+                </p>
+              </div>
+            </div>
+
+            <Button onClick={() => setShowWaGuide(false)} className="w-full !bg-slate-900 text-white font-black cursor-pointer">
+              বুঝেছি, ধন্যবাদ!
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Meta Developer Webhook Credentials Box (Updated with New Use Cases Interface) */}
+      <Card title="Meta Webhook কনফিগারেশন প্যারামিটার (নতুন Use cases ইন্টারফেস)" icon={ShieldCheck}>
         <div className="space-y-4 pt-1">
-          <p className="text-xs text-slate-600">
-            developers.facebook.com-এ গিয়ে আপনার অ্যাপের Webhook সেকশনে নিচের URL এবং Token দিন:
-          </p>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <p className="text-xs text-slate-600">
+              মেটার আধুনিক ড্যাশবোর্ডে <strong>Use cases &gt; Webhooks &gt; Page</strong> পাথে গিয়ে নিচের তথ্যগুলো বসান:
+            </p>
+            <a 
+              href="https://developers.facebook.com/apps/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1"
+            >
+              মেটা অ্যাপস ড্যাশবোর্ড <ExternalLink size={13} />
+            </a>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Callback URL</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={webhookCallbackUrl}
-                  className="flex-1 text-xs font-mono bg-white border border-slate-200 p-2 rounded-lg outline-none"
-                />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Callback URL</span>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(webhookCallbackUrl);
                     setCopiedUrl(true);
                     setTimeout(() => setCopiedUrl(false), 2000);
                   }}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold cursor-pointer"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                 >
-                  {copiedUrl ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedUrl ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />} {copiedUrl ? 'কপি হয়েছে' : 'কপি করুন'}
                 </button>
               </div>
+              <input
+                type="text"
+                readOnly
+                value={webhookCallbackUrl}
+                className="w-full text-xs font-mono bg-white border border-slate-200 p-2 rounded-lg outline-none select-all"
+              />
             </div>
 
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Verify Token</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={verifyTokenStr}
-                  className="flex-1 text-xs font-mono bg-white border border-slate-200 p-2 rounded-lg outline-none"
-                />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Verify Token</span>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(verifyTokenStr);
                     setCopiedToken(true);
                     setTimeout(() => setCopiedToken(false), 2000);
                   }}
-                  className="p-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-slate-700 text-xs font-bold cursor-pointer"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                 >
-                  {copiedToken ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedToken ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />} {copiedToken ? 'কপি হয়েছে' : 'কপি করুন'}
                 </button>
               </div>
+              <input
+                type="text"
+                readOnly
+                value={verifyTokenStr}
+                className="w-full text-xs font-mono bg-white border border-slate-200 p-2 rounded-lg outline-none select-all"
+              />
             </div>
           </div>
 
-          <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 text-xs space-y-2">
-            <p className="font-black text-purple-900">📍 Meta Developer সাইটে কোথায় বসাবেন? (মাত্র ৫টি ধাপ):</p>
-            <ol className="list-decimal list-inside space-y-1.5 text-purple-800 font-medium">
-              <li><strong className="text-purple-950">developers.facebook.com/apps</strong>-এ গিয়ে আপনার অ্যাপে ক্লিক করুন।</li>
-              <li>বাম সাইডবারের <strong className="text-purple-950">Add Product</strong> থেকে <strong className="text-purple-950">Webhooks</strong>-এ <span className="font-bold underline">Set up</span> চাপুন।</li>
-              <li>পেজের একদম উপরে ড্রপডাউন থেকে <strong className="text-purple-950">Page</strong> সিলেক্ট করুন এবং <strong className="text-purple-950">Subscribe to this object</strong> বাটনে চাপুন।</li>
-              <li>পপ-আপ বক্সে উপরের <strong>Callback URL</strong> ও <strong>Verify Token</strong> পেস্ট করে <strong className="text-purple-950">Verify and Save</strong> বাটনে ক্লিক করুন।</li>
-              <li>নিচের তালিকা থেকে <strong className="text-purple-950">messages</strong> এবং <strong className="text-purple-950">feed</strong> ফিল্ডের ডানে <span className="font-bold underline">Subscribe</span> চাপুন। কাজ শেষ! 🎉</li>
+          {/* Step-by-Step Modern Path Guide (Exact match to Meta 2026 Use cases UI) */}
+          <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 text-xs space-y-3">
+            <p className="font-black text-purple-950 flex items-center gap-1.5">
+              <span>📍 মেটা ডেভেলপার সাইটে যাওয়ার আধুনিক সঠিক পথ (Use cases UI):</span>
+            </p>
+            <ol className="list-decimal list-inside space-y-2 text-purple-900 font-medium">
+              <li>
+                ব্রাউজারে যান: <strong className="text-purple-950">developers.facebook.com/apps</strong> এবং আপনার অ্যাপে ক্লিক করুন।
+              </li>
+              <li>
+                বাম সাইডবারের <strong className="text-purple-950">Use cases</strong> মেনুতে ক্লিক করুন (যেমন: <em>Create &amp; manage ads</em> বা <em>Customize</em>)।
+              </li>
+              <li>
+                Use cases তালিকার নিচ থেকে <strong className="text-purple-950">Webhooks</strong> মেনুতে ক্লিক করুন (ঠিক যেমন আপনার স্ক্রিনশটে দেখা যাচ্ছে)।
+              </li>
+              <li>
+                বাম পাশের <strong>Product</strong> তালিকা থেকে <u>অবশ্যই <strong>Page</strong> সিলেক্ট করুন</u>।
+              </li>
+              <li>
+                ডানপাশের <strong>Configure a webhook</strong> বক্সে উপরের <strong>Callback URL</strong> ও <strong>Verify token</strong> পেস্ট করে <strong>Verify and save</strong> বাটনে ক্লিক করুন।
+              </li>
+              <li>
+                নিচের <strong>Webhook fields</strong> টেবিল থেকে <strong className="text-purple-950">messages</strong> এবং <strong className="text-purple-950">feed</strong> ফিল্ডের ডানের <strong>Subscribe</strong> টগলটি অন করে দিন।
+              </li>
             </ol>
+          </div>
+
+          {/* Critical Troubleshooting Box: Why messages don't reach inbox */}
+          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs space-y-2.5">
+            <p className="font-black text-amber-950 flex items-center gap-1.5 text-sm">
+              <AlertCircle size={16} className="text-amber-700" /> মেটাতে সেট করার পরও ইনবক্সে মেসেজ না আসার ৩টি কারণ ও সমাধান:
+            </p>
+            
+            <div className="space-y-2 text-amber-900">
+              <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60">
+                <p className="font-bold text-amber-950">১. &quot;Subscribe to this object&quot; বাটনটি কোথায়?</p>
+                <p className="text-[11px] text-amber-900 mt-0.5">
+                  মেটার নতুন ভার্সনে <strong>&quot;Subscribe to this object&quot; বাটনটি মেটা নিজেই স্থায়ীভাবে তুলে দিয়েছে</strong>। এখন শুধু <strong>Verify and save</strong> বাটন চাপার পর নিচে থাকা <strong>messages</strong> ও <strong>feed</strong> এর পাশে Subscribe টগল অন করে দেওয়াই যথেষ্ট!
+                </p>
+              </div>
+
+              <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60">
+                <p className="font-bold text-amber-950">২. সবচেয়ে গুরুত্বপূর্ণ: সোশ্যাল হাবে পেজ কানেক্ট না করা</p>
+                <p className="text-[11px] text-amber-900 mt-0.5">
+                  মেটা ডেভেলপারে ওয়েববুক সেট করার পর উপরের <strong>Facebook Page</strong> কার্ডে আপনার পেজের <strong>Page Access Token</strong> বসিয়ে <strong>&quot;Facebook পেজ কানেক্ট করুন&quot;</strong> বাটনে চাপতে হবে। বিডি রিটেইলার্স তখনই মেটার <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">subscribed_apps</code> এপিআই কল করে আপনার পেজটিকে ওই ওয়েববুকে সাবস্ক্রাইব করায়। এই কানেক্ট বাটন না চাপলে মেটা আমাদের সিস্টেমে কোনো মেসেজই পাঠাবে না!
+                </p>
+              </div>
+
+              <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60">
+                <p className="font-bold text-amber-950">৩. মেটা অ্যাপ Development Mode-এ থাকা</p>
+                <p className="text-[11px] text-amber-900 mt-0.5">
+                  আপনার মেটা অ্যাপটি বর্তমানে <strong>Development Mode</strong>-এ আছে। Development Mode-এ শুধুমাত্র যে ফেসবুক অ্যাকাউন্ট দিয়ে অ্যাপ তৈরি করা হয়েছে (অর্থাৎ App Admin) শুধু তার মেসেজই আসে। সাধারণ কাস্টমারদের মেসেজ পেতে হলে মেটা ড্যাশবোর্ডের উপরে অ্যাপটি <strong>Development থেকে Live</strong> করতে হবে। অথবা টেস্ট করার জন্য মেটা ডেভেলপারে <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">messages</code> ফিল্ডের ডানের <strong>Test</strong> বাটনে ক্লিক করে সাথে সাথে টেস্ট ডাটা পাঠাতে পারেন।
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </Card>

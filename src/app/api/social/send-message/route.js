@@ -65,6 +65,32 @@ export async function POST(request) {
       } catch (metaErr) {
         console.error('[Social Send] Meta dispatch failed:', metaErr.message);
       }
+    } else if (platform === 'whatsapp') {
+      try {
+        const waSnap = await adminDb.collection('shops').doc(shopId).collection('socialConnections').doc('whatsapp').get();
+        if (waSnap.exists) {
+          const { phoneNumberId, accessToken } = waSnap.data();
+          const cleanRecipient = recipientId.replace('wa_', '');
+          const waRes = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: cleanRecipient,
+              text: { body: message.trim() }
+            })
+          });
+          const waData = await waRes.json();
+          if (waData.messages?.[0]?.id) {
+            metaSent = true;
+          }
+        }
+      } catch (waErr) {
+        console.error('[Social Send] WhatsApp Cloud API dispatch failed:', waErr.message);
+      }
     }
 
     // Append to conversation document in Firestore
