@@ -93,11 +93,16 @@ export async function POST(request) {
     // Intelligent Page Token Resolution:
     // If user accidentally copied a User Access Token, exchange it via /me/accounts for the actual Page Token!
     let resolvedToken = pageAccessToken.trim();
-    let subscribeError = null;
 
     try {
       const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name,category&access_token=${resolvedToken}`);
       const meData = await meRes.json();
+
+      if (meData.error) {
+        return NextResponse.json({
+          error: `মেটা এক্সেস টোকেনটি অকার্যকর বা মেয়াদোত্তীর্ণ (${meData.error.message})। দয়া করে Graph API Explorer থেকে সচল Page Access Token সংগ্রহ করুন।`
+        }, { status: 400 });
+      }
 
       if (meData.category) {
         // Genuine Page Access Token
@@ -107,6 +112,13 @@ export async function POST(request) {
         // Might be a User Token — query /me/accounts for user's pages
         const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?access_token=${resolvedToken}`);
         const accountsData = await accountsRes.json();
+
+        if (accountsData.error) {
+          return NextResponse.json({
+            error: `পেজ এক্সেস টোকেন পাওয়া যায়নি: ${accountsData.error.message}`
+          }, { status: 400 });
+        }
+
         if (accountsData.data && Array.isArray(accountsData.data) && accountsData.data.length > 0) {
           const matchedPage = pageId
             ? accountsData.data.find(p => p.id === pageId) || accountsData.data[0]
@@ -129,7 +141,7 @@ export async function POST(request) {
     }
 
     if (!pageId) {
-      pageId = `page_${Date.now()}`;
+      return NextResponse.json({ error: 'ফেসবুক পেজের ID শনাক্ত করা যায়নি। সঠিক Page Token দিন।' }, { status: 400 });
     }
     if (!pageName) {
       pageName = shopData.shopName || 'Facebook Page';
@@ -144,22 +156,28 @@ export async function POST(request) {
       );
       const subscribeData = await subscribeRes.json();
       webhookSubscribed = Boolean(subscribeData.success);
+
       if (subscribeData.error) {
-        subscribeError = subscribeData.error.message;
-        console.warn('[Social Connect] Page subscribed_apps note:', subscribeData.error);
+        console.warn('[Social Connect] Page subscribed_apps failed:', subscribeData.error);
+        return NextResponse.json({
+          error: `মেটা ওয়েববুকে পেজ সাবস্ক্রাইব করতে ব্যর্থ (${subscribeData.error.message})। নিশ্চিত করুন টোকেনে 'pages_manage_metadata' ও 'pages_messaging' পারমিশন দেওয়া আছে।`
+        }, { status: 400 });
       }
     } catch (subErr) {
       console.warn('[Social Connect] Webhook subscription warning:', subErr.message);
+      return NextResponse.json({
+        error: `মেটা সাবস্ক্রিপশন সংযোগ ত্রুটি: ${subErr.message}`
+      }, { status: 500 });
     }
 
-    // Save connection to Firestore
+    // Save connection to Firestore only if validation and subscription succeeded
     const connectionPayload = {
       shopId,
       pageId,
       pageAccessToken: resolvedToken,
       pageName,
       platform: 'facebook',
-      webhookSubscribed,
+      webhookSubscribed: true,
       connectedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -171,11 +189,8 @@ export async function POST(request) {
       success: true,
       pageId,
       pageName,
-      webhookSubscribed,
-      warning: subscribeError ? `পেজ যুক্ত হয়েছে, তবে ওয়েববুক সাবস্ক্রিপশনে মেটা মেসেজ দিয়েছে: ${subscribeError}` : null,
-      message: webhookSubscribed 
-        ? 'Facebook পেজ সফলভাবে যুক্ত এবং ওয়েববুকে সাবস্ক্রাইব হয়েছে! 🎉'
-        : 'Facebook পেজ যুক্ত হয়েছে! 🎉',
+      webhookSubscribed: true,
+      message: 'Facebook পেজ সফলভাবে যুক্ত এবং ওয়েববুকে সাবস্ক্রাইব হয়েছে! 🎉',
     });
   } catch (error) {
     if (error instanceof AuthError) {

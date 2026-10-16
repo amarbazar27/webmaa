@@ -499,7 +499,7 @@ export default function SocialHubPanel({ shopId }) {
               <div className="p-3.5 bg-purple-50 rounded-2xl border border-purple-100 space-y-1.5">
                 <p className="font-black text-purple-900 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <Zap size={15} className="text-purple-600" /> ধাপ ২: পেজ অ্যাক্সেস টোকেন সংগ্রহ (Access Token)
+                    <Zap size={15} className="text-purple-600" /> ধাপ ২: পেজ অ্যাক্সেস টোকেন সংগ্রহ (Page Access Token)
                   </span>
                   <a 
                     href="https://developers.facebook.com/tools/explorer/" 
@@ -510,9 +510,17 @@ export default function SocialHubPanel({ shopId }) {
                     Graph API Explorer <ExternalLink size={12} />
                   </a>
                 </p>
-                <p className="text-purple-900">
-                  সরাসরি <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="font-bold underline">Graph API Explorer</a>-এ যান। উপরে আপনার তৈরি অ্যাপ বেছে নিন, <strong>User or Page</strong> ড্রপডাউন থেকে আপনার Facebook Page সিলেক্ট করুন এবং <strong>Generate Access Token</strong> চাপুন। প্রাপ্ত টোকেনটি কপি করে Social Hub এর Pages ট্যাবে পেস্ট করুন।
-                </p>
+                <div className="text-purple-900 space-y-1">
+                  <p>
+                    সরাসরি <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="font-bold underline">Graph API Explorer</a>-এ যান:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-[11px]">
+                    <li>উপরে <strong>Meta App</strong> ড্রপডাউনে আপনার তৈরি করা অ্যাপ সিলেক্ট করুন।</li>
+                    <li><strong>User or Page</strong> ড্রপডাউন থেকে অবশ্যই আপনার <strong>Facebook Page</strong> সিলেক্ট করবেন (ভুলেও User Token রাখবেন না)।</li>
+                    <li>Permissions বক্সে: <strong>pages_show_list, pages_read_engagement, pages_manage_metadata, pages_messaging</strong> যোগ করুন।</li>
+                    <li><strong>Generate Access Token</strong> চাপুন এবং প্রাপ্ত টোকেনটি কপি করে Social Hub-এ পেস্ট করুন।</li>
+                  </ol>
+                </div>
               </div>
 
               {/* Step 3: Webhooks Setup */}
@@ -527,11 +535,14 @@ export default function SocialHubPanel({ shopId }) {
                     rel="noopener noreferrer" 
                     className="text-[11px] text-amber-800 font-bold hover:underline flex items-center gap-1"
                   >
-                    Webhooks ড্যাশবোর্ড <ExternalLink size={12} />
+                    মেটা অ্যাপস <ExternalLink size={12} />
                   </a>
                 </p>
+                <div className="p-2 bg-purple-100/70 border border-purple-200 rounded-xl text-[11px] text-purple-950 font-bold">
+                  📍 যাওয়ার সঠিক পাথ: <strong>Use cases &gt; Create &amp; manage ads (বা Customize) &gt; Webhooks</strong>
+                </div>
                 <div className="p-2 bg-amber-100/70 border border-amber-300/80 rounded-xl text-[11px] text-amber-950 font-bold">
-                  ⚠️ গুরুত্বপূর্ণ সতর্কবার্তা: Select an object ড্রপডাউনে <u>অবশ্যই &quot;Page&quot; সিলেক্ট করবেন</u>! ভুলেও Catalog (ক্যাটালগ) সিলেক্ট করবেন না। ক্যাটালগ সিলেক্ট করলে মেসেজ বা কমেন্ট আসবে না।
+                  ⚠️ গুরুত্বপূর্ণ সতর্কবার্তা: বাম পাশের Product / Select an object ড্রপডাউনে <u>অবশ্যই &quot;Page&quot; সিলেক্ট করবেন</u>! ভুলেও Catalog (ক্যাটালগ) সিলেক্ট করবেন না। ক্যাটালগ সিলেক্ট করলে মেসেজ বা কমেন্ট আসবে না।
                 </div>
                 <div className="bg-white p-2.5 rounded-xl border border-amber-200 space-y-1 font-mono text-[11px]">
                   <div className="flex items-center justify-between">
@@ -555,8 +566,8 @@ export default function SocialHubPanel({ shopId }) {
                   </div>
                   <div className="text-slate-800 select-all font-semibold">bdretailers_meta_webhook_secret_2026</div>
                 </div>
-                <p className="text-[11px] text-amber-900">
-                  Verify and Save চাপার পর নিচে ফিল্ড তালিকা থেকে <strong>messages</strong> এবং <strong>feed</strong> এর পাশে <strong>Subscribe</strong> বাটনে ক্লিক করুন।
+                <p className="text-[11px] text-amber-900 font-medium">
+                  <strong>Verify and save</strong> বাটনে চাপ দেওয়ার পর নিচের Webhook fields টেবিল থেকে <strong>messages</strong> এবং <strong>feed</strong> এর পাশে <strong>Subscribe</strong> টগলটি অন করে দিন।
                 </p>
               </div>
 
@@ -2051,12 +2062,26 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
           <div className="space-y-4 pt-1">
             {fbConnection ? (
               <div className="space-y-4">
-                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
-                  <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                <div className={clsx(
+                  "p-3.5 border rounded-2xl flex items-start gap-3",
+                  fbConnection.webhookSubscribed ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+                )}>
+                  {fbConnection.webhookSubscribed ? (
+                    <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                  )}
                   <div className="space-y-0.5 text-xs">
-                    <p className="font-black text-emerald-900">সফলভাবে সংযুক্ত</p>
-                    <p className="font-bold text-emerald-700">{fbConnection.pageName || 'Facebook Page'}</p>
-                    <p className="text-[10px] text-emerald-600 font-mono">Page ID: {fbConnection.pageId}</p>
+                    <p className={clsx("font-black", fbConnection.webhookSubscribed ? "text-emerald-900" : "text-amber-900")}>
+                      {fbConnection.webhookSubscribed ? "সফলভাবে সংযুক্ত ও সক্রিয় 🟢" : "⚠️ মেটা ওয়েববুক পেন্ডিং / সেশন আউট"}
+                    </p>
+                    <p className="font-bold text-slate-800">{fbConnection.pageName || 'Facebook Page'}</p>
+                    <p className="text-[10px] text-slate-500 font-mono">Page ID: {fbConnection.pageId}</p>
+                    {!fbConnection.webhookSubscribed && (
+                      <p className="text-[11px] text-amber-800 mt-1 font-medium leading-tight">
+                        টোকেন দিয়ে মেটা ওয়েববুকে পেজ সাবস্ক্রাইব হয়নি (মেটা সেশন লগআউট বা টোকেন মেয়াদোত্তীর্ণ)। নিচের বাটন চেপে ডিসকানেক্ট করে নতুন Page Access Token দিন।
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -2362,36 +2387,6 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                 নিচের <strong>Webhook fields</strong> টেবিল থেকে <strong className="text-purple-950">messages</strong> এবং <strong className="text-purple-950">feed</strong> ফিল্ডের ডানের <strong>Subscribe</strong> টগলটি অন করে দিন।
               </li>
             </ol>
-          </div>
-
-          {/* Critical Troubleshooting Box: Why messages don't reach inbox */}
-          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs space-y-2.5">
-            <p className="font-black text-amber-950 flex items-center gap-1.5 text-sm">
-              <AlertCircle size={16} className="text-amber-700" /> মেটাতে সেট করার পরও ইনবক্সে মেসেজ না আসার ৩টি কারণ ও সমাধান:
-            </p>
-            
-            <div className="space-y-2 text-amber-900">
-              <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60">
-                <p className="font-bold text-amber-950">১. &quot;Subscribe to this object&quot; বাটনটি কোথায়?</p>
-                <p className="text-[11px] text-amber-900 mt-0.5">
-                  মেটার নতুন ভার্সনে <strong>&quot;Subscribe to this object&quot; বাটনটি মেটা নিজেই স্থায়ীভাবে তুলে দিয়েছে</strong>। এখন শুধু <strong>Verify and save</strong> বাটন চাপার পর নিচে থাকা <strong>messages</strong> ও <strong>feed</strong> এর পাশে Subscribe টগল অন করে দেওয়াই যথেষ্ট!
-                </p>
-              </div>
-
-              <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60">
-                <p className="font-bold text-amber-950">২. সবচেয়ে গুরুত্বপূর্ণ: সোশ্যাল হাবে পেজ কানেক্ট না করা</p>
-                <p className="text-[11px] text-amber-900 mt-0.5">
-                  মেটা ডেভেলপারে ওয়েববুক সেট করার পর উপরের <strong>Facebook Page</strong> কার্ডে আপনার পেজের <strong>Page Access Token</strong> বসিয়ে <strong>&quot;Facebook পেজ কানেক্ট করুন&quot;</strong> বাটনে চাপতে হবে। বিডি রিটেইলার্স তখনই মেটার <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">subscribed_apps</code> এপিআই কল করে আপনার পেজটিকে ওই ওয়েববুকে সাবস্ক্রাইব করায়। এই কানেক্ট বাটন না চাপলে মেটা আমাদের সিস্টেমে কোনো মেসেজই পাঠাবে না!
-                </p>
-              </div>
-
-              <div className="p-2.5 bg-white/80 rounded-xl border border-amber-200/60">
-                <p className="font-bold text-amber-950">৩. মেটা অ্যাপ Development Mode-এ থাকা</p>
-                <p className="text-[11px] text-amber-900 mt-0.5">
-                  আপনার মেটা অ্যাপটি বর্তমানে <strong>Development Mode</strong>-এ আছে। Development Mode-এ শুধুমাত্র যে ফেসবুক অ্যাকাউন্ট দিয়ে অ্যাপ তৈরি করা হয়েছে (অর্থাৎ App Admin) শুধু তার মেসেজই আসে। সাধারণ কাস্টমারদের মেসেজ পেতে হলে মেটা ড্যাশবোর্ডের উপরে অ্যাপটি <strong>Development থেকে Live</strong> করতে হবে। অথবা টেস্ট করার জন্য মেটা ডেভেলপারে <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">messages</code> ফিল্ডের ডানের <strong>Test</strong> বাটনে ক্লিক করে সাথে সাথে টেস্ট ডাটা পাঠাতে পারেন।
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </Card>
