@@ -20,7 +20,7 @@ function extractPageText(html) {
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 8000);
+    .slice(0, 10000);
 }
 
 // Extract OpenGraph tags
@@ -40,14 +40,347 @@ function extractOgMeta(html) {
   };
 }
 
+// Strategy 1: Shopify Direct Catalog Engine
+async function fetchShopifyProducts(origin) {
+  try {
+    const res = await fetch(`${origin}/products.json?limit=30`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.products || !Array.isArray(data.products) || data.products.length === 0) return [];
+
+    return data.products.map(p => {
+      const price = parseFloat(p.variants?.[0]?.price) || 0;
+      const cleanDesc = (p.body_html || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 600) || p.title;
+
+      return {
+        name: p.title.trim(),
+        price,
+        costPrice: Math.round(price * 0.7),
+        stock: p.variants?.[0]?.inventory_quantity > 0 ? p.variants[0].inventory_quantity : 40,
+        category: p.product_type || (p.tags?.[0] ? p.tags[0].split(',')[0].trim() : 'সাধারণ'),
+        description: cleanDesc,
+        imageUrl: p.images?.[0]?.src || '',
+      };
+    }).filter(p => p.name && p.price > 0);
+  } catch (_) {
+    return [];
+  }
+}
+
+// Strategy 2: WooCommerce Store API
+async function fetchWooCommerceProducts(origin) {
+  try {
+    const res = await fetch(`${origin}/wp-json/wc/store/v1/products?per_page=25`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) return [];
+
+    return data.map(p => {
+      const rawPrice = p.prices?.price || p.price || 0;
+      const divisor = p.prices?.currency_minor_unit ? Math.pow(10, p.prices.currency_minor_unit) : 1;
+      const price = parseFloat(rawPrice) / divisor;
+      const cleanDesc = (p.description || p.short_description || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 600) || p.name;
+
+      return {
+        name: (p.name || '').trim(),
+        price,
+        costPrice: Math.round(price * 0.7),
+        stock: 40,
+        category: p.categories?.[0]?.name || 'সাধারণ',
+        description: cleanDesc,
+        imageUrl: p.images?.[0]?.src || '',
+      };
+    }).filter(p => p.name && p.price > 0);
+  } catch (_) {
+    return [];
+  }
+}
+
+// Strategy 3: Product Sitemap Crawler (For sites like Camerakini, Next.js, custom stores)
+async function fetchSitemapProducts(origin) {
+  try {
+    for (const smPath of ['/product-sitemap.xml', '/sitemap_products_1.xml', '/sitemap.xml']) {
+      const smRes = await fetch(`${origin}${smPath}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (!smRes.ok) continue;
+
+      const smText = await smRes.text();
+      const locMatches = [...smText.matchAll(/<loc>([^<]*(?:product|item|p)[^<]*)<\/loc>/gi)].map(m => m[1]);
+      if (locMatches.length === 0) continue;
+
+      // Extract up to 12 product pages concurrently
+      const sampleUrls = locMatches.slice(0, 12);
+      const settled = await Promise.allSettled(sampleUrls.map(async (pUrl) => {
+        const pRes = await fetch(pUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36' },
+          signal: AbortSignal.timeout(4500)
+        });
+        if (!pRes.ok) return null;
+        const pHtml = await pRes.text();
+
+        // 1. JSON-LD check
+        const jsonLdMatch = pHtml.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+        if (jsonLdMatch) {
+          for (const block of jsonLdMatch) {
+            try {
+              const cleaned = block.replace(/<\/?script[^>]*>/gi, '');
+              const parsed = JSON.parse(cleaned);
+              const prodObj = parsed['@type'] === 'Product'
+                ? parsed
+                : (Array.isArray(parsed['@graph']) ? parsed['@graph'].find(g => g['@type'] === 'Product') : null);
+
+              if (prodObj && prodObj.name) {
+                const price = parseFloat(prodObj.offers?.price || prodObj.offers?.[0]?.price) || 0;
+                if (price > 0) {
+                  return {
+                    name: prodObj.name.trim(),
+                    price,
+                    costPrice: Math.round(price * 0.7),
+                    stock: 35,
+                    category: prodObj.category || 'সাধারণ',
+                    description: (prodObj.description || prodObj.name).slice(0, 500),
+                    imageUrl: Array.isArray(prodObj.image) ? prodObj.image[0] : (typeof prodObj.image === 'string' ? prodObj.image : prodObj.image?.url || '')
+                  };
+                }
+              }
+            } catch (_) {}
+          }
+        }
+
+        // 2. OpenGraph + Next.js / embedded price
+        let title = pHtml.match(/property=["']og:title["']\s+content=["']([^"']*)["']/i)?.[1] ||
+                    pHtml.match(/content=["']([^"']*)["']\s+property=["']og:title["']/i)?.[1] ||
+                    pHtml.match(/<title>([^<]*)<\/title>/i)?.[1] || '';
+        title = title.replace(/\s*(?:—|-|\|)\s*(?:Camerakini|OHSOGO|BD Retailers|Official|Store).*$/i, '').trim();
+
+        const image = pHtml.match(/property=["']og:image["']\s+content=["']([^"']*)["']/i)?.[1] ||
+                      pHtml.match(/content=["']([^"']*)["']\s+property=["']og:image["']/i)?.[1] || '';
+
+        let price = 0;
+        const mPrice = pHtml.match(/\\?"price\\?"\s*:\s*(\d+(?:\.\d+)?)/i) ||
+                       pHtml.match(/(?:price|regularPrice|amount)[^0-9]{1,10}(\d{2,7})/i) ||
+                       pHtml.match(/(?:৳|Tk\.?|BDT)\s*(?:<!-- -->)?\s*([\d,]{2,8})/i);
+        if (mPrice) {
+          price = parseFloat(mPrice[1].replace(/,/g, ''));
+        }
+
+        const desc = pHtml.match(/property=["']og:description["']\s+content=["']([^"']*)["']/i)?.[1] || title;
+
+        if (title && price > 0) {
+          return {
+            name: title,
+            price,
+            costPrice: Math.round(price * 0.7),
+            stock: 35,
+            category: 'সাধারণ',
+            description: desc.slice(0, 500),
+            imageUrl: image
+          };
+        }
+        return null;
+      }));
+
+      const products = settled
+        .filter(s => s.status === 'fulfilled' && s.value !== null)
+        .map(s => s.value);
+
+      if (products.length > 0) {
+        return products;
+      }
+    }
+    return [];
+  } catch (_) {
+    return [];
+  }
+}
+
+// Strategy 4: Extract from Single Product HTML (JSON-LD, Microdata, OpenGraph)
+function extractSingleProduct(html, url, ogData) {
+  // Check JSON-LD
+  const jsonLdBlocks = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  if (jsonLdBlocks) {
+    for (const block of jsonLdBlocks) {
+      try {
+        const clean = block.replace(/<\/?script[^>]*>/gi, '');
+        const data = JSON.parse(clean);
+        const prod = data['@type'] === 'Product'
+          ? data
+          : (Array.isArray(data['@graph']) ? data['@graph'].find(g => g['@type'] === 'Product') : null);
+
+        if (prod && prod.name) {
+          const rawPrice = prod.offers?.price || prod.offers?.[0]?.price || ogData.price || 0;
+          const price = parseFloat(rawPrice) || 0;
+          if (price > 0) {
+            return [{
+              name: prod.name.trim(),
+              price,
+              costPrice: Math.round(price * 0.7),
+              stock: 40,
+              category: prod.category || 'সাধারণ',
+              description: (prod.description || prod.name).slice(0, 600),
+              imageUrl: Array.isArray(prod.image) ? prod.image[0] : (typeof prod.image === 'string' ? prod.image : prod.image?.url || ogData.image || '')
+            }];
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
+  // Check OpenGraph + Price Patterns
+  let title = ogData.title || html.match(/<title>([^<]*)<\/title>/i)?.[1] || '';
+  title = title.replace(/\s*(?:—|-|\|)\s*(?:Camerakini|OHSOGO|Daraz|Official|Store|BD Retailers).*$/i, '').trim();
+
+  let price = parseFloat(ogData.price) || 0;
+  if (!price) {
+    const mPrice = html.match(/\\?"price\\?"\s*:\s*(\d+(?:\.\d+)?)/i) ||
+                   html.match(/(?:price|regularPrice)[^0-9]{1,10}(\d{2,7})/i) ||
+                   html.match(/(?:৳|Tk\.?|BDT)\s*(?:<!-- -->)?\s*([\d,]{2,8})/i);
+    if (mPrice) price = parseFloat(mPrice[1].replace(/,/g, ''));
+  }
+
+  if (title && price > 0) {
+    return [{
+      name: title,
+      price,
+      costPrice: Math.round(price * 0.7),
+      stock: 40,
+      category: 'সাধারণ',
+      description: (ogData.description || title).slice(0, 600),
+      imageUrl: ogData.image || ''
+    }];
+  }
+
+  return [];
+}
+
+// Strategy 5: Groq LPU & Vyce AI Dual-Engine Parsing
+async function extractWithAI(textSnippet, ogData, url) {
+  const groqKeys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2].filter(Boolean);
+  const vyceKey = process.env.VYCE_AI_API_KEY;
+
+  const aiPrompt = `You are an expert e-commerce product extraction agent (REA Reverse Engineer Agent).
+Extract all products from the following webpage content and metadata.
+
+Source URL: ${url}
+OpenGraph Title: ${ogData.title || ''}
+OpenGraph Image: ${ogData.image || ''}
+OpenGraph Price: ${ogData.price || ''}
+
+Webpage Content:
+${textSnippet.slice(0, 6000)}
+
+Requirements:
+- Find product name, price (in BDT or local numbers), cost price (70% of price), stock, category, description, and imageUrl.
+- Do NOT output website headers or brand slogans as product names.
+- Output MUST be a valid JSON object strictly matching this schema:
+{
+  "products": [
+    {
+      "name": "Product Name",
+      "price": 1200,
+      "costPrice": 840,
+      "stock": 40,
+      "category": "Category",
+      "description": "Short description",
+      "imageUrl": "https://..."
+    }
+  ]
+}`;
+
+  // 1. Try Groq Keys
+  for (const key of groqKeys) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: aiPrompt }],
+          temperature: 0.2,
+          response_format: { type: 'json_object' }
+        }),
+        signal: AbortSignal.timeout(12000)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const contentStr = json.choices?.[0]?.message?.content || '{}';
+        const parsed = JSON.parse(contentStr);
+        const list = Array.isArray(parsed) ? parsed : (parsed.products || parsed.items || []);
+        if (list.length > 0) return list;
+      }
+    } catch (_) {}
+  }
+
+  // 2. Try Vyce AI Fallback
+  if (vyceKey) {
+    try {
+      const res = await fetch('https://vyceai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${vyceKey}`
+        },
+        body: JSON.stringify({
+          model: 'agnes-3.0-flash',
+          messages: [{ role: 'user', content: aiPrompt }],
+          temperature: 0.2,
+          response_format: { type: 'json_object' }
+        }),
+        signal: AbortSignal.timeout(12000)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const contentStr = json.choices?.[0]?.message?.content || '{}';
+        const parsed = JSON.parse(contentStr);
+        const list = Array.isArray(parsed) ? parsed : (parsed.products || parsed.items || []);
+        if (list.length > 0) return list;
+      }
+    } catch (_) {}
+  }
+
+  return [];
+}
+
 export async function POST(request) {
   try {
     const authResult = await verifyAuth(request);
     const body = await request.json();
-    const { shopId, url, autoSave = true } = body;
+    let { shopId, url, autoSave = true } = body;
 
     if (!shopId || !url) {
       return NextResponse.json({ error: 'Shop ID এবং প্রোডাক্ট/ওয়েবসাইট URL প্রয়োজন' }, { status: 400 });
+    }
+
+    // Ensure valid URL scheme
+    url = url.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `https://${url}`;
+    }
+
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(url);
+    } catch (_) {
+      return NextResponse.json({ error: 'সঠিক ওয়েবসাইট URL দিন (যেমন: https://example.com)' }, { status: 400 });
     }
 
     // Verify ownership
@@ -60,97 +393,84 @@ export async function POST(request) {
       }
     }
 
-    // 1. Fetch competitor/supplier webpage
-    let pageHtml = '';
-    try {
-      const fetchRes = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-        signal: AbortSignal.timeout(12000),
-      });
-      pageHtml = await fetchRes.text();
-    } catch (fetchErr) {
-      return NextResponse.json({ error: `ওয়েবসাইট থেকে ডাটা আনতে ব্যর্থ: ${fetchErr.message}` }, { status: 400 });
-    }
+    const origin = parsedUrl.origin;
+    const isSingleProductUrl = /(?:\/product\/|\/products\/|\/item\/|\/p\/)/i.test(parsedUrl.pathname);
 
-    const ogData = extractOgMeta(pageHtml);
-    const textSnippet = extractPageText(pageHtml);
-
-    // 2. Extract products using Groq LPU AI parser
-    const groqKey = process.env.GROQ_API_KEY || process.env.GROQ_API_KEY_2;
     let extractedProducts = [];
+    let extractionSource = 'general';
 
-    if (groqKey) {
-      try {
-        const aiPrompt = `তুমি একজন এক্সপার্ট ই-কমার্স ডাটা এক্সট্রাক্টর (REA Reverse Engineer Agent)।
-নিচে দেওয়া ওয়েবসাইটের টেক্সট ও মেটাডাটা থেকে প্রোডাক্ট বা পণ্যসমূহের তথ্য বের করো।
+    // ── STEP 1: Multi-Product Store Crawling (Shopify, WooCommerce, Sitemap) ──
+    if (!isSingleProductUrl) {
+      // 1A. Shopify Engine
+      extractedProducts = await fetchShopifyProducts(origin);
+      if (extractedProducts.length > 0) extractionSource = 'shopify_catalog';
 
-URL: ${url}
-OG Data: ${JSON.stringify(ogData)}
-ওয়েবসাইট কন্টেন্ট:
-${textSnippet}
+      // 1B. WooCommerce Engine
+      if (extractedProducts.length === 0) {
+        extractedProducts = await fetchWooCommerceProducts(origin);
+        if (extractedProducts.length > 0) extractionSource = 'woocommerce_catalog';
+      }
 
-নির্দেশনা:
-- ওয়েবসাইটের পণ্যগুলোর নাম (বাংলা বা ইংরেজিতে), মূল্য (BDT সংখ্যায়), বিবরণ, ক্যাটাগরি এবং ছবির লিংক থাকলে বের করো।
-- যদি নির্দিষ্ট ছবি না পাওয়া যায়, তবে পণ্যের ধরণের সাথে মিলে এমন রিয়ালিস্টিক আনস্প্ল্যাশ ইমেজ URL দাও।
-- আউটপুট হতে হবে STRICT JSON ARRAY (কোনো অতিরিক্ত টেক্সট বা মার্কডাউন ছাড়া):
-[
-  {
-    "name": "পণ্যের নাম",
-    "price": 550,
-    "costPrice": 400,
-    "stock": 50,
-    "category": "ক্যাটাগরি",
-    "description": "বিস্তারিত বিবরণ",
-    "imageUrl": "https://images.unsplash.com/..."
-  }
-]`;
-
-        const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqKey}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [{ role: 'user', content: aiPrompt }],
-            temperature: 0.2,
-            response_format: { type: 'json_object' }
-          })
-        });
-
-        const aiJson = await aiRes.json();
-        const contentStr = aiJson.choices?.[0]?.message?.content || '{}';
-        const parsed = JSON.parse(contentStr);
-        extractedProducts = Array.isArray(parsed) ? parsed : (parsed.products || parsed.items || []);
-      } catch (aiErr) {
-        console.warn('[Clone API] Groq parsing fallback:', aiErr.message);
+      // 1C. Product Sitemap Crawler
+      if (extractedProducts.length === 0) {
+        extractedProducts = await fetchSitemapProducts(origin);
+        if (extractedProducts.length > 0) extractionSource = 'sitemap_crawler';
       }
     }
 
-    // Fallback if AI didn't return or failed: use OG meta
-    if (!extractedProducts || extractedProducts.length === 0) {
-      if (ogData.title) {
-        extractedProducts.push({
-          name: ogData.title,
-          price: parseFloat(ogData.price) || 450,
-          costPrice: (parseFloat(ogData.price) || 450) * 0.7,
-          stock: 40,
-          category: 'সাধারণ',
-          description: ogData.description || ogData.title,
-          imageUrl: ogData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80'
-        });
-      }
-    }
+    // ── STEP 2: HTML Fetch & Single Product / AI Extraction ──
+    let pageHtml = '';
+    let ogData = { title: null, image: null, description: null, price: null };
 
     if (extractedProducts.length === 0) {
-      return NextResponse.json({ error: 'এই লিংক থেকে কোনো প্রোডাক্ট তথ্য পাওয়া যায়নি।' }, { status: 422 });
+      try {
+        const fetchRes = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+          signal: AbortSignal.timeout(12000),
+        });
+        if (fetchRes.ok) {
+          pageHtml = await fetchRes.text();
+          ogData = extractOgMeta(pageHtml);
+        }
+      } catch (fetchErr) {
+        console.warn('[Clone API] HTML fetch error:', fetchErr.message);
+      }
+
+      if (pageHtml) {
+        // Try structured product from HTML
+        extractedProducts = extractSingleProduct(pageHtml, url, ogData);
+        if (extractedProducts.length > 0) extractionSource = 'structured_html';
+
+        // Try AI extraction
+        if (extractedProducts.length === 0) {
+          const textSnippet = extractPageText(pageHtml);
+          extractedProducts = await extractWithAI(textSnippet, ogData, url);
+          if (extractedProducts.length > 0) extractionSource = 'ai_extraction';
+        }
+      }
     }
 
-    // 3. Auto-save to shop if requested
+    // Filter out dummy/bogus products (e.g. items with no price or items that just copy site name)
+    extractedProducts = extractedProducts.filter(p => {
+      if (!p.name || typeof p.name !== 'string') return false;
+      const lower = p.name.toLowerCase();
+      // Block website slogans / headers masquerading as products
+      if (lower.includes('best price in bangladesh') || lower.includes('buy cosmetics') || lower.includes('online shopping')) {
+        return false;
+      }
+      return parseFloat(p.price) > 0;
+    });
+
+    if (extractedProducts.length === 0) {
+      return NextResponse.json({
+        error: 'এই ওয়েবসাইট থেকে কোনো বাস্তব পণ্যের তথ্য ও মূল্য পাওয়া যায়নি। অনুগ্রহ করে সরাসরি পণ্যের লিঙ্ক দিন (যেমন: https://site.com/product/xyz) অথবা পুরো স্টোরের মূল লিঙ্ক দিন।'
+      }, { status: 422 });
+    }
+
+    // ── STEP 3: Auto-save to shop in Firestore ──
     if (autoSave) {
       const batch = adminDb.batch();
       const existingCats = new Set();
@@ -158,10 +478,10 @@ ${textSnippet}
       catSnap.forEach(d => existingCats.add((d.data().name || '').trim().toLowerCase()));
 
       let savedCount = 0;
-      for (const p of extractedProducts.slice(0, 30)) {
+      for (const p of extractedProducts.slice(0, 40)) {
         if (!p.name) continue;
         const pRef = adminDb.collection('shops').doc(shopId).collection('products').doc();
-        const catName = (p.category || 'ক্যাটাগরি').trim();
+        const catName = (p.category || 'সাধারণ').trim();
 
         if (catName && !existingCats.has(catName.toLowerCase())) {
           existingCats.add(catName.toLowerCase());
@@ -173,18 +493,21 @@ ${textSnippet}
           });
         }
 
+        const price = parseFloat(p.price) || 0;
+        const costPrice = parseFloat(p.costPrice) || Math.round(price * 0.7);
         const img = p.imageUrl || ogData.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80';
 
         batch.set(pRef, {
           name: p.name.trim(),
-          price: parseFloat(p.price) || 350,
-          costPrice: parseFloat(p.costPrice) || 200,
-          stock: parseInt(p.stock, 10) || 50,
+          price,
+          costPrice,
+          stock: parseInt(p.stock, 10) || 40,
           category: catName,
-          description: p.description || '',
+          description: p.description || p.name,
           imageUrl: img,
           images: [img],
           sourceUrl: url,
+          extractionSource,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         });
@@ -193,16 +516,26 @@ ${textSnippet}
 
       await batch.commit();
 
+      const sourceLabel = {
+        shopify_catalog: 'Shopify সরাসরি ক্যাটালগ',
+        woocommerce_catalog: 'WooCommerce সরাসরি ক্যাটালগ',
+        sitemap_crawler: 'সাইটম্যাপ ক্রলার',
+        structured_html: 'স্ট্রাকচার্ড প্রোডাক্ট ডাটা',
+        ai_extraction: 'Groq LPU / Vyce AI'
+      }[extractionSource] || 'REA Engine';
+
       return NextResponse.json({
         success: true,
         savedCount,
+        extractionSource,
         products: extractedProducts,
-        message: `${savedCount} টি প্রোডাক্ট প্রতিযোগী ওয়েবসাইট থেকে সফলভাবে কপি ও যুক্ত হয়েছে! 🚀`
+        message: `${savedCount} টি আসল প্রোডাক্ট (${sourceLabel} দিয়ে) স্বয়ংক্রিয়ভাবে আমদানি ও যুক্ত হয়েছে! 🚀`
       });
     }
 
     return NextResponse.json({
       success: true,
+      extractionSource,
       products: extractedProducts
     });
   } catch (error) {

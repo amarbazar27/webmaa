@@ -161,7 +161,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **API Keys**: Store in `.env.local` and Vercel production environment (`GROQ_API_KEY`, `GROQ_API_KEY_2`, `VYCE_AI_API_KEY`).
 
 # 📱 Android 15 (SDK 35) & Google Play R8 Optimization Protocol
-- **Edge-to-Edge Compatibility**: Android 15 targets SDK 35 which renders edge-to-edge by default. Ensure `MainActivity` initializes `enableEdgeToEdge()` or handles window insets gracefully.
+- **Edge-to-Edge Compatibility**: Android 15 targets SDK 35 which renders edge-to-edge by default. Flutter handles window insets and surface rendering natively through FlutterEngine — do NOT call `ComponentActivity.enableEdgeToEdge()` inside `FlutterActivity` as it causes Kotlin receiver type mismatch errors.
 - **R8 Proguard & Resource Shrinking**:
   - In `app/build.gradle`: Set `minifyEnabled true` and `shrinkResources true` on release builds.
   - Maintain `proguard-rules.pro` with explicit keep rules for Flutter channels, Flutter InAppWebView, and Firebase Messaging to prevent runtime crashes.

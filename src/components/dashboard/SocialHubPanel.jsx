@@ -2117,9 +2117,14 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                     onChange={e => setFbToken(e.target.value)}
                     className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none"
                   />
-                  <p className="text-[10px] text-slate-500 leading-tight">
-                    💡 Graph API Explorer-এ <strong>User or Page</strong> ড্রপডাউনে আপনার <strong>Facebook Page</strong> সিলেক্ট করে <em>Generate Access Token</em> চাপুন (অথবা ইউজার টোকেন পেস্ট করলেও আমাদের সিস্টেম স্বয়ংক্রিয়ভাবে পেজ টোকেনে কনভার্ট করে নিবে)।
-                  </p>
+                  <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl space-y-1">
+                    <p className="text-[11px] text-amber-950 font-bold leading-snug">
+                      ⚠️ <span className="underline">অত্যন্ত গুরুত্বপূর্ণ:</span> Graph API Explorer-এ <strong>User or Page</strong> ড্রপডাউনে <em>&quot;User Token&quot;</em>-এর পরিবর্তে অবশ্যই আপনার <strong>Facebook Page (যেমন: Messer Bazar)</strong> সিলেক্ট করে <strong>Generate Access Token</strong> চাপবেন।
+                    </p>
+                    <p className="text-[10px] text-amber-800">
+                      (যদি ভুলবশত User Token দেন, আমাদের সিস্টেম স্বয়ংক্রিয়ভাবে পেজ টোকেনে কনভার্ট করার চেষ্টা করবে)।
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">

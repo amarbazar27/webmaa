@@ -591,16 +591,9 @@ async function build() {
   
   const mainActivityContent = `package ${packageName}
 
-import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity: FlutterActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
-    }
-}
+class MainActivity: FlutterActivity()
 `;
   fs.writeFileSync(newKotlinPath, mainActivityContent);
   
@@ -868,11 +861,25 @@ build()
           snap = await db.collection('shops').where('shopSlug', '==', shopSlug).limit(1).get();
         }
         if (!snap.empty) {
-          await snap.docs[0].ref.update({
+          await snap.docs[0].ref.set({
             appBuildStatus: 'failed',
             appBuildError: err.message || err.toString(),
             appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
+          }, { merge: true });
+        } else {
+          await db.collection('shops').doc(shopSlug).set({
+            appBuildStatus: 'failed',
+            appBuildError: err.message || err.toString(),
+            appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+
+        if (shopSlug === 'main') {
+          await db.collection('config').doc('global').set({
+            appBuildStatus: 'failed',
+            appBuildError: err.message || err.toString(),
+            appBuildUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
         }
       } catch (_) {}
     }

@@ -96,7 +96,7 @@ export async function POST(request) {
 
     try {
       // 1. Verify token validity with basic fields supported on BOTH User and Page nodes
-      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${resolvedToken}`);
+      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name,category&access_token=${resolvedToken}`);
       const meData = await meRes.json();
 
       if (meData.error) {
@@ -105,16 +105,17 @@ export async function POST(request) {
         }, { status: 400 });
       }
 
-      // 2. Check if this is a User Access Token by querying /me/accounts
-      // If it's a User Token, /me/accounts returns the list of pages owned by this user
-      const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?access_token=${resolvedToken}`);
+      // 2. Check if this is a User Access Token by querying /me/accounts with explicit fields
+      // In Graph API v21+, fields must be explicitly requested to include access_token
+      const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${resolvedToken}`);
       const accountsData = await accountsRes.json();
 
       if (accountsData.data && Array.isArray(accountsData.data) && accountsData.data.length > 0) {
         // User Token detected! Automatically extract the actual Page Access Token
-        const matchedPage = pageId
-          ? accountsData.data.find(p => p.id === pageId) || accountsData.data[0]
-          : accountsData.data[0];
+        const matchedPage = (pageId ? accountsData.data.find(p => p.id === pageId) : null) ||
+          (pageName ? accountsData.data.find(p => p.name?.toLowerCase().includes(pageName.toLowerCase())) : null) ||
+          (shopData.shopName ? accountsData.data.find(p => p.name?.toLowerCase().includes(shopData.shopName.toLowerCase())) : null) ||
+          accountsData.data[0];
 
         if (matchedPage) {
           pageId = matchedPage.id;
@@ -125,9 +126,9 @@ export async function POST(request) {
           }
         }
       } else {
-        // Not a User Token with accounts, so it's already a direct Page Access Token!
+        // Direct Page Access Token or Page Node
         pageId = pageId || meData.id;
-        pageName = pageName || meData.name || 'Facebook Page';
+        pageName = pageName || meData.name || shopData.shopName || 'Facebook Page';
       }
     } catch (graphErr) {
       console.warn('[Social Connect] Meta lookup warning:', graphErr.message);
@@ -142,6 +143,7 @@ export async function POST(request) {
 
     // Subscribe the Facebook Page to Webhooks via Graph API
     let webhookSubscribed = false;
+    let webhookWarning = null;
     try {
       const subscribeRes = await fetch(
         `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,feed&access_token=${resolvedToken}`,
@@ -152,25 +154,28 @@ export async function POST(request) {
 
       if (subscribeData.error) {
         console.warn('[Social Connect] Page subscribed_apps failed:', subscribeData.error);
-        return NextResponse.json({
-          error: `মেটা ওয়েববুকে পেজ সাবস্ক্রাইব করতে ব্যর্থ (${subscribeData.error.message})। নিশ্চিত করুন টোকেনে 'pages_manage_metadata' ও 'pages_messaging' পারমিশন দেওয়া আছে।`
-        }, { status: 400 });
+        const errMsg = subscribeData.error.message || '';
+        if (errMsg.includes('Object with ID') && errMsg.includes('does not exist')) {
+          return NextResponse.json({
+            error: `মেটা এক্সেস টোকেনটি একটি User Token হিসেবে শনাক্ত হয়েছে (পেজের জন্য নয়)। অনুগ্রহ করে Graph API Explorer-এ 'User or Page' ড্রপডাউন থেকে 'User Token' পরিবর্তন করে আপনার পেজ (${pageName || 'Messer Bazar'}) সিলেক্ট করুন এবং 'Generate Access Token' চেপে পেজ টোকেনটি কপি করে পেস্ট করুন।`
+          }, { status: 400 });
+        }
+        webhookWarning = errMsg;
       }
     } catch (subErr) {
       console.warn('[Social Connect] Webhook subscription warning:', subErr.message);
-      return NextResponse.json({
-        error: `মেটা সাবস্ক্রিপশন সংযোগ ত্রুটি: ${subErr.message}`
-      }, { status: 500 });
+      webhookWarning = subErr.message;
     }
 
-    // Save connection to Firestore only if validation and subscription succeeded
+    // Save connection to Firestore
     const connectionPayload = {
       shopId,
       pageId,
       pageAccessToken: resolvedToken,
       pageName,
       platform: 'facebook',
-      webhookSubscribed: true,
+      webhookSubscribed: Boolean(webhookSubscribed),
+      webhookWarning: webhookWarning || null,
       connectedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -182,8 +187,10 @@ export async function POST(request) {
       success: true,
       pageId,
       pageName,
-      webhookSubscribed: true,
-      message: 'Facebook পেজ সফলভাবে যুক্ত এবং ওয়েববুকে সাবস্ক্রাইব হয়েছে! 🎉',
+      webhookSubscribed: Boolean(webhookSubscribed),
+      message: webhookSubscribed
+        ? 'Facebook পেজ সফলভাবে যুক্ত এবং ওয়েববুকে সাবস্ক্রাইব হয়েছে! 🎉'
+        : `Facebook পেজ (${pageName}) যুক্ত হয়েছে! (মেটা নোটিশ: ${webhookWarning || 'ম্যানুয়াল কনফিগারেশন'})`,
     });
   } catch (error) {
     if (error instanceof AuthError) {

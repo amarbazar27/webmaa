@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Smartphone, Download, Cpu, RefreshCw, CheckCircle2, AlertCircle, Clock,
@@ -101,10 +101,16 @@ export default function SuperadminAppBuilder() {
   const handleResetBuild = async (shopId, shopName) => {
     if (!confirm(`"${shopName}"-এর আটকে যাওয়া বিল্ড স্ট্যাটাস রিসেট করবেন?`)) return;
     try {
-      await updateDoc(doc(db, 'shops', shopId), {
+      if (shopId === 'main') {
+        await setDoc(doc(db, 'config', 'global'), {
+          appBuildStatus: 'not_generated',
+          appBuildError: null,
+        }, { merge: true });
+      }
+      await setDoc(doc(db, 'shops', shopId), {
         appBuildStatus: 'not_generated',
         appBuildError: null,
-      });
+      }, { merge: true });
       toast.success(`"${shopName}"-এর বিল্ড স্ট্যাটাস রিসেট হয়েছে! এখন নতুন করে Generate App দিন।`);
     } catch (err) {
       toast.error('রিসেট করতে সমস্যা: ' + err.message);
