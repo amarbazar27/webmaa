@@ -166,3 +166,38 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **R8 Proguard & Resource Shrinking**:
   - In `app/build.gradle`: Set `minifyEnabled true` and `shrinkResources true` on release builds.
   - Maintain `proguard-rules.pro` with explicit keep rules for Flutter channels, Flutter InAppWebView, and Firebase Messaging to prevent runtime crashes.
+
+# 🎨 Modern UI/UX, Design Systems & Visual Branding Protocol
+- **Uiverse (`uiverse.io`)**: Use as the primary reference for pure, zero-dependency Tailwind CSS micro-interactions (buttons, inputs, toggle switches, badge indicators, skeleton loaders, floating cards) for shop storefronts and retailer dashboard widgets. Never install heavy component libraries when pure Tailwind/CSS achieves the exact same result.
+- **React Bits (`reactbits.dev`)**: Reference for lightweight animated React components (animated text, spotlight cards, glow borders, floating glass cards) on the main landing page (`src/app/page.js`) and shop hero sections without bloated runtime overhead.
+- **Mobbin (`mobbin.com`)**: Benchmark reference for real-world mobile and web e-commerce UX patterns (1-click checkout flow, slide-out cart drawers, sticky mobile bottom navigation, order tracking timelines).
+- **Unicorn Studio & GetLayers AI (`unicorn.studio` & `getlayers.ai`)**: Modern visual branding, gradient shaders, and AI-native design tokens. **STRICT GUARDRAIL**: Never load heavy WebGL shaders inside Flutter Android WebViews to guarantee 60fps performance and avoid memory crashes on budget smartphones. Reserve WebGL effects strictly for desktop marketing landing pages.
+
+# 🛡️ Gravitas Verification-First Reliability Protocol (`udaysharmadev/Gravitas`)
+- **"Make Gemini code like Claude" Mandate**:
+  - **Mandatory Pre-Inspection**: Inspect full surrounding functions, state management lifecycles, and imported utilities before changing a single line of code.
+  - **Root-Cause Resolution**: Always fix issues at their shared origin; never patch symptoms across multiple callers.
+  - **Multi-Perspective Self-Check**: Adversarially evaluate code against Database Protection (0 data loss), React 19 / Next.js 16 breaking changes, Flutter WebView bridge compatibility, and Alibaba OCR standards before finalizing.
+  - **Concrete Evidence Verification**: Never declare a task "done" without running a clean production build (`npm run build`), verifying zero lint/syntax regressions, and auditing git diff.
+
+# 🎯 Agentation Visual Context Protocol (`benjitaylor/agentation`)
+- Map visual UI elements directly to exact React component source files, Tailwind utility classes, and DOM hierarchy.
+- When inspecting or reporting UI bugs, provide clickable file references (`[Component](file:///...)`) and line numbers to eliminate guesswork.
+
+# 🔬 Replica Clean-Room Engineering & Feature Inversion (`Jakeschincariol/replica-skill`)
+- Apply the 9-phase modular replication pipeline (`replica-recon`, `replica-architect`, `replica-design`, `replica-build`, `replica-backend`, `replica-test`, `replica-entrepreneur`, `replica-brand`, `replica-launch`).
+- When deconstructing competitor features (e.g. AiPraktor, Shopify, Chaldal, Daraz):
+  1. Map user journeys, network contracts, and state machines down to exact schemas.
+  2. Identify competitor pain points (high subscription costs, complicated menus, slow checkout, lack of Bengali support).
+  3. Rebuild clean-room versions in BD Retailers with Ponytail simplicity, native branding, and zero code bloat.
+
+# 🌐 API-Anything Network Operation Protocol (`goodnight000/api-anything`)
+- Intercept frontend HTTP/JSON network operations directly instead of spinning up heavy headless browser instances (Puppeteer/Playwright/Chrome).
+- Drastically reduces serverless Vercel memory consumption, prevents timeout crashes, and speeds up external catalog syncing or price checks.
+
+# 🚀 Harvey Autonomous Retailer Acquisition Protocol (`ethanplusai/harvey`)
+- Playbook for identifying prospective Bangladeshi F-commerce merchants and physical shop owners.
+- Formulate benefit-first Bengali messaging ("১ মিনিটে নিজস্ব অনলাইন শপ ও মোবাইল অ্যাপ", "০% প্ল্যাটফর্ম fee", "অটোমেটিক ইনভয়েস ও কুরিয়ার ট্র্যাকিং") and frictionless 3-step merchant onboarding.
+
+# 🚫 YAGNI Elimination & Bloat Rejection Register
+- **`666ghj/MiroFish` — REJECTED (YAGNI & Bloat)**: Swarm simulation of thousands of financial/news prediction agents in Python has zero practical value for an e-commerce platform. Excluded to protect the codebase from unnecessary complexity and maintain clean architecture.
