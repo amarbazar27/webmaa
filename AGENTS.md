@@ -201,3 +201,25 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # 🚫 YAGNI Elimination & Bloat Rejection Register
 - **`666ghj/MiroFish` — REJECTED (YAGNI & Bloat)**: Swarm simulation of thousands of financial/news prediction agents in Python has zero practical value for an e-commerce platform. Excluded to protect the codebase from unnecessary complexity and maintain clean architecture.
+
+# 🏷️ Brand & Header Zero-Truncation Mandate
+- NEVER use artificial width restrictions (e.g. `max-w-[95px]`, `truncate`, or `overflow-hidden`) on the primary brand name or store title in the navbar/header.
+- The platform brand title ("BD Retailers") and shop names MUST ALWAYS render with `whitespace-nowrap`, flexible container growth, and adaptive font sizing so the store name is never truncated (e.g. `BD RETAI...` is strictly forbidden).
+
+# 📋 Retailer Onboarding Wizard & Information Architecture Standard
+- The Retailer Admin Panel (`/dashboard`) must ALWAYS feature an intuitive, step-by-step setup wizard for new merchants:
+  1. Store Branding & Identity (Logo, contact phone, subdomain)
+  2. Category Creation
+  3. Product & Inventory Upload
+  4. Payment & Delivery Courier Setup (COD, bKash, Steadfast)
+  5. Social Media & AI Auto-Reply Connection
+  6. Live Storefront Launch & Verification
+- Organize all dashboard navigation into clear, categorized functional hubs (পণ্য ও স্টক, অর্ডার ও কাস্টমার, ডিজাইন ও সেটিংস, বিলিং ও সাপোর্ট) with progress trackers to eliminate merchant confusion.
+
+# 🌐 Universal Multi-Language Engine Protocol
+- In addition to native Bengali/English, the platform supports universal multi-language translation (Arabic, Hindi, Spanish, French, German, Urdu, Chinese, etc.) across the entire site, including storefronts, dashboard, privacy policy, terms of service, and account deletion pages.
+- Integrate Google Website Translator dynamic client script seamlessly with custom Tailwind styling, hiding default translation banners while keeping cookie persistence across routes.
+
+# 🎯 Agentation Click-to-Component Visual Inspector Protocol
+- The application provides an interactive on-screen UI Inspector (`AgentationInspector`) in development and admin preview modes.
+- Clicking any UI element extracts its DOM tag, Tailwind classes, React component hierarchy, and file path with a 1-click "Copy for AI" button so the user can easily pass exact context to the AI assistant.

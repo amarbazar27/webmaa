@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 import AiInsightsPanel from '@/components/dashboard/AiInsightsPanel';
 import NotificationBox from '@/components/dashboard/NotificationBox';
+import RetailerOnboardingWizard from '@/components/dashboard/RetailerOnboardingWizard';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function DashboardPage() {
@@ -195,6 +196,9 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* 🚀 New Retailer Step-by-Step Onboarding Wizard */}
+      <RetailerOnboardingWizard shop={shop} products={products} orders={orders} shopUrl={shopUrl} />
 
       {/* 🎁 1-Month Free Claim Offer Banner for New Retailers / Expired Accounts */}
       {showTrialOfferBanner && (

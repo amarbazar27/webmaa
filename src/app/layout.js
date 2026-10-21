@@ -7,6 +7,7 @@ import { LanguageProvider } from '@/context/LanguageContext';
 import PlatformAnalytics from '@/components/shared/PlatformAnalytics';
 import { Toaster } from 'react-hot-toast';
 import ScrollProgress from '@/components/ui/ScrollProgress';
+import AgentationInspector from '@/components/dev/AgentationInspector';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -238,11 +239,11 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="bn" translate="no" suppressHydrationWarning className={outfit.variable}>
+    <html lang="bn" suppressHydrationWarning className={outfit.variable}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="google" content="notranslate" />
+
         <link rel="alternate" type="text/markdown" href={`${BASE_URL}/index.md`} title="Agent-readable markdown twin" />
         <link rel="design-system" type="text/markdown" href={`${BASE_URL}/DESIGN.md`} title="Design System Tokens" />
         <JsonLd />
@@ -256,6 +257,7 @@ export default function RootLayout({ children }) {
           মূল কনটেন্টে যান (Skip to content)
         </a>
         <ScrollProgress />
+        <AgentationInspector />
         <ThemeProvider>
           <AuthProvider>
             <LanguageProvider>

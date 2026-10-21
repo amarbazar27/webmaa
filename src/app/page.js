@@ -1504,7 +1504,7 @@ export default function Home() {
                 </div>
               )}
               <div className="flex flex-col min-w-0">
-                <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none truncate max-w-[95px] xs:max-w-none">
+                <span className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none whitespace-nowrap">
                   {globalConfig?.brandName || 'BD Retailers'}
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-medium text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight mt-0.5 hidden sm:block whitespace-nowrap">
