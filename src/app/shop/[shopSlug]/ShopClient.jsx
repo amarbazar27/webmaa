@@ -5145,7 +5145,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       {/* Product details */}
                       <div className="col-span-1 md:col-span-4 flex items-center gap-3 w-full">
                         {product.imageUrl ? (
-                          <img src={product.imageUrl} className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" alt="" />
+                          <img src={product.imageUrl} referrerPolicy="no-referrer" className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" alt="" />
                         ) : (
                           <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-lg shrink-0">📦</div>
                         )}

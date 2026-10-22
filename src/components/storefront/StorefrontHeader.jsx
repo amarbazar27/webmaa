@@ -107,7 +107,21 @@ export default function StorefrontHeader({
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const safeCategories = Array.isArray(categories) ? categories : [];
+  const safeCategories = (() => {
+    const raw = Array.isArray(categories) ? categories : [];
+    const seen = new Set();
+    const result = [];
+    raw.forEach(cat => {
+      const name = (typeof cat === 'object' ? (cat?.name || cat?.label) : String(cat || '')).trim();
+      if (!name) return;
+      const lower = name.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        result.push(typeof cat === 'object' ? { ...cat, name } : { name });
+      }
+    });
+    return result;
+  })();
   const hStyle = headerConfig?.style || 'classic';
   const isWhitePill = headerConfig?.buttonStyle === 'white_pill';
   const primary = themeVars?.primaryColor || themeVars?.['--sp-primary'] || shop?.primaryColor || '#6D28D9';

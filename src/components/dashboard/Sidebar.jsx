@@ -36,15 +36,7 @@ const navGroups = [
       { href: '/dashboard/smart-inventory', label: 'Smart Inventory', condition: 'messerbazar' }
     ]
   },
-  { 
-    id: 'category', 
-    label: 'Category', 
-    icon: Tag, 
-    staffAllowed: true,
-    subItems: [
-      { href: '/dashboard/categories', label: 'Category List' }
-    ]
-  },
+  
   { 
     id: 'order', 
     label: 'Order', 

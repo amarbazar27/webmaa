@@ -522,22 +522,52 @@
   transform: scale(0.96);
 }
 
-/* 📱 Flat High-Visibility Custom Scrollbar */
+/* 📱 Flat High-Visibility Custom Scrollbar (3x Prominent & High Contrast) */
+.flat-scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: #9333EA #E2E8F0;
+}
 .flat-scrollbar::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 14px;
+  width: 14px;
 }
 .flat-scrollbar::-webkit-scrollbar-track {
-  background: rgba(241, 245, 249, 0.8);
-  border-radius: 8px;
+  background: #E2E8F0;
+  border-radius: 9999px;
+  margin: 2px;
 }
 .flat-scrollbar::-webkit-scrollbar-thumb {
-  background: #8B5CF6;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: linear-gradient(135deg, #7C3AED 0%, #9333EA 50%, #4F46E5 100%);
+  border-radius: 9999px;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35);
+  cursor: grab;
 }
 .flat-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #7C3AED;
+  background: linear-gradient(135deg, #6D28D9 0%, #7E22CE 50%, #4338CA 100%);
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.55);
+}
+.flat-scrollbar::-webkit-scrollbar-thumb:active {
+  cursor: grabbing;
+  background: #5B21B6;
+}
+
+/* 🌊 Liquid Micro-Interactions & iOS Tactile Press Classes */
+.liquid-pill {
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.liquid-press {
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.15s ease;
+}
+.liquid-press:active {
+  transform: scale(0.95);
+}
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
 @keyframes fadeIn {

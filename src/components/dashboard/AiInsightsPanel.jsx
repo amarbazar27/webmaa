@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { TrendingUp, AlertTriangle, DollarSign, Package, Brain, Sparkles, Loader2, ChevronDown, ChevronUp, ExternalLink, Plus, Minus } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { playSuccessSound } from '@/lib/sound';
+import toast from 'react-hot-toast';
 
 export default function AiInsightsPanel({ orders = [], products = [], shopName = '', activeShopId }) {
   const [insights, setInsights] = useState([]);
@@ -19,6 +21,8 @@ export default function AiInsightsPanel({ orders = [], products = [], shopName =
     try {
       await updateDoc(doc(db, 'shops', activeShopId, 'products', productId), { stock: newStock });
       setStockValues(prev => ({ ...prev, [productId]: newStock }));
+      playSuccessSound();
+      toast.success(`স্টক আপডেট সম্পন্ন: ${newStock}টি`);
     } catch (e) {
       console.error('Stock update failed', e);
     } finally {
@@ -213,27 +217,51 @@ export default function AiInsightsPanel({ orders = [], products = [], shopName =
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button
-                              disabled={currentStock <= 0 || isSaving}
-                              onClick={() => handleStockUpdate(product.id, currentStock - 1)}
-                              className="w-6 h-6 rounded-lg bg-slate-200 flex items-center justify-center hover:bg-slate-300 disabled:opacity-40 transition-colors"
+                              type="button"
+                              disabled={Number(currentStock) <= 0 || isSaving}
+                              onClick={() => handleStockUpdate(product.id, Math.max(0, Number(currentStock) - 1))}
+                              className="w-7 h-7 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-100 flex items-center justify-center hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-40 transition-all cursor-pointer active:scale-95 shadow-2xs"
+                              title="১ কমান"
                             >
-                              <Minus size={10} />
+                              <Minus size={11} />
                             </button>
-                            <span className="text-sm font-black w-7 text-center tabular-nums">
-                              {isSaving ? '...' : currentStock}
-                            </span>
-                            <button
+                            <input
+                              type="number"
+                              min="0"
+                              value={currentStock}
                               disabled={isSaving}
-                              onClick={() => handleStockUpdate(product.id, currentStock + 1)}
-                              className="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 disabled:opacity-40 transition-colors"
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10) || 0);
+                                setStockValues(prev => ({ ...prev, [product.id]: val }));
+                              }}
+                              onBlur={(e) => {
+                                const finalVal = Math.max(0, parseInt(e.target.value, 10) || 0);
+                                handleStockUpdate(product.id, finalVal);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const finalVal = Math.max(0, parseInt(e.currentTarget.value, 10) || 0);
+                                  handleStockUpdate(product.id, finalVal);
+                                }
+                              }}
+                              className="w-14 sm:w-16 h-7 text-xs font-black text-center tabular-nums bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 focus:border-purple-600 focus:ring-2 focus:ring-purple-200 rounded-xl outline-none transition-all shadow-inner text-slate-900 dark:text-white"
+                              title="যে কোনো সংখ্যা লিখে Enter চাপুন বা বাইরে ক্লিক করুন"
+                            />
+                            <button
+                              type="button"
+                              disabled={isSaving}
+                              onClick={() => handleStockUpdate(product.id, Number(currentStock) + 1)}
+                              className="w-7 h-7 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center disabled:opacity-40 transition-all cursor-pointer active:scale-95 shadow-2xs"
+                              title="১ বাড়ান"
                             >
-                              <Plus size={10} />
+                              <Plus size={11} />
                             </button>
                           </div>
                         </div>
                       );
                     })}
-                    <p className="text-[9px] opacity-60 font-medium text-center">+/− বাটনে ক্লিক করে সরাসরি স্টক আপডেট করুন</p>
+                    <p className="text-[10px] opacity-75 font-bold text-center text-slate-600 dark:text-slate-400">💡 বক্সে যে কোনো সংখ্যা (যেমন: ২০, ৫০, ১০০) লিখে Enter চাপুন বা বাইরে ক্লিক করুন</p>
                   </div>
                 )}
 

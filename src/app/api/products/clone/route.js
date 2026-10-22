@@ -87,7 +87,19 @@ async function fetchSuglowProducts(origin) {
       if (lower.includes('shampoo') || lower.includes('hair') || lower.includes('conditioner')) cat = 'Hair Care';
       else if (lower.includes('lotion') || lower.includes('body milk') || lower.includes('body wash')) cat = 'Body Care';
       else if (lower.includes('baby') || lower.includes('diaper')) cat = 'Baby Care';
-      else if (lower.includes('lipstick') || lower.includes('powder') || lower.includes('makeup')) cat = 'Cosmetics';
+      else if (lower.includes('lipstick') || lower.includes('powder') || lower.includes('makeup') || lower.includes('primer')) cat = 'Cosmetics';
+
+      const BEAUTY_FALLBACKS = {
+        'Skin Care': 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&q=80',
+        'Hair Care': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=80',
+        'Body Care': 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80',
+        'Baby Care': 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80',
+        'Cosmetics': 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80',
+      };
+
+      if (!img || img.includes('default/product/cover') || img.includes('og-suglow')) {
+        img = sitemapImageMap.get(p.slug) || BEAUTY_FALLBACKS[cat] || BEAUTY_FALLBACKS['Skin Care'];
+      }
 
       return {
         name: (p.name || '').trim(),
@@ -536,24 +548,33 @@ export async function POST(request) {
     }
 
     const origin = parsedUrl.origin;
-    const isSingleProductUrl = /(?:\/product\/|\/products\/|\/item\/|\/p\/)/i.test(parsedUrl.pathname);
+    const isCategoryUrl = /(?:\/product-category\/|\/category\/|\/collections\/|\/shop\/?$)/i.test(parsedUrl.pathname) || parsedUrl.pathname.includes('/all-product');
+    const isStrictSingleProduct = !isCategoryUrl && /(?:\/product\/[^\/]+|\/item\/[^\/]+|\/p\/[^\/]+)/i.test(parsedUrl.pathname);
 
     let extractedProducts = [];
     let extractionSource = 'general';
 
-    // ── STEP 1: Multi-Product Store Crawling (Shopify, WooCommerce, Sitemap) ──
-    if (!isSingleProductUrl) {
-      // 1A. Shopify Engine
-      extractedProducts = await fetchShopifyProducts(origin);
-      if (extractedProducts.length > 0) extractionSource = 'shopify_catalog';
+    // ── STEP 1: Multi-Product Store Crawling (Suglow REA, Shopify, WooCommerce, Sitemap) ──
+    if (!isStrictSingleProduct || isCategoryUrl) {
+      // 1A. Suglow REA Engine
+      if (origin.includes('suglow.com') || url.includes('suglow.com')) {
+        extractedProducts = await fetchSuglowProducts(origin);
+        if (extractedProducts.length > 0) extractionSource = 'suglow_rea_engine';
+      }
 
-      // 1B. WooCommerce Engine
+      // 1B. Shopify Engine
+      if (extractedProducts.length === 0) {
+        extractedProducts = await fetchShopifyProducts(origin);
+        if (extractedProducts.length > 0) extractionSource = 'shopify_catalog';
+      }
+
+      // 1C. WooCommerce Engine
       if (extractedProducts.length === 0) {
         extractedProducts = await fetchWooCommerceProducts(origin);
         if (extractedProducts.length > 0) extractionSource = 'woocommerce_catalog';
       }
 
-      // 1C. Product Sitemap Crawler
+      // 1D. Product Sitemap Crawler
       if (extractedProducts.length === 0) {
         extractedProducts = await fetchSitemapProducts(origin);
         if (extractedProducts.length > 0) extractionSource = 'sitemap_crawler';

@@ -1,6 +1,6 @@
 import { 
   collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc,
-  query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction, arrayUnion, writeBatch
+  query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction, arrayUnion, writeBatch, getCountFromServer
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -151,6 +151,30 @@ export const getProducts = async (shopId) => {
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (err) { return []; } 
+};
+
+export const getProductCount = async (shopId) => {
+  try {
+    const coll = collection(db, 'shops', shopId, 'products');
+    const snap = await getCountFromServer(coll);
+    return snap.data().count || 0;
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const getRecentProducts = async (shopId, limitCount = 50) => {
+  try {
+    const q = query(
+      collection(db, 'shops', shopId, 'products'),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    return [];
+  }
 };
 
 export const getProduct = async (shopId, productId) => {

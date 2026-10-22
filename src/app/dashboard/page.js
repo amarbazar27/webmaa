@@ -18,23 +18,39 @@ export default function DashboardPage() {
   const [shop, setShop] = useState(null);
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [productCount, setProductCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [globalConfig, setGlobalConfig] = useState(null);
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   useEffect(() => {
     if (!activeShopId) {
-      const timer = setTimeout(() => setLoading(false), 800);
-      return () => clearTimeout(timer);
+      setLoading(false);
+      return;
     }
+
+    // ⚡ Instant Cache Hydration: Render immediately from session cache (0ms)
+    try {
+      const cached = sessionStorage.getItem(`bd_dash_cache_${activeShopId}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.shop) setShop(parsed.shop);
+        if (parsed.orders) setOrders(parsed.orders || []);
+        if (parsed.products) setProducts(parsed.products || []);
+        if (parsed.productCount !== undefined) setProductCount(parsed.productCount);
+        if (parsed.globalConfig) setGlobalConfig(parsed.globalConfig);
+        setLoading(false);
+      }
+    } catch (_) {}
+
     let isMounted = true;
     const fetchData = async () => {
-      setLoading(true);
       try {
-        const [{ getRecentOrders }, shopData, productsData, configData] = await Promise.all([
+        const [{ getRecentOrders, getProductCount, getRecentProducts }, shopData, count, recentProds, configData] = await Promise.all([
           import('@/lib/firestore'),
           getShop(activeShopId),
-          getProducts(activeShopId),
+          import('@/lib/firestore').then(m => m.getProductCount(activeShopId)),
+          import('@/lib/firestore').then(m => m.getRecentProducts(activeShopId, 40)),
           getGlobalConfig()
         ]);
 
@@ -42,7 +58,7 @@ export default function DashboardPage() {
 
         let finalOrders = [];
         try {
-          finalOrders = await getRecentOrders(activeShopId, 100);
+          finalOrders = await getRecentOrders(activeShopId, 50);
         } catch (_) {
           finalOrders = [];
         }
@@ -50,8 +66,21 @@ export default function DashboardPage() {
         if (isMounted) {
           setShop(shopData);
           setOrders(finalOrders || []);
-          setProducts(productsData || []);
+          setProducts(recentProds || []);
+          setProductCount(count || 0);
           setGlobalConfig(configData);
+          setLoading(false);
+
+          try {
+            sessionStorage.setItem(`bd_dash_cache_${activeShopId}`, JSON.stringify({
+              shop: shopData,
+              orders: finalOrders || [],
+              products: recentProds || [],
+              productCount: count || 0,
+              globalConfig: configData,
+              cachedAt: Date.now()
+            }));
+          } catch (_) {}
         }
       } catch (err) {
         console.error('Dashboard fast-load error:', err);
@@ -102,11 +131,28 @@ export default function DashboardPage() {
     setTimeout(() => setCopiedLink(false), 2500);
   };
 
-  if (loading) {
+  if (loading && !shop) {
     return (
-      <div className="py-20 text-center">
-        <div className="w-10 h-10 border-4 border-slate-100 border-t-purple-600 rounded-full animate-spin mx-auto mb-4 shadowed-loader"></div>
-        <p className="text-slate-400 font-bold text-xs">Assembling Console...</p>
+      <div className="space-y-6 animate-pulse pb-12 w-full min-w-0">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row justify-between gap-4">
+          <div className="space-y-3 flex-1">
+            <div className="h-5 w-32 bg-slate-200 dark:bg-slate-800 rounded-full" />
+            <div className="h-8 w-64 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
+            <div className="h-4 w-48 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+          </div>
+          <div className="h-20 w-full md:w-72 bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40 rounded-2xl" />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-28 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 space-y-3">
+              <div className="h-4 w-16 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+            </div>
+          ))}
+        </div>
+
+        <div className="h-64 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6" />
       </div>
     );
   }
@@ -268,7 +314,7 @@ export default function DashboardPage() {
             className="border-l-4 border-l-blue-500 shadow-sm" 
          />
          <Card 
-            title={products.length} 
+            title={productCount || products.length} 
             subtitle={t('সক্রিয় পণ্য', 'Active Inventory')} 
             icon={Package} 
             className="border-l-4 border-l-purple-500 shadow-sm" 
