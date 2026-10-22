@@ -834,6 +834,58 @@ export default function ProductsPage() {
             </div>
           </div>
 
+          {/* Sticky Bulk Action Toolbar */}
+          {selectedIds.size > 0 && (
+            <div className="sticky top-4 mb-4 shadow-xl ring-2 ring-purple-500/20 z-40 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 border border-slate-800">
+              <div className="flex items-center gap-3">
+                <span className="w-7 h-7 rounded-lg bg-purple-600 text-white font-black text-xs flex items-center justify-center">
+                  {selectedIds.size}
+                </span>
+                <span className="text-xs sm:text-sm font-bold text-white">
+                  {selectedIds.size}টি পণ্য নির্বাচিত
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setBulkCategoryModalOpen(true)}
+                  className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                >
+                  <Tag size={14} />
+                  <span>ক্যাটাগরি পরিবর্তন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBulkStockModalOpen(true)}
+                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                >
+                  <Package size={14} />
+                  <span>স্টক পরিবর্তন</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBulkDeleteModalOpen(true)}
+                  className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md shadow-red-600/30"
+                >
+                  <Trash2 size={14} />
+                  <span>মুছে ফেলুন ({selectedIds.size})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClearSelection}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                  title="নির্বাচন বাতিল"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Products Table */}
           {loading ? (
             <div className="py-20 text-center">
@@ -874,7 +926,7 @@ export default function ProductsPage() {
                 </div>
               )}
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto flat-scrollbar">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
                     <tr>
@@ -953,11 +1005,21 @@ export default function ProductsPage() {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Link href={`/dashboard/products/edit/${p.id}`} className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors">
-                              <Pencil size={15} />
+                            <Link 
+                              href={`/dashboard/products/edit/${p.id}`} 
+                              className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200/80 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs transition-all active:scale-95" 
+                              title="পণ্য এডিট করুন"
+                            >
+                              <Pencil size={13} />
+                              <span className="hidden sm:inline">এডিট</span>
                             </Link>
-                            <button onClick={() => handleDelete(p.id)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors">
-                              <Trash2 size={15} />
+                            <button 
+                              onClick={() => handleDelete(p.id)} 
+                              className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200/80 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs transition-all active:scale-95 cursor-pointer" 
+                              title="পণ্য মুছে ফেলুন"
+                            >
+                              <Trash2 size={13} />
+                              <span className="hidden sm:inline">মুছুন</span>
                             </button>
                           </div>
                         </td>
@@ -1019,57 +1081,7 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {/* Sticky Bulk Action Toolbar */}
-          {selectedIds.size > 0 && (
-            <div className="sticky bottom-6 z-40 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 border border-slate-800">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-lg bg-purple-600 text-white font-black text-xs flex items-center justify-center">
-                  {selectedIds.size}
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-white">
-                  {selectedIds.size}টি পণ্য নির্বাচিত
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setBulkCategoryModalOpen(true)}
-                  className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                >
-                  <Tag size={14} />
-                  <span>ক্যাটাগরি পরিবর্তন</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setBulkStockModalOpen(true)}
-                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                >
-                  <Package size={14} />
-                  <span>স্টক পরিবর্তন</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setBulkDeleteModalOpen(true)}
-                  className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md shadow-red-600/30"
-                >
-                  <Trash2 size={14} />
-                  <span>মুছে ফেলুন ({selectedIds.size})</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleClearSelection}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
-                  title="নির্বাচন বাতিল"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-          )}
+          
         </div>
       )}
 
@@ -1150,6 +1162,53 @@ export default function ProductsPage() {
                   </div>
                 )}
               </div>
+
+              {/* Sticky Bulk Category Action Toolbar */}
+              {selectedCategoryIds.size > 0 && (
+                <div className="sticky top-4 mb-4 shadow-xl ring-2 ring-purple-500/20 z-40 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-lg bg-purple-600 text-white font-black text-xs flex items-center justify-center">
+                      {selectedCategoryIds.size}
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-white">
+                      {selectedCategoryIds.size}টি ক্যাটাগরি নির্বাচিত
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const firstCat = categories.find(c => selectedCategoryIds.has(c.id));
+                        if (firstCat) setSelectedCategory(firstCat.name);
+                        setActiveTab('products');
+                      }}
+                      className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                    >
+                      <Search size={14} />
+                      <span>পণ্যসমূহ দেখুন</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setBulkCatDeleteModalOpen(true)}
+                      className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md shadow-red-600/30"
+                    >
+                      <Trash2 size={14} />
+                      <span>ক্যাটাগরি মুছুন ({selectedCategoryIds.size})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleClearCategorySelection}
+                      className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                      title="নির্বাচন বাতিল"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Category Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1252,52 +1311,7 @@ export default function ProductsPage() {
                 })}
               </div>
 
-              {/* Sticky Bulk Category Action Toolbar */}
-              {selectedCategoryIds.size > 0 && (
-                <div className="sticky bottom-6 z-40 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 border border-slate-800">
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-lg bg-purple-600 text-white font-black text-xs flex items-center justify-center">
-                      {selectedCategoryIds.size}
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-white">
-                      {selectedCategoryIds.size}টি ক্যাটাগরি নির্বাচিত
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const firstCat = categories.find(c => selectedCategoryIds.has(c.id));
-                        if (firstCat) setSelectedCategory(firstCat.name);
-                        setActiveTab('products');
-                      }}
-                      className="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                    >
-                      <Search size={14} />
-                      <span>পণ্যসমূহ দেখুন</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setBulkCatDeleteModalOpen(true)}
-                      className="px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded-xl flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 shadow-md shadow-red-600/30"
-                    >
-                      <Trash2 size={14} />
-                      <span>ক্যাটাগরি মুছুন ({selectedCategoryIds.size})</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleClearCategorySelection}
-                      className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
-                      title="নির্বাচন বাতিল"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
+              
             </div>
           )}
         </div>

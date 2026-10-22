@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getCategories, addCategory, deleteCategory } from '@/lib/firestore';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Tag, Plus, Trash2, Search, Loader2, LayoutGrid, Sparkles } from 'lucide-react';
+import { Tag, Plus, Trash2, Search, Loader2, LayoutGrid, Sparkles, Check, X } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,43 @@ export default function CategoriesPage() {
   const [newSubcat, setNewSubcat] = useState({});
 
   const [catError, setCatError] = useState('');
+  const [selectedCatIds, setSelectedCatIds] = useState(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const handleToggleCatSelect = (id) => {
+    setSelectedCatIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAllCats = () => {
+    if (selectedCatIds.size === categories.length) {
+      setSelectedCatIds(new Set());
+    } else {
+      setSelectedCatIds(new Set(categories.map(c => c.id)));
+    }
+  };
+
+  const handleBulkDeleteCats = async () => {
+    if (selectedCatIds.size === 0) return;
+    if (!confirm(`আপনি কি নিশ্চিত যে আপনি নির্বাচিত ${selectedCatIds.size}টি ক্যাটাগরি মুছে ফেলতে চান?`)) return;
+    setBulkDeleting(true);
+    try {
+      for (const id of selectedCatIds) {
+        await deleteCategory(activeShopId, id);
+      }
+      toast.success(`${selectedCatIds.size}টি ক্যাটাগরি মুছে ফেলা হয়েছে!`);
+      setSelectedCatIds(new Set());
+      fetchCategories();
+    } catch (err) {
+      toast.error('ডিলিট করতে সমস্যা হয়েছে: ' + err.message);
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   const fetchCategories = async () => {
     if (!activeShopId) return;

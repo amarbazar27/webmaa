@@ -3,13 +3,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { Target, X, Copy, Check, Code, Layers, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AgentationInspector() {
+  const { user, userData } = useAuth();
   const [isActive, setIsActive] = useState(false);
   const [hoveredEl, setHoveredEl] = useState(null);
   const [selectedInfo, setSelectedInfo] = useState(null);
   const [copied, setCopied] = useState(false);
   const overlayRef = useRef(null);
+
+  // 🔒 Security Restriction: Only Superadmin logged in with their Google/Email auth can see and use Inspector UI
+  const isSuperAdmin = Boolean(
+    userData?.role === 'superadmin' ||
+    userData?.role === 'sub_superadmin' ||
+    user?.email === 'amarbazar27@gmail.com' ||
+    user?.email === 'bdretailers26@gmail.com'
+  );
+
+  // Hide completely for regular customers, unauthenticated visitors, and non-superadmin retailers
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   // Track hover and click when inspector is active
   useEffect(() => {

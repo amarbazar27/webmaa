@@ -221,5 +221,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Integrate Google Website Translator dynamic client script seamlessly with custom Tailwind styling, hiding default translation banners while keeping cookie persistence across routes.
 
 # 🎯 Agentation Click-to-Component Visual Inspector Protocol
-- The application provides an interactive on-screen UI Inspector (`AgentationInspector`) in development and admin preview modes.
+- The application provides an interactive on-screen UI Inspector (`AgentationInspector`) restricted strictly to Superadmin users (`userData.role === 'superadmin'` or superadmin email) in development and admin preview modes.
+- Hidden completely for regular visitors, customers, and standard retailers to maintain professional aesthetics.
 - Clicking any UI element extracts its DOM tag, Tailwind classes, React component hierarchy, and file path with a 1-click "Copy for AI" button so the user can easily pass exact context to the AI assistant.
+
+# 📦 Agentic Awesome Skills Protocol (`sickn33/agentic-awesome-skills`)
+- Integrated agent instruction inventory located at `.agents/skills/agentic-awesome-skills`.
+- Provides ready-to-use playbooks for enterprise threat modeling (STRIDE, PASTA), Brotli/zlib vulnerability defense, L7 API security, and REA direct JSON ingestion.
+
+# 🔊 Liquid UI Micro-Interactions & Tactile Sound Engine
+- Zero-asset Web Audio API sound synthesis (`src/lib/sound.js`) delivering instant mechanical pops and liquid tab transitions without runtime weight.
+- Includes merchant-facing sound toggle button (`LiquidSoundProvider`) in dashboard header.
+

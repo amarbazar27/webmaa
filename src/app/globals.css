@@ -508,6 +508,37 @@
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+.custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+
+/* 🌊 Liquid Micro-Interactions & Spring Transitions */
+.liquid-transition {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-btn {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.liquid-btn:active {
+  transform: scale(0.96);
+}
+
+/* 📱 Flat High-Visibility Custom Scrollbar */
+.flat-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.flat-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 8px;
+}
+.flat-scrollbar::-webkit-scrollbar-thumb {
+  background: #8B5CF6;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+.flat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #7C3AED;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }

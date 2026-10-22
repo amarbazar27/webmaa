@@ -40,6 +40,70 @@ function extractOgMeta(html) {
   };
 }
 
+// Strategy 0: Suglow REA Direct JSON Engine
+async function fetchSuglowProducts(origin) {
+  if (!origin.includes('suglow.com')) return [];
+  try {
+    const sitemapImageMap = new Map();
+    try {
+      const smRes = await fetch('https://suglow.com/sitemap.xml', {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(6000)
+      });
+      if (smRes.ok) {
+        const smText = await smRes.text();
+        const smBlocks = smText.match(/<url>[\s\S]*?<\/url>/g) || [];
+        for (const b of smBlocks) {
+          const loc = b.match(/<loc>([^<]+)<\/loc>/)?.[1];
+          const img = b.match(/<image:loc>([^<]+)<\/image:loc>/)?.[1];
+          if (loc && img) {
+            sitemapImageMap.set(loc.replace('https://suglow.com/product/', '').trim(), img);
+          }
+        }
+      }
+    } catch (_) {}
+
+    const res = await fetch('https://suglow.com/api/frontend/product', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'x-api-key': 'i7a05ls4-r0i2-22h9-7161-f046d16528q495522',
+      },
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (!json.data || !Array.isArray(json.data)) return [];
+
+    return json.data.map(p => {
+      const price = parseFloat(p.flat_price || p.convert_price || 0);
+      let img = p.cover;
+      if (!img || img.includes('default/product/cover')) {
+        img = sitemapImageMap.get(p.slug) || 'https://suglow.com/images/required/og-suglow.jpg';
+      }
+
+      let cat = 'Skin Care';
+      const lower = (p.name || '').toLowerCase();
+      if (lower.includes('shampoo') || lower.includes('hair') || lower.includes('conditioner')) cat = 'Hair Care';
+      else if (lower.includes('lotion') || lower.includes('body milk') || lower.includes('body wash')) cat = 'Body Care';
+      else if (lower.includes('baby') || lower.includes('diaper')) cat = 'Baby Care';
+      else if (lower.includes('lipstick') || lower.includes('powder') || lower.includes('makeup')) cat = 'Cosmetics';
+
+      return {
+        name: (p.name || '').trim(),
+        price,
+        costPrice: Math.round(price * 0.7),
+        stock: parseInt(p.stock, 10) || 40,
+        category: cat,
+        description: `${p.name}. Authentic imported cosmetic item from Suglow. Original packaging with guaranteed quality.`,
+        imageUrl: img,
+      };
+    }).filter(p => p.name && p.price > 0);
+  } catch (_) {
+    return [];
+  }
+}
+
 // Strategy 1: Shopify Direct Catalog Engine
 async function fetchShopifyProducts(origin) {
   try {

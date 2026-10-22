@@ -9,7 +9,6 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts';
 import AiInsightsPanel from '@/components/dashboard/AiInsightsPanel';
-import NotificationBox from '@/components/dashboard/NotificationBox';
 import RetailerOnboardingWizard from '@/components/dashboard/RetailerOnboardingWizard';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -24,52 +23,44 @@ export default function DashboardPage() {
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   useEffect(() => {
-    if (!activeShopId) return;
+    if (!activeShopId) {
+      const timer = setTimeout(() => setLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+    let isMounted = true;
     const fetchData = async () => {
       setLoading(true);
       try {
-        const { getRecentOrders, updateShop } = await import('@/lib/firestore');
-        const shopData = await getShop(activeShopId);
-        const productsData = await getProducts(activeShopId);
-        const configData = await getGlobalConfig();
+        const [{ getRecentOrders }, shopData, productsData, configData] = await Promise.all([
+          import('@/lib/firestore'),
+          getShop(activeShopId),
+          getProducts(activeShopId),
+          getGlobalConfig()
+        ]);
+
+        if (!isMounted) return;
 
         let finalOrders = [];
-        let finalRevenue = shopData?.totalRevenue;
-        let finalCount = shopData?.orderCount;
-
-        if (finalRevenue === undefined || finalCount === undefined) {
-          // One-time self-healing migration: load all orders to compute stats and cache them
-          const allOrders = await getOrders(activeShopId);
-          finalRevenue = allOrders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
-          finalCount = allOrders.length;
-          finalOrders = allOrders.slice(0, 100); // Only keep recent 100 in state
-
-          // Cache stats in shop document
-          await updateShop(activeShopId, {
-            totalRevenue: finalRevenue,
-            orderCount: finalCount
-          });
-
-          if (shopData) {
-            shopData.totalRevenue = finalRevenue;
-            shopData.orderCount = finalCount;
-          }
-        } else {
-          // Instant load: load only the last 100 orders for charts and insights
+        try {
           finalOrders = await getRecentOrders(activeShopId, 100);
+        } catch (_) {
+          finalOrders = [];
         }
 
-        setShop(shopData);
-        setOrders(finalOrders);
-        setProducts(productsData);
-        setGlobalConfig(configData);
+        if (isMounted) {
+          setShop(shopData);
+          setOrders(finalOrders || []);
+          setProducts(productsData || []);
+          setGlobalConfig(configData);
+        }
       } catch (err) {
-        console.error(err);
+        console.error('Dashboard fast-load error:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
     fetchData();
+    return () => { isMounted = false; };
   }, [activeShopId]);
 
   const totalRevenue = shop?.totalRevenue !== undefined ? shop.totalRevenue : orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
@@ -363,9 +354,6 @@ export default function DashboardPage() {
 
         </div>
       </div>
-
-      {/* 🔔 Broadcast Notifications */}
-      <NotificationBox senderRole="retailer" shopId={activeShopId} />
       </div>
 
       {/* 💳 Donation Accounts Modal */}

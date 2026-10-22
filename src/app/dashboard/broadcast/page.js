@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import BroadcastPanel from '@/components/dashboard/BroadcastPanel';
+import NotificationBox from '@/components/dashboard/NotificationBox';
 import { Card } from '@/components/ui';
 import { Bell } from 'lucide-react';
 
@@ -31,6 +32,11 @@ export default function BroadcastPage() {
       <Card className="border-t-4 border-t-blue-600 shadow-xl bg-white">
         <BroadcastPanel shopId={activeShopId} />
       </Card>
+
+      {/* 🔔 ইন-অ্যাপ নোটিফিকেশন বক্স ও ব্রডকাস্ট হিস্টোরি */}
+      <div className="mt-8">
+        <NotificationBox senderRole="retailer" shopId={activeShopId} />
+      </div>
     </div>
   );
 }

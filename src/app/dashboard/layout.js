@@ -6,6 +6,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import { X, Info, LogOut, Menu, Globe } from 'lucide-react';
 import LoadingScreen from '@/components/ui/LoadingScreen';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
+import LiquidSoundProvider from '@/components/shared/LiquidSoundProvider';
 import NotificationInbox from '@/components/shared/NotificationInbox';
 import NotificationPermissionModal from '@/components/shared/NotificationPermissionModal';
 import ImpersonationBadge from '@/components/shared/ImpersonationBadge';
@@ -99,6 +100,7 @@ export default function DashboardLayout({ children }) {
 
            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <LanguageToggle accent="purple" />
+              <LiquidSoundProvider />
               <ThemeToggleButton size="sm" />
               <NotificationInbox shopId={userData?.activeShopId} isDashboard={true} />
               <NotificationPermissionModal shopId={userData?.activeShopId} userId={user?.uid} />
@@ -108,6 +110,14 @@ export default function DashboardLayout({ children }) {
            </div>
         </div>
 
+        
+        {/* 💻 Desktop Header Quick Bar */}
+        <div className="hidden lg:flex items-center justify-end gap-2.5 mb-6">
+          <LiquidSoundProvider />
+          <LanguageToggle accent="purple" />
+          <ThemeToggleButton size="sm" />
+          <NotificationInbox shopId={userData?.activeShopId} isDashboard={true} />
+        </div>
         <div className="max-w-7xl mx-auto w-full min-w-0">
 
           {/* Staff notice */}
