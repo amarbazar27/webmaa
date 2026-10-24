@@ -41,6 +41,7 @@ yarn-error.log*
 
 # ── Test Coverage ───────────────────────────────
 /coverage
+brag-output/
 
 # ── Patch/Fix Scripts (one-time use) ────────────
 fix_*.js
