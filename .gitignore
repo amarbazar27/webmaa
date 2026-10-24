@@ -41,7 +41,9 @@ yarn-error.log*
 
 # ── Test Coverage ───────────────────────────────
 /coverage
-brag-output/
+brag-output/*.mp4
+brag-output/*.jpg
+brag-output/composition/.hyperframes/
 
 # ── Patch/Fix Scripts (one-time use) ────────────
 fix_*.js
