@@ -871,7 +871,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
         }
       }
     }
-  }, [cart, CART_KEY, safeShopId, user]);
+  }, [cart, CART_KEY, safeShopId, user?.uid]);
 
   useEffect(() => {
     if (user && typeof sessionStorage !== 'undefined') {

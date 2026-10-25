@@ -65,21 +65,7 @@ export default function LandingPagesDashboard() {
     };
     fetchLps();
 
-    // Also listen to landing pages if client rules permit
-    const lpRef = collection(db, 'shops', activeShopId, 'landingPages');
-    const unsubscribe = onSnapshot(lpRef, (snap) => {
-      const list = [];
-      snap.forEach(docSnap => {
-        list.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      list.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setLandingPages(list);
-    }, (err) => {
-      // Quietly ignore client permission errors since API handles fetching
-      console.warn('Direct Firestore snapshot restricted, using API data');
-    });
-
-    return () => unsubscribe();
+    return () => {};
   }, [activeShopId]);
 
   const handleProductSelect = (productId) => {

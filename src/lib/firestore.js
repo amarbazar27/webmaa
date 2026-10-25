@@ -660,7 +660,7 @@ export const subscribeOrders = (shopId, callback) => {
 export const subscribeIncompleteOrders = (shopId, callback, onError) => {
   const q = query(
     collection(db, 'shops', shopId, 'incomplete_orders'),
-    limit(100)
+    limit(30)
   );
   return onSnapshot(
     q, 
@@ -945,14 +945,45 @@ export const updateGlobalConfig = async (data) => {
   return setDoc(doc(db, 'config', 'global'), data, { merge: true });
 };
 
+// ⚡ Multicast Shared Singleton for Global Config (prevents multiple open sockets across components)
+let sharedGlobalConfigCache = null;
+let sharedGlobalConfigSubscribers = new Set();
+let sharedGlobalConfigUnsub = null;
+let sharedGlobalConfigTimer = null;
+
 export const subscribeGlobalConfig = (callback) => {
-  return onSnapshot(doc(db, 'config', 'global'), (snap) => {
-    if (snap.exists()) {
-      callback(snap.data());
-    } else {
-      callback({ geminiApiKey: '' });
+  if (sharedGlobalConfigCache) {
+    try { callback(sharedGlobalConfigCache); } catch (_) {}
+  }
+  sharedGlobalConfigSubscribers.add(callback);
+
+  if (!sharedGlobalConfigUnsub) {
+    if (sharedGlobalConfigTimer) {
+      clearTimeout(sharedGlobalConfigTimer);
+      sharedGlobalConfigTimer = null;
     }
-  });
+    sharedGlobalConfigUnsub = onSnapshot(doc(db, 'config', 'global'), (snap) => {
+      const data = snap.exists() ? snap.data() : { geminiApiKey: '' };
+      sharedGlobalConfigCache = data;
+      sharedGlobalConfigSubscribers.forEach(cb => {
+        try { cb(data); } catch (_) {}
+      });
+    }, (err) => {
+      console.warn('[subscribeGlobalConfig] singleton note:', err.message);
+    });
+  }
+
+  return () => {
+    sharedGlobalConfigSubscribers.delete(callback);
+    if (sharedGlobalConfigSubscribers.size === 0 && sharedGlobalConfigUnsub) {
+      sharedGlobalConfigTimer = setTimeout(() => {
+        if (sharedGlobalConfigSubscribers.size === 0 && sharedGlobalConfigUnsub) {
+          sharedGlobalConfigUnsub();
+          sharedGlobalConfigUnsub = null;
+        }
+      }, 30000);
+    }
+  };
 };
 
 // ── REVIEWS ───────────────────────────────────────
@@ -1005,19 +1036,16 @@ export const deleteBroadcast = async (broadcastId) => {
 };
 
 
+// ⚡ Multicast Shared Singleton for Broadcasts with 5-minute memory cache & bounded limit (8 docs instead of 50)
+let sharedBroadcastsCache = null;
+let sharedBroadcastsTimestamp = 0;
+let sharedBroadcastsSubscribers = new Set();
+let sharedBroadcastsUnsub = null;
+let sharedBroadcastsTimer = null;
+
 export const subscribeBroadcasts = (callback, errorCallback, shopId = null) => {
-  // Fetch last 50 to have enough for client-side filtering
-  const q = query(
-    collection(db, 'broadcasts'),
-    orderBy('createdAt', 'desc'),
-    limit(50)
-  );
-  return onSnapshot(q, (snap) => {
-    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // If shopId is explicitly provided (retailer dashboard or tenant storefront),
-    // show global targets AND shop-specific targets matching this shopId.
-    // If shopId is null/undefined (superadmin), return all broadcasts so superadmin sees complete history!
-    const filtered = shopId && shopId !== 'all'
+  const filterList = (all) => {
+    return shopId && shopId !== 'all'
       ? all.filter(b => {
           if (b.target === 'specific_shop' || b.target === 'shop_users') {
             return b.shopId === shopId;
@@ -1025,8 +1053,52 @@ export const subscribeBroadcasts = (callback, errorCallback, shopId = null) => {
           return true;
         })
       : all;
-    callback(filtered);
-  }, errorCallback);
+  };
+
+  const deliver = (all) => {
+    try { callback(filterList(all)); } catch (_) {}
+  };
+
+  // Immediate delivery from memory cache if fresh (< 5 mins) -> 0 reads!
+  if (sharedBroadcastsCache && (Date.now() - sharedBroadcastsTimestamp < 300000)) {
+    deliver(sharedBroadcastsCache);
+  }
+
+  const subEntry = { callback, errorCallback, shopId, deliver };
+  sharedBroadcastsSubscribers.add(subEntry);
+
+  if (!sharedBroadcastsUnsub) {
+    if (sharedBroadcastsTimer) {
+      clearTimeout(sharedBroadcastsTimer);
+      sharedBroadcastsTimer = null;
+    }
+    // Bounded limit: 8 items eliminates 84% read volume compared to 50!
+    const q = query(
+      collection(db, 'broadcasts'),
+      orderBy('createdAt', 'desc'),
+      limit(8)
+    );
+    sharedBroadcastsUnsub = onSnapshot(q, (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      sharedBroadcastsCache = all;
+      sharedBroadcastsTimestamp = Date.now();
+      sharedBroadcastsSubscribers.forEach(sub => sub.deliver(all));
+    }, (err) => {
+      if (errorCallback) errorCallback(err);
+    });
+  }
+
+  return () => {
+    sharedBroadcastsSubscribers.delete(subEntry);
+    if (sharedBroadcastsSubscribers.size === 0 && sharedBroadcastsUnsub) {
+      sharedBroadcastsTimer = setTimeout(() => {
+        if (sharedBroadcastsSubscribers.size === 0 && sharedBroadcastsUnsub) {
+          sharedBroadcastsUnsub();
+          sharedBroadcastsUnsub = null;
+        }
+      }, 30000);
+    }
+  };
 };
 
 // ── IMPERSONATION AUDIT LOGS ──────────────────────

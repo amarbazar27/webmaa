@@ -87,10 +87,10 @@ export default function IncompleteOrdersPage() {
       console.warn('Real-time listener initialization warning:', e);
     }
 
-    // 3. Periodic background sync every 12 seconds
+    // 3. Periodic background sync (gentle 60-second interval)
     const interval = setInterval(() => {
       loadDrafts(true);
-    }, 12000);
+    }, 60000);
 
     return () => {
       if (unsub) unsub();

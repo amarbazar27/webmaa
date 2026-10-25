@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { getAllShops, subscribeGlobalConfig } from '@/lib/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Smartphone, Download, Cpu, RefreshCw, CheckCircle2, AlertCircle, Clock,
@@ -30,29 +31,27 @@ export default function SuperadminAppBuilder() {
   const [customVersionCodes, setCustomVersionCodes] = useState({});
   const [globalConfig, setGlobalConfig] = useState(null);
 
-  // 1. Real-time Firestore Listener for Shops & Global Config
+  // 1. Cached fetch for Shops & Multicast Global Config
   useEffect(() => {
-    const unsubscribeShops = onSnapshot(collection(db, 'shops'), (snapshot) => {
-      const shopList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setShops(shopList);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error listening to shops:", error);
-      toast.error("শপের ডাটা লাইভ আপডেট লোড করতে ব্যর্থ হয়েছে।");
-      setLoading(false);
+    let isMounted = true;
+    getAllShops().then(list => {
+      if (isMounted) {
+        setShops(list || []);
+        setLoading(false);
+      }
+    }).catch(err => {
+      console.warn("Error loading shops:", err);
+      if (isMounted) setLoading(false);
     });
 
-    const unsubscribeGlobal = onSnapshot(doc(db, 'config', 'global'), (docSnap) => {
-      if (docSnap.exists()) {
-        setGlobalConfig(docSnap.data());
+    const unsubscribeGlobal = subscribeGlobalConfig((data) => {
+      if (isMounted && data) {
+        setGlobalConfig(data);
       }
     });
 
     return () => {
-      unsubscribeShops();
+      isMounted = false;
       unsubscribeGlobal();
     };
   }, []);
