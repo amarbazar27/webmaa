@@ -4,7 +4,20 @@ import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import { getShop } from '@/lib/firestore';
 import dynamic from 'next/dynamic';
-import { LayoutTemplate, Sliders, Loader2 } from 'lucide-react';
+import { LayoutTemplate, Sliders, Loader2, Sparkles } from 'lucide-react';
+
+const CompetitorThemeCloner = dynamic(
+  () => import('@/components/dashboard/CompetitorThemeCloner'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="py-20 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-400 mb-3" />
+        <p className="text-slate-400 text-xs font-bold">ক্লোনার লোড হচ্ছে...</p>
+      </div>
+    ),
+  }
+);
 
 // Client-only dynamic imports
 const TemplateMarketplace = dynamic(
@@ -60,6 +73,7 @@ export default function TemplatePageClient() {
   const tabs = [
     { id: 'templates', label: 'টেমপ্লেট গ্যালারি', icon: LayoutTemplate },
     { id: 'customizer', label: 'কাস্টমাইজার', icon: Sliders },
+    { id: 'cloner', label: 'AI UI ক্লোনার (যেকোনো সাইট)', icon: Sparkles },
   ];
 
   return (
@@ -126,6 +140,21 @@ export default function TemplatePageClient() {
                 onSave={({ theme }) => setShop(prev => ({ ...prev, themeOverrides: theme }))}
               />
             </div>
+          )}
+
+          {/* Competitor UI Cloner */}
+          {activeTab === 'cloner' && (
+            <CompetitorThemeCloner
+              shopId={activeShopId}
+              shopSlug={shop?.subdomainSlug}
+              onCloned={(cloned) => {
+                setShop(prev => ({
+                  ...prev,
+                  designPreset: cloned.designPreset,
+                  themeOverrides: cloned.theme
+                }));
+              }}
+            />
           )}
         </>
       )}

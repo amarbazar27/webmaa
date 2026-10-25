@@ -13,6 +13,7 @@ import {
   ChevronRight, CornerDownRight, Search, Sliders, Smartphone, Lock, Eye, Edit3
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { auth } from '@/lib/auth';
 import { 
@@ -157,6 +158,22 @@ export default function SocialHubPanel({ shopId }) {
 
   useEffect(() => {
     fetchConnections();
+  }, [shopId]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('connected') === 'facebook') {
+        const pageName = params.get('pageName') || 'Facebook Page';
+        toast.success(`🎉 ${pageName} সফলভাবে যুক্ত হয়েছে!`);
+        const cleanUrl = window.location.pathname + (shopId ? `?shopId=${shopId}` : '');
+        window.history.replaceState({}, document.title, cleanUrl);
+      } else if (params.get('error')) {
+        toast.error(params.get('error'));
+        const cleanUrl = window.location.pathname + (shopId ? `?shopId=${shopId}` : '');
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
   }, [shopId]);
 
   const toggleGlobalAi = async () => {
@@ -1937,6 +1954,8 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
   const [pageId, setPageId] = useState('');
   const [pageName, setPageName] = useState('');
   const [fbToken, setFbToken] = useState('');
+  const [showManualFb, setShowManualFb] = useState(false);
+  const [oauthConnecting, setOauthConnecting] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -1992,6 +2011,23 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
       toast.error(err.message || 'হোয়াটসঅ্যাপ কানেকশনে সমস্যা');
     } finally {
       setConnectingWa(false);
+    }
+  };
+
+  const handleFacebookOAuth = async () => {
+    setOauthConnecting(true);
+    try {
+      const res = await fetch(`/api/social/facebook/oauth/init?shopId=${shopId}&mode=json`);
+      const data = await res.json();
+      if (!res.ok || !data.authUrl) {
+        throw new Error(data.error || 'ফেসবুক লগইন শুরু করা যায়নি');
+      }
+      window.location.href = data.authUrl;
+    } catch (err) {
+      toast.error(err.message || 'ফেসবুক অনুমোদন শুরু করতে সমস্যা');
+      setShowManualFb(true);
+    } finally {
+      setOauthConnecting(false);
     }
   };
 
@@ -2095,62 +2131,100 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3.5">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-black text-slate-700 block">
-                      Page Access Token *
-                    </label>
-                    <a
-                      href="https://developers.facebook.com/tools/explorer/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] text-blue-600 font-bold hover:underline flex items-center gap-1"
-                    >
-                      Graph API Explorer <ExternalLink size={11} />
-                    </a>
-                  </div>
-                  <input
-                    type="password"
-                    placeholder="EAA..."
-                    value={fbToken}
-                    onChange={e => setFbToken(e.target.value)}
-                    className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none"
-                  />
-                  <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl space-y-1">
-                    <p className="text-[11px] text-amber-950 font-bold leading-snug">
-                      ⚠️ <span className="underline">অত্যন্ত গুরুত্বপূর্ণ:</span> Graph API Explorer-এ <strong>User or Page</strong> ড্রপডাউনে <em>&quot;User Token&quot;</em>-এর পরিবর্তে অবশ্যই আপনার <strong>Facebook Page (যেমন: Messer Bazar)</strong> সিলেক্ট করে <strong>Generate Access Token</strong> চাপবেন।
-                    </p>
-                    <p className="text-[10px] text-amber-800">
-                      (যদি ভুলবশত User Token দেন, আমাদের সিস্টেম স্বয়ংক্রিয়ভাবে পেজ টোকেনে কনভার্ট করার চেষ্টা করবে)।
-                    </p>
-                  </div>
+              <div className="space-y-4">
+                <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-2xl text-xs space-y-1.5">
+                  <p className="font-black text-blue-950 flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-blue-600" />
+                    সহজতম ১-ক্লিক পেজ কানেকশন
+                  </p>
+                  <p className="text-blue-800 text-[11px] leading-relaxed">
+                    কোনো Graph API Explorer বা টোকেন কপি-পেস্টের ঝামেলা নেই। নিচের বোতামে চাপ দিয়ে সরাসরি ফেসবুক থেকে আপনার পেজটি নির্বাচন করে দিন।
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Page ID (ঐচ্ছিক)"
-                    value={pageId}
-                    onChange={e => setPageId(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Page Name (ঐচ্ছিক)"
-                    value={pageName}
-                    onChange={e => setPageName(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleConnectFacebook}
-                  loading={connecting}
-                  className="w-full !bg-blue-600 hover:!bg-blue-700 text-white font-black text-xs cursor-pointer"
+                <button
+                  type="button"
+                  onClick={handleFacebookOAuth}
+                  disabled={oauthConnecting}
+                  className="w-full py-3.5 px-4 bg-[#1877F2] hover:bg-[#166FE5] text-white font-black text-xs md:text-sm rounded-2xl flex items-center justify-center gap-2.5 shadow-md shadow-blue-500/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-75"
                 >
-                  Facebook পেজ কানেক্ট করুন
-                </Button>
+                  {oauthConnecting ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                  )}
+                  <span>{oauthConnecting ? 'মেটা পোর্টালে নিয়ে যাওয়া হচ্ছে...' : 'ফেসবুক দিয়ে ১-ক্লিকে যুক্ত করুন'}</span>
+                </button>
+
+                <div className="pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualFb(!showManualFb)}
+                    className="w-full flex items-center justify-between text-[11px] font-bold text-slate-500 hover:text-slate-800 py-1"
+                  >
+                    <span>ম্যানুয়াল টোকেন দিয়ে যুক্ত করুন (বিকল্প পদ্ধতি)</span>
+                    {showManualFb ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+
+                  {showManualFb && (
+                    <div className="space-y-3.5 mt-3 pt-3 border-t border-slate-100">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[11px] font-black text-slate-700 block">
+                            Page Access Token *
+                          </label>
+                          <a
+                            href="https://developers.facebook.com/tools/explorer/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] text-blue-600 font-bold hover:underline flex items-center gap-1"
+                          >
+                            Graph API Explorer <ExternalLink size={11} />
+                          </a>
+                        </div>
+                        <input
+                          type="password"
+                          placeholder="EAA..."
+                          value={fbToken}
+                          onChange={e => setFbToken(e.target.value)}
+                          className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none"
+                        />
+                        <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl space-y-1">
+                          <p className="text-[11px] text-amber-950 font-bold leading-snug">
+                            ⚠️ <span className="underline">পরামর্শ:</span> Graph API Explorer-এ <strong>User or Page</strong> ড্রপডাউনে আপনার <strong>Facebook Page</strong> সিলেক্ট করে টোকেন তৈরি করুন।
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          placeholder="Page ID (ঐচ্ছিক)"
+                          value={pageId}
+                          onChange={e => setPageId(e.target.value)}
+                          className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Page Name (ঐচ্ছিক)"
+                          value={pageName}
+                          onChange={e => setPageName(e.target.value)}
+                          className="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                        />
+                      </div>
+
+                      <Button
+                        onClick={handleConnectFacebook}
+                        loading={connecting}
+                        className="w-full !bg-blue-600 hover:!bg-blue-700 text-white font-black text-xs cursor-pointer"
+                      >
+                        ম্যানুয়াল টোকেন সেভ করুন
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

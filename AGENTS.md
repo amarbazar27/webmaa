@@ -1,7 +1,6 @@
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes — APIs, conventions, and file structure may differ from training data. Read relevant guides in `node_modules/next/dist/docs/` before writing code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
 # 🚨 CRITICAL DATABASE & DATA PROTECTION RULE (ABSOLUTE RESTRICTION)
@@ -14,7 +13,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # White-Label Mobile App Build & Versioning Rules
 - Maintain persistent per-shop app version codes in `scripts/app-versions.json`.
-- Every time an app is built for a shop (e.g. `messerbazar`, `camerakini`, `main`), `scripts/build-tenant-app.js` MUST automatically auto-increment the version code (e.g. 3 -> 4 -> 5).
+- Every time an app is built for a shop (`messerbazar`, `camerakini`, `main`), `scripts/build-tenant-app.js` MUST automatically auto-increment the version code (e.g. 3 -> 4 -> 5).
 - Never re-use previous version codes for Play Console uploads.
 
 # Git Deployment & Vercel Push Rules
@@ -30,206 +29,91 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Flutter App Build Rules (via GitHub Actions)
 - Flutter is NOT installed locally. NEVER try to run `flutter` commands directly.
-- To build Android apps, trigger GitHub Actions via repository_dispatch API:
+- Trigger Android builds via repository_dispatch API:
   - Endpoint: `POST https://api.github.com/repos/amarbazar27/webmaa/dispatches`
   - Auth: `token $GITHUB_PAT` (from .env.local → GITHUB_PAT)
   - Body: `{"event_type":"build-app","client_payload":{"shopSlug":"<slug>"}}`
   - Slugs: `main` = bdretailers app, `messerbazar` = Messer Bazar app
-- After triggering, tell the user to check: https://github.com/amarbazar27/webmaa/actions
+- Actions URL: https://github.com/amarbazar27/webmaa/actions
 
 # Google Sign-In Native Auth Architecture
-- The web app (auth.js) detects Flutter WebView via `window.flutter_inappwebview`
-- When in WebView: calls `NativeGoogleSignIn` JS handler → Flutter triggers native Android account picker
-- Flutter `google_sign_in` package uses serverClientId: `156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com`
-- SHA-1 registered in Firebase Console: `25:78:60:62:A1:A1:47:B8:84:46:7F:38:E0:3C:0B:36:AE:1A:A6:09`
+- The web app (`auth.js`) detects Flutter WebView via `window.flutter_inappwebview`.
+- When in WebView: calls `NativeGoogleSignIn` JS handler → Flutter triggers native Android account picker.
+- ServerClientId: `156216219253-4truhu9ta74ochdqc0bo995fgkpuqv2l.apps.googleusercontent.com`
+- SHA-1 in Firebase Console: `25:78:60:62:A1:A1:47:B8:84:46:7F:38:E0:3C:0B:36:AE:1A:A6:09`
 
 # ⚡ Ponytail Senior Developer Rules (YAGNI & Anti-Bloat)
-- The best code is the code you never wrote. Before generating code, stop at the first rung of the Decision Ladder:
-  1. **Does this need to exist?** (YAGNI) -> If speculative, skip it.
-  2. **Already in this codebase?** -> Search first. Reuse existing helpers, components, and hooks.
+- The best code is the code you never wrote. Decision Ladder:
+  1. **Does this need to exist?** (YAGNI) -> Skip it if speculative.
+  2. **Already in this codebase?** -> Search and reuse existing helpers, components, and hooks.
   3. **Stdlib does it?** -> Use standard language/runtime built-ins.
-  4. **Native platform feature?** -> Prefer native HTML5/CSS/browser APIs over heavy external packages.
+  4. **Native platform feature?** -> Prefer native HTML5/CSS/browser APIs over external packages.
   5. **Installed dependency?** -> Use existing packages in package.json.
   6. **Can it be one line?** -> Keep it one line.
   7. **Only then:** -> Write the minimum code that cleanly works.
-- **Lazy, not negligent:** Never compromise database & user data protection, input validation, authentication boundaries, security, or accessibility.
-- **Root cause over symptoms:** Fix issues at their shared origin, not by patching symptoms across multiple callers.
+- **Lazy, not negligent:** Never compromise database & data protection, input validation, authentication boundaries, security, or accessibility.
+- **Root cause over symptoms:** Fix issues at their shared origin, never patch symptoms across multiple callers.
 - **Deletion over addition:** Remove dead code, avoid speculative boilerplate.
 
 # 🌟 Frontend Polish, SEO & High-Converting Copywriting Standards
-- **Frontend Polish:** Maintain WCAG AA contrast, clean dark mode, 60fps responsiveness, hover/active states on buttons, loading skeletons, and print stylesheet.
+- **Frontend Polish:** Maintain WCAG AA contrast, dark mode, 60fps responsiveness, hover/active states on buttons, loading skeletons, and print stylesheet.
 - **Technical SEO:** Maintain comprehensive XML sitemaps, JSON-LD Schema markup, canonical tags, clean URL slugs, and exactly 1 H1 per page.
 - **High-Converting Copy:** On all CTAs, use explicit action verbs + clear outcomes (e.g. "১ মিনিটে ফ্রি স্টোর তৈরি করুন"). Keep copy scannable, honest, and benefit-driven before technical specifications.
 
 # 🛡️ Alibaba OpenCodeReview (OCR) & Security Standards
 - Registered skill located at `.agents/skills/open-code-review/SKILL.md`.
-- Always enforce Alibaba code review standards: zero `var`, strict equality `===`, defensive null checking, zero unsanitized `innerHTML` or script injection vulnerabilities, and verified error boundaries.
+- Enforce Alibaba standards: zero `var`, strict equality `===`, defensive null checking, zero unsanitized `innerHTML` or script injection vulnerabilities, and verified error boundaries.
 - Run or verify with `scripts/ocr-check.js` on code changes.
 
 # 🧠 Autonomous 280+ Agency Agents Coordination (Zero Manual Overhead)
-- The entire 280+ Agency Agents repository is permanently installed locally at `C:\Users\missi\.gemini\agency-agents` and `C:\Users\missi\.claude\agents`.
-- The user does not need to invoke agents manually. The AI autonomously detects the task domain and assumes the specialist persona (Frontend Developer, UI Designer, Backend Architect, Security Auditor, Growth Marketer, QA Engineer) while strictly adhering to Ponytail anti-bloat and Alibaba quality rules.
-
-# ⚡ ECC (Everything Claude Code) Agent Harness & Instincts Guidelines
-- **Research-First Hypothesis Testing**: Diagnose issues by reading code and runtime state before proposing edits. Check root causes over superficial caller patches.
-- **Minimal Blast Radius**: Modify only files directly related to the task. Avoid unsolicited refactoring of unaffected code or adding speculative boilerplate.
-- **Progressive Disclosure & Context Preservation**: Use sliced line reading and targeted grep instead of whole-file dumps.
-- **Rigorous Definition of Done (DoD)**:
-  1. Clean production build verification (`npm run build` or equivalent).
-  2. Zero lint/syntax regressions.
-  3. Git diff review before committing to eliminate accidental artifacts.
-  4. Automatic commit and push triggering deployment (`npm run deploy`).
+- The 280+ Agency Agents repository is permanently installed locally at `C:\Users\missi\.gemini\agency-agents` and `C:\Users\missi\.claude\agents`.
+- Dynamically assume the specialist persona (Frontend Developer, UI Designer, Backend Architect, Security Auditor, Growth Marketer, QA Engineer) while strictly adhering to Ponytail anti-bloat and Alibaba quality rules.
 
 # 🔍 Autonomous 3-Tier SEO & Generative Engine Optimization (GEO) Protocol
-- **Tier 1 — Search Telemetry (Google Search Console MCP)**:
-  - Connect via `mcp-search-console` (`AminForou/mcp-gsc`). Read real-time search queries, impressions, CTR, average rankings (positions 11–20), and indexing/sitemap issues.
-  - Prioritize optimizing pages with high impressions but low CTR (<2%) by refining Title tags, Meta descriptions, and H1 tags.
-- **Tier 2 — Semantic SEO & Intent Mapping (Claude-SEO & Agency Agents)**:
-  - Rely on built-in `.agents/skills/claude-seo` and `agency-agents` SEO Specialist for keyword intent mapping, semantic architecture, and content gap analysis.
-  - Zero paid DataForSEO dependencies required: perform all semantic audits, competitor gap analyses, and entity optimizations autonomously.
-- **Tier 3 — Generative Engine Optimization (GEO) & AI Discovery**:
-  - Run or verify audits with `geo-optimizer` skill (`uvx --from geo-optimizer-skill geo audit --url <url>`).
-  - Maintain `public/llms.txt` with concise, structured entity definitions for AI scrapers (ChatGPT, Claude, Perplexity, Gemini, Google AI Overviews).
-  - Maintain `src/app/robots.txt/route.js` allowing `GPTBot`, `ChatGPT-User`, `ClaudeBot`, `Claude-Web`, `PerplexityBot`, `Google-Extended`, and `Applebot-Extended` while blocking aggressive SEO scrapers.
-  - Ensure dynamic SSR-rendered JSON-LD schema (Product, Organization, BreadcrumbList) on all storefront and product pages.
-
-# 🏆 Autonomous Arena Tournament & Multi-Agent Competitive Protocol
-- **Local Skill Available**: `skills/arena` (`Jakeschincariol/arena-skill`) is installed and ready.
-- **Auto-Arena Principle for Prompts & Ambiguous Requests**:
-  - To prevent repetitive prompt iteration and user back-and-forth, apply the Arena tournament mindset on every non-trivial architecture or refactor task:
-    1. **Multi-Perspective Formulations**: Evaluate competing implementation strategies (e.g. Minimalist Ponytail vs Enterprise Robustness vs AppSec Hardening).
-    2. **Adversarial Critique**: Run an internal debate/review before finalizing code. Check for: data deletion risk, WebView bridge compatibility, React 19 / Next.js 16 breaking changes, and unnecessary boilerplate.
-    3. **Pick the Winner**: Implement the single most elegant, secure, and lean solution.
-  - For deep, difficult, or contested tasks where the user invokes `/arena` or asks for multi-agent competition: utilize the installed `arena` skill bracket runner.
+- **Tier 1 — Search Telemetry (Google Search Console MCP)**: Connect via `mcp-search-console` (`AminForou/mcp-gsc`). Read real-time search queries, impressions, CTR, average rankings (positions 11–20), and indexing/sitemap issues.
+- **Tier 2 — Semantic SEO & Intent Mapping**: Built-in `.agents/skills/claude-seo` and `agency-agents` SEO Specialist for keyword intent mapping, semantic architecture, and content gap analysis without paid subscriptions.
+- **Tier 3 — GEO & AI Discovery**: Maintain `public/llms.txt` with concise entity definitions for AI scrapers (ChatGPT, Claude, Perplexity, Gemini, Google AI Overviews). Maintain `src/app/robots.txt/route.js` allowing AI engines while blocking aggressive SEO scrapers. SSR-rendered JSON-LD schema on all storefront and product pages.
 
 # ☁️ Webmaa Production Cloud Stack Status & Persistent Memory
 - **Active & Configured Services (NEVER FORGET OR RE-SUGGEST SETTING UP)**:
-  - **Cloudflare DNS & CDN**: ALREADY CONFIGURED and active for `bdretailers.com` (Nameservers pointed, SSL Full/Strict, Vercel CNAME).
-  - **Resend Transactional Email**: ALREADY VERIFIED for `bdretailers.com` (Domain Verified Oct 03). Inbound MX records are NOT needed for outbound sending; existing MX records for personal inboxes must remain untouched.
-  - **Upstash Redis**: ALREADY CONFIGURED in Vercel Production environment variables. Handled via `src/lib/rate-limit.js` (`UPSTASH_REDIS_*` / `KV_REST_API_*`).
-  - **Sentry Error Tracking**: Configuration files established (`sentry.client.config.js`, `sentry.server.config.js`, `sentry.edge.config.js`).
+  - **Cloudflare DNS & CDN**: Configured and active for `bdretailers.com` (SSL Full/Strict, Vercel CNAME).
+  - **Resend Transactional Email**: Verified for `bdretailers.com`. Domain verified; personal MX records remain untouched.
+  - **Upstash Redis**: Configured in Vercel Production environment (`UPSTASH_REDIS_*` / `KV_REST_API_*`).
+  - **Sentry Error Tracking**: Configuration files established (`sentry.*.config.js`).
   - **Google Search Console MCP**: Service Account configured at `D:/search-console-ai-510515-6f3365e7d7df.json` for `gsc-reader@search-console-ai-510515.iam.gserviceaccount.com`.
-  - **Token Optimization**: Science plugins permanently deactivated to prevent context bloat.
 
 # 🔔 Push Notification Architecture (FCM)
-- **CRITICAL**: `NEXT_PUBLIC_FIREBASE_VAPID_KEY` MUST be set in `.env.local` AND Vercel env for push notifications to work.
-- Without VAPID key: FCM tokens cannot be generated → devices never register → push never reaches device.
-- Notifications only appear in-app (Firestore `broadcasts` collection) without VAPID key.
+- `NEXT_PUBLIC_FIREBASE_VAPID_KEY` MUST be set in `.env.local` AND Vercel env for push notifications to work.
 - Service Worker: `public/firebase-messaging-sw.js` handles background push + click actions.
 - Client: `src/lib/fcm.js` handles token generation, caching, foreground messages.
 - API: `/api/broadcast` sends FCM push; `/api/fcm-token` registers device tokens.
 - Tokens stored in: `global_fcm_tokens` (all devices) + `shops/{shopId}/fcmTokens` (shop-scoped).
 
-# 🤖 Vyce AI Integration Architecture
-- **API Provider**: Vyce AI (vyceai.com) — OpenAI-compatible API proxy with multiple models.
-- **Preferred Model**: Agnes 3.0 Flash (cheapest: $0.05 in / $0.15 out per 1K tokens).
-- **Credit Balance**: ~$90 available — sufficient for ~3M AI responses.
-- **No Model Training Required**: Use RAG (system prompt + product catalog context) approach.
-- **Endpoint**: `https://vyceai.com/v1` (OpenAI-compatible, drop-in replacement).
-- **API Key**: Store as `VYCE_AI_API_KEY` in `.env.local` + Vercel.
-
-# 📱 Social Media Automation Architecture (Meta Graph API)
-- **Facebook Comment Auto-Reply**: Meta Graph API Webhooks → `/api/social/facebook-webhook` → AI reply via Vyce AI → send DM.
-- **Lead Generation**: Comment/Like/Follow events → auto-capture in Firestore `leads` collection.
-- **Instagram DM**: Same Meta API, same webhook handler.
-- **WhatsApp Business**: Requires Meta Business Verification + WhatsApp Business API approval.
-- **Unified Inbox**: Dashboard component consolidating FB + IG + WhatsApp + Web Chat messages.
-- **Human-AI Handoff**: Retailer types "." to pause AI, "." again to resume — implemented via conversation state flag in Firestore.
-- **Retailer Setup**: Each retailer must connect their own Facebook Page via Meta App → Page Access Token → paste in dashboard.
-- **SuperAdmin Social Hub**: Main website's FB/IG/WhatsApp integrated in SuperAdmin panel for centralized management.
-
-# 🛡️ Autonomous Cloudflare Security Audit Protocol (`cloudflare/security-audit-skill`)
-- Enforce the 6-phase evidence-based vulnerability hunting workflow on all sensitive codebases and API endpoints:
-  1. **Reconnaissance**: Map trust boundaries, public entry points, unauthenticated routes, and inputs into an internal coverage map.
-  2. **Coverage-Led Hunting**: Systematically examine authentication barriers, role enforcement (`staffAllowed`, `superadmin`), secret exposure, and SQL/NoSQL injection risks.
-  3. **Adversarial Candidate Validation**: Never accept speculative vulnerability claims. Every finding must be tested with an adversarial counter-check trying to disprove the exploit.
-  4. **Strict Schema & Categorization**: Classify security findings into `confirmed`, `needs_validation`, and `rejected`.
-  5. **Independent Verification**: Verify code references and line numbers before reporting or making patches.
-  6. **Hardened Defense**: Apply rate limiters (`createRateLimiter`), HMAC verification (`x-hub-signature-256`), sanitized inputs, and defensive null guards across all public and webhook handlers.
-
-# 🔬 Autonomous REA (Reverse Engineer Anything) Protocol (`rea-agents` / `morluto/rea`)
-- When deconstructing competitor applications, external web platforms, or advanced feature suites (e.g. AiPraktor, Shopify, Meta Business Suite):
-  1. **Deconstruct & Inspect**: Inspect network schemas, API contracts, DOM layout structures, and state machines rather than guessing or hallucinating features.
-  2. **Extract Real Mechanics**: Map out data models, webhook event lifecycles, and user journeys down to exact fields and states.
-  3. **Recreate with Ponytail Simplicity**: Implement the verified feature cleanly within BD Retailers using native Next.js/Firestore/Tailwind stack, without introducing bloated third-party dependencies or speculative code.
+# 📱 Social Media Automation & One-Click Facebook Login Architecture
+- **1-Click Facebook OAuth**: Retailer connects via "Connect with Facebook" button (`/api/social/facebook/oauth/init` -> Meta authorization dialog -> `/api/social/facebook/oauth/callback`). Auto-exchanges for never-expiring Page Access Token and subscribes webhooks.
+- **Manual Fallback**: Advanced collapsible token input available for testing via Graph API Explorer.
+- **Facebook Comment Auto-Reply & Messenger**: Meta Webhooks -> `/api/social/facebook-webhook` -> AI reply via Groq LPU (Llama 3.3 70B) with Vyce AI fallback.
+- **Meta Data Deletion Callback**: Mandatory compliance endpoint at `/api/social/facebook/data-deletion`.
+- **Human-AI Handoff**: Retailer types "." to pause AI, "." again to resume — stored in conversation state in Firestore.
+- **WhatsApp Business**: Meta Cloud API integration in Social Hub (`/api/social/connect`).
 
 # 🤖 Groq LPU Multi-Account & Dual-Engine AI Architecture
-- **Primary Inference**: Groq LPU (`llama-3.3-70b-versatile`) at temperature 0.35 for lightning-fast (300+ tps), grammatically flawless, natural Bengali conversations.
-- **Multi-Account Failover Rotation**: Automatically rotate between `GROQ_API_KEY` (Account 1) and `GROQ_API_KEY_2` (Account 2) if rate limits (HTTP 429) or token quotas are reached.
-- **Negative Constraints**: Strictly forbid rural slang, broken colloquialisms, or over-familiar terms (e.g. "দাদু", "আউদি", "দোস্ত"). Always address users respectfully with "আপনি" or polite "ভাইয়া/আপু". Ground answers strictly in the shop product catalog.
-- **Bengali Phonetic & Synonym Normalization**: Customers use varied transliterations and colloquial spellings (e.g. পেঁয়াজ / পেয়াজ / পিয়াজ, কাঁচামরিচ / মরিচ / ঝাল, আলু / Potato, তেল / সয়াবিন). The AI must identify phonetic and semantic synonyms and NEVER claim an item is out of stock if a matching product exists in the catalog.
-- **Fallback Inference**: Vyce AI (`agnes-3.0-flash`) as seamless secondary fallback if all Groq keys are exhausted or network issues occur.
-- **API Keys**: Store in `.env.local` and Vercel production environment (`GROQ_API_KEY`, `GROQ_API_KEY_2`, `VYCE_AI_API_KEY`).
+- **Primary Inference**: Groq LPU (`llama-3.3-70b-versatile`) at temperature 0.35 for fast (300+ tps), natural Bengali conversations.
+- **Failover Rotation**: Automatic rotation between `GROQ_API_KEY` (Account 1) and `GROQ_API_KEY_2` (Account 2) if rate limits (HTTP 429) occur.
+- **Negative Constraints**: Strictly forbid rural slang or over-familiar terms. Always address users respectfully with "আপনি" or polite "ভাইয়া/আপু". Ground answers strictly in the shop product catalog.
+- **Bengali Phonetic & Synonym Normalization**: Map common Bengali colloquial spellings (পেঁয়াজ / পেয়াজ / পিয়াজ, আলু / Potato, তেল / সয়াবিন).
+- **Secondary Fallback**: Vyce AI (`agnes-3.0-flash` at `https://vyceai.com/v1`) if Groq keys are exhausted.
+
+# 🎨 Modern UI/UX, Design Systems & AI UI Cloner
+- **Instant Competitor UI Cloner**: Retailers can paste any competitor website URL in `/dashboard/templates` (`/api/design/clone-theme`). Extracts brand colors, hero banners, logo, and layout preset into native BD Retailers template without touching core React cart/checkout functions.
+- **Micro-interactions**: Use pure, zero-dependency Tailwind CSS for buttons, inputs, toggles, badges, and skeleton loaders.
+- **Brand & Header Zero-Truncation**: NEVER use artificial width restrictions (e.g. `max-w-[95px]`, `truncate`) on store titles in headers. Always render with `whitespace-nowrap` and adaptive font sizing.
+- **Liquid UI Micro-Interactions & Tactile Sound Engine**: Zero-asset Web Audio API sound synthesis (`src/lib/sound.js`) delivering instant mechanical pops and tab transitions. Includes merchant sound toggle in dashboard.
+- **Universal Multi-Language Engine**: Support English, Bengali, and global languages via dynamic Google Website Translator script with custom Tailwind styling.
 
 # 📱 Android 15 (SDK 35) & Google Play R8 Optimization Protocol
-- **Edge-to-Edge Compatibility**: Android 15 targets SDK 35 which renders edge-to-edge by default. Flutter handles window insets and surface rendering natively through FlutterEngine — do NOT call `ComponentActivity.enableEdgeToEdge()` inside `FlutterActivity` as it causes Kotlin receiver type mismatch errors.
-- **R8 Proguard & Resource Shrinking**:
-  - In `app/build.gradle`: Set `minifyEnabled true` and `shrinkResources true` on release builds.
-  - Maintain `proguard-rules.pro` with explicit keep rules for Flutter channels, Flutter InAppWebView, and Firebase Messaging to prevent runtime crashes.
+- **Edge-to-Edge Compatibility**: Android 15 targets SDK 35 rendering edge-to-edge natively. Flutter handles window insets natively — never call `ComponentActivity.enableEdgeToEdge()` inside `FlutterActivity` to prevent Kotlin receiver type mismatch errors.
+- **R8 Proguard**: Set `minifyEnabled true` and `shrinkResources true` on release builds with keep rules for Flutter channels, InAppWebView, and Firebase Messaging.
 
-# 🎨 Modern UI/UX, Design Systems & Visual Branding Protocol
-- **Uiverse (`uiverse.io`)**: Use as the primary reference for pure, zero-dependency Tailwind CSS micro-interactions (buttons, inputs, toggle switches, badge indicators, skeleton loaders, floating cards) for shop storefronts and retailer dashboard widgets. Never install heavy component libraries when pure Tailwind/CSS achieves the exact same result.
-- **React Bits (`reactbits.dev`)**: Reference for lightweight animated React components (animated text, spotlight cards, glow borders, floating glass cards) on the main landing page (`src/app/page.js`) and shop hero sections without bloated runtime overhead.
-- **Mobbin (`mobbin.com`)**: Benchmark reference for real-world mobile and web e-commerce UX patterns (1-click checkout flow, slide-out cart drawers, sticky mobile bottom navigation, order tracking timelines).
-- **Unicorn Studio & GetLayers AI (`unicorn.studio` & `getlayers.ai`)**: Modern visual branding, gradient shaders, and AI-native design tokens. **STRICT GUARDRAIL**: Never load heavy WebGL shaders inside Flutter Android WebViews to guarantee 60fps performance and avoid memory crashes on budget smartphones. Reserve WebGL effects strictly for desktop marketing landing pages.
-
-# 🛡️ Gravitas Verification-First Reliability Protocol (`udaysharmadev/Gravitas`)
-- **"Make Gemini code like Claude" Mandate**:
-  - **Mandatory Pre-Inspection**: Inspect full surrounding functions, state management lifecycles, and imported utilities before changing a single line of code.
-  - **Root-Cause Resolution**: Always fix issues at their shared origin; never patch symptoms across multiple callers.
-  - **Multi-Perspective Self-Check**: Adversarially evaluate code against Database Protection (0 data loss), React 19 / Next.js 16 breaking changes, Flutter WebView bridge compatibility, and Alibaba OCR standards before finalizing.
-  - **Concrete Evidence Verification**: Never declare a task "done" without running a clean production build (`npm run build`), verifying zero lint/syntax regressions, and auditing git diff.
-
-# 🎯 Agentation Visual Context Protocol (`benjitaylor/agentation`)
-- Map visual UI elements directly to exact React component source files, Tailwind utility classes, and DOM hierarchy.
-- When inspecting or reporting UI bugs, provide clickable file references (`[Component](file:///...)`) and line numbers to eliminate guesswork.
-
-# 🔬 Replica Clean-Room Engineering & Feature Inversion (`Jakeschincariol/replica-skill`)
-- Apply the 9-phase modular replication pipeline (`replica-recon`, `replica-architect`, `replica-design`, `replica-build`, `replica-backend`, `replica-test`, `replica-entrepreneur`, `replica-brand`, `replica-launch`).
-- When deconstructing competitor features (e.g. AiPraktor, Shopify, Chaldal, Daraz):
-  1. Map user journeys, network contracts, and state machines down to exact schemas.
-  2. Identify competitor pain points (high subscription costs, complicated menus, slow checkout, lack of Bengali support).
-  3. Rebuild clean-room versions in BD Retailers with Ponytail simplicity, native branding, and zero code bloat.
-
-# 🌐 API-Anything Network Operation Protocol (`goodnight000/api-anything`)
-- Intercept frontend HTTP/JSON network operations directly instead of spinning up heavy headless browser instances (Puppeteer/Playwright/Chrome).
-- Drastically reduces serverless Vercel memory consumption, prevents timeout crashes, and speeds up external catalog syncing or price checks.
-
-# 🚀 Harvey Autonomous Retailer Acquisition Protocol (`ethanplusai/harvey`)
-- Playbook for identifying prospective Bangladeshi F-commerce merchants and physical shop owners.
-- Formulate benefit-first Bengali messaging ("১ মিনিটে নিজস্ব অনলাইন শপ ও মোবাইল অ্যাপ", "০% প্ল্যাটফর্ম fee", "অটোমেটিক ইনভয়েস ও কুরিয়ার ট্র্যাকিং") and frictionless 3-step merchant onboarding.
-
-# 🚫 YAGNI Elimination & Bloat Rejection Register
-- **`666ghj/MiroFish` — REJECTED (YAGNI & Bloat)**: Swarm simulation of thousands of financial/news prediction agents in Python has zero practical value for an e-commerce platform. Excluded to protect the codebase from unnecessary complexity and maintain clean architecture.
-
-# 🏷️ Brand & Header Zero-Truncation Mandate
-- NEVER use artificial width restrictions (e.g. `max-w-[95px]`, `truncate`, or `overflow-hidden`) on the primary brand name or store title in the navbar/header.
-- The platform brand title ("BD Retailers") and shop names MUST ALWAYS render with `whitespace-nowrap`, flexible container growth, and adaptive font sizing so the store name is never truncated (e.g. `BD RETAI...` is strictly forbidden).
-
-# 📋 Retailer Onboarding Wizard & Information Architecture Standard
-- The Retailer Admin Panel (`/dashboard`) must ALWAYS feature an intuitive, step-by-step setup wizard for new merchants:
-  1. Store Branding & Identity (Logo, contact phone, subdomain)
-  2. Category Creation
-  3. Product & Inventory Upload
-  4. Payment & Delivery Courier Setup (COD, bKash, Steadfast)
-  5. Social Media & AI Auto-Reply Connection
-  6. Live Storefront Launch & Verification
-- Organize all dashboard navigation into clear, categorized functional hubs (পণ্য ও স্টক, অর্ডার ও কাস্টমার, ডিজাইন ও সেটিংস, বিলিং ও সাপোর্ট) with progress trackers to eliminate merchant confusion.
-
-# 🌐 Universal Multi-Language Engine Protocol
-- In addition to native Bengali/English, the platform supports universal multi-language translation (Arabic, Hindi, Spanish, French, German, Urdu, Chinese, etc.) across the entire site, including storefronts, dashboard, privacy policy, terms of service, and account deletion pages.
-- Integrate Google Website Translator dynamic client script seamlessly with custom Tailwind styling, hiding default translation banners while keeping cookie persistence across routes.
-
-# 🎯 Agentation Click-to-Component Visual Inspector Protocol
-- The application provides an interactive on-screen UI Inspector (`AgentationInspector`) restricted strictly to Superadmin users (`userData.role === 'superadmin'` or superadmin email) in development and admin preview modes.
-- Hidden completely for regular visitors, customers, and standard retailers to maintain professional aesthetics.
-- Clicking any UI element extracts its DOM tag, Tailwind classes, React component hierarchy, and file path with a 1-click "Copy for AI" button so the user can easily pass exact context to the AI assistant.
-
-# 📦 Agentic Awesome Skills Protocol (`sickn33/agentic-awesome-skills`)
-- Integrated agent instruction inventory located at `.agents/skills/agentic-awesome-skills`.
-- Provides ready-to-use playbooks for enterprise threat modeling (STRIDE, PASTA), Brotli/zlib vulnerability defense, L7 API security, and REA direct JSON ingestion.
-
-# 🔊 Liquid UI Micro-Interactions & Tactile Sound Engine
-- Zero-asset Web Audio API sound synthesis (`src/lib/sound.js`) delivering instant mechanical pops and liquid tab transitions without runtime weight.
-- Includes merchant-facing sound toggle button (`LiquidSoundProvider`) in dashboard header.
-
+# 🛡️ Cloudflare Security Audit Protocol
+- Enforce 6-phase evidence-based vulnerability hunting on sensitive endpoints: Reconnaissance, Coverage-Led Hunting, Adversarial Validation, Strict Schema, Independent Verification, and Hardened Defense (HMAC verification, rate limiting, and sanitized inputs).
