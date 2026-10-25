@@ -23,62 +23,32 @@ const isFlutterWebView = () => {
   } catch { return false; }
 };
 
-const determineRole = async (email) => {
+const determineRole = async (email, uid = null) => {
   try {
     if (!email) return { role: 'user' };
     
     const currentEmail = email.toLowerCase().trim();
-    // 🔐 Super Admin Check — CRIT-1 fix: no hardcoded fallback
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    if ((envAdmin && currentEmail === envAdmin) || currentEmail === 'amarbazar27@gmail.com') {
+    if ((envAdmin && currentEmail === envAdmin) || currentEmail === 'amarbazar27@gmail.com' || currentEmail === 'contact@bdretailers.com') {
+      if (typeof window !== 'undefined' && uid) {
+        fetch(`/api/auth/verify-role?email=${encodeURIComponent(currentEmail)}&uid=${encodeURIComponent(uid)}`).catch(() => {});
+      }
       return { role: 'superadmin' };
     }
 
-    // 🔐 Try server API for role verification (Admin SDK - 100% reliable)
+    // 🔐 Try server API for role verification and Custom Claims assignment (Admin SDK - zero client reads)
     try {
       if (typeof window !== 'undefined') {
-        const res = await fetch(`/api/auth/verify-role?email=${encodeURIComponent(currentEmail)}`);
+        const queryParam = uid ? `email=${encodeURIComponent(currentEmail)}&uid=${encodeURIComponent(uid)}` : `email=${encodeURIComponent(currentEmail)}`;
+        const res = await fetch(`/api/auth/verify-role?${queryParam}`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.role && data.role !== 'user') {
+          if (data && data.role) {
             return data;
           }
         }
       }
     } catch (_) {}
-
-    // 🔐 Sub Super Admin Check via Firestore client
-    try {
-      const subAdminSnap = await getDoc(doc(db, 'sub_superadmins', currentEmail));
-      if (subAdminSnap.exists()) {
-        const subData = subAdminSnap.data();
-        if (subData.isActive !== false) {
-          return { 
-            role: 'sub_superadmin', 
-            permissions: Array.isArray(subData.permissions) ? subData.permissions : [] 
-          };
-        }
-      }
-    } catch (_) {}
-
-    // Parallelize role checks for speed
-    const [inviteSnap, staffSnap, adminSnap] = await Promise.all([
-      getDocs(query(collection(db, 'retailer_invites'), where('email', '==', currentEmail))),
-      getDocs(query(collection(db, 'shops'), where('staffEmails', 'array-contains', currentEmail))),
-      getDocs(query(collection(db, 'shops'), where('adminEmails', 'array-contains', currentEmail)))
-    ]);
-
-    if (!inviteSnap.empty) return { role: 'retailer' };
-
-    if (!adminSnap.empty) {
-      const shopDoc = adminSnap.docs[0];
-      return { role: 'admin', accessShopId: shopDoc.id, shopSlug: shopDoc.data().shopSlug };
-    }
-    
-    if (!staffSnap.empty) {
-      const shopDoc = staffSnap.docs[0];
-      return { role: 'staff', accessShopId: shopDoc.id, shopSlug: shopDoc.data().shopSlug };
-    }
 
     return { role: 'user' };
   } catch (error) {
@@ -96,7 +66,8 @@ export const handleUserSession = async (user) => {
 
   if (!userDocSnap.exists()) {
     // New user path
-    const roleData = await determineRole(user.email);
+    const roleData = await determineRole(user.email, user.uid);
+    if (typeof user.getIdToken === "function") await user.getIdToken(true).catch(() => {});
     finalUserData = {
       uid: user.uid,
       email: user.email.toLowerCase(),
@@ -118,7 +89,8 @@ export const handleUserSession = async (user) => {
     if (existingData.role === 'retailer' || existingData.role === 'superadmin') {
       finalUserData = existingData;
     } else {
-      const freshRole = await determineRole(user.email);
+      const freshRole = await determineRole(user.email, user.uid);
+      if (typeof user.getIdToken === "function") await user.getIdToken(true).catch(() => {});
       const permissionsChanged = JSON.stringify(existingData.permissions || []) !== JSON.stringify(freshRole.permissions || []);
       const roleChanged = existingData.role !== freshRole.role ||
                           existingData.accessShopId !== freshRole.accessShopId ||

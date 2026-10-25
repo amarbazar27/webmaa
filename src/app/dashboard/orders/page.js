@@ -1196,8 +1196,7 @@ export default function OrdersPage() {
                                        src={order.paymentScreenshot} 
                                        alt="Payment Proof" 
                                        onClick={() => {
-                                         const w = window.open();
-                                         w.document.write(`<img src="${order.paymentScreenshot}" style="max-width:100%;height:auto;display:block;margin:auto;" />`);
+                                         window.open(order.paymentScreenshot, '_blank', 'noopener,noreferrer');
                                        }}
                                        className="w-full h-16 object-cover hover:scale-105 transition-transform duration-300" 
                                      />

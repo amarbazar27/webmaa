@@ -1,20 +1,33 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb, adminAuth } from '@/lib/firebase-admin';
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const email = (searchParams.get('email') || '').toLowerCase().trim();
+    const uid = searchParams.get('uid') || null;
 
     if (!email) {
       return NextResponse.json({ role: 'user' });
     }
 
+    const setClaims = async (targetUid, claims) => {
+      if (adminAuth && targetUid) {
+        try {
+          await adminAuth.setCustomUserClaims(targetUid, claims);
+        } catch (e) {
+          console.warn('[verify-role] setCustomUserClaims failed:', e.message);
+        }
+      }
+    };
+
     // 1. Root Superadmin check
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    if ((envAdmin && email === envAdmin) || email === 'amarbazar27@gmail.com') {
-      return NextResponse.json({ role: 'superadmin' });
+    if ((envAdmin && email === envAdmin) || email === 'amarbazar27@gmail.com' || email === 'contact@bdretailers.com') {
+      if (uid) await setClaims(uid, { role: 'superadmin' });
+      return NextResponse.json({ role: 'superadmin', claimsSet: true });
     }
 
     if (!adminDb) {
@@ -27,9 +40,12 @@ export async function GET(request) {
       if (subAdminSnap.exists) {
         const subData = subAdminSnap.data();
         if (subData.isActive !== false) {
+          const perms = Array.isArray(subData.permissions) ? subData.permissions : [];
+          if (uid) await setClaims(uid, { role: 'sub_superadmin', permissions: perms });
           return NextResponse.json({
             role: 'sub_superadmin',
-            permissions: Array.isArray(subData.permissions) ? subData.permissions : []
+            permissions: perms,
+            claimsSet: true
           });
         }
       }
@@ -37,7 +53,18 @@ export async function GET(request) {
       console.warn('[verify-role] sub_superadmins check error:', e.message);
     }
 
-    // 3. Retailer / Staff / Admin check
+    // 3. Retailer / Shop Owner check (if user owns a shop directly)
+    if (uid) {
+      try {
+        const shopSnap = await adminDb.collection('shops').doc(uid).get();
+        if (shopSnap.exists) {
+          await setClaims(uid, { role: 'retailer', shopId: uid });
+          return NextResponse.json({ role: 'retailer', shopId: uid, claimsSet: true });
+        }
+      } catch (_) {}
+    }
+
+    // 4. Retailer Invites / Staff / Admin check
     try {
       const [inviteSnap, staffSnap, adminSnap] = await Promise.all([
         adminDb.collection('retailer_invites').where('email', '==', email).limit(1).get(),
@@ -45,30 +72,38 @@ export async function GET(request) {
         adminDb.collection('shops').where('adminEmails', 'array-contains', email).limit(1).get()
       ]);
 
-      if (!inviteSnap.empty) return NextResponse.json({ role: 'retailer' });
+      if (!inviteSnap.empty) {
+        if (uid) await setClaims(uid, { role: 'retailer', shopId: uid });
+        return NextResponse.json({ role: 'retailer', shopId: uid, claimsSet: true });
+      }
 
       if (!adminSnap.empty) {
         const shopDoc = adminSnap.docs[0];
+        if (uid) await setClaims(uid, { role: 'admin', accessShopId: shopDoc.id, shopId: shopDoc.id });
         return NextResponse.json({
           role: 'admin',
           accessShopId: shopDoc.id,
-          shopSlug: shopDoc.data().shopSlug
+          shopSlug: shopDoc.data().shopSlug,
+          claimsSet: true
         });
       }
 
       if (!staffSnap.empty) {
         const shopDoc = staffSnap.docs[0];
+        if (uid) await setClaims(uid, { role: 'staff', accessShopId: shopDoc.id, shopId: shopDoc.id });
         return NextResponse.json({
           role: 'staff',
           accessShopId: shopDoc.id,
-          shopSlug: shopDoc.data().shopSlug
+          shopSlug: shopDoc.data().shopSlug,
+          claimsSet: true
         });
       }
     } catch (e) {
       console.warn('[verify-role] shop check error:', e.message);
     }
 
-    return NextResponse.json({ role: 'user' });
+    if (uid) await setClaims(uid, { role: 'user' });
+    return NextResponse.json({ role: 'user', claimsSet: true });
   } catch (err) {
     console.error('[verify-role] General error:', err);
     return NextResponse.json({ role: 'user' }, { status: 200 });
