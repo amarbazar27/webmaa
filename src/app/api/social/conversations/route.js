@@ -2,14 +2,37 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyAuth, AuthError } from '@/lib/verifyAuth';
 
-function isShopOwner(shopData, uid) {
+function isShopOwner(shopData, uid, shopId) {
   return (
-    shopData.ownerId === uid ||
-    shopData.ownerUid === uid ||
-    shopData.createdBy === uid ||
-    shopData.userId === uid ||
-    (Array.isArray(shopData.staffEmails) && shopData.staffEmails.length > 0)
+    shopId === uid ||
+    shopData?.id === uid ||
+    shopData?.ownerId === uid ||
+    shopData?.ownerUid === uid ||
+    shopData?.createdBy === uid ||
+    shopData?.userId === uid ||
+    shopData?.ownerEmail === uid ||
+    (Array.isArray(shopData?.staffEmails) && shopData.staffEmails.length > 0)
   );
+}
+
+async function resolveShop(shopId) {
+  if (!shopId) return null;
+  const docRef = adminDb.collection('shops').doc(shopId);
+  const docSnap = await docRef.get();
+  if (docSnap.exists) {
+    return { id: docSnap.id, ...docSnap.data() };
+  }
+
+  const qOwner = await adminDb.collection('shops').where('ownerId', '==', shopId).limit(1).get();
+  if (!qOwner.empty) return { id: qOwner.docs[0].id, ...qOwner.docs[0].data() };
+
+  const qCreated = await adminDb.collection('shops').where('createdBy', '==', shopId).limit(1).get();
+  if (!qCreated.empty) return { id: qCreated.docs[0].id, ...qCreated.docs[0].data() };
+
+  const qSlug = await adminDb.collection('shops').where('shopSlug', '==', shopId).limit(1).get();
+  if (!qSlug.empty) return { id: qSlug.docs[0].id, ...qSlug.docs[0].data() };
+
+  return null;
 }
 
 // GET: Fetch conversations for a shop via Admin SDK (Reliable fallback against client SDK issues)
@@ -25,12 +48,11 @@ export async function GET(request) {
 
     // BOLA/IDOR Protection
     if (shopId !== 'main') {
-      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-      if (!shopDoc.exists) {
+      const foundShop = await resolveShop(shopId);
+      if (!foundShop) {
         return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
       }
-      const shopData = shopDoc.data() || {};
-      if (!isShopOwner(shopData, authResult.uid) && authResult.role !== 'superadmin') {
+      if (!isShopOwner(foundShop, authResult.uid, shopId) && authResult.role !== 'superadmin') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     } else if (authResult.role !== 'superadmin') {

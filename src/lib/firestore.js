@@ -5,14 +5,91 @@ import {
 import { db } from './firebase';
 
 // ── SHOP ──────────────────────────────────────────
+const clientShopByIdCache = new Map();
+const clientAllShopsCache = { data: null, timestamp: 0 };
+const clientMarketplaceCache = { data: null, timestamp: 0 };
+
 export const getShop = async (shopId) => {
-  const snap = await getDoc(doc(db, 'shops', shopId));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  if (!shopId) return null;
+  const cacheKey = String(shopId).trim();
+  const cached = clientShopByIdCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < 1000 * 60 * 5)) {
+    return cached.data;
+  }
+
+  try {
+    const snap = await getDoc(doc(db, 'shops', shopId));
+    if (snap.exists()) {
+      const res = { id: snap.id, ...snap.data() };
+      clientShopByIdCache.set(cacheKey, { data: res, timestamp: Date.now() });
+      return res;
+    }
+
+    // Fallback: Check if document is keyed by ownerId, createdBy or shopSlug
+    try {
+      const qOwner = query(collection(db, 'shops'), where('ownerId', '==', shopId), limit(1));
+      const snapOwner = await getDocs(qOwner);
+      if (!snapOwner.empty) {
+        const res = { id: snapOwner.docs[0].id, ...snapOwner.docs[0].data() };
+        clientShopByIdCache.set(cacheKey, { data: res, timestamp: Date.now() });
+        return res;
+      }
+
+      const qCreated = query(collection(db, 'shops'), where('createdBy', '==', shopId), limit(1));
+      const snapCreated = await getDocs(qCreated);
+      if (!snapCreated.empty) {
+        const res = { id: snapCreated.docs[0].id, ...snapCreated.docs[0].data() };
+        clientShopByIdCache.set(cacheKey, { data: res, timestamp: Date.now() });
+        return res;
+      }
+
+      const qSlug = query(collection(db, 'shops'), where('shopSlug', '==', shopId), limit(1));
+      const snapSlug = await getDocs(qSlug);
+      if (!snapSlug.empty) {
+        const res = { id: snapSlug.docs[0].id, ...snapSlug.docs[0].data() };
+        clientShopByIdCache.set(cacheKey, { data: res, timestamp: Date.now() });
+        return res;
+      }
+    } catch (_) {}
+
+    return null;
+  } catch (err) {
+    console.warn(`[getShop] Firestore read note for ${shopId}:`, err.message);
+    if (cached?.data) return cached.data;
+    return null;
+  }
 };
 
 export const getAllShops = async () => {
-  const snap = await getDocs(collection(db, 'shops'));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (clientAllShopsCache.data && (Date.now() - clientAllShopsCache.timestamp < 1000 * 60 * 10)) {
+    return clientAllShopsCache.data;
+  }
+
+  // Client-side fast REST cache check
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/marketplace/products?includeShops=true');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.shops) && data.shops.length > 0) {
+          clientAllShopsCache.data = data.shops;
+          clientAllShopsCache.timestamp = Date.now();
+          return data.shops;
+        }
+      }
+    } catch (_) {}
+  }
+
+  try {
+    const snap = await getDocs(collection(db, 'shops'));
+    const shops = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    clientAllShopsCache.data = shops;
+    clientAllShopsCache.timestamp = Date.now();
+    return shops;
+  } catch (err) {
+    if (clientAllShopsCache.data) return clientAllShopsCache.data;
+    return [];
+  }
 };
 
 const clientShopCache = new Map();
@@ -1014,10 +1091,47 @@ export const getShopProducts = async (shopId) => {
 };
 
 export const getAllMarketplaceProducts = async () => {
+  if (clientMarketplaceCache.data && (Date.now() - clientMarketplaceCache.timestamp < 1000 * 60 * 10)) {
+    return clientMarketplaceCache.data;
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      // 1. Check sessionStorage
+      const sessionSaved = sessionStorage.getItem('bd_marketplace_products');
+      if (sessionSaved) {
+        const parsed = JSON.parse(sessionSaved);
+        if (parsed.timestamp && (Date.now() - parsed.timestamp < 1000 * 60 * 10)) {
+          clientMarketplaceCache.data = parsed.products;
+          clientMarketplaceCache.timestamp = parsed.timestamp;
+          return parsed.products;
+        }
+      }
+
+      // 2. High-speed cached server API
+      const res = await fetch('/api/marketplace/products');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.products)) {
+          clientMarketplaceCache.data = data.products;
+          clientMarketplaceCache.timestamp = Date.now();
+          try {
+            sessionStorage.setItem('bd_marketplace_products', JSON.stringify({
+              products: data.products,
+              timestamp: Date.now()
+            }));
+          } catch (_) {}
+          return data.products;
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Fallback to bounded collection reads if API unavailable
   try {
     const shops = await getAllVisibleShops();
     const productArrays = await Promise.all(
-      shops.map(async (shop) => {
+      shops.slice(0, 30).map(async (shop) => {
         const prods = await getShopProducts(shop.id);
         return prods.map(p => ({
           ...p,
@@ -1031,8 +1145,14 @@ export const getAllMarketplaceProducts = async () => {
         }));
       })
     );
-    return productArrays.flat();
-  } catch (err) { return []; }
+    const flat = productArrays.flat();
+    clientMarketplaceCache.data = flat;
+    clientMarketplaceCache.timestamp = Date.now();
+    return flat;
+  } catch (err) {
+    if (clientMarketplaceCache.data) return clientMarketplaceCache.data;
+    return [];
+  }
 };
 
 export const toggleShopMainSiteVisibility = async (shopId, visible) => {

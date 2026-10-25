@@ -2,13 +2,45 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyAuth, AuthError } from '@/lib/verifyAuth';
 
-function isShopOwner(shopData, uid) {
+function isShopOwner(shopData, uid, shopId) {
   return (
-    shopData.ownerId === uid ||
-    shopData.ownerUid === uid ||
-    shopData.createdBy === uid ||
-    shopData.userId === uid
+    shopId === uid ||
+    shopData?.id === uid ||
+    shopData?.ownerId === uid ||
+    shopData?.ownerUid === uid ||
+    shopData?.createdBy === uid ||
+    shopData?.userId === uid ||
+    shopData?.ownerEmail === uid
   );
+}
+
+async function resolveShop(shopId) {
+  if (!shopId) return null;
+  const docRef = adminDb.collection('shops').doc(shopId);
+  const docSnap = await docRef.get();
+  if (docSnap.exists) {
+    return { id: docSnap.id, ...docSnap.data() };
+  }
+
+  // Fallback 1: check ownerId
+  const qOwner = await adminDb.collection('shops').where('ownerId', '==', shopId).limit(1).get();
+  if (!qOwner.empty) {
+    return { id: qOwner.docs[0].id, ...qOwner.docs[0].data() };
+  }
+
+  // Fallback 2: check createdBy
+  const qCreated = await adminDb.collection('shops').where('createdBy', '==', shopId).limit(1).get();
+  if (!qCreated.empty) {
+    return { id: qCreated.docs[0].id, ...qCreated.docs[0].data() };
+  }
+
+  // Fallback 3: check shopSlug
+  const qSlug = await adminDb.collection('shops').where('shopSlug', '==', shopId).limit(1).get();
+  if (!qSlug.empty) {
+    return { id: qSlug.docs[0].id, ...qSlug.docs[0].data() };
+  }
+
+  return null;
 }
 
 export async function POST(request) {
@@ -25,12 +57,12 @@ export async function POST(request) {
     // Verify retailer owns the shop (or superadmin for main)
     let shopData = {};
     if (shopId !== 'main') {
-      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-      if (!shopDoc.exists) {
+      const foundShop = await resolveShop(shopId);
+      if (!foundShop) {
         return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
       }
-      shopData = shopDoc.data() || {};
-      if (!isShopOwner(shopData, authResult.uid) && authResult.role !== 'superadmin') {
+      shopData = foundShop;
+      if (!isShopOwner(shopData, authResult.uid, shopId) && authResult.role !== 'superadmin') {
         return NextResponse.json({ error: 'অননুমোদিত অ্যাক্সেস' }, { status: 403 });
       }
     } else if (authResult.role !== 'superadmin') {
@@ -217,20 +249,21 @@ export async function GET(request) {
     }
 
     // Verify retailer owns the shop (or superadmin for main)
+    let effectiveShopId = shopId;
     if (shopId !== 'main') {
-      const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-      if (!shopDoc.exists) {
+      const foundShop = await resolveShop(shopId);
+      if (!foundShop) {
         return NextResponse.json({ error: 'Shop not found' }, { status: 404 });
       }
-      const shopData = shopDoc.data() || {};
-      if (!isShopOwner(shopData, authResult.uid) && authResult.role !== 'superadmin') {
+      effectiveShopId = foundShop.id;
+      if (!isShopOwner(foundShop, authResult.uid, shopId) && authResult.role !== 'superadmin') {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     } else if (authResult.role !== 'superadmin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const snapshot = await adminDb.collection('social_connections').where('shopId', '==', shopId).get();
+    const snapshot = await adminDb.collection('social_connections').where('shopId', 'in', [shopId, effectiveShopId].filter((v, i, a) => a.indexOf(v) === i)).get();
     const connections = [];
     snapshot.forEach(doc => {
       const data = doc.data();

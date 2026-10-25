@@ -212,13 +212,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   // ── Active Shop ID ───────────────────────────────────────────────
-  // Priority: impersonation > retailer own shop > staff accessShopId
+  // Priority: impersonation > explicit accessShopId/shopId > retailer own uid
   const activeShopId = impersonation
     ? impersonation.shopId
     : (userData?.role === 'retailer' || userData?.role === 'superadmin')
-      ? user?.uid
+      ? (userData?.accessShopId || userData?.shopId || user?.uid)
       : (userData?.role === 'admin' || userData?.role === 'staff')
-        ? userData?.accessShopId
+        ? (userData?.accessShopId || userData?.shopId)
         : null;
 
   return (

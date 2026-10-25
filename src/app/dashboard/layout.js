@@ -90,12 +90,15 @@ export default function DashboardLayout({ children }) {
               >
                 <Menu size={18} />
               </button>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-600 rounded-lg flex items-center justify-center shadow-md shrink-0">
-                 <span className="text-white font-black text-xs sm:text-sm">W</span>
-              </div>
-              <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-sm truncate">
-                {isImpersonating ? `👁️ ${impersonation?.shopName}` : t('কনসোল', 'Console')}
-              </span>
+              {isImpersonating ? (
+                <span className="font-black text-purple-700 dark:text-purple-300 text-xs truncate">
+                  👁️ {impersonation?.shopName}
+                </span>
+              ) : (
+                <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-sm truncate hidden min-[400px]:inline">
+                  {t('কনসোল', 'Console')}
+                </span>
+              )}
            </div>
 
            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">

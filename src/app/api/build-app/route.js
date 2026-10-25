@@ -63,15 +63,24 @@ export async function POST(request) {
     // Fetch shop details
     let shopSlug = '';
     let shopData = {};
-    const shopDoc = await adminDb.collection('shops').doc(shopId).get();
-    if (!shopDoc.exists) {
+    let targetShopDoc = await adminDb.collection('shops').doc(shopId).get();
+    if (!targetShopDoc.exists && shopId !== 'main') {
+      const qOwner = await adminDb.collection('shops').where('ownerId', '==', shopId).limit(1).get();
+      if (!qOwner.empty) targetShopDoc = qOwner.docs[0];
+      else {
+        const qSlug = await adminDb.collection('shops').where('shopSlug', '==', shopId).limit(1).get();
+        if (!qSlug.empty) targetShopDoc = qSlug.docs[0];
+      }
+    }
+
+    if (!targetShopDoc.exists) {
       if (shopId === 'main') {
         shopSlug = 'main';
       } else {
         return NextResponse.json({ error: 'শপটি পাওয়া যায়নি।' }, { status: 404 });
       }
     } else {
-      shopData = shopDoc.data();
+      shopData = targetShopDoc.data();
       const rawSlug = shopData.subdomainSlug || shopData.shopSlug || '';
       shopSlug = (rawSlug === '/' || !rawSlug) ? ((shopData.appBuildPackageName === 'com.bdretailers' || shopId === 'main') ? 'main' : '') : rawSlug;
     }

@@ -51,39 +51,106 @@ export default function BillingPage() {
   const [dueSubmitting, setDueSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!activeShopId) return;
+    let isMounted = true;
+    
+    // Safety timeout: Never let user wait indefinitely if connection hangs
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 4500);
 
-    // Load shop data
-    getShop(activeShopId).then((data) => {
-      setShop(data);
-      if (data?.subscriptionPackage && ['starter', 'monthly', 'quarterly', 'yearly'].includes(data.subscriptionPackage)) {
-        setSelectedPackage(data.subscriptionPackage);
-      }
-      setLoading(false);
-    });
+    if (activeShopId) {
+      getShop(activeShopId).then((data) => {
+        if (!isMounted) return;
+        if (data) {
+          setShop(data);
+          if (data?.subscriptionPackage && ['starter', 'monthly', 'quarterly', 'yearly'].includes(data.subscriptionPackage)) {
+            setSelectedPackage(data.subscriptionPackage);
+          }
+        }
+        setLoading(false);
+      }).catch((err) => {
+        console.warn('Billing getShop error:', err.message);
+        if (isMounted) setLoading(false);
+      });
+    } else {
+      // If activeShopId not yet ready, give it 2s then stop skeleton
+      const waitTimer = setTimeout(() => {
+        if (isMounted) setLoading(false);
+      }, 2000);
+      return () => {
+        isMounted = false;
+        clearTimeout(waitTimer);
+        clearTimeout(safetyTimer);
+      };
+    }
 
     // Load global subscription config
     const unsub = subscribeGlobalConfig((config) => {
-      setGlobalConfig(config);
+      if (isMounted) setGlobalConfig(config);
     });
 
-    return () => unsub();
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimer);
+      unsub();
+    };
   }, [activeShopId]);
 
-  if (loading || !shop) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
-        <div className="w-10 h-10 border-4 border-slate-100 border-t-purple-600 rounded-full animate-spin"></div>
+      <div className="max-w-6xl mx-auto space-y-8 animate-pulse pb-12">
+        {/* Title skeleton */}
+        <div className="space-y-2">
+          <div className="h-9 w-72 bg-slate-200 dark:bg-slate-700 rounded-2xl" />
+          <div className="h-4 w-96 max-w-full bg-slate-100 dark:bg-slate-800 rounded-lg" />
+        </div>
+
+        {/* Top 3 Status Cards Shimmer */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-xs space-y-3">
+              <div className="h-3 w-24 bg-slate-200 dark:bg-slate-700 rounded-md" />
+              <div className="h-7 w-40 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+            </div>
+          ))}
+        </div>
+
+        {/* Packages Grid Shimmer */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-xs space-y-4">
+              <div className="h-5 w-24 bg-slate-200 dark:bg-slate-700 rounded-lg" />
+              <div className="h-8 w-28 bg-slate-300 dark:bg-slate-600 rounded-md" />
+              <div className="space-y-2 pt-2">
+                <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="h-3 w-4/5 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="h-3 w-3/4 bg-slate-100 dark:bg-slate-800 rounded" />
+              </div>
+              <div className="h-10 w-full bg-purple-100 dark:bg-purple-950/40 rounded-xl mt-4" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
+  // Fail-safe effective shop object guarantees UI always renders smoothly
+  const effectiveShop = shop || {
+    id: activeShopId || user?.uid || 'retailer_shop',
+    shopName: 'আমার রিটেইলার শপ',
+    subscriptionPackage: 'starter',
+    subscriptionStatus: 'active',
+    customRevenuePercent: globalConfig?.subStarterPercent ?? 5,
+    totalRevenue: 0,
+    sharedRevenuePaid: 0,
+  };
+
   const starterPercent = globalConfig?.subStarterPercent ?? 5;
-  const isStarter = shop?.subscriptionPackage === 'starter';
-  const retailerPercent = shop?.customRevenuePercent ?? starterPercent;
-  const grossSales = Number(shop?.totalRevenue) || 0;
+  const isStarter = effectiveShop?.subscriptionPackage === 'starter';
+  const retailerPercent = effectiveShop?.customRevenuePercent ?? starterPercent ;
+  const grossSales = Number(effectiveShop?.totalRevenue) || 0;
   const totalCommission = Math.round((grossSales * retailerPercent) / 100);
-  const paidCommission = Number(shop?.sharedRevenuePaid) || 0;
+  const paidCommission = Number(effectiveShop?.sharedRevenuePaid) || 0;
   const dueCommission = Math.max(0, totalCommission - paidCommission);
 
   // Price configurations
@@ -98,13 +165,13 @@ export default function BillingPage() {
 
   // Format subscription expiry date
   const getExpiryText = () => {
-    if (shop?.subscriptionPackage === 'starter' && shop?.subscriptionStatus === 'active') {
+    if (effectiveShop?.subscriptionPackage === 'starter' && effectiveShop?.subscriptionStatus === 'active') {
       return <span className="text-amber-700 font-black">আজীবন (রেভিনিউ শেয়ার মোড)</span>;
     }
-    if (!shop?.subscriptionExpiresAt) return 'কোনো সক্রিয় প্যাকেজ নেই';
-    const dateObj = shop.subscriptionExpiresAt.toDate 
+    if (!effectiveShop?.subscriptionExpiresAt) return 'কোনো সক্রিয় প্যাকেজ নেই';
+    const dateObj = effectiveShop.subscriptionExpiresAt.toDate 
       ? shop.subscriptionExpiresAt.toDate() 
-      : new Date(shop.subscriptionExpiresAt);
+      : new Date(effectiveShop.subscriptionExpiresAt);
     
     const isExpired = dateObj.getTime() < Date.now();
     return (
@@ -334,13 +401,13 @@ export default function BillingPage() {
           <div className="space-y-2">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">প্যাকেজ স্ট্যাটাস</p>
             <h3 className="text-xl font-black text-slate-900 flex items-center gap-1.5">
-              {shop?.subscriptionStatus === 'active' && (
+              {effectiveShop?.subscriptionStatus === 'active' && (
                 <><CheckCircle className="text-emerald-500" size={20} /> Active</>
               )}
-              {shop?.subscriptionStatus === 'pending' && (
+              {effectiveShop?.subscriptionStatus === 'pending' && (
                 <><Clock className="text-amber-500" size={20} /> Pending Approval</>
               )}
-              {(shop?.subscriptionStatus === 'expired' || !shop?.subscriptionStatus || shop?.subscriptionStatus === 'none') && (
+              {(effectiveShop?.subscriptionStatus === 'expired' || !effectiveShop?.subscriptionStatus || effectiveShop?.subscriptionStatus === 'none') && (
                 <><AlertCircle className="text-red-500" size={20} /> No Subscription</>
               )}
             </h3>
@@ -361,12 +428,12 @@ export default function BillingPage() {
           <div className="space-y-2">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">চলতি প্যাকেজ</p>
             <h3 className="text-xl font-black text-purple-700 uppercase tracking-wide flex items-center gap-1.5">
-              {shop?.subscriptionPackage === 'starter' ? (
+              {effectiveShop?.subscriptionPackage === 'starter' ? (
                 <span className="text-amber-600 flex items-center gap-1">
                   <Sparkles size={18} /> Starter ({starterPercent}% Share)
                 </span>
               ) : (
-                shop?.subscriptionPackage || 'None'
+                effectiveShop?.subscriptionPackage || 'None'
               )}
             </h3>
           </div>
