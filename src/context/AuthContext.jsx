@@ -124,7 +124,9 @@ export function AuthProvider({ children }) {
 
           // Listen to shops to see if they are added/removed as staff or admin
           const currentEmail = firebaseUser.email?.toLowerCase();
-          if (currentEmail) {
+          const role = result?.userData?.role;
+          const isOwnerOrAdmin = role === 'retailer' || role === 'superadmin' || role === 'sub_superadmin';
+          if (currentEmail && !isOwnerOrAdmin) {
             let unsubStaffOnly = null;
             let unsubAdminOnly = null;
 

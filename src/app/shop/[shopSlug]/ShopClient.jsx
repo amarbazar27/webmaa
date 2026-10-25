@@ -1500,7 +1500,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   // Real-time listener for Merchant / Retailer replies sent from Social Hub Inbox
   useEffect(() => {
-    if (!shop?.id || !visitorId) return;
+    if (!isAiOpen || !shop?.id || !visitorId) return;
     let unsub = () => {};
     try {
       unsub = onSnapshot(doc(db, 'shops', shop.id, 'conversations', visitorId), (snap) => {
@@ -1523,7 +1523,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       }, (err) => console.warn('Chat sync notice:', err.message));
     } catch (e) {}
     return () => unsub();
-  }, [shop?.id, visitorId, shop?.shopName]);
+  }, [isAiOpen, shop?.id, visitorId, shop?.shopName]);
 
   const getSmartBotReply = (text) => {
     const q = text.toLowerCase();

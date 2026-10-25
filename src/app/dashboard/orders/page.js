@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { subscribeOrders, updateOrderStatus, getShop, deleteOrder, reportCustomerFraud, calculateRiskScoreClient } from '@/lib/firestore';
 import { ShoppingBag, Clock, CheckCircle, Truck, XCircle, FileText, Phone, MapPin, Package, ArrowRight, Save, Lock, Trash2, Download, AlertCircle, Mail, Users, RefreshCw, ShieldAlert, ShieldCheck, Shield, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { updateDoc, doc, onSnapshot } from 'firebase/firestore';
+import { updateDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const STATUS_CONFIG = {
@@ -147,18 +147,31 @@ export default function OrdersPage() {
     const phones = Array.from(new Set(orders.map(o => standardizePhone(o.customerPhone)).filter(Boolean)));
     if (phones.length === 0) return;
     
-    // Setup real-time listeners for the fraud profiles of these active phone numbers
-    const unsubs = phones.map(phone => {
-      const docRef = doc(db, 'fraud_profiles', phone);
-      return onSnapshot(docRef, (snap) => {
-        if (snap.exists()) {
-          setFraudProfiles(prev => ({ ...prev, [phone]: snap.data() }));
-        }
-      });
-    });
+    // Safe bounded fetch for fraud profiles (single fetch, zero socket leaks)
+    const phonesToFetch = phones.filter(p => !fraudProfiles[p]);
+    if (phonesToFetch.length === 0) return;
 
-    return () => unsubs.forEach(unsub => unsub && unsub());
-  }, [orders]);
+    let isMounted = true;
+    const fetchProfiles = async () => {
+      const results = {};
+      await Promise.all(
+        phonesToFetch.map(async (phone) => {
+          try {
+            const snap = await getDoc(doc(db, 'fraud_profiles', phone));
+            if (snap.exists()) {
+              results[phone] = snap.data();
+            }
+          } catch (_) {}
+        })
+      );
+      if (isMounted && Object.keys(results).length > 0) {
+        setFraudProfiles(prev => ({ ...prev, ...results }));
+      }
+    };
+    fetchProfiles();
+
+    return () => { isMounted = false; };
+  }, [orders, fraudProfiles]);
 
   const handleOpenReportModal = (phone) => {
     setReportModal({ open: true, phone, reason: 'fake_order', comment: '' });

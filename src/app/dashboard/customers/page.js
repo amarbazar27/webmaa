@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Card, Input, Button } from '@/components/ui';
 import toast from 'react-hot-toast';
-import { doc, onSnapshot, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function CustomersPage() {
@@ -92,17 +92,23 @@ export default function CustomersPage() {
         const customerList = Object.values(customerMap).sort((a, b) => b.totalSpent - a.totalSpent);
         setCustomers(customerList);
 
-        // Realtime Fraud Profile Listeners for all phones
-        const phones = customerList.map(c => c.phone).filter(Boolean);
-        if (phones.length > 0) {
-          phones.forEach(phone => {
-            const docRef = doc(db, 'fraud_profiles', phone);
-            onSnapshot(docRef, (snap) => {
-              if (snap.exists()) {
-                setFraudProfiles(prev => ({ ...prev, [phone]: snap.data() }));
-              }
-            });
-          });
+        // Safe bounded fetch for fraud profiles (single fetch, zero lingering socket leaks)
+        const uniquePhones = Array.from(new Set(customerList.map(c => c.phone).filter(Boolean))).slice(0, 50);
+        if (uniquePhones.length > 0) {
+          const profileMap = {};
+          await Promise.all(
+            uniquePhones.map(async (phone) => {
+              try {
+                const snap = await getDoc(doc(db, 'fraud_profiles', phone));
+                if (snap.exists()) {
+                  profileMap[phone] = snap.data();
+                }
+              } catch (_) {}
+            })
+          );
+          if (Object.keys(profileMap).length > 0) {
+            setFraudProfiles(prev => ({ ...prev, ...profileMap }));
+          }
         }
 
       } catch (err) {
