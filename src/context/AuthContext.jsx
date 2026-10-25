@@ -48,16 +48,40 @@ export function AuthProvider({ children }) {
         ip = ipData.ip || 'unknown';
       } catch {}
 
-      // Firestore-এ audit log তৈরি
-      const logId = await logImpersonationStart({
-        superadminUid: user.uid,
-        superadminEmail: user.email,
-        retailerUid: retailer.uid,
-        retailerEmail: retailer.email || retailer.ownerEmail || 'unknown',
-        shopId: retailer.shopId || retailer.id,
-        shopName: retailer.shopName || 'Unknown Shop',
-        ip,
-      });
+      // Firestore-এ audit log তৈরি (best-effort with fallback to admin server API)
+      let logId = 'local_' + Date.now();
+      try {
+        logId = await logImpersonationStart({
+          superadminUid: user.uid,
+          superadminEmail: user.email,
+          retailerUid: retailer.uid,
+          retailerEmail: retailer.email || retailer.ownerEmail || 'unknown',
+          shopId: retailer.shopId || retailer.id,
+          shopName: retailer.shopName || 'Unknown Shop',
+          ip,
+        });
+      } catch (logErr) {
+        console.warn('Direct client impersonation log note (attempting server audit):', logErr?.message);
+        try {
+          const idToken = await user.getIdToken();
+          const sRes = await fetch('/api/superadmin/impersonate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+              retailerUid: retailer.uid,
+              retailerEmail: retailer.email || retailer.ownerEmail || 'unknown',
+              shopId: retailer.shopId || retailer.id,
+              shopName: retailer.shopName || 'Unknown Shop',
+              ip
+            })
+          });
+          const sData = await sRes.json();
+          if (sData.logId) logId = sData.logId;
+        } catch (_) {}
+      }
 
       const session = {
         uid: retailer.uid || retailer.id,

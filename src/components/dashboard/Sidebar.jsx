@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, ShoppingBag, ShoppingCart, Users, Tag, 
   Settings, LogOut, ShieldCheck, Menu, X, Crown, Lock, Paintbrush, Radio,
-  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle, Rocket, Home, ArrowLeft, MessageCircle
+  Truck, FileText, ChevronDown, ChevronRight, CircleDot, Circle, Rocket, Home, ArrowLeft, MessageCircle, Sparkles
 } from 'lucide-react';
 import { logoutUser } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -52,6 +52,13 @@ const navGroups = [
     label: 'Homepage Builder', 
     icon: Paintbrush, 
     href: '/dashboard/homepage-builder', 
+    staffAllowed: false 
+  },
+  { 
+    id: 'templates', 
+    label: 'Templates & AI Cloner', 
+    icon: Sparkles, 
+    href: '/dashboard/templates', 
     staffAllowed: false 
   },
   { 
@@ -122,6 +129,7 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
       'All Orders': t('সকল অর্ডার', 'All Orders'),
       'Leads & Abandoned Carts': t('ইনকমপ্লিট অর্ডার ও লিডস', 'Leads & Abandoned Carts'),
       'Homepage Builder': t('হোমপেজ বিল্ডার', 'Homepage Builder'),
+      'Templates & AI Cloner': t('টেমপ্লেট ও AI ক্লোনার', 'Templates & AI Cloner'),
       'Landing Pages': t('ল্যান্ডিং পেজ', 'Landing Pages'),
       'Customers': t('কাস্টমার', 'Customers'),
       'Broadcast': t('ব্রডকাস্ট', 'Broadcast'),

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { getShop, getOrders, getProducts, getGlobalConfig } from '@/lib/firestore';
-import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap, Heart, X, Clock, CheckCircle, Copy, Globe, Check } from 'lucide-react';
+import { ShoppingBag, DollarSign, Eye, ExternalLink, Package, TrendingUp, Users, ArrowUpRight, ShieldCheck, Zap, Heart, X, Clock, CheckCircle, Copy, Globe, Check, Sparkles } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -232,6 +232,31 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* 🎨 AI UI Cloner Quick Banner */}
+      <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-2xl p-4 sm:p-5 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg shadow-purple-950/20 border border-purple-800/40">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-purple-300 shrink-0 border border-white/10">
+            <Sparkles size={22} className="text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-sm sm:text-base font-black flex items-center gap-2">
+              <span>{t('যেকোনো ওয়েবসাইটের লিংক দিয়ে মুহূর্তেই UI ও ডিজাইন ক্লোন করুন', 'Instantly Clone UI & Design from any Website URL')}</span>
+              <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wider">New</span>
+            </h3>
+            <p className="text-xs text-purple-200/90 font-medium mt-0.5">
+              {t('প্রতিদ্বন্দ্বীর ওয়েবসাইটের রঙ, ব্যানার ও স্টাইল স্বয়ংক্রিয়ভাবে এক্সট্রাক্ট করে আপনার শপে প্রয়োগ করুন।', 'Extract brand colors, banners and layout style into your store automatically.')}
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/dashboard/templates"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-all shadow-md shadow-purple-600/30 shrink-0 cursor-pointer active:scale-95"
+        >
+          <span>🎨 {t('AI UI ক্লোনার খুলুন', 'Open AI UI Cloner')}</span>
+          <ArrowUpRight size={14} />
+        </Link>
       </div>
 
       {/* 🚀 New Retailer Step-by-Step Onboarding Wizard */}

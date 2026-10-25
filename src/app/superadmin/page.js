@@ -335,13 +335,15 @@ export default function SuperAdminPage() {
   const handleLoginAsRetailer = async (shop) => {
     setImpersonatingId(shop.id);
     try {
+      const targetUid = shop.ownerId || shop.ownerUid || shop.userId || shop.createdBy || shop.id;
+      const targetName = shop.shopName || shop.name || 'Store';
       await loginAsRetailer({
-        uid: shop.id,
-        email: shop.ownerEmail || '',
+        uid: targetUid,
+        email: shop.ownerEmail || shop.email || '',
         shopId: shop.id,
-        shopName: shop.shopName || 'Unknown Shop',
+        shopName: targetName,
       });
-      toast.success(`✅ "${shop.shopName}"-এর ড্যাশবোর্ডে প্রবেশ করছেন...`);
+      toast.success(`✅ "${targetName}"-এর ড্যাশবোর্ডে প্রবেশ করছেন...`);
       router.push('/dashboard');
     } catch (err) {
       toast.error('Login as retailer ব্যর্থ: ' + err.message);

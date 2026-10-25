@@ -12,7 +12,11 @@ service cloud.firestore {
     // Evaluated 100% in-memory via email check or Custom Claims (0 reads)
     function isSuperAdmin() {
       return isAuthenticated() && (
-        (request.auth.token.email != null && (request.auth.token.email == 'amarbazar27@gmail.com' || request.auth.token.email == 'contact@bdretailers.com')) ||
+        (request.auth.token.email != null && (
+          request.auth.token.email == 'amarbazar27@gmail.com' ||
+          request.auth.token.email == 'rafiqunnabi07@gmail.com' ||
+          request.auth.token.email == 'contact@bdretailers.com'
+        )) ||
         request.auth.token.get('role', '') == 'superadmin'
       );
     }
