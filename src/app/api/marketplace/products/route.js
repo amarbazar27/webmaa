@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getAllMarketplaceProductsServer, getAllShopsServer } from '@/lib/server-fetch';
 
 // ⚡ Cache globally for 5 minutes (eliminates thousands of Firestore reads per day from repeat visits and search bots)
-export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 
 export async function GET(request) {

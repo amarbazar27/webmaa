@@ -1,7 +1,7 @@
 import { getAllShops } from '@/lib/firestore';
 import { getShopByDomainServer, getAllShopsServer } from '@/lib/server-fetch';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'freeappweb.com', 'localhost', '127.0.0.1'];
 

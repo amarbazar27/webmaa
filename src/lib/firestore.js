@@ -694,26 +694,92 @@ export const getCustomers = async (shopId) => {
 // Super admin uses these to grant/revoke retailer access
 
 export const getRetailerInvites = async () => {
+  if (typeof window !== 'undefined') {
+    try {
+      const { auth } = await import('@/lib/auth');
+      const user = auth?.currentUser;
+      if (user) {
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/admin/retailer-invite', {
+          headers: { Authorization: `Bearer ${idToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.invites)) return data.invites;
+        }
+      }
+    } catch (_) {}
+  }
   const snap = await getDocs(collection(db, 'retailer_invites'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
 export const addRetailerInvite = async (email) => {
+  const cleanEmail = email.toLowerCase().trim();
+  if (typeof window !== 'undefined') {
+    try {
+      const { auth } = await import('@/lib/auth');
+      const user = auth?.currentUser;
+      if (user) {
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/admin/retailer-invite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`
+          },
+          body: JSON.stringify({ email: cleanEmail })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Invitation failed');
+        }
+        return data;
+      }
+    } catch (apiErr) {
+      if (apiErr.message && !apiErr.message.includes('fetch')) {
+        throw apiErr;
+      }
+    }
+  }
+
   // Check if already invited
-  const q = query(collection(db, 'retailer_invites'), where('email', '==', email.toLowerCase().trim()));
+  const q = query(collection(db, 'retailer_invites'), where('email', '==', cleanEmail));
   const existing = await getDocs(q);
   if (!existing.empty) {
     throw new Error('This email is already invited as a retailer.');
   }
 
   return addDoc(collection(db, 'retailer_invites'), {
-    email: email.toLowerCase().trim(),
+    email: cleanEmail,
     invitedAt: serverTimestamp(),
     status: 'active',
   });
 };
 
 export const removeRetailerInvite = async (inviteId) => {
+  if (typeof window !== 'undefined') {
+    try {
+      const { auth } = await import('@/lib/auth');
+      const user = auth?.currentUser;
+      if (user) {
+        const idToken = await user.getIdToken();
+        const res = await fetch(`/api/admin/retailer-invite?id=${encodeURIComponent(inviteId)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${idToken}` }
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to revoke access');
+        }
+        return data;
+      }
+    } catch (apiErr) {
+      if (apiErr.message && !apiErr.message.includes('fetch')) {
+        throw apiErr;
+      }
+    }
+  }
   return deleteDoc(doc(db, 'retailer_invites', inviteId));
 };
 

@@ -1,4 +1,4 @@
-import { adminAuth } from '@/lib/firebase-admin';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
 /**
  * 🔐 verifyAuth.js — Firebase Token Verification Middleware
  * 
@@ -14,7 +14,7 @@ import { adminAuth } from '@/lib/firebase-admin';
 /**
  * Verify Firebase ID token from request headers
  * @param {Request} request - Next.js API request object  
- * @returns {{ uid: string, email: string, name: string }} Decoded user info
+ * @returns {{ uid: string, email: string, name: string, role: string }} Decoded user info
  * @throws {Error} If token is missing or invalid
  */
 export async function verifyAuth(request) {
@@ -30,14 +30,36 @@ export async function verifyAuth(request) {
     const decoded = await adminAuth.verifyIdToken(token);
     const callerEmail = (decoded.email || '').toLowerCase().trim();
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    const isRootAdmin = callerEmail === 'rafiqunnabi07@gmail.com' || callerEmail === 'amarbazar27@gmail.com' || (envAdmin && callerEmail === envAdmin);
+    const isRootAdmin = 
+      callerEmail === 'rafiqunnabi07@gmail.com' ||
+      callerEmail === 'rafiqunnabi29@gmail.com' ||
+      callerEmail === 'amarbazar27@gmail.com' ||
+      callerEmail === 'contact@bdretailers.com' ||
+      (envAdmin && callerEmail === envAdmin);
+
+    let resolvedRole = isRootAdmin ? 'superadmin' : (decoded.role || 'user');
+
+    // If custom claim wasn't set, verify with users collection in database
+    if (resolvedRole === 'user' && adminDb && decoded.uid) {
+      try {
+        const uSnap = await adminDb.collection('users').doc(decoded.uid).get();
+        if (uSnap.exists) {
+          const uData = uSnap.data();
+          if (uData?.role === 'superadmin') {
+            resolvedRole = 'superadmin';
+          } else if (uData?.role === 'sub_superadmin') {
+            resolvedRole = 'sub_superadmin';
+          }
+        }
+      } catch (_) {}
+    }
 
     return {
       uid: decoded.uid,
       email: callerEmail,
       name: decoded.name || '',
       emailVerified: decoded.email_verified || false,
-      role: isRootAdmin ? 'superadmin' : (decoded.role || 'user'),
+      role: resolvedRole,
     };
   } catch (error) {
     if (error instanceof AuthError) throw error;

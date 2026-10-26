@@ -1,9 +1,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // 🔐 Firebase config — ONLY from environment variables (never hardcode!)
-// .env.local ফাইলে NEXT_PUBLIC_FIREBASE_* ভেরিয়েবলগুলো সেট করতে হবে
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "webmaa-app.firebaseapp.com",
@@ -19,9 +18,23 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.error('❌ Firebase environment variables missing! Check .env.local');
 }
 
-// Initialize Firebase
+// Initialize Firebase App
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+
+// ⚡ Client Persistent IndexedDB Cache: Serves repeat queries with ZERO network reads
+let db;
+try {
+  if (typeof window !== 'undefined') {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } else {
+    db = getFirestore(app);
+  }
+} catch {
+  db = getFirestore(app);
+}
+
 const storage = getStorage(app);
 
 export { app, db, storage };

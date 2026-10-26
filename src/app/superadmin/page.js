@@ -740,7 +740,8 @@ export default function SuperAdminPage() {
       await addRetailerInvite(newEmail);
       toast.success(`Access granted to ${newEmail}!`);
       setNewEmail('');
-      loadData();
+      const updatedInvites = await getRetailerInvites();
+      setInvites(updatedInvites);
     } catch (err) {
       toast.error(err.message || 'Invitation failed');
     }
@@ -752,7 +753,8 @@ export default function SuperAdminPage() {
     try {
       await removeRetailerInvite(inviteId);
       toast.success(`Access revoked for ${email}`);
-      loadData();
+      const updatedInvites = await getRetailerInvites();
+      setInvites(updatedInvites);
     } catch (err) {
       toast.error('Failed to revoke access');
     }

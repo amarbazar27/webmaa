@@ -6,6 +6,24 @@ const FIRESTORE_REST_BASE = `https://firestore.googleapis.com/v1/projects/${FIRE
 // ⚡ High-speed In-Memory Query Cache with TTL (Caches expensive queries & eliminates N+1 latency)
 const memoryCache = new Map();
 
+let redisClient = null;
+let redisChecked = false;
+
+async function getRedis() {
+  if (redisChecked) return redisClient;
+  redisChecked = true;
+  const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  try {
+    const { Redis } = await import(/* webpackIgnore: true */ '@upstash/redis');
+    redisClient = new Redis({ url, token });
+    return redisClient;
+  } catch {
+    return null;
+  }
+}
+
 function getCached(key, allowStale = false) {
   const item = memoryCache.get(key);
   if (!item) return null;
@@ -354,10 +372,25 @@ export async function getGlobalConfigServer() {
 }
 
 export async function getAllShopsServer() {
+  const cacheKey = 'all_shops';
   try {
-    const cacheKey = 'all_shops';
     const cached = getCached(cacheKey);
     if (cached) return cached;
+
+    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        const redisShops = await redis.get('cache:all_shops');
+        if (redisShops) {
+          const parsed = typeof redisShops === 'string' ? JSON.parse(redisShops) : redisShops;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCached(cacheKey, parsed, 300);
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
 
     let shops = [];
     if (adminDb) {
@@ -366,19 +399,44 @@ export async function getAllShopsServer() {
     } else {
       shops = await firestoreRestCollection('shops') || [];
     }
-    setCached(cacheKey, shops, 60);
+    setCached(cacheKey, shops, 300);
+
+    // Save to Redis (TTL 1800s = 30 minutes)
+    if (redis && shops.length > 0) {
+      try {
+        await redis.set('cache:all_shops', JSON.stringify(shops), { ex: 1800 });
+      } catch (_) {}
+    }
+
     return shops;
   } catch (err) {
     console.error('[getAllShopsServer] Error:', err);
+    const stale = getCached(cacheKey, true);
+    if (stale) return stale;
     return [];
   }
 }
 
 export async function getAllMarketplaceProductsServer() {
+  const cacheKey = 'all_marketplace_products';
   try {
-    const cacheKey = 'all_marketplace_products';
     const cached = getCached(cacheKey);
     if (cached) return cached;
+
+    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        const redisProducts = await redis.get('cache:marketplace_products');
+        if (redisProducts) {
+          const parsed = typeof redisProducts === 'string' ? JSON.parse(redisProducts) : redisProducts;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCached(cacheKey, parsed, 300);
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
 
     const shops = await getAllShopsServer();
     const activeShops = shops.filter(s => s.isActive !== false && s.showOnMainSite !== false);
@@ -395,10 +453,20 @@ export async function getAllMarketplaceProductsServer() {
       })
     );
     const flat = productArrays.flat();
-    setCached(cacheKey, flat, 120); // 120s TTL eliminates N+1 query loops
+    setCached(cacheKey, flat, 300); // 300s in-memory
+
+    // Save to Redis (TTL 1800s = 30 minutes)
+    if (redis && flat.length > 0) {
+      try {
+        await redis.set('cache:marketplace_products', JSON.stringify(flat), { ex: 1800 });
+      } catch (_) {}
+    }
+
     return flat;
   } catch (err) {
     console.error('[getAllMarketplaceProductsServer] Error:', err);
+    const stale = getCached(cacheKey, true);
+    if (stale) return stale;
     return [];
   }
 }

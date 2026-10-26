@@ -25,13 +25,31 @@ export async function GET(request) {
 
     // 1. Root Superadmin check
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    if ((envAdmin && email === envAdmin) || email === 'amarbazar27@gmail.com' || email === 'contact@bdretailers.com') {
+    const isRoot = 
+      (envAdmin && email === envAdmin) ||
+      email === 'amarbazar27@gmail.com' ||
+      email === 'rafiqunnabi07@gmail.com' ||
+      email === 'rafiqunnabi29@gmail.com' ||
+      email === 'contact@bdretailers.com';
+
+    if (isRoot) {
       if (uid) await setClaims(uid, { role: 'superadmin' });
       return NextResponse.json({ role: 'superadmin', claimsSet: true });
     }
 
     if (!adminDb) {
       return NextResponse.json({ role: 'user' });
+    }
+
+    // 1.5 Database Superadmin check (preserve superadmin assigned in users collection)
+    if (uid) {
+      try {
+        const userDoc = await adminDb.collection('users').doc(uid).get();
+        if (userDoc.exists && userDoc.data()?.role === 'superadmin') {
+          await setClaims(uid, { role: 'superadmin' });
+          return NextResponse.json({ role: 'superadmin', claimsSet: true });
+        }
+      } catch (_) {}
     }
 
     // 2. Sub-Superadmin check (runs with Admin SDK — 100% bypasses client firestore rules)
