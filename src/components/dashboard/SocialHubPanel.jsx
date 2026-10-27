@@ -1,5 +1,6 @@
 'use client';
 
+import { playWaterDropSound, playClickSound } from '@/lib/sound';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, Button } from '@/components/ui';
 import { 
@@ -335,12 +336,15 @@ export default function SocialHubPanel({ shopId }) {
                     return (
                       <button
                         key={item.id}
-                        onClick={() => setActiveTab(item.id)}
+                        onClick={() => {
+                          playWaterDropSound();
+                          setActiveTab(item.id);
+                        }}
                         className={clsx(
-                          'w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer',
+                          'w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-black transition-all text-left cursor-pointer border',
                           isActive
-                            ? 'bg-purple-600 text-white shadow-sm shadow-purple-500/20'
-                            : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
+                            ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-purple-400/40'
+                            : 'segmented-glass-box text-slate-700 hover:text-slate-950 border-slate-200/70'
                         )}
                       >
                         <div className="flex items-center gap-2.5 truncate">
@@ -1301,13 +1305,23 @@ function LeadsSection({ shopId, leads }) {
 
   const updateStatus = async (id, status) => {
     try {
-      await updateDoc(doc(db, 'shops', shopId, 'leads', id), {
-        status,
-        updatedAt: serverTimestamp()
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('লগইন প্রয়োজন');
+
+      const res = await fetch('/api/social/leads', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ shopId, leadId: id, status })
       });
-      toast.success('স্ট্যাটাস আপডেট হয়েছে');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'আপডেট ব্যর্থ');
+
+      toast.success(data.message || 'স্ট্যাটাস আপডেট হয়েছে');
     } catch (err) {
-      toast.error('আপডেট ব্যর্থ');
+      toast.error(err.message || 'আপডেট ব্যর্থ');
     }
   };
 
@@ -1318,20 +1332,31 @@ function LeadsSection({ shopId, leads }) {
     }
     setAddingLead(true);
     try {
-      await addDoc(collection(db, 'shops', shopId, 'leads'), {
-        name: newLeadName.trim(),
-        phone: newLeadPhone.trim() || 'N/A',
-        source: newLeadSource,
-        status: 'new',
-        createdAt: serverTimestamp(),
-        shopId,
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('লগইন প্রয়োজন');
+
+      const res = await fetch('/api/social/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          shopId,
+          name: newLeadName.trim(),
+          phone: newLeadPhone.trim() || 'N/A',
+          source: newLeadSource
+        })
       });
-      toast.success('নতুন লিড যুক্ত হয়েছে! 🎉');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'লিড তৈরিতে সমস্যা হয়েছে');
+
+      toast.success(data.message || 'নতুন লিড যুক্ত হয়েছে! 🎉');
       setNewLeadName('');
       setNewLeadPhone('');
       setShowAddModal(false);
     } catch (err) {
-      toast.error('লিড তৈরিতে সমস্যা হয়েছে');
+      toast.error(err.message || 'লিড তৈরিতে সমস্যা হয়েছে');
     } finally {
       setAddingLead(false);
     }

@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminDb } from '@/lib/firebase-admin';
 
-// Supported Meta scopes for Facebook Login for Business
+// Supported Meta scopes for Facebook Login for Business (Graph API v21+ compliant)
 const FACEBOOK_SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
   'pages_messaging',
   'pages_manage_posts',
-  'pages_manage_engagement'
+  'public_profile',
+  'email'
 ].join(',');
 
 function signState(payload) {
