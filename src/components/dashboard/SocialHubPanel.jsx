@@ -10,7 +10,7 @@ import {
   BarChart3, Settings, Bell, BookmarkCheck, ShoppingBag, Activity,
   Layers, Radio, BookOpen, MessageCircleQuestion, HelpCircle as HelpIcon,
   Video, DollarSign, UserCheck, MessageSquareCode, Copy, CheckCheck,
-  ChevronRight, CornerDownRight, Search, Sliders, Smartphone, Lock, Eye, Edit3
+  ChevronRight, CornerDownRight, Search, Sliders, Smartphone, Lock, Eye, EyeOff, Edit3
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
@@ -1954,6 +1954,8 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
   const [pageId, setPageId] = useState('');
   const [pageName, setPageName] = useState('');
   const [fbToken, setFbToken] = useState('');
+  const [showFbToken, setShowFbToken] = useState(false);
+  const [showWaToken, setShowWaToken] = useState(false);
   const [showManualFb, setShowManualFb] = useState(false);
   const [oauthConnecting, setOauthConnecting] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -2184,13 +2186,23 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                             Graph API Explorer <ExternalLink size={11} />
                           </a>
                         </div>
-                        <input
-                          type="password"
-                          placeholder="EAA..."
-                          value={fbToken}
-                          onChange={e => setFbToken(e.target.value)}
-                          className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none"
-                        />
+                        <div className="relative">
+                          <input
+                            type={showFbToken ? "text" : "password"}
+                            placeholder="EAA..."
+                            value={fbToken}
+                            onChange={e => setFbToken(e.target.value)}
+                            className="w-full text-xs font-mono p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-600 outline-none pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowFbToken(p => !p)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                            aria-label={showFbToken ? "টোকেন লুকান" : "টোকেন দেখুন"}
+                          >
+                            {showFbToken ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                        </div>
                         <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl space-y-1">
                           <p className="text-[11px] text-amber-950 font-bold leading-snug">
                             ⚠️ <span className="underline">পরামর্শ:</span> Graph API Explorer-এ <strong>User or Page</strong> ড্রপডাউনে আপনার <strong>Facebook Page</strong> সিলেক্ট করে টোকেন তৈরি করুন।
@@ -2307,13 +2319,23 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-700 block">WhatsApp Access Token *</label>
-                  <input
-                    type="password"
-                    placeholder="EAA..."
-                    value={waToken}
-                    onChange={e => setWaToken(e.target.value)}
-                    className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showWaToken ? "text" : "password"}
+                      placeholder="EAA..."
+                      value={waToken}
+                      onChange={e => setWaToken(e.target.value)}
+                      className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowWaToken(p => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                      aria-label={showWaToken ? "টোকেন লুকান" : "টোকেন দেখুন"}
+                    >
+                      {showWaToken ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
                 </div>
 
                 <Button

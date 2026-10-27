@@ -9,7 +9,7 @@ import { ShoppingBag, Search, X, Plus, Minus, Phone, MapPin,
   CheckCircle, Package, ArrowRight, Loader2, ShoppingCart, Edit2, ArrowUp, ArrowDown,
   User, Download, LogOut, ArrowUpDown, Bot, MessageCircle, AlertCircle, Share, Settings, Trash2,
   ChevronLeft, ChevronRight, Star, Flame, Gift, ExternalLink, Menu, Tag,
-  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle, Maximize2, Minimize2, SlidersHorizontal } from 'lucide-react';
+  Truck, ShieldCheck, Clock, PlayCircle, ImagePlus, HelpCircle, Maximize2, Minimize2, SlidersHorizontal, Eye, EyeOff } from 'lucide-react';
 import { placeOrder, getOrderSerial, getUserStreak } from '@/lib/firestore';
 import { logoutUser, loginWithGoogle } from '@/lib/auth';
 import { useAuth } from '@/context/AuthContext';
@@ -945,6 +945,7 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpTimer, setOtpTimer] = useState(0);
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [customerRegName, setCustomerRegName] = useState('');
   const [loginMode, setLoginMode] = useState('login'); // 'login' or 'signup'
@@ -4490,13 +4491,23 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   />
                   
                   {loginMode !== 'forgot' && (
-                    <input 
-                      type="password" 
-                      placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
-                      value={loginPassword}
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                    />
+                    <div className="relative">
+                      <input 
+                        type={showLoginPassword ? "text" : "password"} 
+                        placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
+                        value={loginPassword}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800 pr-11"
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(p => !p)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                        aria-label={showLoginPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                      >
+                        {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   )}
 
                   {loginMode === 'login' && (
@@ -5408,13 +5419,23 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                       />
                       
                       {loginMode !== 'forgot' && (
-                        <input 
-                          type="password" 
-                          placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
-                          value={loginPassword}
-                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800"
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                        />
+                        <div className="relative">
+                      <input 
+                        type={showLoginPassword ? "text" : "password"} 
+                        placeholder="পাসওয়ার্ড লিখুন (কমপক্ষে ৬ ডিজিট)" 
+                        value={loginPassword}
+                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:border-slate-800 pr-11"
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(p => !p)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                        aria-label={showLoginPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                      >
+                        {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                       )}
 
                       {loginMode === 'login' && (

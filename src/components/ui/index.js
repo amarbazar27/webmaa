@@ -1,3 +1,6 @@
+'use client';
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import clsx from 'clsx';
 
 export const Button = ({ 
@@ -63,7 +66,10 @@ export const Card = ({ children, className, title, subtitle, icon: Icon, footer,
 };
 
 export const Input = ({ label, placeholder, value, onChange, type = 'text', icon: Icon, error, className, required, disabled, rows }) => {
+  const [showPassword, setShowPassword] = useState(false);
   const isTextArea = rows !== undefined;
+  const isPassword = type === 'password';
+  const effectiveType = isPassword ? (showPassword ? 'text' : 'password') : type;
   const InputTag = isTextArea ? 'textarea' : 'input';
 
   return (
@@ -72,7 +78,7 @@ export const Input = ({ label, placeholder, value, onChange, type = 'text', icon
       <div className="relative group">
         {Icon && <Icon className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-purple-600 transition-colors" size={18} />}
         <InputTag
-          type={type}
+          type={effectiveType}
           required={required}
           disabled={disabled}
           placeholder={placeholder}
@@ -82,9 +88,20 @@ export const Input = ({ label, placeholder, value, onChange, type = 'text', icon
           className={clsx(
             'input-field w-full px-4 py-3 rounded-xl font-medium outline-none text-slate-900',
             Icon && 'pl-12',
+            isPassword && 'pr-11',
             error ? 'border-red-500/50 focus:border-red-500' : ''
           )}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(p => !p)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+            aria-label={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
       </div>
       {error && <p className="text-[10px] text-red-500 ml-1 font-bold italic tracking-wide">{error}</p>}
     </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { loginWithGoogle } from '@/lib/auth';
-import { Store, ShieldCheck, Zap, Globe, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { Store, ShieldCheck, Zap, Globe, ArrowRight, Loader2, Sparkles, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [globalConfig, setGlobalConfig] = useState(null);
 
   useEffect(() => {
@@ -193,14 +194,24 @@ export default function RegisterPage() {
                        
                        <div className="space-y-1">
                           <label className="text-xs font-semibold text-slate-600 ml-1">Password</label>
-                          <input 
-                             type="password" 
-                             required
-                             placeholder="••••••••"
-                             className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
-                             value={password}
-                             onChange={e => setPassword(e.target.value)}
-                          />
+                          <div className="relative">
+                           <input 
+                              type={showPassword ? "text" : "password"} 
+                              required
+                              placeholder="••••••••"
+                              className="w-full pl-5 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none focus:border-purple-600 focus:bg-white transition-all shadow-sm"
+                              value={password}
+                              onChange={e => setPassword(e.target.value)}
+                           />
+                           <button
+                              type="button"
+                              onClick={() => setShowPassword(prev => !prev)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                              aria-label={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                           >
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                           </button>
+                        </div>
                        </div>
 
                        <button 
