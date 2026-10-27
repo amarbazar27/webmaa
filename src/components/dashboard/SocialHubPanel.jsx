@@ -91,7 +91,7 @@ export default function SocialHubPanel({ shopId }) {
     try {
       const q = query(
         collection(db, 'shops', shopId, 'conversations'),
-        limit(100)
+        limit(20)
       );
       unsub = onSnapshot(q, (snap) => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -120,7 +120,7 @@ export default function SocialHubPanel({ shopId }) {
     try {
       const q = query(
         collection(db, 'shops', shopId, 'leads'),
-        limit(100)
+        limit(20)
       );
       unsub = onSnapshot(q, (snap) => {
         const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));

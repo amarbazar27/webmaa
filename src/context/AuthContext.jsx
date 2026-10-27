@@ -142,7 +142,10 @@ export function AuthProvider({ children }) {
           // Listen to own user document
           unsubUserDoc = onSnapshot(doc(db, 'users', firebaseUser.uid), (snap) => {
             if (snap.exists()) {
-              setUserData(snap.data());
+              const data = snap.data();
+              setUserData(data);
+              // Store latest user data for role checks (avoids extra getDoc reads)
+              latestUserData = data;
             }
           });
 
@@ -150,15 +153,16 @@ export function AuthProvider({ children }) {
           const currentEmail = firebaseUser.email?.toLowerCase();
           const role = result?.userData?.role;
           const isOwnerOrAdmin = role === 'retailer' || role === 'superadmin' || role === 'sub_superadmin';
+          let latestUserData = result?.userData || null;
           if (currentEmail && !isOwnerOrAdmin) {
             let unsubStaffOnly = null;
             let unsubAdminOnly = null;
 
             const checkAndUpdateRole = async (staffDocs, adminDocs) => {
-              import('firebase/firestore').then(async ({ updateDoc, getDoc }) => {
+              import('firebase/firestore').then(async ({ updateDoc }) => {
                 const userRef = doc(db, 'users', firebaseUser.uid);
-                const userSnap = await getDoc(userRef);
-                const data = userSnap.data();
+                // Use cached userData from onSnapshot instead of extra getDoc read
+                const data = latestUserData;
 
                 if (data?.role === 'retailer' || data?.role === 'superadmin' || data?.role === 'sub_superadmin') {
                   return;

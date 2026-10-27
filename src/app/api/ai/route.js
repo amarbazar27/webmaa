@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getGlobalConfig, getShop } from '@/lib/firestore';
+import { adminDb } from '@/lib/firebase-admin';
+
+// Server-side helpers using Admin SDK (avoids client-side Firestore reads in API routes)
+async function getShopAdmin(shopId) {
+  if (!shopId) return null;
+  const snap = await adminDb.collection('shops').doc(shopId).get();
+  return snap.exists ? { id: snap.id, ...snap.data() } : null;
+}
+
+async function getGlobalConfigAdmin() {
+  const snap = await adminDb.collection('config').doc('global').get();
+  return snap.exists ? snap.data() : {};
+}
 
 import { createRateLimiter } from '@/lib/rate-limit';
 import { aiCache } from '@/lib/ai-cache';
@@ -68,7 +80,7 @@ export async function POST(req) {
 
     // 1. Try shop custom key
     if (shopId) {
-      const shop = await getShop(shopId);
+      const shop = await getShopAdmin(shopId);
       const shopKey = shop?.aiConfig?.apiKey?.trim();
       if (isValidApiKey(shopKey)) {
         keysToTry.push({ key: shopKey, source: `Shop Custom Key (${shopId})` });
@@ -76,7 +88,7 @@ export async function POST(req) {
     }
 
     // 2. Try global settings key second
-    const globalConfig = await getGlobalConfig();
+    const globalConfig = await getGlobalConfigAdmin();
     const dbKey = globalConfig?.geminiApiKey?.trim();
     if (isValidApiKey(dbKey)) {
       keysToTry.push({ key: dbKey, source: 'Global Config Key' });
