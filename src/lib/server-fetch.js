@@ -404,7 +404,7 @@ export async function getAllShopsServer() {
     // Save to Redis (TTL 1800s = 30 minutes)
     if (redis && shops.length > 0) {
       try {
-        await redis.set('cache:all_shops', JSON.stringify(shops), { ex: 1800 });
+        await redis.set('cache:all_shops', JSON.stringify(shops), { ex: 86400 });
       } catch (_) {}
     }
 
@@ -453,7 +453,7 @@ export async function getAllMarketplaceProductsServer() {
       })
     );
     const flat = productArrays.flat();
-    setCached(cacheKey, flat, 300); // 300s in-memory
+    setCached(cacheKey, flat, 3600); // 300s in-memory
 
     // Save to Redis (TTL 1800s = 30 minutes)
     if (redis && flat.length > 0) {

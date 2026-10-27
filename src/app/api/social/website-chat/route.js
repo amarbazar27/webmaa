@@ -3,6 +3,9 @@ import { adminDb, FieldValue } from '@/lib/firebase-admin';
 import { createRateLimiter } from '@/lib/rate-limit';
 
 // Security: Rate limit public chat endpoint (25 requests per minute per IP)
+// ⚡ In-memory product catalog cache for website chat
+const chatProductCache = new Map();
+
 const chatLimiter = createRateLimiter({ maxRequests: 25, windowMs: 60000, prefix: 'website_chat' });
 
 // Helper: Multi-Account Groq LPU (Llama 3.3 70B & DeepSeek R1) with Vyce AI Fallback
@@ -178,14 +181,20 @@ export async function POST(request) {
     let aiReply = null;
     if (!chatPaused) {
       // Build product catalog RAG context (Limit 25 items to stay lean and fast)
-      const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(25).get();
       let productList = '';
-      productsSnapshot.forEach(doc => {
-        const p = doc.data();
-        if (p.name && p.price) {
-          productList += `- ${p.name}: ৳${p.price}\n`;
-        }
-      });
+      const cachedProds = chatProductCache.get(shopId);
+      if (cachedProds && Date.now() < cachedProds.expiresAt) {
+        productList = cachedProds.list;
+      } else {
+        const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(25).get();
+        productsSnapshot.forEach(doc => {
+          const p = doc.data();
+          if (p.name && p.price) {
+            productList += `- ${p.name}: ৳${p.price}\n`;
+          }
+        });
+        chatProductCache.set(shopId, { list: productList, expiresAt: Date.now() + 30 * 60 * 1000 });
+      }
 
       const shopContext = `তুমি "${shopName}"-এর অফিসিয়াল ওয়েবসাইট লাইভ চ্যাট সেলস এক্সিকিউটিভ।
 

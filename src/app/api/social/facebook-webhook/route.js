@@ -19,6 +19,41 @@ export async function GET(request) {
   return new NextResponse('Forbidden', { status: 403 });
 }
 
+// ⚡ In-memory product cache for AI context (saves 30 reads per incoming message)
+const webhookProductCache = new Map();
+async function getCachedProductsForWebhook(shopId) {
+  const cached = webhookProductCache.get(shopId);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.list;
+  }
+  const productList = await getCachedProductsForWebhook(shopId);
+  webhookProductCache.set(shopId, { list: productList, expiresAt: Date.now() + 30 * 60 * 1000 });
+  return productList;
+}
+
+// Helper: Send Facebook Messenger private reply to a post comment
+async function sendFacebookCommentPrivateReply(commentId, text, pageAccessToken) {
+  try {
+    const res = await fetch('https://graph.facebook.com/v21.0/me/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipient: { comment_id: commentId },
+        message: { text },
+        access_token: pageAccessToken
+      })
+    });
+    const data = await res.json();
+    if (data.error) {
+      console.warn('[Facebook Comment Private Reply Notice]:', data.error.message);
+    }
+    return data;
+  } catch (err) {
+    console.error('[Facebook Comment Private Reply Error]:', err.message);
+    return null;
+  }
+}
+
 // Helper: Send Facebook Messenger private message
 async function sendFacebookMessage(recipientId, text, pageAccessToken) {
   try {
@@ -272,12 +307,7 @@ export async function POST(request) {
               // Generate AI reply if AI is active
               if (!conversationData.aiPaused && !shopData?.aiSettings?.globallyPaused) {
                 // Load products for RAG context
-                const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(30).get();
-                let productList = '';
-                productsSnapshot.forEach(doc => {
-                  const p = doc.data();
-                  productList += `- ${p.name || ''}: ৳${p.price || ''}\n`;
-                });
+                const productList = await getCachedProductsForWebhook(shopId);
 
                 const customPrompt = shopData.aiSettings?.customPrompt || '';
                 const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';
@@ -357,7 +387,7 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
 
                   // B. Send Private DM to the commenter
                   const privateDm = commentSettings.privateDm || 'আসসালামু আলাইকুম! আমাদের সাথে যোগাযোগ করার জন্য ধন্যবাদ। কোনো পণ্য সম্পর্কে জানতে চাইলে এখনই মেসেজ দিন।';
-                  await sendFacebookMessage(senderId, privateDm, pageAccessToken);
+                  if (commentId) { await sendFacebookCommentPrivateReply(commentId, privateDm, pageAccessToken); } else { await sendFacebookMessage(senderId, privateDm, pageAccessToken); }
 
                   // Create/Update Conversation
                   const conversationRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(senderId);
@@ -457,12 +487,7 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
 
               // Generate AI response
               if (!convData.aiPaused && !shopData?.aiSettings?.globallyPaused) {
-                const productsSnapshot = await adminDb.collection('shops').doc(shopId).collection('products').limit(30).get();
-                let productList = '';
-                productsSnapshot.forEach(doc => {
-                  const p = doc.data();
-                  productList += `- ${p.name || ''}: ৳${p.price || ''}\n`;
-                });
+                const productList = await getCachedProductsForWebhook(shopId);
 
                 const customPrompt = shopData.aiSettings?.customPrompt || '';
                 const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';

@@ -1,3 +1,5 @@
+// ⚡ In-memory sitemap cache (eliminates thousands of Firestore reads per day from search engine crawlers)
+const sitemapCacheMap = new Map();
 import { getAllMarketplaceProducts } from '@/lib/firestore';
 import { getShopByDomainServer, getProductsServer, getAllMarketplaceProductsServer } from '@/lib/server-fetch';
 
@@ -27,6 +29,16 @@ function escapeXml(unsafe) {
 
 export async function GET(request) {
   const host = request.headers.get('host') || 'bdretailers.com';
+  const cachedSitemap = sitemapCacheMap.get(host);
+  if (cachedSitemap && Date.now() < cachedSitemap.expiresAt) {
+    return new Response(cachedSitemap.xml, {
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=43200',
+      },
+    });
+  }
+
   const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
   const baseUrl = `${protocol}://${host}`;
   let xmlItems = '';
@@ -86,10 +98,11 @@ export async function GET(request) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${xmlItems}</urlset>`;
 
+  sitemapCacheMap.set(host, { xml, expiresAt: Date.now() + 6 * 60 * 60 * 1000 });
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, s-maxage=18000',
+      'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=43200',
     },
   });
 }

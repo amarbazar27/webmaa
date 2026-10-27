@@ -815,15 +815,27 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
   const toggleConversationAi = async () => {
     if (!activeConv || !shopId) return;
     try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('লগইন প্রয়োজন');
       const nextPaused = !activeConv.aiPaused;
-      await updateDoc(doc(db, 'shops', shopId, 'conversations', activeConv.id), {
-        aiPaused: nextPaused,
-        updatedAt: serverTimestamp()
+      const res = await fetch('/api/social/toggle-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          shopId,
+          conversationId: activeConv.id,
+          aiPaused: nextPaused
+        })
       });
-      toast.success(nextPaused ? 'এই চ্যাটে AI বিরতি নিয়েছে (হিউম্যান মোড ⏸️)' : 'এই চ্যাটে AI পুনরায় চালু হয়েছে 🤖');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'AI টগল করা সম্ভব হয়নি');
+      toast.success(data.message || (nextPaused ? 'AI বিরতি নিয়েছে' : 'AI চালু হয়েছে'));
       if (onRefresh) onRefresh();
     } catch (err) {
-      toast.error('AI টগল করা সম্ভব হয়নি');
+      toast.error(err.message || 'AI টগল করা সম্ভব হয়নি');
     }
   };
 
