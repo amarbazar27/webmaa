@@ -2,7 +2,8 @@ import {
   collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc,
   query, where, orderBy, serverTimestamp, onSnapshot, limit, increment, runTransaction, arrayUnion, writeBatch, getCountFromServer
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { getAuth } from 'firebase/auth';
+import { app, db } from './firebase';
 
 // ── SHOP ──────────────────────────────────────────
 const clientShopByIdCache = new Map();
@@ -1019,6 +1020,10 @@ export const updateGlobalConfig = async (data) => {
   // ⚡ Prefer server-side Admin SDK API (100% bypass of client security rules for superadmins)
   if (typeof window !== 'undefined') {
     try {
+      const auth = getAuth(app);
+      if (auth.authStateReady) {
+        await auth.authStateReady();
+      }
       const token = await auth.currentUser?.getIdToken();
       if (token) {
         const res = await fetch('/api/superadmin/config', {
@@ -1032,10 +1037,17 @@ export const updateGlobalConfig = async (data) => {
         if (res.ok) {
           const resData = await res.json();
           if (resData.success) return true;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.error('[updateGlobalConfig] Server API error:', errData);
+          throw new Error(errData.error || 'Server error updating global config');
         }
       }
     } catch (apiErr) {
-      console.warn('[updateGlobalConfig] Server API fallback to setDoc:', apiErr.message);
+      console.warn('[updateGlobalConfig] Server API error:', apiErr.message);
+      if (apiErr.message && !apiErr.message.includes('getIdToken')) {
+        throw apiErr;
+      }
     }
   }
 

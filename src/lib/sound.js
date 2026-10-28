@@ -36,7 +36,7 @@ export function toggleSoundEnabled() {
 
 /**
  * 💧 Waterfall / Fluid Water Droplet Sound (Authentic acoustic liquid bubble "টুপ" / "ডপ")
- * Louder, smooth, resonant liquid drop on button switch / tab change
+ * Rich, crystal-clear, louder resonant liquid drop on button switch / tab change
  */
 export function playWaterDropSound() {
   if (!isSoundEnabled()) return;
@@ -46,48 +46,48 @@ export function playWaterDropSound() {
   try {
     const now = ctx.currentTime;
 
-    // Primary Droplet Oscillator (fast upward fluid sweep)
+    // Primary Droplet Oscillator (resonant upward fluid bubble sweep)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     const filter1 = ctx.createBiquadFilter();
 
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(700, now);
-    osc1.frequency.exponentialRampToValueAtTime(1650, now + 0.05);
-    osc1.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+    osc1.frequency.setValueAtTime(750, now);
+    osc1.frequency.exponentialRampToValueAtTime(1850, now + 0.04);
+    osc1.frequency.exponentialRampToValueAtTime(1350, now + 0.075);
 
     filter1.type = 'bandpass';
-    filter1.frequency.setValueAtTime(1200, now);
-    filter1.Q.setValueAtTime(3.5, now);
+    filter1.frequency.setValueAtTime(1400, now);
+    filter1.Q.setValueAtTime(4.2, now);
 
     gain1.gain.setValueAtTime(0.001, now);
-    gain1.gain.linearRampToValueAtTime(0.18, now + 0.015);
-    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    gain1.gain.linearRampToValueAtTime(0.32, now + 0.012);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
 
     osc1.connect(filter1);
     filter1.connect(gain1);
     gain1.connect(ctx.destination);
 
     osc1.start(now);
-    osc1.stop(now + 0.1);
+    osc1.stop(now + 0.12);
 
-    // Secondary sub-surface acoustic ripple (resonance)
+    // Secondary sub-surface acoustic ripple (resonant hollow water pop "টুপ")
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
 
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(420, now + 0.01);
-    osc2.frequency.exponentialRampToValueAtTime(280, now + 0.07);
+    osc2.frequency.setValueAtTime(480, now + 0.006);
+    osc2.frequency.exponentialRampToValueAtTime(310, now + 0.07);
 
-    gain2.gain.setValueAtTime(0.001, now + 0.01);
-    gain2.gain.linearRampToValueAtTime(0.12, now + 0.025);
-    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    gain2.gain.setValueAtTime(0.001, now + 0.006);
+    gain2.gain.linearRampToValueAtTime(0.24, now + 0.018);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.095);
 
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
 
-    osc2.start(now + 0.01);
-    osc2.stop(now + 0.09);
+    osc2.start(now + 0.006);
+    osc2.stop(now + 0.10);
   } catch (_) {}
 }
 

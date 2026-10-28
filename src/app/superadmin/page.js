@@ -1235,7 +1235,7 @@ export default function SuperAdminPage() {
         
         {/* Left Sidebar Navigation */}
         <div className="lg:col-span-3 space-y-2 lg:sticky lg:top-24">
-          <div className="bg-white rounded-3xl border border-slate-200 p-4 shadow-sm space-y-1">
+          <div className="segmented-glass-box rounded-3xl p-4 shadow-sm space-y-2">
             <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest px-3 mb-2">
               {isSubAdmin ? 'অনুমোদিত সেটিংস' : 'সুপারএডমিন সেটিংস'}
             </p>
@@ -1244,11 +1244,11 @@ export default function SuperAdminPage() {
             {!isSubAdmin && (
               <button
                 onClick={() => setSuperadminTab('sub_superadmins')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'sub_superadmins'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-700 hover:bg-purple-50 hover:text-purple-700'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'sub_superadmins'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <ShieldCheck size={16} className="text-purple-500" />
                 <span className="flex-1 text-left">সাব-সুপারএডমিন ম্যানেজমেন্ট</span>
@@ -1263,11 +1263,11 @@ export default function SuperAdminPage() {
             {canAccess('view_marketplace') && (
               <button
                 onClick={() => setSuperadminTab('marketplace')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'marketplace'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'marketplace'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <Sparkles size={16} />
                 <span>মার্কেটপ্লেস কনফিগারেশন</span>
@@ -1277,11 +1277,11 @@ export default function SuperAdminPage() {
             {canAccess('view_live_stores') && (
               <button
                 onClick={() => setSuperadminTab('directory')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'directory'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'directory'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <Store size={16} />
                 <span>মার্চেন্ট ও স্টোর ডিরেক্টরি</span>
@@ -1291,11 +1291,11 @@ export default function SuperAdminPage() {
             {canAccess('view_customers') && (
               <button
                 onClick={() => setSuperadminTab('customers')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'customers'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'customers'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <Users size={16} />
                 <span>কাস্টমার ও ইউজার ডিরেক্টরি</span>
@@ -1305,11 +1305,11 @@ export default function SuperAdminPage() {
             {canAccess('view_inventory') && (
               <button
                 onClick={() => setSuperadminTab('inventory')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'inventory'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'inventory'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <Package size={16} />
                 <span>স্মার্ট ইনভেন্টরি ও ক্যাটালগ</span>
@@ -1319,11 +1319,11 @@ export default function SuperAdminPage() {
             {canAccess('view_broadcast') && (
               <button
                 onClick={() => setSuperadminTab('broadcast')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'broadcast'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'broadcast'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <MessageCircle size={16} />
                 <span>ব্রডকাস্ট ও মোবাইল অ্যাপ</span>
@@ -1333,11 +1333,11 @@ export default function SuperAdminPage() {
             {!isSubAdmin && (
               <button
                 onClick={() => setSuperadminTab('social_hub')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'social_hub'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'social_hub'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <Globe size={16} />
                 <span>সোশ্যাল হাব</span>
@@ -1347,11 +1347,11 @@ export default function SuperAdminPage() {
             {!isSubAdmin && (
               <button
                 onClick={() => setSuperadminTab('store_cloner')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'store_cloner'
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'store_cloner'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <Sparkles size={16} className="text-yellow-400" />
                 <span>FB পেজ থেকে ওয়েবসাইট বিল্ডার</span>
@@ -1361,11 +1361,11 @@ export default function SuperAdminPage() {
             {!isSubAdmin && (
               <button
                 onClick={() => setSuperadminTab('security')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'security'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'security'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <ShieldAlert size={16} />
                 <span>নিরাপত্তা ও অডিট লগ</span>
@@ -1375,11 +1375,11 @@ export default function SuperAdminPage() {
             {canAccess('view_subscriptions') && (
               <button
                 onClick={() => setSuperadminTab('subscriptions')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'subscriptions'
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'subscriptions'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <Crown size={16} />
                 <span>সাবস্ক্রিপশন ও বিলিং</span>
@@ -1389,11 +1389,11 @@ export default function SuperAdminPage() {
             {canAccess('view_shared_business') && (
               <button
                 onClick={() => setSuperadminTab('shared_business')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                  superadminTab === 'shared_business'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'shared_business'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <TrendingUp size={16} />
                 <span>শেয়ার্ড বিজনেস (Revenue Share)</span>
@@ -1409,11 +1409,11 @@ export default function SuperAdminPage() {
                 
                 <button
                   onClick={() => setSuperadminTab('templates_manager')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                    superadminTab === 'templates_manager'
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'templates_manager'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
                 >
                   <Palette size={16} />
                   <span>ওয়েবসাইট ডিজাইন ও টেমপ্লেট</span>
@@ -1421,11 +1421,11 @@ export default function SuperAdminPage() {
 
                 <button
                   onClick={() => setSuperadminTab('homepage_sections')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                    superadminTab === 'homepage_sections'
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'homepage_sections'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
                 >
                   <Layout size={16} />
                   <span>হোমপেজ সেকশন অন / অফ</span>
@@ -1433,11 +1433,11 @@ export default function SuperAdminPage() {
 
                 <button
                   onClick={() => setSuperadminTab('marketing_hub')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                    superadminTab === 'marketing_hub'
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'marketing_hub'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
                 >
                   <Target size={16} />
                   <span>পিক্সেল ও মার্কেটিং সেটআপ</span>
@@ -1445,11 +1445,11 @@ export default function SuperAdminPage() {
 
                 <button
                   onClick={() => setSuperadminTab('pricing_customizer')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                    superadminTab === 'pricing_customizer'
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'pricing_customizer'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
                 >
                   <DollarSign size={16} />
                   <span>প্রাইসিং প্ল্যান ও ফিচার লাইনস</span>
@@ -1457,11 +1457,11 @@ export default function SuperAdminPage() {
 
                 <button
                   onClick={() => setSuperadminTab('subscribers')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                    superadminTab === 'subscribers'
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'subscribers'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
                 >
                   <Mail size={16} />
                   <span>নিউজলেটার সাবস্ক্রাইবার্স</span>
@@ -1469,11 +1469,11 @@ export default function SuperAdminPage() {
 
                 <button
                   onClick={() => setSuperadminTab('sponsors_manager')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                    superadminTab === 'sponsors_manager'
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'sponsors_manager'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
                 >
                   <Handshake size={16} />
                   <span>স্পনসর ও পার্টনার্স</span>
@@ -1481,11 +1481,11 @@ export default function SuperAdminPage() {
 
                 <button
                   onClick={() => setSuperadminTab('faq_manager')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all ${
-                    superadminTab === 'faq_manager'
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all cursor-pointer ${
+    superadminTab === 'faq_manager'
+      ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+      : 'segmented-glass-box text-slate-700 hover:text-slate-900 hover:bg-white'
+  }`}
               >
                 <HelpCircle size={16} />
                 <span>FAQ প্রশ্নোত্তর কন্ট্রোল</span>

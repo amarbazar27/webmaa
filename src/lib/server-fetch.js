@@ -202,6 +202,21 @@ export async function getShopServer(slug) {
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
+    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        const redisShop = await redis.get(`cache:shop_slug:${slug}`);
+        if (redisShop) {
+          const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
+          if (parsed && parsed.id) {
+            setCached(cacheKey, parsed, 86400);
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
+
     let shop = null;
     if (adminDb) {
       // Admin SDK path (preferred - when env vars are set)
@@ -222,7 +237,14 @@ export async function getShopServer(slug) {
       if (!shop) shop = await firestoreRestQuery('shops', 'shopSlug', 'EQUAL', slug);
     }
 
-    if (shop) setCached(cacheKey, shop, 600); // 10 minutes cache
+    if (shop) {
+      setCached(cacheKey, shop, 86400); // 24 hours cache
+      if (redis) {
+        try {
+          await redis.set(`cache:shop_slug:${slug}`, JSON.stringify(shop), { ex: 86400 });
+        } catch (_) {}
+      }
+    }
     return shop || null;
   } catch (err) {
     console.error(`[getShopServer] Error:`, err);
@@ -246,6 +268,21 @@ export async function getShopByDomainServer(host) {
   try {
     const cached = getCached(cacheKey);
     if (cached) return cached;
+
+    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        const redisShop = await redis.get(`cache:shop_domain:${lookupHost}`);
+        if (redisShop) {
+          const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
+          if (parsed && parsed.id) {
+            setCached(cacheKey, parsed, 86400);
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
 
     let shop = null;
     if (adminDb) {
@@ -275,7 +312,12 @@ export async function getShopByDomainServer(host) {
     }
 
     if (shop) {
-      setCached(cacheKey, shop, 600); // 10 minutes cache
+      setCached(cacheKey, shop, 86400); // 24 hours cache
+      if (redis) {
+        try {
+          await redis.set(`cache:shop_domain:${lookupHost}`, JSON.stringify(shop), { ex: 86400 });
+        } catch (_) {}
+      }
     }
     return shop || null;
   } catch (err) {
@@ -334,6 +376,22 @@ export async function getProductsServer(shopId) {
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
+    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        const redisProds = await redis.get(`cache:shop_products:${shopId}`);
+        if (redisProds) {
+          const parsed = typeof redisProds === 'string' ? JSON.parse(redisProds) : redisProds;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCached(cacheKey, parsed, 86400);
+            parsed.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, 86400); });
+            return parsed;
+          }
+        }
+      } catch (_) {}
+    }
+
     let products;
     if (adminDb) {
       const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
@@ -349,6 +407,14 @@ export async function getProductsServer(shopId) {
     });
     setCached(cacheKey, products, 86400); // 24 hour cache
     products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, 86400); });
+
+    // Save to Redis (TTL 24 hours = 0 reads across serverless lambdas)
+    if (redis && products.length > 0) {
+      try {
+        await redis.set(`cache:shop_products:${shopId}`, JSON.stringify(products), { ex: 86400 });
+      } catch (_) {}
+    }
+
     return products;
   } catch (err) {
     console.error(`[getProductsServer] Error:`, err);

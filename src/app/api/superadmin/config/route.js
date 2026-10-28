@@ -30,6 +30,10 @@ export async function POST(request) {
       return val;
     }));
 
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
+    }
+
     await adminDb.collection('config').doc('global').set(cleanData, { merge: true });
 
     return NextResponse.json({
@@ -38,6 +42,6 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('[Superadmin Config API Error]:', error);
-    return NextResponse.json({ error: error.message || 'সার্ভার ত্রুটি' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'সার্ভার ত্রুটি' }, { status: error.statusCode || 500 });
   }
 }

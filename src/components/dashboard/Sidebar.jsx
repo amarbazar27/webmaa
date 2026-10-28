@@ -277,17 +277,17 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
                 href={group.href}
                 onClick={onClose}
                 className={clsx(
-                  'group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-200',
+                  'group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-black transition-all duration-200',
                   isDirectActive
-                    ? 'bg-purple-50 text-purple-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+                    : 'segmented-glass-box text-slate-700 hover:text-slate-950 hover:bg-white'
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className={clsx('transition-colors', isDirectActive ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-700')} />
+                  <Icon size={18} className={clsx('transition-colors', isDirectActive ? 'text-white' : 'text-slate-400 group-hover:text-purple-600')} />
                   <span>{translateNav(group.label)}</span>
                 </div>
-                {isDirectActive && <div className="w-1.5 h-1.5 rounded-full bg-purple-600 shadow-xs" />}
+                {isDirectActive && <div className="w-2 h-2 rounded-full bg-white shadow-xs animate-pulse" />}
               </Link>
             );
           }
@@ -299,14 +299,16 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
                 type="button"
                 onClick={() => toggleGroup(group.id)}
                 className={clsx(
-                  'w-full group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-200 cursor-pointer select-none',
-                  isChildActive || isGroupOpen
-                    ? 'bg-purple-50/70 text-purple-900'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  'w-full group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-black transition-all duration-200 cursor-pointer select-none',
+                  isChildActive
+                    ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+                    : isGroupOpen
+                      ? 'segmented-glass-box border-purple-300 text-purple-900 bg-white shadow-xs'
+                      : 'segmented-glass-box text-slate-700 hover:text-slate-950 hover:bg-white'
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className={clsx('transition-colors', (isChildActive || isGroupOpen) ? 'text-purple-600' : 'text-slate-400 group-hover:text-slate-700')} />
+                  <Icon size={18} className={clsx('transition-colors', isChildActive ? 'text-white' : isGroupOpen ? 'text-purple-600' : 'text-slate-400 group-hover:text-purple-600')} />
                   <span>{translateNav(group.label)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -316,9 +318,9 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
                     </span>
                   )}
                   {isGroupOpen ? (
-                    <ChevronDown size={15} className="text-purple-600 transition-transform duration-200" />
+                    <ChevronDown size={15} className={clsx('transition-transform duration-200', isChildActive ? 'text-white' : 'text-purple-600')} />
                   ) : (
-                    <ChevronRight size={15} className="text-slate-400 group-hover:text-slate-700 transition-transform duration-200" />
+                    <ChevronRight size={15} className={clsx('transition-transform duration-200', isChildActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-700')} />
                   )}
                 </div>
               </button>
@@ -336,16 +338,16 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
                         href={sub.href}
                         onClick={onClose}
                         className={clsx(
-                          'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150',
+                          'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150',
                           isSubActive
-                            ? 'text-purple-700 font-black bg-purple-100/60'
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                            ? 'liquid-wave-btn text-white font-black shadow-xs border-transparent'
+                            : 'segmented-glass-box text-slate-600 hover:text-slate-900 hover:bg-white'
                         )}
                       >
                         {isSubActive ? (
-                          <CircleDot size={12} className="text-purple-600 shrink-0" />
+                          <CircleDot size={12} className="text-white shrink-0" />
                         ) : (
-                          <Circle size={10} className="text-slate-300 group-hover:text-slate-500 shrink-0" />
+                          <Circle size={10} className="text-slate-300 group-hover:text-purple-500 shrink-0" />
                         )}
                         <span className="truncate">{translateNav(sub.label)}</span>
                       </Link>
@@ -366,17 +368,17 @@ export default function Sidebar({ isOpen, onClose, onOpen }) {
               href="/superadmin"
               onClick={onClose}
               className={clsx(
-                'group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black transition-all duration-200',
+                'group flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-black transition-all duration-200',
                 pathname.startsWith('/superadmin')
-                  ? 'bg-amber-50 text-amber-700'
-                  : 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'
+                  ? 'liquid-wave-btn text-white shadow-lg shadow-purple-500/25 border-transparent'
+                  : 'segmented-glass-box text-amber-700 hover:text-amber-900 hover:bg-white'
               )}
             >
               <div className="flex items-center gap-3">
-                <Crown size={18} className="text-amber-500" />
+                <Crown size={18} className={pathname.startsWith('/superadmin') ? 'text-white' : 'text-amber-500'} />
                 <span>{translateNav('Superadmin Panel')}</span>
               </div>
-              {pathname.startsWith('/superadmin') && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
+              {pathname.startsWith('/superadmin') && <div className="w-2 h-2 rounded-full bg-white shadow-xs animate-pulse" />}
             </Link>
           </>
         )}

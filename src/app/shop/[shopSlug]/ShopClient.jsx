@@ -499,6 +499,28 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const safeShopId = safeShop?.id || props.shop?.id || '';
   const [shop, setShop] = useState(safeShop);
   const [products, setProducts] = useState(initialProducts || props.products || []);
+
+  // 🛡️ High-Availability LocalStorage Cache (Prevents blank store or missing products on Firestore quota exhaustion)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !safeShopId) return;
+    const cacheKey = `bd_shop_products_${safeShopId}`;
+    if (Array.isArray(products) && products.length > 0) {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(products));
+      } catch (_) {}
+    } else if ((!products || products.length === 0)) {
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            console.log(`[ShopClient] Restored ${parsed.length} products from persistent local cache`);
+            setProducts(parsed);
+          }
+        }
+      } catch (_) {}
+    }
+  }, [safeShopId, products]);
   
   const googleMapsApiKey = shop?.googleMapsApiKey || globalConfig?.googleMapsApiKey || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   
