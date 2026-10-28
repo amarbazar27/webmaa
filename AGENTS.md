@@ -65,6 +65,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Enforce Alibaba standards: zero `var`, strict equality `===`, defensive null checking, zero unsanitized `innerHTML` or script injection vulnerabilities, and verified error boundaries.
 - Run or verify with `scripts/ocr-check.js` on code changes.
 
+# 🔒 MANDATORY NVIDIA SKILLSPECTOR REPO & SKILL SECURITY GATE
+- **Absolute Rule**: Whenever the user asks to install, clone, import, or integrate ANY third-party repository, GitHub package, skill, MCP server, or tool:
+  1. **NEVER install blindly.**
+  2. ALWAYS scan the target repo/skill first with NVIDIA SkillSpector (`uv run --directory C:\Users\missi\.gemini\tools\skillspector skillspector scan <target> --no-llm`).
+  3. Inspect the security report for malicious prompt injections, data exfiltration, webshells, backdoor credentials, destructive commands, or excessive agency.
+  4. **Only proceed if verified SAFE.** If vulnerabilities or suspicious payloads are detected, HALT immediately, explain the risks in detail in Bengali, and DO NOT install.
+- SkillSpector CLI engine is permanently maintained at `C:\Users\missi\.gemini\tools\skillspector`.
+
 # 🧠 Autonomous 280+ Agency Agents Coordination (Zero Manual Overhead)
 - The 280+ Agency Agents repository is permanently installed locally at `C:\Users\missi\.gemini\agency-agents` and `C:\Users\missi\.claude\agents`.
 - Dynamically assume the specialist persona (Frontend Developer, UI Designer, Backend Architect, Security Auditor, Growth Marketer, QA Engineer) while strictly adhering to Ponytail anti-bloat and Alibaba quality rules.

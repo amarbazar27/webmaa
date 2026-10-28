@@ -1,0 +1,11 @@
+---
+description: NVIDIA SkillSpector Pre-Installation Security Gate
+globs: *
+---
+# NVIDIA SkillSpector Security Protocol
+
+Always scan external repositories and AI agent skills before installing:
+```bash
+uv run --directory C:\Users\missi\.gemini\tools\skillspector skillspector scan <path_or_url> --no-llm
+```
+Only proceed if verified SAFE.
