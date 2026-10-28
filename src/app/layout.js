@@ -8,6 +8,7 @@ import PlatformAnalytics from '@/components/shared/PlatformAnalytics';
 import { Toaster } from 'react-hot-toast';
 import ScrollProgress from '@/components/ui/ScrollProgress';
 import AgentationInspector from '@/components/dev/AgentationInspector';
+import TactileSoundProvider from '@/components/TactileSoundProvider';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -261,6 +262,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <AuthProvider>
             <LanguageProvider>
+            <TactileSoundProvider>
               <Suspense fallback={null}>
                 <PlatformAnalytics />
               </Suspense>
@@ -273,6 +275,7 @@ export default function RootLayout({ children }) {
                   style: { marginBottom: '20px', marginLeft: '20px' } 
                 }} 
               />
+            </TactileSoundProvider>
             </LanguageProvider>
           </AuthProvider>
         </ThemeProvider>

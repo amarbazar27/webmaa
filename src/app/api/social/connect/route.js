@@ -50,8 +50,8 @@ export async function POST(request) {
     const body = await request.json();
     let { pageId, pageAccessToken, pageName, shopId } = body;
 
-    if (!pageAccessToken || !shopId) {
-      return NextResponse.json({ error: 'Page Access Token এবং Shop ID প্রয়োজন' }, { status: 400 });
+    if (!shopId) {
+      return NextResponse.json({ error: 'Shop ID প্রয়োজন' }, { status: 400 });
     }
 
     // Verify retailer owns the shop (or superadmin for main)
@@ -118,8 +118,8 @@ export async function POST(request) {
     }
 
     // ── Facebook Page Connect Handler ──────────────────────────
-    if (!pageAccessToken || !shopId) {
-      return NextResponse.json({ error: 'Page Access Token এবং Shop ID প্রয়োজন' }, { status: 400 });
+    if (!pageAccessToken) {
+      return NextResponse.json({ error: 'Page Access Token প্রয়োজন' }, { status: 400 });
     }
 
     // Intelligent Page Token Resolution:

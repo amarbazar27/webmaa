@@ -9,6 +9,7 @@ import {
   Tag, ExternalLink, ChevronRight, Eye, Sparkles, ArrowLeft, LogIn
 } from 'lucide-react';
 import { getAllMarketplaceProducts, getAllShops, subscribeGlobalConfig } from '@/lib/firestore';
+import { playWaterDropSound } from '@/lib/sound';
 import toast from 'react-hot-toast';
 import Logo from '@/components/ui/Logo';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
@@ -62,6 +63,7 @@ export default function StoreMarketplacePage() {
   const [selectedShop, setSelectedShop] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
+  const [visibleCount, setVisibleCount] = useState(20);
 
   // Modal & Cart States
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -150,9 +152,30 @@ export default function StoreMarketplacePage() {
     return ['All', ...Array.from(names)];
   }, [products]);
 
+  // ── Smart Showcase Curation (Superadmin Controlled Whitelist) ──
+  const isCurationActive = globalConfig?.showcaseCuration?.enabled === true;
+  const allowedShopsList = globalConfig?.showcaseCuration?.allowedShops || [];
+  const allowedCategoriesList = globalConfig?.showcaseCuration?.allowedCategories || [];
+  const allowedSubcategoriesList = globalConfig?.showcaseCuration?.allowedSubcategories || [];
+
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = products.filter(p => {
+      if (p.showOnMainSite === false) return false;
+      if (isCurationActive) {
+        if (allowedShopsList.length > 0) {
+          const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
+          if (!matchesShop) return false;
+        }
+        if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
+          return false;
+        }
+        if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
+          return false;
+        }
+      }
+      return true;
+    });
 
     // Shop filter
     if (selectedShop !== 'All') {
@@ -200,7 +223,12 @@ export default function StoreMarketplacePage() {
     });
 
     return result;
-  }, [products, selectedShop, selectedCategory, searchQuery, sortBy]);
+  }, [products, selectedShop, selectedCategory, searchQuery, sortBy, isCurationActive, allowedShopsList, allowedCategoriesList, allowedSubcategoriesList]);
+
+  // Paginate visible products (20 per batch)
+  const visibleProducts = useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
 
   // Cart Functions
   const handleAddToCart = (product) => {
@@ -408,7 +436,7 @@ export default function StoreMarketplacePage() {
             <div className="relative flex-1 max-w-xs bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-purple-400 rounded-xl px-3 py-2 flex items-center justify-between cursor-pointer transition-all">
               <select
                 value={selectedShop}
-                onChange={e => setSelectedShop(e.target.value)}
+                onChange={e => { playWaterDropSound(); setSelectedShop(e.target.value); setVisibleCount(20); }}
                 className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
               >
                 <option value="All">🌐 সকল স্টোর (All Stores)</option>
@@ -460,7 +488,7 @@ export default function StoreMarketplacePage() {
               return (
                 <button
                   key={cat}
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => { playWaterDropSound(); setSelectedCategory(cat); setVisibleCount(20); }}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer ${
                     active
                       ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
@@ -473,6 +501,8 @@ export default function StoreMarketplacePage() {
             })}
           </div>
         )}
+
+
 
         {/* ── 3. ALL PRODUCTS GRID ── */}
         {loading ? (
@@ -501,7 +531,7 @@ export default function StoreMarketplacePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-5">
-            {filteredProducts.map(product => {
+            {visibleProducts.map(product => {
               const storeLink = getStoreLink(product.shopSlug, product.customDomain, product.domainStatus);
               const cartItem = cart.find(c => c.productId === product.id);
 
@@ -620,6 +650,24 @@ export default function StoreMarketplacePage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── 20-Product Pagination & Load More ── */}
+        {visibleProducts.length < filteredProducts.length && (
+          <div className="flex flex-col items-center justify-center pt-8 pb-4 gap-2">
+            <button
+              onClick={() => {
+                playWaterDropSound();
+                setVisibleCount(prev => prev + 20);
+              }}
+              className="px-6 py-3 rounded-2xl text-white font-black text-xs liquid-wave-btn shadow-lg cursor-pointer flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform"
+            >
+              <Sparkles size={14} /> আরও ২০টি পণ্য দেখুন ({visibleProducts.length} / {filteredProducts.length})
+            </button>
+            <p className="text-[11px] text-slate-400 font-medium">
+              সর্বমোট {filteredProducts.length}টি পণ্যের মধ্যে {visibleProducts.length}টি প্রদর্শিত
+            </p>
           </div>
         )}
       </main>

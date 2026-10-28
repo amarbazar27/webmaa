@@ -1015,6 +1015,30 @@ export const updateGlobalConfig = async (data) => {
     }
     return val;
   }));
+
+  // ⚡ Prefer server-side Admin SDK API (100% bypass of client security rules for superadmins)
+  if (typeof window !== 'undefined') {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (token) {
+        const res = await fetch('/api/superadmin/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(clean)
+        });
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.success) return true;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('[updateGlobalConfig] Server API fallback to setDoc:', apiErr.message);
+    }
+  }
+
   return setDoc(doc(db, 'config', 'global'), clean, { merge: true });
 };
 
