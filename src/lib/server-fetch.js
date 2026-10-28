@@ -300,7 +300,7 @@ export async function getProductServer(shopId, productId) {
   if (Array.isArray(shopProducts)) {
     const found = shopProducts.find(p => p.id === productId);
     if (found) {
-      setCached(cacheKey, found, 3600);
+      setCached(cacheKey, found, 86400);
       return found;
     }
   }
@@ -313,11 +313,12 @@ export async function getProductServer(shopId, productId) {
         product = { id: docSnap.id, ...toPlainObject(docSnap.data()) };
       }
     } else {
-      product = await firestoreRestDoc(`shops/${shopId}/products/${productId}`);
+      const allProds = await firestoreRestCollection(`shops/${shopId}/products`);
+      product = (allProds || []).find(p => p.id === productId) || null;
     }
 
     if (product) {
-      setCached(cacheKey, product, 3600);
+      setCached(cacheKey, product, 86400);
     }
     return product;
   } catch (err) {
@@ -346,8 +347,8 @@ export async function getProductsServer(shopId) {
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
-    setCached(cacheKey, products, 3600); // 1 hour cache
-    products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, 3600); });
+    setCached(cacheKey, products, 86400); // 24 hour cache
+    products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, 86400); });
     return products;
   } catch (err) {
     console.error(`[getProductsServer] Error:`, err);
@@ -400,7 +401,7 @@ export async function getGlobalConfigServer() {
       const doc = await res.json();
       config = fromFirestoreRest(doc.fields) || {};
     }
-    setCached(cacheKey, config, 60);
+    setCached(cacheKey, config, 600);
     return config;
   } catch (err) {
     console.error(`[getGlobalConfigServer] Error:`, err);
@@ -422,7 +423,7 @@ export async function getAllShopsServer() {
         if (redisShops) {
           const parsed = typeof redisShops === 'string' ? JSON.parse(redisShops) : redisShops;
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setCached(cacheKey, parsed, 300);
+            setCached(cacheKey, parsed, 86400);
             return parsed;
           }
         }
@@ -436,9 +437,9 @@ export async function getAllShopsServer() {
     } else {
       shops = await firestoreRestCollection('shops') || [];
     }
-    setCached(cacheKey, shops, 300);
+    setCached(cacheKey, shops, 86400);
 
-    // Save to Redis (TTL 1800s = 30 minutes)
+    // Save to Redis (TTL 86400s = 24 hours)
     if (redis && shops.length > 0) {
       try {
         await redis.set('cache:all_shops', JSON.stringify(shops), { ex: 86400 });
@@ -468,7 +469,7 @@ export async function getAllMarketplaceProductsServer() {
         if (redisProducts) {
           const parsed = typeof redisProducts === 'string' ? JSON.parse(redisProducts) : redisProducts;
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setCached(cacheKey, parsed, 300);
+            setCached(cacheKey, parsed, 86400);
             return parsed;
           }
         }
@@ -490,12 +491,12 @@ export async function getAllMarketplaceProductsServer() {
       })
     );
     const flat = productArrays.flat();
-    setCached(cacheKey, flat, 3600); // 300s in-memory
+    setCached(cacheKey, flat, 86400); // 24 hour in-memory cache
 
     // Save to Redis (TTL 1800s = 30 minutes)
     if (redis && flat.length > 0) {
       try {
-        await redis.set('cache:marketplace_products', JSON.stringify(flat), { ex: 1800 });
+        await redis.set('cache:marketplace_products', JSON.stringify(flat), { ex: 86400 });
       } catch (_) {}
     }
 

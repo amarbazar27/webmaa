@@ -610,18 +610,13 @@ export default function SuperAdminPage() {
   const [curationSearchCat, setCurationSearchCat] = useState('');
 
   const handleToggleCuration = async () => {
-    const updated = {
-      ...globalConfig,
-      showcaseCuration: {
-        ...showcaseCuration,
-        enabled: !showcaseCuration.enabled
-      }
-    };
-    setGlobalConfig(updated);
+    const newCuration = { ...showcaseCuration, enabled: !showcaseCuration.enabled };
+    setGlobalConfig(prev => ({ ...prev, showcaseCuration: newCuration }));
     try {
-      await updateGlobalConfig(updated);
-      toast.success(updated.showcaseCuration.enabled ? 'Curation whitelisting active!' : 'Curation whitelisting disabled!');
+      await updateGlobalConfig({ showcaseCuration: newCuration });
+      toast.success(newCuration.enabled ? 'Curation whitelisting active!' : 'Curation whitelisting disabled!');
     } catch (err) {
+      console.error('[Curation Toggle]', err);
       toast.error('Failed to update curation settings');
     }
   };
@@ -631,19 +626,13 @@ export default function SuperAdminPage() {
     const newList = currentList.includes(item)
       ? currentList.filter(x => x !== item)
       : [...currentList, item];
-      
-    const updated = {
-      ...globalConfig,
-      showcaseCuration: {
-        ...showcaseCuration,
-        [type]: newList
-      }
-    };
-    setGlobalConfig(updated);
+    const newCuration = { ...showcaseCuration, [type]: newList };
+    setGlobalConfig(prev => ({ ...prev, showcaseCuration: newCuration }));
     try {
-      await updateGlobalConfig(updated);
+      await updateGlobalConfig({ showcaseCuration: newCuration });
       toast.success('Curation whitelist updated!');
     } catch (err) {
+      console.error('[Whitelist Toggle]', err);
       toast.error('Failed to update whitelist');
     }
   };
@@ -656,16 +645,10 @@ export default function SuperAdminPage() {
     } else {
       updatedList = currentList.filter(x => !itemsList.includes(x));
     }
-    const updated = {
-      ...globalConfig,
-      showcaseCuration: {
-        ...showcaseCuration,
-        [type]: updatedList
-      }
-    };
-    setGlobalConfig(updated);
+    const newCuration = { ...showcaseCuration, [type]: updatedList };
+    setGlobalConfig(prev => ({ ...prev, showcaseCuration: newCuration }));
     try {
-      await updateGlobalConfig(updated);
+      await updateGlobalConfig({ showcaseCuration: newCuration });
       toast.success(shouldSelectAll ? 'সব নির্বাচিত করা হয়েছে!' : 'সব ক্লিয়ার করা হয়েছে!');
     } catch (err) {
       toast.error('Failed to update whitelist');

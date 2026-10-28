@@ -19,7 +19,7 @@ export async function GET(req) {
 
     const cacheKey = `${shopId}_${category || 'all'}_${pageParam || '1'}_${limitParam || 'all'}`;
     const cachedEntry = productsApiCache.get(cacheKey);
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < 1000 * 60 * 15) { // 15-min cache
+    if (cachedEntry && Date.now() - cachedEntry.timestamp < 1000 * 60 * 60 * 24) { // 24-hour cache
       return NextResponse.json(cachedEntry.data, {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',

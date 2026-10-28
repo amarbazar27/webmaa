@@ -1008,7 +1008,14 @@ export const getGlobalConfig = async () => {
 };
 
 export const updateGlobalConfig = async (data) => {
-  return setDoc(doc(db, 'config', 'global'), data, { merge: true });
+  // Sanitize: strip Firestore Timestamp objects & non-serializable fields to prevent write failures
+  const clean = JSON.parse(JSON.stringify(data, (key, val) => {
+    if (val && typeof val === 'object' && (val.seconds !== undefined && val.nanoseconds !== undefined)) {
+      return new Date(val.seconds * 1000).toISOString();
+    }
+    return val;
+  }));
+  return setDoc(doc(db, 'config', 'global'), clean, { merge: true });
 };
 
 // ⚡ Multicast Shared Singleton for Global Config (prevents multiple open sockets across components)
@@ -1229,7 +1236,7 @@ export const getShopProducts = async (shopId) => {
 };
 
 export const getAllMarketplaceProducts = async () => {
-  if (clientMarketplaceCache.data && (Date.now() - clientMarketplaceCache.timestamp < 1000 * 60 * 10)) {
+  if (clientMarketplaceCache.data && (Date.now() - clientMarketplaceCache.timestamp < 1000 * 60 * 60 * 24)) {
     return clientMarketplaceCache.data;
   }
 
@@ -1239,7 +1246,7 @@ export const getAllMarketplaceProducts = async () => {
       const sessionSaved = sessionStorage.getItem('bd_marketplace_products');
       if (sessionSaved) {
         const parsed = JSON.parse(sessionSaved);
-        if (parsed.timestamp && (Date.now() - parsed.timestamp < 1000 * 60 * 10)) {
+        if (parsed.timestamp && (Date.now() - parsed.timestamp < 1000 * 60 * 60 * 24)) {
           clientMarketplaceCache.data = parsed.products;
           clientMarketplaceCache.timestamp = parsed.timestamp;
           return parsed.products;
