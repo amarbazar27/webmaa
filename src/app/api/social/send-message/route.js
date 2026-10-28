@@ -46,7 +46,7 @@ export async function POST(request) {
     let metaSent = false;
     if (pageAccessToken && platform === 'facebook') {
       try {
-        const metaRes = await fetch('https://graph.facebook.com/v21.0/me/messages', {
+        const metaRes = await fetch('https://graph.facebook.com/v26.0/me/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -71,7 +71,7 @@ export async function POST(request) {
         if (waSnap.exists) {
           const { phoneNumberId, accessToken } = waSnap.data();
           const cleanRecipient = recipientId.replace('wa_', '');
-          const waRes = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+          const waRes = await fetch(`https://graph.facebook.com/v26.0/${phoneNumberId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

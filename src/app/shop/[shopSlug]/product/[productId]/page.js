@@ -1,4 +1,4 @@
-import { getShopServer, getProductsServer } from '@/lib/server-fetch';
+import { getShopServer, getProductServer } from '@/lib/server-fetch';
 import ProductDetailClient from './ProductDetailClient';
 
 export const revalidate = 60; // Cache product page for 60 seconds (ISR)
@@ -26,8 +26,7 @@ export async function generateMetadata({ params }) {
     const shop = await getShopServer(shopSlug);
     if (!shop) return { title: 'শপ পাওয়া যায়নি' };
     
-    const products = await getProductsServer(shop.id) || [];
-    const product = products.find(p => p.id === productId);
+    const product = await getProductServer(shop.id, productId);
 
     const title = product?.name ? `${product.name} — ${shop.shopName}` : (shop?.shopName || 'পণ্য');
     const description = String(product?.description || `${shop?.shopName || 'Shop'}-এ কেনাকাটা করুন`).slice(0, 160);
@@ -88,8 +87,7 @@ export default async function ProductDetailPage({ params }) {
       if (resolvedParams?.shopSlug && resolvedParams?.productId) {
         shop = await getShopServer(resolvedParams.shopSlug);
         if (shop?.id) {
-          const products = await getProductsServer(shop.id) || [];
-          product = products.find(p => p?.id === resolvedParams.productId);
+          product = await getProductServer(shop.id, resolvedParams.productId);
         }
       }
     } catch (err) {

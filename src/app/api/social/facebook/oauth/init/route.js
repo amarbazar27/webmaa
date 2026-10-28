@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminDb } from '@/lib/firebase-admin';
 
-// Supported Meta scopes for Facebook Login for Business (Graph API v21+ compliant)
+// Supported Meta scopes for Facebook Login for Business (Graph API v26.0 compliant)
+// Note: 'email' is removed as it causes 'Invalid Scopes: email' in Business Apps
 const FACEBOOK_SCOPES = [
   'pages_show_list',
   'pages_read_engagement',
   'pages_messaging',
-  'pages_manage_posts',
-  'public_profile',
-  'email'
+  'pages_manage_posts'
 ].join(',');
 
 function signState(payload) {
@@ -46,7 +45,7 @@ export async function GET(request) {
       nonce: crypto.randomBytes(16).toString('hex')
     });
 
-    const metaAuthUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth');
+    const metaAuthUrl = new URL('https://www.facebook.com/v26.0/dialog/oauth');
     metaAuthUrl.searchParams.set('client_id', appId);
     metaAuthUrl.searchParams.set('redirect_uri', redirectUri);
     metaAuthUrl.searchParams.set('scope', FACEBOOK_SCOPES);
@@ -55,11 +54,27 @@ export async function GET(request) {
 
     // Return URL for client redirect or direct 302 redirect
     const mode = searchParams.get('mode');
+    
+    // Set HTTP-only cookie as a bulletproof secondary CSRF anchor
+    const cookieOptions = {
+      name: 'fb_oauth_shop_id',
+      value: shopId,
+      httpOnly: true,
+      secure: !host.includes('localhost'),
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7200 // 2 hours
+    };
+
     if (mode === 'json') {
-      return NextResponse.json({ authUrl: metaAuthUrl.toString() });
+      const jsonRes = NextResponse.json({ authUrl: metaAuthUrl.toString() });
+      jsonRes.cookies.set(cookieOptions);
+      return jsonRes;
     }
 
-    return NextResponse.redirect(metaAuthUrl.toString(), { status: 302 });
+    const redirectRes = NextResponse.redirect(metaAuthUrl.toString(), { status: 302 });
+    redirectRes.cookies.set(cookieOptions);
+    return redirectRes;
   } catch (error) {
     console.error('[Facebook OAuth Init Error]:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

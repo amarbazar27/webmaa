@@ -34,7 +34,7 @@ async function getCachedProductsForWebhook(shopId) {
 // Helper: Send Facebook Messenger private reply to a post comment
 async function sendFacebookCommentPrivateReply(commentId, text, pageAccessToken) {
   try {
-    const res = await fetch('https://graph.facebook.com/v21.0/me/messages', {
+    const res = await fetch('https://graph.facebook.com/v26.0/me/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -57,7 +57,7 @@ async function sendFacebookCommentPrivateReply(commentId, text, pageAccessToken)
 // Helper: Send Facebook Messenger private message
 async function sendFacebookMessage(recipientId, text, pageAccessToken) {
   try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/me/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v26.0/me/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -77,7 +77,7 @@ async function sendFacebookMessage(recipientId, text, pageAccessToken) {
 // Helper: Reply publicly to a Facebook Post Comment
 async function sendFacebookCommentReply(commentId, text, pageAccessToken) {
   try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/comments`, {
+    const res = await fetch(`https://graph.facebook.com/v26.0/${commentId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -95,7 +95,7 @@ async function sendFacebookCommentReply(commentId, text, pageAccessToken) {
 // Helper: Send message via Meta WhatsApp Business Cloud API
 async function sendWhatsAppMessage(phoneNumberId, recipientPhone, text, token) {
   try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v26.0/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

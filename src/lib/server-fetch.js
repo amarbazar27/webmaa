@@ -290,6 +290,42 @@ export async function getShopByDomainServer(host) {
   }
 }
 
+export async function getProductServer(shopId, productId) {
+  if (!shopId || !productId) return null;
+  const cacheKey = `product_${shopId}_${productId}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const shopProducts = getCached(`products_${shopId}`);
+  if (Array.isArray(shopProducts)) {
+    const found = shopProducts.find(p => p.id === productId);
+    if (found) {
+      setCached(cacheKey, found, 3600);
+      return found;
+    }
+  }
+
+  try {
+    let product = null;
+    if (adminDb) {
+      const docSnap = await adminDb.collection('shops').doc(shopId).collection('products').doc(productId).get();
+      if (docSnap.exists) {
+        product = { id: docSnap.id, ...toPlainObject(docSnap.data()) };
+      }
+    } else {
+      product = await firestoreRestDoc(`shops/${shopId}/products/${productId}`);
+    }
+
+    if (product) {
+      setCached(cacheKey, product, 3600);
+    }
+    return product;
+  } catch (err) {
+    console.error('[getProductServer] Error:', err);
+    return getCached(cacheKey, true) || null;
+  }
+}
+
 export async function getProductsServer(shopId) {
   if (!shopId) return [];
   const cacheKey = `products_${shopId}`;
@@ -310,7 +346,8 @@ export async function getProductsServer(shopId) {
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
-    setCached(cacheKey, products, 300); // 5 minutes cache
+    setCached(cacheKey, products, 3600); // 1 hour cache
+    products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, 3600); });
     return products;
   } catch (err) {
     console.error(`[getProductsServer] Error:`, err);

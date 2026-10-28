@@ -2,22 +2,32 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminDb } from '@/lib/firebase-admin';
 
-function verifyState(stateStr) {
+function verifyState(stateStr, cookieShopId) {
   try {
+    if (!stateStr) return cookieShopId ? { shopId: cookieShopId } : null;
     const secret = process.env.FACEBOOK_APP_SECRET || 'bdretailers-fb-state-secret-2026';
     const decoded = JSON.parse(Buffer.from(stateStr, 'base64url').toString('utf-8'));
-    const { payload, hmac } = decoded;
+    const { payload, hmac } = decoded || {};
+    if (!payload?.shopId) return cookieShopId ? { shopId: cookieShopId } : null;
+
     const expected = crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
     
+    // Primary check: HMAC match and within 2-hour validity window
     if (crypto.timingSafeEqual(Buffer.from(hmac, 'hex'), Buffer.from(expected, 'hex'))) {
-      // 15-minute validity check
-      if (Date.now() - payload.timestamp < 15 * 60 * 1000) {
+      if (Date.now() - payload.timestamp < 2 * 60 * 60 * 1000) {
         return payload;
       }
     }
+
+    // Secondary fallback: Match with HttpOnly secure cookie
+    if (cookieShopId && cookieShopId === payload.shopId) {
+      console.warn('[Facebook OAuth] State HMAC drift recovered via secure cookie for shopId:', cookieShopId);
+      return payload;
+    }
+
     return null;
   } catch (err) {
-    return null;
+    return cookieShopId ? { shopId: cookieShopId } : null;
   }
 }
 
@@ -32,18 +42,26 @@ export async function GET(request) {
   const proto = host.includes('localhost') ? 'http' : 'https';
   const dashboardBase = `${proto}://${host}/dashboard/social-hub`;
 
+  // Read secondary secure cookie anchor
+  const cookieShopId = request.cookies.get('fb_oauth_shop_id')?.value || '';
+
   // Verify CSRF state token
-  const statePayload = stateStr ? verifyState(stateStr) : null;
-  const shopId = statePayload?.shopId || '';
+  const statePayload = verifyState(stateStr, cookieShopId);
+  const shopId = statePayload?.shopId || cookieShopId || '';
+
+  const cleanCookie = (response) => {
+    response.cookies.delete('fb_oauth_shop_id');
+    return response;
+  };
 
   if (!shopId) {
-    return NextResponse.redirect(`${dashboardBase}?error=${encodeURIComponent('অবৈধ বা মেয়াদোত্তীর্ণ সেশন (Invalid CSRF State)')}`, { status: 302 });
+    return cleanCookie(NextResponse.redirect(`${dashboardBase}?error=${encodeURIComponent('অবৈধ বা মেয়াদোত্তীর্ণ সেশন (Invalid CSRF State)')}`, { status: 302 }));
   }
 
   // Handle Meta authorization cancellations or errors
   if (errorParam || !code) {
     const msg = errorDescription || 'ফেসবুক অনুমোদন বাতিল করা হয়েছে';
-    return NextResponse.redirect(`${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent(msg)}`, { status: 302 });
+    return cleanCookie(NextResponse.redirect(`${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent(msg)}`, { status: 302 }));
   }
 
   const appId = process.env.FACEBOOK_APP_ID;
@@ -51,12 +69,12 @@ export async function GET(request) {
   const redirectUri = `${proto}://${host}/api/social/facebook/oauth/callback`;
 
   if (!appId || !appSecret) {
-    return NextResponse.redirect(`${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent('Meta App ID বা Secret কনফিগার করা নেই')}`, { status: 302 });
+    return cleanCookie(NextResponse.redirect(`${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent('Meta App ID বা Secret কনফিগার করা নেই')}`, { status: 302 }));
   }
 
   try {
-    // 1. Exchange code for short-lived User Access Token
-    const tokenUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token');
+    // 1. Exchange code for short-lived User Access Token (Graph API v26.0)
+    const tokenUrl = new URL('https://graph.facebook.com/v26.0/oauth/access_token');
     tokenUrl.searchParams.set('client_id', appId);
     tokenUrl.searchParams.set('redirect_uri', redirectUri);
     tokenUrl.searchParams.set('client_secret', appSecret);
@@ -67,15 +85,15 @@ export async function GET(request) {
 
     if (tokenData.error || !tokenData.access_token) {
       const errMsg = tokenData.error?.message || 'টোকেন রূপান্তর ব্যর্থ হয়েছে';
-      return NextResponse.redirect(`${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent(errMsg)}`, { status: 302 });
+      return cleanCookie(NextResponse.redirect(`${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent(errMsg)}`, { status: 302 }));
     }
 
     const shortLivedUserToken = tokenData.access_token;
 
-    // 2. Exchange short-lived token for long-lived User Token (60-day token)
+    // 2. Exchange short-lived token for long-lived User Token (60-day token, Graph API v26.0)
     let longLivedUserToken = shortLivedUserToken;
     try {
-      const exchangeUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token');
+      const exchangeUrl = new URL('https://graph.facebook.com/v26.0/oauth/access_token');
       exchangeUrl.searchParams.set('grant_type', 'fb_exchange_token');
       exchangeUrl.searchParams.set('client_id', appId);
       exchangeUrl.searchParams.set('client_secret', appSecret);
@@ -90,17 +108,17 @@ export async function GET(request) {
       console.warn('[Facebook OAuth] Long-lived token exchange warning:', exErr.message);
     }
 
-    // 3. Fetch managed Facebook Pages with their Page Access Tokens
+    // 3. Fetch managed Facebook Pages with their Page Access Tokens (Graph API v26.0)
     // In Meta Graph API, Page Tokens obtained from a long-lived User Token NEVER expire
-    const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${longLivedUserToken}`;
+    const accountsUrl = `https://graph.facebook.com/v26.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${longLivedUserToken}`;
     const accountsRes = await fetch(accountsUrl);
     const accountsData = await accountsRes.json();
 
     if (accountsData.error || !accountsData.data || !Array.isArray(accountsData.data) || accountsData.data.length === 0) {
-      return NextResponse.redirect(
+      return cleanCookie(NextResponse.redirect(
         `${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent('আপনার অ্যাকাউন্টে কোনো অনুমোদিত ফেসবুক পেজ পাওয়া যায়নি। দয়া করে পেজ তৈরি করে পুনরায় চেষ্টা করুন।')}`,
         { status: 302 }
-      );
+      ));
     }
 
     // 4. Retrieve shop details to match page name if possible
@@ -121,18 +139,18 @@ export async function GET(request) {
     const pageAccessToken = matchedPage.access_token;
 
     if (!pageAccessToken) {
-      return NextResponse.redirect(
+      return cleanCookie(NextResponse.redirect(
         `${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent('পেজ এক্সেস টোকেন পাওয়া যায়নি। আপনার পেজে প্রয়োজনীয় অ্যাডমিন অধিকার আছে কি না যাচাই করুন।')}`,
         { status: 302 }
-      );
+      ));
     }
 
-    // 5. Automatically subscribe the Facebook Page to Webhooks
+    // 5. Automatically subscribe the Facebook Page to Webhooks (All 5 fields in Graph API v26.0)
     let webhookSubscribed = false;
     let webhookWarning = null;
     try {
       const subRes = await fetch(
-        `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,feed&access_token=${pageAccessToken}`,
+        `https://graph.facebook.com/v26.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,feed,message_deliveries,message_reads&access_token=${pageAccessToken}`,
         { method: 'POST' }
       );
       const subData = await subRes.json();
@@ -162,15 +180,15 @@ export async function GET(request) {
     await adminDb.collection('social_connections').doc(pageId).set(connectionPayload, { merge: true });
     await adminDb.collection('shops').doc(shopId).collection('socialConnections').doc('facebook').set(connectionPayload, { merge: true });
 
-    return NextResponse.redirect(
+    return cleanCookie(NextResponse.redirect(
       `${dashboardBase}?shopId=${shopId}&connected=facebook&pageName=${encodeURIComponent(pageName)}`,
       { status: 302 }
-    );
+    ));
   } catch (err) {
     console.error('[Facebook OAuth Callback Error]:', err);
-    return NextResponse.redirect(
+    return cleanCookie(NextResponse.redirect(
       `${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent(err.message || 'কানেকশন প্রক্রিয়াকরণে সমস্যা হয়েছে')}`,
       { status: 302 }
-    );
+    ));
   }
 }

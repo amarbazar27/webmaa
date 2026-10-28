@@ -1,11 +1,9 @@
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-// ═══════════════════════════════════════════════════════════════
-// 🛍️ PRODUCTS API — Public product listing
-// GET ?shopId=xxx                → All products for a shop
-// GET ?shopId=xxx&category=xxx   → Filtered by category
-// ═══════════════════════════════════════════════════════════════
+
+// ⚡ High-speed in-memory cache to prevent Firestore read burning
+const productsApiCache = new Map();
 
 export async function GET(req) {
   try {
@@ -17,6 +15,17 @@ export async function GET(req) {
 
     if (!shopId) {
       return NextResponse.json({ error: 'shopId required' }, { status: 400 });
+    }
+
+    const cacheKey = `${shopId}_${category || 'all'}_${pageParam || '1'}_${limitParam || 'all'}`;
+    const cachedEntry = productsApiCache.get(cacheKey);
+    if (cachedEntry && Date.now() - cachedEntry.timestamp < 1000 * 60 * 15) { // 15-min cache
+      return NextResponse.json(cachedEntry.data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+          'X-Cache-Status': 'HIT'
+        }
+      });
     }
 
     let q = adminDb.collection('shops').doc(shopId).collection('products');
@@ -53,12 +62,24 @@ export async function GET(req) {
       };
     });
 
-    return NextResponse.json({
+    const responsePayload = {
       products,
       page,
       limit: limit || products.length,
       count: products.length,
-    }, {
+    };
+
+    productsApiCache.set(cacheKey, {
+      data: responsePayload,
+      timestamp: Date.now()
+    });
+
+    if (productsApiCache.size > 200) {
+      const oldestKey = productsApiCache.keys().next().value;
+      productsApiCache.delete(oldestKey);
+    }
+
+    return NextResponse.json(responsePayload, {
       headers: {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       }
