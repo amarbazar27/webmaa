@@ -280,6 +280,31 @@ export async function GET(request) {
       });
     });
 
+    // 🛡️ Double-check shop-scoped subcollection (ensures OAuth & Manual connections always appear)
+    try {
+      const subSnap = await adminDb.collection('shops').doc(effectiveShopId).collection('socialConnections').get();
+      subSnap.forEach(subDoc => {
+        const subData = subDoc.data();
+        const existingIdx = connections.findIndex(c => c.platform === (subData.platform || subDoc.id));
+        const item = {
+          id: subDoc.id,
+          pageId: subData.pageId || subDoc.id,
+          pageName: subData.pageName || 'Connected Page',
+          platform: subData.platform || subDoc.id || 'facebook',
+          phoneNumberId: subData.phoneNumberId || null,
+          displayPhoneNumber: subData.displayPhoneNumber || null,
+          wabaId: subData.wabaId || null,
+          webhookSubscribed: subData.webhookSubscribed || false,
+          connectedAt: subData.connectedAt,
+        };
+        if (existingIdx >= 0) {
+          connections[existingIdx] = { ...connections[existingIdx], ...item };
+        } else {
+          connections.push(item);
+        }
+      });
+    } catch (_) {}
+
     return NextResponse.json({ connections });
   } catch (error) {
     if (error instanceof AuthError) {

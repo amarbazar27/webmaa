@@ -604,36 +604,39 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
 
   useEffect(() => { const t = setTimeout(() => setShowSplash(false), 1500); return () => clearTimeout(t); }, []);
 
+  // 🛡️ Zero-read client mount: Products are already loaded via SSR initialProducts.
+  // Never perform raw getShopProducts on mount to protect Firestore free quota (50k/day limit).
   useEffect(() => {
     if (!safeShopId) return;
-    // Sync fresh shop and products configurations from Firestore to bypass Next.js ISR cache latency
-    import('@/lib/firestore').then(async (lib) => {
+    // Only fetch if products are completely missing from both SSR and localStorage
+    if ((!products || products.length === 0)) {
+      const cacheKey = `bd_shop_products_${safeShopId}`;
+      let hasLocal = false;
       try {
-        const freshShop = await lib.getShop(safeShopId);
-        if (freshShop) {
-          setShop(prev => ({
-            ...prev,
-            enableCommonOrder: freshShop.enableCommonOrder ?? prev.enableCommonOrder,
-            couponCode: freshShop.couponCode ?? prev.couponCode,
-            couponDiscount: freshShop.couponDiscount ?? prev.couponDiscount,
-            shopName: freshShop.shopName ?? prev.shopName,
-            logoUrl: freshShop.logoUrl ?? prev.logoUrl,
-            slogan: freshShop.slogan ?? prev.slogan,
-            templateId: freshShop.templateId ?? prev.templateId,
-            themeOverrides: freshShop.themeOverrides ?? prev.themeOverrides,
-            designPreset: freshShop.designPreset ?? prev.designPreset,
-            designOverrides: freshShop.designOverrides ?? prev.designOverrides,
-          }));
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProducts(parsed);
+            hasLocal = true;
+          }
         }
-        const freshProducts = await lib.getShopProducts(safeShopId);
-        if (freshProducts && freshProducts.length > 0) {
-          setProducts(freshProducts);
-        }
-      } catch (err) {
-        console.error('Failed to sync real-time configurations:', err);
+      } catch (_) {}
+
+      if (!hasLocal) {
+        // Fallback to cached API route (uses Edge / Redis cache, 0 Firestore reads)
+        fetch(`/api/products?shopId=${safeShopId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data?.products && Array.isArray(data.products) && data.products.length > 0) {
+              setProducts(data.products);
+              try { localStorage.setItem(cacheKey, JSON.stringify(data.products)); } catch (_) {}
+            }
+          })
+          .catch(err => console.warn('[ShopClient] Products fallback note:', err.message));
       }
-    });
-  }, [safeShopId]);
+    }
+  }, [safeShopId, products?.length]);
 
   // ── Real-time template & theme listener — triggers instant UI update when retailer applies a template ──
   useEffect(() => {

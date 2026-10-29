@@ -454,10 +454,16 @@ export default function SettingsPage() {
       });
       setFeaturedProductIds(data?.featuredProductIds || []);
       
-      // Load products for featured selection
-      getShopProducts(activeShopId).then(prods => {
-        setShopProducts(prods || []);
-      }).catch(err => console.error("Error loading products for settings:", err));
+      // Load products for featured selection (using cached API to prevent Firestore read burn)
+      fetch(`/api/products?shopId=${activeShopId}`)
+        .then(res => res.json())
+        .then(resData => { setShopProducts(resData?.products || []); })
+        .catch(() => {
+          try {
+            const cached = localStorage.getItem(`bd_shop_products_${activeShopId}`);
+            if (cached) setShopProducts(JSON.parse(cached));
+          } catch (_) {}
+        });
 
       setFaqItems(data?.faqItems || []);
       setAppConfig({

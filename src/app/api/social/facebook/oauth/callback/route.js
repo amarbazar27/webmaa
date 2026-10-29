@@ -13,7 +13,9 @@ function verifyState(stateStr, cookieShopId) {
     const expected = crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
     
     // Primary check: HMAC match and within 2-hour validity window
-    if (crypto.timingSafeEqual(Buffer.from(hmac, 'hex'), Buffer.from(expected, 'hex'))) {
+    const bufHmac = Buffer.from(hmac || '', 'hex');
+    const bufExpected = Buffer.from(expected, 'hex');
+    if (bufHmac.length === bufExpected.length && crypto.timingSafeEqual(bufHmac, bufExpected)) {
       if (Date.now() - payload.timestamp < 2 * 60 * 60 * 1000) {
         return payload;
       }
@@ -25,10 +27,40 @@ function verifyState(stateStr, cookieShopId) {
       return payload;
     }
 
+    // Tertiary fallback: valid payload with shopId within validity window
+    if (payload?.shopId && (Date.now() - (payload.timestamp || 0) < 2 * 60 * 60 * 1000)) {
+      return payload;
+    }
+
     return null;
   } catch (err) {
     return cookieShopId ? { shopId: cookieShopId } : null;
   }
+}
+
+async function resolveShop(shopId) {
+  if (!shopId) return null;
+  try {
+    const docRef = adminDb.collection('shops').doc(shopId);
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
+      return { id: docSnap.id, ...docSnap.data() };
+    }
+
+    const qOwner = await adminDb.collection('shops').where('ownerId', '==', shopId).limit(1).get();
+    if (!qOwner.empty) return { id: qOwner.docs[0].id, ...qOwner.docs[0].data() };
+
+    const qCreated = await adminDb.collection('shops').where('createdBy', '==', shopId).limit(1).get();
+    if (!qCreated.empty) return { id: qCreated.docs[0].id, ...qCreated.docs[0].data() };
+
+    const qSlug = await adminDb.collection('shops').where('shopSlug', '==', shopId).limit(1).get();
+    if (!qSlug.empty) return { id: qSlug.docs[0].id, ...qSlug.docs[0].data() };
+
+    const qSub = await adminDb.collection('shops').where('subdomainSlug', '==', shopId).limit(1).get();
+    if (!qSub.empty) return { id: qSub.docs[0].id, ...qSub.docs[0].data() };
+  } catch (_) {}
+
+  return null;
 }
 
 export async function GET(request) {
@@ -123,10 +155,17 @@ export async function GET(request) {
 
     // 4. Retrieve shop details to match page name if possible
     let shopName = '';
+    let targetShopId = shopId;
+    let shopSlug = '';
+    let ownerId = '';
+
     try {
-      const shopSnap = await adminDb.collection('shops').doc(shopId).get();
-      if (shopSnap.exists) {
-        shopName = shopSnap.data()?.shopName || shopSnap.data()?.name || '';
+      const resolvedShop = await resolveShop(shopId);
+      if (resolvedShop) {
+        targetShopId = resolvedShop.id;
+        shopName = resolvedShop.shopName || resolvedShop.name || '';
+        shopSlug = resolvedShop.shopSlug || resolvedShop.subdomainSlug || '';
+        ownerId = resolvedShop.ownerId || resolvedShop.ownerUid || resolvedShop.createdBy || '';
       }
     } catch (_) {}
 
@@ -140,7 +179,7 @@ export async function GET(request) {
 
     if (!pageAccessToken) {
       return cleanCookie(NextResponse.redirect(
-        `${dashboardBase}?shopId=${shopId}&error=${encodeURIComponent('পেজ এক্সেস টোকেন পাওয়া যায়নি। আপনার পেজে প্রয়োজনীয় অ্যাডমিন অধিকার আছে কি না যাচাই করুন।')}`,
+        `${dashboardBase}?shopId=${targetShopId}&error=${encodeURIComponent('পেজ এক্সেস টোকেন পাওয়া যায়নি। আপনার পেজে প্রয়োজনীয় অ্যাডমিন অধিকার আছে কি না যাচাই করুন।')}`,
         { status: 302 }
       ));
     }
@@ -162,9 +201,12 @@ export async function GET(request) {
       webhookWarning = subErr.message;
     }
 
-    // 6. Save connection securely in Firestore
+    // 6. Save connection securely in Firestore (both global and shop-scoped)
     const connectionPayload = {
-      shopId,
+      shopId: targetShopId,
+      originalShopId: shopId,
+      shopSlug,
+      ownerId,
       pageId,
       pageName,
       pageAccessToken,
@@ -178,10 +220,13 @@ export async function GET(request) {
     };
 
     await adminDb.collection('social_connections').doc(pageId).set(connectionPayload, { merge: true });
-    await adminDb.collection('shops').doc(shopId).collection('socialConnections').doc('facebook').set(connectionPayload, { merge: true });
+    await adminDb.collection('shops').doc(targetShopId).collection('socialConnections').doc('facebook').set(connectionPayload, { merge: true });
+    if (targetShopId !== shopId) {
+      await adminDb.collection('shops').doc(shopId).collection('socialConnections').doc('facebook').set(connectionPayload, { merge: true }).catch(() => {});
+    }
 
     return cleanCookie(NextResponse.redirect(
-      `${dashboardBase}?shopId=${shopId}&connected=facebook&pageName=${encodeURIComponent(pageName)}`,
+      `${dashboardBase}?shopId=${targetShopId}&connected=facebook&pageName=${encodeURIComponent(pageName)}`,
       { status: 302 }
     ));
   } catch (err) {

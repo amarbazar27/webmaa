@@ -31,15 +31,24 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Lookup social connection pageAccessToken
-    const connectionsSnap = await adminDb.collection('social_connections')
-      .where('shopId', '==', shopId)
-      .limit(5)
-      .get();
-
+    // Lookup social connection pageAccessToken (direct from shop subcollection or indexed query)
     let pageAccessToken = null;
-    if (!connectionsSnap.empty) {
-      pageAccessToken = connectionsSnap.docs[0].data().pageAccessToken;
+    try {
+      const fbSnap = await adminDb.collection('shops').doc(shopId).collection('socialConnections').doc('facebook').get();
+      if (fbSnap.exists && fbSnap.data()?.pageAccessToken) {
+        pageAccessToken = fbSnap.data().pageAccessToken;
+      }
+    } catch (_) {}
+
+    if (!pageAccessToken) {
+      const connectionsSnap = await adminDb.collection('social_connections')
+        .where('shopId', '==', shopId)
+        .where('platform', '==', 'facebook')
+        .limit(1)
+        .get();
+      if (!connectionsSnap.empty) {
+        pageAccessToken = connectionsSnap.docs[0].data().pageAccessToken;
+      }
     }
 
     // If access token found, dispatch via Meta Graph API

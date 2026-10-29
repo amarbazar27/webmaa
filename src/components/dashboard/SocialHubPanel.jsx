@@ -136,13 +136,23 @@ export default function SocialHubPanel({ shopId }) {
     return () => unsub();
   }, [shopId]);
 
-  // Fetch social connections
-  const fetchConnections = async () => {
+  // Fetch social connections with automatic auth token hydration & retries
+  const fetchConnections = async (retryCount = 0) => {
     if (!shopId) return;
     try {
       setLoadingConnections(true);
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) return;
+      let token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        // Wait up to 800ms for Firebase Auth to hydrate from IndexedDB
+        await new Promise(r => setTimeout(r, 800));
+        token = await auth.currentUser?.getIdToken();
+      }
+      if (!token) {
+        if (retryCount < 3) {
+          setTimeout(() => fetchConnections(retryCount + 1), 1200);
+        }
+        return;
+      }
       const res = await fetch(`/api/social/connect?shopId=${shopId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -159,6 +169,12 @@ export default function SocialHubPanel({ shopId }) {
 
   useEffect(() => {
     fetchConnections();
+    const unsub = auth.onAuthStateChanged((u) => {
+      if (u) {
+        fetchConnections();
+      }
+    });
+    return () => unsub();
   }, [shopId]);
 
   useEffect(() => {
@@ -167,6 +183,7 @@ export default function SocialHubPanel({ shopId }) {
       if (params.get('connected') === 'facebook') {
         const pageName = params.get('pageName') || 'Facebook Page';
         toast.success(`🎉 ${pageName} সফলভাবে যুক্ত হয়েছে!`);
+        fetchConnections();
         const cleanUrl = window.location.pathname + (shopId ? `?shopId=${shopId}` : '');
         window.history.replaceState({}, document.title, cleanUrl);
       } else if (params.get('error')) {
