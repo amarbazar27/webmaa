@@ -318,7 +318,7 @@ export async function getShopByDomainServer(host) {
       setCached(cacheKey, shop, 86400); // 24 hours cache
       if (redis) {
         try {
-          await redis.set(`cache:shop_domain:${lookupHost}`, JSON.stringify(shop), { ex: 86400 });
+          await redis.set(`cache:shop_domain:${lookupHost}`, JSON.stringify(shop), { ex: 300 });
         } catch (_) {}
       }
     }
@@ -511,7 +511,7 @@ export async function getAllShopsServer() {
     // Save to Redis (TTL 86400s = 24 hours)
     if (redis && shops.length > 0) {
       try {
-        await redis.set('cache:all_shops', JSON.stringify(shops), { ex: 86400 });
+        await redis.set('cache:all_shops', JSON.stringify(shops), { ex: 300 });
       } catch (_) {}
     }
 
@@ -560,12 +560,12 @@ export async function getAllMarketplaceProductsServer() {
       })
     );
     const flat = productArrays.flat();
-    setCached(cacheKey, flat, 86400); // 24 hour in-memory cache
+    setCached(cacheKey, flat, 300); // 24 hour in-memory cache
 
     // Save to Redis (TTL 1800s = 30 minutes)
     if (redis && flat.length > 0) {
       try {
-        await redis.set('cache:marketplace_products', JSON.stringify(flat), { ex: 86400 });
+        await redis.set('cache:marketplace_products', JSON.stringify(flat), { ex: 300 });
       } catch (_) {}
     }
 

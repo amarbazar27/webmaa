@@ -158,10 +158,34 @@ export default function StoreMarketplacePage() {
   const allowedCategoriesList = globalConfig?.showcaseCuration?.allowedCategories || [];
   const allowedSubcategoriesList = globalConfig?.showcaseCuration?.allowedSubcategories || [];
 
+  const curatedShops = useMemo(() => {
+    return shops.filter(s => {
+      if (s.shopSlug === 'test' || s.shopName?.toLowerCase() === 'test' || s.shopSlug === 'daripallah-store' || s.shopSlug === 'webmaa-store') {
+        return false;
+      }
+      if (s.isActive === false || s.showOnMainSite === false) {
+        return false;
+      }
+      if (isCurationActive && allowedShopsList.length > 0) {
+        return allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName);
+      }
+      return true;
+    });
+  }, [shops, isCurationActive, allowedShopsList]);
+
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
+    const validShopIds = new Set(curatedShops.map(s => s.id));
+    const validShopSlugs = new Set(curatedShops.map(s => s.shopSlug || s.subdomainSlug).filter(Boolean));
+    const validShopNames = new Set(curatedShops.map(s => s.shopName).filter(Boolean));
+
     let result = products.filter(p => {
       if (p.showOnMainSite === false) return false;
+      const belongsToValidShop = (p.shopId && validShopIds.has(p.shopId)) ||
+                                 (p.shopSlug && validShopSlugs.has(p.shopSlug)) ||
+                                 (p.shopName && validShopNames.has(p.shopName));
+      if (!belongsToValidShop) return false;
+
       if (isCurationActive) {
         if (allowedShopsList.length > 0) {
           const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
@@ -343,6 +367,54 @@ export default function StoreMarketplacePage() {
       window.location.href = targetUrl;
     }, 350);
   };
+
+  const isMarketplaceDisabled = globalConfig && (globalConfig?.sections?.marketplace === false || globalConfig?.sections?.marketplaceGateway === false);
+
+  if (isMarketplaceDisabled) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-slate-100 flex flex-col justify-between">
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 px-4 sm:px-6 py-3 shadow-sm">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <Logo size="small" />
+            </Link>
+            <Link
+              href="/"
+              className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all"
+            >
+              <ArrowLeft size={14} />
+              <span>মূল সাইটে যান</span>
+            </Link>
+          </div>
+        </header>
+
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 text-center shadow-xl space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+              <Store size={32} />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white">কেন্দ্রীয় মার্কেটপ্লেস বর্তমানে বন্ধ রয়েছে</h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+              সুপারএডমিন কর্তৃক কেন্দ্রীয় মার্কেটপ্লেস স্টোর সাময়িকভাবে নিষ্ক্রিয় রাখা হয়েছে। ব্যক্তিগত স্টোরগুলো সরাসরি তাদের নির্দিষ্ট লিংকে সচল রয়েছে।
+            </p>
+            <div className="pt-2">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs shadow-lg shadow-purple-500/25 hover:scale-105 transition-all"
+              >
+                <span>হোমপেজে ফিরে যান</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <footer className="text-center py-6 text-xs text-slate-400 font-bold border-t border-slate-100 dark:border-slate-800">
+          © {new Date().getFullYear()} BD Retailers. সর্বস্বত্ব সংরক্ষিত।
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#07090E] text-slate-900 dark:text-slate-100 font-sans selection:bg-purple-600 selection:text-white pb-20">

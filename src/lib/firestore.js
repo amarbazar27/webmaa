@@ -1272,7 +1272,7 @@ export const getShopProducts = async (shopId) => {
 };
 
 export const getAllMarketplaceProducts = async () => {
-  if (clientMarketplaceCache.data && (Date.now() - clientMarketplaceCache.timestamp < 1000 * 60 * 60 * 24)) {
+  if (clientMarketplaceCache.data && (Date.now() - clientMarketplaceCache.timestamp < 1000 * 60 * 5)) {
     return clientMarketplaceCache.data;
   }
 
@@ -1282,7 +1282,7 @@ export const getAllMarketplaceProducts = async () => {
       const sessionSaved = sessionStorage.getItem('bd_marketplace_products');
       if (sessionSaved) {
         const parsed = JSON.parse(sessionSaved);
-        if (parsed.timestamp && (Date.now() - parsed.timestamp < 1000 * 60 * 60 * 24)) {
+        if (parsed.timestamp && (Date.now() - parsed.timestamp < 1000 * 60 * 5)) {
           clientMarketplaceCache.data = parsed.products;
           clientMarketplaceCache.timestamp = parsed.timestamp;
           return parsed.products;

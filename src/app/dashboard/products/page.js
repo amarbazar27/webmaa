@@ -1467,7 +1467,7 @@ export default function ProductsPage() {
                     <Sparkles size={14} className="text-indigo-600" /> REA Reverse Engineering AI Cloner:
                   </p>
                   <p className="text-[11px] text-indigo-800 leading-relaxed">
-                    প্রতিযোগী বা সাপ্লায়ারের যেকোনো একক পণ্য অথবা পুরো ই-কমার্স সাইটের লিংক দিলে REA রিভার্স ইঞ্জিনিয়ারিং ইঞ্জিন স্বয়ংক্রিয়ভাবে আসল পণ্যের নাম, দাম, ছবি, বিবরণ ও ক্যাটাগরি এক্সট্র্যাক্ট করে দোকানে যুক্ত করে দিবে (পুরো স্টোর লিংকে সর্বোচ্চ ৫,০০০ প্রোডাক্ট পর্যন্ত এক ক্লিকে আমদানি করা যাবে)!
+                    প্রতিযোগী বা সাপ্লায়ারের যেকোনো একক পণ্য, **পুরো ক্যাটাগরি / সাবক্যাটাগরি** (যেমন: themallbd.com/category/skin-care-bath) অথবা পুরো সাইটের লিংক দিলে REA হান্টার বট স্বয়ংক্রিয়ভাবে আসল পণ্যের নাম, সঠিক দাম, ছবি, বিবরণ ও ক্যাটাগরি তৈরি করে আপনার স্টোরে যুক্ত করে দিবে!
                   </p>
                 </div>
 
@@ -1477,7 +1477,7 @@ export default function ProductsPage() {
                   </label>
                   <input
                     type="url"
-                    placeholder="https://example.com/product/..."
+                    placeholder="যেমন: https://themallbd.com/category/skin-care-bath বা https://site.com/product/xyz"
                     value={cloneUrl}
                     onChange={e => setCloneUrl(e.target.value)}
                     className="w-full text-xs font-mono p-3 rounded-2xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none"

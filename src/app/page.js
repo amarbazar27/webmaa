@@ -1021,10 +1021,14 @@ export default function Home() {
   const allowedCategoriesList = globalConfig?.showcaseCuration?.allowedCategories || [];
   const allowedSubcategoriesList = globalConfig?.showcaseCuration?.allowedSubcategories || [];
 
-  // 1. Curated Shops: strictly follows whitelist if curation is active
+  // 1. Curated Shops: strictly follows whitelist if curation is active, and enforces shop visibility
   const curatedShops = useMemo(() => {
     return allShops.filter(s => {
       if (s.shopSlug === 'test' || s.shopName?.toLowerCase() === 'test' || s.shopSlug === 'daripallah-store' || s.shopSlug === 'webmaa-store') {
+        return false;
+      }
+      // Never show inactive shops or shops hidden by superadmin
+      if (s.isActive === false || s.showOnMainSite === false) {
         return false;
       }
       if (isCurationActive && allowedShopsList.length > 0) {
@@ -1034,10 +1038,20 @@ export default function Home() {
     });
   }, [allShops, isCurationActive, allowedShopsList]);
 
-  // 2. Curated Products: strictly follows whitelist if curation is active
+  // 2. Curated Products: strictly follows whitelist and verified curatedShops
   const curatedProducts = useMemo(() => {
+    const validShopIds = new Set(curatedShops.map(s => s.id));
+    const validShopSlugs = new Set(curatedShops.map(s => s.shopSlug || s.subdomainSlug).filter(Boolean));
+    const validShopNames = new Set(curatedShops.map(s => s.shopName).filter(Boolean));
+
     return products.filter(p => {
       if (p.showOnMainSite === false) return false;
+      // Shop validation: product must belong to an active, non-hidden curated shop
+      const belongsToValidShop = (p.shopId && validShopIds.has(p.shopId)) ||
+                                 (p.shopSlug && validShopSlugs.has(p.shopSlug)) ||
+                                 (p.shopName && validShopNames.has(p.shopName));
+      if (!belongsToValidShop) return false;
+
       if (isCurationActive) {
         if (allowedShopsList.length > 0) {
           const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
@@ -1052,7 +1066,7 @@ export default function Home() {
       }
       return true;
     });
-  }, [products, isCurationActive, allowedShopsList, allowedCategoriesList, allowedSubcategoriesList]);
+  }, [products, curatedShops, isCurationActive, allowedShopsList, allowedCategoriesList, allowedSubcategoriesList]);
 
   // ── Merchant-Category Filter Double Flow ──
   const uniqueShops = useMemo(() => ['All', ...Array.from(new Set(curatedProducts.map(p => p.shopName).filter(Boolean)))], [curatedProducts]);
@@ -1671,6 +1685,7 @@ export default function Home() {
       </div>
 
       {/* ── Main Marketplace Store Showcase Card (store.bdretailers.com) ── */}
+      {showMarketplaceGateway && showMarketplace && (
       <section className="relative z-20 max-w-7xl mx-auto px-3 sm:px-6 py-3">
         <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-br from-emerald-50/90 via-white to-slate-50 text-slate-900 p-5 sm:p-7 shadow-xs overflow-hidden border border-emerald-200/80">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
@@ -1700,6 +1715,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Marketplace Section ── */}
       {showMarketplace && (

@@ -364,6 +364,164 @@ async function fetchSitemapProducts(origin) {
   }
 }
 
+
+// Strategy 0B: Category & Subcategory REA Hunter Bot
+async function fetchCategoryHunterProducts(url, origin, initialHtml = '') {
+  try {
+    let html = initialHtml;
+    if (!html) {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+      if (!res.ok) return [];
+      html = await res.text();
+    }
+
+    const parsedUrl = new URL(url);
+
+    // 1. Detect Category Name from title, breadcrumb, or path
+    let catName = '';
+    const pageTitle = html.match(/<title>([^<]+)<\/title>/i)?.[1] || '';
+    if (pageTitle) {
+      const cleanTitle = pageTitle.split(/\||-|—/)[0].trim();
+      if (cleanTitle && cleanTitle.length < 50) catName = cleanTitle;
+    }
+    if (!catName) {
+      const slug = parsedUrl.pathname.split('/').filter(Boolean).pop() || '';
+      catName = slug.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // 2. Discover Product URLs
+    const productUrls = new Set();
+
+    // 2A. Check JSON-LD ItemList
+    const jsonLdBlocks = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+    for (const block of jsonLdBlocks) {
+      try {
+        const clean = block.replace(/<\/?script[^>]*>/gi, '');
+        const parsed = JSON.parse(clean);
+        const graph = parsed['@graph'] || (Array.isArray(parsed) ? parsed : [parsed]);
+        for (const node of graph) {
+          if ((node['@type'] === 'ItemList' || node['@type'] === 'CollectionPage') && Array.isArray(node.itemListElement)) {
+            for (const item of node.itemListElement) {
+              const itemUrl = item.url || item.item?.url;
+              if (itemUrl && (itemUrl.includes('/product/') || itemUrl.includes('/item/') || itemUrl.includes('/p/'))) {
+                try {
+                  productUrls.add(new URL(itemUrl, origin).href);
+                } catch (_) {}
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 2B. Anchor tags matching product URLs
+    const hrefMatches = [...html.matchAll(/href=["']([^"'#?]+(?:\/product\/|\/item\/|\/p\/|\/goods\/)[^"'#?]+)["']/gi)].map(m => m[1]);
+    for (const h of hrefMatches) {
+      try {
+        const fullUrl = new URL(h, origin).href;
+        if (!fullUrl.endsWith('/product') && !fullUrl.endsWith('/products') && !fullUrl.includes('/category/')) {
+          productUrls.add(fullUrl);
+        }
+      } catch (_) {}
+    }
+
+    // If fewer than 2 product URLs found, return empty so it can fall back to single product
+    if (productUrls.size < 2) return [];
+
+    const targetList = [...productUrls].slice(0, 150); // Hunt up to 150 products in this category
+    const results = [];
+    const CONCURRENCY = 6;
+    let currentIndex = 0;
+
+    const worker = async () => {
+      while (currentIndex < targetList.length) {
+        const pUrl = targetList[currentIndex++];
+        try {
+          const pRes = await fetch(pUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36'
+            },
+            signal: AbortSignal.timeout(8000)
+          });
+          if (!pRes.ok) continue;
+          const pHtml = await pRes.text();
+
+          // Title
+          let title = pHtml.match(/property=["']og:title["']\s+content=["']([^"']*)["']/i)?.[1] ||
+                      pHtml.match(/content=["']([^"']*)["']\s+property=["']og:title["']/i)?.[1] ||
+                      pHtml.match(/<title>([^<]*)<\/title>/i)?.[1] || '';
+          title = title.replace(/\s*(?:—|-|\|)\s*(?:The Mall|Suglow|Camerakini|OHSOGO|BD Retailers|Official|Store).*$/i, '').trim();
+
+          // Image
+          let image = pHtml.match(/property=["']og:image["']\s+content=["']([^"']*)["']/i)?.[1] ||
+                      pHtml.match(/content=["']([^"']*)["']\s+property=["']og:image["']/i)?.[1] || '';
+
+          // Price
+          let price = 0;
+          const ogPrice = pHtml.match(/property=["'](?:product:)?price:amount["']\s+content=["']([^"']*)["']/i)?.[1] ||
+                          pHtml.match(/content=["']([^"']*)["']\s+property=["'](?:product:)?price:amount["']/i)?.[1];
+          if (ogPrice && parseFloat(ogPrice) > 0) {
+            price = parseFloat(ogPrice);
+          }
+
+          // JSON-LD inspection for product
+          const pJsonLd = pHtml.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+          for (const b of pJsonLd) {
+            try {
+              const pObj = JSON.parse(b.replace(/<\/?script[^>]*>/gi, ''));
+              const pNode = pObj['@type'] === 'Product' ? pObj : (pObj['@graph']?.find(g => g['@type'] === 'Product'));
+              if (pNode) {
+                if (!title && pNode.name) title = pNode.name.trim();
+                if (!image && pNode.image) {
+                  image = Array.isArray(pNode.image) ? pNode.image[0] : (typeof pNode.image === 'string' ? pNode.image : pNode.image?.url);
+                }
+                if (!price) {
+                  const rawP = pNode.offers?.price || pNode.offers?.[0]?.price;
+                  if (rawP && parseFloat(rawP) > 0) price = parseFloat(rawP);
+                }
+              }
+            } catch (_) {}
+          }
+
+          // Regex fallback for price
+          if (!price) {
+            const mPrice = pHtml.match(/(?:৳|Tk\.?|BDT)\s*(?:<!-- -->)?\s*([\d,]{2,8})/i) ||
+                           pHtml.match(/\\?"price\\?"\s*:\s*(\d+(?:\.\d+)?)/i) ||
+                           pHtml.match(/(?:regularPrice|salePrice|price)[^0-9]{1,10}(\d{2,7})/i);
+            if (mPrice) price = parseFloat(mPrice[1].replace(/,/g, ''));
+          }
+
+          const desc = pHtml.match(/property=["']og:description["']\s+content=["']([^"']*)["']/i)?.[1] || title;
+
+          if (title && price > 0) {
+            results.push({
+              name: title,
+              price,
+              costPrice: Math.round(price * 0.7),
+              stock: 40,
+              category: catName || 'সাধারণ',
+              description: desc.slice(0, 500),
+              imageUrl: image || '',
+              sourceUrl: pUrl
+            });
+          }
+        } catch (_) {}
+      }
+    };
+
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+    return results;
+  } catch (_) {
+    return [];
+  }
+}
+
 // Strategy 4: Extract from Single Product HTML (JSON-LD, Microdata, OpenGraph)
 function extractSingleProduct(html, url, ogData) {
   // Check JSON-LD
@@ -554,34 +712,40 @@ export async function POST(request) {
     let extractedProducts = [];
     let extractionSource = 'general';
 
-    // ── STEP 1: Multi-Product Store Crawling (Suglow REA, Shopify, WooCommerce, Sitemap) ──
+    // ── STEP 1: Multi-Product Store Crawling & REA Category Hunter Bot ──
     if (!isStrictSingleProduct || isCategoryUrl) {
-      // 1A. Suglow REA Engine
-      if (origin.includes('suglow.com') || url.includes('suglow.com')) {
+      // 1A. Category / Subcategory REA Hunter Bot
+      if (isCategoryUrl || url.includes('/category/') || url.includes('/collections/')) {
+        extractedProducts = await fetchCategoryHunterProducts(url, origin);
+        if (extractedProducts.length > 0) extractionSource = 'category_hunter_bot';
+      }
+
+      // 1B. Suglow REA Engine
+      if (extractedProducts.length === 0 && (origin.includes('suglow.com') || url.includes('suglow.com'))) {
         extractedProducts = await fetchSuglowProducts(origin);
         if (extractedProducts.length > 0) extractionSource = 'suglow_rea_engine';
       }
 
-      // 1B. Shopify Engine
+      // 1C. Shopify Engine
       if (extractedProducts.length === 0) {
         extractedProducts = await fetchShopifyProducts(origin);
         if (extractedProducts.length > 0) extractionSource = 'shopify_catalog';
       }
 
-      // 1C. WooCommerce Engine
+      // 1D. WooCommerce Engine
       if (extractedProducts.length === 0) {
         extractedProducts = await fetchWooCommerceProducts(origin);
         if (extractedProducts.length > 0) extractionSource = 'woocommerce_catalog';
       }
 
-      // 1D. Product Sitemap Crawler
+      // 1E. Product Sitemap Crawler
       if (extractedProducts.length === 0) {
         extractedProducts = await fetchSitemapProducts(origin);
         if (extractedProducts.length > 0) extractionSource = 'sitemap_crawler';
       }
     }
 
-    // ── STEP 2: HTML Fetch & Single Product / AI Extraction ──
+    // ── STEP 2: HTML Fetch & Deep Category Hunter or Single Product / AI Extraction ──
     let pageHtml = '';
     let ogData = { title: null, image: null, description: null, price: null };
 
@@ -603,9 +767,17 @@ export async function POST(request) {
       }
 
       if (pageHtml) {
-        // Try structured product from HTML
-        extractedProducts = extractSingleProduct(pageHtml, url, ogData);
-        if (extractedProducts.length > 0) extractionSource = 'structured_html';
+        // First check if pageHtml actually contains multiple products / ItemList (Category Hunter)
+        extractedProducts = await fetchCategoryHunterProducts(url, origin, pageHtml);
+        if (extractedProducts.length > 0) {
+          extractionSource = 'category_hunter_bot';
+        }
+
+        // Otherwise try structured single product from HTML
+        if (extractedProducts.length === 0) {
+          extractedProducts = extractSingleProduct(pageHtml, url, ogData);
+          if (extractedProducts.length > 0) extractionSource = 'structured_html';
+        }
 
         // Try AI extraction
         if (extractedProducts.length === 0) {
@@ -687,6 +859,7 @@ export async function POST(request) {
       }
 
       const sourceLabel = {
+        category_hunter_bot: 'REA ক্যাটাগরি হান্টার বট',
         shopify_catalog: 'Shopify সরাসরি ক্যাটালগ',
         woocommerce_catalog: 'WooCommerce সরাসরি ক্যাটালগ',
         sitemap_crawler: 'সাইটম্যাপ ক্রলার',
