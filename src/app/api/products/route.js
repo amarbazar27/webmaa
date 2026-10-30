@@ -19,10 +19,11 @@ export async function GET(req) {
 
     const cacheKey = `${shopId}_${category || 'all'}_${pageParam || '1'}_${limitParam || 'all'}`;
     const cachedEntry = productsApiCache.get(cacheKey);
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < 1000 * 60 * 60 * 24) { // 24-hour cache
+    // 30-day (1-month) in-memory cache to eliminate read burn
+    if (cachedEntry && Date.now() - cachedEntry.timestamp < 1000 * 60 * 60 * 24 * 30) {
       return NextResponse.json(cachedEntry.data, {
         headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+          'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
           'X-Cache-Status': 'HIT'
         }
       });

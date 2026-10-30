@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   Search, ShoppingBag, Bell, Menu, X, Heart, 
@@ -106,6 +106,8 @@ export default function StorefrontHeader({
   onOpenFaq,
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const mobileSearchInputRef = useRef(null);
+  const [showMobileSearch, setShowMobileSearch] = useState(true);
 
   const safeCategories = (() => {
     const raw = Array.isArray(categories) ? categories : [];
@@ -365,6 +367,32 @@ export default function StorefrontHeader({
             {renderActionButtons(false)}
           </div>
         </div>
+
+        {/* Dedicated Mobile Search Bar Row */}
+        {showMobileSearch && headerConfig?.showSearch !== false && (
+          <div className="md:hidden px-3.5 pb-2.5 pt-1 border-t border-slate-100 bg-white">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="পণ্য খুঁজুন..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 outline-none transition-all focus:border-purple-600 focus:ring-1 focus:ring-purple-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     );
   }
@@ -409,6 +437,32 @@ export default function StorefrontHeader({
             })}
           </div>
         </div>
+
+        {/* Dedicated Mobile Search Bar Row */}
+        {showMobileSearch && headerConfig?.showSearch !== false && (
+          <div className="md:hidden px-3.5 pb-2.5 pt-1 border-t border-slate-100 bg-white">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="পণ্য খুঁজুন..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 outline-none transition-all focus:border-purple-600 focus:ring-1 focus:ring-purple-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     );
   }
@@ -454,6 +508,32 @@ export default function StorefrontHeader({
             {renderActionButtons(false)}
           </div>
         </div>
+
+        {/* Dedicated Mobile Search Bar Row */}
+        {showMobileSearch && headerConfig?.showSearch !== false && (
+          <div className="md:hidden px-3.5 pb-2.5 pt-1 border-t border-slate-100 bg-white">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="পণ্য খুঁজুন..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 outline-none transition-all focus:border-purple-600 focus:ring-1 focus:ring-purple-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     );
   }
@@ -482,6 +562,32 @@ export default function StorefrontHeader({
             {renderActionButtons(false)}
           </div>
         </div>
+
+        {/* Dedicated Mobile Search Bar Row */}
+        {showMobileSearch && headerConfig?.showSearch !== false && (
+          <div className="md:hidden px-3.5 pb-2.5 pt-1 border-t border-slate-100 bg-white">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="পণ্য খুঁজুন..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 outline-none transition-all focus:border-purple-600 focus:ring-1 focus:ring-purple-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     );
   }
@@ -567,6 +673,32 @@ export default function StorefrontHeader({
             {renderSearchBar("🥦 তাজা শাকসবজি, ফলমূল বা ডেইলি বাজার খুঁজুন...")}
           </div>
         </div>
+
+        {/* Dedicated Mobile Search Bar Row */}
+        {showMobileSearch && headerConfig?.showSearch !== false && (
+          <div className="md:hidden px-3.5 pb-2.5 pt-1 border-t border-slate-100 bg-white">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="পণ্য খুঁজুন..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 outline-none transition-all focus:border-purple-600 focus:ring-1 focus:ring-purple-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     );
   }
@@ -609,6 +741,32 @@ export default function StorefrontHeader({
             {renderActionButtons(true)}
           </div>
         </div>
+
+        {/* Dedicated Mobile Search Bar Row */}
+        {showMobileSearch && headerConfig?.showSearch !== false && (
+          <div className="md:hidden px-3.5 pb-2.5 pt-1 border-t border-slate-100 bg-white">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="পণ্য খুঁজুন..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 outline-none transition-all focus:border-purple-600 focus:ring-1 focus:ring-purple-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     );
   }
@@ -653,18 +811,21 @@ export default function StorefrontHeader({
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
           {/* Mobile Left: Menu & Search */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex md:hidden items-center gap-2.5">
             <button
               onClick={onOpenCategories}
-              className="p-2 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="ক্যাটাগরি"
+              className="p-2.5 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="ক্যাটাগরি মেনু"
             >
               <Menu size={20} />
             </button>
             <button
-              onClick={onOpenCategories}
-              className="p-2 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="সার্চ"
+              onClick={() => {
+                setShowMobileSearch(prev => !prev);
+                setTimeout(() => mobileSearchInputRef.current?.focus(), 100);
+              }}
+              className="p-2.5 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer bg-slate-100/80 border border-slate-200/80 shadow-2xs"
+              title="পণ্য খুঁজুন"
             >
               <Search size={18} />
             </button>
@@ -782,6 +943,32 @@ export default function StorefrontHeader({
             </button>
           </div>
         </div>
+
+        {/* Dedicated Mobile Search Bar Row */}
+        {showMobileSearch && headerConfig?.showSearch !== false && (
+          <div className="md:hidden px-3.5 pb-2.5 pt-1 border-t border-slate-100 bg-white">
+            <div className="relative flex items-center">
+              <Search size={15} className="text-slate-400 absolute left-3.5 pointer-events-none" />
+              <input
+                ref={mobileSearchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="পণ্য খুঁজুন..."
+                className="w-full pl-9 pr-8 py-2 bg-slate-50 focus:bg-white text-xs font-bold text-slate-800 rounded-xl border border-slate-200 outline-none transition-all focus:border-purple-600 focus:ring-1 focus:ring-purple-200"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange?.('')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
     );
   }

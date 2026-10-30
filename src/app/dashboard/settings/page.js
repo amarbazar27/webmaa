@@ -12,7 +12,7 @@ import {
   Info, Link2, AlertTriangle, Check, Sparkles, MessageSquare, Truck, Users, Gift, X,
   MapPin, Clock, Plus, ChevronDown, LayoutTemplate, Sliders, Palette, Tag,
   Smartphone, FileText, ExternalLink, HelpCircle, CheckCircle2, Download, Cloud, Lock, CreditCard,
-  Copy, CheckCheck, Loader2, AlertCircle
+  Copy, CheckCheck, Loader2, AlertCircle, RotateCcw
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -891,8 +891,8 @@ export default function SettingsPage() {
         toast.success('Profile photo updated!');
       }
       
-      await updateShop(activeShopId, { 
-        shopName: shop.shopName,
+      const settingsPayload = {
+        shopName: shop.shopName || '',
         cloudinaryCloudName: shop.cloudinaryCloudName || '',
         cloudinaryUploadPreset: shop.cloudinaryUploadPreset || '',
         couponCode: shop.couponCode || '',
@@ -900,52 +900,137 @@ export default function SettingsPage() {
         couponDiscountType: shop.couponDiscountType || 'percent',
         enableCommonOrder: shop.enableCommonOrder || false,
         enableSmartMeal: shop.enableSmartMeal || false,
-        piprapayEnabled, // Save public flag for UI checks
-        piprapayBkash,
-        piprapayNagad,
-        piprapayRocket,
-        uddoktapayUrl,
-        uddoktapayApiKey,
-        sslcommerzConfig,
-        shurjopayConfig,
-        bkashMerchantConfig,
-        manualPaymentEnabled,
-        slogan: shop.slogan,
-        notices: shop.notices,
-        welcomeMessage: shop.welcomeMessage,
+        piprapayEnabled: piprapayEnabled || false,
+        piprapayBkash: piprapayBkash || '',
+        piprapayNagad: piprapayNagad || '',
+        piprapayRocket: piprapayRocket || '',
+        uddoktapayUrl: uddoktapayUrl || '',
+        uddoktapayApiKey: uddoktapayApiKey || '',
+        sslcommerzConfig: sslcommerzConfig || {},
+        shurjopayConfig: shurjopayConfig || {},
+        bkashMerchantConfig: bkashMerchantConfig || {},
+        manualPaymentEnabled: manualPaymentEnabled !== false,
+        slogan: shop.slogan || '',
+        notices: shop.notices || '',
+        welcomeMessage: shop.welcomeMessage || '',
         bannerDescription: shop.bannerDescription || '',
         bannerInterval: shop.bannerInterval || 4,
         howToOrderVideo: shop.howToOrderVideo || '',
         logoUrl,
-        socialLinks,
-        authSettings,
-        promoSettings,
-        deliveryConfig,
-        aiConfig,
-        staffEmails,
-        adminEmails,
-        serviceAreas,
-        isStrictLocation,
-        requireLocationForOrder,
-        showLocationSelector,
-        disableServiceBanner,
-        customAreas,
-        trackingConfig,
-        courierConfig,
-        googleMapsApiKey,
-        loadingMedia,
-        featuredProductIds,
-        faqItems,
-        appConfig,
+        socialLinks: socialLinks || {},
+        authSettings: authSettings || {},
+        promoSettings: promoSettings || {},
+        deliveryConfig: deliveryConfig || {},
+        aiConfig: aiConfig || {},
+        staffEmails: staffEmails || [],
+        adminEmails: adminEmails || [],
+        serviceAreas: serviceAreas || [],
+        isStrictLocation: isStrictLocation || false,
+        requireLocationForOrder: requireLocationForOrder !== false,
+        showLocationSelector: showLocationSelector !== false,
+        disableServiceBanner: disableServiceBanner || false,
+        customAreas: customAreas || [],
+        trackingConfig: trackingConfig || {},
+        courierConfig: courierConfig || {},
+        googleMapsApiKey: googleMapsApiKey || '',
+        loadingMedia: loadingMedia || {},
+        featuredProductIds: featuredProductIds || [],
+        faqItems: faqItems || [],
+        appConfig: appConfig || {},
         banners: shop.banners || []
+      };
+
+      // 1. Dedicated server API with Admin SDK (100% reliable in impersonation & cross-account updates)
+      const token = await user.getIdToken();
+      const res = await fetch('/api/shop/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId: activeShopId,
+          settings: settingsPayload
+        })
       });
-      if (shop.subdomainSlug) {
-        fetch(`/api/revalidate?slug=${shop.subdomainSlug}&domain=${shop.customDomain || ''}`).catch(e => console.error(e));
+
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(resData.error || 'সেটিংস সেভ করতে ব্যর্থ হয়েছে');
       }
-      toast.success('All settings synchronized! ✨');
+
+      toast.success(resData.message || 'All settings synchronized! ✨');
+    } catch (err) {
+      console.warn('[handleSave API notice, attempting fallback]:', err);
+      try {
+        const sanitized = JSON.parse(JSON.stringify(settingsPayload || {}));
+        await updateShop(activeShopId, sanitized);
+        if (shop.subdomainSlug) {
+          fetch(`/api/revalidate?slug=${shop.subdomainSlug}&domain=${shop.customDomain || ''}`).catch(() => {});
+        }
+        toast.success('All settings synchronized! ✨');
+        return;
+      } catch (clientErr) {
+        console.error('[Client fallback error]:', clientErr);
+        toast.error(err.message || clientErr.message || 'Settings update failed');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleResetSettings = async () => {
+    if (!window.confirm('আপনি কি নিশ্চিত যে সেটিংস ডিফল্ট মানে রিসেট করতে চান? আপনার বর্তমান সোশ্যাল লিংক, ডেলিভারি ও অন্যান্য কাস্টমাইজেশন ডিফল্ট অবস্থায় ফিরে যাবে।')) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const defaultSettings = {
+        socialLinks: { fb: '', insta: '', yt: '', wa: '', linkedin: '', tiktok: '', twitter: '', telegram: '', threads: '', pinterest: '' },
+        authSettings: { emailAuth: false, googleAuth: true, emailPasswordAuth: false, actionPin: '', requireLoginBeforeOrder: true },
+        promoSettings: { seventhDayFree: false },
+        deliveryConfig: { advanceFee: '', methods: 'ক্যাশ অন ডেলিভারি (Cash on Delivery)', isCOD: true, contactEmail: '', contactWhatsapp: '', minOrderAmount: '' },
+        aiConfig: { apiKey: '', botName: 'AI Assistant', botTone: 'friendly', enableAiShoppingList: true, smartCalcEnabled: true },
+        trackingConfig: { ga4Id: '', clarityId: '', metaPixelId: '', metaPixelEnabled: false },
+        courierConfig: { steadfastApiKey: '', steadfastSecretKey: '', steadfastEnabled: false, pathaoEnabled: false, redxEnabled: false, paperflyEnabled: false },
+        bannerInterval: 4,
+        isStrictLocation: false,
+        requireLocationForOrder: true,
+        showLocationSelector: true,
+        disableServiceBanner: false,
+      };
+
+      const token = await user?.getIdToken?.();
+      const res = await fetch('/api/shop/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ shopId: activeShopId, settings: defaultSettings })
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Reset failed');
+      }
+
+      setSocialLinks(defaultSettings.socialLinks);
+      setAuthSettings(defaultSettings.authSettings);
+      setPromoSettings(defaultSettings.promoSettings);
+      setDeliveryConfig(prev => ({ ...prev, ...defaultSettings.deliveryConfig }));
+      setAiConfig(prev => ({ ...prev, ...defaultSettings.aiConfig }));
+      setTrackingConfig(prev => ({ ...prev, ...defaultSettings.trackingConfig }));
+      setCourierConfig(prev => ({ ...prev, ...defaultSettings.courierConfig }));
+      setIsStrictLocation(false);
+      setRequireLocationForOrder(true);
+      setShowLocationSelector(true);
+      setDisableServiceBanner(false);
+
+      toast.success('সেটিংস সফলভাবে ডিফল্ট মানে রিসেট করা হয়েছে! 🔄');
     } catch (err) {
       console.error(err);
-      toast.error('Settings update failed');
+      toast.error(err.message || 'সেটিংস রিসেট করতে সমস্যা হয়েছে');
     } finally {
       setSaving(false);
     }
@@ -3147,15 +3232,27 @@ export default function SettingsPage() {
                 </div>
               )}
 
-            <Button
-              variant="primary"
-              loading={saving}
-              icon={Save}
-              className="w-full h-16 text-lg tracking-widest font-black uppercase shadow-xl shadow-purple-500/20"
-              type="submit"
-            >
-              Commit Changes Over Network
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <Button
+                variant="primary"
+                loading={saving}
+                icon={Save}
+                className="flex-1 h-16 text-base tracking-widest font-black uppercase shadow-xl shadow-purple-500/20"
+                type="submit"
+              >
+                Commit Changes Over Network
+              </Button>
+              <button
+                type="button"
+                onClick={handleResetSettings}
+                disabled={saving}
+                className="px-6 py-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm hover:shadow shrink-0"
+                title="ভুল সেটিংস ডিফল্ট মানে রিসেট করুন"
+              >
+                <RotateCcw size={18} />
+                <span>ডিফল্ট সেটিংসে রিসেট (Reset Defaults)</span>
+              </button>
+            </div>
           </form>
         </div>
       </div>

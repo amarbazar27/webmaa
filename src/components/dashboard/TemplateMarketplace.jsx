@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import {
   Palette, Check, Loader2, Eye, Search, Tag, Sparkles,
-  Smartphone, Monitor, ChevronRight, Star, Zap, Info, Camera
+  Smartphone, Monitor, ChevronRight, Star, Zap, Info, Camera, RotateCcw
 } from 'lucide-react';
 import { TEMPLATES, TEMPLATE_CATEGORIES, getTemplatesByCategory, suggestTemplateFromDescription } from '@/templates/index';
 import toast from 'react-hot-toast';
@@ -858,6 +858,57 @@ export default function TemplateMarketplace({ shopId, shopSlug, shopDomain, acti
     }
   }, [shopId, applying, onTemplateApplied, aiGeneratedTemplates]);
 
+  const handleResetTemplate = useCallback(async () => {
+    if (!shopId || applying) return;
+    if (!window.confirm('আপনি কি স্টোরফ্রন্ট টেমপ্লেট ডিফল্ট (Bold Commerce / Grocery Bazaar) ডিজাইনে রিসেট করতে চান?')) return;
+    setApplying('reset');
+    try {
+      const defaultId = 'bold-commerce';
+      const defaultTheme = TEMPLATES[defaultId]?.defaultTheme || {};
+
+      try {
+        const { getAuth } = await import('firebase/auth');
+        const token = await getAuth().currentUser?.getIdToken();
+        const res = await fetch('/api/shop/settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            shopId,
+            settings: {
+              templateId: defaultId,
+              themeOverrides: defaultTheme,
+              templateAppliedAt: new Date().toISOString()
+            }
+          })
+        });
+        if (!res.ok) throw new Error('Server update failed');
+      } catch (_) {
+        const { updateShop } = await import('@/lib/firestore');
+        await updateShop(shopId, {
+          templateId: defaultId,
+          themeOverrides: defaultTheme,
+          templateAppliedAt: new Date().toISOString()
+        });
+      }
+
+      if (shopSlug) {
+        fetch(`/api/revalidate?slug=${shopSlug}&domain=${shopDomain || ''}`).catch(() => {});
+      }
+
+      setCurrentActive(defaultId);
+      onTemplateApplied?.(defaultId);
+      toast.success('✨ টেমপ্লেট সফলভাবে ডিফল্ট ডিজাইনে রিসেট হয়েছে!');
+    } catch (err) {
+      console.error(err);
+      toast.error('টেমপ্লেট রিসেট করতে সমস্যা হয়েছে');
+    } finally {
+      setApplying(null);
+    }
+  }, [shopId, applying, onTemplateApplied, shopSlug, shopDomain]);
+
   const handleAiSuggest = useCallback((template) => {
     setCurrentActive(null); // highlight suggestion
     setPreviewTemplate(template);
@@ -866,14 +917,26 @@ export default function TemplateMarketplace({ shopId, shopSlug, shopDomain, acti
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
-          <Palette size={22} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+            <Palette size={22} />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-slate-900">টেমপ্লেট মার্কেটপ্লেস</h2>
+            <p className="text-xs font-bold text-slate-500">{Object.keys(TEMPLATES).length}টি প্রিমিয়াম টেমপ্লেট থেকে আপনার স্টোর সাজান</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-black text-slate-900">টেমপ্লেট মার্কেটপ্লেস</h2>
-          <p className="text-xs font-bold text-slate-500">{Object.keys(TEMPLATES).length}টি প্রিমিয়াম টেমপ্লেট থেকে আপনার স্টোর সাজান</p>
-        </div>
+        <button
+          type="button"
+          onClick={handleResetTemplate}
+          disabled={applying}
+          className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs self-start sm:self-auto border border-slate-200/80"
+          title="ডিফল্ট টেমপ্লেটে রিসেট করুন"
+        >
+          <RotateCcw size={14} />
+          <span>ডিফল্ট টেমপ্লেটে রিসেট (Reset)</span>
+        </button>
       </div>
 
       {/* AI Vision Suggestion Panel */}

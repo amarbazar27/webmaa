@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * 🔊 sound.js — Pure Web Audio API Tactile Acoustic Sound Engine
- * Synthesizes warm, organic, velvety ("মায়াবী") UI sounds without harsh treble.
- * Features hierarchical acoustic signatures:
- *   - playNavSectionSound: Warm hollow wooden drop ("টুপ" / "ঠুক") for top-level navigation
- *   - playSubNavSound: Delicate crystal pebble tap ("টিপ") for sub-items and switches
- *   - playActionSound: Tactile soft-thud mechanical snap for action buttons
- *   - playCancelSound: Gentle reverse bubble pop for close/cancel/delete
- *   - playSuccessSound: Warm acoustic kalimba harmonic chime
- * Zero external mp3/wav assets, 0 latency, 60fps fast, 0 ear fatigue.
+ * 🔊 sound.js — High-Fidelity Tactile Mechanical UI Sound Engine
+ * Synthesizes crisp, satisfying, tactile pops and mechanical clicks (iOS / Reels style).
+ * Replaces dull muffled thuds with snappy, crystal-clear acoustic transients:
+ *   - playNavSectionSound: Crisp acoustic bubble pop ("টক্" / "পপ")
+ *   - playSubNavSound: Delicate crystal pebble tap ("টিক্")
+ *   - playActionSound: Snappy mechanical switch click ("ক্লিক")
+ *   - playCancelSound: Light airy reverse bubble pop
+ *   - playSuccessSound: Sparkling crystal kalimba chime
+ * Zero external audio assets, 0 latency, 60fps fast, zero ear fatigue.
  */
 
 let audioCtx = null;
@@ -41,10 +41,9 @@ export function toggleSoundEnabled() {
 }
 
 /**
- * 🪵 1. Main Navigation Section Sound (Warm Hollow Wooden Bubble "টুপ" / "ঠুক")
- * Used for: Sidebar main tabs, Superadmin categories, Floating glass boxes
- * Characteristics: Warm fundamental (280Hz -> 210Hz), gentle lowpass filter @ 580Hz.
- * Zero piercing high frequencies — velvety and comfortable on the ears.
+ * 🫧 1. Main Navigation Sound — Crisp Acoustic Bubble Pop ("টক্" / "পপ")
+ * Fast frequency sweep (750Hz -> 1180Hz) with sharp attack and 22ms decay.
+ * Sounds ultra-crisp, tactile, and modern (identical to viral tech UI reels).
  */
 export function playNavSectionSound() {
   if (!isSoundEnabled()) return;
@@ -59,33 +58,34 @@ export function playNavSectionSound() {
     const filter = ctx.createBiquadFilter();
 
     osc.type = 'sine';
-    // Gentle downward pitch glide (natural acoustic liquid drop)
-    osc.frequency.setValueAtTime(290, now);
-    osc.frequency.exponentialRampToValueAtTime(215, now + 0.055);
+    // Snappy upward acoustic bubble pop
+    osc.frequency.setValueAtTime(720, now);
+    osc.frequency.exponentialRampToValueAtTime(1150, now + 0.016);
+    osc.frequency.exponentialRampToValueAtTime(900, now + 0.026);
 
-    // Warm Lowpass filter (removes any sharp click or digital harshness)
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(580, now);
-    filter.Q.setValueAtTime(1.2, now);
+    // Peaking filter to enhance crisp presence without harshness
+    filter.type = 'peaking';
+    filter.frequency.setValueAtTime(1200, now);
+    filter.gain.setValueAtTime(4, now);
+    filter.Q.setValueAtTime(1.5, now);
 
-    // Soft Gaussian-like volume envelope
+    // Snappy envelope (1.5ms attack, 24ms decay)
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.13, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.065);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.0015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.026);
 
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.07);
+    osc.stop(now + 0.028);
   } catch (_) {}
 }
 
 /**
- * 💧 2. Sub-Navigation / Dropdown / Toggle Sound (Delicate Pebble Tap "টিপ")
- * Used for: Sub-menu items, checkboxes, accordion children, radio buttons
- * Characteristics: Light, airy, subtle (400Hz -> 460Hz), lowpass @ 720Hz.
+ * 💧 2. Sub-Navigation / Toggle Sound — Delicate Pebble Tap ("টিক্")
+ * Light, airy high-register tap (1250Hz -> 1550Hz) for switches, filters & pills.
  */
 export function playSubNavSound() {
   if (!isSoundEnabled()) return;
@@ -100,30 +100,32 @@ export function playSubNavSound() {
     const filter = ctx.createBiquadFilter();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(380, now);
-    osc.frequency.exponentialRampToValueAtTime(440, now + 0.035);
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.exponentialRampToValueAtTime(1550, now + 0.014);
 
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(720, now);
-    filter.Q.setValueAtTime(1.0, now);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1400, now);
+    filter.Q.setValueAtTime(2.0, now);
 
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.08, now + 0.003);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.001);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.018);
 
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.05);
+    osc.stop(now + 0.02);
   } catch (_) {}
 }
 
 /**
- * 🔘 3. Action Button Sound (Tactile Low-Thud Mechanical Pop / "ক্লিক")
- * Used for: Save, Submit, Update, Add to Cart, Confirm, Filter
- * Characteristics: Low resonant body (160Hz) with soft tactile snap (380Hz).
+ * 🔘 3. Action Button Sound — Snappy Mechanical Switch Click ("ক্লিক")
+ * Dual-transient tactile mechanism:
+ * Layer A: Sharp tactile snap (1800Hz -> 950Hz in 7ms)
+ * Layer B: Crisp acoustic woodblock body (820Hz -> 540Hz in 18ms)
+ * Total duration: 22ms. Feels like a premium mechanical switch or iOS haptic click.
  */
 export function playActionSound() {
   if (!isSoundEnabled()) return;
@@ -133,52 +135,52 @@ export function playActionSound() {
   try {
     const now = ctx.currentTime;
 
-    // Body thud
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    const filter1 = ctx.createBiquadFilter();
+    // Transient 1: Sharp micro-click snap
+    const oscClick = ctx.createOscillator();
+    const gainClick = ctx.createGain();
+    const filterClick = ctx.createBiquadFilter();
 
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(180, now);
-    osc1.frequency.exponentialRampToValueAtTime(120, now + 0.03);
+    oscClick.type = 'triangle';
+    oscClick.frequency.setValueAtTime(1800, now);
+    oscClick.frequency.exponentialRampToValueAtTime(950, now + 0.007);
 
-    filter1.type = 'lowpass';
-    filter1.frequency.setValueAtTime(450, now);
+    filterClick.type = 'highpass';
+    filterClick.frequency.setValueAtTime(800, now);
 
-    gain1.gain.setValueAtTime(0.0001, now);
-    gain1.gain.linearRampToValueAtTime(0.12, now + 0.004);
-    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+    gainClick.gain.setValueAtTime(0.0001, now);
+    gainClick.gain.linearRampToValueAtTime(0.14, now + 0.001);
+    gainClick.gain.exponentialRampToValueAtTime(0.0001, now + 0.012);
 
-    osc1.connect(filter1);
-    filter1.connect(gain1);
-    gain1.connect(ctx.destination);
+    oscClick.connect(filterClick);
+    filterClick.connect(gainClick);
+    gainClick.connect(ctx.destination);
 
-    osc1.start(now);
-    osc1.stop(now + 0.045);
+    oscClick.start(now);
+    oscClick.stop(now + 0.014);
 
-    // Tactile micro-snap
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
+    // Transient 2: Crisp resonant key body
+    const oscBody = ctx.createOscillator();
+    const gainBody = ctx.createGain();
 
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(360, now);
-    osc2.frequency.exponentialRampToValueAtTime(240, now + 0.02);
+    oscBody.type = 'sine';
+    oscBody.frequency.setValueAtTime(820, now);
+    oscBody.frequency.exponentialRampToValueAtTime(540, now + 0.018);
 
-    gain2.gain.setValueAtTime(0.0001, now);
-    gain2.gain.linearRampToValueAtTime(0.06, now + 0.003);
-    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+    gainBody.gain.setValueAtTime(0.0001, now);
+    gainBody.gain.linearRampToValueAtTime(0.10, now + 0.002);
+    gainBody.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
 
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
+    oscBody.connect(gainBody);
+    gainBody.connect(ctx.destination);
 
-    osc2.start(now);
-    osc2.stop(now + 0.03);
+    oscBody.start(now);
+    oscBody.stop(now + 0.024);
   } catch (_) {}
 }
 
 /**
- * 🍃 4. Cancel / Close / Delete Sound (Gentle Reverse Bubble Pop)
- * Used for: Close modals, dismiss banners, delete items, back buttons
+ * 🍃 4. Cancel / Close Sound — Soft Descending Bubble Tap
+ * Smooth downward glide (920Hz -> 550Hz) for closing modals and dismissing toasts.
  */
 export function playCancelSound() {
   if (!isSoundEnabled()) return;
@@ -192,28 +194,28 @@ export function playCancelSound() {
     const filter = ctx.createBiquadFilter();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(320, now);
-    osc.frequency.exponentialRampToValueAtTime(180, now + 0.045);
+    osc.frequency.setValueAtTime(920, now);
+    osc.frequency.exponentialRampToValueAtTime(550, now + 0.022);
 
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(500, now);
+    filter.frequency.setValueAtTime(1400, now);
 
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.09, now + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+    gain.gain.linearRampToValueAtTime(0.09, now + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.026);
 
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
     osc.start(now);
-    osc.stop(now + 0.055);
+    osc.stop(now + 0.028);
   } catch (_) {}
 }
 
 /**
- * ✨ 5. Success / Completed Sound (Warm Acoustic Kalimba Harmonic Chime)
- * Used for: Order placed, settings saved, publish complete
+ * ✨ 5. Success Sound — Sparkling Crystal Kalimba Chime ("টুন-টুন-টিং")
+ * Bright, airy G-Major ascending chime (G5: 784Hz, B5: 988Hz, E6: 1319Hz) with crystalline resonance.
  */
 export function playSuccessSound() {
   if (!isSoundEnabled()) return;
@@ -222,30 +224,30 @@ export function playSuccessSound() {
 
   try {
     const now = ctx.currentTime;
-    // Warm C-Major triad (C5, E5, G5) in kalimba range with lowpass
-    [523.25, 659.25, 783.99].forEach((freq, idx) => {
+    [783.99, 987.77, 1318.51].forEach((freq, idx) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       const filter = ctx.createBiquadFilter();
 
-      const startTime = now + idx * 0.055;
+      const startTime = now + idx * 0.045;
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, startTime);
 
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(1100, startTime);
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq, startTime);
+      filter.Q.setValueAtTime(3.0, startTime);
 
       gain.gain.setValueAtTime(0.0001, startTime);
-      gain.gain.linearRampToValueAtTime(0.09, startTime + 0.006);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.16);
+      gain.gain.linearRampToValueAtTime(0.11, startTime + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.12);
 
       osc.connect(filter);
       filter.connect(gain);
       gain.connect(ctx.destination);
 
       osc.start(startTime);
-      osc.stop(startTime + 0.18);
+      osc.stop(startTime + 0.14);
     });
   } catch (_) {}
 }

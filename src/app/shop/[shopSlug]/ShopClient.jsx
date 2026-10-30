@@ -3796,30 +3796,33 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           // ── MASONRY GRID — Pinterest-style staggered 3 columns ──
           if (layoutType === 'masonry-grid' && filteredProducts.length >= 3) {
             const col1 = [], col2 = [], col3 = [];
-            filteredProducts.forEach((p, i) => {
+            paginatedProducts.forEach((p, i) => {
               if (i % 3 === 0) col1.push(p);
               else if (i % 3 === 1) col2.push(p);
               else col3.push(p);
             });
             return (
-              <div id="product-section" className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4" style={{alignItems: 'start'}}>
-                <div className="flex flex-col gap-3 sm:gap-4">
-                  {col1.map((p, i) => (
-                    <div key={p.id} style={{paddingTop: i % 2 === 0 ? '0' : '12px'}}>
-                      {renderSingleProductCard(p)}
-                    </div>
-                  ))}
+              <div id="product-section" className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4" style={{alignItems: 'start'}}>
+                  <div className="flex flex-col gap-3 sm:gap-4">
+                    {col1.map((p, i) => (
+                      <div key={p.id} style={{paddingTop: i % 2 === 0 ? '0' : '12px'}}>
+                        {renderSingleProductCard(p)}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-3 sm:gap-4" style={{paddingTop: '20px'}}>
+                    {col2.map(p => (
+                      <div key={p.id}>{renderSingleProductCard(p)}</div>
+                    ))}
+                  </div>
+                  <div className="hidden md:flex flex-col gap-3 sm:gap-4" style={{paddingTop: '8px'}}>
+                    {col3.map(p => (
+                      <div key={p.id}>{renderSingleProductCard(p)}</div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-3 sm:gap-4" style={{paddingTop: '20px'}}>
-                  {col2.map(p => (
-                    <div key={p.id}>{renderSingleProductCard(p)}</div>
-                  ))}
-                </div>
-                <div className="hidden md:flex flex-col gap-3 sm:gap-4" style={{paddingTop: '8px'}}>
-                  {col3.map(p => (
-                    <div key={p.id}>{renderSingleProductCard(p)}</div>
-                  ))}
-                </div>
+                {renderStorefrontPagination()}
               </div>
             );
           }
@@ -3850,15 +3853,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   </div>
                   {/* Smaller items */}
-                  {filteredProducts.slice(1, 3).map(p => (
+                  {paginatedProducts.slice(1, 3).map(p => (
                     <div key={p.id}>{renderSingleProductCard(p)}</div>
                   ))}
                 </div>
-                {filteredProducts.length > 3 && (
+                {paginatedProducts.length > 3 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                    {filteredProducts.slice(3).map(renderSingleProductCard)}
+                    {paginatedProducts.slice(3).map(renderSingleProductCard)}
                   </div>
                 )}
+                {renderStorefrontPagination()}
               </div>
             );
           }
@@ -3960,36 +3964,14 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
             );
           }
 
-          // ── LIST VIEW — Horizontal rows: thumbnail + details + button ──
+          // ── LIST VIEW REMOVED — Render clean responsive grid with strict pagination ──
           if (layoutType === 'list-view' && filteredProducts.length >= 1) {
             return (
-              <div id="product-section" className="space-y-3">
-                {filteredProducts.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all hover:shadow-md cursor-pointer"
-                    style={{background: themeVars['--sp-card'] || '#fff', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}
-                    onClick={() => setSelectedProductForModal(p)}
-                  >
-                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0" style={{background: themeVars['--sp-bg'] || '#f8fafc'}}>
-                      {(p.images?.[0] || p.imageUrl) ? (
-                        <Image src={p.images?.[0] || p.imageUrl} alt={p.name} fill className="object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs font-bold" style={{color: themeVars['--sp-text']}}>{p.name?.slice(0,10)}</div>
-                      )}
-                      {p.isFeatured && <div className="absolute top-1 left-1 w-2 h-2 rounded-full" style={{background: themeVars['--sp-primary']}} />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-sm sm:text-base truncate" style={{color: themeVars['--sp-text'] || '#0f172a'}}>{p.name}</h3>
-                      <p className="text-xs line-clamp-1 mt-0.5 font-medium" style={{color: (themeVars['--sp-text'] || '#64748b') + '99'}}>{p.description || p.category || ''}</p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-base font-black" style={{color: themeVars['--sp-primary']}}>৳{Number(p.price || 0).toLocaleString()}</span>
-                        {p.stock <= 0 && <span className="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded-full">স্টক শেষ</span>}
-                      </div>
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); addToCart(p); }} className="shrink-0 px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black text-white transition-all" style={{background: themeVars['--sp-primary']}}>
-                      কার্টে +
-                    </button>
-                  </div>
-                ))}
+              <div id="product-section" className="space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                  {paginatedProducts.map(renderSingleProductCard)}
+                </div>
+                {renderStorefrontPagination()}
               </div>
             );
           }
@@ -4016,15 +3998,16 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     </div>
                   </div>
                   {/* 2 smaller stacked products */}
-                  {filteredProducts.slice(1, 3).map(p => (
+                  {paginatedProducts.slice(1, 3).map(p => (
                     <div key={p.id}>{renderSingleProductCard(p)}</div>
                   ))}
                 </div>
-                {filteredProducts.length > 3 && (
+                {paginatedProducts.length > 3 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-                    {filteredProducts.slice(3).map(renderSingleProductCard)}
+                    {paginatedProducts.slice(3).map(renderSingleProductCard)}
                   </div>
                 )}
+                {renderStorefrontPagination()}
               </div>
             );
           }
@@ -4097,6 +4080,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     {restProducts.map(renderSingleProductCard)}
                   </div>
                 )}
+                {renderStorefrontPagination()}
               </div>
             );
           }
@@ -4173,6 +4157,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     {restProducts.map(renderSingleProductCard)}
                   </div>
                 )}
+                {renderStorefrontPagination()}
               </div>
             );
           }
@@ -4230,6 +4215,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     {restProducts.map(renderSingleProductCard)}
                   </div>
                 )}
+                {renderStorefrontPagination()}
               </div>
             );
           }

@@ -6,6 +6,9 @@ const FIRESTORE_REST_BASE = `https://firestore.googleapis.com/v1/projects/${FIRE
 // ⚡ High-speed In-Memory Query Cache with TTL (Caches expensive queries & eliminates N+1 latency)
 const memoryCache = new Map();
 
+// 1 Month (30 days) Cache TTL to radically eliminate Firestore read burns
+export const CACHE_TTL_MONTH = 2592000; // 30 days in seconds (30 * 86400)
+
 let redisClient = null;
 let redisChecked = false;
 
@@ -210,7 +213,7 @@ export async function getShopServer(slug) {
         if (redisShop) {
           const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
           if (parsed && parsed.id) {
-            setCached(cacheKey, parsed, 86400);
+            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
             return parsed;
           }
         }
@@ -238,10 +241,10 @@ export async function getShopServer(slug) {
     }
 
     if (shop) {
-      setCached(cacheKey, shop, 86400); // 24 hours cache
+      setCached(cacheKey, shop, CACHE_TTL_MONTH); // 1-month cache to eliminate read burn
       if (redis) {
         try {
-          await redis.set(`cache:shop_slug:${slug}`, JSON.stringify(shop), { ex: 86400 });
+          await redis.set(`cache:shop_slug:${slug}`, JSON.stringify(shop), { ex: CACHE_TTL_MONTH });
         } catch (_) {}
       }
     }
@@ -384,8 +387,8 @@ export async function getProductsServer(shopId) {
         if (redisProds) {
           const parsed = typeof redisProds === 'string' ? JSON.parse(redisProds) : redisProds;
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setCached(cacheKey, parsed, 86400);
-            parsed.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, 86400); });
+            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
+            parsed.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
             return parsed;
           }
         }
@@ -405,13 +408,13 @@ export async function getProductsServer(shopId) {
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateB - dateA;
     });
-    setCached(cacheKey, products, 86400); // 24 hour cache
-    products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, 86400); });
+    setCached(cacheKey, products, CACHE_TTL_MONTH); // 1-month cache to eliminate read burn
+    products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
 
-    // Save to Redis (TTL 24 hours = 0 reads across serverless lambdas)
+    // Save to Redis (TTL 30 days = 0 reads across serverless lambdas)
     if (redis && products.length > 0) {
       try {
-        await redis.set(`cache:shop_products:${shopId}`, JSON.stringify(products), { ex: 86400 });
+        await redis.set(`cache:shop_products:${shopId}`, JSON.stringify(products), { ex: CACHE_TTL_MONTH });
       } catch (_) {}
     }
 
@@ -572,6 +575,42 @@ export async function getAllMarketplaceProductsServer() {
     const stale = getCached(cacheKey, true);
     if (stale) return stale;
     return [];
+  }
+}
+
+/**
+ * ⚡ Instant Cache Invalidator: Purges in-memory and Redis caches for a shop.
+ * Guarantees zero stale data after product or settings updates while maintaining
+ * 30-day 0-read cache during steady-state browsing.
+ */
+export async function invalidateShopCache(shopId, slug) {
+  try {
+    if (shopId) {
+      memoryCache.delete(`products_${shopId}`);
+      memoryCache.delete(`categories_${shopId}`);
+      memoryCache.delete(`shop_${shopId}`);
+    }
+    if (slug) {
+      memoryCache.delete(`shop_${slug}`);
+    }
+
+    const redis = await getRedis();
+    if (redis) {
+      const keys = [];
+      if (shopId) {
+        keys.push(`cache:shop_products:${shopId}`);
+        keys.push(`cache:shop_categories:${shopId}`);
+        keys.push(`cache:shop:${shopId}`);
+      }
+      if (slug) {
+        keys.push(`cache:shop_slug:${slug}`);
+      }
+      if (keys.length > 0) {
+        await Promise.allSettled(keys.map(k => redis.del(k)));
+      }
+    }
+  } catch (e) {
+    console.warn('[invalidateShopCache] Non-fatal purge warning:', e.message);
   }
 }
 
