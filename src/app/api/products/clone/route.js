@@ -849,6 +849,7 @@ export async function POST(request) {
             images: [img],
             sourceUrl: url,
             extractionSource,
+            showOnMainSite: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });

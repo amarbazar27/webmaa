@@ -158,6 +158,7 @@ export default function StoreMarketplacePage() {
   const allowedCategoriesList = globalConfig?.showcaseCuration?.allowedCategories || [];
   const allowedSubcategoriesList = globalConfig?.showcaseCuration?.allowedSubcategories || [];
 
+  // 1. Curated Shops: strictly follows whitelist if curation is active. If curation is OFF, NO external shops are displayed.
   const curatedShops = useMemo(() => {
     return shops.filter(s => {
       if (s.shopSlug === 'test' || s.shopName?.toLowerCase() === 'test' || s.shopSlug === 'daripallah-store' || s.shopSlug === 'webmaa-store') {
@@ -166,15 +167,20 @@ export default function StoreMarketplacePage() {
       if (s.isActive === false || s.showOnMainSite === false) {
         return false;
       }
-      if (isCurationActive && allowedShopsList.length > 0) {
+      if (isCurationActive) {
+        if (!allowedShopsList || allowedShopsList.length === 0) return false;
         return allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName);
       }
-      return true;
+      return false;
     });
   }, [shops, isCurationActive, allowedShopsList]);
 
-  // Filtered & Sorted Products
+  // Filtered & Sorted Products (Strict Curation: Zero unapproved leaks)
   const filteredProducts = useMemo(() => {
+    if (!isCurationActive || curatedShops.length === 0) {
+      return [];
+    }
+
     const validShopIds = new Set(curatedShops.map(s => s.id));
     const validShopSlugs = new Set(curatedShops.map(s => s.shopSlug || s.subdomainSlug).filter(Boolean));
     const validShopNames = new Set(curatedShops.map(s => s.shopName).filter(Boolean));
@@ -186,17 +192,11 @@ export default function StoreMarketplacePage() {
                                  (p.shopName && validShopNames.has(p.shopName));
       if (!belongsToValidShop) return false;
 
-      if (isCurationActive) {
-        if (allowedShopsList.length > 0) {
-          const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
-          if (!matchesShop) return false;
-        }
-        if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
-          return false;
-        }
-        if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
-          return false;
-        }
+      if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
+        return false;
+      }
+      if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
+        return false;
       }
       return true;
     });

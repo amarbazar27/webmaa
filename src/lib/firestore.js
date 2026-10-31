@@ -62,7 +62,7 @@ export const getShop = async (shopId) => {
 };
 
 export const getAllShops = async () => {
-  if (clientAllShopsCache.data && (Date.now() - clientAllShopsCache.timestamp < 1000 * 60 * 10)) {
+  if (clientAllShopsCache.data && (Date.now() - clientAllShopsCache.timestamp < 1000 * 60 * 60)) {
     return clientAllShopsCache.data;
   }
 
@@ -1272,7 +1272,7 @@ export const getShopProducts = async (shopId) => {
 };
 
 export const getAllMarketplaceProducts = async () => {
-  if (clientMarketplaceCache.data && (Date.now() - clientMarketplaceCache.timestamp < 1000 * 60 * 5)) {
+  if (clientMarketplaceCache.data && (Date.now() - clientMarketplaceCache.timestamp < 1000 * 60 * 60)) {
     return clientMarketplaceCache.data;
   }
 
@@ -1282,15 +1282,15 @@ export const getAllMarketplaceProducts = async () => {
       const sessionSaved = sessionStorage.getItem('bd_marketplace_products');
       if (sessionSaved) {
         const parsed = JSON.parse(sessionSaved);
-        if (parsed.timestamp && (Date.now() - parsed.timestamp < 1000 * 60 * 5)) {
+        if (parsed.timestamp && (Date.now() - parsed.timestamp < 1000 * 60 * 60)) {
           clientMarketplaceCache.data = parsed.products;
           clientMarketplaceCache.timestamp = parsed.timestamp;
           return parsed.products;
         }
       }
 
-      // 2. High-speed cached server API
-      const res = await fetch('/api/marketplace/products');
+      // 2. High-speed cached server API (Dual hydration: products + shops)
+      const res = await fetch('/api/marketplace/products?includeShops=true');
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.products)) {
@@ -1302,6 +1302,12 @@ export const getAllMarketplaceProducts = async () => {
               timestamp: Date.now()
             }));
           } catch (_) {}
+        }
+        if (Array.isArray(data.shops) && data.shops.length > 0) {
+          clientAllShopsCache.data = data.shops;
+          clientAllShopsCache.timestamp = Date.now();
+        }
+        if (Array.isArray(data.products)) {
           return data.products;
         }
       }

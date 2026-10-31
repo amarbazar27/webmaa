@@ -101,7 +101,7 @@ export async function GET(request) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${xmlItems}</urlset>`;
 
-  sitemapCacheMap.set(host, { xml, expiresAt: Date.now() + 6 * 60 * 60 * 1000 });
+  sitemapCacheMap.set(host, { xml, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',

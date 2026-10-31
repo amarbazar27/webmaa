@@ -112,7 +112,7 @@ export async function GET(request) {
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${xmlItems}</urlset>`;
 
-  sitemapCacheMap.set(host, { xml, expiresAt: Date.now() + 6 * 60 * 60 * 1000 });
+  sitemapCacheMap.set(host, { xml, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',

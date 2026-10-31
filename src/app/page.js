@@ -1021,7 +1021,7 @@ export default function Home() {
   const allowedCategoriesList = globalConfig?.showcaseCuration?.allowedCategories || [];
   const allowedSubcategoriesList = globalConfig?.showcaseCuration?.allowedSubcategories || [];
 
-  // 1. Curated Shops: strictly follows whitelist if curation is active, and enforces shop visibility
+  // 1. Curated Shops: strictly follows whitelist if curation is active. If curation is OFF, NO external shops are displayed.
   const curatedShops = useMemo(() => {
     return allShops.filter(s => {
       if (s.shopSlug === 'test' || s.shopName?.toLowerCase() === 'test' || s.shopSlug === 'daripallah-store' || s.shopSlug === 'webmaa-store') {
@@ -1031,42 +1031,46 @@ export default function Home() {
       if (s.isActive === false || s.showOnMainSite === false) {
         return false;
       }
-      if (isCurationActive && allowedShopsList.length > 0) {
+      // When curation is active: ONLY shops explicitly checked in the whitelist are permitted!
+      if (isCurationActive) {
+        if (!allowedShopsList || allowedShopsList.length === 0) return false;
         return allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName);
       }
-      return true;
+      // When curation is OFF: External tenant shops are completely disabled from main site showcase!
+      return false;
     });
   }, [allShops, isCurationActive, allowedShopsList]);
 
   // 2. Curated Products: strictly follows whitelist and verified curatedShops
   const curatedProducts = useMemo(() => {
+    if (!isCurationActive || curatedShops.length === 0) {
+      // Showcase Curation is OFF or no shops whitelisted: 0 external merchant products permitted!
+      return [];
+    }
+
     const validShopIds = new Set(curatedShops.map(s => s.id));
     const validShopSlugs = new Set(curatedShops.map(s => s.shopSlug || s.subdomainSlug).filter(Boolean));
     const validShopNames = new Set(curatedShops.map(s => s.shopName).filter(Boolean));
 
     return products.filter(p => {
       if (p.showOnMainSite === false) return false;
-      // Shop validation: product must belong to an active, non-hidden curated shop
+      // Shop validation: product must belong to an active, whitelisted curated shop
       const belongsToValidShop = (p.shopId && validShopIds.has(p.shopId)) ||
                                  (p.shopSlug && validShopSlugs.has(p.shopSlug)) ||
                                  (p.shopName && validShopNames.has(p.shopName));
       if (!belongsToValidShop) return false;
 
-      if (isCurationActive) {
-        if (allowedShopsList.length > 0) {
-          const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
-          if (!matchesShop) return false;
-        }
-        if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
-          return false;
-        }
-        if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
-          return false;
-        }
+      // Category whitelist validation
+      if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
+        return false;
+      }
+      // Subcategory whitelist validation
+      if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
+        return false;
       }
       return true;
     });
-  }, [products, curatedShops, isCurationActive, allowedShopsList, allowedCategoriesList, allowedSubcategoriesList]);
+  }, [products, curatedShops, isCurationActive, allowedCategoriesList, allowedSubcategoriesList]);
 
   // ── Merchant-Category Filter Double Flow ──
   const uniqueShops = useMemo(() => ['All', ...Array.from(new Set(curatedProducts.map(p => p.shopName).filter(Boolean)))], [curatedProducts]);

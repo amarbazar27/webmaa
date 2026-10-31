@@ -1,55 +1,55 @@
-# Graph Report - webmaa  (2026-10-12)
+# Graph Report - webmaa  (2026-10-30)
 
 ## Corpus Check
-- 1060 files · ~2,274,116 words
+- 1129 files · ~2,384,107 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 1481 file(s) not represented in the graph (top: .xml 1300, .version 92, .ttf 18)
+- Unclassified: 1483 file(s) not represented in the graph (top: .xml 1300, .version 92, .ttf 18)
 
 ## Summary
-- 12097 nodes · 22307 edges · 761 communities (518 shown, 243 thin omitted)
-- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 1420 edges (avg confidence: 0.91)
+- 12531 nodes · 23015 edges · 739 communities (549 shown, 190 thin omitted)
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 1431 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `fabae52b`
+- Built from commit: `77bf9ccb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - results.py
 - json
-- fetch_url
+- fetch_url_async
 - server.py
 - app.py
-- ContentResult
+- SchemaResult
 - ShopClient.jsx
 - lucide-react
 - AuthContext.jsx
 - ref_fs
 - audit_trust_stack
 - ref_path
-- audit_brand_entity
+- audit_signals
 - firestore.js
-- test_registry.py
-- SchemaResult
+- products/page.js
+- TestWebMcpReadiness
 - ref_react
 - formatters.py
 - audit_intent_mapping
 - AuditResult
 - skipif
-- useAuth
-- run_full_audit
+- react-hot-toast
+- batch_audit.py
 - audit_instruction_readiness
 - guides/[slug].astro
 - firebase-admin.js
 - validator.py
 - models.dart
 - rich_formatter.py
-- MethodScore
-- load_config
+- audit_platform_citation
+- TestProjectConfig
 - cookieConsent.ts
 - validate_public_url
-- geo_track.ts
+- ctaTracking.ts
 - _fake_post
 - test_agent_access.py
 - _soup
@@ -58,37 +58,37 @@
 - Shell.astro
 - Changelog
 - AuditReportContainer.tsx
-- patch
+- test_core.py
 - storefront_view.dart
 - cli
 - test_web_app.py
-- LLMResponse
+- prompt_library.py
 - audit_context_window
-- audit_negative_signals
+- _content
 - _soup
 - test_audit_contract.py
 - run_citation_check
 - TestI18n
 - AgentRules
 - patch
-- patch
+- test_v2_remaining_fixes.py
 - checkout_view.dart
 - subscribeGlobalConfig
 - fixer.py
 - SitemapUrl
 - audit_hallucination_bait
-- audit_prompt_injection
+- _soup
 - TestFixCommand
 - rate-limit.js
 - Issue tracker: GitHub
 - Issue tracker: GitHub
 - app_webview_screen.dart
 - frontend/package.json
-- snapshots.py
+- app/layout.js
 - TestLlmsCommand
 - extract_perception
-- src_lib_firebase_admin_fieldvalue
-- datetime
+- next
+- HistoryStore
 - audit_llms_txt
 - with_retry
 - ruflo.js
@@ -96,38 +96,38 @@
 - Triage
 - CheckResult
 - generate-sitemap.mjs
-- _get_clean_text
-- patch
-- query_llm
-- test_drift_detector.py
-- StoreCustomizationPanel.jsx
+- citability.py
+- fetch_sitemap
+- LLMResponse
+- build_passive_monitor_result
+- TemplateMarketplace.jsx
 - agent/skills/teach/SKILL.md
-- telemetry.py
+- audit_multimodal_readiness
 - PageTermExtract
 - .claude/skills/teach/SKILL.md
 - package.json
 - location/route.js
 - check_messerbazar_products.js
 - Process
-- bracket.py
+- phase_jobs
 - IntentLanding.astro
 - schema
-- TestCheckRegistry
+- .register
 - Process
 - SectionEditor.jsx
 - api.ts
 - test_citability.py
 - analyze_log_file
-- test_badge.py
+- generate_badge_svg
 - order_tracking_view.dart
-- LlmsTxtGenerator.tsx
-- _get_text_safe
-- _run_serpbase_citation_check
+- geo_track.ts
+- injection_detector.py
+- citations.py
 - audit_citability
 - query_serpbase
-- TestRobotsParserRFC9309
+- gap_analysis.py
 - functions
-- audit_sentiment.py
+- audit_citation_map
 - AI Context Files — Platform Guide
 - dependencies
 - AI Context Files — Platform Guide
@@ -140,38 +140,38 @@
 - Codebase Design
 - geo-optimizer/docs/index.md
 - detect_content_freshness
-- generate_badge_svg
+- TestBadgeSvgXss
 - TestGithubFormatter
 - Codebase Design
 - decompile_all_classes.js
 - decompile_mainactivity.js
 - audit_js_rendering
-- _analyze_attribution
+- audit_attribution.py
 - audit_rag_readiness
 - audit_schema
-- fill_template
+- schema_injector.py
 - topic_authority.py
-- patch
+- audit_ai_discovery
 - checkout/route.js
 - During the session
-- run_competitive_narrative_analysis
+- competitive_narrative.py
 - Your site ranks on Google. Does ChatGPT cite it?
 - Full List by Category
-- _soup
-- SnapshotStore
+- audit_embedding_proximity
+- snapshots.py
 - TelemetryStore
 - iter_jsonld_objects
 - validate_safe_path
 - web/docs/index.md
-- _make_result
-- patch
+- delete-resource/route.js
+- fetch_url
 - _page
 - theme.dart
 - During the session
 - marketplace_view.dart
 - decompile_baseactivity.js
 - decompile_send_flags.js
-- NewsletterSignup.tsx
+- ArticleVisual.astro
 - TestConfig
 - main.dart
 - domain/route.js
@@ -193,23 +193,23 @@
 - TestGraphUnpacking
 - detect_entity_disambiguation
 - Skill Roadmap
-- TestFaqJsonValidation
+- analyze_music_cues.py
 - HTML Report Format
 - 🚀 Webmaa প্রোডাকশন ক্লাউড সার্ভিস বাস্তবায়ন গাইড (ধাপ-ধাপ নির্দেশিকা)
-- broadcast/route.js
+- verify-password/route.js
 - agent/skills/wizard/template.sh
 - AGENTS.md
-- cmd_init
+- bracket.py
 - The 47 GEO Methods
 - sanity-publication-state.mjs
 - The 47 GEO Methods
 - audit_content_decay
 - check_llms_drift
 - url_to_label
-- extract_faq_from_html
+- decompile_send_detailed.js
 - generate_astro_snippet
-- run_site_coherence_async
-- _fetch_with_manual_redirects
+- site_coherence.py
+- NewsletterSignup.tsx
 - .claude/skills/wizard/template.sh
 - ocr-check.js
 - decompile_check_if_active_full.js
@@ -226,23 +226,23 @@
 - docs/docs/geo-audit.md
 - Complete Bot Table
 - index.astro
-- index.mjs
+- generate-llms.mjs
 - format_audit_pdf
 - Generating llms.txt
-- TestServiceJsonValidation
-- TestSchemaGenerateCommand
+- Step 1: Inspect the project
+- Step 2: Write the brag plan
 - TestFormatters
-- .test_fetch_url_connection_error_con_retry
-- fcm.js
+- test_http_retry.py
+- firebase.js
 - decompile_send_full_opcodes.js
 - decompile_send_url_param.js
 - GEO Optimizer — Claude Project Context
 - Generating llms.txt
 - Generating llms.txt
 - audit_content_quality
-- detect_temporal_coherence
+- /brag
 - Complete Bot Table
-- parametrize
+- _hrefs
 - TestQueryLLM
 - test_prompt_injection.py
 - dependencies
@@ -254,16 +254,16 @@
 - CI/CD Integration
 - Schema Injector
 - Schema Injector
-- audit_multi_turn_persistence
-- count_brand_mentions
-- analyze_html_file
+- audit_persistence.py
+- detect_crawl_budget
+- Step 4: Validate, render, and deliver
 - TestScoringConsistency
 - CI/CD Integration
 - Schema Injector
-- TestSummaryJsonValidation
-- TestCdnAiCrawlerCheck
-- _extract_shell_prop
-- TestValidateLlmsContent
+- /brag-slim
+- agent_access.py
+- test_frontend_seo.py
+- WaitlistForm.tsx
 - TestTelemetryStore
 - Ask Matt
 - decompile_check_if_active_detailed.js
@@ -273,10 +273,10 @@
 - force_connect_camerakini.js
 - list_fields_dex3.js
 - server-fetch.js
-- useVoiceOrder.js
+- AiVoicePanel.jsx
 - TemplateRenderer.jsx
 - Diagnosing Bugs
-- perception_extractor.py
+- _extract_shell_prop
 - MCP Server
 - scripts
 - Navbar.astro
@@ -290,24 +290,24 @@
 - decompile_full_sendworker.js
 - print_all_instructions.js
 - arena
-- inject_schema_into_html
+- The 9 Modular Phases
 - Categories and Weights (v4.0.0)
-- generate-llms.mjs
-- inspect_all_auth.js
+- clone/route.js
+- Audio reference
 - Categories and Weights (v4.0.0)
 - GEO Optimizer
-- schema_to_html_tag
+- Step 3: Hand off to Hyperframes
 - brand_matches
-- _PinnedIPAdapter
+- create_session_with_retry
 - Categories and Weights (v4.0.0)
-- test_ci_formatter.py
-- TestSchemaAnalyzeCommand
+- TestSarifFormatter
 - TestResultDataclasses
+- generate_llms_fix
 - TestFileCache
-- _FakeResponse
+- run_full_audit
 - _soup
-- TestValidateJsonldBranchMancanti
-- test_web_llms_generate.py
+- _schema_html
+- unittest_mock
 - Proposed Changes
 - decompile_mainactivity_fields.js
 - styleEngine.js
@@ -325,11 +325,11 @@
 - search_library.js
 - GEO Audit
 - detect_anchor_text_quality
-- build_audit_diff
+- test_diff.py
 - should_skip
 - GEO Audit
-- _mock_groq_module
-- TestSchemaRichness
+- test_llm_client.py
+- _score_schema
 - Steps
 - Test-Driven Development
 - Process
@@ -339,32 +339,32 @@
 - Steps
 - agent/skills/wayfinder/SKILL.md
 - geo-optimizer/AGENTS.md
-- fetch_page_title
-- GEO History
+- 2. 6-Act Real Scenario Storyboard (90.0s)
+- Modified Files and Descriptions
 - Skill System
 - ResearchCard.astro
 - SurveyForm.tsx
-- extract_competitor_narrative
+- schema_validator.py
 - categorize_url
 - FileCache
 - _svg_escape
 - GEO History
 - Skill System
-- TestJunitFormatter
+- test_ci_formatter.py
 - TestSchemaInjectCommand
 - TestWebCli
-- test_factual_accuracy.py
+- factual_accuracy.py
 - Steps
 - .claude/skills/wayfinder/SKILL.md
 - facebook-webhook/route.js
 - list_all_classes.js
 - test_ssr.js
-- getProductsServer
+- product/[productId]/page.js
 - getShopByDomainServer
 - 1. Core Competency & Sub-Skill Matrix
 - ArenaError
 - 1. Core Competency & Sub-Skill Matrix
-- ai-vision/route.js
+- hyperframes.json
 - Troubleshooting
 - RoadmapPhase.astro
 - compare.astro
@@ -374,31 +374,31 @@
 - pricing.astro
 - Quality Scoring Rubric
 - detect_answer_capsule
-- detect_eeat
-- .clear
-- .register
+- scripts
+- TestCheckRegistry
+- .run_all
 - Troubleshooting
 - _has_about_link
-- TestBatchAudit
+- test_batch_audit.py
 - _read_sitemap_locs
-- TestPerformanceBudget
+- Tone reference
 - TestLlmInstructions
 - TestAriaHiddenInjection
 - TestSeverityAndRisk
-- react-hot-toast
+- ai/route.js
 - list_all_distinct_packages.js
 - fraud-check/route.js
 - Migrate to Shoehorn
-- JSON Contract v1 — GEO Optimizer Web API
+- geo-optimizer/README.md
 - JSON Contract v1 — GEO Optimizer Web API
 - reportMapper.ts
 - detect_international_geo
 - detect_multi_platform
 - extract_page_terms
-- TestSchemaFaqCommand
+- HyperFrames Composition Project
 - TestSanityScheduledPublishing
 - TestAuditSchemaScriptStringNone
-- _soup
+- audit_prompt_injection
 - Migrate to Shoehorn
 - config.dart
 - list_types_dex3.js
@@ -408,15 +408,15 @@
 - agent/skills/to-spec/SKILL.md
 - chatgpt-custom-gpt.md
 - Deployment record — GeoReady CLS & branding follow-up
-- llms-txt-generator-wordpress.astro
-- _audit_robots_from_response
+- HyperFrames Composition Project
+- check_shop.js
 - detect_token_efficiency
 - get_score_band
-- _check
-- _run
+- TestTitleSeparatorCutting
+- test_drift_cmd.py
 - TestRobotsPolicy
 - TestHiddenText
-- TestSchemaRichnessThresholdBoundaries
+- _schema_html
 - TestSchemaRichnessConstants
 - requires_frontend_build
 - Steps
@@ -442,31 +442,31 @@
 - GEO Snapshots
 - tsconfig.json
 - GEO Optimizer Documentation
-- .get
-- test_unregister_rimuove_check
+- check_oauth.js
+- Core Capabilities & Catalog Areas
 - geo fix Command
 - GEO Snapshots
 - TestSchemaAstroCommand
 - TestSchemaErrorCases
 - TestDiffCommand
 - TestSnapshotsCommand
-- _user_facing_strings
-- ._render
-- test_llm_client.py
-- TestDetectProvider
-- test_web_logs_endpoint.py
+- SFX Analysis Summary
+- _classify_faithfulness
+- find_string_282.js
+- sub-superadmins/route.js
+- Music Cues: happy-beats-business-moves-vol-10-by-ende-dot-app
 - Process
 - <Questionnaire title>
 - .claude/skills/writing-shape/SKILL.md
 - read_pdf.js
-- draft/route.js
-- check_camerakini.js
+- Music Cues: happy-beats-business-moves-vol-11-by-ende-dot-app
+- Music Cues: happy-beats-business-moves-vol-12-by-ende-dot-app
 - find_all_arsc_strings.js
 - compare_fields.js
 - search_apk_strings.js
-- test_regex.js
+- Music Cues: happy-beats-business-moves-vol-1-by-ende-dot-app
 - test_upload.js
-- get_logo_client.js
+- Music Cues: happy-beats-business-moves-vol-9-by-ende-dot-app
 - db-backup.js
 - Process
 - _edge_colour
@@ -481,9 +481,9 @@
 - geo coherence
 - geo logs
 - Getting Started
-- Security Policy
+- SFX library — approved files
 - detect_citability_density
-- detect_image_alt_quality
+- LLM Providers for `geo citations`
 - detect_technical_terms
 - GEO AI Discovery Readiness
 - GEO Audit Orchestrator
@@ -495,7 +495,7 @@
 - Template Skill Prompt
 - Getting Started
 - TestResolveProvider
-- TestAuditLlmsTxtV2Integration
+- PlatformScore
 - _audit_result
 - TestHtmlCommentInjection
 - TestMonochromeText
@@ -509,11 +509,11 @@
 - 🔄 Webmaa Production Failover & Disaster Recovery Guide
 - geo/route.js
 - platform-review/route.js
-- search_dex_for_registerForActivityResult.js
+- detect_negative_signals
 - agent/skills/writing-beats/SKILL.md
-- advance
+- detect_stale_data
 - [1.1.0] — 2026-02-21
-- [4.0.1] — 2026-04-02
+- .test_history_text_output
 - [4.10.3] — 2026-05-10
 - [4.9.0] — 2026-04-16
 - GEO Monitor
@@ -522,43 +522,43 @@
 - GEO History
 - GEO Monitor
 - geo-optimizer
-- audit_citation_attribution
-- _quick_sentiment
+- Core Mandates
+- Key Workflows
 - detect_attribution
 - detect_boilerplate_ratio
 - detect_chatgpt_shopping
 - detect_cite_sources
-- detect_comparison_content
+- Hyperframes Composition Brief: BD Retailers 90s Cinematic Walkthrough
 - detect_faq_in_content
 - detect_format_mix
 - detect_quotations
 - detect_snippet_ready
-- detect_statistics
-- generate_faq_schema
+- Performance Benchmarks & Laboratory Metrics
+- 1. Safe Reversion Procedures
 - get_required_fields
 - main
 - product-sitemap.xml/route.js
-- TestAuditAiDiscoveryFromResponses
+- Production Readiness & Security Verification Report
 - TestResolveProviderSerpbase
-- TestGenerateMetaFix
+- firebase-admin
 - TestDemoReportSeo
 - TestLlmsScoringV2
-- TestGetHeaders
-- TestResolveUserAgentOverride
-- TestIntegrazioneBranchCoperti
+- test_user_agent_override.py
+- search_classes_dex_for_scanner.js
+- find_activity_result.js
 - TestRawSchemasDuplication
 - [1.1.0] - 2026-07-05
 - .claude/skills/writing-beats/SKILL.md
 - GEO Diff
 - decompile_instruction_details.js
-- find_all_scan_occurrences.js
+- count-prods.mjs
 - search_intent_activity.js
 - search_dex_http.js
 - search_dex_network.js
 - search_scanner.js
 - Security Policy
 - Platform Setup Guide
-- category-sitemap.xml/route.js
+- getAllMarketplaceProducts
 - image-sitemap.xml/route.js
 - agent/skills/loop-me/SKILL.md
 - Agency Agents — 280+ Autonomous Specialist Hub
@@ -567,7 +567,7 @@
 - Astro Starter Kit: Minimal
 - MonitorSurface.astro
 - GEO Diff
-- Layout.astro
+- 🎯 Agentation: Visual UI Element Locator & Context Protocol
 - PULL_REQUEST_TEMPLATE.md
 - astro-geoready
 - Princeton GEO Methods — Foundation for 42 Citability Methods
@@ -578,24 +578,24 @@
 - Method 8 — Technical Terms
 - Method 2 — Statistics
 - Method 3 — Quotation Addition
-- detect_definition_patterns
-- detect_easy_to_understand
-- detect_nuance_signals
-- detect_unique_words
+- 🗺️ Archify: Visual Architecture & System Flow Protocol
+- [4.8.0] — 2026-04-16
+- GEO Optimizer — Documentation
+- Alibaba OpenCodeReview (OCR) Skill
 - GEO Perception
-- _mock_core_url_validation
-- TestDemoBuiltContent
+- find_request_urls.js
+- find_sound_creation.js
 - TestSanityScheduledWorkflow
-- _mock_async_url_validation
-- TestVersionPep440
-- test_serp_provider.py
-- _mock_v21_url_validation
+- print_bytes.js
+- search_qr_server.js
+- 🌐 API-Anything: Lightweight Network Operation Interception Protocol
+- Music
 - test_pagine_comparison_ritirate_ridirigono_301_su_best_geo_tools
 - .claude/skills/loop-me/SKILL.md
 - Deployment Guide
 - next.config.mjs
 - firebase-messaging-sw.js
-- check_download_links.js
+- [3.19.0] — 2026-03-30
 - decompile_functions.js
 - patch-orders.js
 - agent/skills/diagnosing-bugs/scripts/hitl-loop.template.sh
@@ -614,7 +614,7 @@
 - [4.12.0] — 2026-05-29
 - [4.13.0] — 2026-06-10 · Echo
 - [4.2.0] — 2026-04-13
-- [4.4.0] — 2026-04-13
+- Fixed
 - [4.6.0] — 2026-04-14
 - Published Articles
 - GitHub Discussions — launch plan
@@ -622,28 +622,28 @@
 - Method 7 — Unique Words
 - Method 9 — Keyword Stuffing ⚠️
 - Recommended Implementation Strategy
-- TestAboutLinkPatternsConstant
-- TestWilsonInterval
-- _mock_offline_url_validation
-- _mock_mcp_url_validation
-- _mock_mcp_url_validation
-- _mock_v2_url_validation
+- about/page.js
+- not-found.js
+- skillspector.md
+- test_mcp.py
+- test_mcp_server.py
+- [3.17.12] — 2026-03-27
 - Ponytail Review — Hunt & Delete Over-Engineering
 - Ponytail — The Lazy Senior Developer
 - .claude/skills/diagnosing-bugs/scripts/hitl-loop.template.sh
 - GLOSSARY.md Format
 - .claude/skills/writing-fragments/SKILL.md
-- decompile_mainactivity_dialog_methods.js
+- [3.17.5] — 2026-03-27
 - find_download_handler.js
-- find_inner_classes.js
+- [3.17.9] — 2026-03-27
 - find_snackbar_calls.js
 - find_stringrequest_init.js
-- find_showtoast_calls.js
+- Fixed
 - find_string_anywhere.js
 - print_simname_bytes.js
 - search_qr.js
-- read_api_dialogue.js
-- ReviewsClient.jsx
+- test_health_ritorna_200_e_status_ok
+- test_verify_bearer_token_con_token_corretto_ritorna_true
 - [1.2.0] — 2026-02-21
 - [3.14.0] — 2026-03-25
 - [3.18.1] — 2026-03-27
@@ -657,7 +657,7 @@
 - [4.15.0] — 2026-07-08 · Aperture
 - [4.16.0] — 2026-08-06 · Ground Truth
 - [4.16.1] — 2026-08-11
-- [4.17.0] — 2026-08-30 · Parallax
+- brag
 - [4.1.0] — 2026-04-03
 - [4.5.1] — 2026-04-13
 - [4.7.0] — 2026-04-16
@@ -669,36 +669,14 @@
 - pricing/layout.js
 - robots.txt/route.js
 - agent/skills/git-guardrails-claude-code/scripts/block-dangerous-git.sh
-- [3.17.11] — 2026-03-27
-- [3.17.13] — 2026-03-27
-- [3.17.14] — 2026-03-27
-- [3.17.16] — 2026-03-27
 - [3.17.2] — 2026-03-27
 - [3.17.6] — 2026-03-27
-- [3.17.7] — 2026-03-27
 - [3.18.0] — 2026-03-27
 - [3.18.5–3.18.7] — 2026-03-27 → 2026-03-30
 - [4.0.0-beta.4] — 2026-04-02
 - [4.12.1] — 2026-06-03
-- _extract_article_author
-- test_badge_good_contiene_score_e_label
-- test_badge_excellent_usa_colore_verde
-- test_badge_band_sconosciuta_fallback_a_critical
-- test_post_audit_url_valido_ritorna_200
-- test_post_audit_body_vuoto_ritorna_422
-- test_post_audit_include_report_url
-- test_post_audit_url_privato_ritorna_400
-- test_get_audit_senza_url_ritorna_422
-- test_post_audit_usa_cache_per_secondo_request
-- test_badge_happy_path_restituisce_svg
-- test_badge_audit_eccezione_generica_restituisce_badge_errore
-- test_badge_url_privato_ritorna_400
 - test_badge_senza_url_ritorna_422
-- test_report_id_non_hex_ritorna_400
-- test_report_id_troppo_corto_ritorna_400
-- test_report_id_valido_con_report_in_cache_ritorna_html
 - test_verify_bearer_token_senza_header_authorization_ritorna_false
-- test_post_audit_con_token_sbagliato_ritorna_401
 - CLAUDE.md
 - .claude/skills/git-guardrails-claude-code/scripts/block-dangerous-git.sh
 - postcss.config.mjs
@@ -709,9 +687,9 @@
 1. `SchemaResult` - 185 edges
 2. `AuditResult` - 185 edges
 3. `_soup()` - 158 edges
-4. `lucide-react` - 130 edges
-5. `ContentResult` - 117 edges
-6. `next` - 115 edges
+4. `lucide-react` - 136 edges
+5. `next` - 132 edges
+6. `ContentResult` - 117 edges
 7. `cli()` - 114 edges
 8. `MetaResult` - 111 edges
 9. `LlmsTxtResult` - 87 edges
@@ -722,113 +700,109 @@
   implementation_plan.md → src/lib/firestore.js
 - `Fixed` --references--> `err()`  [INFERRED]
   .agents/skills/geo-optimizer/CHANGELOG.md → src/lib/fcm.js
-- `Rules for the orchestrator` --references--> `collect()`  [INFERRED]
-  .agents/skills/arena/SKILL.md → .agents/skills/arena/bracket.py
-- `Fixed` --references--> `format_audit_text()`  [INFERRED]
-  .agents/skills/geo-optimizer/CHANGELOG.md → .agents/skills/geo-optimizer/src/geo_optimizer/cli/formatters.py
-- `Changed` --references--> `build_recommendations()`  [INFERRED]
-  .agents/skills/geo-optimizer/CHANGELOG.md → .agents/skills/geo-optimizer/src/geo_optimizer/core/audit.py
+- `2. `src/lib/firestore.js`` --references--> `getShop()`  [INFERRED]
+  PERFORMANCE_CHANGELOG.md → src/lib/firestore.js
+- `⚠️ Critical Bottleneck 2: Missing Server-Side Marketplace API Caching (Severity: HIGH / P1)` --references--> `getAllShops()`  [INFERRED]
+  PERFORMANCE_AUDIT.md → src/lib/firestore.js
+- `2. `src/lib/firestore.js`` --references--> `getAllShops()`  [INFERRED]
+  PERFORMANCE_CHANGELOG.md → src/lib/firestore.js
 
 ## Import Cycles
 - 3-file cycle: `src/lib/fraud/detector.js -> src/lib/fraud/providers/index.js -> src/lib/fraud/providers/fraudbd.js -> src/lib/fraud/detector.js`
 
-## Communities (761 total, 243 thin omitted)
+## Communities (739 total, 190 thin omitted)
 
 ### Community 0 - "results.py"
 Cohesion: 0.02
-Nodes (56): audit_ai_discovery(), _audit_ai_discovery_from_responses(), _flatten_graph(), audit_cdn_ai_crawler(), audit_embedding_proximity(), _browser_like_headers(), _result_from_response(), _try_browser_like_retry() (+48 more)
+Nodes (41): Added, Fixed, _cut_at_first_separator(), _flatten_graph(), _compute_evergreen(), _compute_risk(), _audit_llms_from_response(), _browser_like_headers() (+33 more)
 
 ### Community 1 - "json"
-Cohesion: 0.02
-Nodes (71): Added, Fixed, access(), _format_json(), _format_text(), authority(), _print_text(), citations() (+63 more)
+Cohesion: 0.03
+Nodes (43): Added, access(), _format_json(), _format_text(), audit(), authority(), _print_text(), citations() (+35 more)
 
-### Community 2 - "fetch_url"
-Cohesion: 0.01
-Nodes (79): [4.0.0-beta.2] — 2026-04-02, [4.18.2] — 2026-09-19, Added, Changed, Fixed, Security, Security, Security (+71 more)
+### Community 2 - "fetch_url_async"
+Cohesion: 0.03
+Nodes (40): [4.18.2] — 2026-09-19, get_headers(), fetch_url_async(), fetch_urls_async(), is_httpx_available(), TestHttpAsync, run(), run() (+32 more)
 
 ### Community 3 - "server.py"
-Cohesion: 0.02
-Nodes (77): Added, Fixed, 10. `geo_trust_score`, 11. `geo_negative_signals`, 12. `geo_factual_accuracy`, 1. `geo_audit`, 2. `geo_fix`, 3. `geo_llms_generate` (+69 more)
+Cohesion: 0.04
+Nodes (65): [4.4.0] — 2026-04-13, Added, Added, Changed, Fixed, Tests, 10. `geo_trust_score`, 11. `geo_negative_signals` (+57 more)
 
 ### Community 4 - "app.py"
-Cohesion: 0.03
-Nodes (52): normalize_domain(), ai_faq(), ai_service(), ai_summary(), analyze_competitors(), analyze_competitors_get(), analyze_logs(), audit_get() (+44 more)
+Cohesion: 0.02
+Nodes (62): Added, map_prompt_library_intents(), geo_api_error(), geo_audit_run(), geo_badge_generated(), geo_score_improved(), geo_suggestion_applied(), _telemetry() (+54 more)
 
-### Community 5 - "ContentResult"
-Cohesion: 0.04
-Nodes (39): Top-level keys, Top-level keys, _build_audit_result(), build_recommendations(), _flatten(), _recoverable(), _extract_text_for_analysis(), _extract_page_text() (+31 more)
+### Community 5 - "SchemaResult"
+Cohesion: 0.03
+Nodes (50): Top-level keys, Top-level keys, audit_brand_entity(), _build_audit_result(), build_recommendations(), _flatten(), _recoverable(), _extract_text_for_analysis() (+42 more)
 
 ### Community 6 - "ShopClient.jsx"
 Cohesion: 0.02
-Nodes (148): AiCustomization, AiShoppingList, AiVoicePanel, COMMON_PHONETIC_DICT, Home(), LandingProductDetailInner(), LandingProductDetailModal(), LegacySizes (+140 more)
+Nodes (138): AiCustomization, AiShoppingList, COMMON_PHONETIC_DICT, LandingProductDetailInner(), LandingProductDetailModal(), LegacySizes, ProductActions, ProductImage (+130 more)
 
 ### Community 7 - "lucide-react"
 Cohesion: 0.05
-Nodes (65): lucide-react, HomepageBuilderPage(), StorefrontFooter, StorefrontHeader, ATTRIBUTION_OPTIONS, HeaderFooterEditor(), CATEGORY_TEMPLATES, DEFAULT_FOOTER (+57 more)
+Nodes (66): lucide-react, HomepageBuilderPage(), StorefrontFooter, StorefrontHeader, ATTRIBUTION_OPTIONS, HeaderFooterEditor(), CATEGORY_TEMPLATES, DEFAULT_FOOTER (+58 more)
 
 ### Community 8 - "AuthContext.jsx"
-Cohesion: 0.11
-Nodes (34): firebase, LoginPage(), RegisterPage(), BecomeRetailerPage(), countries, DEMO_CATEGORIES, DEMO_PRODUCTS, DemoPage() (+26 more)
+Cohesion: 0.09
+Nodes (37): firebase, LoginPage(), RegisterPage(), BecomeRetailerPage(), countries, DEMO_CATEGORIES, DEMO_PRODUCTS, DemoPage() (+29 more)
 
 ### Community 9 - "ref_fs"
 Cohesion: 0.02
-Nodes (62): fs, content, fs, sections, buffer, fs, strings, buffer (+54 more)
+Nodes (63): content, fs, lines, fs, content, fs, sections, content (+55 more)
 
 ### Community 10 - "audit_trust_stack"
 Cohesion: 0.05
-Nodes (28): audit_trust_stack(), _compute_grade(), _count_social_links(), _count_statistics(), _detect_authoritative_links(), _detect_references_section(), _detect_social_links(), _detect_testimonials() (+20 more)
+Nodes (29): audit_trust_stack(), _compute_grade(), _count_social_links(), _count_statistics(), _detect_authoritative_links(), _detect_references_section(), _detect_social_links(), _detect_testimonials() (+21 more)
 
 ### Community 11 - "ref_path"
-Cohesion: 0.03
-Nodes (49): admin, db, fs, path, privateKey, buffer, fs, path (+41 more)
+Cohesion: 0.02
+Nodes (57): admin, db, fs, path, privateKey, buffer, fs, path (+49 more)
 
-### Community 12 - "audit_brand_entity"
-Cohesion: 0.04
-Nodes (10): audit_brand_entity(), _base_html(), _soup(), TestAuditBrandEntity, TestAuditSignals, TestBrandCoherenceWithLegalSuffixes, _schema_html(), _soup() (+2 more)
+### Community 12 - "audit_signals"
+Cohesion: 0.11
+Nodes (3): Fixed, audit_signals(), TestAuditSignals
 
 ### Community 13 - "firestore.js"
-Cohesion: 0.06
-Nodes (67): GoogleMapViewer(), OrdersPage(), STATUS_CONFIG, SuperadminAppBuilder, SuperadminBroadcastPanel, SuperadminCustomersPanel, SuperadminFaqManager, SuperadminHomepageControls (+59 more)
-
-### Community 14 - "test_registry.py"
-Cohesion: 0.18
-Nodes (5): _MissingMethodCheck, test_check_result_completo(), test_check_result_defaults(), test_register_oggetto_non_protocol_solleva_typeerror(), test_run_all_nessun_check_registrato()
-
-### Community 15 - "SchemaResult"
 Cohesion: 0.05
-Nodes (11): audit_multimodal_readiness(), _informative_alt(), SchemaResult, _soup(), TestAuditWebmcpRecognizesEmbeddedFormProviders, _soup(), TestAuditMultimodal, _mock_response() (+3 more)
+Nodes (69): GoogleMapViewer(), OrdersPage(), STATUS_CONFIG, SuperadminAppBuilder, SuperadminBroadcastPanel, SuperadminCustomersPanel, SuperadminFaqManager, SuperadminHomepageControls (+61 more)
+
+### Community 14 - "products/page.js"
+Cohesion: 0.13
+Nodes (26): LandingPagesDashboard(), EditProductPage(), NewProductPage(), EditableCell(), parseCSV(), ProductsPage(), COMMON_PHONETIC_DICT, matchPhoneticSearch() (+18 more)
+
+### Community 15 - "TestWebMcpReadiness"
+Cohesion: 0.04
+Nodes (6): _audit_ai_discovery_from_responses(), TestAuditAiDiscoveryFromResponses, _mock_response(), _schema_with_action(), TestWebMcpDeclaration, TestWebMcpReadiness
 
 ### Community 16 - "ref_react"
 Cohesion: 0.04
-Nodes (46): next, metadata, AccountDeletePage(), AdminLayout(), dynamic, DashboardLayout(), JsonLd(), metadata (+38 more)
+Nodes (68): recharts, AccountDeletePage(), AdminLayout(), AdminPage(), BroadcastPage(), DashboardLayout(), DashboardPage(), Loading() (+60 more)
 
 ### Community 17 - "formatters.py"
-Cohesion: 0.04
-Nodes (24): audit(), format_audit_diff_json(), format_audit_diff_text(), format_audit_text(), format_batch_audit_json(), format_batch_audit_text(), format_citation_quality_json(), format_citation_quality_text() (+16 more)
+Cohesion: 0.03
+Nodes (35): diff(), format_audit_diff_json(), format_audit_diff_text(), format_audit_text(), format_batch_audit_json(), format_batch_audit_text(), format_citation_quality_json(), format_citation_quality_text() (+27 more)
 
 ### Community 18 - "audit_intent_mapping"
-Cohesion: 0.06
-Nodes (15): audit_intent_mapping(), _build_gap_summary(), _check_schema_for_intent(), _estimate_intent_coverage(), _find_primary_intent(), _generate_radar_data(), _generate_recommendations(), map_prompt_library_intents() (+7 more)
+Cohesion: 0.07
+Nodes (13): audit_intent_mapping(), _build_gap_summary(), _check_schema_for_intent(), _estimate_intent_coverage(), _find_primary_intent(), _generate_radar_data(), _generate_recommendations(), _score_text_for_intents() (+5 more)
 
 ### Community 19 - "AuditResult"
 Cohesion: 0.07
 Nodes (30): _ai_discovery_findings(), _content_findings(), format_audit_junit(), format_audit_sarif(), _get_version(), _level_for_score(), _llms_findings(), _meta_findings() (+22 more)
 
-### Community 20 - "skipif"
-Cohesion: 0.04
-Nodes (10): is_httpx_available(), _crea_audit_result_vuoto(), TestHttpAsync, run(), run(), run(), run(), run() (+2 more)
+### Community 21 - "react-hot-toast"
+Cohesion: 0.10
+Nodes (48): clsx, react-hot-toast, BillingPage(), CategoriesPage(), CustomersPage(), IncompleteOrdersPage(), BD_DISTRICTS, RANGPUR_WARDS (+40 more)
 
-### Community 21 - "useAuth"
-Cohesion: 0.07
-Nodes (65): clsx, RESERVED_SLUGS, BillingPage(), BroadcastPage(), CategoriesPage(), CustomersPage(), EditProductPage(), NewProductPage() (+57 more)
-
-### Community 22 - "run_full_audit"
-Cohesion: 0.05
-Nodes (21): Fixed, Upgrading from v3.x, _audit_llms_from_response(), run_full_audit(), run_full_audit_async(), audit_signals(), _aggregate_batch_result(), _async_runtime_available() (+13 more)
+### Community 22 - "batch_audit.py"
+Cohesion: 0.11
+Nodes (15): _aggregate_batch_result(), _async_runtime_available(), _audit_single_url(), _audit_urls(), _worker(), _average_breakdowns(), run_batch_audit(), run_batch_audit_async() (+7 more)
 
 ### Community 23 - "audit_instruction_readiness"
-Cohesion: 0.08
-Nodes (11): _action_clarity_score(), _analyze_actions(), _analyze_forms(), audit_instruction_readiness(), _compute_level(), _compute_readiness_score(), _form_readability_score(), _has_label() (+3 more)
+Cohesion: 0.07
+Nodes (12): _action_clarity_score(), _analyze_actions(), _analyze_forms(), audit_instruction_readiness(), _compute_level(), _compute_readiness_score(), _form_readability_score(), _has_label() (+4 more)
 
 ### Community 24 - "guides/[slug].astro"
 Cohesion: 0.05
@@ -836,7 +810,7 @@ Nodes (41): styles, dimensionMatch, renderHeight, renderWidth, src, dataCta, hre
 
 ### Community 25 - "firebase-admin.js"
 Cohesion: 0.04
-Nodes (28): firebase-admin, dynamic, POST(), cleanupMainSiteCloudinaryImages(), dynamic, POST(), dynamic, POST() (+20 more)
+Nodes (29): dynamic, POST(), dynamic, POST(), dynamic, dynamic, createTransporter(), dynamic (+21 more)
 
 ### Community 26 - "validator.py"
 Cohesion: 0.06
@@ -850,25 +824,21 @@ Nodes (51): bannerUrls, CartItem, Category, categoryId, city, colors, contactEma
 Cohesion: 0.07
 Nodes (21): _band_color(), _build_ai_discovery_card(), _build_brand_entity_card(), _build_cdn_card(), _build_content_card(), _build_js_card(), _build_llms_card(), _build_meta_card() (+13 more)
 
-### Community 29 - "MethodScore"
-Cohesion: 0.09
-Nodes (14): Changed, audit_platform_citation(), _score_chatgpt(), _score_google_ai(), _score_perplexity(), CitabilityResult, MethodScore, PlatformCitationResult (+6 more)
-
-### Community 30 - "load_config"
-Cohesion: 0.06
-Nodes (10): AuditConfig, find_config_file(), _is_yaml_available(), LlmsConfig, load_config(), _parse_config(), ProjectConfig, _safe_int() (+2 more)
+### Community 29 - "audit_platform_citation"
+Cohesion: 0.12
+Nodes (9): Changed, audit_platform_citation(), _score_google_ai(), CitabilityResult, TestGeoCitabilityTool, _defaults(), _google_ai(), TestGoogleAiRealign (+1 more)
 
 ### Community 31 - "cookieConsent.ts"
-Cohesion: 0.12
-Nodes (38): CATEGORY_STATE, CookieBanner(), CookieBannerProps, CookieConsentManager(), ManagerState, CookieFloatingButton(), CookieFloatingButtonProps, CookiePreferencesModal() (+30 more)
+Cohesion: 0.11
+Nodes (39): CATEGORY_STATE, CookieBanner(), CookieBannerProps, CookieConsentManager(), ManagerState, CookieFloatingButton(), CookieFloatingButtonProps, CookiePreferencesModal() (+31 more)
 
 ### Community 32 - "validate_public_url"
 Cohesion: 0.06
-Nodes (5): Security, validate_public_url(), TestAsyncSSRFValidation, TestValidatePublicUrl, TestSsrfBypassNetworks
+Nodes (4): validate_public_url(), TestAsyncSSRFValidation, TestValidatePublicUrl, TestSsrfBypassNetworks
 
-### Community 33 - "geo_track.ts"
-Cohesion: 0.09
-Nodes (46): FormState, MAIN_INTEREST_OPTIONS, SITES_RANGE_OPTIONS, USER_TYPE_OPTIONS, WaitlistForm(), handleFirstInteraction(), handleSubmit(), appDestination() (+38 more)
+### Community 33 - "ctaTracking.ts"
+Cohesion: 0.14
+Nodes (26): appDestination(), appUrl(), ctaLocation(), handleAppFunnelClick(), handleGenericCta(), handleManualPreviewDownload(), handlePlanCta(), initCtaTracking() (+18 more)
 
 ### Community 34 - "_fake_post"
 Cohesion: 0.05
@@ -879,8 +849,8 @@ Cohesion: 0.12
 Nodes (33): [4.11.0] — 2026-05-27, Added, Codename — Static, Notes, Tests, _compute_overall_status(), run_agent_access_audit(), audit_meta_tags() (+25 more)
 
 ### Community 36 - "_soup"
-Cohesion: 0.06
-Nodes (10): detect_negative_signals(), detect_stale_data(), detect_voice_search(), _soup(), TestCrawlBudget, TestEntityResolution, TestNegativeSignals, TestRetrievalTriggers (+2 more)
+Cohesion: 0.05
+Nodes (12): detect_comparison_content(), detect_eeat(), detect_image_alt_quality(), detect_voice_search(), _soup(), TestComparisonContent, TestEeat, TestImageAltQuality (+4 more)
 
 ### Community 37 - "ref_https"
 Cohesion: 0.04
@@ -896,75 +866,75 @@ Nodes (31): Props, COMPARISON_ROWS, faqs, faqs, LOG_ROW, faqs, faqs, PLAN_ROWS (
 
 ### Community 40 - "Changelog"
 Cohesion: 0.05
-Nodes (43): [1.0.0] — 2026-02-18, [1.5.1] — 2026-02-21, [2.0.0b1] — 2026-02-24, [2.2.0b1] — 2026-02-27, [3.0.0] — 2026-02-27, [3.14.1] — 2026-03-25, [3.17.10] — 2026-03-27, [3.17.12] — 2026-03-27 (+35 more)
+Nodes (43): [1.0.0] — 2026-02-18, [1.5.1] — 2026-02-21, [2.0.0b1] — 2026-02-24, [2.2.0b1] — 2026-02-27, [3.0.0a1] — 2026-02-27, [3.14.1] — 2026-03-25, [3.17.10] — 2026-03-27, [3.17.11] — 2026-03-27 (+35 more)
 
 ### Community 41 - "AuditReportContainer.tsx"
-Cohesion: 0.08
-Nodes (37): ALL_LOCKED_SLUGS, AuditReportContainer(), AuditReportContainerProps, categoryAction, categoryRatio(), findWeakestCategory(), FREE_SLUGS, planByCategory (+29 more)
+Cohesion: 0.09
+Nodes (30): ALL_LOCKED_SLUGS, AuditReportContainerProps, categoryAction, categoryRatio(), findWeakestCategory(), FREE_SLUGS, planByCategory, planSignupHref() (+22 more)
 
-### Community 42 - "patch"
-Cohesion: 0.07
-Nodes (6): audit_robots_txt(), TestAuditRobotsTxt, TestDiscoverSitemap, TestFetchSitemap, TestFetchUrl, TestRunFullAudit
+### Community 42 - "test_core.py"
+Cohesion: 0.05
+Nodes (20): [2.0.0b3] — 2026-02-27, [4.0.0-beta.2] — 2026-04-02, Added, Changed, Fixed, Fixed, Security, Security (+12 more)
 
 ### Community 43 - "storefront_view.dart"
 Cohesion: 0.05
 Nodes (35): _buildShopCard, _bannerController, _buildAppBar, _buildBannerCarousel, _buildCartTab, _buildCategoryChips, _buildEmptyProducts, _buildErrorView (+27 more)
 
 ### Community 44 - "cli"
-Cohesion: 0.06
-Nodes (4): cli(), TestCitationsCli, TestCLIVersionAndHelp, TestUppercaseSchemeEndToEnd
+Cohesion: 0.05
+Nodes (5): cli(), TestCitationsCli, TestCLIVersionAndHelp, TestSchemaGenerateCommand, TestUppercaseSchemeEndToEnd
 
 ### Community 45 - "test_web_app.py"
-Cohesion: 0.05
-Nodes (20): test_ai_faq_json_punteggi_coerenti_con_config(), test_ai_service_json_restituisce_capabilities(), test_ai_summary_json_restituisce_struttura_valida(), test_audit_result_to_dict_include_tutti_campi(), test_badge_audit_timeout_restituisce_badge_errore(), test_check_rate_limit_blocca_dopo_limite(), test_get_audit_url_valido_ritorna_200(), test_health_ritorna_200_e_status_ok() (+12 more)
+Cohesion: 0.03
+Nodes (28): test_ai_faq_json_punteggi_coerenti_con_config(), test_ai_service_json_restituisce_capabilities(), test_ai_summary_json_restituisce_struttura_valida(), test_badge_audit_eccezione_generica_restituisce_badge_errore(), test_badge_audit_timeout_restituisce_badge_errore(), test_badge_happy_path_restituisce_svg(), test_badge_url_privato_ritorna_400(), test_get_audit_senza_url_ritorna_422() (+20 more)
 
-### Community 46 - "LLMResponse"
-Cohesion: 0.09
-Nodes (11): audit_citation_map(), _analyze_response(), LLMResponse, run_prompt_library(), TestAuditCitationMap, llm_error_response(), llm_invalid_json_response(), llm_success_response() (+3 more)
+### Community 46 - "prompt_library.py"
+Cohesion: 0.16
+Nodes (6): _avg_sentiment(), _quick_sentiment(), run_prompt_library(), PromptLibraryResult, PromptResult, TestPromptLibrary
 
 ### Community 47 - "audit_context_window"
-Cohesion: 0.10
+Cohesion: 0.09
 Nodes (5): audit_context_window(), _compute_score(), _compute_truncation_risk(), _soup(), TestContextWindowAudit
 
-### Community 48 - "audit_negative_signals"
-Cohesion: 0.10
-Nodes (8): audit_negative_signals(), TestNegativeSignalsSeverity, _content(), _meta(), TestNegativeSignalsStyleLeak, _content(), _meta(), TestNegativeSignals
+### Community 48 - "_content"
+Cohesion: 0.13
+Nodes (3): _content(), _meta(), TestNegativeSignals
 
 ### Community 49 - "_soup"
-Cohesion: 0.07
-Nodes (7): detect_answer_first(), detect_keyword_stuffing(), TestKeywordStuffing, _soup(), TestAnswerFirst, TestOverOptimization, TestPassageDensity
+Cohesion: 0.06
+Nodes (8): detect_answer_first(), detect_keyword_stuffing(), detect_passage_density(), TestKeywordStuffing, _soup(), TestAnswerFirst, TestOverOptimization, TestPassageDensity
 
 ### Community 50 - "test_audit_contract.py"
-Cohesion: 0.08
-Nodes (21): _call_audit_result_to_dict(), _make_minimal_audit_result(), test_agent_access_result_defaults(), test_audit_result_agent_access_optional(), test_audit_result_defaults_safe(), test_audit_result_has_required_fields(), test_audit_result_url_required(), test_fixture_file_exists() (+13 more)
+Cohesion: 0.05
+Nodes (41): [4.12.2] — 2026-06-03, Fixed, _classify_severity(), compute_semantic_drift(), SemanticDriftDelta, _call_audit_result_to_dict(), test_agent_access_result_defaults(), test_audit_result_agent_access_optional() (+33 more)
 
 ### Community 51 - "run_citation_check"
-Cohesion: 0.09
-Nodes (8): run_citation_check(), _wilson_interval(), _serp(), _sonar_response(), TestMultiRun, TestPerplexityProvider, TestRunCitationCheck, TestRunCitationCheckServpbase
+Cohesion: 0.08
+Nodes (9): run_citation_check(), SerpResult, _serp(), _sonar_response(), TestMultiRun, TestPerplexityProvider, TestRunCitationCheck, TestRunCitationCheckServpbase (+1 more)
 
 ### Community 52 - "TestI18n"
 Cohesion: 0.06
 Nodes (4): get_lang(), set_lang(), setup_i18n(), TestI18n
 
 ### Community 53 - "AgentRules"
-Cohesion: 0.08
-Nodes (4): AgentRules, BotStatus, classify_bot(), TestClassifyBot
-
-### Community 55 - "patch"
 Cohesion: 0.06
-Nodes (5): TestFetchPageTitleStatusCheck, TestResponseSizeLimit, TestSitemapDepthLimit, TestSitemapUrlValidation, TestStatusCodeValidation
+Nodes (6): AgentRules, BotStatus, classify_bot(), _is_path_allowed(), TestClassifyBot, TestRobotsParserRFC9309
+
+### Community 55 - "test_v2_remaining_fixes.py"
+Cohesion: 0.06
+Nodes (6): _mock_v2_url_validation(), TestFetchPageTitleStatusCheck, TestResponseSizeLimit, TestSitemapDepthLimit, TestSitemapUrlValidation, TestStatusCodeValidation
 
 ### Community 56 - "checkout_view.dart"
 Cohesion: 0.06
 Nodes (31): CartProvider, _addressController, build, CheckoutView, _CheckoutViewState, createState, dispose, _emailController (+23 more)
 
 ### Community 57 - "subscribeGlobalConfig"
-Cohesion: 0.17
-Nodes (22): ShowcasePage(), COMMON_PHONETIC_DICT, normalizePhonetic(), StoreMarketplacePage(), TemplateEmbedPage(), TEMPLATE_BADGES_EN, TEMPLATE_DESCRIPTIONS_EN, TemplatesPage() (+14 more)
+Cohesion: 0.14
+Nodes (26): ShowcasePage(), COMMON_PHONETIC_DICT, normalizePhonetic(), StoreMarketplacePage(), TemplateEmbedPage(), TEMPLATE_BADGES_EN, TEMPLATE_DESCRIPTIONS_EN, TemplatesPage() (+18 more)
 
 ### Community 58 - "fixer.py"
-Cohesion: 0.08
-Nodes (16): [4.0.0-beta.3] — 2026-04-02, [4.18.3] — 2026-09-22, Added, Fixed, Fixed, _estimate_score_after(), generate_ai_discovery_fix(), generate_content_rewrite_fix() (+8 more)
+Cohesion: 0.06
+Nodes (13): _estimate_score_after(), generate_ai_discovery_fix(), generate_content_rewrite_fix(), generate_meta_fix(), generate_robots_fix(), generate_schema_fix(), run_all_fixes(), FixItem (+5 more)
 
 ### Community 59 - "SitemapUrl"
 Cohesion: 0.09
@@ -974,17 +944,13 @@ Nodes (8): generate_llms_txt(), SitemapUrl, _build_llms_content(), _build_minima
 Cohesion: 0.12
 Nodes (7): audit_hallucination_bait(), _find_all_with_context(), HallucinationBaitResult, _content(), _meta(), _schema(), TestHallucinationBait
 
-### Community 61 - "audit_prompt_injection"
-Cohesion: 0.07
-Nodes (3): audit_prompt_injection(), _detect_data_attr_injection(), TestIssue387NewPatterns
-
 ### Community 62 - "TestFixCommand"
-Cohesion: 0.06
-Nodes (5): _make_optimized_result(), TestFixCommand, TestGenerateContentRewriteFix, TestGenerateLlmsFix, TestRunAllFixes
+Cohesion: 0.07
+Nodes (4): _make_optimized_result(), TestFixCommand, TestGenerateMetaFix, TestRunAllFixes
 
 ### Community 63 - "rate-limit.js"
-Cohesion: 0.07
-Nodes (21): bcryptjs, createTransporter(), forgotLimiter, POST(), verifyLimiter, dynamic, ipVerifyLimiter, orderLimiter (+13 more)
+Cohesion: 0.06
+Nodes (28): zod, dynamic, getImageMimeType(), maxDuration, POST(), tryGeminiVision(), visionLimiter, dynamic (+20 more)
 
 ### Community 64 - "Issue tracker: GitHub"
 Cohesion: 0.06
@@ -1002,33 +968,33 @@ Nodes (27): AppWebViewScreen, _AppWebViewScreenState, build, _buildSplashPill, c
 Cohesion: 0.07
 Nodes (28): { PUBLIC_SANITY_PROJECT_ID, PUBLIC_SANITY_DATASET }, pyprojectPath, versionMatch, engines, node, astro, react, react-dom (+20 more)
 
-### Community 68 - "snapshots.py"
-Cohesion: 0.09
-Nodes (13): analyze_snapshot_citation_quality(), _context_snippet(), _position_score(), _tier_from_snippet(), _truncate(), _citation_from_url(), extract_citations(), AnswerCitation (+5 more)
+### Community 68 - "app/layout.js"
+Cohesion: 0.14
+Nodes (24): JsonLd(), metadata, outfit, RootLayout(), viewport, AiInsightsPanel(), AgentationInspector(), LiquidSoundProvider() (+16 more)
 
 ### Community 70 - "extract_perception"
-Cohesion: 0.17
-Nodes (30): extract_perception(), _make_audit(), _make_brand(), _make_citability(), _make_factual(), _make_schema(), _make_trust(), test_ai_readable_summary_built() (+22 more)
+Cohesion: 0.12
+Nodes (40): [4.16.4] — 2026-08-14, Fixed, _build_ai_readable_summary(), _extract_brand_entity(), _extract_citability(), _extract_factual_claims(), _extract_missing_signals(), extract_perception() (+32 more)
 
-### Community 71 - "src_lib_firebase_admin_fieldvalue"
-Cohesion: 0.13
-Nodes (24): dynamic, POST(), dynamic, POST(), dynamic, POST(), DELETE(), GET() (+16 more)
-
-### Community 72 - "datetime"
+### Community 71 - "next"
 Cohesion: 0.07
-Nodes (11): _compute_evergreen(), _compute_risk(), DecaySignal, _make_result(), test_canonicalize_history_url_normalizes_host_and_root(), TestHistoryStore, _ts(), _make_result() (+3 more)
+Nodes (46): next, DELETE(), dynamic, GET(), POST(), dynamic, dynamic, POST() (+38 more)
+
+### Community 72 - "HistoryStore"
+Cohesion: 0.07
+Nodes (11): canonicalize_history_url(), HistoryStore, HistoryEntry, HistoryResult, _load_history_summary(), _save_and_load_history_summary(), _make_result(), test_canonicalize_history_url_normalizes_host_and_root() (+3 more)
 
 ### Community 73 - "audit_llms_txt"
-Cohesion: 0.10
-Nodes (6): audit_llms_txt(), TestLlmsTxtWordCountCJK, TestAuditLlmsTxt, _mock_resp(), TestAuditLlmsFromResponseBlocked, TestLlmsBlockedByCdn
+Cohesion: 0.06
+Nodes (9): audit_llms_txt(), TestLlmsTxtWordCountCJK, TestAuditLlmsTxt, _mock_resp(), TestAuditLlmsFromResponseBlocked, TestBrowserLikeHeaders, TestGenerateLlmsFixBlocked, TestLlmsBlockedByCdn (+1 more)
 
 ### Community 74 - "with_retry"
 Cohesion: 0.08
 Nodes (3): with_retry(), decorator(), TestWithRetryDecorator
 
 ### Community 75 - "ruflo.js"
-Cohesion: 0.13
-Nodes (26): deleteCollection(), dynamic, POST(), dynamic, ipOtpLimiter, isOtpRateLimited(), POST(), dynamic (+18 more)
+Cohesion: 0.12
+Nodes (28): deleteCollection(), dynamic, POST(), dynamic, ipOtpLimiter, isOtpRateLimited(), POST(), dynamic (+20 more)
 
 ### Community 76 - "Triage"
 Cohesion: 0.06
@@ -1039,52 +1005,52 @@ Cohesion: 0.06
 Nodes (29): Bad agent brief, Behavioral, not procedural, Complete acceptance criteria, Durability over precision, Examples, Explicit scope boundaries, Good agent brief (bug), Good agent brief (enhancement) (+21 more)
 
 ### Community 78 - "CheckResult"
-Cohesion: 0.21
-Nodes (5): WordCountCheck, CheckResult, _FailingCheck, test_run_all_passa_kwargs_al_check(), run()
+Cohesion: 0.09
+Nodes (10): WordCountCheck, CheckResult, _FailingCheck, _MockCheck, test_check_result_completo(), test_check_result_defaults(), test_register_check_duplicato_solleva_errore(), test_run_all_check_fallito_non_blocca_altri() (+2 more)
 
 ### Community 79 - "generate-sitemap.mjs"
 Cohesion: 0.09
 Nodes (30): buildEntries(), CATEGORY_TO_PATH, clampToToday(), DEFAULT_META, __dirname, DOCS_CONTENT_DIR, entries, EXCLUDE_ROUTES (+22 more)
 
-### Community 80 - "_get_clean_text"
-Cohesion: 0.08
-Nodes (11): detect_authoritative_tone(), detect_content_decay(), detect_first_party_data(), detect_kg_density(), detect_readability(), _get_clean_text(), TestAuthoritativeTone, TestContentDecay (+3 more)
+### Community 80 - "citability.py"
+Cohesion: 0.05
+Nodes (26): Performance, _count_syllables(), detect_authoritative_tone(), detect_content_decay(), detect_first_party_data(), detect_fluency(), detect_kg_density(), detect_nuance_signals() (+18 more)
 
-### Community 81 - "patch"
-Cohesion: 0.08
-Nodes (4): TestDiscoverSitemapFallbackCommonPaths, TestDiscoverSitemapValidazioneSSRF, TestFetchSitemapOnStatus, TestPriorityNonNumerica
+### Community 81 - "fetch_sitemap"
+Cohesion: 0.05
+Nodes (7): fetch_sitemap(), TestFetchSitemap, TestSitemapSsrf, TestDiscoverSitemapFallbackCommonPaths, TestDiscoverSitemapValidazioneSSRF, TestFetchSitemapOnStatus, TestPriorityNonNumerica
 
-### Community 82 - "query_llm"
+### Community 82 - "LLMResponse"
 Cohesion: 0.09
-Nodes (19): DeepSeek, Gemini, LLM Providers for `geo citations`, MiniMax, SerpBase (Google SERP + AI Overview), DeepSeek, Gemini, LLM Providers for `geo citations` (+11 more)
+Nodes (18): Fixed, _analyze_response(), audit_brand_sentiment(), _classify_strength(), LLMContentPart, LLMResponse, _query_anthropic(), _query_deepseek() (+10 more)
 
-### Community 83 - "test_drift_detector.py"
-Cohesion: 0.15
-Nodes (21): _classify_severity(), compute_semantic_drift(), SemanticDriftDelta, test_new_dataclasses_importable(), _entry(), test_category_delta_detected(), test_crawlable_before_false_if_no_robots_score(), test_crawlable_both_positive() (+13 more)
+### Community 83 - "build_passive_monitor_result"
+Cohesion: 0.08
+Nodes (14): _ai_discovery_signal(), _build_monitor_recommendations(), build_passive_monitor_result(), _citation_bot_signal(), _entity_signal(), _llms_signal(), _momentum_signal(), _monitor_band() (+6 more)
 
-### Community 84 - "StoreCustomizationPanel.jsx"
+### Community 84 - "TemplateMarketplace.jsx"
 Cohesion: 0.11
-Nodes (24): StoreCustomizationPanel, TemplateMarketplace, metadata, TemplatePage(), StoreCustomizationPanel, TemplateMarketplace, TemplatePageClient(), CollapsibleSection() (+16 more)
+Nodes (25): StoreCustomizationPanel, TemplateMarketplace, metadata, TemplatePage(), CompetitorThemeCloner, StoreCustomizationPanel, TemplateMarketplace, TemplatePageClient() (+17 more)
 
 ### Community 85 - "agent/skills/teach/SKILL.md"
 Cohesion: 0.07
 Nodes (25): Learning Record Format, Numbering, Optional sections, Supersession, Template, What does _not_ qualify, When to write a learning record, MISSION.md Format (+17 more)
 
-### Community 86 - "telemetry.py"
-Cohesion: 0.10
-Nodes (8): Added, geo_api_error(), geo_audit_run(), geo_badge_generated(), geo_score_improved(), geo_suggestion_applied(), _telemetry(), TestGeoEventEmitters
+### Community 86 - "audit_multimodal_readiness"
+Cohesion: 0.15
+Nodes (6): audit_multimodal_readiness(), _informative_alt(), MultimodalResult, _soup(), TestAuditMultimodal, TestMultimodalRecommendations
 
 ### Community 87 - "PageTermExtract"
-Cohesion: 0.14
-Nodes (10): analyze_coherence(), _check_conflicting_definitions(), _check_duplicate_titles(), _check_mixed_language(), _definitions_conflict(), _extract_defined_term(), CoherenceIssue, PageTermExtract (+2 more)
+Cohesion: 0.16
+Nodes (9): analyze_coherence(), _check_conflicting_definitions(), _check_duplicate_titles(), _check_mixed_language(), _definitions_conflict(), _extract_defined_term(), CoherenceIssue, PageTermExtract (+1 more)
 
 ### Community 88 - ".claude/skills/teach/SKILL.md"
 Cohesion: 0.07
 Nodes (25): Learning Record Format, Numbering, Optional sections, Supersession, Template, What does _not_ qualify, When to write a learning record, MISSION.md Format (+17 more)
 
 ### Community 89 - "package.json"
-Cohesion: 0.05
-Nodes (40): eslintConfig, allowScripts, core-js, @firebase/util, protobufjs, sharp, unrs-resolver, devDependencies (+32 more)
+Cohesion: 0.06
+Nodes (33): eslintConfig, allowScripts, core-js, @firebase/util, protobufjs, sharp, unrs-resolver, devDependencies (+25 more)
 
 ### Community 90 - "location/route.js"
 Cohesion: 0.47
@@ -1098,17 +1064,21 @@ Nodes (5): admin, db, fs, path, privateKey
 Cohesion: 0.07
 Nodes (25): 1. State the question, 2. Isolate the logic in a portable module, 3. Build the shareable HTML file, 4. Hand it over, 5. Capture the answer and the prototype, Anti-patterns, Logic Prototype, Process (+17 more)
 
-### Community 93 - "bracket.py"
+### Community 93 - "phase_jobs"
 Cohesion: 0.13
-Nodes (21): attack_out(), _card_line(), _card_values(), collect(), defense_out(), extract_json(), fill(), final_out() (+13 more)
+Nodes (14): advance(), attack_out(), _card_values(), defense_out(), fill(), final_out(), load_templates(), phase_jobs() (+6 more)
 
 ### Community 94 - "IntentLanding.astro"
 Cohesion: 0.05
 Nodes (32): Cta, Faq, offerCatalog, PaidStep, Props, schema, Stat, TableRow (+24 more)
 
 ### Community 95 - "schema"
-Cohesion: 0.09
-Nodes (4): schema(), TestSchemaCmdFaqOltreTre, TestSchemaCmdPathTraversalValidation, TestSchemaCmdPrintAnalysis
+Cohesion: 0.06
+Nodes (13): Commit Convention, `score_breakdown` keys, 2. `geo_fix`, `score_breakdown` keys, 2. `geo_fix`, Scoring, llms(), schema() (+5 more)
+
+### Community 96 - ".register"
+Cohesion: 0.10
+Nodes (4): Added, AuditCheck, run(), test_clear_svuota_registry()
 
 ### Community 97 - "Process"
 Cohesion: 0.07
@@ -1119,52 +1089,56 @@ Cohesion: 0.30
 Nodes (27): BannerRowEditor(), BasicStorefrontEditor(), BeforeAfterEditor(), BentoMosaicEditor(), BrandMarqueeEditor(), BundleSectionEditor(), CategoryScrollerEditor(), DealOfTheDayEditor() (+19 more)
 
 ### Community 99 - "api.ts"
-Cohesion: 0.12
-Nodes (23): ExportActions(), ExportActionsProps, FALLBACK, fmt(), Stats, StatsBar(), StatsBarProps, AICitationChecker() (+15 more)
+Cohesion: 0.17
+Nodes (14): ExportActions(), ExportActionsProps, FALLBACK, fmt(), Stats, StatsBar(), StatsBarProps, buildApiUrl() (+6 more)
 
 ### Community 100 - "test_citability.py"
 Cohesion: 0.09
-Nodes (9): detect_accessibility_signals(), detect_chunk_quotability(), detect_conversion_funnel(), detect_fluency(), TestAccessibilitySignals, TestChunkQuotability, TestConversionFunnel, TestFluency (+1 more)
+Nodes (10): detect_accessibility_signals(), detect_chunk_quotability(), detect_definition_patterns(), detect_easy_to_understand(), detect_shopping_readiness(), TestAccessibilitySignals, TestChunkQuotability, TestDefinitionPatterns (+2 more)
 
 ### Community 101 - "analyze_log_file"
-Cohesion: 0.11
-Nodes (6): analyze_log_file(), _match_bot(), _parse_line(), TestAnalyzeLogFile, TestMatchBot, TestParseLine
-
-### Community 102 - "test_badge.py"
 Cohesion: 0.08
-Nodes (12): test_badge_critical_usa_colore_rosso(), test_badge_errore_con_label_personalizzata(), test_badge_errore_contiene_testo_error(), test_badge_errore_e_xml_valido(), test_badge_errore_usa_colore_grigio(), test_badge_foundation_usa_colore_giallo(), test_badge_good_e_xml_valido(), test_badge_ha_attributi_accessibilita() (+4 more)
+Nodes (12): _aggregate_bots(), _aggregate_pages(), analyze_log_file(), _match_bot(), _parse_json_line(), _parse_line(), BotStats, CrawledPage (+4 more)
+
+### Community 102 - "generate_badge_svg"
+Cohesion: 0.08
+Nodes (18): generate_badge_svg(), test_badge_band_sconosciuta_fallback_a_critical(), test_badge_critical_usa_colore_rosso(), test_badge_errore_con_label_personalizzata(), test_badge_errore_contiene_testo_error(), test_badge_errore_e_xml_valido(), test_badge_errore_usa_colore_grigio(), test_badge_excellent_usa_colore_verde() (+10 more)
 
 ### Community 103 - "order_tracking_view.dart"
 Cohesion: 0.08
 Nodes (21): addItem, clearCart, _items, removeItem, updateQuantity, build, _buildEmptyState, _buildOrderCard (+13 more)
 
-### Community 104 - "LlmsTxtGenerator.tsx"
-Cohesion: 0.15
-Nodes (22): [4.16.2] — 2026-08-11, Fixed, AuditForm(), AuditFormProps, formatBytes(), LlmsData, LlmsTxtGenerator(), handleCopy() (+14 more)
+### Community 104 - "geo_track.ts"
+Cohesion: 0.10
+Nodes (42): [4.16.2] — 2026-08-11, Fixed, AuditForm(), AuditFormProps, AICitationChecker(), handleSubmit(), CitationsData, Status (+34 more)
 
-### Community 105 - "_get_text_safe"
-Cohesion: 0.08
-Nodes (14): [4.16.3] — 2026-08-13, Fixed, _detect_aria_hidden_injection(), _detect_hidden_text(), _detect_html_comment_injection(), _detect_invisible_unicode(), _detect_llm_instructions(), _detect_microfont() (+6 more)
+### Community 105 - "injection_detector.py"
+Cohesion: 0.10
+Nodes (14): _compute_severity(), _detect_aria_hidden_injection(), _detect_data_attr_injection(), _detect_hidden_text(), _detect_html_comment_injection(), _detect_invisible_unicode(), _detect_llm_instructions(), _detect_microfont() (+6 more)
 
-### Community 106 - "_run_serpbase_citation_check"
-Cohesion: 0.09
-Nodes (14): [4.18.0] — 2026-09-12 · Quorum, [4.18.1] — 2026-09-17, Added, Added, Changed, Fixed, Fixed, _cut_at_first_separator() (+6 more)
+### Community 106 - "citations.py"
+Cohesion: 0.07
+Nodes (16): [4.18.0] — 2026-09-12 · Quorum, [4.18.1] — 2026-09-17, Added, Added, Changed, Fixed, _domains_in_text(), normalize_domain() (+8 more)
 
 ### Community 107 - "audit_citability"
-Cohesion: 0.10
-Nodes (6): audit_citability(), _compute_grade(), detect_shopping_readiness(), TestAuditCitability, TestShoppingReadiness, TestPesiCitability
+Cohesion: 0.07
+Nodes (9): [4.16.3] — 2026-08-13, Fixed, audit_citability(), _compute_grade(), detect_conversion_funnel(), TestAuditCitability, TestConversionFunnel, TestWeightSum (+1 more)
 
 ### Community 108 - "query_serpbase"
-Cohesion: 0.13
-Nodes (7): _extract_ai_overview(), query_serpbase(), _rate_limit(), SerpResponse, SerpResult, _fake_post_factory(), TestQuerySerpbase
+Cohesion: 0.11
+Nodes (7): _extract_ai_overview(), query_serpbase(), _rate_limit(), SerpResponse, _fake_post_factory(), _no_real_rate_limit_sleep(), TestQuerySerpbase
+
+### Community 109 - "gap_analysis.py"
+Cohesion: 0.12
+Nodes (10): _build_action_plan(), add_action(), build_gap_analysis(), _dedupe_actions(), _priority_for_impact(), run_gap_analysis(), _sort_by_score(), GapAction (+2 more)
 
 ### Community 110 - "functions"
 Cohesion: 0.08
 Nodes (25): framework, functions, src/app/api/ai/route.js, src/app/api/ai-vision/route.js, src/app/api/build-app/route.js, src/app/api/checkout/draft/route.js, src/app/api/checkout/recover-draft/route.js, src/app/api/checkout/route.js (+17 more)
 
-### Community 111 - "audit_sentiment.py"
+### Community 111 - "audit_citation_map"
 Cohesion: 0.10
-Nodes (11): [4.8.0] — 2026-04-16, Added, Documentation, Fixed, Tests, audit_brand_sentiment(), _classify_strength(), detect_provider() (+3 more)
+Nodes (9): audit_citation_map(), _quick_sentiment(), resolve_provider(), detect_provider(), CitationMapEntry, CitationMapResult, TestAuditCitationMap, TestQuickSentiment (+1 more)
 
 ### Community 112 - "AI Context Files — Platform Guide"
 Cohesion: 0.08
@@ -1181,6 +1155,10 @@ Nodes (24): Activation modes (Windsurf UI), AI Context Files — Platform Guide,
 ### Community 115 - "astro-geoready/package.json"
 Cohesion: 0.08
 Nodes (24): author, bugs, url, description, engines, node, exports, files (+16 more)
+
+### Community 116 - "validate_jsonld"
+Cohesion: 0.07
+Nodes (4): validate_jsonld(), TestValidateJsonld, TestIntegrazioneBranchCoperti, TestValidateJsonldBranchMancanti
 
 ### Community 118 - "AI Context Files — Platform Guide"
 Cohesion: 0.08
@@ -1199,8 +1177,8 @@ Cohesion: 0.09
 Nodes (21): 1. In-process, 2. Local-substitutable, 3. Remote but owned (Ports & Adapters), 4. True external (Mock), Deepening, Dependency categories, Seam discipline, Testing strategy: replace, don't layer (+13 more)
 
 ### Community 122 - "geo-optimizer/docs/index.md"
-Cohesion: 0.16
-Nodes (4): Deployment records, GEO Optimizer — Documentation, Navigation, Quick Navigation
+Cohesion: 0.14
+Nodes (12): Example Output, Flags, GEO History, Related Commands, Usage, What It Does, Flags, GEO Track (+4 more)
 
 ### Community 123 - "detect_content_freshness"
 Cohesion: 0.13
@@ -1222,33 +1200,37 @@ Nodes (18): classDefsOff, classDefsSize, dex, fieldIdsOff, fieldIdsSize, fs, fie
 Cohesion: 0.12
 Nodes (5): [3.17.0] — 2026-03-27, Changed, Fixed (Critical — 12 bug risolti), audit_js_rendering(), TestJsRenderingCheck
 
-### Community 130 - "_analyze_attribution"
-Cohesion: 0.11
-Nodes (8): _analyze_attribution(), _classify_faithfulness(), _find_best_match(), _has_match(), _split_sentences(), TestAnalyzeAttribution, TestClassifyFaithfulness, TestSplitSentences
+### Community 130 - "audit_attribution.py"
+Cohesion: 0.10
+Nodes (10): _analyze_attribution(), audit_citation_attribution(), _find_best_match(), _has_match(), _split_sentences(), AttributionSegment, CitationAttributionResult, TestAnalyzeAttribution (+2 more)
 
 ### Community 131 - "audit_rag_readiness"
 Cohesion: 0.16
 Nodes (5): audit_rag_readiness(), _compute_score(), _split_by_headings(), _soup(), TestRagChunkReadiness
 
-### Community 133 - "fill_template"
-Cohesion: 0.12
-Nodes (3): fill_template(), TestFillTemplate, TestFillTemplateInjection
+### Community 133 - "schema_injector.py"
+Cohesion: 0.04
+Nodes (16): [2.0.0b2] — 2026-02-25, Added, Fixed, Security, Test Results, fill_template(), generate_faq_schema(), inject_schema_into_html() (+8 more)
 
 ### Community 134 - "topic_authority.py"
-Cohesion: 0.15
-Nodes (11): _build_clusters(), _extract_internal_links(), _find_orphan_pages(), _normalize_host(), _normalize_page_url(), _recommendations(), run_topic_authority(), _score() (+3 more)
+Cohesion: 0.17
+Nodes (10): _build_clusters(), _extract_internal_links(), _find_orphan_pages(), _normalize_host(), _normalize_page_url(), _recommendations(), run_topic_authority(), _score() (+2 more)
+
+### Community 135 - "audit_ai_discovery"
+Cohesion: 0.05
+Nodes (6): audit_ai_discovery(), _mock_response(), TestAuditAiDiscovery, TestFaqJsonValidation, TestServiceJsonValidation, TestSummaryJsonValidation
 
 ### Community 136 - "checkout/route.js"
-Cohesion: 0.17
-Nodes (15): checkoutLimiter, CheckoutSchema, dynamic, POST(), calculateDeliveryFee(), calculateRiskScore(), runEnterpriseFraudScan(), standardizePhone() (+7 more)
+Cohesion: 0.21
+Nodes (13): checkoutLimiter, CheckoutSchema, dynamic, POST(), calculateDeliveryFee(), calculateRiskScore(), runEnterpriseFraudScan(), standardizePhone() (+5 more)
 
 ### Community 137 - "During the session"
 Cohesion: 0.09
 Nodes (19): ADR Format, Numbering, Optional sections, Template, What qualifies, When to offer an ADR, CONTEXT.md Format, Rules (+11 more)
 
-### Community 138 - "run_competitive_narrative_analysis"
-Cohesion: 0.12
-Nodes (10): Fixed, _build_competitive_gaps(), _build_summary(), CompetitiveGap, CompetitiveNarrativeResult, CompetitorNarrative, format_competitive_narrative(), get_competitor_narratives_for_audit() (+2 more)
+### Community 138 - "competitive_narrative.py"
+Cohesion: 0.06
+Nodes (16): _build_competitive_gaps(), _build_summary(), CompetitiveGap, CompetitiveNarrativeResult, CompetitorNarrative, extract_competitor_narrative(), format_competitive_narrative(), get_competitor_narratives_for_audit() (+8 more)
 
 ### Community 139 - "Your site ranks on Google. Does ChatGPT cite it?"
 Cohesion: 0.09
@@ -1258,17 +1240,17 @@ Nodes (22): Astro Integration, CI/CD — fail the build when AI-readiness drops,
 Cohesion: 0.09
 Nodes (21): Academic & Open Source, AI Bots List — User-Agents for robots.txt, Anthropic (Claude), Apple (Siri/AI), ByteDance/TikTok, Cohere, DuckDuckGo, Full List by Category (+13 more)
 
-### Community 141 - "_soup"
-Cohesion: 0.13
-Nodes (5): _extract_chunks(), _soup(), TestExtractChunks, TestGracefulSkip, TestWithMockedModel
+### Community 141 - "audit_embedding_proximity"
+Cohesion: 0.06
+Nodes (10): audit_embedding_proximity(), _extract_chunks(), EmbeddingProximityResult, _soup(), TestExtractChunks, TestGracefulSkip, TestWithMockedModel, TestNoItalianLeak (+2 more)
 
-### Community 142 - "SnapshotStore"
-Cohesion: 0.13
-Nodes (4): _normalize_filter_date(), _normalize_timestamp(), SnapshotStore, test_snapshot_store_save_and_list_filters()
+### Community 142 - "snapshots.py"
+Cohesion: 0.07
+Nodes (12): _citation_from_url(), extract_citations(), _normalize_filter_date(), _normalize_timestamp(), SnapshotStore, AnswerCitation, AnswerSnapshot, AnswerSnapshotArchive (+4 more)
 
 ### Community 144 - "iter_jsonld_objects"
-Cohesion: 0.20
-Nodes (3): iter_jsonld_objects(), _soup(), TestIterJsonldObjects
+Cohesion: 0.06
+Nodes (11): [4.17.0] — 2026-08-30 · Parallax, Changed, Fixed, analyze_html_file(), extract_faq_from_html(), iter_jsonld_objects(), TestAnalyzeHtmlFile, TestExtractFaqFromHtml (+3 more)
 
 ### Community 145 - "validate_safe_path"
 Cohesion: 0.12
@@ -1278,13 +1260,17 @@ Nodes (3): validate_safe_path(), TestValidateSafePath, TestValidatorsBranchManca
 Cohesion: 0.23
 Nodes (3): GEO Optimizer — Documentation, Navigation, Quick Navigation
 
-### Community 147 - "_make_result"
-Cohesion: 0.12
-Nodes (3): _make_result(), TestGenerateRobotsFix, TestGenerateSchemaFix
+### Community 147 - "delete-resource/route.js"
+Cohesion: 0.13
+Nodes (13): cleanupMainSiteCloudinaryImages(), dynamic, POST(), parseSignedRequest(), POST(), GET(), resolveShop(), verifyState() (+5 more)
+
+### Community 148 - "fetch_url"
+Cohesion: 0.03
+Nodes (16): Security, 13 Security Fixes, _discover_sitemap_inner(), _execute_request(), fetch_url(), _fetch_with_manual_redirects(), _pinned_getaddrinfo(), _stream_response() (+8 more)
 
 ### Community 149 - "_page"
-Cohesion: 0.18
-Nodes (4): _mock_fetch(), _page(), TestAuthorityCli, TestRunTopicAuthority
+Cohesion: 0.15
+Nodes (5): _mock_fetch(), _page(), TestAuthorityCli, TestHelpers, TestRunTopicAuthority
 
 ### Community 150 - "theme.dart"
 Cohesion: 0.10
@@ -1306,17 +1292,17 @@ Nodes (18): classDataOff, classDefsOff, classDefsSize, dex, directMethodsSize, f
 Cohesion: 0.09
 Nodes (18): classDataOff, classDefsOff, classDefsSize, dex, directMethodsSize, fs, instanceFieldsSize, methodIdsOff (+10 more)
 
-### Community 155 - "NewsletterSignup.tsx"
-Cohesion: 0.06
-Nodes (24): Props, NewsletterSignup(), Props, Status, Props, stages, faqs, BENCHMARK (+16 more)
+### Community 155 - "ArticleVisual.astro"
+Cohesion: 0.07
+Nodes (21): Props, lines, Props, Props, stages, faqs, BENCHMARK, CATEGORY_MATRIX (+13 more)
 
 ### Community 157 - "main.dart"
 Cohesion: 0.10
 Nodes (10): body, build, _firebaseInitialized, _firebaseMessagingBackgroundHandler, flutterLocalNotificationsPlugin, main, _registerDeviceToken, _sendTokenToServer (+2 more)
 
 ### Community 158 - "domain/route.js"
-Cohesion: 0.14
-Nodes (15): checkDomain(), domains, run(), checkDomain(), domains, run(), GET(), checkDnsRecords() (+7 more)
+Cohesion: 0.13
+Nodes (16): checkDomain(), domains, run(), checkDomain(), domains, run(), GET(), checkDnsRecords() (+8 more)
 
 ### Community 159 - "build-tenant-app.js"
 Cohesion: 0.11
@@ -1327,8 +1313,8 @@ Cohesion: 0.10
 Nodes (20): classDefsOff, classDefsSize, decompileMethod(), dex, fieldIdsOff, fieldIdsSize, fields, fs (+12 more)
 
 ### Community 161 - "decompile_functions_request_simname.js"
-Cohesion: 0.06
-Nodes (35): classDefsOff, classDefsSize, decompileMethod(), dex, fieldIdsOff, fieldIdsSize, fields, fs (+27 more)
+Cohesion: 0.10
+Nodes (20): classDefsOff, classDefsSize, decompileMethod(), dex, fieldIdsOff, fieldIdsSize, fields, fs (+12 more)
 
 ### Community 162 - "decompile_headers.js"
 Cohesion: 0.10
@@ -1363,12 +1349,12 @@ Cohesion: 0.10
 Nodes (20): 1. `geo_schema_repair_planner`, 2. `geo_citation_gap_comparison`, 3. `geo_ai_discovery_repair`, Anti-Patterns, Candidate Backlog, Comparison skills worth building later, Current Coverage Map, Current Skills (+12 more)
 
 ### Community 170 - "generate-og-images.mjs"
-Cohesion: 0.13
-Nodes (19): COLORS, __dirname, DIST, EYEBROW, FONT_BOLD, FONT_REG, FONTS, GeoLogo() (+11 more)
+Cohesion: 0.12
+Nodes (20): 🎨 Modern UI/UX, Design Systems & AI UI Cloner, COLORS, __dirname, DIST, EYEBROW, FONT_BOLD, FONT_REG, FONTS (+12 more)
 
 ### Community 171 - "CompareContainer.tsx"
 Cohesion: 0.18
-Nodes (16): AnalyzeCompetitorsContainer(), CompactCompetitorCard(), CompetitorState, readQueryParam(), CompactReport(), CompareContainer(), CompareState, readQueryParams() (+8 more)
+Nodes (18): AnalyzeCompetitorsContainer(), CompactCompetitorCard(), CompetitorState, readQueryParam(), CompactReport(), CompareContainer(), CompareState, readQueryParams() (+10 more)
 
 ### Community 172 - "book.astro"
 Cohesion: 0.12
@@ -1379,16 +1365,20 @@ Cohesion: 0.10
 Nodes (19): 1. Clonare il repository, 2. Creare virtualenv (opzionale ma raccomandato), 3. Installare package con dipendenze opzionali, 4. Verificare installazione CLI, Audit di un sito, Comandi MCP e Web, Comandi principali in locale, Confronto e monitoring (+11 more)
 
 ### Community 174 - "TestGraphUnpacking"
-Cohesion: 0.12
-Nodes (5): detect_blog_structure(), detect_social_proof(), TestBlogStructure, TestGraphUnpacking, TestSocialProof
+Cohesion: 0.08
+Nodes (7): detect_blog_structure(), detect_entity_resolution(), detect_social_proof(), TestBlogStructure, TestEntityResolution, TestGraphUnpacking, TestSocialProof
 
 ### Community 175 - "detect_entity_disambiguation"
-Cohesion: 0.13
+Cohesion: 0.14
 Nodes (4): detect_entity_disambiguation(), _names_are_consistent(), _split_title_segments(), TestEntityDisambiguation
 
 ### Community 176 - "Skill Roadmap"
 Cohesion: 0.10
 Nodes (20): 1. `geo_schema_repair_planner`, 2. `geo_citation_gap_comparison`, 3. `geo_ai_discovery_repair`, Anti-Patterns, Candidate Backlog, Comparison skills worth building later, Current Coverage Map, Current Skills (+12 more)
+
+### Community 177 - "analyze_music_cues.py"
+Cohesion: 0.26
+Nodes (11): analyze_track(), _as_float(), _compact_times(), _dedupe_cues(), _feature_at(), _finite_round(), _format_cue(), _local_contrast() (+3 more)
 
 ### Community 178 - "HTML Report Format"
 Cohesion: 0.10
@@ -1398,21 +1388,21 @@ Nodes (18): Call-graph collapse, Candidate card, Cross-section (good for layered
 Cohesion: 0.10
 Nodes (19): 🚀 Webmaa প্রোডাকশন ক্লাউড সার্ভিস বাস্তবায়ন গাইড (ধাপ-ধাপ নির্দেশিকা), ধাপ ১: Cloudflare-এ সাইট অ্যাড করা, ধাপ ১: Sentry প্রজেক্ট তৈরি, ধাপ ১: ফ্রি Redis ডাটাবেজ তৈরি, ধাপ ১: ফ্রি অ্যাকাউন্ট ও API Key নেওয়া, ধাপ ১: ফ্রি অ্যাকাউন্ট ও API Key সংগ্রহ, ধাপ ২: DSN সংগ্রহ ও প্রজেক্টে বসানো, ধাপ ২: REST URL ও Token কপি করা (+11 more)
 
-### Community 180 - "broadcast/route.js"
-Cohesion: 0.14
-Nodes (15): nodemailer, createTransporter(), dynamic, escapeHtml(), POST(), createTransporter(), dynamic, escapeHtml() (+7 more)
+### Community 180 - "verify-password/route.js"
+Cohesion: 0.16
+Nodes (14): nodemailer, createTransporter(), dynamic, escapeHtml(), POST(), createTransporter(), forgotLimiter, POST() (+6 more)
 
 ### Community 181 - "agent/skills/wizard/template.sh"
 Cohesion: 0.23
 Nodes (17): ask(), ask_secret(), banner(), _clear(), _existing(), finish(), note(), open_url() (+9 more)
 
 ### Community 182 - "AGENTS.md"
-Cohesion: 0.11
-Nodes (18): 🛡️ Alibaba OpenCodeReview (OCR) & Security Standards, Auto-Proceed & No Manual Approval Rules (CRITICAL), 🧠 Autonomous 280+ Agency Agents Coordination (Zero Manual Overhead), 🔍 Autonomous 3-Tier SEO & Generative Engine Optimization (GEO) Protocol, 🏆 Autonomous Arena Tournament & Multi-Agent Competitive Protocol, 🚨 CRITICAL DATABASE & DATA PROTECTION RULE (ABSOLUTE RESTRICTION), ⚡ ECC (Everything Claude Code) Agent Harness & Instincts Guidelines, Flutter App Build Rules (via GitHub Actions) (+10 more)
+Cohesion: 0.10
+Nodes (19): 🛡️ Alibaba OpenCodeReview (OCR) & Security Standards, 📱 Android 15 (SDK 35) & Google Play R8 Optimization Protocol, Auto-Proceed & No Manual Approval Rules (CRITICAL), 🧠 Autonomous 280+ Agency Agents Coordination (Zero Manual Overhead), 🔍 Autonomous 3-Tier SEO & Generative Engine Optimization (GEO) Protocol, 🛡️ Cloudflare Security Audit Protocol, 🚨 CRITICAL DATABASE & DATA PROTECTION RULE (ABSOLUTE RESTRICTION), Flutter App Build Rules (via GitHub Actions) (+11 more)
 
-### Community 183 - "cmd_init"
-Cohesion: 0.16
-Nodes (13): agent_ids(), _agents_arg(), bracket_sizes(), cmd_init(), cmd_plan(), combo_count(), deal(), load_strategies() (+5 more)
+### Community 183 - "bracket.py"
+Cohesion: 0.14
+Nodes (17): agent_ids(), _agents_arg(), bracket_sizes(), _card_line(), cmd_init(), cmd_plan(), combo_count(), deal() (+9 more)
 
 ### Community 184 - "The 47 GEO Methods"
 Cohesion: 0.11
@@ -1431,28 +1421,28 @@ Cohesion: 0.24
 Nodes (3): audit_content_decay(), _soup(), TestContentDecay
 
 ### Community 188 - "check_llms_drift"
-Cohesion: 0.20
+Cohesion: 0.18
 Nodes (3): check_llms_drift(), _sitemap(), TestCheckLlmsDrift
 
 ### Community 189 - "url_to_label"
 Cohesion: 0.15
 Nodes (3): url_to_label(), TestUrlToLabel, TestUrlToLabelSlugNumerico
 
-### Community 190 - "extract_faq_from_html"
+### Community 190 - "decompile_send_detailed.js"
 Cohesion: 0.14
-Nodes (3): extract_faq_from_html(), TestExtractFaqFromHtml, TestExtractFaqNoMutation
+Nodes (15): decompileMethod(), dex, fs, methodIdsOff, methodIdsSizeReal, methods, OPCODES, readInt() (+7 more)
 
 ### Community 191 - "generate_astro_snippet"
 Cohesion: 0.13
 Nodes (3): generate_astro_snippet(), TestGenerateAstroSnippet, TestAstroInjection
 
-### Community 192 - "run_site_coherence_async"
-Cohesion: 0.15
-Nodes (5): _dedupe_urls(), _fetch_and_extract(), run_site_coherence(), run_site_coherence_async(), TestSiteCoherenceOrchestrator
+### Community 192 - "site_coherence.py"
+Cohesion: 0.14
+Nodes (6): _dedupe_urls(), _fetch_and_extract(), run_site_coherence(), run_site_coherence_async(), SemanticCoherenceResult, TestSiteCoherenceOrchestrator
 
-### Community 193 - "_fetch_with_manual_redirects"
-Cohesion: 0.13
-Nodes (4): _execute_request(), _fetch_with_manual_redirects(), _stream_response(), TestBodyStreamingSizeCheck
+### Community 193 - "NewsletterSignup.tsx"
+Cohesion: 0.14
+Nodes (9): NewsletterSignup(), Props, Status, faqs, stats, faqs, stats, faqs (+1 more)
 
 ### Community 194 - ".claude/skills/wizard/template.sh"
 Cohesion: 0.23
@@ -1499,8 +1489,8 @@ Cohesion: 0.12
 Nodes (18): decompileMethod(), dex, fieldIdsOff, fieldIdsSize, fields, fs, methodIdsOff, methodIdsSizeReal (+10 more)
 
 ### Community 205 - "build_parser"
-Cohesion: 0.25
-Nodes (17): alive_ids(), build_parser(), _cmd(), cmd_advance(), cmd_card(), cmd_collect(), cmd_next(), cmd_pairings() (+9 more)
+Cohesion: 0.20
+Nodes (21): alive_ids(), build_parser(), _cmd(), cmd_advance(), cmd_card(), cmd_check(), cmd_collect(), cmd_next() (+13 more)
 
 ### Community 206 - "Complete Bot Table"
 Cohesion: 0.11
@@ -1518,9 +1508,9 @@ Nodes (18): AI Bots Reference, Amazon (Alexa AI), Anthropic (Claude), Apple (Sir
 Cohesion: 0.14
 Nodes (15): actions, avgPct, faqs, faqSchema, medPct, projectChecks, SCORING_WEIGHTS, asPercent() (+7 more)
 
-### Community 210 - "index.mjs"
-Cohesion: 0.18
-Nodes (11): buildAiTxt(), buildFaqJson(), buildLlmsTxt(), buildServiceJson(), buildSummaryJson(), geoReady(), groupPages(), humanize() (+3 more)
+### Community 210 - "generate-llms.mjs"
+Cohesion: 0.10
+Nodes (23): __dirname, dryRun, fetchGuideEntries(), firstSentence(), FRONTEND_ROOT, LLMS_TXT_PATH, main(), orderEntries() (+15 more)
 
 ### Community 211 - "format_audit_pdf"
 Cohesion: 0.13
@@ -1530,13 +1520,21 @@ Nodes (3): format_audit_pdf(), TestPdfFormatterImportError, TestPdfFormatterWith
 Cohesion: 0.11
 Nodes (18): All Flags, Astro — with custom sitemap, Checking for drift, Example for Specific Frameworks, Generating llms.txt, Generic Site (any server), Generic site — no sitemap, Next.js — standard setup (+10 more)
 
-### Community 216 - ".test_fetch_url_connection_error_con_retry"
-Cohesion: 0.14
-Nodes (3): TestExecuteRequestRetry, side_effect(), TestFetchUrlRetryIntegration
+### Community 213 - "Step 1: Inspect the project"
+Cohesion: 0.17
+Nodes (7): Color extraction, Font extraction, Rule: nothing secret leaves this step, Step 1: Inspect the project, The 9-question rubric, What to look for, What to skip
 
-### Community 217 - "fcm.js"
-Cohesion: 0.32
-Nodes (14): NotificationPermissionModal(), err(), getFCMToken(), getPermissionStatus(), getPlatformInfo(), initializeFCM(), isPushSupported(), log() (+6 more)
+### Community 214 - "Step 2: Write the brag plan"
+Cohesion: 0.15
+Nodes (13): Audio planning, Bias the storyboard toward the user flow, Choosing what to show, Create the output directory, Duration guidance, Handoff posture, Look for interaction and sequential reveal moments, Music cue guidance (+5 more)
+
+### Community 216 - "test_http_retry.py"
+Cohesion: 0.12
+Nodes (4): _fetch_url_testable(), TestExecuteRequestRetry, side_effect(), TestFetchUrlRetryIntegration
+
+### Community 217 - "firebase.js"
+Cohesion: 0.12
+Nodes (26): html2canvas, jspdf, GET(), GET(), InvoicePage(), DeliveryInfoCard(), LiveCountdown(), OrderSummaryPage() (+18 more)
 
 ### Community 218 - "decompile_send_full_opcodes.js"
 Cohesion: 0.12
@@ -1562,17 +1560,13 @@ Nodes (17): All Flags, Astro — with custom sitemap, Example for Specific Frame
 Cohesion: 0.16
 Nodes (4): audit_content_quality(), TestContentSoupCleanExtras, TestContentWordCountCJK, TestAuditContentQuality
 
-### Community 224 - "detect_temporal_coherence"
+### Community 224 - "/brag"
 Cohesion: 0.15
-Nodes (3): detect_temporal_coherence(), _parse_date_flexible(), TestTemporalCoherence
+Nodes (13): /brag, Creative laws, Invocation dispatch (must happen first), Narration guidance, Output directory, Parsing the invocation, Skill directory, Step 1: Inspect the project (+5 more)
 
 ### Community 225 - "Complete Bot Table"
 Cohesion: 0.12
 Nodes (17): AI Bots Reference, Anthropic (Claude), Apple (Siri), Citation Bots vs Training Bots, Complete Bot Table, 🔴 Critical Citation Bots, Google AI (Gemini), Meta (Facebook AI) (+9 more)
-
-### Community 226 - "parametrize"
-Cohesion: 0.18
-Nodes (3): _hrefs(), TestGuideInternalLinks, TestKeyPagesMetadata
 
 ### Community 228 - "test_prompt_injection.py"
 Cohesion: 0.12
@@ -1588,22 +1582,22 @@ Nodes (14): dex, fs, methodIdsOff, methodIdsSizeReal, methods, protoIdsOff, prot
 
 ### Community 231 - "getShopServer"
 Cohesion: 0.18
-Nodes (13): ShopAccountDeletePage(), ShopAccountDeleteClient(), generateMetadata(), revalidate, ShopPage(), ShopPausedPage(), generateMetadata(), revalidate (+5 more)
+Nodes (13): ShopAccountDeletePage(), ShopAccountDeleteClient(), generateMetadata(), generateMetadata(), revalidate, ShopPrivacyPage(), ShopReviewsPage(), ReviewsClient() (+5 more)
 
 ### Community 232 - "Ask Matt"
 Cohesion: 0.12
 Nodes (14): Phase boundaries, Primary and secondary sources, The five options, The tree, These are judgement calls, Ask Matt, Codebase health, Context hygiene (+6 more)
 
 ### Community 233 - "CheckRegistry"
-Cohesion: 0.16
-Nodes (8): [3.0.0a1] — 2026-02-27, Added, CheckRegistry, test_load_entry_points_con_plugin_valido(), test_load_entry_points_nessun_plugin(), test_load_entry_points_non_ricarica_se_gia_caricato(), test_load_entry_points_plugin_fallito_non_blocca(), test_registry_init_vuoto()
+Cohesion: 0.09
+Nodes (13): CheckRegistry, _MissingMethodCheck, test_get_nome_inesistente_ritorna_none(), test_load_entry_points_con_plugin_valido(), test_load_entry_points_nessun_plugin(), test_load_entry_points_non_ricarica_se_gia_caricato(), test_load_entry_points_plugin_fallito_non_blocca(), test_register_check_valido() (+5 more)
 
 ### Community 234 - "Contributing to GEO Optimizer"
-Cohesion: 0.12
-Nodes (15): Code Style, Commit Convention, Contributing to GEO Optimizer, Optional Dependencies, PR Checklist, Project Architecture, Pull Request Process, Quick Start (+7 more)
+Cohesion: 0.14
+Nodes (14): Code Style, Contributing to GEO Optimizer, Optional Dependencies, PR Checklist, Project Architecture, Pull Request Process, Quick Start, Release Process (Maintainers Only) (+6 more)
 
 ### Community 235 - "CI/CD Integration"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (15): CI/CD Integration, Detect regressions against the previous snapshot, Enforce a minimum score, Examples, Generic CI (any platform), GitLab CI, Inputs, Jenkins (+7 more)
 
 ### Community 236 - "Schema Injector"
@@ -1614,13 +1608,13 @@ Nodes (16): All Flags, Astro — Full Integration, FAQPage Best Practices, Flag:
 Cohesion: 0.12
 Nodes (16): All Flags, Astro — Full Integration, FAQPage Best Practices, Flag: --analyze, Flag: --astro, Flag: --faq-file, Flag: --inject, Flag: --type (+8 more)
 
-### Community 238 - "audit_multi_turn_persistence"
-Cohesion: 0.22
-Nodes (5): audit_multi_turn_persistence(), _compute_persistence(), TurnResult, TestAuditMultiTurnPersistence, TestComputePersistence
+### Community 238 - "audit_persistence.py"
+Cohesion: 0.13
+Nodes (8): audit_multi_turn_persistence(), _compute_persistence(), _count_mentions(), MultiTurnResult, TurnResult, TestAuditMultiTurnPersistence, TestComputePersistence, TestCountMentions
 
-### Community 239 - "count_brand_mentions"
-Cohesion: 0.16
-Nodes (5): _count_mentions(), count_brand_mentions(), TestBrandPatternCaching, TestCountBrandMentions, TestCountMentions
+### Community 240 - "Step 4: Validate, render, and deliver"
+Cohesion: 0.17
+Nodes (11): Bake the poster as frame 0, Example: Taxi for Taxis, Final output structure, Pick the poster frame, Preview, Render, Share copy by tone, Step 4: Validate, render, and deliver (+3 more)
 
 ### Community 242 - "CI/CD Integration"
 Cohesion: 0.13
@@ -1630,9 +1624,21 @@ Nodes (15): CI/CD Integration, Detect regressions against the previous snapshot,
 Cohesion: 0.12
 Nodes (16): All Flags, Astro — Full Integration, FAQPage Best Practices, Flag: --analyze, Flag: --astro, Flag: --faq-file, Flag: --inject, Flag: --type (+8 more)
 
-### Community 246 - "_extract_shell_prop"
-Cohesion: 0.15
-Nodes (7): _extract_page_schema_urls(), _extract_shell_prop(), _find_shell_tag(), _is_asset_url(), _page_url_has_trailing_slash(), _resolve_consts(), TestSchemaCanonicalConsistency
+### Community 244 - "/brag-slim"
+Cohesion: 0.17
+Nodes (11): 1. Inspect, 2. Plan, 3. Build, check, render, 4. Deliver, /brag-slim, Creative laws, Project, Sound (+3 more)
+
+### Community 245 - "agent_access.py"
+Cohesion: 0.11
+Nodes (6): audit_cdn_ai_crawler(), TestCdnAiCrawlerCheck, side_effect(), _mock_v21_url_validation(), _fake_resolve(), _fake_validate()
+
+### Community 246 - "test_frontend_seo.py"
+Cohesion: 0.14
+Nodes (6): _extract_page_schema_urls(), _is_asset_url(), _page_url_has_trailing_slash(), _resolve_consts(), TestDemoBuiltContent, TestSchemaCanonicalConsistency
+
+### Community 247 - "WaitlistForm.tsx"
+Cohesion: 0.26
+Nodes (10): FormState, MAIN_INTEREST_OPTIONS, SITES_RANGE_OPTIONS, USER_TYPE_OPTIONS, WaitlistForm(), handleFirstInteraction(), handleSubmit(), trackWaitlistFailed() (+2 more)
 
 ### Community 249 - "Ask Matt"
 Cohesion: 0.12
@@ -1663,12 +1669,12 @@ Cohesion: 0.12
 Nodes (13): classDefsOff, classDefsSize, dex, fieldIdsOff, fieldIdsSize, fields, fs, stringIdsOff (+5 more)
 
 ### Community 256 - "server-fetch.js"
-Cohesion: 0.31
-Nodes (14): CustomDomainShopPage(), revalidate, firestoreRestCollection(), firestoreRestQuery(), fromFirestoreRest(), getAllMarketplaceProductsServer(), getAllShopsServer(), getCached() (+6 more)
+Cohesion: 0.18
+Nodes (24): GET(), revalidate, GET(), CustomDomainShopPage(), revalidate, revalidate, ShopPage(), ShopPausedPage() (+16 more)
 
-### Community 257 - "useVoiceOrder.js"
-Cohesion: 0.38
-Nodes (6): useVoiceOrder(), createRecognition(), isSupported(), startListening(), stopListening(), speak()
+### Community 257 - "AiVoicePanel.jsx"
+Cohesion: 0.24
+Nodes (10): AiVoicePanel, AiVoicePanel, AiVoicePanel(), compressImage(), useVoiceOrder(), createRecognition(), isSupported(), startListening() (+2 more)
 
 ### Community 258 - "TemplateRenderer.jsx"
 Cohesion: 0.24
@@ -1678,9 +1684,9 @@ Nodes (5): buildShopTheme(), getTemplateById(), StorefrontErrorBoundary, Templat
 Cohesion: 0.13
 Nodes (14): Completion criterion — a tight loop that goes red, Diagnosing Bugs, Minimise, Non-deterministic bugs, Phase 1 — Build a feedback loop, Phase 2 — Reproduce + minimise, Phase 3 — Hypothesise, Phase 4 — Instrument (+6 more)
 
-### Community 260 - "perception_extractor.py"
-Cohesion: 0.26
-Nodes (10): [4.16.4] — 2026-08-14, Fixed, _build_ai_readable_summary(), _extract_brand_entity(), _extract_citability(), _extract_factual_claims(), _extract_missing_signals(), _extract_schema_types() (+2 more)
+### Community 260 - "_extract_shell_prop"
+Cohesion: 0.29
+Nodes (3): _extract_shell_prop(), _find_shell_tag(), TestKeyPagesMetadata
 
 ### Community 261 - "MCP Server"
 Cohesion: 0.13
@@ -1730,21 +1736,21 @@ Nodes (14): decompileMethod(), dex, fs, methodIdsOff, methodIdsSizeReal, methods
 Cohesion: 0.14
 Nodes (13): arena, Attacker, in every round, Competitor, in the spawn phase, Defender, in every round, Final check, only when there is an answer to beat, Judge, one per match, Rules for the orchestrator, Step 1: size it, and get a yes if nobody asked for it (+5 more)
 
-### Community 274 - "inject_schema_into_html"
-Cohesion: 0.19
-Nodes (7): [2.0.0b2] — 2026-02-25, Added, Fixed, Security, Test Results, inject_schema_into_html(), TestInjectSchemaIntoHtml
+### Community 274 - "The 9 Modular Phases"
+Cohesion: 0.17
+Nodes (11): 1. `replica-recon` (Feature & Flow Deconstruction), 2. `replica-architect` (Data & Route Modeling), 3. `replica-design` (Design Token & Component Translation), 4. `replica-build` (Screen-by-Screen Implementation), 5. `replica-backend` (Logic & Third-Party Integration), 6. `replica-test` (Edge Case & Boundary Verification), 7. `replica-entrepreneur` (Competitor Pain Point Inversion), 8. `replica-brand` (Native BD Retailers Identity Sweep) (+3 more)
 
 ### Community 275 - "Categories and Weights (v4.0.0)"
 Cohesion: 0.14
 Nodes (14): 1. robots.txt — max 18 pts, 2. llms.txt — max 18 pts, 3. Schema JSON-LD — max 16 pts effective (declared 22), 4. Meta Tags — max 14 pts, 5. Content Quality — max 12 pts, 6. Signals — max 6 pts, 7. AI Discovery — max 6 pts, 8. Brand & Entity Signals — max 10 pts *(new in v3.18.2)* (+6 more)
 
-### Community 276 - "generate-llms.mjs"
-Cohesion: 0.21
-Nodes (12): __dirname, dryRun, fetchGuideEntries(), firstSentence(), FRONTEND_ROOT, LLMS_TXT_PATH, main(), orderEntries() (+4 more)
+### Community 276 - "clone/route.js"
+Cohesion: 0.32
+Nodes (11): extractOgMeta(), extractPageText(), extractSingleProduct(), extractWithAI(), fetchCategoryHunterProducts(), fetchShopifyProducts(), fetchSitemapProducts(), fetchSuglowProducts() (+3 more)
 
-### Community 277 - "inspect_all_auth.js"
-Cohesion: 0.25
-Nodes (5): admin, fs, https, inspectAll(), path
+### Community 277 - "Audio reference"
+Cohesion: 0.18
+Nodes (11): Adding SFX elements, Asset paths, Audio-reactive visuals, Audio reference, Available tracks, Beat and cue sources, In a composition, Moment → sound heuristics (+3 more)
 
 ### Community 278 - "Categories and Weights (v4.0.0)"
 Cohesion: 0.14
@@ -1752,19 +1758,43 @@ Nodes (14): 1. robots.txt — max 18 pts, 2. llms.txt — max 18 pts, 3. Schema 
 
 ### Community 279 - "GEO Optimizer"
 Cohesion: 0.14
-Nodes (13): CLI Commands, GEO Optimizer, Informational Checks, Output Formats, Platform Context Files, Scoring, Step 1 — Audit the site, Step 2 — Fix AI crawler access (robots.txt) (+5 more)
+Nodes (13): CLI Commands, GEO Optimizer, Informational Checks, Output Formats, Platform Context Files, Plugin System, Step 1 — Audit the site, Step 2 — Fix AI crawler access (robots.txt) (+5 more)
 
-### Community 280 - "schema_to_html_tag"
-Cohesion: 0.18
-Nodes (3): schema_to_html_tag(), TestSchemaToHtmlTag, TestSchemaXssEscape
+### Community 280 - "Step 3: Hand off to Hyperframes"
+Cohesion: 0.20
+Nodes (10): Audio asset preparation, Audio-reactive extraction (when music is present), Beat sync (when a cue source is available), Call Hyperframes, Create the composition brief, Grounding factual claims, How to implement, Self-review checklist (+2 more)
+
+### Community 281 - "brand_matches"
+Cohesion: 0.10
+Nodes (6): brand_matches(), brand_pattern(), count_brand_mentions(), TestBrandMatches, TestBrandPatternCaching, TestCountBrandMentions
+
+### Community 282 - "create_session_with_retry"
+Cohesion: 0.08
+Nodes (5): create_session_with_retry(), _PinnedIPAdapter, TestCreateSessionWithRetry, TestPinnedIPAdapter, TestSessionPicksUpOverride
 
 ### Community 283 - "Categories and Weights (v4.0.0)"
 Cohesion: 0.14
 Nodes (14): 1. robots.txt — max 18 pts, 2. llms.txt — max 18 pts, 3. Schema JSON-LD — max 16 pts effective (declared 22), 4. Meta Tags — max 14 pts, 5. Content Quality — max 12 pts, 6. Signals — max 6 pts, 7. AI Discovery — max 6 pts, 8. Brand & Entity Signals — max 10 pts *(new in v3.18.2)* (+6 more)
 
-### Community 291 - "test_web_llms_generate.py"
-Cohesion: 0.18
-Nodes (6): _sample_sitemap_urls(), test_llms_generate_custom_sitemap_url_skips_discovery(), test_llms_generate_invalid_base_url_returns_error(), test_llms_generate_max_per_section_clamped_to_20(), test_llms_generate_sitemap_found_returns_content(), test_llms_generate_unsafe_sitemap_url_returns_400()
+### Community 285 - "TestResultDataclasses"
+Cohesion: 0.06
+Nodes (4): SchemaAnalysis, TestSchemaAnalyzeCommand, TestSchemaFaqCommand, TestResultDataclasses
+
+### Community 286 - "generate_llms_fix"
+Cohesion: 0.24
+Nodes (4): [4.18.3] — 2026-09-22, Fixed, generate_llms_fix(), TestGenerateLlmsFix
+
+### Community 288 - "run_full_audit"
+Cohesion: 0.07
+Nodes (10): [3.0.0] — 2026-02-27, Changed, Security, Test Results, run_full_audit(), _check_ip_blocked(), _is_ip_blocked(), _FakeResponse (+2 more)
+
+### Community 290 - "_schema_html"
+Cohesion: 0.33
+Nodes (3): _schema_html(), _soup(), TestAuditSchemaRecognizesOrganizationSubtypes
+
+### Community 291 - "unittest_mock"
+Cohesion: 0.03
+Nodes (22): _audit_robots_from_response(), TestAuditRobotsFromResponse, minimal_audit_result(), _mock_cli_url_validation(), runner(), sample_schema_analysis(), _mock_offline_url_validation(), store() (+14 more)
 
 ### Community 292 - "Proposed Changes"
 Cohesion: 0.14
@@ -1799,8 +1829,8 @@ Cohesion: 0.15
 Nodes (11): Context pointers, Information hierarchy, Leading words, Invocation, Router skills, Skill mechanics, Splitting by invocation, Pruning (+3 more)
 
 ### Community 300 - "03-devto-v4-stable-release.md"
-Cohesion: 0.15
-Nodes (12): 10 MCP Tools (Was 8), 27 AI Bots (Was 24), Architecture: From Monolith to 12 Focused Modules, Full English Codebase, New: Prompt Injection Detection, New: Trust Stack Score, New: WebMCP Readiness, Scoring Accuracy: 6 Regex False Positives Eliminated (+4 more)
+Cohesion: 0.14
+Nodes (13): 10 MCP Tools (Was 8), 27 AI Bots (Was 24), Architecture: From Monolith to 12 Focused Modules, Full English Codebase, New: Prompt Injection Detection, New: Trust Stack Score, New: WebMCP Readiness, Scoring Accuracy: 6 Regex False Positives Eliminated (+5 more)
 
 ### Community 301 - "GEO Audit"
 Cohesion: 0.15
@@ -1815,7 +1845,7 @@ Cohesion: 0.19
 Nodes (12): collectGuides(), __dirname, extractConst(), FRONTEND_ROOT, guides, GUIDES_DIR, OUTPUT, renderAtom() (+4 more)
 
 ### Community 304 - "indexnow-submit.mjs"
-Cohesion: 0.24
+Cohesion: 0.27
 Nodes (11): buildPayload(), __dirname, explainStatus(), FRONTEND_ROOT, keepSameHost(), main(), parseArgs(), readSitemapEntries() (+3 more)
 
 ### Community 305 - "state-of-geo.astro"
@@ -1830,17 +1860,13 @@ Nodes (6): buffer, fs, keywords, matches, path, strings
 Cohesion: 0.15
 Nodes (13): Bonus checks (informational, no score impact), Example Outputs, Flags, GEO Audit, GEO Score Breakdown, Output Explained, Output Formats, Score 52/100 — Unoptimized Site (+5 more)
 
-### Community 309 - "build_audit_diff"
-Cohesion: 0.17
-Nodes (4): build_audit_diff(), _compute_category_deltas(), _make_result(), TestAuditDiff
-
 ### Community 311 - "GEO Audit"
 Cohesion: 0.15
 Nodes (13): Bonus checks (informational, no score impact), Example Outputs, Flags, GEO Audit, GEO Score Breakdown, Output Explained, Output Formats, Score 52/100 — Unoptimized Site (+5 more)
 
-### Community 312 - "_mock_groq_module"
-Cohesion: 0.15
-Nodes (4): _mock_anthropic_module(), _mock_env(), _mock_groq_module(), _mock_openai_module()
+### Community 312 - "test_llm_client.py"
+Cohesion: 0.07
+Nodes (7): _mock_anthropic_module(), _mock_env(), _mock_groq_module(), _mock_openai_module(), TestDetectProvider, TestDetectProviderDeepseek, TestDetectProviderGemini
 
 ### Community 314 - "Steps"
 Cohesion: 0.15
@@ -1875,16 +1901,16 @@ Cohesion: 0.17
 Nodes (11): Chart the map, Fog of war, Invocation, Out of scope, Plan, don't do, Refer by name, The Map, The map body (+3 more)
 
 ### Community 322 - "geo-optimizer/AGENTS.md"
-Cohesion: 0.11
-Nodes (13): Architectural Rules, Audit and Scoring Model, Data Flow Expectations, Graft — repo context graph, Guidance for Future Agents, Project Context, Project-Specific Gotchas, Repository Map (+5 more)
-
-### Community 323 - "fetch_page_title"
-Cohesion: 0.21
-Nodes (6): [2.0.0b3] — 2026-02-27, Added, Fixed, Test Results, fetch_page_title(), TestFetchPageTitle
-
-### Community 324 - "GEO History"
 Cohesion: 0.15
-Nodes (12): Example Output, Flags, GEO History, Related Commands, Usage, What It Does, Flags, GEO Track (+4 more)
+Nodes (11): Architectural Rules, Audit and Scoring Model, Data Flow Expectations, Graft — repo context graph, Guidance for Future Agents, Project Context, Project-Specific Gotchas, Repository Map (+3 more)
+
+### Community 323 - "2. 6-Act Real Scenario Storyboard (90.0s)"
+Cohesion: 0.20
+Nodes (9): 1. Product Overview & Creative Direction, 2. 6-Act Real Scenario Storyboard (90.0s), Act 1: The Merchant's Daily Struggle (0.0s - 15.0s), Act 2: The Transformation — BD Retailers (15.0s - 30.0s), Act 3: 1-Click Customer Buying Experience (30.0s - 48.0s), Act 4: Merchant Power Dashboard & 1-Click Courier (48.0s - 65.0s), Act 5: 24/7 Groq AI Sales Agent in Action (65.0s - 78.0s), Act 6: Grand Finale & Call to Action (78.0s - 90.0s) (+1 more)
+
+### Community 324 - "Modified Files and Descriptions"
+Cohesion: 0.20
+Nodes (9): 1. `src/app/api/marketplace/products/route.js` (NEW), 3. `src/context/AuthContext.jsx`, 4. `src/app/api/social/connect/route.js`, 5. `src/app/api/social/settings/route.js`, `src/app/api/social/conversations/route.js`, `src/app/api/social/team/route.js`, 6. `src/app/api/build-app/route.js`, 7. `src/app/dashboard/billing/page.js`, 8. `src/app/dashboard/layout.js`, Modified Files and Descriptions (+1 more)
 
 ### Community 325 - "Skill System"
 Cohesion: 0.17
@@ -1895,12 +1921,8 @@ Cohesion: 0.23
 Nodes (8): meta, Props, typeLabels, methods, Props, researchClosing, ResearchSource, researchSources
 
 ### Community 327 - "SurveyForm.tsx"
-Cohesion: 0.23
+Cohesion: 0.25
 Nodes (10): CURRENT_TOOL_OPTIONS, FormState, MAIN_PROBLEM_OPTIONS, PRIORITY_FEATURE_OPTIONS, SurveyForm(), handleFirstInteraction(), handleSubmit(), WTP_OPTIONS (+2 more)
-
-### Community 328 - "extract_competitor_narrative"
-Cohesion: 0.20
-Nodes (3): extract_competitor_narrative(), _sanitize_prompt_input(), TestExtractCompetitorNarrative
 
 ### Community 332 - "GEO History"
 Cohesion: 0.10
@@ -1910,9 +1932,9 @@ Nodes (18): Example Output, Flags, GEO History, Related Commands, Usage, What It
 Cohesion: 0.17
 Nodes (12): Adding a New Skill, Audit engine, Canonical Format, Catalog v1, Design Goals, Documentation, MCP surface, Plugin/check system (+4 more)
 
-### Community 337 - "test_factual_accuracy.py"
-Cohesion: 0.21
-Nodes (5): _soup(), test_audit_factual_accuracy_restituisce_clean_su_contenuto_neutro(), test_audit_factual_accuracy_rileva_claims_fonti_incoerenze_e_link_rotti(), _fake_fetch(), test_run_factual_accuracy_audit_gestisce_errori_http()
+### Community 337 - "factual_accuracy.py"
+Cohesion: 0.08
+Nodes (18): _append_unique(), audit_factual_accuracy(), _check_source_links(), _collect_date_inconsistencies(), _collect_numeric_inconsistencies(), _context_key(), _extract_numeric_values(), _extract_support_links() (+10 more)
 
 ### Community 338 - "Steps"
 Cohesion: 0.17
@@ -1923,8 +1945,8 @@ Cohesion: 0.17
 Nodes (11): Chart the map, Fog of war, Invocation, Out of scope, Plan, don't do, Refer by name, The Map, The map body (+3 more)
 
 ### Community 340 - "facebook-webhook/route.js"
-Cohesion: 0.48
-Nodes (5): getAiReply(), POST(), sendFacebookCommentReply(), sendFacebookMessage(), verifySignature()
+Cohesion: 0.31
+Nodes (9): getAiReply(), getCachedProductsForWebhook(), POST(), sendFacebookCommentPrivateReply(), sendFacebookCommentReply(), sendFacebookMessage(), sendWhatsAppMessage(), verifySignature() (+1 more)
 
 ### Community 341 - "list_all_classes.js"
 Cohesion: 0.17
@@ -1934,29 +1956,29 @@ Nodes (10): classDefsOff, classDefsSize, dex, fs, stringIdsOff, stringIdsSize, s
 Cohesion: 0.21
 Nodes (11): app, db, firebaseConfig, fs, getCategoriesServer(), { getFirestore, getDocs, collection, query, where, getDoc, doc }, getProductsServer(), getShopServer() (+3 more)
 
-### Community 343 - "getProductsServer"
+### Community 343 - "product/[productId]/page.js"
 Cohesion: 0.27
-Nodes (8): deepClone(), generateMetadata(), ProductDetailPage(), revalidate, ErrorBoundary, ErrorFallback(), ProductDetailClient(), getProductsServer()
+Nodes (8): deepClone(), generateMetadata(), ProductDetailPage(), revalidate, ErrorBoundary, ErrorFallback(), ProductDetailClient(), getProductServer()
 
 ### Community 344 - "getShopByDomainServer"
 Cohesion: 0.24
-Nodes (10): BYPASS_HOSTS, dynamic, escapeXml(), GET(), isMainSiteHost(), BYPASS_HOSTS, dynamic, GET() (+2 more)
+Nodes (10): BYPASS_HOSTS, escapeXml(), GET(), isMainSiteHost(), revalidate, BYPASS_HOSTS, GET(), isMainSiteHost() (+2 more)
 
 ### Community 345 - "1. Core Competency & Sub-Skill Matrix"
 Cohesion: 0.18
 Nodes (10): 1. Core Competency & Sub-Skill Matrix, 2. Standard Optimization Checklist, 3. Implementation Workflow, A. Technical SEO & Core Web Vitals, B. On-Page & Semantic Architecture, C. Structured Data (Schema.org JSON-LD), Claude-SEO: Autonomous Search & AI Engine Optimization Suite, D. GEO & AEO (Generative & Answer Engine Optimization) (+2 more)
 
 ### Community 346 - "ArenaError"
-Cohesion: 0.22
-Nodes (8): ArenaError, decide(), find_match(), norm_agent(), record(), run_dir_from(), _truthy(), weighted_total()
+Cohesion: 0.15
+Nodes (12): ArenaError, collect(), decide(), extract_json(), find_match(), _fmt(), norm_agent(), record() (+4 more)
 
 ### Community 347 - "1. Core Competency & Sub-Skill Matrix"
 Cohesion: 0.18
 Nodes (10): 1. Core Competency & Sub-Skill Matrix, 2. Standard Optimization Checklist, 3. Implementation Workflow, A. Technical SEO & Core Web Vitals, B. On-Page & Semantic Architecture, C. Structured Data (Schema.org JSON-LD), Claude-SEO: Autonomous Search & AI Engine Optimization Suite, D. GEO & AEO (Generative & Answer Engine Optimization) (+2 more)
 
-### Community 348 - "ai-vision/route.js"
-Cohesion: 0.38
-Nodes (6): dynamic, getImageMimeType(), maxDuration, POST(), tryGeminiVision(), visionLimiter
+### Community 348 - "hyperframes.json"
+Cohesion: 0.22
+Nodes (8): media, autoProxy, paths, assets, blocks, components, registry, $schema
 
 ### Community 349 - "Troubleshooting"
 Cohesion: 0.18
@@ -1987,24 +2009,28 @@ Cohesion: 0.18
 Nodes (10): afterCheckoutSteps, comparisonRows, faqs, heroCadenceRows, planChoiceRows, pricingParams, reportClaim, scalePlans (+2 more)
 
 ### Community 356 - "Quality Scoring Rubric"
-Cohesion: 0.18
+Cohesion: 0.17
 Nodes (11): Current Status (v4.6.0), Future Targets, Methodology, Quality Scoring Rubric, Score Progression, Scoring Dimensions, Scoring Scale, v1.0.0 (2026-02-18) — Baseline (+3 more)
 
-### Community 360 - ".register"
-Cohesion: 0.13
-Nodes (5): _MockCheck, test_clear_svuota_registry(), test_register_check_duplicato_solleva_errore(), test_run_all_check_fallito_non_blocca_altri(), test_run_all_esegue_check_registrato()
+### Community 358 - "scripts"
+Cohesion: 0.22
+Nodes (8): name, private, scripts, check, dev, publish, render, type
 
 ### Community 361 - "Troubleshooting"
 Cohesion: 0.18
 Nodes (11): 10. Install on Windows, 1. `geo: command not found`, 2. `ModuleNotFoundError: requests`, 3. `--help shows a dependency error`, 4. `llms.txt generated but 0 links`, 5. `robots.txt bot shows as MISSING despite being there`, 6. `WebSite schema found but score is still low`, 7. `sitemap.xml returns 404` (+3 more)
 
 ### Community 362 - "_has_about_link"
-Cohesion: 0.25
-Nodes (3): _has_about_link(), _soup(), TestAuditBrandRecognizesAnchorAboutLinks
+Cohesion: 0.16
+Nodes (4): _has_about_link(), _soup(), TestAboutLinkPatternsConstant, TestAuditBrandRecognizesAnchorAboutLinks
 
-### Community 369 - "react-hot-toast"
-Cohesion: 0.06
-Nodes (45): react-hot-toast, recharts, AdminPage(), aiLimiter, POST(), IncompleteOrdersPage(), LandingPagesDashboard(), DashboardPage() (+37 more)
+### Community 365 - "Tone reference"
+Cohesion: 0.25
+Nodes (8): `app-store`, `chaotic`, `cinematic`, `deadpan`, `default`, `polished`, Tone reference, `yc-parody`
+
+### Community 369 - "ai/route.js"
+Cohesion: 0.17
+Nodes (10): aiLimiter, getGlobalConfigAdmin(), getShopAdmin(), POST(), aiCache, getDailyUsage(), getRedis(), incrementDailyUsage() (+2 more)
 
 ### Community 370 - "list_all_distinct_packages.js"
 Cohesion: 0.18
@@ -2018,21 +2044,25 @@ Nodes (7): dynamic, fraudCheckLimiter, GET(), isAuthorizedShopAdmin(), POST(), c
 Cohesion: 0.20
 Nodes (9): `as Type` → `fromPartial()`, `as unknown as Type` → `fromAny()`, Install, Large objects with few needed properties, Migrate to Shoehorn, Migration patterns, When to use each, Why shoehorn? (+1 more)
 
-### Community 373 - "JSON Contract v1 — GEO Optimizer Web API"
-Cohesion: 0.20
-Nodes (9): Backward compatibility rules, `checks` structure, Flat alias keys, Frozen fixture, JSON Contract v1 — GEO Optimizer Web API, Nested sub-dicts, Overview, Platform consumers (+1 more)
+### Community 373 - "geo-optimizer/README.md"
+Cohesion: 0.08
+Nodes (20): Backward compatibility rules, `checks` structure, Flat alias keys, Frozen fixture, JSON Contract v1 — GEO Optimizer Web API, Nested sub-dicts, Overview, Platform consumers (+12 more)
 
 ### Community 374 - "JSON Contract v1 — GEO Optimizer Web API"
-Cohesion: 0.20
-Nodes (9): Backward compatibility rules, `checks` structure, Flat alias keys, Frozen fixture, JSON Contract v1 — GEO Optimizer Web API, Nested sub-dicts, Overview, Platform consumers (+1 more)
+Cohesion: 0.22
+Nodes (8): Backward compatibility rules, `checks` structure, Flat alias keys, Frozen fixture, JSON Contract v1 — GEO Optimizer Web API, Nested sub-dicts, Overview, Platform consumers
 
 ### Community 375 - "reportMapper.ts"
-Cohesion: 0.33
-Nodes (9): _buildSignalsForCategory(), _buildTechnicalSignals(), CATEGORY_NAMES, computeGrade(), _extractImpact(), extractReportId(), _inferPriority(), mapBackendToFrontend() (+1 more)
+Cohesion: 0.20
+Nodes (13): statusConfig, TechnicalSignals(), TechnicalSignalsProps, TechnicalSignal, _buildSignalsForCategory(), _buildTechnicalSignals(), CATEGORY_NAMES, computeGrade() (+5 more)
 
 ### Community 378 - "extract_page_terms"
-Cohesion: 0.38
+Cohesion: 0.25
 Nodes (3): extract_page_terms(), _soup(), TestTermExtractor
+
+### Community 379 - "HyperFrames Composition Project"
+Cohesion: 0.25
+Nodes (7): Commands, Documentation, HyperFrames Composition Project, Key Rules, Linting — ALWAYS RUN AFTER CHANGES, Project Structure, Skills — read these first
 
 ### Community 383 - "Migrate to Shoehorn"
 Cohesion: 0.20
@@ -2070,13 +2100,17 @@ Nodes (8): 4-Step Workflow, Behavior Rules, Citability Methods (47 total), GEO C
 Cohesion: 0.22
 Nodes (8): Commits deployed, Core Web Vitals (mobile, throttled lab measurement), Deployment record — GeoReady CLS & branding follow-up, Live smoke results, Residual risks, Verification method (summary), What shipped, What was corrected
 
-### Community 392 - "llms-txt-generator-wordpress.astro"
-Cohesion: 0.22
-Nodes (6): lines, Props, faqs, stats, tableRows, faqs
+### Community 392 - "HyperFrames Composition Project"
+Cohesion: 0.25
+Nodes (7): Commands, Documentation, HyperFrames Composition Project, Key Rules, Linting — ALWAYS RUN AFTER CHANGES, Project Structure, Skills — read these first
 
-### Community 397 - "_run"
-Cohesion: 0.50
-Nodes (3): _entry(), _run(), TestDriftCmd
+### Community 393 - "check_shop.js"
+Cohesion: 0.25
+Nodes (5): admin, db, fs, path, privateKey
+
+### Community 397 - "test_drift_cmd.py"
+Cohesion: 0.36
+Nodes (4): _entry(), _history(), _run(), TestDriftCmd
 
 ### Community 402 - "requires_frontend_build"
 Cohesion: 0.22
@@ -2119,8 +2153,8 @@ Cohesion: 0.22
 Nodes (7): app, db, firebaseConfig, fs, { getFirestore, doc, getDoc }, { initializeApp }, path
 
 ### Community 412 - "homepage-config/route.js"
-Cohesion: 0.28
-Nodes (7): DEFAULT_FOOTER, DEFAULT_HEADER, DEFAULT_SECTIONS, DEFAULT_THEME, POST(), PUT(), verifyAuth()
+Cohesion: 0.29
+Nodes (8): DEFAULT_FOOTER, DEFAULT_HEADER, DEFAULT_SECTIONS, DEFAULT_THEME, isShopOwner(), POST(), PUT(), verifyAuth()
 
 ### Community 413 - "Process"
 Cohesion: 0.25
@@ -2174,6 +2208,14 @@ Nodes (7): compilerOptions, jsx, jsxImportSource, exclude, extends, include, ast
 Cohesion: 0.25
 Nodes (7): CLI Commands, GEO Optimizer Documentation, Get started in 30 seconds, Integrations, Links, Python API, Reference
 
+### Community 426 - "check_oauth.js"
+Cohesion: 0.25
+Nodes (5): admin, checkOAuth(), fs, https, path
+
+### Community 427 - "Core Capabilities & Catalog Areas"
+Cohesion: 0.29
+Nodes (6): 1. Application Security & Vulnerability Auditing, 2. Architecture & High-Performance Web, 3. REA & API-First Catalog Integration, Agentic Awesome Skills (sickn33/agentic-awesome-skills), Core Capabilities & Catalog Areas, Usage Protocol
+
 ### Community 429 - "geo fix Command"
 Cohesion: 0.25
 Nodes (7): Example Output (Dry-Run), Flags, geo fix Command, Tips, Usage, Using with MCP, What It Generates
@@ -2182,9 +2224,21 @@ Nodes (7): Example Output (Dry-Run), Flags, geo fix Command, Tips, Usage, Using 
 Cohesion: 0.25
 Nodes (7): Citation quality scoring, GEO Snapshots, Notes, Options, Query the archive, Save a snapshot, Use cases
 
-### Community 439 - "test_web_logs_endpoint.py"
-Cohesion: 0.39
-Nodes (4): test_upload_analyzer_error_returns_500(), test_upload_requires_auth_when_token_set(), test_upload_returns_200_and_log_result(), test_upload_too_large_returns_413()
+### Community 435 - "SFX Analysis Summary"
+Cohesion: 0.29
+Nodes (6): Family Summary, Lower-Risk Picks By Use Case, Safest General Picks, Selection Rules, SFX Analysis Summary, Signal Guide
+
+### Community 437 - "find_string_282.js"
+Cohesion: 0.29
+Nodes (5): dex, fs, stringIdsOff, stringIdsSize, strings
+
+### Community 438 - "sub-superadmins/route.js"
+Cohesion: 0.48
+Nodes (6): DELETE(), dynamic, GET(), POST(), PUT(), verifySuperAdmin()
+
+### Community 439 - "Music Cues: happy-beats-business-moves-vol-10-by-ende-dot-app"
+Cohesion: 0.33
+Nodes (5): Music Cues: happy-beats-business-moves-vol-10-by-ende-dot-app, Reveal Candidates, Strong Cues In Window, Use Policy, Useful Beat Grid
 
 ### Community 440 - "Process"
 Cohesion: 0.25
@@ -2202,13 +2256,13 @@ Nodes (7): Conversational feel, Format arguments to actually have, Grounding, Ou
 Cohesion: 0.25
 Nodes (6): pdf-parse, dependencies, pdf-parse, dataBuffer, fs, pdf
 
-### Community 444 - "draft/route.js"
-Cohesion: 0.32
-Nodes (6): zod, DELETE(), DraftCheckoutSchema, draftLimiter, GET(), verifyShopAccess()
+### Community 444 - "Music Cues: happy-beats-business-moves-vol-11-by-ende-dot-app"
+Cohesion: 0.33
+Nodes (5): Music Cues: happy-beats-business-moves-vol-11-by-ende-dot-app, Reveal Candidates, Strong Cues In Window, Use Policy, Useful Beat Grid
 
-### Community 445 - "check_camerakini.js"
-Cohesion: 0.25
-Nodes (5): admin, db, fs, path, privateKey
+### Community 445 - "Music Cues: happy-beats-business-moves-vol-12-by-ende-dot-app"
+Cohesion: 0.33
+Nodes (5): Music Cues: happy-beats-business-moves-vol-12-by-ende-dot-app, Reveal Candidates, Strong Cues In Window, Use Policy, Useful Beat Grid
 
 ### Community 446 - "find_all_arsc_strings.js"
 Cohesion: 0.33
@@ -2222,17 +2276,17 @@ Nodes (6): bytes15, bytes4, dex, fieldIdx15, fieldIdx4, fs
 Cohesion: 0.25
 Nodes (6): allStrings, buffer, fs, keywords, matches, path
 
-### Community 449 - "test_regex.js"
-Cohesion: 0.25
-Nodes (7): code, filePath, fs, normalized, path, pos, sub
+### Community 449 - "Music Cues: happy-beats-business-moves-vol-1-by-ende-dot-app"
+Cohesion: 0.33
+Nodes (5): Music Cues: happy-beats-business-moves-vol-1-by-ende-dot-app, Reveal Candidates, Strong Cues In Window, Use Policy, Useful Beat Grid
 
 ### Community 450 - "test_upload.js"
 Cohesion: 0.29
 Nodes (6): admin, bucket, fs, path, privateKey, testUpload()
 
-### Community 451 - "get_logo_client.js"
+### Community 451 - "Music Cues: happy-beats-business-moves-vol-9-by-ende-dot-app"
 Cohesion: 0.33
-Nodes (4): app, db, envPath, firebaseConfig
+Nodes (5): Music Cues: happy-beats-business-moves-vol-9-by-ende-dot-app, Reveal Candidates, Strong Cues In Window, Use Policy, Useful Beat Grid
 
 ### Community 452 - "db-backup.js"
 Cohesion: 0.29
@@ -2251,8 +2305,8 @@ Cohesion: 0.29
 Nodes (6): Anchors, The arena rubric, The fatal rule, The five criteria, Ties, What the judge does not reward
 
 ### Community 456 - "[3.0.0a2] — 2026-02-27"
-Cohesion: 0.19
-Nodes (5): [3.0.0a2] — 2026-02-27, Added, Changed, test_badge_ha_dimensioni_altezza_20(), test_badge_label_personalizzata_appare_nel_svg()
+Cohesion: 0.67
+Nodes (3): [3.0.0a2] — 2026-02-27, Added, Changed
 
 ### Community 457 - "[4.6.1] — 2026-04-16"
 Cohesion: 0.29
@@ -2271,7 +2325,7 @@ Cohesion: 0.29
 Nodes (7): 1. What You Need, 2. Install, 3. Your First Audit, 4. Reading the Output, 5. What to Fix First, 6. Update, Getting Started
 
 ### Community 461 - "Roadmap"
-Cohesion: 0.29
+Cohesion: 0.20
 Nodes (7): Current Direction, Release Calendar, Release Philosophy, Roadmap, Static Cycle — MVP Track, What's Ahead, What This Roadmap Does Not Cover
 
 ### Community 462 - "BenchmarkComparison.tsx"
@@ -2290,9 +2344,13 @@ Nodes (6): Bot detection, geo logs, Options, Python API, Supported log formats, 
 Cohesion: 0.29
 Nodes (7): 1. What You Need, 2. Install, 3. Your First Audit, 4. Reading the Output, 5. What to Fix First, 6. Update, Getting Started
 
-### Community 466 - "Security Policy"
-Cohesion: 0.29
-Nodes (7): Bounty / recognition, How to report, Public disclosure, Reporting a Vulnerability, Scope, Security Policy, What happens next
+### Community 466 - "SFX library — approved files"
+Cohesion: 0.33
+Nodes (6): `casino/` — Card and chip sounds, `impact/` — Impact sounds, `interface/` — UI sounds, `keyboard/` — Individual keypress sounds, SFX library — approved files, `ui/` — Clicks and switches
+
+### Community 468 - "LLM Providers for `geo citations`"
+Cohesion: 0.33
+Nodes (5): DeepSeek, Gemini, LLM Providers for `geo citations`, MiniMax, SerpBase (Google SERP + AI Overview)
 
 ### Community 470 - "GEO AI Discovery Readiness"
 Cohesion: 0.29
@@ -2330,6 +2388,10 @@ Nodes (6): Execution Protocol, Guardrails, Mission, Output Contract, Required In
 Cohesion: 0.29
 Nodes (7): 1. What You Need, 2. Install, 3. Your First Audit, 4. Reading the Output, 5. What to Fix First, 6. Update, Getting Started
 
+### Community 480 - "PlatformScore"
+Cohesion: 0.33
+Nodes (3): _score_chatgpt(), _score_perplexity(), PlatformScore
+
 ### Community 485 - "client"
 Cohesion: 0.29
 Nodes (3): clean_state(), client(), client_strict()
@@ -2366,25 +2428,13 @@ Nodes (6): ALLOWED_GEO_TYPES, CITY_CORPORATION_WARDS, GET(), MANUAL_UPAZILAS, re
 Cohesion: 0.33
 Nodes (3): dynamic, getUserCompletedOrderCount(), POST()
 
-### Community 494 - "search_dex_for_registerForActivityResult.js"
-Cohesion: 0.33
-Nodes (4): dex, fs, stringIdsOff, stringIdsSize
-
 ### Community 495 - "agent/skills/writing-beats/SKILL.md"
 Cohesion: 0.33
 Nodes (5): Ending the journey, Grounding, Pulling from the pile, What is a beat, Writing rhythm
 
-### Community 496 - "advance"
-Cohesion: 0.40
-Nodes (5): advance(), cmd_check(), _has_output(), missing_jobs(), Step 4: the loop
-
 ### Community 497 - "[1.1.0] — 2026-02-21"
 Cohesion: 0.33
 Nodes (6): [1.1.0] — 2026-02-21, Added — Features, Added — Infrastructure & Quality, Changed — Security & UX, Fixed, Planned
-
-### Community 498 - "[4.0.1] — 2026-04-02"
-Cohesion: 0.33
-Nodes (5): [4.0.1] — 2026-04-02, Fixed, Performance, Refactored, _count_syllables()
 
 ### Community 499 - "[4.10.3] — 2026-05-10"
 Cohesion: 0.33
@@ -2418,9 +2468,49 @@ Nodes (6): GEO Monitor, Options, Output, Relationship to other commands, Usage, 
 Cohesion: 0.33
 Nodes (5): geo-optimizer, graft, PYTHONUNBUFFERED, graft, .venv/bin/geo-mcp
 
+### Community 507 - "Core Mandates"
+Cohesion: 0.33
+Nodes (5): 1. Mandatory Pre-Inspection Before Mutation, 2. Multi-Perspective Adversarial Self-Check, 3. Concrete Evidence Verification (Definition of Done), Core Mandates, 🛡️ Gravitas: Verification-First Reliability Runtime
+
+### Community 508 - "Key Workflows"
+Cohesion: 0.33
+Nodes (5): 1. Merchant Prospecting & Qualification, 2. High-Converting Localized Outreach (Bengali Copywriting), 3. Frictionless Onboarding Journey, 🚀 Harvey: Autonomous B2B Retailer Acquisition Engine, Key Workflows
+
+### Community 513 - "Hyperframes Composition Brief: BD Retailers 90s Cinematic Walkthrough"
+Cohesion: 0.33
+Nodes (5): Audio Plan, Hyperframes Composition Brief: BD Retailers 90s Cinematic Walkthrough, Objective, Output Details, Palette & Design System
+
+### Community 518 - "Performance Benchmarks & Laboratory Metrics"
+Cohesion: 0.33
+Nodes (5): 1. Test Conditions & Environment, 2. Before vs. After Comparative Metrics, 3. Laboratory Web Vitals (Representative Storefront), 4. Test Limitations, Performance Benchmarks & Laboratory Metrics
+
+### Community 519 - "1. Safe Reversion Procedures"
+Cohesion: 0.33
+Nodes (5): 1. Safe Reversion Procedures, 2. Production Rollback Precautions, Option A: Clean Git Revert (Recommended), Option B: Granular Per-Component Rollback, Performance & Architecture Rollback Guide
+
 ### Community 522 - "product-sitemap.xml/route.js"
-Cohesion: 0.47
-Nodes (5): BYPASS_HOSTS, dynamic, escapeXml(), GET(), isMainSiteHost()
+Cohesion: 0.38
+Nodes (6): BYPASS_HOSTS, escapeXml(), GET(), isMainSiteHost(), revalidate, sitemapCacheMap
+
+### Community 523 - "Production Readiness & Security Verification Report"
+Cohesion: 0.33
+Nodes (5): 1. Automated Build & Static Analysis Results, 2. Multi-Tenant Data Isolation Status, 3. Outstanding Merchant Action Items (Meta Graph API & Social Hub), 4. Deployment Recommendation, Production Readiness & Security Verification Report
+
+### Community 525 - "firebase-admin"
+Cohesion: 0.33
+Nodes (4): firebase-admin, db, { getFirestore }, { initializeApp, cert, getApps }
+
+### Community 528 - "test_user_agent_override.py"
+Cohesion: 0.11
+Nodes (3): _reset_user_agent_override(), TestGetHeaders, TestResolveUserAgentOverride
+
+### Community 529 - "search_classes_dex_for_scanner.js"
+Cohesion: 0.33
+Nodes (5): buffer, fs, keywords, strings, uniqueMatches
+
+### Community 530 - "find_activity_result.js"
+Cohesion: 0.40
+Nodes (4): content, fs, lines, matches
 
 ### Community 532 - "[1.1.0] - 2026-07-05"
 Cohesion: 0.33
@@ -2438,9 +2528,9 @@ Nodes (4): Flags, GEO Diff, Output, Usage
 Cohesion: 0.40
 Nodes (4): dex, fs, printMethodRaw(), readInt()
 
-### Community 536 - "find_all_scan_occurrences.js"
-Cohesion: 0.33
-Nodes (5): buffer, fs, keywords, matches, strings
+### Community 536 - "count-prods.mjs"
+Cohesion: 0.40
+Nodes (3): db, env, envContent
 
 ### Community 537 - "search_intent_activity.js"
 Cohesion: 0.40
@@ -2466,13 +2556,13 @@ Nodes (5): 1. Webhook Validation (Steadfast Courier), 2. Server-Side Data Privac
 Cohesion: 0.33
 Nodes (5): 1. Environment Variables Configuration, 2. Firestore Rules Setup, 3. Google Maps Autocomplete Settings, 4. Steadfast Courier Setup, Platform Setup Guide
 
-### Community 543 - "category-sitemap.xml/route.js"
-Cohesion: 0.47
-Nodes (5): BYPASS_HOSTS, dynamic, escapeXml(), GET(), isMainSiteHost()
+### Community 543 - "getAllMarketplaceProducts"
+Cohesion: 0.11
+Nodes (20): 1. Executive Summary & Existing Architecture, 2. Identified Bottlenecks & Critical Root Causes, 3. Implemented Fixes Summary, 4. Hosting & VPS Assessment (Phase 8 Evaluation), BDRetailers SaaS — Full-Stack Performance Audit & Architecture Report, 🚨 Critical Bottleneck 1: Unbounded Full-Database Scans on Client Visits (Severity: CRITICAL / P0), ⚠️ Critical Bottleneck 2: Missing Server-Side Marketplace API Caching (Severity: HIGH / P1), ⚠️ Critical Bottleneck 3: AuthContext Active Shop ID & Shop Document Mismatch (Severity: HIGH / P1) (+12 more)
 
 ### Community 544 - "image-sitemap.xml/route.js"
-Cohesion: 0.47
-Nodes (5): BYPASS_HOSTS, dynamic, escapeXml(), GET(), isMainSiteHost()
+Cohesion: 0.38
+Nodes (6): BYPASS_HOSTS, escapeXml(), GET(), isMainSiteHost(), revalidate, sitemapCacheMap
 
 ### Community 545 - "agent/skills/loop-me/SKILL.md"
 Cohesion: 0.40
@@ -2501,6 +2591,10 @@ Nodes (4): coords, path, Props, pts
 ### Community 551 - "GEO Diff"
 Cohesion: 0.40
 Nodes (4): Flags, GEO Diff, Output, Usage
+
+### Community 552 - "🎯 Agentation: Visual UI Element Locator & Context Protocol"
+Cohesion: 0.50
+Nodes (3): 🎯 Agentation: Visual UI Element Locator & Context Protocol, Core Directives, When to Apply
 
 ### Community 553 - "PULL_REQUEST_TEMPLATE.md"
 Cohesion: 0.40
@@ -2542,21 +2636,41 @@ Nodes (5): Description, How to implement it, Method 2 — Statistics, Notes, Pra
 Cohesion: 0.40
 Nodes (5): Description, How to implement it, Method 3 — Quotation Addition, Notes, Practical example
 
+### Community 563 - "🗺️ Archify: Visual Architecture & System Flow Protocol"
+Cohesion: 0.50
+Nodes (3): 🗺️ Archify: Visual Architecture & System Flow Protocol, Core Schemas to Maintain, Supported Visual Formats
+
+### Community 564 - "[4.8.0] — 2026-04-16"
+Cohesion: 0.50
+Nodes (4): [4.8.0] — 2026-04-16, Added, Documentation, Tests
+
+### Community 565 - "GEO Optimizer — Documentation"
+Cohesion: 0.50
+Nodes (4): Deployment records, GEO Optimizer — Documentation, Navigation, Quick Navigation
+
+### Community 566 - "Alibaba OpenCodeReview (OCR) Skill"
+Cohesion: 0.50
+Nodes (3): Alibaba OpenCodeReview (OCR) Skill, Core Rules & Quality Bar, Running the Scanner
+
 ### Community 567 - "GEO Perception"
 Cohesion: 0.40
 Nodes (4): Flags, GEO Perception, Output, Usage
 
-### Community 568 - "_mock_core_url_validation"
+### Community 568 - "find_request_urls.js"
 Cohesion: 0.50
-Nodes (3): _mock_core_url_validation(), _fake_resolve(), _fake_validate()
+Nodes (3): content, fs, sections
 
-### Community 571 - "_mock_async_url_validation"
+### Community 569 - "find_sound_creation.js"
 Cohesion: 0.50
-Nodes (3): _mock_async_url_validation(), _fake_resolve(), _fake_validate()
+Nodes (3): content, fs, lines
 
-### Community 574 - "_mock_v21_url_validation"
+### Community 571 - "print_bytes.js"
 Cohesion: 0.50
-Nodes (3): _mock_v21_url_validation(), _fake_resolve(), _fake_validate()
+Nodes (3): dex, fs, insnsSize
+
+### Community 572 - "search_qr_server.js"
+Cohesion: 0.50
+Nodes (3): fs, path, searchInDir()
 
 ### Community 576 - ".claude/skills/loop-me/SKILL.md"
 Cohesion: 0.40
@@ -2570,9 +2684,9 @@ Nodes (4): 1. Production Bundle Build Verification, 2. Deploying to Vercel (Reco
 Cohesion: 0.50
 Nodes (4): firebaseConfig, handleBackgroundMessage(), STATIC_ASSETS, tryInitFirebase()
 
-### Community 581 - "check_download_links.js"
-Cohesion: 0.50
-Nodes (3): content, fs, lines
+### Community 581 - "[3.19.0] — 2026-03-30"
+Cohesion: 0.67
+Nodes (3): [3.19.0] — 2026-03-30, Added, Changed
 
 ### Community 582 - "decompile_functions.js"
 Cohesion: 0.50
@@ -2646,9 +2760,9 @@ Nodes (4): [4.13.0] — 2026-06-10 · Echo, Added, Changed, Fixed
 Cohesion: 0.50
 Nodes (4): [4.2.0] — 2026-04-13, Added, Changed, Tests
 
-### Community 600 - "[4.4.0] — 2026-04-13"
-Cohesion: 0.50
-Nodes (4): [4.4.0] — 2026-04-13, Added, Changed, Tests
+### Community 600 - "Fixed"
+Cohesion: 0.67
+Nodes (3): [4.17.1] — 2026-08-31, Added, Fixed
 
 ### Community 601 - "[4.6.0] — 2026-04-14"
 Cohesion: 0.50
@@ -2678,6 +2792,14 @@ Nodes (4): Description, Method 9 — Keyword Stuffing ⚠️, Research result, W
 Cohesion: 0.50
 Nodes (4): Phase 1 — Quick Wins (week 1–2), Phase 2 — Optimization (week 3–4), Phase 3 — Fine Tuning, Recommended Implementation Strategy
 
+### Community 612 - "test_mcp.py"
+Cohesion: 0.05
+Nodes (6): _mock_mcp_url_validation(), TestExceptionPaths, TestGeoAuditTool, TestGeoFactualAccuracyTool, TestGeoFixTool, TestGeoLlmsGenerateTool
+
+### Community 613 - "test_mcp_server.py"
+Cohesion: 0.11
+Nodes (4): _mock_mcp_url_validation(), TestGeoCitabilityToolAdditional, TestGeoCompareToolAdditional, TestGeoNegativeSignalsTool
+
 ### Community 615 - "Ponytail Review — Hunt & Delete Over-Engineering"
 Cohesion: 0.50
 Nodes (3): Findings Format, Ponytail Review — Hunt & Delete Over-Engineering, Tags
@@ -2698,17 +2820,9 @@ Nodes (3): GLOSSARY.md Format, Rules, Structure
 Cohesion: 0.50
 Nodes (3): File format, What is a fragment, Writing rhythm
 
-### Community 620 - "decompile_mainactivity_dialog_methods.js"
-Cohesion: 0.50
-Nodes (3): content, fs, sections
-
 ### Community 621 - "find_download_handler.js"
 Cohesion: 0.50
 Nodes (3): fs, path, searchFiles()
-
-### Community 622 - "find_inner_classes.js"
-Cohesion: 0.50
-Nodes (3): content, fs, sections
 
 ### Community 623 - "find_snackbar_calls.js"
 Cohesion: 0.50
@@ -2717,10 +2831,6 @@ Nodes (3): content, fs, lines
 ### Community 624 - "find_stringrequest_init.js"
 Cohesion: 0.50
 Nodes (3): content, fs, sections
-
-### Community 625 - "find_showtoast_calls.js"
-Cohesion: 0.50
-Nodes (3): content, fs, lines
 
 ### Community 626 - "find_string_anywhere.js"
 Cohesion: 0.50
@@ -2733,10 +2843,6 @@ Nodes (3): dex, fs, insnsSize
 ### Community 628 - "search_qr.js"
 Cohesion: 0.50
 Nodes (3): fs, path, searchFiles()
-
-### Community 629 - "read_api_dialogue.js"
-Cohesion: 0.50
-Nodes (3): buffer, fs, strings
 
 ### Community 632 - "[1.2.0] — 2026-02-21"
 Cohesion: 0.67
@@ -2790,10 +2896,6 @@ Nodes (3): [4.16.0] — 2026-08-06 · Ground Truth, Added, Fixed
 Cohesion: 0.67
 Nodes (3): [4.16.1] — 2026-08-11, Changed, Fixed
 
-### Community 645 - "[4.17.0] — 2026-08-30 · Parallax"
-Cohesion: 0.67
-Nodes (3): [4.17.0] — 2026-08-30 · Parallax, Changed, Fixed
-
 ### Community 646 - "[4.1.0] — 2026-04-03"
 Cohesion: 0.67
 Nodes (3): [4.1.0] — 2026-04-03, Added, Changed
@@ -2807,24 +2909,24 @@ Cohesion: 0.67
 Nodes (3): [4.7.0] — 2026-04-16, Added, Tests
 
 ## Knowledge Gaps
-- **3411 isolated node(s):** `.venv/bin/geo-mcp`, `PYTHONUNBUFFERED`, `graft`, `pyprojectPath`, `versionMatch` (+3406 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 6249 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **243 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **3625 isolated node(s):** `brag`, `.venv/bin/geo-mcp`, `PYTHONUNBUFFERED`, `graft`, `pyprojectPath` (+3620 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 6496 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **190 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Fixed` connect `LlmsTxtGenerator.tsx` to `fcm.js`, `CompareContainer.tsx`?**
-  _High betweenness centrality (0.202) - this node is a cross-community bridge._
+- **Why does `Fixed` connect `geo_track.ts` to `firebase.js`, `CompareContainer.tsx`?**
+  _High betweenness centrality (0.210) - this node is a cross-community bridge._
 - **Are the 62 inferred relationships involving `SchemaResult` (e.g. with `Top-level keys` and `Top-level keys`) actually correct?**
   _`SchemaResult` has 62 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `.venv/bin/geo-mcp`, `PYTHONUNBUFFERED`, `graft` to the rest of the system?**
-  _3411 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `brag`, `.venv/bin/geo-mcp`, `PYTHONUNBUFFERED` to the rest of the system?**
+  _3625 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `results.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.015561295944726277 - nodes in this community are weakly interconnected._
-- **Why does `err()` connect `fcm.js` to `test_upload.js`, `ocr-check.js`, `ShopClient.jsx`, `LlmsTxtGenerator.tsx`, `read_pdf.js`, `build-tenant-app.js`?**
-  _High betweenness centrality (0.177) - this node is a cross-community bridge._
+  _Cohesion score 0.02121059086645985 - nodes in this community are weakly interconnected._
+- **Why does `err()` connect `firebase.js` to `test_upload.js`, `ocr-check.js`, `ShopClient.jsx`, `geo_track.ts`, `firebase-admin`, `read_pdf.js`, `build-tenant-app.js`?**
+  _High betweenness centrality (0.175) - this node is a cross-community bridge._
 - **Are the 118 inferred relationships involving `AuditResult` (e.g. with `Added` and `Added`) actually correct?**
   _`AuditResult` has 118 INFERRED edges - model-reasoned connections that need verification._
 - **Should `json` be split into smaller, more focused modules?**
-  _Cohesion score 0.01635971125952911 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.02756949178217072 - nodes in this community are weakly interconnected._

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getAllMarketplaceProductsServer, getAllShopsServer } from '@/lib/server-fetch';
+import { getAllMarketplaceProductsServer, getAllShopsServer, getGlobalConfigServer } from '@/lib/server-fetch';
 
-// ⚡ Cache globally for 5 minutes (eliminates thousands of Firestore reads per day from repeat visits and search bots)
+// ⚡ 24-hour Edge Cache (Zero redundant database reads on repeat visits)
+export const dynamic = 'force-dynamic';
 export const revalidate = 86400;
 
 export async function GET(request) {
@@ -9,19 +10,51 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const includeShops = searchParams.get('includeShops') === 'true';
 
-    const [products, shops] = await Promise.all([
+    const [allProducts, allShops, globalConfig] = await Promise.all([
       getAllMarketplaceProductsServer(),
-      includeShops ? getAllShopsServer() : Promise.resolve(null)
+      includeShops ? getAllShopsServer() : Promise.resolve(null),
+      getGlobalConfigServer()
     ]);
+
+    const isCurationActive = globalConfig?.showcaseCuration?.enabled === true;
+    const allowedShopsList = Array.isArray(globalConfig?.showcaseCuration?.allowedShops) ? globalConfig.showcaseCuration.allowedShops : [];
+    const allowedCategoriesList = Array.isArray(globalConfig?.showcaseCuration?.allowedCategories) ? globalConfig.showcaseCuration.allowedCategories : [];
+    const allowedSubcategoriesList = Array.isArray(globalConfig?.showcaseCuration?.allowedSubcategories) ? globalConfig.showcaseCuration.allowedSubcategories : [];
+
+    let filteredShops = [];
+    let filteredProducts = [];
+
+    if (isCurationActive && allowedShopsList.length > 0) {
+      if (allShops) {
+        filteredShops = allShops.filter(s => {
+          if (s.isActive === false || s.showOnMainSite === false) return false;
+          return allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName);
+        });
+      }
+
+      filteredProducts = (allProducts || []).filter(p => {
+        if (p.showOnMainSite === false) return false;
+        const matchesShop = allowedShopsList.includes(p.shopId) || allowedShopsList.includes(p.shopSlug) || allowedShopsList.includes(p.shopName);
+        if (!matchesShop) return false;
+
+        if (allowedCategoriesList.length > 0 && !allowedCategoriesList.includes(p.category)) {
+          return false;
+        }
+        if (allowedSubcategoriesList.length > 0 && p.subcategory && !allowedSubcategoriesList.includes(p.subcategory)) {
+          return false;
+        }
+        return true;
+      });
+    }
 
     const res = NextResponse.json({
       success: true,
-      count: products.length,
-      products,
-      ...(shops ? { shops: shops.filter(s => s.isActive !== false && s.showOnMainSite !== false) } : {})
+      count: filteredProducts.length,
+      products: filteredProducts,
+      ...(includeShops ? { shops: filteredShops } : {})
     });
 
-    // ⚡ Edge and Browser Cache Headers (5 min edge cache, 10 min SWR)
+    // ⚡ Edge & Browser Cache Headers (24 hour edge cache, 24 hour SWR)
     res.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400');
     return res;
   } catch (error) {

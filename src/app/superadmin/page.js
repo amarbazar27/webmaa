@@ -3602,7 +3602,7 @@ export default function SuperAdminPage() {
                               <input 
                                 type="checkbox" 
                                 className="sr-only peer" 
-                                checked={product.showOnMainSite !== false} 
+                                checked={product.showOnMainSite === true} 
                                 onChange={async (e) => {
                                   const show = e.target.checked;
                                   setAllProducts(prev => prev.map(p => p.id === product.id ? { ...p, showOnMainSite: show } : p));

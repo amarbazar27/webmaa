@@ -1,6 +1,6 @@
 import { getShopByDomainServer } from '@/lib/server-fetch';
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'freeappweb.com', 'localhost', '127.0.0.1'];
 

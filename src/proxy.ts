@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // ── Rate Limiting & Domain Cache Store ──
+const isDev = process.env.NODE_ENV !== 'production';
 const rateLimitMap = new Map<string, { count: number, startTime: number }>();
 const domainCache = new Map<string, { slug: string | null, expiresAt: number }>();
 
@@ -147,7 +148,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const host = normalizeHost(rawHost);
   const cleanRawHost = rawHost.split(':')[0].toLowerCase();
 
-  console.log(`[Proxy] host=${host} pathname=${pathname}`);
+  if (isDev) console.log(`[Proxy] host=${host} pathname=${pathname}`);
 
   // ── Edge WAF: Drop known exploit probes & vulnerability scans immediately ──
   const isMaliciousProbe = BLOCKED_PROBE_PATTERNS.some(pattern => pattern.test(pathname));
@@ -226,7 +227,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     if (slug) {
       const targetPath = `/shop/${slug}${pathname}`;
       const rewriteUrl = new URL(targetPath, request.url);
-      console.log(`[Proxy] Subdomain/domain favicon/logo rewrite: ${targetPath}`);
+      if (isDev) console.log(`[Proxy] Subdomain/domain favicon/logo rewrite: ${targetPath}`);
       return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
     }
     
@@ -244,7 +245,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         if (data.slug) {
           const targetPath = `/shop/${data.slug}${pathname}`;
           const rewriteUrl = new URL(targetPath, request.url);
-          console.log(`[Proxy] Custom domain favicon/logo rewrite: ${targetPath}`);
+          if (isDev) console.log(`[Proxy] Custom domain favicon/logo rewrite: ${targetPath}`);
           return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
         }
       }
@@ -286,7 +287,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const dashboardPath = pathname === '/admin' ? '/dashboard' : pathname.replace(/^\/admin/, '/dashboard');
     const rewriteUrl = new URL(dashboardPath, request.url);
     rewriteUrl.search = request.nextUrl.search;
-    console.log(`[Proxy] /admin white-label portal rewrite: ${rawHost}${pathname} -> ${dashboardPath}`);
+    if (isDev) console.log(`[Proxy] /admin white-label portal rewrite: ${rawHost}${pathname} -> ${dashboardPath}`);
     return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
   }
 
@@ -308,7 +309,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // 308 permanent redirect passes full SEO link equity directly to the active live domain.
   if (cleanRawHost === 'messbazar.com' || cleanRawHost === 'www.messbazar.com') {
     const canonicalUrl = new URL(pathname + request.nextUrl.search, 'https://www.messerbazar.com');
-    console.log(`[Proxy] Replica redirect 308: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
+    if (isDev) console.log(`[Proxy] Replica redirect 308: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
     return NextResponse.redirect(canonicalUrl, 308);
   }
 
@@ -316,7 +317,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (cleanRawHost === 'www.bdretailers.com' || cleanRawHost === 'www.daripallah.com' || cleanRawHost === 'www.freeappweb.com') {
     const apexDomain = cleanRawHost.replace(/^www\./, '');
     const canonicalUrl = new URL(pathname + request.nextUrl.search, `https://${apexDomain}`);
-    console.log(`[Proxy] Apex 308 redirect: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
+    if (isDev) console.log(`[Proxy] Apex 308 redirect: ${rawHost}${pathname} -> ${canonicalUrl.toString()}`);
     return NextResponse.redirect(canonicalUrl, 308);
   }
 
@@ -336,7 +337,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         const targetPath = `/shop/${firstSegment}${remainingPath ? '/' + remainingPath : ''}`;
         const rewriteUrl = new URL(targetPath, request.url);
         rewriteUrl.search = request.nextUrl.search;
-        console.log(`[Proxy] Short path detected. Rewriting ${pathname} to ${targetPath}`);
+        if (isDev) console.log(`[Proxy] Short path detected. Rewriting ${pathname} to ${targetPath}`);
         return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
       }
     }
@@ -354,7 +355,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       const targetPath = pathname === '/' ? '/store' : (pathname.startsWith('/store') ? pathname : `/store${pathname}`);
       const rewriteUrl = new URL(targetPath, request.url);
       rewriteUrl.search = request.nextUrl.search;
-      console.log(`[Proxy] Multi-vendor marketplace rewrite: ${rawHost}${pathname} -> ${targetPath}`);
+      if (isDev) console.log(`[Proxy] Multi-vendor marketplace rewrite: ${rawHost}${pathname} -> ${targetPath}`);
       return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
     }
 
@@ -365,7 +366,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const targetPath = `/shop/${tenantSlug}${pathname === '/' ? '' : pathname}`;
     const rewriteUrl = new URL(targetPath, request.url);
     rewriteUrl.search = request.nextUrl.search;
-    console.log(`[Proxy] Subdomain tenant rewrite: ${rawHost}${pathname} to ${targetPath}`);
+    if (isDev) console.log(`[Proxy] Subdomain tenant rewrite: ${rawHost}${pathname} to ${targetPath}`);
     return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
   }
 
@@ -387,7 +388,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       request.url
     );
     rewriteUrl.search = request.nextUrl.search;
-    console.log(`[Proxy] Verified domain instant rewrite: ${rawHost}${pathname} -> /shop/${staticTenantSlug}`);
+    if (isDev) console.log(`[Proxy] Verified domain instant rewrite: ${rawHost}${pathname} -> /shop/${staticTenantSlug}`);
     return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
   }
 
@@ -419,7 +420,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       headers: {
         'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '',
       },
-      next: { revalidate: 300 }, // Cache on edge
+      next: { revalidate: 86400 }, // Cache on edge
     });
 
     if (lookupResponse.ok) {
@@ -427,7 +428,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
       if (data.slug) {
         // Cache result for 5 minutes
-        domainCache.set(host, { slug: data.slug, expiresAt: now + 300000 });
+        domainCache.set(host, { slug: data.slug, expiresAt: now + 86400000 });
 
         // ✅ ডোমেইন পাওয়া গেছে — /shop/[slug] এ rewrite করো
         const rewriteUrl = new URL(

@@ -4,7 +4,7 @@ import ShopClient from '@/app/shop/[shopSlug]/ShopClient';
 import { notFound } from 'next/navigation';
 import TemplateRenderer from '@/templates/TemplateRenderer';
 
-export const revalidate = 60; // Cache the page for 60 seconds (ISR)
+export const revalidate = 86400; // ⚡ 24-hour ISR cache (On-demand revalidated via /api/revalidate on updates)
 
 export async function generateMetadata({ params }) {
   try {
