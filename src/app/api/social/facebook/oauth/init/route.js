@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { adminDb } from '@/lib/firebase-admin';
 
-// Supported Meta scopes for Facebook Login for Business (Graph API v26.0 compliant)
+// Supported Meta scopes for Facebook Login for Business (Graph API v21.0 compliant)
 // Note: 'email' is removed as it causes 'Invalid Scopes: email' in Business Apps
 const FACEBOOK_SCOPES = [
   'pages_show_list',
@@ -45,7 +45,7 @@ export async function GET(request) {
       nonce: crypto.randomBytes(16).toString('hex')
     });
 
-    const metaAuthUrl = new URL('https://www.facebook.com/v26.0/dialog/oauth');
+    const metaAuthUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth');
     metaAuthUrl.searchParams.set('client_id', appId);
     metaAuthUrl.searchParams.set('redirect_uri', redirectUri);
     metaAuthUrl.searchParams.set('scope', FACEBOOK_SCOPES);

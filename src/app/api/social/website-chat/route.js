@@ -98,7 +98,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { shopId = 'main', visitorId, visitorName = 'কাস্টমার', visitorPhone, message } = body;
+    const { shopId = 'main', visitorId, visitorName = 'কাস্টমার', visitorPhone, message, platform: reqPlatform } = body;
 
     if (!visitorId || typeof visitorId !== 'string' || !message?.trim() || typeof message !== 'string') {
       return NextResponse.json({ error: 'visitorId এবং message প্রয়োজন' }, { status: 400 });
@@ -133,7 +133,7 @@ export async function POST(request) {
     const convRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(cleanVisitorId);
     const convDoc = await convRef.get();
     let convData = convDoc.exists ? convDoc.data() : {
-      platform: 'website',
+      platform: reqPlatform || 'website',
       senderName: cleanName,
       senderPsid: cleanVisitorId,
       phone: cleanPhone || null,

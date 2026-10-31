@@ -12,7 +12,6 @@ import NotificationPermissionModal from '@/components/shared/NotificationPermiss
 import ImpersonationBadge from '@/components/shared/ImpersonationBadge';
 import LanguageToggle from '@/components/shared/LanguageToggle';
 import { useLanguage } from '@/context/LanguageContext';
-import AiCompanion from '@/components/dashboard/AiCompanion';
 
 export default function DashboardLayout({ children }) {
   const { user, userData, loading, isImpersonating, impersonation } = useAuth();
@@ -144,9 +143,6 @@ export default function DashboardLayout({ children }) {
 
           {children}
         </div>
-
-        {/* 🤖 Retailer AI Helper & Guide - Floating Bottom Right */}
-        <AiCompanion shop={userData?.activeShopId ? { id: userData.activeShopId } : null} />
       </main>
     </div>
   );

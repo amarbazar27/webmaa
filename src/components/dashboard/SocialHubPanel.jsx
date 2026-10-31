@@ -788,7 +788,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
     });
   }, [conversations, filterPlatform, searchQuery]);
 
-  const activeConv = conversations.find(c => c.id === activeConvId) || filteredConversations[0];
+  const activeConv = filteredConversations.find(c => c.id === activeConvId) || filteredConversations[0] || null;
 
   const handleSend = async () => {
     if (!replyText.trim() || !activeConv || !shopId) return;
@@ -880,6 +880,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
           visitorId: testVisitorId,
           visitorName: `সিমুলেটর গ্রাহক #${testVisitorId.slice(-3)}`,
           visitorPhone: '01700000000',
+          platform: filterPlatform === 'whatsapp' ? 'whatsapp' : (filterPlatform === 'facebook' ? 'facebook' : 'website'),
           message: randomQuery
         })
       });
@@ -984,7 +985,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <p className="font-black text-xs truncate">
-                        {conv.senderName || 'গ্রাহক'}
+                        {(conv.senderName && conv.senderName !== 'Facebook User' && conv.senderName !== 'Facebook') ? conv.senderName : 'সম্মানিত ক্রেতা'}
                       </p>
                       <span className={clsx('text-[9px] px-1.5 py-0.5 rounded-md font-black capitalize', isSelected ? 'bg-purple-800 text-purple-200' : 'bg-slate-100 text-slate-500')}>
                         {conv.platform || 'FB'}
@@ -1013,13 +1014,13 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
               <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="space-y-0.5">
                   <h4 className="font-black text-sm text-slate-900 flex items-center gap-2">
-                    {activeConv.senderName || 'গ্রাহক'}
+                    {(activeConv.senderName && activeConv.senderName !== 'Facebook User' && activeConv.senderName !== 'Facebook') ? activeConv.senderName : 'সম্মানিত ক্রেতা'}
                     <span className="text-[10px] px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-bold capitalize">
                       {activeConv.platform || 'Facebook'}
                     </span>
                   </h4>
                   <p className="text-[10px] text-slate-400 font-mono">
-                    ID: {activeConv.senderPsid || activeConv.id} {activeConv.phone && `• ${activeConv.phone}`}
+                    {activeConv.phone ? `ফোন: ${activeConv.phone}` : `রেফারেন্স কোড: #${(activeConv.senderPsid || activeConv.id).slice(-6)}`}
                   </p>
                 </div>
 
@@ -1118,9 +1119,25 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 space-y-2">
-              <MessageCircle size={48} className="opacity-20 text-purple-600" />
-              <p className="text-xs font-bold">কথোপকথন দেখতে বাম পাশ থেকে একটি চ্যাট বেছে নিন</p>
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 space-y-3 max-w-sm mx-auto text-center">
+              <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center mb-1 text-purple-600 shadow-xs">
+                {filterPlatform === 'whatsapp' ? <MessageSquare size={26} className="text-emerald-600" /> : <MessageCircle size={26} className="text-purple-600" />}
+              </div>
+              <p className="text-sm font-black text-slate-800">
+                {filterPlatform === 'whatsapp' ? 'কোনো WhatsApp বার্তা পাওয়া যায়নি' : 'কথোপকথন দেখতে বাম পাশ থেকে একটি চ্যাট বেছে নিন'}
+              </p>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                {filterPlatform === 'whatsapp'
+                  ? 'কাস্টমাররা স্টোরফ্রন্ট থেকে আপনার WhatsApp নম্বরে চ্যাট করলে বা টেস্ট মেসেজ পাঠালে তা এখানে আসবে।'
+                  : 'গ্রাহকদের ফেসবুক, হোয়াটসঅ্যাপ বা ওয়েবসাইট থেকে পাঠানো সকল ইনবক্স মেসেজ এখানে লাইভ দেখা যাবে।'}
+              </p>
+              <button
+                onClick={handleSimulateTestMessage}
+                disabled={simulating}
+                className="mt-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+              >
+                <Sparkles size={14} /> টেস্ট মেসেজ পাঠান
+              </button>
             </div>
           )}
         </div>

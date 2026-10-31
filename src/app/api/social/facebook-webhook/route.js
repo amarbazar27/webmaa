@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { adminDb, FieldValue } from '@/lib/firebase-admin';
+import crypto from 'crypto';
 
 const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN || 'bdretailers_meta_webhook_secret_2026';
 
-// GET: Meta Webhook Verification Challenge
+// ── GET: Meta Webhook Verification Challenge ────────────────────
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('hub.mode');
@@ -19,7 +20,7 @@ export async function GET(request) {
   return new NextResponse('Forbidden', { status: 403 });
 }
 
-// 🛡️ Webhook Event Deduplication Cache (Prevents Meta Retries from Repeating Messages)
+// ── 🛡️ Webhook Event Deduplication Cache (Prevents Meta Retries) ──
 const processedMessageIds = new Map();
 function isDuplicateMessage(mid) {
   if (!mid) return false;
@@ -36,7 +37,7 @@ function isDuplicateMessage(mid) {
   return false;
 }
 
-// ⚡ In-memory product cache for AI context (saves Firestore read quota)
+// ── ⚡ In-memory product cache for AI context ──────────────────────
 const webhookProductCache = new Map();
 async function getCachedProductsForWebhook(shopId) {
   if (!shopId) return '';
@@ -66,23 +67,32 @@ async function getCachedProductsForWebhook(shopId) {
   }
 }
 
-// Helper: Fetch real Facebook sender profile name via Graph API
+// ── Helper: Fetch real Facebook sender profile name via Graph API ─
 async function getFacebookSenderName(senderPsid, pageAccessToken) {
-  if (!senderPsid || !pageAccessToken) return 'Facebook User';
+  if (!senderPsid || !pageAccessToken) return 'ফেসবুক ক্রেতা';
   try {
-    const res = await fetch(`https://graph.facebook.com/v26.0/${senderPsid}?fields=first_name,last_name,name&access_token=${pageAccessToken}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2500);
+
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${senderPsid}?fields=first_name,last_name,name&access_token=${pageAccessToken}`,
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
+
     if (res.ok) {
       const data = await res.json();
-      return data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Facebook User';
+      const resolved = data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim();
+      if (resolved && resolved !== 'Facebook User') return resolved;
     }
   } catch (_) {}
-  return 'Facebook User';
+  return 'ফেসবুক ক্রেতা';
 }
 
-// Helper: Send Facebook Messenger private reply to a post comment
+// ── Helper: Send Facebook Messenger private reply to a comment ────
 async function sendFacebookCommentPrivateReply(commentId, text, pageAccessToken) {
   try {
-    const res = await fetch('https://graph.facebook.com/v26.0/me/messages', {
+    const res = await fetch('https://graph.facebook.com/v21.0/me/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -91,21 +101,17 @@ async function sendFacebookCommentPrivateReply(commentId, text, pageAccessToken)
         access_token: pageAccessToken
       })
     });
-    const data = await res.json();
-    if (data.error) {
-      console.warn('[Facebook Comment Private Reply Notice]:', data.error.message);
-    }
-    return data;
+    return await res.json();
   } catch (err) {
     console.error('[Facebook Comment Private Reply Error]:', err.message);
     return null;
   }
 }
 
-// Helper: Send Facebook Messenger private message
+// ── Helper: Send Facebook Messenger private message ───────────────
 async function sendFacebookMessage(recipientId, text, pageAccessToken) {
   try {
-    const res = await fetch(`https://graph.facebook.com/v26.0/me/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v21.0/me/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -122,10 +128,10 @@ async function sendFacebookMessage(recipientId, text, pageAccessToken) {
   }
 }
 
-// Helper: Reply publicly to a Facebook Post Comment
+// ── Helper: Reply publicly to a Facebook Post Comment ─────────────
 async function sendFacebookCommentReply(commentId, text, pageAccessToken) {
   try {
-    const res = await fetch(`https://graph.facebook.com/v26.0/${commentId}/comments`, {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -140,10 +146,10 @@ async function sendFacebookCommentReply(commentId, text, pageAccessToken) {
   }
 }
 
-// Helper: Send message via Meta WhatsApp Business Cloud API
+// ── Helper: Send message via Meta WhatsApp Business Cloud API ─────
 async function sendWhatsAppMessage(phoneNumberId, recipientPhone, text, token) {
   try {
-    const res = await fetch(`https://graph.facebook.com/v26.0/${phoneNumberId}/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -162,7 +168,7 @@ async function sendWhatsAppMessage(phoneNumberId, recipientPhone, text, token) {
   }
 }
 
-// Helper: Multi-Account Groq LPU (Llama 3.3 70B & DeepSeek R1) with Vyce AI Fallback
+// ── Helper: Multi-Account Groq LPU (Llama 3.3 70B & DeepSeek R1) with Vyce AI Fallback ─
 async function getAiReply(messages, shopContext) {
   const groqKeys = [
     process.env.GROQ_API_KEY,
@@ -185,7 +191,7 @@ async function getAiReply(messages, shopContext) {
               { role: 'system', content: shopContext },
               ...messages
             ],
-            max_tokens: 500,
+            max_tokens: 450,
             temperature: 0.35
           })
         });
@@ -194,13 +200,12 @@ async function getAiReply(messages, shopContext) {
           const groqData = await groqRes.json();
           let reply = groqData.choices?.[0]?.message?.content;
           if (reply) {
-            // Strip DeepSeek R1 internal thought blocks <think>...</think>
             reply = reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
             if (reply) return reply;
           }
         } else if (groqRes.status === 429) {
-          console.warn(`[Groq Webhook 429] Key rate limited on ${model}, rotating to next key...`);
-          break; // break inner model loop to try next key immediately
+          console.warn(`[Groq Webhook 429] Key rate limited on ${model}, rotating...`);
+          break;
         }
       } catch (groqErr) {
         console.warn(`[Groq Webhook Warning with ${model}]:`, groqErr.message);
@@ -237,11 +242,9 @@ async function getAiReply(messages, shopContext) {
   return null;
 }
 
-import crypto from 'crypto';
-
 function verifySignature(payload, signature) {
   const secret = process.env.FACEBOOK_APP_SECRET;
-  if (!secret || !signature) return true; // bypass if secret not set
+  if (!secret || !signature) return true;
   try {
     const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
     const incoming = signature.replace('sha256=', '');
@@ -251,22 +254,14 @@ function verifySignature(payload, signature) {
   }
 }
 
-export async function POST(request) {
+// ── Background Processor for Meta Webhook Events ─────────────────
+async function processWebhookPayload(body) {
   try {
-    const rawText = await request.text();
-    const signature = request.headers.get('x-hub-signature-256');
-    if (process.env.FACEBOOK_APP_SECRET && !verifySignature(rawText, signature)) {
-      console.warn('[Meta Webhook] Invalid HMAC SHA256 signature');
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
-
-    const body = JSON.parse(rawText || '{}');
-
     if (body.object === 'page') {
       for (const entry of (body.entry || [])) {
         const pageId = entry.id;
 
-        // Lookup shop connection (check doc ID first, then field pageId)
+        // Lookup shop connection
         let shopId = null;
         let pageAccessToken = null;
 
@@ -281,6 +276,27 @@ export async function POST(request) {
             const connData = querySnap.docs[0].data();
             shopId = connData.shopId;
             pageAccessToken = connData.pageAccessToken;
+          }
+        }
+
+        // If page is connected to 'main', check if an active retailer shop also has it
+        if (shopId === 'main') {
+          try {
+            const retailQuery = await adminDb.collectionGroup('socialConnections')
+              .where('pageId', '==', pageId)
+              .get();
+            for (const doc of retailQuery.docs) {
+              const rShopId = doc.data().shopId || doc.ref.parent.parent?.id;
+              if (rShopId && rShopId !== 'main') {
+                shopId = rShopId;
+                if (doc.data().pageAccessToken) {
+                  pageAccessToken = doc.data().pageAccessToken;
+                }
+                break;
+              }
+            }
+          } catch (cgErr) {
+            console.warn('[Meta Webhook] CollectionGroup lookup note:', cgErr.message);
           }
         }
 
@@ -321,7 +337,7 @@ export async function POST(request) {
               const conversationDoc = await conversationRef.get();
               let conversationData = conversationDoc.exists ? conversationDoc.data() : {
                 platform: 'facebook',
-                senderName: 'Facebook User',
+                senderName: 'ফেসবুক ক্রেতা',
                 senderPsid: senderId,
                 messages: [],
                 aiPaused: false,
@@ -329,7 +345,7 @@ export async function POST(request) {
               };
 
               // Fetch real sender name from Graph API if needed
-              if (!conversationData.senderName || conversationData.senderName === 'Facebook User') {
+              if (!conversationData.senderName || conversationData.senderName === 'Facebook User' || conversationData.senderName === 'ফেসবুক ক্রেতা') {
                 const fetchedName = await getFacebookSenderName(senderId, pageAccessToken);
                 if (fetchedName && fetchedName !== 'Facebook User') {
                   conversationData.senderName = fetchedName;
@@ -346,8 +362,15 @@ export async function POST(request) {
                 continue;
               }
 
+              // Check if 15-minute temporary manual takeover has expired
+              if (conversationData.aiPaused && conversationData.aiPausedUntil && Date.now() > conversationData.aiPausedUntil) {
+                conversationData.aiPaused = false;
+                delete conversationData.aiPausedUntil;
+              }
+
               // Append user message
               conversationData.messages.push({ role: 'user', content: text, timestamp: new Date().toISOString() });
+
               await conversationRef.set({
                 ...conversationData,
                 lastMessage: text,
@@ -356,7 +379,7 @@ export async function POST(request) {
 
               // Record Lead
               await adminDb.collection('shops').doc(shopId).collection('leads').doc(senderId).set({
-                name: conversationData.senderName || 'Facebook User',
+                name: conversationData.senderName || 'ফেসবুক ক্রেতা',
                 source: 'facebook_message',
                 fbId: senderId,
                 message: text,
@@ -367,18 +390,18 @@ export async function POST(request) {
 
               // Generate AI reply if AI is active
               if (!conversationData.aiPaused && !shopData?.aiSettings?.globallyPaused) {
-                // Load products for RAG context
                 const productList = await getCachedProductsForWebhook(shopId);
 
                 const customPrompt = shopData.aiSettings?.customPrompt || '';
                 const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';
                 const knowledgeBase = shopData.knowledgeBase || '';
-                const customerName = conversationData.senderName && conversationData.senderName !== 'Facebook User' ? conversationData.senderName : '';
+                const customerName = conversationData.senderName && conversationData.senderName !== 'Facebook User' && conversationData.senderName !== 'ফেসবুক ক্রেতা' ? conversationData.senderName : '';
                 const shopUrl = `https://bdretailers.com/shop/${shopData.subdomainSlug || shopData.shopSlug || ''}`;
+                
                 const shopContext = `তুমি "${shopName}"-এর অফিসিয়াল কাস্টমার সাপোর্ট এবং সেলস এক্সিকিউটিভ।
 
 গুরুত্বপূর্ণ নির্দেশনা (কঠোরভাবে মানতে হবে):
-১. গ্রাহকের নাম সম্বোধন: গ্রাহকের নাম "${customerName || 'সম্মানিত ক্রেতা'}"। প্রাসঙ্গিক হলে শুরুতেই গ্রাহকের নাম উল্লেখ করে সম্মান ও আন্তরিকতার সাথে কথা বলবে (যেমন: "আসসালামু আলাইকুম ${customerName ? `${customerName} ভাইয়া/আপু` : ''}!")।
+১. গ্রাহকের নাম সম্বোধন: গ্রাহকের নাম "${customerName || 'সম্মানিত ক্রেতা'}"। প্রাসঙ্গিক হলে শুরুতেই গ্রাহকের নাম উল্লেখ করে সম্মান ও আন্তরিকতার সাথে কথা বলবে (যেমন: "আসসালামু আলাইকুম ${customerName ? `${customerName} ভাইয়া/আপু` : 'সম্মানিত ক্রেতা'}!")।
 ২. ভাষা: সর্বদা অত্যন্ত মার্জিত, প্রমিত এবং ভদ্র বাংলায় কথা বলবে। কাস্টমারকে শ্রদ্ধার সাথে 'আপনি' বা মার্জিতভাবে 'ভাইয়া/আপু' সম্বোধন করবে।
 ২. নিষিদ্ধ: কখনোই অপভ্রংশ, অশুদ্ধ বা অদ্ভুত আঞ্চলিক শব্দ (যেমন: 'দাদু', 'আউদি', 'দোস্ত' ইত্যাদি) ব্যবহার করবে না।
 ৩. সত্যনিষ্ঠ তথ্য: তালিকার বাইরের কোনো কাল্পনিক পণ্যের নাম বা মিথ্যা দাম বানিয়ে বলবে না। যদি কোনো তথ্য তালিকায় না থাকে, তবে বিনয়ের সাথে বলবে যে আমাদের প্রতিনিধি দ্রুত যোগাযোগ করবে।
@@ -421,7 +444,7 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
               const item = change.value?.item;
               const verb = change.value?.verb;
               const senderId = change.value?.from?.id;
-              const senderName = change.value?.from?.name || 'Facebook User';
+              const senderName = change.value?.from?.name || 'ফেসবুক ক্রেতা';
               const commentId = change.value?.comment_id;
 
               if (!senderId || senderId === pageId) continue;
@@ -429,7 +452,6 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
               if (item === 'comment' && verb === 'add') {
                 const commentText = change.value?.message || '';
 
-                // Capture Lead
                 await adminDb.collection('shops').doc(shopId).collection('leads').doc(senderId).set({
                   name: senderName,
                   source: 'facebook_comment',
@@ -440,20 +462,20 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
                   shopId
                 }, { merge: true });
 
-                // Check comment automation settings
                 const isAutoReplyEnabled = commentSettings.enabled !== false;
                 if (isAutoReplyEnabled) {
-                  // A. Send Public Comment Reply if configured
                   const publicReply = commentSettings.publicReply || 'ধন্যবাদ আপনার কমেন্টের জন্য ভাইয়া! বিস্তারিত তথ্য ইনবক্সে পাঠানো হয়েছে 😊';
                   if (commentId) {
                     await sendFacebookCommentReply(commentId, publicReply, pageAccessToken);
                   }
 
-                  // B. Send Private DM to the commenter
                   const privateDm = commentSettings.privateDm || 'আসসালামু আলাইকুম! আমাদের সাথে যোগাযোগ করার জন্য ধন্যবাদ। কোনো পণ্য সম্পর্কে জানতে চাইলে এখনই মেসেজ দিন।';
-                  if (commentId) { await sendFacebookCommentPrivateReply(commentId, privateDm, pageAccessToken); } else { await sendFacebookMessage(senderId, privateDm, pageAccessToken); }
+                  if (commentId) {
+                    await sendFacebookCommentPrivateReply(commentId, privateDm, pageAccessToken);
+                  } else {
+                    await sendFacebookMessage(senderId, privateDm, pageAccessToken);
+                  }
 
-                  // Create/Update Conversation
                   const conversationRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(senderId);
                   await conversationRef.set({
                     platform: 'facebook',
@@ -484,10 +506,9 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
           }
         }
       }
-      return new NextResponse('EVENT_RECEIVED', { status: 200 });
     }
 
-    // ── 2. Handle Meta WhatsApp Business Cloud API Messages ─────
+    // ── 3. Handle WhatsApp Business Cloud API Messages ────────────
     if (body.object === 'whatsapp_business_account') {
       for (const entry of (body.entry || [])) {
         for (const change of (entry.changes || [])) {
@@ -529,16 +550,19 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
                 shopId
               };
 
-              // Human takeover toggle with single dot
               if (text.trim() === '.') {
                 convData.aiPaused = !convData.aiPaused;
                 await convRef.set({ aiPaused: convData.aiPaused }, { merge: true });
                 continue;
               }
 
+              if (convData.aiPaused && convData.aiPausedUntil && Date.now() > convData.aiPausedUntil) {
+                convData.aiPaused = false;
+                delete convData.aiPausedUntil;
+              }
+
               convData.messages.push({ role: 'user', content: text, timestamp: new Date().toISOString() });
 
-              // Lead capture
               await adminDb.collection('shops').doc(shopId).collection('leads').doc(`wa_${senderPhone}`).set({
                 name: senderName,
                 phone: senderPhone,
@@ -549,15 +573,14 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
                 shopId
               }, { merge: true });
 
-              // Generate AI response
               if (!convData.aiPaused && !shopData?.aiSettings?.globallyPaused) {
                 const productList = await getCachedProductsForWebhook(shopId);
 
                 const customPrompt = shopData.aiSettings?.customPrompt || '';
                 const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';
                 const knowledgeBase = shopData.knowledgeBase || '';
-                const customerName = conversationData.senderName && conversationData.senderName !== 'Facebook User' ? conversationData.senderName : '';
-                const shopUrl = `https://bdretailers.com/shop/${shopData.subdomainSlug || shopData.shopSlug || ''}`;
+                const customerName = convData.senderName && convData.senderName !== 'Facebook User' && convData.senderName !== 'ফেসবুক ক্রেতা' ? convData.senderName : '';
+                
                 const shopContext = `তুমি "${shopName}"-এর অফিসিয়াল WhatsApp সেলস অ্যাসিস্ট্যান্ট।
 ১. সর্বদা অত্যন্ত মার্জিত, প্রমিত এবং ভদ্র বাংলায় কথা বলবে। কাস্টমারকে শ্রদ্ধার সাথে 'আপনি' বা 'ভাইয়া/আপু' সম্বোধন করবে।
 ২. নিষিদ্ধ: অপভ্রংশ, অদ্ভুত আঞ্চলিক শব্দ ব্যবহার করবে না।
@@ -595,10 +618,36 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
           }
         }
       }
-      return new NextResponse('EVENT_RECEIVED', { status: 200 });
+    }
+  } catch (backgroundError) {
+    console.error('[Meta Webhook Background Execution Error]:', backgroundError);
+  }
+}
+
+// ── POST: Fast Acknowledgment with Non-blocking Event Handler ─────
+export async function POST(request) {
+  try {
+    const rawText = await request.text();
+    const signature = request.headers.get('x-hub-signature-256');
+    if (process.env.FACEBOOK_APP_SECRET && !verifySignature(rawText, signature)) {
+      console.warn('[Meta Webhook] Invalid HMAC SHA256 signature');
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    return new NextResponse('Not Found', { status: 404 });
+    const body = JSON.parse(rawText || '{}');
+
+    // ⚡ Execute background processing without blocking Meta's <5s SLA timeout
+    if (typeof after === 'function') {
+      after(async () => {
+        await processWebhookPayload(body);
+      });
+    } else {
+      // Fallback for runtimes without Next.js after()
+      processWebhookPayload(body).catch(e => console.error('[Webhook Unhandled Error]:', e));
+    }
+
+    // Return HTTP 200 instantly in <30ms so Meta never retries or triggers loop
+    return new NextResponse('EVENT_RECEIVED', { status: 200 });
   } catch (error) {
     console.error('[Meta Webhook Error]:', error);
     return new NextResponse('Internal Server Error', { status: 500 });

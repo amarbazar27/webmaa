@@ -21,7 +21,6 @@ import { useNetworkStatus } from '@/lib/useNetworkStatus';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
 import { savePendingOrder, getPendingOrders, removePendingOrder, saveCartIDB, loadCartIDB } from '@/lib/offlineDB';
 import MessengerButton from '@/components/shop/MessengerButton';
-import LanguageToggle from '@/components/shared/LanguageToggle';
 import StoreAnalytics, { trackStoreEvent } from '@/components/shop/StoreAnalytics';
 import dynamic from 'next/dynamic';
 import { TEMPLATES, getTemplateById } from '@/templates/index';
@@ -2764,12 +2763,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         <div className={`absolute top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${isCategoryMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
             <h2 className="text-base font-black text-slate-900 flex items-center gap-1.5"><Tag size={17} className="text-slate-800" /> ক্যাটাগরি</h2>
-            <div className="flex items-center gap-2">
-              <LanguageToggle accent="purple" className="scale-85" />
-              <button onClick={() => setIsCategoryMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 hover:bg-slate-900 transition-colors">
-                <X size={16} strokeWidth={3} />
-              </button>
-            </div>
+            <button onClick={() => setIsCategoryMenuOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 hover:bg-slate-900 transition-colors">
+              <X size={16} strokeWidth={3} />
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
             <button
@@ -4311,9 +4307,6 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
           <svg width="22" height="22" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#a855f7" /><circle cx="35" cy="45" r="5" fill="white" /><circle cx="65" cy="45" r="5" fill="white" /><path d="M40,65 Q50,72 60,65" stroke="white" strokeWidth="3" strokeLinecap="round" /></svg>
           <span className="text-[10px] font-bold">এআই</span>
         </button>
-        <div className="flex flex-col items-center justify-center py-0.5">
-          <LanguageToggle accent="purple" className="scale-75 origin-center" />
-        </div>
         <button onClick={() => setIsProfileOpen(true)} className="flex flex-col items-center gap-1 text-slate-600 hover:text-slate-900 transition-colors">
           {user?.photoURL ? (
             <img src={user.photoURL} className="w-6 h-6 rounded-full object-cover" alt="" />

@@ -105,8 +105,8 @@ export async function GET(request) {
   }
 
   try {
-    // 1. Exchange code for short-lived User Access Token (Graph API v26.0)
-    const tokenUrl = new URL('https://graph.facebook.com/v26.0/oauth/access_token');
+    // 1. Exchange code for short-lived User Access Token (Graph API v21.0)
+    const tokenUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token');
     tokenUrl.searchParams.set('client_id', appId);
     tokenUrl.searchParams.set('redirect_uri', redirectUri);
     tokenUrl.searchParams.set('client_secret', appSecret);
@@ -122,10 +122,10 @@ export async function GET(request) {
 
     const shortLivedUserToken = tokenData.access_token;
 
-    // 2. Exchange short-lived token for long-lived User Token (60-day token, Graph API v26.0)
+    // 2. Exchange short-lived token for long-lived User Token (60-day token, Graph API v21.0)
     let longLivedUserToken = shortLivedUserToken;
     try {
-      const exchangeUrl = new URL('https://graph.facebook.com/v26.0/oauth/access_token');
+      const exchangeUrl = new URL('https://graph.facebook.com/v21.0/oauth/access_token');
       exchangeUrl.searchParams.set('grant_type', 'fb_exchange_token');
       exchangeUrl.searchParams.set('client_id', appId);
       exchangeUrl.searchParams.set('client_secret', appSecret);
@@ -140,9 +140,9 @@ export async function GET(request) {
       console.warn('[Facebook OAuth] Long-lived token exchange warning:', exErr.message);
     }
 
-    // 3. Fetch managed Facebook Pages with their Page Access Tokens (Graph API v26.0)
+    // 3. Fetch managed Facebook Pages with their Page Access Tokens (Graph API v21.0)
     // In Meta Graph API, Page Tokens obtained from a long-lived User Token NEVER expire
-    const accountsUrl = `https://graph.facebook.com/v26.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${longLivedUserToken}`;
+    const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${longLivedUserToken}`;
     const accountsRes = await fetch(accountsUrl);
     const accountsData = await accountsRes.json();
 
@@ -184,12 +184,12 @@ export async function GET(request) {
       ));
     }
 
-    // 5. Automatically subscribe the Facebook Page to Webhooks (All 5 fields in Graph API v26.0)
+    // 5. Automatically subscribe the Facebook Page to Webhooks (All 5 fields in Graph API v21.0)
     let webhookSubscribed = false;
     let webhookWarning = null;
     try {
       const subRes = await fetch(
-        `https://graph.facebook.com/v26.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,feed,message_deliveries,message_reads&access_token=${pageAccessToken}`,
+        `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,feed,message_deliveries,message_reads&access_token=${pageAccessToken}`,
         { method: 'POST' }
       );
       const subData = await subRes.json();
@@ -223,7 +223,7 @@ export async function GET(request) {
     await adminDb.collection('shops').doc(targetShopId).collection('socialConnections').doc('facebook').set(connectionPayload, { merge: true });
     // Auto-detect & link WhatsApp Business if available on this Meta account
     try {
-      const waUrl = `https://graph.facebook.com/v26.0/me?fields=whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}&access_token=${longLivedUserToken}`;
+      const waUrl = `https://graph.facebook.com/v21.0/me?fields=whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}&access_token=${longLivedUserToken}`;
       const waRes = await fetch(waUrl);
       const waData = await waRes.json();
       const wabas = waData?.whatsapp_business_accounts?.data || [];

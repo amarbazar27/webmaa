@@ -122,7 +122,7 @@ export async function POST(request) {
       // Verify token with Meta Graph API
       let displayPhoneNumber = cleanPhoneId;
       try {
-        const waTestRes = await fetch(`https://graph.facebook.com/v26.0/${cleanPhoneId}?access_token=${cleanToken}`);
+        const waTestRes = await fetch(`https://graph.facebook.com/v21.0/${cleanPhoneId}?access_token=${cleanToken}`);
         const waTestData = await waTestRes.json();
         if (waTestData.display_phone_number) {
           displayPhoneNumber = waTestData.display_phone_number;
@@ -167,7 +167,7 @@ export async function POST(request) {
 
     try {
       // 1. Verify token validity with basic fields supported on BOTH User and Page nodes (never ask for category on /me as it fails on User nodes)
-      const meRes = await fetch(`https://graph.facebook.com/v26.0/me?fields=id,name&access_token=${resolvedToken}`);
+      const meRes = await fetch(`https://graph.facebook.com/v21.0/me?fields=id,name&access_token=${resolvedToken}`);
       const meData = await meRes.json();
 
       if (meData.error) {
@@ -178,7 +178,7 @@ export async function POST(request) {
 
       // 2. Check if this is a User Access Token by querying /me/accounts with explicit fields
       // In Graph API v21+, fields must be explicitly requested to include access_token
-      const accountsRes = await fetch(`https://graph.facebook.com/v26.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${resolvedToken}`);
+      const accountsRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token,category,tasks&access_token=${resolvedToken}`);
       const accountsData = await accountsRes.json();
 
       if (accountsData.data && Array.isArray(accountsData.data) && accountsData.data.length > 0) {
@@ -217,7 +217,7 @@ export async function POST(request) {
     let webhookWarning = null;
     try {
       const subscribeRes = await fetch(
-        `https://graph.facebook.com/v26.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,feed,message_deliveries,message_reads&access_token=${resolvedToken}`,
+        `https://graph.facebook.com/v21.0/${pageId}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,feed,message_deliveries,message_reads&access_token=${resolvedToken}`,
         { method: 'POST' }
       );
       const subscribeData = await subscribeRes.json();

@@ -55,7 +55,7 @@ export async function POST(request) {
     let metaSent = false;
     if (pageAccessToken && platform === 'facebook') {
       try {
-        const metaRes = await fetch('https://graph.facebook.com/v26.0/me/messages', {
+        const metaRes = await fetch('https://graph.facebook.com/v21.0/me/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -80,7 +80,7 @@ export async function POST(request) {
         if (waSnap.exists) {
           const { phoneNumberId, accessToken } = waSnap.data();
           const cleanRecipient = recipientId.replace('wa_', '');
-          const waRes = await fetch(`https://graph.facebook.com/v26.0/${phoneNumberId}/messages`, {
+          const waRes = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -115,7 +115,8 @@ export async function POST(request) {
     await convRef.set({
       lastMessage: message.trim(),
       lastMessageAt: FieldValue.serverTimestamp(),
-      aiPaused: true, // Retailer took over, auto pause AI!
+      aiPaused: true,
+      aiPausedUntil: Date.now() + 15 * 60 * 1000, // 15-min human takeover, then auto-resumes AI
       updatedAt: FieldValue.serverTimestamp(),
       messages: FieldValue.arrayUnion(newMessageObj),
     }, { merge: true });
