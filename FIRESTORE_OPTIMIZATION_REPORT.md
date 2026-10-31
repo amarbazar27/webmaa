@@ -11,12 +11,13 @@
 
 ## 2. Implemented Architectural Safeguards
 
-### A. Redis Serverless Read-Through Cache (24-Hour TTL)
-- Replaced the ephemeral 300-second TTL with a robust 24-hour (`86400s`) persistent cache on Upstash Redis:
-  - `cache:all_shops` (TTL: 86400s)
-  - `cache:marketplace_products` (TTL: 86400s)
-  - `cache:shop_categories:{shopId}` (TTL: 86400s)
-  - `cache:shop_domain:{domain}` (TTL: 86400s)
+### A. Redis Serverless Read-Through Cache (30-Day TTL)
+- Replaced the ephemeral 300-second TTL with a robust 30-day (`2592000s`) persistent cache on Upstash Redis:
+  - `cache:all_shops` (TTL: 2592000s / 30 days)
+  - `cache:marketplace_products` (TTL: 2592000s / 30 days)
+  - `cache:shop_categories:{shopId}` (TTL: 2592000s / 30 days)
+  - `cache:shop_domain:{domain}` (TTL: 2592000s / 30 days)
+  - `cache:shop_slug:{slug}` (TTL: 2592000s / 30 days)
   - `cache:shop_products:{shopId}` (TTL: 2592000s / 30 days)
 
 ### B. Request-Level Deduplication (In-Flight Promise Coalescing)

@@ -16,8 +16,8 @@
 ### A. 44K ISR Reads Elimination
 - **Issue:** Product page (`/shop/[shopSlug]/product/[productId]`) and custom domain page (`/domain/[customDomain]`) were configured with `export const revalidate = 60;`.
 - **Impact:** Automated search bots and frequent visits triggered re-rendering cycles every 60 seconds, logging 44,000 ISR reads on Vercel.
-- **Fix:** Increased `revalidate` to `86400` (24 hours). Product updates now trigger on-demand revalidation via `revalidatePath` in `/api/revalidate`.
-- **Result:** ISR reads drop by over **95%** to near zero during steady-state periods.
+- **Fix:** Increased `revalidate` to `2592000` (30 days). Product updates now trigger on-demand revalidation via `revalidatePath` in `/api/revalidate`.
+- **Result:** ISR reads drop by over **99%** to near zero during steady-state periods.
 
 ### B. Function CPU Duration & Edge Logging Elimination
 - **Issue:** `src/proxy.ts` executed multiple `console.log` statements for every incoming request across all assets and paths.
@@ -28,5 +28,5 @@
 ### C. Fast Origin Transfer & Data Transfer Reduction
 - **Issue:** `/api/marketplace/products` returned unrestricted JSON payloads containing every product from all active shops regardless of curation status.
 - **Impact:** Large JSON payloads transferred over Vercel origin network on every uncached fetch.
-- **Fix:** Enforced server-side showcase curation whitelist in `/api/marketplace/products/route.js`. Only approved tenant products are serialized and delivered. Cache headers set to `s-maxage=86400, stale-while-revalidate=86400`.
+- **Fix:** Enforced server-side showcase curation whitelist in `/api/marketplace/products/route.js`. Only approved tenant products are serialized and delivered. Cache headers set to `s-maxage=2592000, stale-while-revalidate=2592000`.
 - **Result:** Payload size reduced by up to **80%**, saving origin transfer and client memory.

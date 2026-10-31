@@ -14,12 +14,12 @@
   - **Source:** `src/lib/server-fetch.js` (`getAllMarketplaceProductsServer`, `getAllShopsServer`, `getShopByDomainServer`)
   - **Mechanism:** Redis TTL and memory TTL were set to `ex: 300` (5 minutes). Every 5 minutes, the cache expired. Whenever search engine crawlers (Googlebot, Bingbot, ClaudeBot, GPTBot) or visitors hit sitemaps or pages, it forced a full sequential table scan across all registered shops and all products in Firestore.
   - **Mathematical Proof:** 30 shops × 100 products = ~3,000 reads per cache miss. 288 5-minute intervals/day × crawler sweeps = **129,000+ reads/day**.
-  - **Resolution:** Restored 24-hour (`86400s`) persistent cache TTL across Upstash Redis and serverless memory, coupled with instant cache invalidation on product/setting mutations (`invalidateShopCache`).
+  - **Resolution:** Upgraded to 30-day (`2592000s`) persistent cache TTL across Upstash Redis and serverless memory, coupled with instant cache invalidation on product/setting mutations (`invalidateShopCache`).
 
 - **Root Cause 2: Sitemap Redundant Full-Collection Triggers**
   - **Source:** `product-sitemap.xml`, `category-sitemap.xml`, `image-sitemap.xml`
   - **Mechanism:** 4 independent XML sitemaps had 6-hour and 1-hour cache expirations. When automated crawlers indexed sitemaps overnight (1:00 AM – 4:00 AM as seen in Firebase telemetry), all sitemaps independently queried the un-cached Firestore products simultaneously.
-  - **Resolution:** Sitemap memory cache TTL set to 24 hours (`86400s`) and backed by deduplicated Redis caching.
+  - **Resolution:** Sitemap memory cache TTL set to 30 days and backed by deduplicated Redis caching.
 
 - **Root Cause 3: Duplicate Client Hydration Loops**
   - **Source:** `src/app/page.js` (lines 360 & 445)
@@ -31,7 +31,7 @@
 ### Incident B: 44K Vercel ISR Reads
 - **Root Cause:** Product detail pages (`src/app/shop/[shopSlug]/product/[productId]/page.js`) and custom domain pages (`src/app/domain/[customDomain]/page.js`) were configured with `export const revalidate = 60;` (60 seconds).
   - Every minute, crawler requests invalidated the edge cache, triggering 44,000 ISR reads on Vercel and constantly re-executing serverless functions.
-- **Resolution:** Changed `revalidate = 86400` (24 hours). Product and shop pages are now strictly revalidated on-demand via `/api/revalidate` upon actual retailer edits.
+- **Resolution:** Changed `revalidate = 2592000` (30 days). Product and shop pages are now strictly revalidated on-demand via `/api/revalidate` upon actual retailer edits.
 
 ---
 
