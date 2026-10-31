@@ -18,7 +18,11 @@ export default function AgentationInspector() {
     userData?.role === 'superadmin' ||
     userData?.role === 'sub_superadmin' ||
     user?.email === 'amarbazar27@gmail.com' ||
-    user?.email === 'bdretailers26@gmail.com'
+    user?.email === 'rafiqunnabi07@gmail.com' ||
+    user?.email === 'rafiqunnabi29@gmail.com' ||
+    user?.email === 'bdretailers26@gmail.com' ||
+    user?.email === 'missionedu306@gmail.com' ||
+    user?.email === 'contact@bdretailers.com'
   );
 
   // Hide completely for regular customers, unauthenticated visitors, and non-superadmin retailers

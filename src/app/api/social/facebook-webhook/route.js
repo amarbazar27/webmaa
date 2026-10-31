@@ -19,16 +19,64 @@ export async function GET(request) {
   return new NextResponse('Forbidden', { status: 403 });
 }
 
-// ⚡ In-memory product cache for AI context (saves 30 reads per incoming message)
+// 🛡️ Webhook Event Deduplication Cache (Prevents Meta Retries from Repeating Messages)
+const processedMessageIds = new Map();
+function isDuplicateMessage(mid) {
+  if (!mid) return false;
+  const now = Date.now();
+  if (processedMessageIds.size > 2000) {
+    for (const [key, ts] of processedMessageIds.entries()) {
+      if (now - ts > 15 * 60 * 1000) processedMessageIds.delete(key);
+    }
+  }
+  if (processedMessageIds.has(mid)) {
+    return true;
+  }
+  processedMessageIds.set(mid, now);
+  return false;
+}
+
+// ⚡ In-memory product cache for AI context (saves Firestore read quota)
 const webhookProductCache = new Map();
 async function getCachedProductsForWebhook(shopId) {
+  if (!shopId) return '';
   const cached = webhookProductCache.get(shopId);
   if (cached && Date.now() < cached.expiresAt) {
     return cached.list;
   }
-  const productList = await getCachedProductsForWebhook(shopId);
-  webhookProductCache.set(shopId, { list: productList, expiresAt: Date.now() + 30 * 60 * 1000 });
-  return productList;
+  try {
+    const snap = await adminDb
+      .collection('shops')
+      .doc(shopId)
+      .collection('products')
+      .limit(35)
+      .get();
+    
+    const productList = snap.docs.map(d => {
+      const p = d.data();
+      const stockStr = p.stock !== undefined && p.stock !== null ? ` (স্টক: ${p.stock})` : '';
+      return `- ${p.name || 'পণ্য'}: ৳${p.price || 0}${p.category ? ` [${p.category}]` : ''}${stockStr}`;
+    }).join('\n');
+
+    webhookProductCache.set(shopId, { list: productList, expiresAt: Date.now() + 15 * 60 * 1000 });
+    return productList;
+  } catch (err) {
+    console.error('[Webhook Product Cache Error]:', err?.message);
+    return '';
+  }
+}
+
+// Helper: Fetch real Facebook sender profile name via Graph API
+async function getFacebookSenderName(senderPsid, pageAccessToken) {
+  if (!senderPsid || !pageAccessToken) return 'Facebook User';
+  try {
+    const res = await fetch(`https://graph.facebook.com/v26.0/${senderPsid}?fields=first_name,last_name,name&access_token=${pageAccessToken}`);
+    if (res.ok) {
+      const data = await res.json();
+      return data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Facebook User';
+    }
+  } catch (_) {}
+  return 'Facebook User';
 }
 
 // Helper: Send Facebook Messenger private reply to a post comment
@@ -262,6 +310,11 @@ export async function POST(request) {
 
             if (event.message && !event.message.is_echo) {
               const text = event.message.text;
+              const mid = event.message.mid;
+              if (mid && isDuplicateMessage(mid)) {
+                console.log('[Meta Webhook] Skipped duplicate message retry mid:', mid);
+                continue;
+              }
               if (!text) continue;
 
               const conversationRef = adminDb.collection('shops').doc(shopId).collection('conversations').doc(senderId);
@@ -274,6 +327,14 @@ export async function POST(request) {
                 aiPaused: false,
                 shopId
               };
+
+              // Fetch real sender name from Graph API if needed
+              if (!conversationData.senderName || conversationData.senderName === 'Facebook User') {
+                const fetchedName = await getFacebookSenderName(senderId, pageAccessToken);
+                if (fetchedName && fetchedName !== 'Facebook User') {
+                  conversationData.senderName = fetchedName;
+                }
+              }
 
               // Human Takeover via '.' command
               if (text.trim() === '.') {
@@ -295,7 +356,7 @@ export async function POST(request) {
 
               // Record Lead
               await adminDb.collection('shops').doc(shopId).collection('leads').doc(senderId).set({
-                name: 'Facebook User',
+                name: conversationData.senderName || 'Facebook User',
                 source: 'facebook_message',
                 fbId: senderId,
                 message: text,
@@ -312,10 +373,13 @@ export async function POST(request) {
                 const customPrompt = shopData.aiSettings?.customPrompt || '';
                 const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';
                 const knowledgeBase = shopData.knowledgeBase || '';
+                const customerName = conversationData.senderName && conversationData.senderName !== 'Facebook User' ? conversationData.senderName : '';
+                const shopUrl = `https://bdretailers.com/shop/${shopData.subdomainSlug || shopData.shopSlug || ''}`;
                 const shopContext = `তুমি "${shopName}"-এর অফিসিয়াল কাস্টমার সাপোর্ট এবং সেলস এক্সিকিউটিভ।
 
 গুরুত্বপূর্ণ নির্দেশনা (কঠোরভাবে মানতে হবে):
-১. ভাষা: সর্বদা অত্যন্ত মার্জিত, প্রমিত এবং ভদ্র বাংলায় কথা বলবে। কাস্টমারকে শ্রদ্ধার সাথে 'আপনি' বা মার্জিতভাবে 'ভাইয়া/আপু' সম্বোধন করবে।
+১. গ্রাহকের নাম সম্বোধন: গ্রাহকের নাম "${customerName || 'সম্মানিত ক্রেতা'}"। প্রাসঙ্গিক হলে শুরুতেই গ্রাহকের নাম উল্লেখ করে সম্মান ও আন্তরিকতার সাথে কথা বলবে (যেমন: "আসসালামু আলাইকুম ${customerName ? `${customerName} ভাইয়া/আপু` : ''}!")।
+২. ভাষা: সর্বদা অত্যন্ত মার্জিত, প্রমিত এবং ভদ্র বাংলায় কথা বলবে। কাস্টমারকে শ্রদ্ধার সাথে 'আপনি' বা মার্জিতভাবে 'ভাইয়া/আপু' সম্বোধন করবে।
 ২. নিষিদ্ধ: কখনোই অপভ্রংশ, অশুদ্ধ বা অদ্ভুত আঞ্চলিক শব্দ (যেমন: 'দাদু', 'আউদি', 'দোস্ত' ইত্যাদি) ব্যবহার করবে না।
 ৩. সত্যনিষ্ঠ তথ্য: তালিকার বাইরের কোনো কাল্পনিক পণ্যের নাম বা মিথ্যা দাম বানিয়ে বলবে না। যদি কোনো তথ্য তালিকায় না থাকে, তবে বিনয়ের সাথে বলবে যে আমাদের প্রতিনিধি দ্রুত যোগাযোগ করবে।
 ৪. দাম ও সংখ্যা: প্রমিত বাংলায় বা স্পষ্ট সংখ্যায় (যেমন: ৳৫০০ বা ৫০০ টাকা) লিখবে।
@@ -492,6 +556,8 @@ ${customPrompt ? `বিশেষ নির্দেশনা:\n${customPrompt}`
                 const customPrompt = shopData.aiSettings?.customPrompt || '';
                 const deliveryInfo = shopData.aiSettings?.deliveryInfo || '';
                 const knowledgeBase = shopData.knowledgeBase || '';
+                const customerName = conversationData.senderName && conversationData.senderName !== 'Facebook User' ? conversationData.senderName : '';
+                const shopUrl = `https://bdretailers.com/shop/${shopData.subdomainSlug || shopData.shopSlug || ''}`;
                 const shopContext = `তুমি "${shopName}"-এর অফিসিয়াল WhatsApp সেলস অ্যাসিস্ট্যান্ট।
 ১. সর্বদা অত্যন্ত মার্জিত, প্রমিত এবং ভদ্র বাংলায় কথা বলবে। কাস্টমারকে শ্রদ্ধার সাথে 'আপনি' বা 'ভাইয়া/আপু' সম্বোধন করবে।
 ২. নিষিদ্ধ: অপভ্রংশ, অদ্ভুত আঞ্চলিক শব্দ ব্যবহার করবে না।

@@ -221,6 +221,34 @@ export async function GET(request) {
 
     await adminDb.collection('social_connections').doc(pageId).set(connectionPayload, { merge: true });
     await adminDb.collection('shops').doc(targetShopId).collection('socialConnections').doc('facebook').set(connectionPayload, { merge: true });
+    // Auto-detect & link WhatsApp Business if available on this Meta account
+    try {
+      const waUrl = `https://graph.facebook.com/v26.0/me?fields=whatsapp_business_accounts{id,name,phone_numbers{id,display_phone_number,verified_name}}&access_token=${longLivedUserToken}`;
+      const waRes = await fetch(waUrl);
+      const waData = await waRes.json();
+      const wabas = waData?.whatsapp_business_accounts?.data || [];
+      for (const waba of wabas) {
+        const phones = waba.phone_numbers?.data || [];
+        for (const phone of phones) {
+          if (phone.id) {
+            const waPayload = {
+              shopId: targetShopId,
+              platform: 'whatsapp',
+              phoneNumberId: phone.id,
+              displayPhoneNumber: phone.display_phone_number || phone.verified_name || phone.id,
+              wabaId: waba.id,
+              accessToken: longLivedUserToken,
+              connectedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            await adminDb.collection('social_connections').doc(phone.id).set(waPayload, { merge: true });
+            await adminDb.collection('shops').doc(targetShopId).collection('socialConnections').doc('whatsapp').set(waPayload, { merge: true });
+            break;
+          }
+        }
+      }
+    } catch (_) {}
+
     if (targetShopId !== shopId) {
       await adminDb.collection('shops').doc(shopId).collection('socialConnections').doc('facebook').set(connectionPayload, { merge: true }).catch(() => {});
     }

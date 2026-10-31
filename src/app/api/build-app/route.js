@@ -30,7 +30,14 @@ export async function POST(request) {
 
     // Check root superadmin emails
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    const isRootAdmin = callerEmail === 'rafiqunnabi07@gmail.com' || callerEmail === 'amarbazar27@gmail.com' || (envAdmin && callerEmail === envAdmin);
+    const isRootAdmin = 
+      callerEmail === 'rafiqunnabi07@gmail.com' || 
+      callerEmail === 'rafiqunnabi29@gmail.com' ||
+      callerEmail === 'amarbazar27@gmail.com' || 
+      callerEmail === 'bdretailers26@gmail.com' ||
+      callerEmail === 'missionedu306@gmail.com' ||
+      callerEmail === 'contact@bdretailers.com' ||
+      (envAdmin && callerEmail === envAdmin);
 
     let userRole = decodedToken.role || 'user';
     try {

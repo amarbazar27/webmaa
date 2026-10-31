@@ -34,6 +34,8 @@ export async function verifyAuth(request) {
       callerEmail === 'rafiqunnabi07@gmail.com' ||
       callerEmail === 'rafiqunnabi29@gmail.com' ||
       callerEmail === 'amarbazar27@gmail.com' ||
+      callerEmail === 'bdretailers26@gmail.com' ||
+      callerEmail === 'missionedu306@gmail.com' ||
       callerEmail === 'contact@bdretailers.com' ||
       (envAdmin && callerEmail === envAdmin);
 

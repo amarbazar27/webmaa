@@ -30,6 +30,8 @@ export async function GET(request) {
       email === 'amarbazar27@gmail.com' ||
       email === 'rafiqunnabi07@gmail.com' ||
       email === 'rafiqunnabi29@gmail.com' ||
+      email === 'bdretailers26@gmail.com' ||
+      email === 'missionedu306@gmail.com' ||
       email === 'contact@bdretailers.com';
 
     if (isRoot) {

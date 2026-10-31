@@ -157,6 +157,10 @@ export default function ProductsPage() {
   const [bulkCatDeleteModalOpen, setBulkCatDeleteModalOpen] = useState(false);
   const [deleteCatWithProducts, setDeleteCatWithProducts] = useState(false);
   const [isBulkCatLoading, setIsBulkCatLoading] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
+  const [editCategorySubs, setEditCategorySubs] = useState('');
+  const [isEditCatLoading, setIsEditCatLoading] = useState(false);
 
   // Bulk Import & Competitor Cloner state
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -432,6 +436,79 @@ export default function ProductsPage() {
     }
   };
 
+  const handleOpenEditCategory = (cat) => {
+    setEditingCategory(cat);
+    setEditCategoryName(cat.name || '');
+    setEditCategorySubs(Array.isArray(cat.subcategories) ? cat.subcategories.join(', ') : '');
+  };
+
+  const handleSaveEditCategory = async (e) => {
+    e?.preventDefault();
+    if (!editingCategory || !editCategoryName.trim()) {
+      toast.error('ক্যাটাগরির নাম দিন');
+      return;
+    }
+    const oldName = editingCategory.name;
+    const newName = editCategoryName.trim();
+    const subs = editCategorySubs
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    setIsEditCatLoading(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/categories', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          shopId: activeShopId,
+          categoryId: editingCategory.id,
+          name: newName,
+          oldName,
+          subcategories: subs
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...c, name: newName, subcategories: subs } : c));
+        if (oldName.toLowerCase() !== newName.toLowerCase()) {
+          setProducts(prev => prev.map(p => (p.category || '').toLowerCase() === oldName.toLowerCase() ? { ...p, category: newName } : p));
+        }
+        toast.success(data.message || 'ক্যাটাগরি সফলভাবে আপডেট করা হয়েছে! ✨');
+        setEditingCategory(null);
+        return;
+      }
+
+      // Direct Firestore fallback
+      await updateDoc(doc(db, 'shops', activeShopId, 'categories', editingCategory.id), {
+        name: newName,
+        subcategories: subs
+      });
+      setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...c, name: newName, subcategories: subs } : c));
+      if (oldName.toLowerCase() !== newName.toLowerCase()) {
+        const matchingIds = products
+          .filter(p => (p.category || '').toLowerCase() === oldName.toLowerCase())
+          .map(p => p.id);
+        if (matchingIds.length > 0) {
+          await bulkUpdateProductsCategory(activeShopId, matchingIds, newName);
+          setProducts(prev => prev.map(p => matchingIds.includes(p.id) ? { ...p, category: newName } : p));
+        }
+      }
+      toast.success('ক্যাটাগরি সফলভাবে আপডেট করা হয়েছে! ✨');
+      setEditingCategory(null);
+    } catch (err) {
+      console.error('[Save Category Edit Error]:', err);
+      toast.error('ক্যাটাগরি আপডেট করতে সমস্যা হয়েছে');
+    } finally {
+      setIsEditCatLoading(false);
+    }
+  };
+
   const handleDeleteCategoryWithProducts = async (cat) => {
     const matching = products.filter(p => (p.category || '').toLowerCase() === (cat.name || '').toLowerCase());
     const proceed = window.confirm(`⚠️ সতর্কতা: আপনি কি "${cat.name}" ক্যাটাগরি এবং এর অন্তর্ভুক্ত সকল ${matching.length}টি প্রোডাক্ট স্থায়ীভাবে মুছে ফেলতে চান? এটি আর ফিরিয়ে আনা যাবে না।`);
@@ -489,6 +566,35 @@ export default function ProductsPage() {
     const matchingProductIds = matchingProducts.map(p => p.id);
 
     setIsBulkCatLoading(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/categories', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          shopId: activeShopId,
+          categoryIds: catIdsToDelete,
+          categoryNames: selectedCatNames,
+          deleteWithProducts: deleteCatWithProducts
+        })
+      });
+
+      if (res.ok) {
+        if (deleteCatWithProducts) {
+          setProducts(prev => prev.filter(p => !matchingProductIds.includes(p.id)));
+        } else {
+          setProducts(prev => prev.map(p => matchingProductIds.includes(p.id) ? { ...p, category: 'Uncategorized' } : p));
+        }
+        setCategories(prev => prev.filter(c => !selectedCategoryIds.has(c.id)));
+        setSelectedCategoryIds(new Set());
+        setBulkCatDeleteModalOpen(false);
+        toast.success(`সফলভাবে ${catIdsToDelete.length}টি ক্যাটাগরি মুছে ফেলা হয়েছে! 🗑️`);
+        return;
+      }
+    } catch (_) {}
     try {
       if (deleteCatWithProducts && matchingProductIds.length > 0) {
         // Cascade delete products
@@ -1267,6 +1373,14 @@ export default function ProductsPage() {
                           </button>
                           <button
                             type="button"
+                            onClick={() => handleOpenEditCategory(cat)}
+                            className="p-2 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-colors cursor-pointer"
+                            title="ক্যাটাগরির নাম ও সাবক্যাটাগরি সম্পাদনা করুন"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleDeleteCategoryWithProducts(cat)}
                             className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
                             title="ক্যাটাগরি ও এর সকল পণ্য মুছুন"
@@ -1671,6 +1785,102 @@ export default function ProductsPage() {
                 {isBulkLoading ? 'আপডেট হচ্ছে...' : 'স্টক পরিবর্তন করুন'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Category Modal ── */}
+      {editingCategory && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center font-black">
+                  <Pencil size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">ক্যাটাগরি সম্পাদনা</h3>
+                  <p className="text-[11px] text-slate-400 font-bold">নাম ও সাবক্যাটাগরি পরিবর্তন করুন</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCategory(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCategory} className="space-y-4">
+              <div>
+                <label className="block text-xs font-black text-slate-700 mb-1.5">
+                  ক্যাটাগরির নাম <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editCategoryName}
+                  onChange={(e) => setEditCategoryName(e.target.value)}
+                  placeholder="যেমন: Skin Care, Electronics..."
+                  className="w-full px-4 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-purple-600 outline-none transition-all"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-slate-700 mb-1.5">
+                  সাবক্যাটাগরি সমূহ (কমা দিয়ে লিখুন)
+                </label>
+                <input
+                  type="text"
+                  value={editCategorySubs}
+                  onChange={(e) => setEditCategorySubs(e.target.value)}
+                  placeholder="যেমন: Serum, Toner, Cream"
+                  className="w-full px-4 py-2.5 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-purple-600 outline-none transition-all"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  একাধিক সাবক্যাটাগরি কমা (,) দিয়ে আলাদা করে লিখুন
+                </p>
+              </div>
+
+              {(() => {
+                const affectedCount = products.filter(
+                  p => (p.category || '').toLowerCase() === (editingCategory.name || '').toLowerCase()
+                ).length;
+                return (
+                  <div className="bg-purple-50/70 p-3 rounded-2xl border border-purple-100 flex items-start gap-2.5">
+                    <Sparkles size={16} className="text-purple-600 shrink-0 mt-0.5" />
+                    <p className="text-[11px] text-purple-900 leading-relaxed font-medium">
+                      এই ক্যাটাগরিতে বর্তমানে <strong>{affectedCount}টি পণ্য</strong> রয়েছে। নাম পরিবর্তন করলে সংশ্লিষ্ট সকল পণ্যের ক্যাটাগরি স্বয়ংক্রিয়ভাবে আপডেট হবে।
+                    </p>
+                  </div>
+                );
+              })()}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCategory(null)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditCatLoading || !editCategoryName.trim()}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs transition-all shadow-md shadow-purple-600/30 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  {isEditCatLoading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>সংরক্ষণ হচ্ছে...</span>
+                    </>
+                  ) : (
+                    <span>সংরক্ষণ করুন</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

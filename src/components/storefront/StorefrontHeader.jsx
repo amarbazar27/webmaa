@@ -7,6 +7,7 @@ import {
   HelpCircle, Sun, Moon, Settings, Zap, ArrowRight, ShieldCheck, SlidersHorizontal
 } from 'lucide-react';
 import ThemeToggleButton from '@/components/ui/ThemeToggleButton';
+import LanguageToggle from '@/components/shared/LanguageToggle';
 
 export const HEADER_PRESETS = [
   {
@@ -209,6 +210,7 @@ export default function StorefrontHeader({
   // Render Common Action Buttons
   const renderActionButtons = (isDark = false) => (
     <div className="flex items-center gap-1.5 shrink-0">
+      <LanguageToggle accent={isDark ? "slate" : "purple"} className="scale-85 sm:scale-90" />
       {headerConfig?.showThemeToggle !== false && (
         <div className="hidden sm:block">
           <ThemeToggleButton size="sm" />
@@ -897,6 +899,7 @@ export default function StorefrontHeader({
               })}
             </nav>
             <div className="flex items-center gap-2">
+              <LanguageToggle accent="purple" className="scale-90" />
               <button
                 type="button"
                 onClick={onOpenProfile}
@@ -926,6 +929,7 @@ export default function StorefrontHeader({
 
           {/* Mobile Right Cart Button */}
           <div className="flex md:hidden items-center gap-2">
+            <LanguageToggle accent="purple" className="scale-85 origin-right" />
             <button
               type="button"
               onClick={onOpenCart}

@@ -71,7 +71,46 @@ export async function POST(request) {
 
     // ── WhatsApp Cloud API Connect Handler ─────────────────────
     if (body.platform === 'whatsapp') {
-      const { phoneNumberId, wabaId, accessToken } = body;
+      const { phoneNumberId, wabaId, accessToken, directNumber, phoneNumber } = body;
+
+      // 1. Direct Phone Number Connect (No Meta App / Token Needed)
+      const inputNum = directNumber || (!accessToken && phoneNumber ? phoneNumber : null);
+      if (inputNum) {
+        const cleanNum = String(inputNum).trim().replace(/[^0-9+]/g, '');
+        if (!cleanNum || cleanNum.length < 10) {
+          return NextResponse.json({ error: 'সঠিক WhatsApp মোবাইল নম্বর দিন (যেমন: 01712345678)' }, { status: 400 });
+        }
+        const docId = `direct_wa_${shopId}`;
+        const waPayload = {
+          shopId,
+          platform: 'whatsapp',
+          mode: 'direct_number',
+          phoneNumberId: docId,
+          displayPhoneNumber: cleanNum,
+          whatsappNumber: cleanNum,
+          connectedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await adminDb.collection('social_connections').doc(docId).set(waPayload, { merge: true });
+        await adminDb.collection('shops').doc(shopId).collection('socialConnections').doc('whatsapp').set(waPayload, { merge: true });
+        try {
+          await adminDb.collection('shops').doc(shopId).update({
+            whatsappNumber: cleanNum,
+            'settings.whatsappNumber': cleanNum,
+            updatedAt: new Date().toISOString()
+          });
+        } catch (_) {}
+
+        return NextResponse.json({
+          success: true,
+          platform: 'whatsapp',
+          mode: 'direct_number',
+          phoneNumberId: docId,
+          displayPhoneNumber: cleanNum,
+          message: `WhatsApp নম্বর (${cleanNum}) সফলভাবে যুক্ত হয়েছে! স্টোরে WhatsApp বাটন ও ইনস্ট্যান্ট চ্যাট সক্রিয় হয়েছে 🎉`
+        });
+      }
+
       if (!phoneNumberId?.trim() || !accessToken?.trim()) {
         return NextResponse.json({ error: 'Phone Number ID এবং Access Token প্রয়োজন' }, { status: 400 });
       }

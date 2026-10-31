@@ -29,7 +29,15 @@ const determineRole = async (email, uid = null) => {
     
     const currentEmail = email.toLowerCase().trim();
     const envAdmin = (process.env.NEXT_PUBLIC_SUPER_ADMIN_EMAIL || '').toLowerCase().trim();
-    if ((envAdmin && currentEmail === envAdmin) || currentEmail === 'amarbazar27@gmail.com' || currentEmail === 'rafiqunnabi07@gmail.com' || currentEmail === 'rafiqunnabi29@gmail.com' || currentEmail === 'contact@bdretailers.com') {
+    const SUPER_ADMIN_EMAILS = [
+      'amarbazar27@gmail.com',
+      'rafiqunnabi07@gmail.com',
+      'rafiqunnabi29@gmail.com',
+      'bdretailers26@gmail.com',
+      'missionedu306@gmail.com',
+      'contact@bdretailers.com'
+    ];
+    if ((envAdmin && currentEmail === envAdmin) || SUPER_ADMIN_EMAILS.includes(currentEmail)) {
       if (typeof window !== 'undefined' && uid) {
         fetch(`/api/auth/verify-role?email=${encodeURIComponent(currentEmail)}&uid=${encodeURIComponent(uid)}`).catch(() => {});
       }

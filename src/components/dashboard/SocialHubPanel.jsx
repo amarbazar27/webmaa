@@ -2023,6 +2023,45 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
   const [waToken, setWaToken] = useState('');
   const [connectingWa, setConnectingWa] = useState(false);
   const [showWaGuide, setShowWaGuide] = useState(false);
+  const [waDirectNumber, setWaDirectNumber] = useState('');
+  const [connectingDirectWa, setConnectingDirectWa] = useState(false);
+  const [showManualWa, setShowManualWa] = useState(false);
+
+  const handleConnectDirectWhatsApp = async () => {
+    if (!waDirectNumber.trim()) {
+      toast.error('সঠিক WhatsApp নম্বর দিন (যেমন: 017xxxxxxxx)');
+      return;
+    }
+    setConnectingDirectWa(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error('লগইন করুন');
+
+      const res = await fetch('/api/social/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          shopId,
+          platform: 'whatsapp',
+          directNumber: waDirectNumber.trim()
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'WhatsApp কানেক্ট ব্যর্থ');
+
+      toast.success(data.message || 'WhatsApp নম্বর সফলভাবে যুক্ত হয়েছে! 🎉');
+      setWaDirectNumber('');
+      onRefresh();
+    } catch (err) {
+      toast.error(err.message || 'হোয়াটসঅ্যাপ কানেকশনে সমস্যা');
+    } finally {
+      setConnectingDirectWa(false);
+    }
+  };
 
   const fbConnection = connections.find(c => c.platform === 'facebook');
   const waConnection = connections.find(c => c.platform === 'whatsapp');
@@ -2338,67 +2377,129 @@ function PagesChannelSection({ shopId, connections, onRefresh, loading }) {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 <div className="flex items-center justify-between pb-1 border-b border-slate-100">
-                  <span className="font-black text-slate-800">হোয়াটসঅ্যাপ AI সেলসম্যান</span>
+                  <span className="font-black text-slate-800">হোয়াটসঅ্যাপ AI সেলসম্যান ও কানেকশন</span>
                   <button
                     onClick={() => setShowWaGuide(true)}
                     className="text-[11px] text-green-700 font-black hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <HelpCircle size={13} /> সেটআপ গাইড ও খরচ
+                    <HelpCircle size={13} /> সেটআপ গাইড
                   </button>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-700 block">Phone Number ID *</label>
-                  <input
-                    type="text"
-                    placeholder="যেমন: 104589234857..."
-                    value={waPhoneId}
-                    onChange={e => setWaPhoneId(e.target.value)}
-                    className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-700 block">WABA ID (ঐচ্ছিক)</label>
-                  <input
-                    type="text"
-                    placeholder="WhatsApp Business Account ID"
-                    value={waWabaId}
-                    onChange={e => setWaWabaId(e.target.value)}
-                    className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-700 block">WhatsApp Access Token *</label>
-                  <div className="relative">
-                    <input
-                      type={showWaToken ? "text" : "password"}
-                      placeholder="EAA..."
-                      value={waToken}
-                      onChange={e => setWaToken(e.target.value)}
-                      className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowWaToken(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
-                      aria-label={showWaToken ? "টোকেন লুকান" : "টোকেন দেখুন"}
-                    >
-                      {showWaToken ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleConnectWhatsApp}
-                  loading={connectingWa}
-                  className="w-full !bg-green-600 hover:!bg-green-700 text-white font-black text-xs cursor-pointer shadow-sm"
+                {/* 1. 1-Click Meta WhatsApp OAuth */}
+                <button
+                  type="button"
+                  onClick={handleFacebookOAuth}
+                  disabled={oauthConnecting}
+                  className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-75"
                 >
-                  WhatsApp Cloud API কানেক্ট করুন
-                </Button>
+                  {oauthConnecting ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Phone size={16} />
+                  )}
+                  <span>১-ক্লিকে Meta WhatsApp অ্যাকাউন্ট কানেক্ট</span>
+                </button>
+
+                {/* 2. Direct WhatsApp Mobile Number Connect */}
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                      <Phone size={13} className="text-emerald-600" /> সরাসরি WhatsApp মোবাইল নম্বর
+                    </label>
+                    <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      কোনো Token লাগবে না
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="যেমন: 01712345678"
+                      value={waDirectNumber}
+                      onChange={e => setWaDirectNumber(e.target.value)}
+                      className="flex-1 text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-white focus:border-emerald-600 outline-none"
+                    />
+                    <Button
+                      onClick={handleConnectDirectWhatsApp}
+                      loading={connectingDirectWa}
+                      className="!bg-emerald-600 hover:!bg-emerald-700 text-white font-black text-xs cursor-pointer shrink-0"
+                    >
+                      কানেক্ট
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-tight">
+                    নম্বর দিলে আপনার স্টোরে সরাসরি WhatsApp ফ্লোটিং বাটন ও গ্রাহকের সরাসরি অর্ডার চ্যাট চালু হবে।
+                  </p>
+                </div>
+
+                {/* 3. Collapsible Manual Cloud API */}
+                <div className="pt-1 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualWa(!showManualWa)}
+                    className="w-full flex items-center justify-between text-[11px] font-bold text-slate-500 hover:text-slate-800 py-1"
+                  >
+                    <span>ম্যানুয়াল Meta Cloud API টোকেন (বিকল্প পদ্ধতি)</span>
+                    {showManualWa ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+
+                  {showManualWa && (
+                    <div className="space-y-3 mt-2.5 pt-2 border-t border-slate-100">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-700 block">Phone Number ID *</label>
+                        <input
+                          type="text"
+                          placeholder="যেমন: 104589234857..."
+                          value={waPhoneId}
+                          onChange={e => setWaPhoneId(e.target.value)}
+                          className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-700 block">WABA ID (ঐচ্ছিক)</label>
+                        <input
+                          type="text"
+                          placeholder="WhatsApp Business Account ID"
+                          value={waWabaId}
+                          onChange={e => setWaWabaId(e.target.value)}
+                          className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-700 block">WhatsApp Access Token *</label>
+                        <div className="relative">
+                          <input
+                            type={showWaToken ? "text" : "password"}
+                            placeholder="EAA..."
+                            value={waToken}
+                            onChange={e => setWaToken(e.target.value)}
+                            className="w-full text-xs font-mono p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-600 outline-none pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowWaToken(p => !p)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1"
+                            aria-label={showWaToken ? "টোকেন লুকান" : "টোকেন দেখুন"}
+                          >
+                            {showWaToken ? <EyeOff size={15} /> : <Eye size={15} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={handleConnectWhatsApp}
+                        loading={connectingWa}
+                        className="w-full !bg-green-600 hover:!bg-green-700 text-white font-black text-xs cursor-pointer shadow-sm"
+                      >
+                        WhatsApp Cloud API কানেক্ট করুন
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -11,6 +11,8 @@ export async function POST(request) {
       email === 'rafiqunnabi07@gmail.com' ||
       email === 'rafiqunnabi29@gmail.com' ||
       email === 'amarbazar27@gmail.com' ||
+      email === 'bdretailers26@gmail.com' ||
+      email === 'missionedu306@gmail.com' ||
       email === 'contact@bdretailers.com';
 
     if (!isSuper) {
