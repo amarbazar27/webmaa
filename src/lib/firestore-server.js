@@ -5,8 +5,8 @@ import { db } from './firebase';
 import { adminDb } from '@/lib/firebase-admin';
 
 const domainCache = new Map();
-const CACHE_TTL_MS = 1000 * 60 * 30; // 30 mins active TTL
-const STALE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours stale fallback
+const CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days active TTL
+const STALE_TTL_MS = 1000 * 60 * 60 * 24 * 45; // 45 days stale fallback
 
 /**
  * getShopByDomain — Resolve a hostname to a shop document on server

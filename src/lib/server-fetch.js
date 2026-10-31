@@ -294,7 +294,7 @@ export async function getShopByDomainServer(host) {
         if (redisShop) {
           const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
           if (parsed && parsed.id) {
-            setCached(cacheKey, parsed, 86400);
+            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
             return parsed;
           }
         }
@@ -329,10 +329,10 @@ export async function getShopByDomainServer(host) {
     }
 
     if (shop) {
-      setCached(cacheKey, shop, 86400); // 24 hours cache
+      setCached(cacheKey, shop, CACHE_TTL_MONTH); // 30-day cache to eliminate read burn
       if (redis) {
         try {
-          await redis.set(`cache:shop_domain:${lookupHost}`, JSON.stringify(shop), { ex: 86400 });
+          await redis.set(`cache:shop_domain:${lookupHost}`, JSON.stringify(shop), { ex: CACHE_TTL_MONTH });
         } catch (_) {}
       }
     }
@@ -359,7 +359,7 @@ export async function getProductServer(shopId, productId) {
   if (Array.isArray(shopProducts)) {
     const found = shopProducts.find(p => p.id === productId);
     if (found) {
-      setCached(cacheKey, found, 86400);
+      setCached(cacheKey, found, CACHE_TTL_MONTH);
       return found;
     }
   }
@@ -377,7 +377,7 @@ export async function getProductServer(shopId, productId) {
     }
 
     if (product) {
-      setCached(cacheKey, product, 86400);
+      setCached(cacheKey, product, CACHE_TTL_MONTH);
     }
     return product;
   } catch (err) {
@@ -459,7 +459,7 @@ export async function getCategoriesServer(shopId) {
         if (redisCats) {
           const parsed = typeof redisCats === 'string' ? JSON.parse(redisCats) : redisCats;
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setCached(cacheKey, parsed, 86400);
+            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
             return parsed;
           }
         }
@@ -473,10 +473,10 @@ export async function getCategoriesServer(shopId) {
     } else {
       categories = await firestoreRestCollection(`shops/${shopId}/categories`);
     }
-    setCached(cacheKey, categories, 86400);
+    setCached(cacheKey, categories, CACHE_TTL_MONTH);
     if (redis && categories.length > 0) {
       try {
-        await redis.set(`cache:shop_categories:${shopId}`, JSON.stringify(categories), { ex: 86400 });
+        await redis.set(`cache:shop_categories:${shopId}`, JSON.stringify(categories), { ex: CACHE_TTL_MONTH });
       } catch (_) {}
     }
     return categories;
@@ -503,7 +503,7 @@ export async function getGlobalConfigServer() {
       const doc = await res.json();
       config = fromFirestoreRest(doc.fields) || {};
     }
-    setCached(cacheKey, config, 600);
+    setCached(cacheKey, config, CACHE_TTL_MONTH);
     return config;
   } catch (err) {
     console.error(`[getGlobalConfigServer] Error:`, err);
@@ -526,7 +526,7 @@ export async function getAllShopsServer() {
           if (redisShops) {
             const parsed = typeof redisShops === 'string' ? JSON.parse(redisShops) : redisShops;
             if (Array.isArray(parsed) && parsed.length > 0) {
-              setCached(cacheKey, parsed, 86400);
+              setCached(cacheKey, parsed, CACHE_TTL_MONTH);
               return parsed;
             }
           }
@@ -540,12 +540,12 @@ export async function getAllShopsServer() {
       } else {
         shops = await firestoreRestCollection('shops') || [];
       }
-      setCached(cacheKey, shops, 86400);
+      setCached(cacheKey, shops, CACHE_TTL_MONTH);
 
-      // Save to Redis (TTL 86400s = 24 hours)
+      // Save to Redis (TTL 30 days = 0 reads across serverless lambdas)
       if (redis && shops.length > 0) {
         try {
-          await redis.set('cache:all_shops', JSON.stringify(shops), { ex: 86400 });
+          await redis.set('cache:all_shops', JSON.stringify(shops), { ex: CACHE_TTL_MONTH });
         } catch (_) {}
       }
 
@@ -574,7 +574,7 @@ export async function getAllMarketplaceProductsServer() {
           if (redisProducts) {
             const parsed = typeof redisProducts === 'string' ? JSON.parse(redisProducts) : redisProducts;
             if (Array.isArray(parsed) && parsed.length > 0) {
-              setCached(cacheKey, parsed, 86400);
+              setCached(cacheKey, parsed, CACHE_TTL_MONTH);
               return parsed;
             }
           }
@@ -596,12 +596,12 @@ export async function getAllMarketplaceProductsServer() {
         })
       );
       const flat = productArrays.flat();
-      setCached(cacheKey, flat, 86400); // 24 hour in-memory cache
+      setCached(cacheKey, flat, CACHE_TTL_MONTH); // 30-day in-memory cache
 
-      // Save to Redis (TTL 24 hours)
+      // Save to Redis (TTL 30 days)
       if (redis && flat.length > 0) {
         try {
-          await redis.set('cache:marketplace_products', JSON.stringify(flat), { ex: 86400 });
+          await redis.set('cache:marketplace_products', JSON.stringify(flat), { ex: CACHE_TTL_MONTH });
         } catch (_) {}
       }
 
@@ -632,6 +632,7 @@ export async function invalidateShopCache(shopId, slug) {
     }
     memoryCache.delete('all_marketplace_products');
     memoryCache.delete('all_shops');
+    memoryCache.delete('global_config');
 
     const redis = await getRedis();
     if (redis) {

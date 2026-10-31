@@ -2,7 +2,7 @@ import { getShopServer } from '@/lib/server-fetch';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-export const revalidate = 600;
+export const revalidate = 2592000;
 
 export async function generateMetadata({ params }) {
   const { shopSlug } = await params;

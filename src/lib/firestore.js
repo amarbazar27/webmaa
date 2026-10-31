@@ -62,7 +62,7 @@ export const getShop = async (shopId) => {
 };
 
 export const getAllShops = async () => {
-  if (clientAllShopsCache.data && (Date.now() - clientAllShopsCache.timestamp < 1000 * 60 * 60)) {
+  if (clientAllShopsCache.data && (Date.now() - clientAllShopsCache.timestamp < 1000 * 60 * 60 * 24)) {
     return clientAllShopsCache.data;
   }
 

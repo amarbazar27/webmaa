@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 export const dynamic = 'force-static';
-export const revalidate = 86400;
+export const revalidate = 2592000;
 
 export async function GET() {
   const filePath = path.join(process.cwd(), 'public', 'DESIGN.md');
@@ -13,7 +13,7 @@ export async function GET() {
     headers: {
       'Content-Type': 'text/markdown; charset=utf-8',
       'Vary': 'Accept',
-      'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+      'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=604800',
     },
   });
 }

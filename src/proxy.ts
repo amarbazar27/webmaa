@@ -420,7 +420,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       headers: {
         'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '',
       },
-      next: { revalidate: 86400 }, // Cache on edge
+      next: { revalidate: 2592000 }, // Cache on edge for 30 days
     });
 
     if (lookupResponse.ok) {
@@ -428,7 +428,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
       if (data.slug) {
         // Cache result for 5 minutes
-        domainCache.set(host, { slug: data.slug, expiresAt: now + 86400000 });
+        domainCache.set(host, { slug: data.slug, expiresAt: now + 2592000000 }); // 30 days
 
         // ✅ ডোমেইন পাওয়া গেছে — /shop/[slug] এ rewrite করো
         const rewriteUrl = new URL(

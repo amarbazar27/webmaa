@@ -1,7 +1,7 @@
 import { getShopServer, getProductServer } from '@/lib/server-fetch';
 import ProductDetailClient from './ProductDetailClient';
 
-export const revalidate = 86400; // ⚡ 24-hour ISR cache (On-demand revalidation on update eliminates 44K ISR reads)
+export const revalidate = 2592000; // ⚡ 24-hour ISR cache (On-demand revalidation on update eliminates 44K ISR reads)
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 

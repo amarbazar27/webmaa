@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Script from 'next/script';
 import TemplateRenderer from '@/templates/TemplateRenderer';
 
-export const revalidate = 86400; // 24-hour ISR cache — on-demand revalidated instantly on product/setting update
+export const revalidate = 2592000; // 24-hour ISR cache — on-demand revalidated instantly on product/setting update
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://bdretailers.com';
 

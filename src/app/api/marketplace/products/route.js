@@ -3,7 +3,7 @@ import { getAllMarketplaceProductsServer, getAllShopsServer, getGlobalConfigServ
 
 // ⚡ 24-hour Edge Cache (Zero redundant database reads on repeat visits)
 export const dynamic = 'force-dynamic';
-export const revalidate = 86400;
+export const revalidate = 2592000;
 
 export async function GET(request) {
   try {
@@ -55,7 +55,7 @@ export async function GET(request) {
     });
 
     // ⚡ Edge & Browser Cache Headers (24 hour edge cache, 24 hour SWR)
-    res.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400');
+    res.headers.set('Cache-Control', 'public, s-maxage=2592000, stale-while-revalidate = 2592000');
     return res;
   } catch (error) {
     console.error('[API Marketplace Products] Error:', error);

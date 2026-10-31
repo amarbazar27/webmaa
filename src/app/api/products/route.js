@@ -23,7 +23,7 @@ export async function GET(req) {
     if (cachedEntry && Date.now() - cachedEntry.timestamp < 1000 * 60 * 60 * 24 * 30) {
       return NextResponse.json(cachedEntry.data, {
         headers: {
-          'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
+          'Cache-Control': 'public, s-maxage=2592000, stale-while-revalidate=604800',
           'X-Cache-Status': 'HIT'
         }
       });

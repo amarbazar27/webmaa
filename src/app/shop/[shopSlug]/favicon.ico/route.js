@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
         return new NextResponse(imageBlob, {
           headers: {
             'Content-Type': imageResponse.headers.get('content-type') || 'image/png',
-            'Cache-Control': 'public, max-age=86400, stale-while-revalidate=31536000',
+            'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=31536000',
           },
         });
       }
@@ -39,7 +39,7 @@ export async function GET(request, { params }) {
     return new NextResponse(svg, {
       headers: {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=31536000',
+        'Cache-Control': 'public, max-age=2592000, stale-while-revalidate=31536000',
       },
     });
   } catch (error) {

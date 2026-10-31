@@ -1,6 +1,6 @@
 import { getShopByDomainServer } from '@/lib/server-fetch';
 
-export const revalidate = 86400;
+export const revalidate = 2592000;
 
 const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'freeappweb.com', 'localhost', '127.0.0.1'];
 
@@ -49,7 +49,7 @@ export async function GET(request) {
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, s-maxage=18000',
+      'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=2592000',
     },
   });
 }
