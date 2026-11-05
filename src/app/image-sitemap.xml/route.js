@@ -1,6 +1,5 @@
 // ⚡ In-memory sitemap cache (eliminates thousands of Firestore reads per day from search engine crawlers)
 const sitemapCacheMap = new Map();
-import { getAllMarketplaceProducts } from '@/lib/firestore';
 import { getShopByDomainServer, getProductsServer, getAllMarketplaceProductsServer } from '@/lib/server-fetch';
 
 export const revalidate = 2592000;
@@ -76,10 +75,8 @@ export async function GET(request) {
       }
     } else {
       // Main site image sitemap lists all products from all shops
-      let products = await getAllMarketplaceProductsServer();
-      if (!products || products.length === 0) {
-        products = await getAllMarketplaceProducts();
-      }
+      // ⚡ Server-only: NEVER fallback to client-side Firestore (was burning reads from bot crawls)
+      const products = await getAllMarketplaceProductsServer() || [];
       const activeProducts = (products || []).filter(p => p.stock !== 0 && p.imageUrl);
 
       activeProducts.forEach((prod) => {

@@ -54,8 +54,9 @@ export async function GET(request) {
       ...(includeShops ? { shops: filteredShops } : {})
     });
 
-    // ⚡ Edge & Browser Cache Headers (24 hour edge cache, 24 hour SWR)
-    res.headers.set('Cache-Control', 'public, s-maxage=2592000, stale-while-revalidate = 2592000');
+    // ⚡ Edge & Browser Cache Headers (30-day edge cache, 30-day SWR — zero repeat reads)
+    res.headers.set('Cache-Control', 'public, s-maxage=2592000, stale-while-revalidate=2592000');
+    res.headers.set('CDN-Cache-Control', 'public, max-age=2592000');
     return res;
   } catch (error) {
     console.error('[API Marketplace Products] Error:', error);

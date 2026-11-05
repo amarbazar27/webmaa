@@ -36,7 +36,8 @@ async function getRedis() {
     const { Redis } = await import(/* webpackIgnore: true */ '@upstash/redis');
     redisClient = new Redis({ url, token });
     return redisClient;
-  } catch {
+  } catch (e) {
+    console.error('[Redis] Failed to initialize Upstash Redis:', e.message);
     return null;
   }
 }
@@ -231,7 +232,9 @@ export async function getShopServer(slug) {
             return parsed;
           }
         }
-      } catch (_) {}
+      } catch (redisErr) {
+        console.warn('[Redis] shop_slug cache read error:', redisErr.message);
+      }
     }
 
     let shop = null;
@@ -406,7 +409,7 @@ export async function getProductsServer(shopId) {
             return parsed;
           }
         }
-      } catch (_) {}
+      } catch (redisErr) { console.warn('[Redis] shop_products cache read error:', redisErr.message); }
     }
 
     let products;

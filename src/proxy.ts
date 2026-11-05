@@ -169,6 +169,37 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+
+  // -- Firestore Read Protection: Block SEO scrapers that burn reads --
+  if (isBlockedSeoBot(userAgent)) {
+    return applySecurityHeaders(
+      NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+      pathname
+    );
+  }
+
+  // -- Bot Cache Headers: Serve crawlers with aggressive edge cache to prevent Firestore reads --
+  if (isAnyCrawler(userAgent)) {
+    if (pathname.startsWith('/api/') &&
+        !pathname.includes('manifest') &&
+        !pathname.includes('health') &&
+        !pathname.includes('marketplace/products') &&
+        !pathname.includes('sitemap')) {
+      return applySecurityHeaders(
+        NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+        pathname
+      );
+    }
+    if (pathname.startsWith('/shop/') || pathname === '/' ||
+        pathname.startsWith('/domain/') || pathname.startsWith('/showcase') ||
+        pathname.includes('sitemap')) {
+      const response = NextResponse.next();
+      response.headers.set('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=2592000');
+      response.headers.set('CDN-Cache-Control', 'public, max-age=86400');
+      response.headers.set('x-bot-request', 'true');
+      return applySecurityHeaders(response, pathname);
+    }
+  }
   // ── Anti-Slowloris & Memory Protection: Reject oversized payloads at edge ──
   const rawContentLength = request.headers.get('content-length');
   if (rawContentLength) {

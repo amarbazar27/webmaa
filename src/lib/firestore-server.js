@@ -38,34 +38,30 @@ export const getShopByDomain = async (rawDomain) => {
   // ── 3. PRIMARY: Firebase Admin SDK (High-speed server-to-server) ──
   try {
     if (adminDb) {
-      // 3a. Check 'domains' array-contains for all variants
-      for (const variant of variants) {
-        const adminSnap = await adminDb.collection('shops')
-          .where('domains', 'array-contains', variant)
-          .limit(1)
-          .get();
-        if (!adminSnap.empty) {
-          const d = adminSnap.docs[0];
-          const shop = { id: d.id, ...d.data() };
-          domainCache.set(naked, { data: shop, timestamp: Date.now() });
-          domainCache.set(host, { data: shop, timestamp: Date.now() });
-          return shop;
-        }
+      // 3a. Check 'customDomain' field first (most common case — single query)
+      const adminLegacy = await adminDb.collection('shops')
+        .where('customDomain', '==', naked)
+        .limit(1)
+        .get();
+      if (!adminLegacy.empty) {
+        const d = adminLegacy.docs[0];
+        const shop = { id: d.id, ...d.data() };
+        domainCache.set(naked, { data: shop, timestamp: Date.now() });
+        domainCache.set(host, { data: shop, timestamp: Date.now() });
+        return shop;
       }
 
-      // 3b. Check 'customDomain' field for all variants
-      for (const variant of variants) {
-        const adminLegacy = await adminDb.collection('shops')
-          .where('customDomain', '==', variant)
-          .limit(1)
-          .get();
-        if (!adminLegacy.empty) {
-          const d = adminLegacy.docs[0];
-          const shop = { id: d.id, ...d.data() };
-          domainCache.set(naked, { data: shop, timestamp: Date.now() });
-          domainCache.set(host, { data: shop, timestamp: Date.now() });
-          return shop;
-        }
+      // 3b. Check 'domains' array-contains (second most common)
+      const adminSnap = await adminDb.collection('shops')
+        .where('domains', 'array-contains', naked)
+        .limit(1)
+        .get();
+      if (!adminSnap.empty) {
+        const d = adminSnap.docs[0];
+        const shop = { id: d.id, ...d.data() };
+        domainCache.set(naked, { data: shop, timestamp: Date.now() });
+        domainCache.set(host, { data: shop, timestamp: Date.now() });
+        return shop;
       }
 
       // 3c. Fallback: Check subdomainSlug (e.g. camerakini.bdretailers.com -> camerakini)

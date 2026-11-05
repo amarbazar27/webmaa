@@ -1,5 +1,7 @@
-import { getAllShops } from '@/lib/firestore';
 import { getShopByDomainServer, getAllShopsServer } from '@/lib/server-fetch';
+
+// ⚡ In-memory sitemap cache (eliminates Firestore reads from search engine crawlers)
+const sitemapCacheMap = new Map();
 
 export const revalidate = 2592000;
 
@@ -27,6 +29,18 @@ function escapeXml(unsafe) {
 
 export async function GET(request) {
   const host = request.headers.get('host') || 'bdretailers.com';
+
+  // ⚡ Serve from in-memory cache to eliminate repeat Firestore reads
+  const cachedSitemap = sitemapCacheMap.get(host);
+  if (cachedSitemap && Date.now() < cachedSitemap.expiresAt) {
+    return new Response(cachedSitemap.xml, {
+      headers: {
+        'Content-Type': 'application/xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=2592000',
+      },
+    });
+  }
+
   const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
   const baseUrl = `${protocol}://${host}`;
   let xmlItems = '';
@@ -47,10 +61,8 @@ export async function GET(request) {
       }
     } else {
       // Main site sitemap lists main site home, primary static pages, and all active shops
-      let shops = await getAllShopsServer();
-      if (!shops || shops.length === 0) {
-        shops = await getAllShops();
-      }
+      // ⚡ Server-only: NEVER fallback to client-side Firestore (was burning reads from bot crawls)
+      const shops = await getAllShopsServer() || [];
       const activeShops = (shops || []).filter(shop => {
         const isTest = shop.shopSlug === 'test' || shop.subdomainSlug === 'test' || shop.shopName?.toLowerCase() === 'test';
         return shop.isActive !== false && shop.showOnMainSite !== false && (!isTest || shop.showOnMainSite === true);
@@ -101,6 +113,7 @@ export async function GET(request) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${xmlItems}</urlset>`;
 
+  sitemapCacheMap.set(host, { xml, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
