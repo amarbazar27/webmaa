@@ -53,6 +53,29 @@ const BLOCKED_BOT_SIGNATURES = [
   'gobuster', 'acunetix', 'nessus', 'havij', 'zgrab', 'censys'
 ];
 
+// 🛡️ Known SEO scrapers and bots that aggressively crawl and burn Firestore reads
+const BLOCKED_SEO_BOTS = [
+  'ahrefsbot', 'semrushbot', 'mj12bot', 'dotbot', 'blexbot',
+  'dataforseobot', 'serpstatbot', 'bytespider', 'petalbot',
+  'yandexbot', 'megaindex', 'baiduspider', 'sogou',
+  'zoominfobot', 'pandalytics'
+];
+
+function isBlockedSeoBot(ua: string): boolean {
+  if (!ua) return false;
+  return BLOCKED_SEO_BOTS.some(bot => ua.includes(bot));
+}
+
+function isAnyCrawler(ua: string): boolean {
+  if (!ua) return false;
+  return ua.includes('bot') || ua.includes('crawler') ||
+         ua.includes('spider') || ua.includes('slurp') ||
+         ua.includes('curl/') || ua.includes('wget/') ||
+         ua.includes('python-') || ua.includes('httpx') ||
+         ua.includes('scrapy') || ua.includes('headless') ||
+         ua.includes('phantom');
+}
+
 // এই হোস্টগুলো কাস্টম ডোমেইন হিসেবে ধরা হবে না — সরাসরি পার হয়ে যাবে
 const BYPASS_HOSTS = [
   'webmaa.vercel.app',
