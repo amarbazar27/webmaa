@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAllMarketplaceProductsServer, getAllShopsServer, getGlobalConfigServer } from '@/lib/server-fetch';
 
-// ⚡ 24-hour Edge Cache (Zero redundant database reads on repeat visits)
-export const dynamic = 'force-dynamic';
+// ⚡ 30-day Edge Cache (Zero redundant database reads on repeat visits)
 export const revalidate = 2592000;
 
 export async function GET(request) {

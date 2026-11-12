@@ -1,9 +1,7 @@
-export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getProductsServer } from '@/lib/server-fetch';
 
-// ⚡ High-speed in-memory cache to prevent Firestore read burning
-const productsApiCache = new Map();
+export const revalidate = 2592000; // 30 days edge cache
 
 export async function GET(req) {
   try {
@@ -17,72 +15,51 @@ export async function GET(req) {
       return NextResponse.json({ error: 'shopId required' }, { status: 400 });
     }
 
-    const cacheKey = `${shopId}_${category || 'all'}_${pageParam || '1'}_${limitParam || 'all'}`;
-    const cachedEntry = productsApiCache.get(cacheKey);
-    // 30-day (1-month) in-memory cache to eliminate read burn
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < 1000 * 60 * 60 * 24 * 30) {
-      return NextResponse.json(cachedEntry.data, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=2592000, stale-while-revalidate=604800',
-          'X-Cache-Status': 'HIT'
-        }
-      });
+    // ⚡ Reuses the global deduplicated, Redis & memory-cached products list (0 extra Firestore reads)
+    const allProducts = await getProductsServer(shopId);
+
+    let filtered = allProducts;
+    if (category && category !== 'all') {
+      const lowerCat = category.trim().toLowerCase();
+      filtered = filtered.filter(p => (p.category || '').trim().toLowerCase() === lowerCat);
     }
 
-    let q = adminDb.collection('shops').doc(shopId).collection('products');
-
-    if (category) {
-      q = q.where('category', '==', category);
-    }
-
-    q = q.orderBy('createdAt', 'desc');
-
+    const totalCount = filtered.length;
     let page = 1;
-    let limit = 0; // 0 means all (unless specified)
+    let limit = totalCount;
 
     if (limitParam) {
       limit = Math.min(Math.max(1, parseInt(limitParam, 10) || 20), 100);
       page = Math.max(1, parseInt(pageParam, 10) || 1);
-      q = q.offset((page - 1) * limit).limit(limit);
+      const start = (page - 1) * limit;
+      filtered = filtered.slice(start, start + limit);
     }
 
-    const snap = await q.get();
-    const products = snap.docs.map(d => {
-      const data = d.data();
-      return {
-        id: d.id,
-        name: data.name,
-        price: data.price,
-        imageUrl: data.imageUrl || '',
-        category: data.category || '',
-        stock: data.stock ?? null,
-        inStock: data.stock === undefined || data.stock === null || data.stock > 0,
-        variants: data.variants || [],
-        sizes: data.sizes || [],
-        allowCustomize: data.allowCustomize || false,
-      };
-    });
+    const products = filtered.map(data => ({
+      id: data.id,
+      name: data.name || '',
+      price: data.price || 0,
+      imageUrl: data.imageUrl || '',
+      category: data.category || '',
+      stock: data.stock ?? null,
+      inStock: data.stock === undefined || data.stock === null || data.stock > 0,
+      variants: data.variants || [],
+      sizes: data.sizes || [],
+      allowCustomize: data.allowCustomize || false,
+    }));
 
     const responsePayload = {
       products,
       page,
-      limit: limit || products.length,
-      count: products.length,
+      limit,
+      count: totalCount,
     };
-
-    productsApiCache.set(cacheKey, {
-      data: responsePayload,
-      timestamp: Date.now()
-    });
-
-    if (productsApiCache.size > 200) {
-      const oldestKey = productsApiCache.keys().next().value;
-      productsApiCache.delete(oldestKey);
-    }
 
     return NextResponse.json(responsePayload, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=2592000, stale-while-revalidate=2592000',
+        'CDN-Cache-Control': 'public, max-age=2592000',
+        'X-Cache-Source': 'bdretailers-unified-cache'
       }
     });
   } catch (err) {

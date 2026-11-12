@@ -45,7 +45,8 @@ export async function GET(request) {
       {
         status: 200,
         headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+          'Cache-Control': 'public, s-maxage=2592000, stale-while-revalidate=2592000',
+          'CDN-Cache-Control': 'public, max-age=2592000',
         },
       }
     );

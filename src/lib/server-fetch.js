@@ -23,21 +23,84 @@ function dedupeRequest(key, fn) {
 // 1 Month (30 days) Cache TTL to radically eliminate Firestore read burns
 export const CACHE_TTL_MONTH = 2592000; // 30 days in seconds (30 * 86400)
 
+/**
+ * ⚡ Zero-dependency native HTTP client for Upstash Redis REST API.
+ * Eliminates missing package errors, zero cold-start delay, 100% Edge & Node.js compatible.
+ */
+class NativeUpstashRedis {
+  constructor(url, token) {
+    this.url = url.replace(/\/$/, '');
+    this.token = token;
+  }
+
+  async get(key) {
+    try {
+      const res = await fetch(`${this.url}/get/${encodeURIComponent(key)}`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+        cache: 'no-store'
+      });
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.result;
+    } catch {
+      return null;
+    }
+  }
+
+  async set(key, value, opts) {
+    try {
+      const valStr = typeof value === 'string' ? value : JSON.stringify(value);
+      const ex = opts?.ex;
+      const cmd = ex ? ['SET', key, valStr, 'EX', ex] : ['SET', key, valStr];
+      const res = await fetch(this.url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cmd),
+        cache: 'no-store'
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async del(...keys) {
+    try {
+      if (!keys.length) return true;
+      const cmd = ['DEL', ...keys];
+      const res = await fetch(this.url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(cmd),
+        cache: 'no-store'
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
 let redisClient = null;
 let redisChecked = false;
 
-async function getRedis() {
+function getRedis() {
   if (redisChecked) return redisClient;
   redisChecked = true;
   const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
   if (!url || !token) return null;
   try {
-    const { Redis } = await import(/* webpackIgnore: true */ '@upstash/redis');
-    redisClient = new Redis({ url, token });
+    redisClient = new NativeUpstashRedis(url, token);
     return redisClient;
   } catch (e) {
-    console.error('[Redis] Failed to initialize Upstash Redis:', e.message);
+    console.error('[Redis] Failed to initialize Native Upstash Redis:', e.message);
     return null;
   }
 }
@@ -214,68 +277,82 @@ async function firestoreRestCollection(path) {
 }
 
 
+const VERIFIED_DOMAIN_MAP = {
+  'camerakini.com': 'camerakini1-600',
+  'www.camerakini.com': 'camerakini1-600',
+  'messerbazar.com': 'messerbazar',
+  'www.messerbazar.com': 'messerbazar',
+  'messbazar.com': 'messerbazar',
+  'www.messbazar.com': 'messerbazar',
+  'choloshazi.com': 'choloshazi-374',
+  'www.choloshazi.com': 'choloshazi-374',
+};
+
 export async function getShopServer(slug) {
+  if (!slug) return null;
   const cacheKey = `shop_slug_${slug}`;
-  try {
-    const cached = getCached(cacheKey);
-    if (cached) return cached;
+  return dedupeRequest(cacheKey, async () => {
+    try {
+      const cached = getCached(cacheKey);
+      if (cached) return cached;
 
-    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
-    const redis = await getRedis();
-    if (redis) {
-      try {
-        const redisShop = await redis.get(`cache:shop_slug:${slug}`);
-        if (redisShop) {
-          const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
-          if (parsed && parsed.id) {
-            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
-            return parsed;
-          }
-        }
-      } catch (redisErr) {
-        console.warn('[Redis] shop_slug cache read error:', redisErr.message);
-      }
-    }
-
-    let shop = null;
-    if (adminDb) {
-      // Admin SDK path (preferred - when env vars are set)
-      const shopsRef = adminDb.collection('shops');
-      let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
-      if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
-      if (snap.empty) {
-        const doc = await shopsRef.doc(slug).get();
-        if (doc.exists) shop = { id: doc.id, ...toPlainObject(doc.data()) };
-      } else {
-        const doc = snap.docs[0];
-        shop = { id: doc.id, ...toPlainObject(doc.data()) };
-      }
-    } else {
-      // REST API fallback (when admin SDK env vars are missing)
-      console.log(`[getShopServer] Using REST API fallback for slug: ${slug}`);
-      shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', slug);
-      if (!shop) shop = await firestoreRestQuery('shops', 'shopSlug', 'EQUAL', slug);
-    }
-
-    if (shop) {
-      setCached(cacheKey, shop, CACHE_TTL_MONTH); // 1-month cache to eliminate read burn
+      // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+      const redis = getRedis();
       if (redis) {
         try {
-          await redis.set(`cache:shop_slug:${slug}`, JSON.stringify(shop), { ex: CACHE_TTL_MONTH });
-        } catch (_) {}
+          const redisShop = await redis.get(`cache:shop_slug:${slug}`);
+          if (redisShop) {
+            const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
+            if (parsed && parsed.id) {
+              setCached(cacheKey, parsed, CACHE_TTL_MONTH);
+              return parsed;
+            }
+          }
+        } catch (redisErr) {
+          console.warn('[Redis] shop_slug cache read error:', redisErr.message);
+        }
       }
+
+      let shop = null;
+      if (adminDb) {
+        // Admin SDK path (preferred - when env vars are set)
+        const shopsRef = adminDb.collection('shops');
+        let snap = await shopsRef.where('subdomainSlug', '==', slug).limit(1).get();
+        if (snap.empty) snap = await shopsRef.where('shopSlug', '==', slug).limit(1).get();
+        if (snap.empty) {
+          const doc = await shopsRef.doc(slug).get();
+          if (doc.exists) shop = { id: doc.id, ...toPlainObject(doc.data()) };
+        } else {
+          const doc = snap.docs[0];
+          shop = { id: doc.id, ...toPlainObject(doc.data()) };
+        }
+      } else {
+        // REST API fallback (when admin SDK env vars are missing)
+        console.log(`[getShopServer] Using REST API fallback for slug: ${slug}`);
+        shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', slug);
+        if (!shop) shop = await firestoreRestQuery('shops', 'shopSlug', 'EQUAL', slug);
+      }
+
+      if (shop) {
+        setCached(cacheKey, shop, CACHE_TTL_MONTH); // 1-month cache to eliminate read burn
+        if (redis) {
+          try {
+            await redis.set(`cache:shop_slug:${slug}`, JSON.stringify(shop), { ex: CACHE_TTL_MONTH });
+          } catch (_) {}
+        }
+      }
+      return shop || null;
+    } catch (err) {
+      console.error(`[getShopServer] Error:`, err);
+      // Return stale cache if available to prevent 404 during quota exhaustion
+      const stale = getCached(cacheKey, true);
+      if (stale) {
+        console.warn(`[getShopServer] Serving stale shop for slug "${slug}"`);
+        return stale;
+      }
+      return null;
     }
-    return shop || null;
-  } catch (err) {
-    console.error(`[getShopServer] Error:`, err);
-    // Return stale cache if available to prevent 404 during quota exhaustion
-    const stale = getCached(cacheKey, true);
-    if (stale) {
-      console.warn(`[getShopServer] Serving stale shop for slug "${slug}"`);
-      return stale;
-    }
-    return null;
-  }
+  });
 }
 
 export async function getShopByDomainServer(host) {
@@ -283,73 +360,80 @@ export async function getShopByDomainServer(host) {
   // Normalize host
   const normalizedHost = host.toLowerCase().trim().replace(/^www\./i, '');
   const lookupHost = normalizedHost === 'messbazar.com' ? 'messerbazar.com' : normalizedHost;
+
+  // ⚡ Static resolution for verified core domains (0ms, 0 reads, 100% reliable)
+  if (VERIFIED_DOMAIN_MAP[lookupHost] || VERIFIED_DOMAIN_MAP[normalizedHost]) {
+    const slug = VERIFIED_DOMAIN_MAP[lookupHost] || VERIFIED_DOMAIN_MAP[normalizedHost];
+    return getShopServer(slug);
+  }
+
   const cacheKey = `shop_domain_${lookupHost}`;
+  return dedupeRequest(cacheKey, async () => {
+    try {
+      const cached = getCached(cacheKey);
+      if (cached) return cached;
 
-  try {
-    const cached = getCached(cacheKey);
-    if (cached) return cached;
-
-    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
-    const redis = await getRedis();
-    if (redis) {
-      try {
-        const redisShop = await redis.get(`cache:shop_domain:${lookupHost}`);
-        if (redisShop) {
-          const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
-          if (parsed && parsed.id) {
-            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
-            return parsed;
-          }
-        }
-      } catch (_) {}
-    }
-
-    let shop = null;
-    if (adminDb) {
-      const shopsRef = adminDb.collection('shops');
-      let snap = await shopsRef.where('customDomain', '==', lookupHost).limit(1).get();
-      if (snap.empty) {
-        snap = await shopsRef.where('domains', 'array-contains', lookupHost).limit(1).get();
-      }
-      if (snap.empty) {
-        snap = await shopsRef.where('domains', 'array-contains', `www.${lookupHost}`).limit(1).get();
-      }
-      if (snap.empty) {
-        // Fallback to checking subdomain (e.g. messerbazar.daripallah.com -> messerbazar)
-        const subdomain = lookupHost.split('.')[0];
-        snap = await shopsRef.where('subdomainSlug', '==', subdomain).limit(1).get();
-      }
-      if (snap.empty) return null;
-      const doc = snap.docs[0];
-      shop = { id: doc.id, ...toPlainObject(doc.data()) };
-    } else {
-      console.log(`[getShopByDomainServer] Using REST API fallback for host: ${normalizedHost}`);
-      shop = await firestoreRestQuery('shops', 'customDomain', 'EQUAL', normalizedHost);
-      if (!shop) {
-        const subdomain = normalizedHost.split('.')[0];
-        shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', subdomain);
-      }
-    }
-
-    if (shop) {
-      setCached(cacheKey, shop, CACHE_TTL_MONTH); // 30-day cache to eliminate read burn
+      // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+      const redis = getRedis();
       if (redis) {
         try {
-          await redis.set(`cache:shop_domain:${lookupHost}`, JSON.stringify(shop), { ex: CACHE_TTL_MONTH });
+          const redisShop = await redis.get(`cache:shop_domain:${lookupHost}`);
+          if (redisShop) {
+            const parsed = typeof redisShop === 'string' ? JSON.parse(redisShop) : redisShop;
+            if (parsed && parsed.id) {
+              setCached(cacheKey, parsed, CACHE_TTL_MONTH);
+              return parsed;
+            }
+          }
         } catch (_) {}
       }
+
+      let shop = null;
+      if (adminDb) {
+        const shopsRef = adminDb.collection('shops');
+        let snap = await shopsRef.where('customDomain', '==', lookupHost).limit(1).get();
+        if (snap.empty) {
+          snap = await shopsRef.where('domains', 'array-contains', lookupHost).limit(1).get();
+        }
+        if (snap.empty) {
+          snap = await shopsRef.where('domains', 'array-contains', `www.${lookupHost}`).limit(1).get();
+        }
+        if (snap.empty) {
+          // Fallback to checking subdomain (e.g. messerbazar.daripallah.com -> messerbazar)
+          const subdomain = lookupHost.split('.')[0];
+          snap = await shopsRef.where('subdomainSlug', '==', subdomain).limit(1).get();
+        }
+        if (snap.empty) return null;
+        const doc = snap.docs[0];
+        shop = { id: doc.id, ...toPlainObject(doc.data()) };
+      } else {
+        console.log(`[getShopByDomainServer] Using REST API fallback for host: ${normalizedHost}`);
+        shop = await firestoreRestQuery('shops', 'customDomain', 'EQUAL', normalizedHost);
+        if (!shop) {
+          const subdomain = normalizedHost.split('.')[0];
+          shop = await firestoreRestQuery('shops', 'subdomainSlug', 'EQUAL', subdomain);
+        }
+      }
+
+      if (shop) {
+        setCached(cacheKey, shop, CACHE_TTL_MONTH); // 30-day cache to eliminate read burn
+        if (redis) {
+          try {
+            await redis.set(`cache:shop_domain:${lookupHost}`, JSON.stringify(shop), { ex: CACHE_TTL_MONTH });
+          } catch (_) {}
+        }
+      }
+      return shop || null;
+    } catch (err) {
+      console.error(`[getShopByDomainServer] Error:`, err);
+      const stale = getCached(cacheKey, true);
+      if (stale) {
+        console.warn(`[getShopByDomainServer] Serving stale shop for host "${host}"`);
+        return stale;
+      }
+      return null;
     }
-    return shop || null;
-  } catch (err) {
-    console.error(`[getShopByDomainServer] Error:`, err);
-    // Return stale cache if available to prevent 404 during quota exhaustion
-    const stale = getCached(cacheKey, true);
-    if (stale) {
-      console.warn(`[getShopByDomainServer] Serving stale shop for host "${host}"`);
-      return stale;
-    }
-    return null;
-  }
+  });
 }
 
 export async function getProductServer(shopId, productId) {
@@ -367,6 +451,32 @@ export async function getProductServer(shopId, productId) {
     }
   }
 
+  // ⚡ Check Redis single product cache and full shop cache first
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const redisSingle = await redis.get(`cache:product_${shopId}_${productId}`);
+      if (redisSingle) {
+        const parsed = typeof redisSingle === 'string' ? JSON.parse(redisSingle) : redisSingle;
+        if (parsed && parsed.id) {
+          setCached(cacheKey, parsed, CACHE_TTL_MONTH);
+          return parsed;
+        }
+      }
+      const redisProds = await redis.get(`cache:shop_products:${shopId}`);
+      if (redisProds) {
+        const parsed = typeof redisProds === 'string' ? JSON.parse(redisProds) : redisProds;
+        if (Array.isArray(parsed)) {
+          const found = parsed.find(p => p.id === productId);
+          if (found) {
+            setCached(cacheKey, found, CACHE_TTL_MONTH);
+            return found;
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   try {
     let product = null;
     if (adminDb) {
@@ -375,12 +485,25 @@ export async function getProductServer(shopId, productId) {
         product = { id: docSnap.id, ...toPlainObject(docSnap.data()) };
       }
     } else {
-      const allProds = await firestoreRestCollection(`shops/${shopId}/products`);
-      product = (allProds || []).find(p => p.id === productId) || null;
+      // ⚡ Single document REST query (NEVER scan the entire collection to find one product!)
+      const url = `${FIRESTORE_REST_BASE}/shops/${shopId}/products/${productId}`;
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const doc = await res.json();
+        product = { id: productId, ...fromFirestoreRest(doc.fields) };
+      }
     }
 
     if (product) {
       setCached(cacheKey, product, CACHE_TTL_MONTH);
+      if (redis) {
+        try {
+          await redis.set(`cache:product_${shopId}_${productId}`, JSON.stringify(product), { ex: CACHE_TTL_MONTH });
+        } catch (_) {}
+      }
     }
     return product;
   } catch (err) {
@@ -392,101 +515,105 @@ export async function getProductServer(shopId, productId) {
 export async function getProductsServer(shopId) {
   if (!shopId) return [];
   const cacheKey = `products_${shopId}`;
-  try {
-    const cached = getCached(cacheKey);
-    if (cached) return cached;
+  return dedupeRequest(cacheKey, async () => {
+    try {
+      const cached = getCached(cacheKey);
+      if (cached) return cached;
 
-    // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
-    const redis = await getRedis();
-    if (redis) {
-      try {
-        const redisProds = await redis.get(`cache:shop_products:${shopId}`);
-        if (redisProds) {
-          const parsed = typeof redisProds === 'string' ? JSON.parse(redisProds) : redisProds;
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
-            parsed.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
-            return parsed;
+      // ⚡ Check Upstash Redis serverless cache first (0 reads across all lambdas)
+      const redis = getRedis();
+      if (redis) {
+        try {
+          const redisProds = await redis.get(`cache:shop_products:${shopId}`);
+          if (redisProds) {
+            const parsed = typeof redisProds === 'string' ? JSON.parse(redisProds) : redisProds;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setCached(cacheKey, parsed, CACHE_TTL_MONTH);
+              parsed.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
+              return parsed;
+            }
           }
-        }
-      } catch (redisErr) { console.warn('[Redis] shop_products cache read error:', redisErr.message); }
-    }
+        } catch (redisErr) { console.warn('[Redis] shop_products cache read error:', redisErr.message); }
+      }
 
-    let products;
-    if (adminDb) {
-      const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
-      products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
-    } else {
-      console.log(`[getProductsServer] Using REST API fallback for shopId: ${shopId}`);
-      products = await firestoreRestCollection(`shops/${shopId}/products`);
-    }
-    products.sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA;
-    });
-    setCached(cacheKey, products, CACHE_TTL_MONTH); // 1-month cache to eliminate read burn
-    products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
+      let products;
+      if (adminDb) {
+        const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
+        products = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+      } else {
+        console.log(`[getProductsServer] Using REST API fallback for shopId: ${shopId}`);
+        products = await firestoreRestCollection(`shops/${shopId}/products`);
+      }
+      products.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+      setCached(cacheKey, products, CACHE_TTL_MONTH); // 1-month cache to eliminate read burn
+      products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
 
-    // Save to Redis (TTL 30 days = 0 reads across serverless lambdas)
-    if (redis && products.length > 0) {
-      try {
-        await redis.set(`cache:shop_products:${shopId}`, JSON.stringify(products), { ex: CACHE_TTL_MONTH });
-      } catch (_) {}
-    }
+      // Save to Redis (TTL 30 days = 0 reads across serverless lambdas)
+      if (redis && products.length > 0) {
+        try {
+          await redis.set(`cache:shop_products:${shopId}`, JSON.stringify(products), { ex: CACHE_TTL_MONTH });
+        } catch (_) {}
+      }
 
-    return products;
-  } catch (err) {
-    console.error(`[getProductsServer] Error:`, err);
-    const stale = getCached(cacheKey, true);
-    if (stale) {
-      console.warn(`[getProductsServer] Serving stale products for shopId "${shopId}"`);
-      return stale;
+      return products;
+    } catch (err) {
+      console.error(`[getProductsServer] Error:`, err);
+      const stale = getCached(cacheKey, true);
+      if (stale) {
+        console.warn(`[getProductsServer] Serving stale products for shopId "${shopId}"`);
+        return stale;
+      }
+      return [];
     }
-    return [];
-  }
+  });
 }
 
 export async function getCategoriesServer(shopId) {
-  try {
-    if (!shopId) return [];
-    const cacheKey = `categories_${shopId}`;
-    const cached = getCached(cacheKey);
-    if (cached) return cached;
+  if (!shopId) return [];
+  const cacheKey = `categories_${shopId}`;
+  return dedupeRequest(cacheKey, async () => {
+    try {
+      const cached = getCached(cacheKey);
+      if (cached) return cached;
 
-    // ⚡ Check Upstash Redis serverless cache
-    const redis = await getRedis();
-    if (redis) {
-      try {
-        const redisCats = await redis.get(`cache:shop_categories:${shopId}`);
-        if (redisCats) {
-          const parsed = typeof redisCats === 'string' ? JSON.parse(redisCats) : redisCats;
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCached(cacheKey, parsed, CACHE_TTL_MONTH);
-            return parsed;
+      // ⚡ Check Upstash Redis serverless cache
+      const redis = getRedis();
+      if (redis) {
+        try {
+          const redisCats = await redis.get(`cache:shop_categories:${shopId}`);
+          if (redisCats) {
+            const parsed = typeof redisCats === 'string' ? JSON.parse(redisCats) : redisCats;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setCached(cacheKey, parsed, CACHE_TTL_MONTH);
+              return parsed;
+            }
           }
-        }
-      } catch (_) {}
-    }
+        } catch (_) {}
+      }
 
-    let categories;
-    if (adminDb) {
-      const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
-      categories = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
-    } else {
-      categories = await firestoreRestCollection(`shops/${shopId}/categories`);
+      let categories;
+      if (adminDb) {
+        const snap = await adminDb.collection('shops').doc(shopId).collection('categories').get();
+        categories = snap.docs.map(doc => ({ id: doc.id, ...toPlainObject(doc.data()) }));
+      } else {
+        categories = await firestoreRestCollection(`shops/${shopId}/categories`);
+      }
+      setCached(cacheKey, categories, CACHE_TTL_MONTH);
+      if (redis && categories.length > 0) {
+        try {
+          await redis.set(`cache:shop_categories:${shopId}`, JSON.stringify(categories), { ex: CACHE_TTL_MONTH });
+        } catch (_) {}
+      }
+      return categories;
+    } catch (err) {
+      console.error(`[getCategoriesServer] Error:`, err);
+      return [];
     }
-    setCached(cacheKey, categories, CACHE_TTL_MONTH);
-    if (redis && categories.length > 0) {
-      try {
-        await redis.set(`cache:shop_categories:${shopId}`, JSON.stringify(categories), { ex: CACHE_TTL_MONTH });
-      } catch (_) {}
-    }
-    return categories;
-  } catch (err) {
-    console.error(`[getCategoriesServer] Error:`, err);
-    return [];
-  }
+  });
 }
 
 export async function getGlobalConfigServer() {

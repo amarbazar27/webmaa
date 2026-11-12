@@ -58,7 +58,9 @@ const BLOCKED_SEO_BOTS = [
   'ahrefsbot', 'semrushbot', 'mj12bot', 'dotbot', 'blexbot',
   'dataforseobot', 'serpstatbot', 'bytespider', 'petalbot',
   'yandexbot', 'megaindex', 'baiduspider', 'sogou',
-  'zoominfobot', 'pandalytics'
+  'zoominfobot', 'pandalytics', 'turnitin', 'screaming frog',
+  'sitebulb', 'seokicks', 'crawler4j', 'trendictionbot',
+  'seznambot', 'coccocbot', 'linkdexbot', 'spbot'
 ];
 
 function isBlockedSeoBot(ua: string): boolean {
@@ -206,7 +208,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     if (pathname.startsWith('/api/') &&
         !pathname.includes('manifest') &&
         !pathname.includes('health') &&
-        !pathname.includes('marketplace/products') &&
         !pathname.includes('sitemap')) {
       return applySecurityHeaders(
         NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
@@ -278,6 +279,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const isFaviconOrLogo = pathname === '/favicon.ico' || pathname === '/logo.png';
   if (isFaviconOrLogo && !isBypassHost(host)) {
     let slug = VERIFIED_DOMAIN_MAP[host] || VERIFIED_DOMAIN_MAP[cleanRawHost] || getTenantSlug(rawHost);
+    if (!slug) {
+      const cached = domainCache.get(host);
+      if (cached?.slug) slug = cached.slug;
+    }
     if (slug) {
       const targetPath = `/shop/${slug}${pathname}`;
       const rewriteUrl = new URL(targetPath, request.url);
@@ -285,27 +290,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
     }
     
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bdretailers.com';
-      const lookupUrl = new URL('/api/domain-lookup', baseUrl);
-      lookupUrl.searchParams.set('host', host);
-      const lookupResponse = await fetch(lookupUrl.toString(), {
-        method: 'GET',
-        headers: { 'x-internal-token': process.env.INTERNAL_PROXY_SECRET ?? '' },
-        cache: 'no-store',
-      });
-      if (lookupResponse.ok) {
-        const data = await lookupResponse.json();
-        if (data.slug) {
-          const targetPath = `/shop/${data.slug}${pathname}`;
-          const rewriteUrl = new URL(targetPath, request.url);
-          if (isDev) console.log(`[Proxy] Custom domain favicon/logo rewrite: ${targetPath}`);
-          return applySecurityHeaders(NextResponse.rewrite(rewriteUrl), pathname);
-        }
-      }
-    } catch (err) {
-      console.error('[Proxy] Favicon lookup failed:', err);
-    }
+    // For unknown hosts, fallback to default static favicon/logo without blocking fetch
+    return applySecurityHeaders(NextResponse.next(), pathname);
   }
 
   // ── Common static bypass paths for all hosts ──────────────────────────

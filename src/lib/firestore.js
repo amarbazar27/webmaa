@@ -260,22 +260,36 @@ export const getProduct = async (shopId, productId) => {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 };
 
+const triggerServerRevalidation = (shopId) => {
+  if (typeof window !== 'undefined' && shopId) {
+    try {
+      fetch(`/api/revalidate?shopId=${encodeURIComponent(shopId)}`).catch(() => {});
+    } catch (_) {}
+  }
+};
+
 export const addProduct = async (shopId, productData) => {
-  return addDoc(collection(db, 'shops', shopId, 'products'), {
+  const res = await addDoc(collection(db, 'shops', shopId, 'products'), {
     ...productData,
     createdAt: serverTimestamp(),
   });
+  triggerServerRevalidation(shopId);
+  return res;
 };
 
 export const updateProduct = async (shopId, productId, data) => {
-  return updateDoc(doc(db, 'shops', shopId, 'products', productId), {
+  const res = await updateDoc(doc(db, 'shops', shopId, 'products', productId), {
     ...data,
     updatedAt: serverTimestamp(),
   });
+  triggerServerRevalidation(shopId);
+  return res;
 };
 
 export const deleteProduct = async (shopId, productId) => {
-  return deleteDoc(doc(db, 'shops', shopId, 'products', productId));
+  const res = await deleteDoc(doc(db, 'shops', shopId, 'products', productId));
+  triggerServerRevalidation(shopId);
+  return res;
 };
 
 export const bulkDeleteProducts = async (shopId, productIds) => {
@@ -289,6 +303,7 @@ export const bulkDeleteProducts = async (shopId, productIds) => {
     }
     await batch.commit();
   }
+  triggerServerRevalidation(shopId);
 };
 
 export const bulkUpdateProductsCategory = async (shopId, productIds, category) => {
@@ -300,11 +315,12 @@ export const bulkUpdateProductsCategory = async (shopId, productIds, category) =
     for (const id of chunk) {
       batch.update(doc(db, 'shops', shopId, 'products', id), {
         category,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       });
     }
     await batch.commit();
   }
+  triggerServerRevalidation(shopId);
 };
 
 export const bulkUpdateProductsStock = async (shopId, productIds, stock) => {
@@ -1314,32 +1330,11 @@ export const getAllMarketplaceProducts = async () => {
     } catch (_) {}
   }
 
-  // Fallback to bounded collection reads if API unavailable
-  try {
-    const shops = await getAllVisibleShops();
-    const productArrays = await Promise.all(
-      shops.slice(0, 30).map(async (shop) => {
-        const prods = await getShopProducts(shop.id);
-        return prods.map(p => ({
-          ...p,
-          shopId: shop.id,
-          shopName: shop.shopName || '',
-          shopSlug: shop.subdomainSlug || shop.shopSlug || '',
-          shopLogoUrl: shop.logoUrl || '',
-          deliveryConfig: shop.deliveryConfig || {},
-          customDomain: shop.customDomain || '',
-          domainStatus: shop.domainStatus || '',
-        }));
-      })
-    );
-    const flat = productArrays.flat();
-    clientMarketplaceCache.data = flat;
-    clientMarketplaceCache.timestamp = Date.now();
-    return flat;
-  } catch (err) {
-    if (clientMarketplaceCache.data) return clientMarketplaceCache.data;
-    return [];
+  // Fail-safe fallback if API is temporarily unavailable (Never burn thousands of reads across 30 shops)
+  if (clientMarketplaceCache.data && clientMarketplaceCache.data.length > 0) {
+    return clientMarketplaceCache.data;
   }
+  return [];
 };
 
 export const toggleShopMainSiteVisibility = async (shopId, visible) => {
