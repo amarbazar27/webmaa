@@ -55,15 +55,31 @@ export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
     if (typeof document !== 'undefined') {
       document.documentElement.classList.remove('dark', 'light');
       document.documentElement.classList.add(init);
+      document.documentElement.style.colorScheme = init;
+      let metaColorScheme = document.querySelector('meta[name="color-scheme"]');
+      if (!metaColorScheme) {
+        metaColorScheme = document.createElement('meta');
+        metaColorScheme.name = 'color-scheme';
+        document.head.appendChild(metaColorScheme);
+      }
+      metaColorScheme.content = init;
     }
   }, [shopId, shopTheme]);
 
-  // Apply class to <html>
+  // Apply class and color-scheme to <html>
   useEffect(() => {
     if (!mounted || typeof document === 'undefined') return;
     const root = document.documentElement;
     root.classList.remove('dark', 'light');
     root.classList.add(theme);
+    root.style.colorScheme = theme;
+    let metaColorScheme = document.querySelector('meta[name="color-scheme"]');
+    if (!metaColorScheme) {
+      metaColorScheme = document.createElement('meta');
+      metaColorScheme.name = 'color-scheme';
+      document.head.appendChild(metaColorScheme);
+    }
+    metaColorScheme.content = theme;
   }, [theme, mounted]);
 
   const setTheme = useCallback((newTheme) => {
@@ -77,6 +93,14 @@ export function ThemeProvider({ children, shopId = null, shopTheme = null }) {
       const root = document.documentElement;
       root.classList.remove('dark', 'light');
       root.classList.add(newTheme);
+      root.style.colorScheme = newTheme;
+      let metaColorScheme = document.querySelector('meta[name="color-scheme"]');
+      if (!metaColorScheme) {
+        metaColorScheme = document.createElement('meta');
+        metaColorScheme.name = 'color-scheme';
+        document.head.appendChild(metaColorScheme);
+      }
+      metaColorScheme.content = newTheme;
     }
   }, [STORAGE_KEY]);
 

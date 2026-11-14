@@ -430,7 +430,7 @@ export default function SuperadminPricingCustomizer({ globalConfig = {} }) {
               type="text"
               value={newLineText}
               onChange={(e) => setNewLineText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddFeatureLine()}
+              onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && e.keyCode !== 229 && handleAddFeatureLine()}
               placeholder="নতুন ফিচার লাইনের বিবরণ লিখুন (যেমন: '🌐 ফ্রি কাস্টম ডোমেন কানেকশন')..."
               className="flex-1 px-4 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-none focus:border-purple-600"
             />
@@ -464,7 +464,7 @@ export default function SuperadminPricingCustomizer({ globalConfig = {} }) {
                           type="text"
                           value={editingLineText}
                           onChange={(e) => setEditingLineText(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSaveEditLine()}
+                          onKeyDown={(e) => e.key === 'Enter' && !e.isComposing && e.keyCode !== 229 && handleSaveEditLine()}
                           autoFocus
                           className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-purple-500 focus:outline-none bg-white"
                         />

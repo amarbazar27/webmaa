@@ -1,6 +1,6 @@
 import { getShopByDomainServer } from '@/lib/server-fetch';
 
-export const revalidate = 2592000;
+export const revalidate = 604800; // 7 days
 
 const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'freeappweb.com', 'localhost', '127.0.0.1'];
 
@@ -16,12 +16,10 @@ export async function GET(request) {
   const baseUrl = `${protocol}://${host}`;
   const currentDate = new Date().toISOString();
 
-  // If it's a retailer's custom domain, we check if the shop exists
   let isRetailer = !isMainSiteHost(host);
   if (isRetailer) {
     const shop = await getShopByDomainServer(host);
     if (!shop) {
-      // Fallback to main site if shop not found
       isRetailer = false;
     }
   }
@@ -49,7 +47,10 @@ export async function GET(request) {
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=2592000',
+      'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000',
+      'CDN-Cache-Control': 'public, max-age=604800',
+      'Vercel-CDN-Cache-Control': 'public, max-age=604800',
+      'Cloudflare-CDN-Cache-Control': 'public, max-age=604800',
     },
   });
 }

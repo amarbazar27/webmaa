@@ -57,7 +57,7 @@ function EditableCell({ value, onSave, type = 'text', prefix = '', className = '
         value={val}
         onChange={e => setVal(e.target.value)}
         onBlur={handleSave}
-        onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') { setVal(value); setEditing(false); } }}
+        onKeyDown={e => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) handleSave(); if (e.key === 'Escape') { setVal(value); setEditing(false); } }}
         className={`bg-purple-50 border border-purple-300 rounded-lg px-2 py-1 text-slate-900 font-bold outline-none w-full min-w-0 ${className}`}
       />
     );

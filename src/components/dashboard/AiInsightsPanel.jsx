@@ -239,7 +239,7 @@ export default function AiInsightsPanel({ orders = [], products = [], shopName =
                                 handleStockUpdate(product.id, finalVal);
                               }}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) {
                                   e.preventDefault();
                                   const finalVal = Math.max(0, parseInt(e.currentTarget.value, 10) || 0);
                                   handleStockUpdate(product.id, finalVal);

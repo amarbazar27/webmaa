@@ -536,6 +536,21 @@ export async function getProductsServer(shopId) {
         } catch (redisErr) { console.warn('[Redis] shop_products cache read error:', redisErr.message); }
       }
 
+      // ⚡ Check Persistent Firestore system_cache (1 single read on cold start instead of collection scan!)
+      if (adminDb) {
+        try {
+          const cacheSnap = await adminDb.collection('system_cache').doc(`products_${shopId}`).get();
+          if (cacheSnap.exists) {
+            const data = cacheSnap.data();
+            if (data && Array.isArray(data.products) && data.expiresAt > Date.now()) {
+              setCached(cacheKey, data.products, CACHE_TTL_MONTH);
+              data.products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
+              return data.products;
+            }
+          }
+        } catch (_) {}
+      }
+
       let products;
       if (adminDb) {
         const snap = await adminDb.collection('shops').doc(shopId).collection('products').get();
@@ -551,6 +566,28 @@ export async function getProductsServer(shopId) {
       });
       setCached(cacheKey, products, CACHE_TTL_MONTH); // 1-month cache to eliminate read burn
       products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
+
+      // Save to Persistent Firestore Cache (TTL 7 days — 1 single read on subsequent cold starts)
+      if (adminDb && products.length > 0) {
+        const compact = products.map(p => ({
+          id: p.id,
+          name: p.name || '',
+          price: p.price || 0,
+          imageUrl: p.imageUrl || '',
+          category: p.category || '',
+          subcategory: p.subcategory || '',
+          stock: p.stock ?? null,
+          variants: p.variants || [],
+          sizes: p.sizes || [],
+          allowCustomize: p.allowCustomize || false,
+          createdAt: p.createdAt || null,
+        }));
+        adminDb.collection('system_cache').doc(`products_${shopId}`).set({
+          products: compact,
+          updatedAt: Date.now(),
+          expiresAt: Date.now() + 7 * 86400 * 1000,
+        }).catch(() => {});
+      }
 
       // Save to Redis (TTL 30 days = 0 reads across serverless lambdas)
       if (redis && products.length > 0) {
@@ -663,6 +700,20 @@ export async function getAllShopsServer() {
         } catch (_) {}
       }
 
+      // ⚡ Check Persistent Firestore system_cache (1 read on cold start instead of collection scan)
+      if (adminDb) {
+        try {
+          const cacheSnap = await adminDb.collection('system_cache').doc('all_shops').get();
+          if (cacheSnap.exists) {
+            const data = cacheSnap.data();
+            if (data && Array.isArray(data.shops) && data.expiresAt > Date.now()) {
+              setCached(cacheKey, data.shops, CACHE_TTL_MONTH);
+              return data.shops;
+            }
+          }
+        } catch (_) {}
+      }
+
       let shops = [];
       if (adminDb) {
         const snap = await adminDb.collection('shops').get();
@@ -671,6 +722,15 @@ export async function getAllShopsServer() {
         shops = await firestoreRestCollection('shops') || [];
       }
       setCached(cacheKey, shops, CACHE_TTL_MONTH);
+
+      // Save to Persistent Firestore Cache (TTL 7 days — 1 read on subsequent cold starts)
+      if (adminDb && shops.length > 0) {
+        adminDb.collection('system_cache').doc('all_shops').set({
+          shops,
+          updatedAt: Date.now(),
+          expiresAt: Date.now() + 7 * 86400 * 1000,
+        }).catch(() => {});
+      }
 
       // Save to Redis (TTL 30 days = 0 reads across serverless lambdas)
       if (redis && shops.length > 0) {
@@ -711,12 +771,42 @@ export async function getAllMarketplaceProductsServer() {
         } catch (_) {}
       }
 
-      const shops = await getAllShopsServer();
-      const activeShops = shops.filter(s => s.isActive !== false && s.showOnMainSite !== false);
+      // ⚡ Check Persistent Firestore system_cache (1 single read on cold start instead of 1,564 reads!)
+      if (adminDb) {
+        try {
+          const cacheSnap = await adminDb.collection('system_cache').doc('all_marketplace_products').get();
+          if (cacheSnap.exists) {
+            const data = cacheSnap.data();
+            if (data && Array.isArray(data.products) && data.expiresAt > Date.now()) {
+              setCached(cacheKey, data.products, CACHE_TTL_MONTH);
+              return data.products;
+            }
+          }
+        } catch (_) {}
+      }
+
+      const [shops, globalConfig] = await Promise.all([
+        getAllShopsServer(),
+        getGlobalConfigServer()
+      ]);
+
+      const activeShops = (shops || []).filter(s => s.isActive !== false && s.showOnMainSite !== false);
+
+      // ⚡ Respect SuperAdmin Showcase Curation: NEVER scan thousands of products from non-curated shops!
+      const isCurationActive = globalConfig?.showcaseCuration?.enabled === true;
+      const allowedShopsList = Array.isArray(globalConfig?.showcaseCuration?.allowedShops) ? globalConfig.showcaseCuration.allowedShops : [];
+
+      let targetShops = activeShops;
+      if (isCurationActive && allowedShopsList.length > 0) {
+        targetShops = activeShops.filter(s =>
+          allowedShopsList.includes(s.id) || allowedShopsList.includes(s.shopSlug) || allowedShopsList.includes(s.shopName)
+        );
+      }
+
       const productArrays = await Promise.all(
-        activeShops.map(async (shop) => {
+        targetShops.map(async (shop) => {
           const prods = await getProductsServer(shop.id);
-          return prods.map(p => ({
+          return (prods || []).map(p => ({
             ...p,
             shopId: shop.id,
             shopName: shop.shopName || '',
@@ -727,6 +817,28 @@ export async function getAllMarketplaceProductsServer() {
       );
       const flat = productArrays.flat();
       setCached(cacheKey, flat, CACHE_TTL_MONTH); // 30-day in-memory cache
+
+      // Save to Persistent Firestore Cache (Single document snapshot: 1 read on subsequent cold starts!)
+      if (adminDb && flat.length > 0) {
+        const compactFlat = flat.slice(0, 500).map(p => ({
+          id: p.id,
+          name: p.name || '',
+          price: p.price || 0,
+          imageUrl: p.imageUrl || '',
+          category: p.category || '',
+          subcategory: p.subcategory || '',
+          stock: p.stock ?? null,
+          shopId: p.shopId || '',
+          shopName: p.shopName || '',
+          shopSlug: p.shopSlug || '',
+          customDomain: p.customDomain || '',
+        }));
+        adminDb.collection('system_cache').doc('all_marketplace_products').set({
+          products: compactFlat,
+          updatedAt: Date.now(),
+          expiresAt: Date.now() + 7 * 86400 * 1000,
+        }).catch(() => {});
+      }
 
       // Save to Redis (TTL 30 days)
       if (redis && flat.length > 0) {
@@ -746,9 +858,9 @@ export async function getAllMarketplaceProductsServer() {
 }
 
 /**
- * ⚡ Instant Cache Invalidator: Purges in-memory and Redis caches for a shop.
+ * ⚡ Instant Cache Invalidator: Purges in-memory, Redis, and Firestore system_cache.
  * Guarantees zero stale data after product or settings updates while maintaining
- * 30-day 0-read cache during steady-state browsing.
+ * 0-read cache during steady-state browsing.
  */
 export async function invalidateShopCache(shopId, slug) {
   try {
@@ -763,6 +875,17 @@ export async function invalidateShopCache(shopId, slug) {
     memoryCache.delete('all_marketplace_products');
     memoryCache.delete('all_shops');
     memoryCache.delete('global_config');
+
+    if (adminDb) {
+      const keysToPurge = ['all_marketplace_products', 'all_shops'];
+      if (shopId) keysToPurge.push(`products_${shopId}`);
+      await Promise.allSettled(
+        keysToPurge.map(k => adminDb.collection('system_cache').doc(k).delete())
+      );
+      // Invalidate sitemaps as well
+      const { invalidateSitemapCache } = await import('./sitemap-cache');
+      await invalidateSitemapCache();
+    }
 
     const redis = await getRedis();
     if (redis) {

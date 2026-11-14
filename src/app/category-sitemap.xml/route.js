@@ -1,8 +1,7 @@
-// ⚡ In-memory sitemap cache (eliminates thousands of Firestore reads per day from search engine crawlers)
-const sitemapCacheMap = new Map();
-import { getShopByDomainServer, getProductsServer, getAllMarketplaceProductsServer } from '@/lib/server-fetch';
+import { getShopByDomainServer, getCategoriesServer, getAllShopsServer } from '@/lib/server-fetch';
+import { getCachedSitemapXml } from '@/lib/sitemap-cache';
 
-export const revalidate = 2592000;
+export const revalidate = 604800; // 7 days
 
 const BYPASS_HOSTS = ['webmaa.vercel.app', 'daripallah.com', 'bdretailers.com', 'freeappweb.com', 'localhost', '127.0.0.1'];
 
@@ -28,78 +27,53 @@ function escapeXml(unsafe) {
 
 export async function GET(request) {
   const host = request.headers.get('host') || 'bdretailers.com';
-  const cachedSitemap = sitemapCacheMap.get(host);
-  if (cachedSitemap && Date.now() < cachedSitemap.expiresAt) {
-    return new Response(cachedSitemap.xml, {
-      headers: {
-        'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=2592000',
-      },
-    });
-  }
-
   const protocol = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
   const baseUrl = `${protocol}://${host}`;
-  let xmlItems = '';
-
   const isRetailer = !isMainSiteHost(host);
 
-  try {
-    let products = [];
-    if (isRetailer) {
-      const shop = await getShopByDomainServer(host);
-      if (shop) {
-        products = await getProductsServer(shop.id);
+  // ⚡ 2-Tier Persistent Sitemap Cache: 0 reads on warm lambda, 1 read on serverless cold start!
+  const xml = await getCachedSitemapXml(host, 'category', async () => {
+    let xmlItems = '';
+    try {
+      if (isRetailer) {
+        const shop = await getShopByDomainServer(host);
+        if (shop) {
+          // ⚡ Reads categories subcollection (5-10 docs) instead of scanning thousands of products!
+          const categories = await getCategoriesServer(shop.id);
+          (categories || []).forEach((cat) => {
+            const catName = cat.name || cat.id;
+            if (!catName) return;
+            const url = `${baseUrl}/?category=${encodeURIComponent(catName)}`;
+            xmlItems += `  <url>\n    <loc>${escapeXml(url)}</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+          });
+        }
+      } else {
+        // Main platform category index: aggregate shop categories (0 product scans)
+        const shops = await getAllShopsServer();
+        const activeShops = (shops || []).filter(s => s.isActive !== false && s.showOnMainSite !== false);
+        const allCatArrays = await Promise.all(
+          activeShops.map(s => getCategoriesServer(s.id))
+        );
+        const uniqueNames = Array.from(new Set(allCatArrays.flat().map(c => c.name || c.id).filter(Boolean)));
+        uniqueNames.forEach((name) => {
+          const url = `${baseUrl}/showcase?category=${encodeURIComponent(name)}`;
+          xmlItems += `  <url>\n    <loc>${escapeXml(url)}</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+        });
       }
-    } else {
-      // ⚡ Server-only: NEVER fallback to client-side Firestore (was burning reads from bot crawls)
-      products = await getAllMarketplaceProductsServer() || [];
+    } catch (error) {
+      console.error("Category Sitemap Generation Error:", error);
     }
 
-    // Unique Categories
-    const uniqueCategories = Array.from(new Set(products.map(p => p.category).filter(Boolean)));
-    uniqueCategories.forEach((cat) => {
-      const url = `${baseUrl}/?category=${encodeURIComponent(cat)}`;
-      const escapedUrl = escapeXml(url);
-      xmlItems += `  <url>
-    <loc>${escapedUrl}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>\n`;
-    });
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${xmlItems}</urlset>`;
+  });
 
-    // Unique Subcategories
-    const uniqueSubcombo = Array.from(
-      new Set(
-        products.map(p => p.category && p.subcategory ? `${p.category}|||${p.subcategory}` : null).filter(Boolean)
-      )
-    );
-
-    uniqueSubcombo.forEach((combo) => {
-      const [cat, subcat] = combo.split('|||');
-      const url = `${baseUrl}/?category=${encodeURIComponent(cat)}&subcategory=${encodeURIComponent(subcat)}`;
-      const escapedUrl = escapeXml(url);
-      xmlItems += `  <url>
-    <loc>${escapedUrl}</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>\n`;
-    });
-  } catch (error) {
-    console.error("Category Sitemap Generation Error:", error);
-  }
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${xmlItems}</urlset>`;
-
-  sitemapCacheMap.set(host, { xml, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=2592000',
+      'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=2592000',
+      'CDN-Cache-Control': 'public, max-age=604800',
+      'Vercel-CDN-Cache-Control': 'public, max-age=604800',
+      'Cloudflare-CDN-Cache-Control': 'public, max-age=604800',
     },
   });
 }

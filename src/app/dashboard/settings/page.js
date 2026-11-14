@@ -2518,7 +2518,7 @@ export default function SettingsPage() {
                              placeholder="ছবির URL দিন বা ডান পাশের আপলোড বাটনে ক্লিক করুন"
                              className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-purple-600 text-slate-900"
                              onKeyDown={e => {
-                               if (e.key === 'Enter' && e.target.value.trim() && (loadingMedia.posters?.length || 0) < 5) {
+                               if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229 && e.target.value.trim() && (loadingMedia.posters?.length || 0) < 5) {
                                  setLoadingMedia(prev => ({...prev, posters: [...(prev.posters || []), e.target.value.trim()]}));
                                  e.target.value = '';
                                }
@@ -2562,7 +2562,7 @@ export default function SettingsPage() {
                              onChange={e => setNewLoadingText(e.target.value)}
                              className="flex-1 bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-purple-600 text-slate-900"
                              onKeyDown={e => {
-                               if (e.key === 'Enter' && newLoadingText.trim() && (loadingMedia.texts?.length || 0) < 6) {
+                               if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229 && newLoadingText.trim() && (loadingMedia.texts?.length || 0) < 6) {
                                  setLoadingMedia(prev => ({...prev, texts: [...(prev.texts || []), newLoadingText.trim()]}));
                                  setNewLoadingText('');
                                }

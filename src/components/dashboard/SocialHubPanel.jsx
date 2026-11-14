@@ -1106,7 +1106,7 @@ function UnifiedInboxSection({ shopId, conversations, isAiGloballyPaused, onRefr
                     onChange={e => setReplyText(e.target.value)}
                     placeholder="মেসেজ লিখুন (অথবা শুধু '.' লিখে এন্টার দিলে AI বিরতিতে যাবে)..."
                     className="flex-1 p-3 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-purple-600 outline-none transition-colors"
-                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229 && handleSend()}
                   />
                   <Button onClick={handleSend} loading={sending} className="!p-3 !bg-purple-600 text-white cursor-pointer">
                     <Send size={16} />
