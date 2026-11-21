@@ -125,3 +125,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # 🛡️ Cloudflare Security Audit Protocol
 - Enforce 6-phase evidence-based vulnerability hunting on sensitive endpoints: Reconnaissance, Coverage-Led Hunting, Adversarial Validation, Strict Schema, Independent Verification, and Hardened Defense (HMAC verification, rate limiting, and sanitized inputs).
+
+# 🌐 Google Chrome Modern Web Guidance (MWG) & Baseline Standards
+- Registered skill located at `.agents/skills/modern-web-guidance/SKILL.md` (`googlechrome/modern-web-guidance`).
+- **Core Web Vitals**: Maintain sub-second LCP, zero CLS via explicit aspect ratios (`aspect-square`), and smooth 60fps interaction responsiveness.
+- **CSS Touch & Gesture**: Always apply `touch-action: pan-y` on swipeable product carousels to prevent touch cancellation and browser back-swipe interference.
+- **Virtual DOM Protection**: NEVER remove React-managed `<head>` nodes (such as `<link rel="icon">`) via raw `el.remove()`. Direct DOM removal causes fatal `Cannot read properties of null (reading 'removeChild')` crashes during React component unmount / navigation.
+- **IME-Safe Inputs**: Any keyboard `Enter` listener must be guarded with `!e.isComposing && e.keyCode !== 229` to support Bengali Avro phonetic input without premature form submission.
+

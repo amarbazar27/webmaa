@@ -83,6 +83,7 @@ import ProductQuantity from '@/features/product/components/ProductQuantity';
 import AiCustomization from '@/features/product/components/AiCustomization';
 import SmartCalculator from '@/features/product/components/SmartCalculator';
 import ProductActions from '@/features/product/components/ProductActions';
+import StorefrontProductCardImage from '@/components/shared/StorefrontProductCardImage';
 
 import { sanitizeProductData } from '@/features/product/utils/safeObjects';
 import { calculateBasePrice } from '@/features/product/utils/price';
@@ -690,29 +691,17 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
       const rawLogo = shop?.faviconUrl || shop?.logoUrl;
       const faviconUrl = rawLogo || svgFavicon;
 
-      // Remove all existing icon links to prevent any conflict or caching of the main site icon
-      const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");
-      existingIcons.forEach(el => el.remove());
-
-      // Create new clean favicon link
-      const iconLink = document.createElement('link');
-      iconLink.rel = 'icon';
-      iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
-      iconLink.href = faviconUrl;
-      document.head.appendChild(iconLink);
-
-      // Create new clean shortcut icon link
-      const shortcutLink = document.createElement('link');
-      shortcutLink.rel = 'shortcut icon';
-      shortcutLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
-      shortcutLink.href = faviconUrl;
-      document.head.appendChild(shortcutLink);
-
-      // Create new clean apple touch icon link
-      const appleLink = document.createElement('link');
-      appleLink.rel = 'apple-touch-icon';
-      appleLink.href = rawLogo || faviconUrl;
-      document.head.appendChild(appleLink);
+      // Safely update favicon href without deleting React-managed DOM nodes (prevents React removeChild crash)
+      const existingIcon = document.querySelector("link[rel*='icon']");
+      if (existingIcon) {
+        existingIcon.href = faviconUrl;
+      } else {
+        const iconLink = document.createElement('link');
+        iconLink.rel = 'icon';
+        iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
+        iconLink.href = faviconUrl;
+        document.head.appendChild(iconLink);
+      }
 
       // 3. Cache shop logo and name for instant loading page display
       if (shop.shopSlug || shop.subdomainSlug) {
@@ -759,10 +748,20 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   // Navigate to dedicated product detail page instead of floating modal
   const navigateToProduct = useCallback((product) => {
     if (!product?.id) return;
-    const slug = shop?.shopSlug || shop?.subdomainSlug || safeShopId;
-    if (!slug) return;
+    const isCustomDomain = typeof window !== 'undefined' && 
+      window.location.hostname !== 'localhost' && 
+      !window.location.hostname.includes('bdretailers.com') &&
+      !window.location.hostname.includes('vercel.app');
+
     trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
-    router.push(`/shop/${slug}/product/${product.id}`);
+    
+    if (isCustomDomain) {
+      router.push(`/product/${product.id}`);
+    } else {
+      const slug = shop?.shopSlug || shop?.subdomainSlug || safeShopId;
+      if (!slug) return;
+      router.push(`/shop/${slug}/product/${product.id}`);
+    }
   }, [shop?.shopSlug, shop?.subdomainSlug, safeShopId, router]);
 
   useEffect(() => {
@@ -3463,33 +3462,15 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 catStyle === 'electronics' ? 'bg-white text-slate-900 border-blue-200 hover:border-blue-500' :
                 'bg-white text-slate-900 border-slate-200'
               }`}>
-                <div 
-                  className="relative h-40 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
-                  onClick={() => {
-                    trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
-                    navigateToProduct(product);
+                <StorefrontProductCardImage
+                  product={product}
+                  priority={index < 4}
+                  className="h-40 sm:h-52"
+                  onNavigate={(prod) => {
+                    trackStoreEvent('select_content', { content_type: 'product', item_id: prod.id, name: prod.name });
+                    navigateToProduct(prod);
                   }}
-                >
-                  {(product.images?.[0] || product.imageUrl) ? (
-                    <Image 
-                      src={product.images?.[0] || product.imageUrl} 
-                      alt={product.name} 
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      priority={index < 4}
-                      className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                  ) : (
-                    <div className={`w-full h-full flex items-center justify-center p-4 text-center ${getFallbackColor(product.name)}`}>
-                      <h3 className="text-xl md:text-2xl font-black text-white drop-shadow-md leading-tight">{product.name}</h3>
-                    </div>
-                  )}
-                  {product.allowCustomize && (
-                    <div className="absolute top-2.5 left-2.5 bg-slate-900 text-white px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-sm">
-                      <SlidersHorizontal size={10} /> কাস্টম
-                    </div>
-                  )}
-                </div>
+                />
 
                 <div className={`p-3.5 sm:p-4 flex flex-col flex-1 ${
                   catStyle === 'luxury' ? 'bg-[#FAF9F6]' :

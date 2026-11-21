@@ -1,7 +1,7 @@
 'use client';
 // Build trigger: v1.0.4 - Shop-themed header with share button on product detail page
 import { Component, Suspense, useState, useEffect } from 'react';
-import { Loader2, Info, ArrowLeft, Share2, Copy, Store } from 'lucide-react';
+import { Loader2, Info, ArrowLeft, Share2, Copy, Store, X } from 'lucide-react';
 import { useProductLogic } from '@/features/product/hooks/useProductLogic';
 import { sanitizeProductData } from '@/features/product/utils/safeObjects';
 import { calculateBasePrice } from '@/features/product/utils/price';
@@ -42,11 +42,6 @@ const ErrorFallback = () => (
 );
 
 export default function ProductDetailClient({ shop, product }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   useEffect(() => {
     if (shop && product) {
       try {
@@ -71,37 +66,22 @@ export default function ProductDetailClient({ shop, product }) {
         const logoUrlStr = typeof shop.logoUrl === 'string' ? shop.logoUrl : '';
         const faviconUrl = logoUrlStr || svgFavicon;
 
-        // Remove all existing icon links to prevent any conflict or caching of the main site icon
-        const existingIcons = document.querySelectorAll("link[rel*='icon'], link[rel='apple-touch-icon'], link[rel='shortcut icon']");
-        existingIcons.forEach(el => {
-          try { el.remove(); } catch (e) {}
-        });
-
-        // Create new clean favicon link
-        const iconLink = document.createElement('link');
-        iconLink.rel = 'icon';
-        iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
-        iconLink.href = faviconUrl;
-        document.head.appendChild(iconLink);
-
-        // Create new clean apple touch icon link
-        const appleLink = document.createElement('link');
-        appleLink.rel = 'apple-touch-icon';
-        appleLink.href = faviconUrl;
-        document.head.appendChild(appleLink);
+        // Safely update favicon href without deleting React-managed DOM nodes (prevents React removeChild crash)
+        const existingIcon = document.querySelector("link[rel*='icon']");
+        if (existingIcon) {
+          existingIcon.href = faviconUrl;
+        } else {
+          const iconLink = document.createElement('link');
+          iconLink.rel = 'icon';
+          iconLink.type = faviconUrl.startsWith('data:') ? 'image/svg+xml' : 'image/png';
+          iconLink.href = faviconUrl;
+          document.head.appendChild(iconLink);
+        }
       } catch (err) {
         console.error('[FaviconUpdate] Error:', err);
       }
     }
   }, [shop, product]);
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-purple-600" size={40} />
-      </div>
-    );
-  }
 
   if (!shop || !product) {
     return <ErrorFallback />;
@@ -195,22 +175,36 @@ function ProductDetailInner({ shop, product }) {
 function Header({ router, product, shop }) {
   const [sharing, setSharing] = useState(false);
 
+  const isCustomDomain = () => {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname.toLowerCase();
+    return host !== 'localhost' && !host.includes('bdretailers.com') && !host.includes('vercel.app');
+  };
+
+  const getHomePath = () => {
+    if (isCustomDomain()) return '/';
+    const slug = shop?.shopSlug || shop?.subdomainSlug;
+    return slug ? `/shop/${slug}` : '/';
+  };
+
+  const handleClose = () => {
+    router.push(getHomePath());
+  };
+
   const handleBack = () => {
-    if (typeof window !== 'undefined' && window.history.length > 2) {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
-      const slug = shop?.shopSlug || shop?.subdomainSlug;
-      if (slug) {
-        router.push(`/shop/${slug}`);
-      } else {
-        router.back();
-      }
+      handleClose();
     }
   };
 
   // Build the share URL
   const getShareUrl = () => {
     if (typeof window === 'undefined') return '';
+    if (isCustomDomain() && product?.id) {
+      return `${window.location.origin}/product/${product.id}`;
+    }
     if (shop?.shopSlug && product?.id) {
       return `${window.location.origin}/shop/${shop.shopSlug}/product/${product.id}`;
     }
@@ -287,17 +281,24 @@ function Header({ router, product, shop }) {
         {/* Back Button */}
         <button
           onClick={handleBack}
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95"
+          title="ফিরে যান (Back)"
+          aria-label="Back"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-xs"
           style={{
-            background: 'var(--sp-primary, #4f46e5)',
-            color: 'var(--sp-btn-text, #ffffff)',
+            background: 'var(--sp-card, #ffffff)',
+            color: 'var(--sp-text, #0f172a)',
+            borderColor: 'var(--sp-border, #e2e8f0)',
           }}
         >
           <ArrowLeft size={18} />
         </button>
 
-        {/* Shop Logo + Name + Product Name */}
-        <div className="flex-1 min-w-0 flex items-center gap-2.5">
+        {/* Shop Logo + Name + Product Name (Click to Return Home) */}
+        <div 
+          onClick={handleClose} 
+          title="হোম পেজে ফিরুন" 
+          className="flex-1 min-w-0 flex items-center gap-2.5 cursor-pointer hover:opacity-85 transition-opacity"
+        >
           {shop?.logoUrl ? (
             <div className="w-7 h-7 rounded-lg overflow-hidden border shrink-0" style={{ borderColor: 'var(--sp-border, #e2e8f0)' }}>
               <img src={shop.logoUrl} alt={shop.shopName || ''} className="object-cover w-full h-full" style={{ width: 28, height: 28 }} />
@@ -325,7 +326,7 @@ function Header({ router, product, shop }) {
           onClick={handleShare}
           disabled={sharing}
           title="শেয়ার করুন"
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 border"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 border cursor-pointer"
           style={{
             background: 'var(--sp-card, #ffffff)',
             borderColor: 'var(--sp-border, #e2e8f0)',
@@ -339,7 +340,7 @@ function Header({ router, product, shop }) {
         <button
           onClick={() => handleCopy()}
           title="লিংক কপি করুন"
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 border"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 border cursor-pointer"
           style={{
             background: 'var(--sp-card, #ffffff)',
             borderColor: 'var(--sp-border, #e2e8f0)',
@@ -347,6 +348,20 @@ function Header({ router, product, shop }) {
           }}
         >
           <Copy size={15} />
+        </button>
+
+        {/* Close (Kete Deoya) Button */}
+        <button
+          onClick={handleClose}
+          title="বন্ধ করুন (হোমে ফিরুন)"
+          aria-label="Close"
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95 border cursor-pointer text-slate-700 hover:text-red-600 hover:bg-red-50 hover:border-red-200"
+          style={{
+            background: 'var(--sp-card, #ffffff)',
+            borderColor: 'var(--sp-border, #e2e8f0)',
+          }}
+        >
+          <X size={18} />
         </button>
       </div>
     </div>

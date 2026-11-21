@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { ShoppingCart, Heart, Star } from 'lucide-react';
 import { resolveSectionData, DEMO_PRODUCTS } from '@/lib/homepageDemoData';
+import StorefrontProductCardImage from '@/components/shared/StorefrontProductCardImage';
 
 export default function ProductGrid({ data, products, themeVars, onAddToCart, onProductClick }) {
   const d = resolveSectionData('product_grid', data);
@@ -74,20 +75,16 @@ export default function ProductGrid({ data, products, themeVars, onAddToCart, on
               onClick={() => onProductClick?.(product)}
             >
               <div className="relative aspect-square bg-slate-50 overflow-hidden">
-                <img
-                  src={product.imageUrl || product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500'}
-                  alt={product.name}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                <StorefrontProductCardImage
+                  product={product}
+                  className="w-full h-full aspect-square border-b-0"
+                  discount={discount}
+                  primaryColor={primary}
+                  onNavigate={() => onProductClick?.(product)}
                 />
-                {discount > 0 && (
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[10px] font-black text-white shadow" style={{ background: primary }}>
-                    -{discount}%
-                  </div>
-                )}
                 <button
                   onClick={e => e.stopPropagation()}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                  className="absolute top-2 right-2 z-30 w-7 h-7 rounded-full bg-white/90 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
                   aria-label="Wishlist"
                 >
                   <Heart size={14} className="text-slate-400 hover:text-red-500 transition-colors" />

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { ShoppingCart, Star } from 'lucide-react';
 import { resolveSectionData, DEMO_PRODUCTS } from '@/lib/homepageDemoData';
+import StorefrontProductCardImage from '@/components/shared/StorefrontProductCardImage';
 
 export default function TabbedCollection({ data, products, themeVars, onAddToCart, onProductClick }) {
   const d = resolveSectionData('tabbed_collection', data);
@@ -62,17 +63,13 @@ export default function TabbedCollection({ data, products, themeVars, onAddToCar
               className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col justify-between"
             >
               <div className="relative aspect-square bg-slate-50 overflow-hidden">
-                <img
-                  src={product.imageUrl || product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500'}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
+                <StorefrontProductCardImage
+                  product={product}
+                  className="w-full h-full aspect-square border-b-0"
+                  discount={discount}
+                  primaryColor="#dc2626"
+                  onNavigate={() => onProductClick?.(product)}
                 />
-                {discount > 0 && (
-                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-lg bg-red-600 text-white text-[10px] font-black shadow">
-                    -{discount}%
-                  </span>
-                )}
               </div>
 
               <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between gap-2">

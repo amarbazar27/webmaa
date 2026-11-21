@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Flame, ShoppingCart } from 'lucide-react';
 import { resolveSectionData, DEMO_PRODUCTS } from '@/lib/homepageDemoData';
+import StorefrontProductCardImage from '@/components/shared/StorefrontProductCardImage';
 
 function useCountdown(endTime) {
   const [time, setTime] = useState({ h: 0, m: 0, s: 0, expired: false });
@@ -99,19 +100,15 @@ export default function FlashSale({ data, products, themeVars, onAddToCart, onPr
                 onClick={() => onProductClick?.(product)}
               >
                 <div className="relative aspect-square bg-slate-50 overflow-hidden">
-                  <img
-                    src={product.imageUrl || product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=500'}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
+                  <StorefrontProductCardImage
+                    product={product}
+                    className="w-full h-full aspect-square border-b-0"
+                    discount={discount}
+                    primaryColor={primary}
+                    onNavigate={() => onProductClick?.(product)}
                   />
-                  {discount > 0 && (
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[10px] font-black text-white shadow" style={{ background: primary }}>
-                      -{discount}%
-                    </div>
-                  )}
                   {/* Stock bar */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-200">
+                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-200 z-20">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
