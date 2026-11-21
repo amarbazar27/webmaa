@@ -756,6 +756,15 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const [cart, setCart] = useState([]);
   const [selectedProductForModal, setSelectedProductForModal] = useState(null);
 
+  // Navigate to dedicated product detail page instead of floating modal
+  const navigateToProduct = useCallback((product) => {
+    if (!product?.id) return;
+    const slug = shop?.shopSlug || shop?.subdomainSlug || safeShopId;
+    if (!slug) return;
+    trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
+    router.push(`/shop/${slug}/product/${product.id}`);
+  }, [shop?.shopSlug, shop?.subdomainSlug, safeShopId, router]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       let initialCart = [];
@@ -3086,7 +3095,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         const hbCallbacks = {
           onAddToCart: addToCart,
           onProductClick: (product) => {
-            if (product) setSelectedProductForModal(product);
+            if (product) navigateToProduct(product);
           },
           onCategoryClick: (label) => {
             setSearchTerm(label);
@@ -3458,7 +3467,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   className="relative h-40 sm:h-52 overflow-hidden bg-white border-b border-slate-100 cursor-pointer" 
                   onClick={() => {
                     trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
-                    setSelectedProductForModal(product);
+                    navigateToProduct(product);
                   }}
                 >
                   {(product.images?.[0] || product.imageUrl) ? (
@@ -3490,7 +3499,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <h3 
                     onClick={() => {
                       trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
-                      setSelectedProductForModal(product);
+                      navigateToProduct(product);
                     }}
                     className={`font-extrabold text-[14px] leading-tight transition-colors line-clamp-2 mb-3 cursor-pointer ${
                       catStyle === 'luxury' ? 'text-white group-hover:text-[#C9A84C]' :
@@ -3561,7 +3570,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     )}
                     {product.stock !== 0 && (product.allowCustomize || (product.sizes && product.sizes.length > 0) || (product.variants && product.variants.length > 0)) && (
                       <button
-                        onClick={() => setSelectedProductForModal(product)}
+                        onClick={() => navigateToProduct(product)}
                         className="w-full py-2 rounded-xl font-black text-xs border-2 border-slate-200 text-slate-900 hover:bg-slate-50 hover:border-slate-800 transition-colors flex items-center justify-center gap-1.5"
                       >
                         <SlidersHorizontal size={13} /> কাস্টমাইজ
@@ -3835,7 +3844,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   {/* Large featured product spanning 2 rows */}
                   <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden border shadow-lg cursor-pointer group" 
                     style={{minHeight: '380px', background: themeVars['--sp-card'] || '#fff', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}
-                    onClick={() => setSelectedProductForModal(p0)}
+                    onClick={() => navigateToProduct(p0)}
                   >
                     {(p0?.images?.[0] || p0?.imageUrl) ? (
                       <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -3938,7 +3947,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
               <div id="product-section" className="space-y-6">
                 {/* Hero featured product */}
                 <div className="relative rounded-2xl overflow-hidden shadow-xl cursor-pointer group" style={{minHeight: '280px', maxHeight: '400px'}}
-                  onClick={() => setSelectedProductForModal(p0)}
+                  onClick={() => navigateToProduct(p0)}
                 >
                   {(p0?.images?.[0] || p0?.imageUrl) ? (
                     <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -3984,7 +3993,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   {/* Large product spanning 2 columns */}
                   <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden border shadow-lg cursor-pointer group"
                     style={{minHeight: '320px', background: themeVars['--sp-card'] || '#fff', borderColor: themeVars['--sp-border'] || '#e2e8f0'}}
-                    onClick={() => setSelectedProductForModal(p0)}
+                    onClick={() => navigateToProduct(p0)}
                   >
                     {(p0?.images?.[0] || p0?.imageUrl) ? (
                       <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -4032,7 +4041,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                   <div 
-                    onClick={() => setSelectedProductForModal(p0)}
+                    onClick={() => navigateToProduct(p0)}
                     className="lg:col-span-7 relative h-[400px] md:h-[460px] rounded-3xl overflow-hidden shadow-lg group cursor-pointer bg-stone-100"
                   >
                     {(p0.images?.[0] || p0.imageUrl) ? (
@@ -4054,7 +4063,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <div className="lg:col-span-5 flex flex-col gap-4 justify-between">
                     {[p1, p2].map((prod, idx) => (
                       prod && (
-                        <div key={prod.id || idx} onClick={() => setSelectedProductForModal(prod)} className="flex items-center gap-4 p-4 rounded-3xl bg-white shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer flex-1">
+                        <div key={prod.id || idx} onClick={() => navigateToProduct(prod)} className="flex items-center gap-4 p-4 rounded-3xl bg-white shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer flex-1">
                           <div className="relative w-32 h-28 rounded-2xl overflow-hidden shrink-0 bg-rose-50">
                             {(prod.images?.[0] || prod.imageUrl) ? (
                               <Image src={prod.images?.[0] || prod.imageUrl} alt={prod.name} fill className="object-cover" />
@@ -4097,7 +4106,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  <div onClick={() => setSelectedProductForModal(p0)} className="lg:col-span-6 relative h-[400px] md:h-[460px] rounded-3xl overflow-hidden shadow-xl group cursor-pointer bg-[#0A192F]">
+                  <div onClick={() => navigateToProduct(p0)} className="lg:col-span-6 relative h-[400px] md:h-[460px] rounded-3xl overflow-hidden shadow-xl group cursor-pointer bg-[#0A192F]">
                     {(p0.images?.[0] || p0.imageUrl) ? (
                       <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" />
                     ) : (
@@ -4116,7 +4125,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
 
                   <div className="lg:col-span-6 flex flex-col gap-4">
                     {p1 && (
-                      <div onClick={() => setSelectedProductForModal(p1)} className="flex items-center gap-4 p-4 rounded-3xl bg-white shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-pointer">
+                      <div onClick={() => navigateToProduct(p1)} className="flex items-center gap-4 p-4 rounded-3xl bg-white shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-pointer">
                         <div className="relative w-36 h-28 rounded-2xl overflow-hidden shrink-0 bg-slate-100">
                           {(p1.images?.[0] || p1.imageUrl) ? (
                             <Image src={p1.images?.[0] || p1.imageUrl} alt={p1.name} fill className="object-cover" />
@@ -4135,7 +4144,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                     <div className="grid grid-cols-2 gap-4 flex-1">
                       {[p2, p3].map((prod, idx) => (
                         prod && (
-                          <div key={prod.id || idx} onClick={() => setSelectedProductForModal(prod)} className="p-3.5 rounded-3xl bg-white shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-pointer flex flex-col">
+                          <div key={prod.id || idx} onClick={() => navigateToProduct(prod)} className="p-3.5 rounded-3xl bg-white shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-pointer flex flex-col">
                             <div className="relative h-28 rounded-2xl overflow-hidden bg-slate-100 mb-2">
                               {(prod.images?.[0] || prod.imageUrl) ? (
                                 <Image src={prod.images?.[0] || prod.imageUrl} alt={prod.name} fill className="object-cover" />
@@ -4174,7 +4183,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  <div onClick={() => setSelectedProductForModal(p0)} className="lg:col-span-7 relative h-[400px] md:h-[460px] rounded-2xl overflow-hidden shadow-xl group cursor-pointer bg-[#FAF9F6] border border-amber-200">
+                  <div onClick={() => navigateToProduct(p0)} className="lg:col-span-7 relative h-[400px] md:h-[460px] rounded-2xl overflow-hidden shadow-xl group cursor-pointer bg-[#FAF9F6] border border-amber-200">
                     {(p0.images?.[0] || p0.imageUrl) ? (
                       <Image src={p0.images?.[0] || p0.imageUrl} alt={p0.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
                     ) : (
@@ -4192,7 +4201,7 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                   <div className="lg:col-span-5 flex flex-col gap-4">
                     {[p1, p2].map((prod, idx) => (
                       prod && (
-                        <div key={prod.id || idx} onClick={() => setSelectedProductForModal(prod)} className="flex items-center gap-4 p-4 rounded-xl bg-white shadow-sm border border-slate-200 hover:border-[#C9A84C] transition-all cursor-pointer flex-1">
+                        <div key={prod.id || idx} onClick={() => navigateToProduct(prod)} className="flex items-center gap-4 p-4 rounded-xl bg-white shadow-sm border border-slate-200 hover:border-[#C9A84C] transition-all cursor-pointer flex-1">
                           <div className="relative w-32 h-28 rounded-lg overflow-hidden shrink-0 bg-slate-100">
                             {(prod.images?.[0] || prod.imageUrl) ? (
                               <Image src={prod.images?.[0] || prod.imageUrl} alt={prod.name} fill className="object-cover" />
@@ -4793,9 +4802,9 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
                         trackStoreEvent('select_content', { content_type: 'product', item_id: item.productId, name: item.name }); 
                         const originalProduct = products.find(p => p.id === (item.productId || item.id));
                         if (originalProduct) {
-                          setSelectedProductForModal(originalProduct);
+                          navigateToProduct(originalProduct);
                         } else {
-                          setSelectedProductForModal(item);
+                          navigateToProduct(item);
                         }
                         setIsCartOpen(false); 
                       }} className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-colors p-2 rounded-lg" title="Edit/Customize"><Edit2 size={16} strokeWidth={2.5} /></button>

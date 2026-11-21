@@ -195,6 +195,19 @@ function ProductDetailInner({ shop, product }) {
 function Header({ router, product, shop }) {
   const [sharing, setSharing] = useState(false);
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 2) {
+      router.back();
+    } else {
+      const slug = shop?.shopSlug || shop?.subdomainSlug;
+      if (slug) {
+        router.push(`/shop/${slug}`);
+      } else {
+        router.back();
+      }
+    }
+  };
+
   // Build the share URL
   const getShareUrl = () => {
     if (typeof window === 'undefined') return '';
@@ -273,7 +286,7 @@ function Header({ router, product, shop }) {
       <div className="px-4 py-3 flex items-center gap-3">
         {/* Back Button */}
         <button
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all hover:scale-105 active:scale-95"
           style={{
             background: 'var(--sp-primary, #4f46e5)',
