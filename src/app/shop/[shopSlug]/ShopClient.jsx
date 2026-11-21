@@ -84,6 +84,7 @@ import AiCustomization from '@/features/product/components/AiCustomization';
 import SmartCalculator from '@/features/product/components/SmartCalculator';
 import ProductActions from '@/features/product/components/ProductActions';
 import StorefrontProductCardImage from '@/components/shared/StorefrontProductCardImage';
+import { ProductDetailInner } from '@/app/shop/[shopSlug]/product/[productId]/ProductDetailClient';
 
 import { sanitizeProductData } from '@/features/product/utils/safeObjects';
 import { calculateBasePrice } from '@/features/product/utils/price';
@@ -744,25 +745,75 @@ export default function ShopClient({ initialShop, initialProducts, initialCatego
   const CART_KEY = `cart_${safeShopId || 'store'}`;
   const [cart, setCart] = useState([]);
   const [selectedProductForModal, setSelectedProductForModal] = useState(null);
+  const [dedicatedProduct, setDedicatedProduct] = useState(null);
 
-  // Navigate to dedicated product detail page instead of floating modal
+  // ⚡ Seamless Dedicated Product Page Transition (0ms latency, zero reload)
   const navigateToProduct = useCallback((product) => {
     if (!product?.id) return;
-    const isCustomDomain = typeof window !== 'undefined' && 
-      window.location.hostname !== 'localhost' && 
-      !window.location.hostname.includes('bdretailers.com') &&
-      !window.location.hostname.includes('vercel.app');
-
     trackStoreEvent('select_content', { content_type: 'product', item_id: product.id, name: product.name });
-    
-    if (isCustomDomain) {
-      router.push(`/product/${product.id}`);
-    } else {
+    setDedicatedProduct(product);
+
+    if (typeof window !== 'undefined') {
+      const isCustomDomain = window.location.hostname !== 'localhost' && 
+        !window.location.hostname.includes('bdretailers.com') &&
+        !window.location.hostname.includes('vercel.app');
+      
       const slug = shop?.shopSlug || shop?.subdomainSlug || safeShopId;
-      if (!slug) return;
-      router.push(`/shop/${slug}/product/${product.id}`);
+      const targetUrl = isCustomDomain 
+        ? `/product/${product.id}` 
+        : `/shop/${slug}/product/${product.id}`;
+      
+      window.history.pushState({ dedicatedProductId: product.id }, '', targetUrl);
     }
-  }, [shop?.shopSlug, shop?.subdomainSlug, safeShopId, router]);
+  }, [shop?.shopSlug, shop?.subdomainSlug, safeShopId]);
+
+  const closeDedicatedProduct = useCallback(() => {
+    setDedicatedProduct(null);
+    try {
+      const local = localStorage.getItem(CART_KEY);
+      if (local) setCart(JSON.parse(local));
+    } catch (_) {}
+
+    if (typeof window !== 'undefined') {
+      const isCustomDomain = window.location.hostname !== 'localhost' && 
+        !window.location.hostname.includes('bdretailers.com') &&
+        !window.location.hostname.includes('vercel.app');
+      const slug = shop?.shopSlug || shop?.subdomainSlug || safeShopId;
+      const homeUrl = isCustomDomain ? '/' : `/shop/${slug}`;
+      
+      if (window.history.state?.dedicatedProductId) {
+        window.history.back();
+      } else {
+        window.history.replaceState(null, '', homeUrl);
+      }
+    }
+  }, [CART_KEY, shop?.shopSlug, shop?.subdomainSlug, safeShopId]);
+
+  // Handle browser back button (Android swipe back, desktop back button)
+  useEffect(() => {
+    const handlePopState = () => {
+      if (dedicatedProduct) {
+        setDedicatedProduct(null);
+        try {
+          const local = localStorage.getItem(CART_KEY);
+          if (local) setCart(JSON.parse(local));
+        } catch (_) {}
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [dedicatedProduct, CART_KEY]);
+
+  // Lock background body scroll when dedicated product is open
+  useEffect(() => {
+    if (dedicatedProduct) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [dedicatedProduct]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -5674,15 +5725,17 @@ FORMAT: PRODUCTS_JSON:[{"id":"ID","qty":1,"note":"৪০০ গ্রাম","cu
         </div>
       )}
 
-      {selectedProductForModal && (
-        <ShopProductDetailModal
-          product={selectedProductForModal}
-          shop={shop}
-          onClose={() => setSelectedProductForModal(null)}
-          cart={cart}
-          setCart={setCart}
-          addToCart={addToCart}
-        />
+      {dedicatedProduct && (
+        <div 
+          className="fixed inset-0 z-[120] min-h-screen w-full h-full overflow-y-auto bg-white"
+          style={{ overscrollBehavior: 'contain' }}
+        >
+          <ProductDetailInner
+            shop={shop}
+            product={dedicatedProduct}
+            onClose={closeDedicatedProduct}
+          />
+        </div>
       )}
 
       {/* 🔔 Notification Permission Prompt for Shop */}

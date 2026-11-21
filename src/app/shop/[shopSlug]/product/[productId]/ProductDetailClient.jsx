@@ -94,7 +94,7 @@ export default function ProductDetailClient({ shop, product }) {
   );
 }
 
-function ProductDetailInner({ shop, product }) {
+export function ProductDetailInner({ shop, product, onClose }) {
   const { product: safeProduct, shop: safeShop } = sanitizeProductData(product, shop);
   const logic = useProductLogic(safeShop, safeProduct);
   
@@ -142,7 +142,7 @@ function ProductDetailInner({ shop, product }) {
 
   return (
     <div className="min-h-screen" style={{ ...themeVars, background: theme.bg }}>
-      <Header router={logic.router} product={safeProduct} shop={safeShop} />
+      <Header router={logic.router} product={safeProduct} shop={safeShop} onClose={onClose} />
       
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="px-4 pb-12 space-y-6">
@@ -172,7 +172,7 @@ function ProductDetailInner({ shop, product }) {
 }
 
 
-function Header({ router, product, shop }) {
+function Header({ router, product, shop, onClose }) {
   const [sharing, setSharing] = useState(false);
 
   const isCustomDomain = () => {
@@ -188,11 +188,17 @@ function Header({ router, product, shop }) {
   };
 
   const handleClose = () => {
-    router.push(getHomePath());
+    if (onClose) {
+      onClose();
+    } else {
+      router.push(getHomePath());
+    }
   };
 
   const handleBack = () => {
-    if (typeof window !== 'undefined' && window.history.length > 1) {
+    if (onClose) {
+      onClose();
+    } else if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
       handleClose();
