@@ -542,7 +542,8 @@ export async function getProductsServer(shopId) {
           const cacheSnap = await adminDb.collection('system_cache').doc(`products_${shopId}`).get();
           if (cacheSnap.exists) {
             const data = cacheSnap.data();
-            if (data && Array.isArray(data.products) && data.expiresAt > Date.now()) {
+            const hasImagesField = data?.products?.some(p => Array.isArray(p.images) && p.images.length > 0);
+            if (data && Array.isArray(data.products) && data.expiresAt > Date.now() && hasImagesField) {
               setCached(cacheKey, data.products, CACHE_TTL_MONTH);
               data.products.forEach(p => { if (p?.id) setCached(`product_${shopId}_${p.id}`, p, CACHE_TTL_MONTH); });
               return data.products;
@@ -574,6 +575,8 @@ export async function getProductsServer(shopId) {
           name: p.name || '',
           price: p.price || 0,
           imageUrl: p.imageUrl || '',
+          image: p.image || '',
+          images: Array.isArray(p.images) ? p.images : (p.images ? [p.images] : []),
           category: p.category || '',
           subcategory: p.subcategory || '',
           stock: p.stock ?? null,

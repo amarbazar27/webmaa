@@ -40,6 +40,8 @@ export async function GET(req) {
       name: data.name || '',
       price: data.price || 0,
       imageUrl: data.imageUrl || '',
+      image: data.image || '',
+      images: Array.isArray(data.images) ? data.images : (data.images ? [data.images] : []),
       category: data.category || '',
       stock: data.stock ?? null,
       inStock: data.stock === undefined || data.stock === null || data.stock > 0,
