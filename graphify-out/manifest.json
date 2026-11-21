@@ -3912,9 +3912,9 @@
     "semantic_hash": ""
   },
   "src/app/shop/[shopSlug]/ShopClient.jsx": {
-    "mtime": 1794635640.6743882,
-    "seen": 1794636407.3396473,
-    "ast_hash": "3d8a4617fe5b1822b4434a45faadc9ab",
+    "mtime": 1795233759.9409628,
+    "seen": 1795234304.1344635,
+    "ast_hash": "b0c9758a78fc80c77ce9618fc87fb832",
     "semantic_hash": ""
   },
   "src/app/shop/[shopSlug]/account-delete/ShopAccountDeleteClient.jsx": {
@@ -3972,9 +3972,9 @@
     "semantic_hash": ""
   },
   "src/app/shop/[shopSlug]/product/[productId]/ProductDetailClient.jsx": {
-    "mtime": 1790303668.2499514,
-    "seen": 1791734636.840035,
-    "ast_hash": "507e0c525908de51c9fd3a3a90bdcebf",
+    "mtime": 1795233838.103518,
+    "seen": 1795234304.134538,
+    "ast_hash": "f972bae96beb92449c5ff610276ebcfe",
     "semantic_hash": ""
   },
   "src/app/shop/[shopSlug]/product/[productId]/page.js": {
@@ -4662,9 +4662,9 @@
     "semantic_hash": ""
   },
   "src/features/product/components/ProductImage.jsx": {
-    "mtime": 1782547621.0283525,
-    "seen": 1791734636.8406167,
-    "ast_hash": "a6ff7e4823eb93792a29b89d1149f6cc",
+    "mtime": 1795233808.9860578,
+    "seen": 1795234304.1363213,
+    "ast_hash": "6d794a6332c4a5d3f441262b2188b37b",
     "semantic_hash": ""
   },
   "src/features/product/components/ProductInfo.jsx": {
